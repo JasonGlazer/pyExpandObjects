@@ -12,18 +12,27 @@ class Logger():
         logging_file_name = 'logging.conf',
         logger_name = 'base_logger',
         log_file_name = 'base'):
+        # Always try to fall back to console logging on errors
         logger_name = logger_name or 'root'
         try:
             logging_dir = os.path.join(
-            os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),
-            'logs'
+                os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),
+                'logs'
             )
         except:
             logging_dir = None
         if not os.path.isdir(logging_dir) or\
         not logging_dir or\
         not logging_file_name:
-            self.logger = logging.getLogger('root')
+            import sys
+            root = logging.getLogger()
+            root.setLevel(logging.DEBUG)
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setLevel(logging.DEBUG)
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            root.addHandler(handler)
+            self.logger = root
             self.logger.warning("Error reading logging setup parameters.  "
                 "Actions will only be printed to console.")
             return
@@ -63,5 +72,5 @@ class Logger():
                 logger_name
             )
             import traceback
-            logger.warning('logger error ouput: %s', traceback.print_exc())
+            self.logger.warning('logger error ouput: %s', traceback.print_exc())
         return
