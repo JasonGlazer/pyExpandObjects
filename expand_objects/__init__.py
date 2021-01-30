@@ -6,9 +6,16 @@ __author__ = "John Grando"
 from expand_objects.epjson_handler import EPJSON
 from expand_objects.logger import Logger
 
-class ExpandObjects:
+class ExpandObjects(EPJSON):
     """
     Base class for expand-objects
+
+    Inheritance
+    -----
+    EPJSON : Class for handling epJSON files
+        Parameters
+        -----
+        logger_class : Logging class for output
     """
     def __init__(self, logger_class = None):
         self.Logger = logger_class
@@ -16,6 +23,7 @@ class ExpandObjects:
             self.logger = self.Logger.logger
         else:
             self.logger = Logger().logger
+        super().__init__()
         return
 
     def run(self, file_location, **kwargs):
@@ -32,11 +40,10 @@ class ExpandObjects:
         use_validator (optional) : boolean value to indicate whether schema
             validation should be used.  This will run by default.
         """
-        tst = EPJSON(logger_class = kwargs.get('logger', self.Logger))
-        tst.load_schema(schema_location = kwargs.get('schema_location'))
-        tst.load_epjson(file_location = file_location)
+        self.load_schema(schema_location = kwargs.get('schema_location'))
+        self.load_epjson(file_location = file_location)
         if kwargs.get('use_validator', True):
-            tst.validate_epjson()
+            self.validate_epjson()
         return
 
 if __name__ == "__main__":
