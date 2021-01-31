@@ -10,10 +10,10 @@ class Logger():
     def __init__(
         self,
         logging_file_name = 'logging.conf',
-        logger_name = 'base_logger',
+        logger_name = None,
         log_file_name = 'base'):
         # Always try to fall back to console logging on errors
-        logger_name = logger_name or 'root'
+        logger_name = logger_name or 'console_logger'
         try:
             logging_dir = os.path.join(
                 os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),

@@ -6,7 +6,7 @@ __author__ = "John Grando"
 from expand_objects.epjson_handler import EPJSON
 from expand_objects.logger import Logger
 
-class ExpandObjects(EPJSON):
+class ExpandObjects(Logger):
     """
     Base class for expand-objects
 
@@ -17,13 +17,10 @@ class ExpandObjects(EPJSON):
         -----
         logger_class : Logging class for output
     """
-    def __init__(self, logger_class = None):
-        self.Logger = logger_class
-        if isinstance(self.Logger, Logger):
-            self.logger = self.Logger.logger
-        else:
-            self.logger = Logger().logger
-        super().__init__()
+    def __init__(self): # pragma: no cover
+        super().__init__(logger_name = 'expand_objects_logger')
+        # The same logger can be specified via logger_name
+        self.epjson_handler = EPJSON()
         return
 
     def run(self, file_location, **kwargs):
@@ -40,15 +37,19 @@ class ExpandObjects(EPJSON):
         use_validator (optional) : boolean value to indicate whether schema
             validation should be used.  This will run by default.
         """
-        self.load_schema(schema_location = kwargs.get('schema_location'))
-        self.load_epjson(file_location = file_location)
-        if kwargs.get('use_validator', True):
-            self.validate_epjson()
+        self.logger.info('Expand Objects starting')
+        self.epjson_handler.load_schema(
+            schema_location = kwargs.get('schema_location')
+        )
+        self.epjson_handler.load_epjson(
+            file_location = file_location,
+            validate = True)
+        self.logger.info('Expand Objects finished')
         return
 
 if __name__ == "__main__":
     #Temp code while tests are not set up
-    eo = ExpandObjects(logger_class = Logger(logger_name = 'base_logger'))
+    eo = ExpandObjects()
     eo.run(
         file_location = os.path.join(
             os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),
