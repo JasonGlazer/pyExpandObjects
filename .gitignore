@@ -1,6 +1,5 @@
 # project specific
 logs/*
-environment_variables.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
