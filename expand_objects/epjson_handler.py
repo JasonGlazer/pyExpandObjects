@@ -79,10 +79,14 @@ class EPJSON(Logger):
         self.schema_is_valid = False
         self.schema_validated = False
         if not schema_location:
-            schema_location = os.path.join(
-                os.environ.get('ENERGYPLUS_ROOT_DIR'),
-                'Energy+.schema.epJSON'
-            )
+            try:
+                schema_location = os.path.join(
+                    os.environ.get('ENERGYPLUS_ROOT_DIR'),
+                    'Energy+.schema.epJSON'
+                )
+            except:
+                self.logger.exception('Schema file path is not valid')
+                return
         self.schema_location = schema_location
         self.schema = self._get_json_file(schema_location)
         if self.schema:

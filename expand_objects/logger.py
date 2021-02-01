@@ -14,15 +14,12 @@ class Logger():
         log_file_name = 'base'):
         # Always try to fall back to console logging on errors
         logger_name = logger_name or 'console_logger'
-        try:
-            logging_dir = os.path.join(
-                os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),
-                'logs'
-            )
-        except:
-            logging_dir = None
-        if not os.path.isdir(logging_dir) or\
-        not logging_dir or\
+        logging_dir = os.path.join(
+            os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),
+            'logs'
+        ) or None
+        if not logging_dir or\
+        not os.path.isdir(logging_dir) or\
         not logging_file_name:
             import sys
             root = logging.getLogger()
@@ -33,8 +30,10 @@ class Logger():
             handler.setFormatter(formatter)
             root.addHandler(handler)
             self.logger = root
-            self.logger.warning("Error reading logging setup parameters.  "
-                "Actions will only be printed to console.")
+            self.logger.warning("Log file location has not been set up.  "
+                "Actions will only be printed to console.  Create the directory"
+                "(ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR\logs) and file (default "
+                "is 'base') if you wish to have logs recorded.")
             return
         log_file_location = os.path.join(
             logging_dir,
