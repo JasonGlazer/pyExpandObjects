@@ -9,17 +9,19 @@ dependencies:
   - ca-certificates=2020.12.5=ha878542_0
   - certifi=2020.12.5=py37h89c1867_1
   - coverage=5.4=py37h5e8e339_0
+  - decorator=4.4.2=py_0
   - importlib-metadata=3.4.0=py37h89c1867_0
   - importlib_metadata=3.4.0=hd8ed1ab_0
   - jsonschema=3.2.0=py_2
-  - ld_impl_linux-64=2.35.1=hea4e1c9_1
+  - ld_impl_linux-64=2.35.1=hea4e1c9_2
   - libffi=3.3=h58526e2_2
   - libgcc-ng=9.3.0=h2828fa1_18
   - libgomp=9.3.0=h2828fa1_18
   - libstdcxx-ng=9.3.0=h6de172a_18
   - ncurses=6.2=h58526e2_4
+  - networkx=2.5=py_0
   - openssl=1.1.1i=h7f98852_0
-  - pip=21.0=pyhd8ed1ab_1
+  - pip=21.0.1=pyhd8ed1ab_0
   - pyrsistent=0.17.3=py37h5e8e339_2
   - python=3.7.9=hffdb5ce_0_cpython
   - python_abi=3.7=1_cp37m
@@ -35,4 +37,4 @@ dependencies:
   - yaml=0.2.5=h516909a_0
   - zipp=3.4.0=py_0
   - zlib=1.2.11=h516909a_1010
-prefix: /home/jgrando/miniconda3/envs/eplus
+prefix: /home/grandocu/miniconda3/envs/eplus

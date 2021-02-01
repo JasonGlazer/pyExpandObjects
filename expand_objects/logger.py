@@ -12,28 +12,39 @@ class Logger():
         logging_file_name = 'logging.conf',
         logger_name = None,
         log_file_name = 'base'):
+        # prevent re-calling same logger handlers once initialized
+        # also prevent bad logger name from being called
+        global loggers
         # Always try to fall back to console logging on errors
         logger_name = logger_name or 'console_logger'
-        logging_dir = os.path.join(
-            os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),
-            'logs'
-        ) or None
+        try:
+            logging_dir = os.path.join(
+                os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),
+                'logs'
+            )
+        except:
+            logging_dir = None
         if not logging_dir or\
         not os.path.isdir(logging_dir) or\
         not logging_file_name:
-            import sys
-            root = logging.getLogger()
-            root.setLevel(logging.DEBUG)
-            handler = logging.StreamHandler(sys.stdout)
-            handler.setLevel(logging.DEBUG)
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
-            root.addHandler(handler)
-            self.logger = root
-            self.logger.warning("Log file location has not been set up.  "
-                "Actions will only be printed to console.  Create the directory"
-                "(ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR\logs) and file (default "
-                "is 'base') if you wish to have logs recorded.")
+            # If files are not set up, use console output and give warning.
+            logger_name = 'console_logger'
+            if not loggers.get(logger_name):
+                import sys
+                root = logging.getLogger()
+                root.setLevel(logging.DEBUG)
+                handler = logging.StreamHandler(sys.stdout)
+                handler.setLevel(logging.DEBUG)
+                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                handler.setFormatter(formatter)
+                root.addHandler(handler)
+                self.logger = root
+                self.logger.warning("Log file location has not been set up.  "
+                    "Actions will only be printed to console.  Create the directory"
+                    "(ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR\logs) "
+                    "if you wish to have logs recorded.")
+                loggers.update({logger_name : self.logger})
+                print(loggers)
             return
         log_file_location = os.path.join(
             logging_dir,
@@ -51,9 +62,6 @@ class Logger():
                 "logfilename":log_file_location
             }
         )
-        # prevent re-calling same logger handlers once initialized
-        # also prevent bad logger name from being called
-        global loggers
         try:
             if not loggers.get(logger_name):
                 if logger_name in logging.root.manager.loggerDict.keys():
@@ -72,4 +80,5 @@ class Logger():
             )
             import traceback
             self.logger.warning('logger error ouput: %s', traceback.print_exc())
+        loggers.update({logger_name : self.logger})
         return

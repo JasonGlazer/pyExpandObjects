@@ -26,5 +26,9 @@ class TestEPJSONHandler(ut.TestCase):
 
 
 #make load_schema() and/or validate_schema() accept string and file implementations?
+#tests
+# - bad file path gives meaningful error
+# - good file outputs success
+
 if __name__ == "__main__":
     ut.main()
