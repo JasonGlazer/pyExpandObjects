@@ -8,5 +8,8 @@ setup(
     license='',
     author='GARD Analytics and NREL for US DOE',
     author_email='',
-    description='Tool for Expanding EpJSON Templates'
+    description='Tool for Expanding EpJSON Templates',
+    entry_points={
+        'console_scripts': ['expandobjects=expand_objects.main:main'],
+    }
 )

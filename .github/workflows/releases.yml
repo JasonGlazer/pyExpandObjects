@@ -32,10 +32,10 @@ jobs:
 
     - name: Build
       shell: bash
-      run: pyinstaller ${{ matrix.pyinstall_args }} eplaunch.spec
+      run: pyinstaller ${{ matrix.pyinstall_args }} main.spec
 
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
         name: EPLaunch-${{ matrix.os }}
-        path: dist/EPLaunch
+        path: dist/main
