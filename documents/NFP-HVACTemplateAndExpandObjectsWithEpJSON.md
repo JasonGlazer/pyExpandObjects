@@ -7,7 +7,7 @@ Create HVACTemplate and ExpandObjects Support for epJSON files
 
 ## Justification for New Feature ##
 
-The addition of epJSON as an input file is impacting current workflows which rely on HVACTemplate objects. Similarly, HVACTemplate is useful for learning EnergyPlus, and provides an aid on projects focused on envelope or lighting measures, simplified interfaces, and scripted workflows.  It is important that model files built in the epJSON format have, at a minimum, the same functionality as their equivalents written in IDF format in order to support existing workflows as well as foster future adoption.  The HVACTemplate and ExpandObjects features have proven to be valuable in the previous format, and new implementations of these tools should be developed.  
+The addition of epJSON as an input file is impacting current workflows which rely on HVACTemplate objects. Similarly, HVACTemplate is useful for learning EnergyPlus, and provides an aid on projects focused on envelope or lighting measures, simplified interfaces, and scripted workflows.  It is important that model files built in the epJSON format have the same functionality as their equivalents written in IDF format in order to support existing workflows as well as foster future adoption.  The HVACTemplate and ExpandObjects features have proven to be valuable in the previous format, and new implementations of these tools should be developed.  
 
 ## E-mail and  Conference Call Conclusions ##
 
@@ -19,11 +19,11 @@ In order to achieve greater alignment with other programming initiatives in Ener
 
 ## Approach ##
 
-The process for delivering this product will be different in order to better align with Python best practices, and provide greater flexibility.  First, object validation will be built into the core of the program.  Second, the various existing templates will be structured as objects which will allow for natural hierarchies and common attributes to be built in and shared.  Third, a process will be created which translates epJSON files with HVACTemplate objects to epJSON files with only regular objects.  Finally, a rigorous set of tests will created which verify the functionality and robustness of the program.  With these proposed changes, the ExpandObjects tool will be able to operate in the EnergyPlus file pre-processing pipeline by reading and writing epJSON files.
+The process for delivering this product will be different in order to better align with Python best practices, and provide greater flexibility.  First, validation methods will be incorporated to ensure valid files are read and created.  Second, an HVACTemplate class will be created in Python which will keep data attributes and methods together in a central location as well as provide the option of using inheritance with other classes.  Third, a process will be created which translates epJSON files with HVACTemplate objects to epJSON files with only regular objects.  Finally, a rigorous set of tests will created which verify the functionality and robustness of the program.  With these proposed changes, the ExpandObjects tool will be able to operate in the EnergyPlus file pre-processing pipeline by reading and writing valid epJSON files.
 
 ## Testing/Validation/Data Sources ##
 
-A duplicated set of HVACTemplate-*.idf in epJSON format will be created and used as the source files for testing.
+A subset of HVACTemplate-*.idf files will be created in epJSON format and used as the source files for testing.
 
 ## Auxiliary Programs Reference Documentation ##
 
@@ -39,7 +39,7 @@ None
 
 ## Example File and Transition Changes ##
 
-A duplicated set of HVACTemplate-*.idf in epJSON format will be created as examples.
+A subset of HVACTemplate-*.idf files in epJSON format will be created as examples.
 
 ## References ##
 
@@ -51,11 +51,11 @@ Current ExpandObjects code: https://github.com/NREL/EnergyPlus/blob/develop/src/
 
 To implement the features described above, the following will be done:
 
-- Build epJSON input and output File handlers
-- Document existing HVACTemplate objects and how they are mapped to regular objects in the ExpandObjects process
-- Create HVACTemplate Class hierarchy of objects, using class inheritance and combining common methods wherever meaningful
-- Create testing suite consisting of all HVACTemplate objects to verify outputs
-- Create ExpandObjects file conversion process
-- Test and refactor code based on findings from above item
-- Create copies of each HVACTemplate-*.idf file in JSON format and test results against the IDF counterparts.
+- Build epJSON input and output File handlers.
+- Document existing HVACTemplate objects and how they are mapped to regular objects in the ExpandObjects process.
+- Create HVACTemplate Class hierarchy of objects, using class inheritance and combining common methods wherever meaningful.
+- Create testing suite consisting of all HVACTemplate objects to verify outputs.
+- Create ExpandObjects file conversion process.
+- Test and refactor code based on findings from above item.
+- Create copies of selected HVACTemplate-*.idf files in JSON format and test results against the IDF counterparts.
 - Consult with EnergyPlus team on implementation process for new tool.
