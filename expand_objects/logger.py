@@ -45,9 +45,11 @@ class Logger:
                 self.logger = root
                 self.logger.warning("Log file location has not been set up.  "
                                     "Actions will only be printed to console.  Create the directory"
-                                    "(ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR\\logs) "
+                                    "(ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR\logs) "
                                     "if you wish to have logs recorded.")
-                loggers.update({logger_name: self.logger})
+                loggers.update({logger_name : self.logger})
+            else:
+                self.logger = loggers[logger_name]
             return
         log_file_location = os.path.join(
             logging_dir,
