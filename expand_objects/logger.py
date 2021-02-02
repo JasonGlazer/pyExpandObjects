@@ -44,7 +44,6 @@ class Logger():
                     "(ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR\logs) "
                     "if you wish to have logs recorded.")
                 loggers.update({logger_name : self.logger})
-                print(loggers)
             return
         log_file_location = os.path.join(
             logging_dir,
@@ -72,13 +71,16 @@ class Logger():
                         'Bad logger name passed (%s), continuing with only console logging',
                         logger_name
                     )
+                loggers.update({logger_name : self.logger})
+            else:
+                self.logger = loggers[logger_name]
         except Exception as e:
             self.logger = logging.getLogger('root')
+            loggers.update({logger_name : self.logger})
             self.logger.warning(
                 'Logger failed to start %s, continuing with only console logging',
                 logger_name
             )
             import traceback
             self.logger.warning('logger error ouput: %s', traceback.print_exc())
-        loggers.update({logger_name : self.logger})
         return

@@ -34,9 +34,9 @@ class EPJSON(Logger):
             with open(json_location) as f:
                 json_obj = json.load(f)
         except FileNotFoundError:
-            self.exception("file does not exist: %s", json_location)
+            self.logger.exception("file does not exist: %s", json_location)
         except:
-            self.exception("file is not a valid json: %s", json_location)
+            self.logger.exception("file is not a valid json: %s", json_location)
         return json_obj
 
     def _validate_schema(self, schema):
@@ -122,24 +122,27 @@ class EPJSON(Logger):
         finally:
             return epjson_is_valid
 
-    def load_epjson(self, file_location, validate = True):
+    def load_epjson(self, epjson_ref, validate = True):
         """
         Load schema to class object.
 
         Arguments
         -----
-        file_location : location of epjson file to read
+        epjson_ref : location of epjson file to read
         schema_location (optional) : location of json schema.  If not provided
             then the default environment variable path (ENERGYPLUS_ROOT_DIR) and
             file (Energy+.schema.epJSON) will be used.
 
         Return
         -----
-        class object (file_location, schema_location)
+        class object (epjson_ref, schema_location)
         """
         self.input_epjson = False
         self.input_epjson_is_valid = False
-        self.input_epjson = self._get_json_file(file_location)
+        if isinstance(epjson_ref, dict):
+            self.input_epjson = epjson_ref
+        else:
+            self.input_epjson = self._get_json_file(epjson_ref)
         if self.input_epjson:
             self.logger.info(
                 'input EPJSON file loaded, %s top level objects',

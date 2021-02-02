@@ -17,10 +17,10 @@ class ExpandObjects(Logger):
         -----
         logger_class : Logging class for output
     """
-    def __init__(self): # pragma: no cover
-        super().__init__(logger_name = 'expand_objects_logger')
+    def __init__(self, logger_name = None):
+        super().__init__(logger_name = logger_name or 'expand_objects_logger')
         # The same logger can be specified via logger_name
-        self.epjson_handler = EPJSON()
+        self.epjson_handler = EPJSON(logger_name = logger_name or 'expand_objects_logger')
         return
 
     def run(self, file_location, **kwargs):
@@ -42,19 +42,7 @@ class ExpandObjects(Logger):
             schema_location = kwargs.get('schema_location')
         )
         self.epjson_handler.load_epjson(
-            file_location = file_location,
+            epjson_ref = file_location,
             validate = True)
         self.logger.info('Expand Objects finished')
         return
-
-if __name__ == "__main__":
-    #Temp code while tests are not set up
-    eo = ExpandObjects()
-    eo.run(
-        file_location = os.path.join(
-            os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),
-            'test',
-            'example_files',
-            'RefBldgMediumOfficeNew2004_Chicago_epJSON.epJSON'
-        )
-    )
