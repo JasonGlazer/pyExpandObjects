@@ -1,5 +1,5 @@
 import unittest as ut
-import jsonschema, os
+import os
 
 from expand_objects.epjson_handler import EPJSON
 
@@ -26,10 +26,11 @@ minimum_objects_d = {
     }
 }
 
+
 class TestEPJSONHandler(ut.TestCase):
     def setUp(self):
         self.logger_name = 'console_logger'
-        self.epjson_handler = EPJSON(logger_name = self.logger_name)
+        self.epjson_handler = EPJSON(logger_name=self.logger_name)
         self.epjson_handler.logger.setLevel('ERROR')
         return
 
@@ -38,11 +39,11 @@ class TestEPJSONHandler(ut.TestCase):
 
     def test_default_schema_is_valid(self):
         self.epjson_handler.load_schema()
-        assert self.epjson_handler.schema_is_valid == True
+        assert self.epjson_handler.schema_is_valid
         return
 
     def test_blank_schema_is_not_valid(self):
-        bad_return_value = self.epjson_handler._validate_schema({"properties" : {"id" : "asdf"}})
+        bad_return_value = self.epjson_handler._validate_schema({"properties": {"id": "asdf"}})
         self.assertFalse(bad_return_value)
         return
 
@@ -72,8 +73,9 @@ class TestEPJSONHandler(ut.TestCase):
         self.assertTrue(self.epjson_handler.epjson_is_valid)
         return
 
-#make load_schema() and/or validate_schema() accept string and file implementations?
-#tests
+
+# make load_schema() and/or validate_schema() accept string and file implementations?
+# tests
 # - bad file path gives meaningful error
 # - good file outputs success
 

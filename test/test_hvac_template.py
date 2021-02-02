@@ -1,4 +1,3 @@
-
 import unittest as ut
 
 from expand_objects.hvac_template import HVACTemplate
@@ -26,10 +25,11 @@ minimum_objects_d = {
     }
 }
 
+
 class TestHVACTemplateObject(ut.TestCase):
     def setUp(self):
         self.logger_name = 'console_logger'
-        self.hvac_template = HVACTemplate(logger_name = self.logger_name)
+        self.hvac_template = HVACTemplate(logger_name=self.logger_name)
         self.hvac_template.logger.setLevel('ERROR')
         self.hvac_template.load_schema()
         return
@@ -56,8 +56,8 @@ class TestHVACTemplateObject(ut.TestCase):
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
                 "All Zones": {
-                    "heating_setpoint_schedule_name":"Htg-SetP-Sch",
-                    "cooling_setpoint_schedule_name":"Clg-SetP-Sch"
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
                 }
             }
         })
@@ -72,12 +72,12 @@ class TestHVACTemplateObject(ut.TestCase):
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
                 "All Zones": {
-                    "heating_setpoint_schedule_name":"Htg-SetP-Sch",
-                    "cooling_setpoint_schedule_name":"Clg-SetP-Sch"
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
                 },
                 "All Zones 2": {
-                    "heating_setpoint_schedule_name":"Htg-SetP-Sch",
-                    "cooling_setpoint_schedule_name":"Clg-SetP-Sch"
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
                 }
             }
         })
@@ -95,22 +95,22 @@ class TestHVACTemplateObject(ut.TestCase):
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
                 "All Zones": {
-                    "heating_setpoint_schedule_name":"Htg-SetP-Sch",
-                    "cooling_setpoint_schedule_name":"Clg-SetP-Sch"
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
                 },
                 "All Zones 2": {
-                    "heating_setpoint_schedule_name":"Htg-SetP-Sch",
-                    "cooling_setpoint_schedule_name":"Clg-SetP-Sch"
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
                 },
             },
-            "HVACTemplate:Zone:IdealLoadsAirSystem" : {
-                "first_zone" : {"zone_name" : "Zone 1"},
-                "second_zone" : {"zone_name" : "Zone 2"}
+            "HVACTemplate:Zone:IdealLoadsAirSystem": {
+                "first_zone": {"zone_name": "Zone 1"},
+                "second_zone": {"zone_name": "Zone 2"}
             }
         })
         self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.epjson_is_valid)
         self.assertTrue(self.hvac_template.templates_exist)
         # Can't reference by order for this test [0].  Rework
-        #self.assertEqual(len(self.hvac_template.templates[0]['HVACTemplate:Thermostat'].keys()), 2)
+        # self.assertEqual(len(self.hvac_template.templates[0]['HVACTemplate:Thermostat'].keys()), 2)
         return
