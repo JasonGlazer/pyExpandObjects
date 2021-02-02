@@ -1,0 +1,11 @@
+[run]
+source =
+        expand_objects
+
+omit =
+        /usr/*
+        /tmp/*
+        .tox/*
+        *.pyenv*
+        *.venv*
+        setup.py

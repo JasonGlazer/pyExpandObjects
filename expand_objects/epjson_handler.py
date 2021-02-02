@@ -1,7 +1,8 @@
-
-import os, sys, json
-import jsonschema as jschema
+import json
+import os
+import jsonschema
 from expand_objects.logger import Logger
+
 
 class EPJSON(Logger):
     """
@@ -17,13 +18,12 @@ class EPJSON(Logger):
     """
     def __init__(self, logger_name = None):
         super().__init__(logger_name = logger_name or 'epjson_logger')
-        self.Validator = jschema.Draft4Validator
+        self.Validator = jsonschema.Draft4Validator
         self.schema = None
         self.schema_is_valid = None
         self.schema_validated = None
         self.input_epjson = None
         self.input_epjson_is_valid = None
-        return
 
     def _get_json_file(self, json_location = None):
         """

@@ -1,6 +1,7 @@
 # project specific
 logs/*
 !logs/logging.conf
+.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
