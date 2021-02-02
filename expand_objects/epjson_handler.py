@@ -1,7 +1,9 @@
 import json
-import os
 import jsonschema
+from pathlib import Path
 from expand_objects.logger import Logger
+
+this_script_dir = Path(__file__).resolve()
 
 
 class EPJSON(Logger):
@@ -25,6 +27,7 @@ class EPJSON(Logger):
         self.schema_validated = None
         self.input_epjson = None
         self.input_epjson_is_valid = None
+        self.schema_location = None
 
     def _get_json_file(self, json_location=None):
         """
@@ -81,10 +84,7 @@ class EPJSON(Logger):
         self.schema_validated = False
         if not schema_location:
             try:
-                schema_location = os.path.join(
-                    os.environ.get('ENERGYPLUS_ROOT_DIR'),
-                    'Energy+.schema.epJSON'
-                )
+                schema_location = str(this_script_dir.parent / 'resources' / 'Energy+.schema.epJSON')
             except Exception as e:
                 self.logger.exception('Schema file path is not valid; \n%s', str(e))
                 return
@@ -95,7 +95,6 @@ class EPJSON(Logger):
             self.schema_validated = self._validate_schema(self.schema)
             if self.schema_validated:
                 self.schema_is_valid = True
-        return
 
     def _validate_epjson(self, input_epjson):
         """

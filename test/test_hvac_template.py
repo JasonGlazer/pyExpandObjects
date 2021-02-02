@@ -1,5 +1,4 @@
-import unittest as ut
-from unittest import skip
+import unittest
 
 from expand_objects.hvac_template import HVACTemplate
 
@@ -27,18 +26,13 @@ minimum_objects_d = {
 }
 
 
-class TestHVACTemplateObject(ut.TestCase):
+class TestHVACTemplateObject(unittest.TestCase):
     def setUp(self):
         self.logger_name = 'console_logger'
         self.hvac_template = HVACTemplate(logger_name=self.logger_name)
         self.hvac_template.logger.setLevel('ERROR')
         self.hvac_template.load_schema()
-        return
 
-    def tearDown(self):
-        return
-
-    @skip
     def test_no_hvac_objects_returns_false(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -51,9 +45,7 @@ class TestHVACTemplateObject(ut.TestCase):
         self.assertTrue(self.hvac_template.epjson_is_valid)
         self.assertFalse(self.hvac_template.templates_exist)
         self.assertIsNone(self.hvac_template.templates)
-        return
 
-    @skip
     def test_one_hvac_object_one_template_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -68,9 +60,7 @@ class TestHVACTemplateObject(ut.TestCase):
         self.assertTrue(self.hvac_template.epjson_is_valid)
         self.assertTrue(self.hvac_template.templates_exist)
         self.assertEqual(len(self.hvac_template.templates[0]['HVACTemplate:Thermostat'].keys()), 1)
-        return
 
-    @skip
     def test_n_hvac_objects_one_template_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -89,9 +79,7 @@ class TestHVACTemplateObject(ut.TestCase):
         self.assertTrue(self.hvac_template.epjson_is_valid)
         self.assertTrue(self.hvac_template.templates_exist)
         self.assertEqual(len(self.hvac_template.templates[0]['HVACTemplate:Thermostat'].keys()), 2)
-        return
 
-    @skip
     def test_n_hvac_objects_n_templates_returns_true(self):
         # Consult on how to properaly build HVACTemplate:zone:IdealLoadsAirSystem
         # the keys were created to make it work with epjson but do not exist in
@@ -118,4 +106,3 @@ class TestHVACTemplateObject(ut.TestCase):
         self.assertTrue(self.hvac_template.templates_exist)
         # Can't reference by order for this test [0].  Rework
         # self.assertEqual(len(self.hvac_template.templates[0]['HVACTemplate:Thermostat'].keys()), 2)
-        return

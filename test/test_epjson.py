@@ -1,6 +1,5 @@
-import unittest as ut
-from unittest import skip
-import os
+from pathlib import Path
+import unittest
 
 from expand_objects.epjson_handler import EPJSON
 
@@ -28,29 +27,21 @@ minimum_objects_d = {
 }
 
 
-class TestEPJSONHandler(ut.TestCase):
+class TestEPJSONHandler(unittest.TestCase):
     def setUp(self):
         self.logger_name = 'console_logger'
         self.epjson_handler = EPJSON(logger_name=self.logger_name)
         self.epjson_handler.logger.setLevel('ERROR')
-        return
+        self.example_file_dir = Path(__file__).resolve().parent / 'example_files'
 
-    def tearDown(self):
-        return
-
-    @skip
     def test_default_schema_is_valid(self):
         self.epjson_handler.load_schema()
         assert self.epjson_handler.schema_is_valid
-        return
 
-    @skip
     def test_blank_schema_is_not_valid(self):
         bad_return_value = self.epjson_handler._validate_schema({"properties": {"id": "asdf"}})
         self.assertFalse(bad_return_value)
-        return
 
-    @skip
     def test_good_object_is_valid(self):
         self.epjson_handler.load_schema()
         self.epjson_handler.load_epjson({
@@ -62,27 +53,14 @@ class TestEPJSONHandler(ut.TestCase):
             }
         })
         self.assertTrue(self.epjson_handler.epjson_is_valid)
-        return
 
-    @skip
     def test_good_file_is_verified(self):
         self.epjson_handler.load_schema()
-        self.epjson_handler.load_epjson(
-            os.path.join(
-                os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),
-                'test',
-                'example_files',
-                'RefBldgMediumOfficeNew2004_Chicago_epJSON.epJSON'
-            )
-        )
+        self.epjson_handler.load_epjson(str(self.example_file_dir / 'RefBldgMediumOfficeNew2004_Chicago_epJSON.epJSON'))
         self.assertTrue(self.epjson_handler.epjson_is_valid)
-        return
 
 
 # make load_schema() and/or validate_schema() accept string and file implementations?
 # tests
 # - bad file path gives meaningful error
 # - good file outputs success
-
-if __name__ == "__main__":
-    ut.main()

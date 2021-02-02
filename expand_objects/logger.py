@@ -1,11 +1,14 @@
 import logging
 import os
+from pathlib import Path
 from logging.config import fileConfig
 
 loggers = {}
 
+this_script_dir = Path(__file__).resolve()
 
-class Logger():
+
+class Logger:
     """
     General logger setup
     """
@@ -22,10 +25,7 @@ class Logger():
         logger_name = logger_name or 'console_logger'
         # noinspection PyBroadException
         try:
-            logging_dir = os.path.join(
-                os.environ.get('ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR'),
-                'logs'
-            )
+            logging_dir = str(this_script_dir.parent.parent / 'logs')
         except:  # noqa: E722
             logging_dir = None
         if not logging_dir or \

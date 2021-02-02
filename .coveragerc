@@ -7,5 +7,5 @@ omit =
         /tmp/*
         .tox/*
         *.pyenv*
-        *.venv*
+        *venv*
         setup.py
