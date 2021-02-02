@@ -6,8 +6,7 @@ class HVACTemplate(EPJSON):
     """
     Manage HVAC Template objects and handle their conversion to regular objects.
 
-    Parameters
-    ------
+    Parameters:
     templates_exist : boolean indicating if templates are present
     """
 

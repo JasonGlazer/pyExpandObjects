@@ -1,4 +1,5 @@
 import unittest as ut
+from unittest import skip
 import os
 
 from expand_objects.epjson_handler import EPJSON
@@ -37,16 +38,19 @@ class TestEPJSONHandler(ut.TestCase):
     def tearDown(self):
         return
 
+    @skip
     def test_default_schema_is_valid(self):
         self.epjson_handler.load_schema()
         assert self.epjson_handler.schema_is_valid
         return
 
+    @skip
     def test_blank_schema_is_not_valid(self):
         bad_return_value = self.epjson_handler._validate_schema({"properties": {"id": "asdf"}})
         self.assertFalse(bad_return_value)
         return
 
+    @skip
     def test_good_object_is_valid(self):
         self.epjson_handler.load_schema()
         self.epjson_handler.load_epjson({
@@ -60,6 +64,7 @@ class TestEPJSONHandler(ut.TestCase):
         self.assertTrue(self.epjson_handler.epjson_is_valid)
         return
 
+    @skip
     def test_good_file_is_verified(self):
         self.epjson_handler.load_schema()
         self.epjson_handler.load_epjson(

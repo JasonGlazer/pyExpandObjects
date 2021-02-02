@@ -10,6 +10,7 @@ Welcome to EpJSON ExpandObjects's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   HVACTemplate
 
 
 Indices and tables
