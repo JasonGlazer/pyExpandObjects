@@ -44,6 +44,8 @@ class Logger():
                     "(ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR\logs) "
                     "if you wish to have logs recorded.")
                 loggers.update({logger_name : self.logger})
+            else:
+                self.logger = loggers[logger_name]
             return
         log_file_location = os.path.join(
             logging_dir,
