@@ -5,7 +5,7 @@ from logging.config import fileConfig
 
 loggers = {}
 
-this_script_dir = Path(__file__).resolve()
+this_script_path = Path(__file__).resolve()
 
 
 class Logger:
@@ -25,7 +25,7 @@ class Logger:
         logger_name = logger_name or 'console_logger'
         # noinspection PyBroadException
         try:
-            logging_dir = str(this_script_dir.parent.parent / 'logs')
+            logging_dir = str(this_script_path.parent.parent / 'logs')
         except:  # noqa: E722
             logging_dir = None
         if not logging_dir or \
