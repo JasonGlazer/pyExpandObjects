@@ -1,7 +1,10 @@
-
-import os, sys, json
-import jsonschema as jschema
+import json
+import jsonschema
+from pathlib import Path
 from expand_objects.logger import Logger
+
+this_script_dir = Path(__file__).resolve()
+
 
 class EPJSON(Logger):
     """
@@ -15,17 +18,18 @@ class EPJSON(Logger):
         However, it requires a valid json object
     *_is_valid : initialized as None.  False if failed, True if passed.
     """
-    def __init__(self, logger_name = None):
-        super().__init__(logger_name = logger_name or 'epjson_logger')
-        self.Validator = jschema.Draft4Validator
+
+    def __init__(self, logger_name=None):
+        super().__init__(logger_name=logger_name or 'epjson_logger')
+        self.Validator = jsonschema.Draft4Validator
         self.schema = None
         self.schema_is_valid = None
         self.schema_validated = None
         self.input_epjson = None
         self.input_epjson_is_valid = None
-        return
+        self.schema_location = None
 
-    def _get_json_file(self, json_location = None):
+    def _get_json_file(self, json_location=None):
         """
         Load json file and return an error and None if fails
         """
@@ -35,8 +39,8 @@ class EPJSON(Logger):
                 json_obj = json.load(f)
         except FileNotFoundError:
             self.logger.exception("file does not exist: %s", json_location)
-        except:
-            self.logger.exception("file is not a valid json: %s", json_location)
+        except Exception as e:
+            self.logger.exception("file is not a valid json: %s\n%s", json_location, str(e))
         return json_obj
 
     def _validate_schema(self, schema):
@@ -54,12 +58,12 @@ class EPJSON(Logger):
             self.logger.info('schema build: %s', self.schema['epJSON_schema_build'])
         except jsonschema.exceptions.SchemaError:
             self.logger.exception('Failed to validate schema')
-        except:
-            self.logger.exception('Schema validator failed')
+        except Exception as e:
+            self.logger.exception('Schema validator failed:\n%s', str(e))
         finally:
             return schema_validated
 
-    def load_schema(self, schema_location = None):
+    def load_schema(self, schema_location=None):
         """
         Load schema to class object.
 
@@ -80,12 +84,9 @@ class EPJSON(Logger):
         self.schema_validated = False
         if not schema_location:
             try:
-                schema_location = os.path.join(
-                    os.environ.get('ENERGYPLUS_ROOT_DIR'),
-                    'Energy+.schema.epJSON'
-                )
-            except:
-                self.logger.exception('Schema file path is not valid')
+                schema_location = str(this_script_dir.parent / 'resources' / 'Energy+.schema.epJSON')
+            except Exception as e:
+                self.logger.exception('Schema file path is not valid; \n%s', str(e))
                 return
         self.schema_location = schema_location
         self.schema = self._get_json_file(schema_location)
@@ -94,7 +95,6 @@ class EPJSON(Logger):
             self.schema_validated = self._validate_schema(self.schema)
             if self.schema_validated:
                 self.schema_is_valid = True
-        return
 
     def _validate_epjson(self, input_epjson):
         """
@@ -103,11 +103,11 @@ class EPJSON(Logger):
         If input epjson is not valid, line by line errors will be returned.
         """
         epjson_is_valid = False
-        if not self.schema or\
-        not self.schema_is_valid or\
-        not self.schema_validated:
+        if not self.schema or \
+                not self.schema_is_valid or \
+                not self.schema_validated:
             self.logger.error("Schema has either not been loaded or not validated.  "
-                "File can't be processed")
+                              "File can't be processed")
             return epjson_is_valid
         try:
             file_validation = self.schema_validated.is_valid(input_epjson)
@@ -117,12 +117,12 @@ class EPJSON(Logger):
                     self.logger.error(err.message)
                 return epjson_is_valid
             epjson_is_valid = True
-        except:
-            self.logger.exception('epJSON validation failed')
+        except Exception as e:
+            self.logger.exception('epJSON validation failed; \n%s', str(e))
         finally:
             return epjson_is_valid
 
-    def load_epjson(self, epjson_ref, validate = True):
+    def load_epjson(self, epjson_ref, validate=True):
         """
         Load schema to class object.
 
