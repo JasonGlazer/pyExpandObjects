@@ -3,7 +3,7 @@ import jsonschema
 from pathlib import Path
 from expand_objects.logger import Logger
 
-this_script_dir = Path(__file__).resolve()
+this_script_path = Path(__file__).resolve()
 
 
 class EPJSON(Logger):
@@ -84,7 +84,7 @@ class EPJSON(Logger):
         self.schema_validated = False
         if not schema_location:
             try:
-                schema_location = str(this_script_dir.parent / 'resources' / 'Energy+.schema.epJSON')
+                schema_location = str(this_script_path.parent / 'resources' / 'Energy+.schema.epJSON')
             except Exception as e:
                 self.logger.exception('Schema file path is not valid; \n%s', str(e))
                 return
