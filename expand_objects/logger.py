@@ -5,7 +5,7 @@ from logging.config import fileConfig
 
 loggers = {}
 
-this_script_dir = Path(__file__).resolve()
+this_script_path = Path(__file__).resolve()
 
 
 class Logger:
@@ -16,13 +16,13 @@ class Logger:
     def __init__(
             self,
             logging_file_name='logging.conf',
-            logger_name='expand_objects_logger',
+            logger_name=None,
             log_file_name='base'):
         # prevent re-calling same logger handlers once initialized
         # also prevent bad logger name from being called
         global loggers
         # noinspection PyBroadException
-        logging_dir = str(this_script_dir.parent.parent / 'logs')
+        logging_dir = str(this_script_path.parent.parent / 'logs')
         log_file_location = os.path.join(
             logging_dir,
             '{}.log'.format(log_file_name)
@@ -63,4 +63,6 @@ class Logger:
                 'Logger failed to start %s, continuing with only console logging, error message: %s',
                 logger_name, str(e)
             )
+            import traceback
+            self.logger.warning('logger error ouput: %s', traceback.print_exc())
         return
