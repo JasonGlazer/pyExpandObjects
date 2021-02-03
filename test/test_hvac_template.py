@@ -28,8 +28,7 @@ minimum_objects_d = {
 
 class TestHVACTemplateObject(unittest.TestCase):
     def setUp(self):
-        self.logger_name = 'console_logger'
-        self.hvac_template = HVACTemplate(logger_name=self.logger_name)
+        self.hvac_template = HVACTemplate()
         self.hvac_template.logger.setLevel('ERROR')
         self.hvac_template.load_schema()
 

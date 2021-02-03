@@ -10,8 +10,8 @@ class HVACTemplate(EPJSON):
     templates_exist : boolean indicating if templates are present
     """
 
-    def __init__(self, logger_name=None):
-        super().__init__(logger_name=logger_name or 'hvac_template_logger')
+    def __init__(self):
+        super().__init__()
         self.templates_exist = None
         self.templates = None
         return

@@ -17,10 +17,10 @@ class ExpandObjects(Logger):
         logger_class : Logging class for output
     """
 
-    def __init__(self, logger_name=None):
-        super().__init__(logger_name=logger_name or 'expand_objects_logger')
+    def __init__(self):
+        super().__init__()
         # The same logger can be specified via logger_name
-        self.epjson_handler = EPJSON(logger_name=logger_name or 'expand_objects_logger')
+        self.epjson_handler = EPJSON()
         return
 
     def run(self, file_location, **kwargs):

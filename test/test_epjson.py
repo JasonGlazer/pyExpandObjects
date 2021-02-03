@@ -29,8 +29,7 @@ minimum_objects_d = {
 
 class TestEPJSONHandler(unittest.TestCase):
     def setUp(self):
-        self.logger_name = 'console_logger'
-        self.epjson_handler = EPJSON(logger_name=self.logger_name)
+        self.epjson_handler = EPJSON()
         self.epjson_handler.logger.setLevel('ERROR')
         self.example_file_dir = Path(__file__).resolve().parent / 'example_files'
 

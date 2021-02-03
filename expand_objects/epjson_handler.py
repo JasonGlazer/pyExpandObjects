@@ -19,8 +19,8 @@ class EPJSON(Logger):
     *_is_valid : initialized as None.  False if failed, True if passed.
     """
 
-    def __init__(self, logger_name=None):
-        super().__init__(logger_name=logger_name or 'epjson_logger')
+    def __init__(self):
+        super().__init__()
         self.Validator = jsonschema.Draft4Validator
         self.schema = None
         self.schema_is_valid = None

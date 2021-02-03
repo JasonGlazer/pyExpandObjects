@@ -16,41 +16,13 @@ class Logger:
     def __init__(
             self,
             logging_file_name='logging.conf',
-            logger_name=None,
+            logger_name='expand_objects_logger',
             log_file_name='base'):
         # prevent re-calling same logger handlers once initialized
         # also prevent bad logger name from being called
         global loggers
-        # Always try to fall back to console logging on errors
-        logger_name = logger_name or 'console_logger'
         # noinspection PyBroadException
-        try:
-            logging_dir = str(this_script_dir.parent.parent / 'logs')
-        except:  # noqa: E722
-            logging_dir = None
-        if not logging_dir or \
-                not os.path.isdir(logging_dir) or \
-                not logging_file_name:
-            # If files are not set up, use console output and give warning.
-            logger_name = 'console_logger'
-            if not loggers.get(logger_name):
-                import sys
-                root = logging.getLogger()
-                root.setLevel(logging.DEBUG)
-                handler = logging.StreamHandler(sys.stdout)
-                handler.setLevel(logging.DEBUG)
-                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-                handler.setFormatter(formatter)
-                root.addHandler(handler)
-                self.logger = root
-                self.logger.warning("Log file location has not been set up.  "
-                                    "Actions will only be printed to console.  Create the directory"
-                                    r"(ENERGYPLUS_EXPANDOBJECTS_ROOT_DIR\logs) "
-                                    "if you wish to have logs recorded.")
-                loggers.update({logger_name: self.logger})
-            else:
-                self.logger = loggers[logger_name]
-            return
+        logging_dir = str(this_script_dir.parent.parent / 'logs')
         log_file_location = os.path.join(
             logging_dir,
             '{}.log'.format(log_file_name)
@@ -67,8 +39,11 @@ class Logger:
                 "logfilename": log_file_location
             }
         )
+        # if the code fails, fall back to root logger
         try:
+            # if the logger exists, use it instead of creating a new one
             if not loggers.get(logger_name):
+                # if logger_name is not in the config file, default to root
                 if logger_name in logging.root.manager.loggerDict.keys():
                     self.logger = logging.getLogger(logger_name)
                 else:
@@ -77,6 +52,7 @@ class Logger:
                         'Bad logger name passed (%s), continuing with only console logging',
                         logger_name
                     )
+                # save logger to global dictionary
                 loggers.update({logger_name: self.logger})
             else:
                 self.logger = loggers[logger_name]
@@ -87,6 +63,4 @@ class Logger:
                 'Logger failed to start %s, continuing with only console logging, error message: %s',
                 logger_name, str(e)
             )
-            import traceback
-            self.logger.warning('logger error ouput: %s', traceback.print_exc())
         return

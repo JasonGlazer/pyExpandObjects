@@ -6,8 +6,7 @@ from expand_objects import ExpandObjects
 
 class TestExpandObject(unittest.TestCase):
     def setUp(self):
-        self.logger_name = 'console_logger'
-        self.expand_object = ExpandObjects(logger_name=self.logger_name)
+        self.expand_object = ExpandObjects()
         self.expand_object.logger.setLevel('ERROR')
         self.example_file_dir = Path(__file__).resolve().parent / 'example_files'
 
