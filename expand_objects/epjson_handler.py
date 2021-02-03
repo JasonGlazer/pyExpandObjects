@@ -10,6 +10,10 @@ class EPJSON(Logger):
     """
     Handle epjson (and json) specific tasks
 
+    Inheritance
+    -----
+    Logger
+
     Parameters
     ------
     Validator : schema validator from jsonschema

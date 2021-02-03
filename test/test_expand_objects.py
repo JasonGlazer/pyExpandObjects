@@ -14,4 +14,4 @@ class TestExpandObject(unittest.TestCase):
         self.expand_object.run(
             file_location=str(self.example_file_dir / 'RefBldgMediumOfficeNew2004_Chicago_epJSON.epJSON')
         )
-        self.assertTrue(self.expand_object.epjson_handler.epjson_is_valid)
+        self.assertTrue(self.expand_object.epjson_is_valid)
