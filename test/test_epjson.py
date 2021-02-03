@@ -5,20 +5,11 @@ from expand_objects.epjson_handler import EPJSON
 
 minimum_objects_d = {
     "Building": {
-        "Ref Bldg Medium Office New2004_v1.3_5.0": {
-            "loads_convergence_tolerance_value": 0.04,
-            "maximum_number_of_warmup_days": 25,
-            "minimum_number_of_warmup_days": 6,
-            "north_axis": 0.0,
-            "solar_distribution": "FullInteriorAndExterior",
-            "temperature_convergence_tolerance_value": 0.2,
-            "terrain": "City"
-        }
+        "Test Building": {}
     },
     "GlobalGeometryRules": {
         "GlobalGeometryRules 1": {
             "coordinate_system": "Relative",
-            "daylighting_reference_point_coordinate_system": "Relative",
             "starting_vertex_position": "UpperLeftCorner",
             "vertex_entry_direction": "Counterclockwise"
 

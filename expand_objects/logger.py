@@ -16,7 +16,7 @@ class Logger:
     def __init__(
             self,
             logging_file_name='logging.conf',
-            logger_name=None,
+            logger_name='expand_objects_logger',
             log_file_name='base'):
         # prevent re-calling same logger handlers once initialized
         # also prevent bad logger name from being called
