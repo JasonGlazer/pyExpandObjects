@@ -87,7 +87,7 @@ class TestHVACTemplateObject(unittest.TestCase):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
-                "All Zones": {
+                "All Zones 1": {
                     "heating_setpoint_schedule_name": "Htg-SetP-Sch",
                     "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
                 },
@@ -104,5 +104,14 @@ class TestHVACTemplateObject(unittest.TestCase):
         self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.epjson_is_valid)
         self.assertTrue(self.hvac_template.templates_exist)
-        # Can't reference by order for this test [0].  Rework
-        # self.assertEqual(len(self.hvac_template.templates[0]['HVACTemplate:Thermostat'].keys()), 2)
+        thermostat_objects = [
+            i.get("HVACTemplate:Thermostat") for i
+            in self.hvac_template.templates
+            if i.get("HVACTemplate:Thermostat")][0]
+        air_system_objects = [
+            i.get("HVACTemplate:Zone:IdealLoadsAirSystem") for i
+            in self.hvac_template.templates
+            if i.get("HVACTemplate:Zone:IdealLoadsAirSystem")][0]
+        self.assertEqual(len(thermostat_objects.keys()), 2)
+        self.assertEqual(len(air_system_objects.keys()), 2)
+        return
