@@ -63,6 +63,4 @@ class Logger:
                 'Logger failed to start %s, continuing with only console logging, error message: %s',
                 logger_name, str(e)
             )
-            import traceback
-            self.logger.warning('logger error ouput: %s', traceback.print_exc())
         return
