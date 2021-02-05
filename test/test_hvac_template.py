@@ -49,7 +49,7 @@ class TestHVACTemplateObject(unittest.TestCase):
         self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.epjson_is_valid)
         self.assertTrue(self.hvac_template.templates_exist)
-        self.assertEqual(len(self.hvac_template.templates[0]['HVACTemplate:Thermostat'].keys()), 1)
+        self.assertEqual(len(self.hvac_template.templates.keys()), 1)
 
     def test_n_hvac_objects_one_template_returns_true(self):
         self.hvac_template.load_epjson({
@@ -68,12 +68,9 @@ class TestHVACTemplateObject(unittest.TestCase):
         self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.epjson_is_valid)
         self.assertTrue(self.hvac_template.templates_exist)
-        self.assertEqual(len(self.hvac_template.templates[0]['HVACTemplate:Thermostat'].keys()), 2)
+        self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
 
     def test_n_hvac_objects_n_templates_returns_true(self):
-        # Consult on how to properaly build HVACTemplate:zone:IdealLoadsAirSystem
-        # the keys were created to make it work with epjson but do not exist in
-        # the idf or schema definition.
         self.hvac_template.load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
@@ -87,21 +84,78 @@ class TestHVACTemplateObject(unittest.TestCase):
                 },
             },
             "HVACTemplate:Zone:IdealLoadsAirSystem": {
-                "first_zone": {"zone_name": "Zone 1"},
-                "second_zone": {"zone_name": "Zone 2"}
+                "HVACTemplate:Zone:IdealLoadsAirSystem 1": {"zone_name": "Zone 1"},
+                "HVACTemplate:Zone:IdealLoadsAirSystem 2": {"zone_name": "Zone 2"}
             }
         })
         self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.epjson_is_valid)
         self.assertTrue(self.hvac_template.templates_exist)
-        thermostat_objects = [
-            i.get("HVACTemplate:Thermostat") for i
-            in self.hvac_template.templates
-            if i.get("HVACTemplate:Thermostat")][0]
-        air_system_objects = [
-            i.get("HVACTemplate:Zone:IdealLoadsAirSystem") for i
-            in self.hvac_template.templates
-            if i.get("HVACTemplate:Zone:IdealLoadsAirSystem")][0]
-        self.assertEqual(len(thermostat_objects.keys()), 2)
-        self.assertEqual(len(air_system_objects.keys()), 2)
+        self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
+        self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
+        return
+
+    def test_thermostat_template_object_created(self):
+        self.hvac_template.load_epjson({
+            **minimum_objects_d,
+            "HVACTemplate:Thermostat": {
+                "All Zones 1": {
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+                },
+                "All Zones 2": {
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+                },
+            }
+        })
+        self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
+        self.assertEqual(len(self.hvac_template.templates_thermostat.keys()), 2)
+        return
+
+    def test_return_object_from_schema(self):
+        epjson_obj = self.hvac_template.get_object_from_schema("ThermostatSetpoint:DualSetpoint")
+        self.assertIn('heating_setpoint_temperature_schedule_name', epjson_obj.keys())
+        self.assertIn('cooling_setpoint_temperature_schedule_name', epjson_obj.keys())
+        return
+
+    def test_build_good_object_returns_valid_epjson(self):
+        self.hvac_template.load_epjson({
+            **minimum_objects_d,
+            "HVACTemplate:Thermostat": {
+                "All Zones 1": {
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+                },
+                "All Zones 2": {
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+                },
+            }
+        })
+        self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
+        target_object = self.hvac_template.populate_object_from_object(
+            source_objects=self.hvac_template.templates_thermostat,
+            target_object_name="ThermostatSetpoint:DualSetpoint",
+            transitions={
+                "heating_setpoint_schedule_name": "heating_setpoint_temperature_schedule_name",
+                "cooling_setpoint_schedule_name": "cooling_setpoint_temperature_schedule_name"
+            },
+            name_append='thermostat'
+        )
+        valid_epjson = self.hvac_template._validate_epjson({
+            **minimum_objects_d,
+            **{"ThermostatSetpoint:DualSetpoint": target_object}
+        })
+        self.assertTrue(valid_epjson)
+        return
+
+    def test_build_bad_object_returns_invalid(self):
+        # make test where these keys are wrong
+        # transitions={
+        #     "wrong_heating_setpoint_schedule_name": "heating_setpoint_temperature_schedule_name",
+        #     "wrong_cooling_setpoint_schedule_name": "cooling_setpoint_temperature_schedule_name"}
+
+        # also, populate_object_from_object sets the keys without checking they exist, which should
+        # not be allowed
         return

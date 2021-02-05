@@ -20,6 +20,8 @@ class EPJSON(Logger):
     schema_validated : validated schema
     schema : loaded schema.  This can be a failed or unvalidated schema.
         However, it requires a valid json object
+    schema_location : file path for schema
+    input_epjson : input epjson file
     *_is_valid : initialized as None.  False if failed, True if passed.
     """
 
