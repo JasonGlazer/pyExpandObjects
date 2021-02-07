@@ -11,6 +11,7 @@ Welcome to EpJSON ExpandObjects's documentation!
    :caption: Contents:
 
    HVACTemplate
+   CodeStructureOverview
 
 
 Indices and tables
