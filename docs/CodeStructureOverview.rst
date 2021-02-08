@@ -40,99 +40,172 @@ Given that pyExpandObject serves a simple overall purpose, the processing path i
 
 1. A schema file is read and validated using the jsonschema package `Versioned Validator`_ class.  In this case, the Draft4Validator is used.  If the `--no-schema` option has been passed to the program, then no validation will occur at any point in the process.
 2. The epJSON file is read, validated, and loaded as a dictionary object.
-3. The HVACTemplate class is initialized and extracts all HVACTemplate objects from the epJSON input file object.
-4. The objects are organized into groups by their dependencies to the top-level HVACTemplate:System object and stored as a class-level attribute for the System class operations.  For HVACTemplate:Zone level objects that require no System class, a special 'NA' system will be created.
-5. Groups created for Plant:ChilledWater, Plant:HotWater, Plant:MixedWater, and Thermostat
-6. For each System group:
+3. All HVACTemplate objects are extracted from the epJSON input file object and loaded into an HVACTemplate class for processing.
+4. The template objects are organized into groups by their dependencies to the top-level HVACTemplate:System object and stored as a an attribute in the System class.  For HVACTemplate:Zone level objects that require no System class, a special 'NA' system will be created.
+5. For each System group a yaml file object will be called for each HVACTemplate:System:* object which contains a group of objects to create the necessary EnergyPlus objects.  Customized build lists based on HVACTemplate:System inputs are provided.  Additionally, programming logic is performed to overwrite any defaults with the user input.  The output will be a list of EnergyPlus objects stored as a class variable.  Detailed explanation of Yaml file structure:
 
-  1. A yaml file will be called which contains a list of build steps for that system type (key = 'build_path').  Each build step will contain a dictionary where they key value is the EnergyPlus object to be created.  The value is a sub-dictionary that identifies:
+    * buildPath - list of objects to create along the flow path of the network.  Each object contains:
 
-    * output - value to return at completion of object build.  This is intended to be the connecting node to the next object.
-    * fields - key-value pairs to insert node names.  values identified as 'output_value' will  use the output value returned from the previous object.
+      * fields - key-pairs of variable names and values to populate the object.  Values with '{}' will have the system name inserted to ensure unique entries.
+      * connectors - hierarchical dictionary of variable names that serve as the loop inlets and outlets.  Note, values that are written by default in the object['fields'][variable name] will be overridden in some cases to ensure all objects are connected.
 
-  2. A yaml file will be called which contains build steps for each zone system type, including water coils.  Groups of water coils will be stored and saved for the Plant:* class steps noted below.
+        * [air, hotWater, coldWater, mixedWater]
 
-7.asdf
+          * inlet - variable name of input node to next object
+          * outlet - variable name of output node to next object
+
+    * controllers - Dictionary of Controller objects to use as and node locations for input values.  These objects will be created after the buildPath.
+    * setpointManagers - Dictionary of SetpointManager objects to use and node locations for input values.  These objects will be created after the buildPath.
+    * transitions - Dictionary of mappings from the template input variable name to the equipment variable name to be updated.
+
+6. For each System, a yaml file object will be called for each HVACTemplate:Zone:* object which contains a group of objects to create the necessary EnergyPlus objects.  The output will be a list of lists (one per system branch) of EnergyPlus objects stored as a class variable.
+7. Template user-provided input variables are passed to the created objects.
+8. Controllers and SetpointManagers are created.
+9. For each HVACTemplate:Plant[Chilled,Hot,Mixed]WaterLoop
+
+  1. Systems are created using a similar process as described above.
+  2. For each system group created by HVACTemplate:System:
+
+    1. The class attributes are scanned for possible inclusion of water loop objects.
+    2. If present, each system and zone list will is scanned for water loop objects.
+    3. If water loop objects are found, then yaml file objects are called to build the supporting objects to connect the water loop system to those elements.
+    4. The output is saved as a list of lists (one per system branch) in the class.
+
+  3. Controllers and SetpointMnaagers are create for the water loop.
+
+10. HVAC:Template objects are handled in a similar, but more simplified way.
+11. For each system loop, additional required objects will be created based on the class structure (e.g. Branch, BranchList, Connector:\*)
+
+12. All created objects are checked for duplicate keys and merged to one epJSON object.
+13. The original template objects are removed from the input file and new objects are merged after checking for duplicate keys.
+14. epJSON file validation is performed.
+15. Errors and warnings are written to the standard error file.
+16. If validated, the epJSON object is output as result for the downstream pipeline.
 
 .. _Versioned Validator: https://python-jsonschema.readthedocs.io/en/stable/validate/#versioned-validators
+
+**Sample Yaml Configuration**
+
+.. code-block:: yaml
+
+  base: &baseOutdoorAir
+    - OutdoorAir:NodeList:
+        fields:
+          - '{} Outside Air Inlet'
+        connectors:
+          air:
+            outlet: '{} Outside Air Inlet'
+    - OutdoorAir:Mixer:
+        fields:
+          name: '{} OA Mixing Box'
+          mixed_air_node_name: '{} Mixed Air Outlet'
+          outdoor_air_stream_node_name: '{} Outside Air Inlet' #will be overridden
+          relief_air_stream_node_name: '{} Relief Air Outlet'
+          return_air_stream_node_name: '{} Return Air Loop Inlet'
+        connectors:
+          air:
+            inlet: outdoor_air_stream_node_name
+            outlet: mixed_air_node_name
+
+  HVACTemplate:System:VAV:
+    buildPath:
+      - *baseOutdoorAir
+      - Coil:Cooling:Water:
+          fields:
+            name: '{} Cooling Coil'
+          connectors:
+    transitions:
+      Supply_fan_total_efficiency:
+        Fan:VariableVolume: fan_total_efficiency
+    setpointManagers:
+      SetpointManager:MixedAir:
+        name: '{} Cooling Coil Air Temp Manager'
+        control_variable: 'Temperature'
+        reference_setpoint_node_name:
+          AirLoopHVAC: 'supply_side_outlet_node_names'
+    controllers:
+      Controller:OutdoorAir:
+        name: '{} OA Controller'
+        revief_air_outlet_node_name:
+          OutdoorAir:Mixer: 'relief_air_stream_node_name'
+        return_air_node_name:
+          OutdoorAir:Mixer: return_air_stream_node_name
+
+**Sample Output**
+
+.. code-block:: python
+
+  {
+    'buildPath': [
+      [
+        {
+          'OutdoorAir:NodeList': {
+            'fields': [
+              '{} Outside Air Inlet'
+            ],
+            'connectors': {
+              'air': {
+                'outlet': '{} Outside Air Inlet'
+              }
+            }
+          }
+        },
+        {
+          'OutdoorAir:Mixer': {
+            'fields': {
+              'name': '{} OA Mixing Box',
+              'mixed_air_node_name': '{} Mixed Air Outlet',
+              'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+              'relief_air_stream_node_name': '{} Relief Air Outlet',
+              'return_air_stream_node_name': '{} Return Air Loop Inlet'
+            },
+            'connectors': {
+              'air': {
+                'inlet': 'outdoor_air_stream_node_name',
+                'outlet': 'mixed_air_node_name'
+              }
+            }
+          }
+        }
+      ],
+      {
+        'Coil:Cooling:Water': {
+          'fields': {
+            'name': '{} Cooling Coil'
+          },
+          'connectors': None
+        }
+      }
+    ],
+    'transitions': {
+      'Supply_fan_total_efficiency': {
+        'Fan:VariableVolume': 'fan_total_efficiency'
+      }
+    },
+    'setpointManagers': {
+      'SetpointManager:MixedAir': {
+        'name': '{} Cooling Coil Air Temp Manager',
+        'control_variable': 'Temperature',
+        'reference_setpoint_node_name': {
+          'AirLoopHVAC': 'supply_side_outlet_node_names'
+        }
+      }
+    },
+    'controllers': {
+      'Controller:OutdoorAir': {
+        'name': '{} OA Controller',
+        'revief_air_outlet_node_name': {
+          'OutdoorAir:Mixer': 'relief_air_stream_node_name'
+        },
+        'return_air_node_name': {
+          'OutdoorAir:Mixer': 'return_air_stream_node_name'
+        }
+      }
+    }
+  }
 
 ----------------------
 Command Line Interface
 ----------------------
 
-
-
-Unstructured Notes
-~~~~~~~~~~~~~~~~~~
-
-HVACTemplate
-* Attributes
-
-  * templates_exist - boolean for whether templates were detected
-  * templates - dictionary of captured objects
-  * chilled_water_templates - Plant:* objects that belong to chilled water.
-  * hot_water_templates - hw loop objects
-  * mixed_water_templates - mw loop objects
-  * flags needed for controllers, setpointmanagers, etc.
-
-HVACTemplate(System)
-
-Yaml example showing how code reuses common configurations
-
-.. code-block:: yaml
-
-  base: &baseOutdoorAir
-    OutdoorAir:NodeList:
-      fields:
-        - '{} Outside Air Inlet'
-      output:
-        - '{} Outside Air Inlet'
-    OutdoorAir:Mixer:
-      fields:
-        name: '{} OA Mixing Box'
-        mixed_air_node_name: '{} Mixed Air Outlet'
-        outdoor_air_stream_node_name: 'output_val'
-        relief_air_stream_node_name: '{} Relief Air Outlet'
-        return_air_stream_node_name: '{} Return Air Loop Inlet'
-      output:
-        - '{} Mixed Air Outlet'
-
-  HVACTemplate:System:VAV:
-    - buildpath:
-      - *baseOutdoorAir
-      - Coil:Cooling:Water:
-        fields:
-          name: '{} Cooling Coil'
-          air_indlet_node_name : 'output_val'
-
-  HVACTemplate:System:ConstantVolume:
-    - buildpath:
-      - *baseOutdoorAir
-      - Coil:Cooling:Water:
-        fields:
-          name: '{} Cooling Coil'
-          air_indlet_node_name : 'output_val'
-
-.. code-block:: python
-
-  # base
-  {'OutdoorAir:NodeList': {'fields': ['{} Outside Air Inlet'], 'output': ['{} Outside Air Inlet']}, 'OutdoorAir:Mixer': {'fields': {'name': '{} OA Mixing Box', 'mixed_air_node_name': '{} Mixed Air Outlet', 'outdoor_air_stream_node_name': 'output_val', 'relief_air_stream_node_name': '{} Relief Air Outlet', 'return_air_stream_node_name': '{} Return Air Loop Inlet'}, 'output': ['{} Mixed Air Outlet']}}
-  #HVACTemplate:System:VAV
-  [{'buildpath': [{'OutdoorAir:NodeList': {'fields': ['{} Outside Air Inlet'], 'output': ['{} Outside Air Inlet']}, 'OutdoorAir:Mixer': {'fields': {'name': '{} OA Mixing Box', 'mixed_air_node_name': '{} Mixed Air Outlet', 'outdoor_air_stream_node_name': 'output_val', 'relief_air_stream_node_name': '{} Relief Air Outlet', 'return_air_stream_node_name': '{} Return Air Loop Inlet'}, 'output': ['{} Mixed Air Outlet']}}, {'Coil:Cooling:Water': None, 'fields': {'name': '{} Cooling Coil', 'air_indlet_node_name': 'output_val'}}]}]
-  #HVACTemplate:System:ConstantVolume
-  [{'buildpath': [{'OutdoorAir:NodeList': {'fields': ['{} Outside Air Inlet'], 'output': ['{} Outside Air Inlet']}, 'OutdoorAir:Mixer': {'fields': {'name': '{} OA Mixing Box', 'mixed_air_node_name': '{} Mixed Air Outlet', 'outdoor_air_stream_node_name': 'output_val', 'relief_air_stream_node_name': '{} Relief Air Outlet', 'return_air_stream_node_name': '{} Return Air Loop Inlet'}, 'output': ['{} Mixed Air Outlet']}}, {'Coil:Cooling:Water': None, 'fields': {'name': '{} Cooling Coil', 'air_indlet_node_name': 'output_val'}}]}]
-
-
-
-
-HVT(chilled water, hw, mw)
-Same as above for system
-Zone: similar but call created object and update for each chw/hw/mw
-
-HVT(packaged)
-Zone only
-
-HVT(VRF)?
-
-HVT(Themostat)
-same as above (example)
+... in progress...
