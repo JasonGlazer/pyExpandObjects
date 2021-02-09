@@ -1,73 +1,73 @@
 # Objects
 OutdoorAir:NodeLists:
-  baseConfig: &baseOutdoorAirNodeList
+  BaseConfig: &OutdoorAirNodeListBase
     OutdoorAir:NodeList:
-      fields:
+      Fields:
         - '{} Outside Air Inlet'
-      connectors:
-        air:
-          outlet: '{} Outside Air Inlet'
+      Connectors:
+        Air:
+          Outlet: '{} Outside Air Inlet'
 
 OutdoorAir:Mixers: # structure might be unnecessary but is being used for example
-  commonFields: &outdoorAirMixersCommonFields
+  CommonFields: &OutdoorAirMixersCommonFields
     name: '{} OA Mixing Box'
-    mixed_air_node_name: '{} Mixed Air Outlet'
-    outdoor_air_stream_node_name: '{} Outside Air Inlet' #will be overridden
-    relief_air_stream_node_name: '{} Relief Air Outlet'
-    return_air_stream_node_name: '{} Return Air Loop Inlet'
-  commonConnectors: &outdoorAirMixersCommonConnectors
-    air:
-      inlet: outdoor_air_stream_node_name
-      outlet: mixed_air_node_name
-  baseConfig: &baseOutdoorAirMixer
+    mixed_Air_node_name: '{} Mixed Air Outlet'
+    outdoor_Air_stream_node_name: '{} Outside Air Inlet' #will be overridden
+    relief_Air_stream_node_name: '{} Relief Air Outlet'
+    return_Air_stream_node_name: '{} Return Air Loop Inlet'
+  CommonConnectors: &OutdoorAirMixersCommonConnectors
+    Air:
+      inlet: outdoor_Air_stream_node_name
+      Outlet: mixed_Air_node_name
+  BaseConfig: &OutdoorAirMixerBase
     OutdoorAir:Mixer:
-      fields:
-        << : *outdoorAirMixersCommonFields
-      connectors:
-        << : *outdoorAirMixersCommonConnectors
+      Fields:
+        << : *OutdoorAirMixersCommonFields
+      Connectors:
+        << : *OutdoorAirMixersCommonConnectors
 
 Coils:
-  commonFields: &coilsCommonFields
+  CommonFields: &CoilsCommonFields
     name: '{} Cooling Coil'
   Cooling:
     Water:
-      commonFields: &coilsCommonWaterCooling
-        air_inlet_node_name: '{} Cooling Coil Inlet'
-        air_outlet_node_name: '{} Cooling Coil Outlet'
+      CommonFields: &CoilsCoolingCommonFields
+        Air_inlet_node_name: '{} Cooling Coil Inlet'
+        Air_Outlet_node_name: '{} Cooling Coil Outlet'
         water_inlet_node_name: '{} Cooling Coil Chw Inlet'
-        water_outlet_node_name: '{} Cooling Coil Chw Outlet'
-      commonConnectors: &coilsCommonWaterConnectors
-        air:
-          inlet: air_inlet_node_name
-          outlet: air_outlet_node_name
-        chilledWater:
+        water_Outlet_node_name: '{} Cooling Coil Chw Outlet'
+      CommonConnectors: &CoilsCoolingCommonConnectors
+        Air:
+          inlet: Air_inlet_node_name
+          Outlet: Air_Outlet_node_name
+        ChilledWater:
           inlet: water_inlet_node_name
-          outlet: water_outlet_node_name
-      Base: &baseCoilCoolingWater
+          Outlet: water_Outlet_node_name
+      Base: &CoilsCoolingWaterBase
         Coil:Cooling:Water:
-          fields:
-            << : *coilsCommonFields
-            << : *coilsCommonWaterCooling
-          connectors:
-            << : *coilsCommonWaterConnectors
-      DetailedGeometry: &detailedGeometryWaterCoolingCoil
+          Fields:
+            << : *CoilsCommonFields
+            << : *CoilsCoolingCommonFields
+          Connectors:
+            << : *CoilsCoolingCommonConnectors
+      DetailedGeometry: &CoilsCoolingWaterDetailedGeometry
         Coil:Cooling:Water:DetailedGeometry:
-          fields:
-            << : *coilsCommonFields
-            << : *coilsCommonWaterCooling
-          connectors:
-            << : *coilsCommonWaterConnectors
+          Fields:
+            << : *CoilsCommonFields
+            << : *CoilsCoolingCommonFields
+          Connectors:
+            << : *CoilsCoolingCommonConnectors
 
 # Basic Systems
-baseSystemOutdoorAir: &baseOutdoorAir
-  - << : *baseOutdoorAirNodeList
-  - << : *baseOutdoorAirMixer
+SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
+  - << : *OutdoorAirNodeListBase
+  - << : *OutdoorAirMixerBase
 
 #HVAC System Templates
 HVACTemplate:System:VAV:
   buildPath:
-    - *baseOutdoorAir
-    - *baseCoilCoolingWater
+    - *SystemConfigOutdoorAirBase
+    - *CoilsCoolingWaterBase
   transitions:
     supply_fan_total_efficiency:
       Fan:VariableVolume: fan_total_efficiency
@@ -76,13 +76,13 @@ HVACTemplate:System:VAV:
       name: '{} Cooling Coil Air Temp Manager'
       control_variable: 'Temperature'
       reference_setpoint_node_name:
-        AirLoopHVAC: 'supply_side_outlet_node_names'
+        AirLoopHVAC: 'supply_side_Outlet_node_names'
   controllers:
     Controller:OutdoorAir:
       name: '{} OA Controller'
-      revief_air_outlet_node_name:
-        OutdoorAir:Mixer: relief_air_stream_node_name
-      return_air_node_name:
-        OutdoorAir:Mixer: return_air_stream_node_name
-      minimum_outdoor_air_flow_rate: autosize
-      maximum_outdoor_air_flow_rate: autosize
+      revief_Air_Outlet_node_name:
+        OutdoorAir:Mixer: relief_Air_stream_node_name
+      return_Air_node_name:
+        OutdoorAir:Mixer: return_Air_stream_node_name
+      minimum_outdoor_Air_flow_rate: autosize
+      maximum_outdoor_Air_flow_rate: autosize

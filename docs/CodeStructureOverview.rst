@@ -34,7 +34,7 @@ The input and output file type (epJSON) are JSON objects which follow a schema s
 .... Remaining classes ....
 
 ------------------------------
-Operational Logic
+Process Flow
 ------------------------------
 Given that pyExpandObject serves a simple overall purpose, the processing path is fairly static.  Outlined below are the general steps that the program takes to perform its operation.
 
@@ -88,48 +88,94 @@ Given that pyExpandObject serves a simple overall purpose, the processing path i
 
 .. code-block:: yaml
 
-  base: &baseOutdoorAir
-    - OutdoorAir:NodeList:
-        fields:
+  # Objects
+  OutdoorAir:NodeLists:
+    BaseConfig: &OutdoorAirNodeListBase
+      OutdoorAir:NodeList:
+        Fields:
           - '{} Outside Air Inlet'
-        connectors:
-          air:
-            outlet: '{} Outside Air Inlet'
-    - OutdoorAir:Mixer:
-        fields:
-          name: '{} OA Mixing Box'
-          mixed_air_node_name: '{} Mixed Air Outlet'
-          outdoor_air_stream_node_name: '{} Outside Air Inlet' #will be overridden
-          relief_air_stream_node_name: '{} Relief Air Outlet'
-          return_air_stream_node_name: '{} Return Air Loop Inlet'
-        connectors:
-          air:
-            inlet: outdoor_air_stream_node_name
-            outlet: mixed_air_node_name
+        Connectors:
+          Air:
+            Outlet: '{} Outside Air Inlet'
 
+  OutdoorAir:Mixers: # structure might be unnecessary but is being used for example
+    CommonFields: &OutdoorAirMixersCommonFields
+      name: '{} OA Mixing Box'
+      mixed_Air_node_name: '{} Mixed Air Outlet'
+      outdoor_Air_stream_node_name: '{} Outside Air Inlet' #will be overridden
+      relief_Air_stream_node_name: '{} Relief Air Outlet'
+      return_Air_stream_node_name: '{} Return Air Loop Inlet'
+    CommonConnectors: &OutdoorAirMixersCommonConnectors
+      Air:
+        inlet: outdoor_Air_stream_node_name
+        Outlet: mixed_Air_node_name
+    BaseConfig: &OutdoorAirMixerBase
+      OutdoorAir:Mixer:
+        Fields:
+          << : *OutdoorAirMixersCommonFields
+        Connectors:
+          << : *OutdoorAirMixersCommonConnectors
+
+  Coils:
+    CommonFields: &CoilsCommonFields
+      name: '{} Cooling Coil'
+    Cooling:
+      Water:
+        CommonFields: &CoilsCoolingCommonFields
+          Air_inlet_node_name: '{} Cooling Coil Inlet'
+          Air_Outlet_node_name: '{} Cooling Coil Outlet'
+          water_inlet_node_name: '{} Cooling Coil Chw Inlet'
+          water_Outlet_node_name: '{} Cooling Coil Chw Outlet'
+        CommonConnectors: &CoilsCoolingCommonConnectors
+          Air:
+            inlet: Air_inlet_node_name
+            Outlet: Air_Outlet_node_name
+          ChilledWater:
+            inlet: water_inlet_node_name
+            Outlet: water_Outlet_node_name
+        Base: &CoilsCoolingWaterBase
+          Coil:Cooling:Water:
+            Fields:
+              << : *CoilsCommonFields
+              << : *CoilsCoolingCommonFields
+            Connectors:
+              << : *CoilsCoolingCommonConnectors
+        DetailedGeometry: &CoilsCoolingWaterDetailedGeometry
+          Coil:Cooling:Water:DetailedGeometry:
+            Fields:
+              << : *CoilsCommonFields
+              << : *CoilsCoolingCommonFields
+            Connectors:
+              << : *CoilsCoolingCommonConnectors
+
+  # Basic Systems
+  SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
+    - << : *OutdoorAirNodeListBase
+    - << : *OutdoorAirMixerBase
+
+  #HVAC System Templates
   HVACTemplate:System:VAV:
     buildPath:
-      - *baseOutdoorAir
-      - Coil:Cooling:Water:
-          fields:
-            name: '{} Cooling Coil'
-          connectors:
+      - *SystemConfigOutdoorAirBase
+      - *CoilsCoolingWaterBase
     transitions:
-      Supply_fan_total_efficiency:
+      supply_fan_total_efficiency:
         Fan:VariableVolume: fan_total_efficiency
     setpointManagers:
       SetpointManager:MixedAir:
         name: '{} Cooling Coil Air Temp Manager'
         control_variable: 'Temperature'
         reference_setpoint_node_name:
-          AirLoopHVAC: 'supply_side_outlet_node_names'
+          AirLoopHVAC: 'supply_side_Outlet_node_names'
     controllers:
       Controller:OutdoorAir:
         name: '{} OA Controller'
-        revief_air_outlet_node_name:
-          OutdoorAir:Mixer: 'relief_air_stream_node_name'
-        return_air_node_name:
-          OutdoorAir:Mixer: return_air_stream_node_name
+        revief_Air_Outlet_node_name:
+          OutdoorAir:Mixer: relief_Air_stream_node_name
+        return_Air_node_name:
+          OutdoorAir:Mixer: return_Air_stream_node_name
+        minimum_outdoor_Air_flow_rate: autosize
+        maximum_outdoor_Air_flow_rate: autosize
 
 **Sample Output**
 
@@ -140,29 +186,29 @@ Given that pyExpandObject serves a simple overall purpose, the processing path i
       [
         {
           'OutdoorAir:NodeList': {
-            'fields': [
+            'Fields': [
               '{} Outside Air Inlet'
             ],
-            'connectors': {
-              'air': {
-                'outlet': '{} Outside Air Inlet'
+            'Connectors': {
+              'Air': {
+                'Outlet': '{} Outside Air Inlet'
               }
             }
           }
         },
         {
           'OutdoorAir:Mixer': {
-            'fields': {
+            'Fields': {
               'name': '{} OA Mixing Box',
-              'mixed_air_node_name': '{} Mixed Air Outlet',
-              'outdoor_air_stream_node_name': '{} Outside Air Inlet',
-              'relief_air_stream_node_name': '{} Relief Air Outlet',
-              'return_air_stream_node_name': '{} Return Air Loop Inlet'
+              'mixed_Air_node_name': '{} Mixed Air Outlet',
+              'outdoor_Air_stream_node_name': '{} Outside Air Inlet',
+              'relief_Air_stream_node_name': '{} Relief Air Outlet',
+              'return_Air_stream_node_name': '{} Return Air Loop Inlet'
             },
-            'connectors': {
-              'air': {
-                'inlet': 'outdoor_air_stream_node_name',
-                'outlet': 'mixed_air_node_name'
+            'Connectors': {
+              'Air': {
+                'inlet': 'outdoor_Air_stream_node_name',
+                'Outlet': 'mixed_Air_node_name'
               }
             }
           }
@@ -170,15 +216,28 @@ Given that pyExpandObject serves a simple overall purpose, the processing path i
       ],
       {
         'Coil:Cooling:Water': {
-          'fields': {
-            'name': '{} Cooling Coil'
+          'Fields': {
+            'name': '{} Cooling Coil',
+            'Air_inlet_node_name': '{} Cooling Coil Inlet',
+            'Air_Outlet_node_name': '{} Cooling Coil Outlet',
+            'water_inlet_node_name': '{} Cooling Coil Chw Inlet',
+            'water_Outlet_node_name': '{} Cooling Coil Chw Outlet'
           },
-          'connectors': None
+          'Connectors': {
+            'Air': {
+              'inlet': 'Air_inlet_node_name',
+              'Outlet': 'Air_Outlet_node_name'
+            },
+            'ChilledWater': {
+              'inlet': 'water_inlet_node_name',
+              'Outlet': 'water_Outlet_node_name'
+            }
+          }
         }
       }
     ],
     'transitions': {
-      'Supply_fan_total_efficiency': {
+      'supply_fan_total_efficiency': {
         'Fan:VariableVolume': 'fan_total_efficiency'
       }
     },
@@ -187,19 +246,21 @@ Given that pyExpandObject serves a simple overall purpose, the processing path i
         'name': '{} Cooling Coil Air Temp Manager',
         'control_variable': 'Temperature',
         'reference_setpoint_node_name': {
-          'AirLoopHVAC': 'supply_side_outlet_node_names'
+          'AirLoopHVAC': 'supply_side_Outlet_node_names'
         }
       }
     },
     'controllers': {
       'Controller:OutdoorAir': {
         'name': '{} OA Controller',
-        'revief_air_outlet_node_name': {
-          'OutdoorAir:Mixer': 'relief_air_stream_node_name'
+        'revief_Air_Outlet_node_name': {
+          'OutdoorAir:Mixer': 'relief_Air_stream_node_name'
         },
-        'return_air_node_name': {
-          'OutdoorAir:Mixer': 'return_air_stream_node_name'
-        }
+        'return_Air_node_name': {
+          'OutdoorAir:Mixer': 'return_Air_stream_node_name'
+        },
+        'minimum_outdoor_Air_flow_rate': 'autosize',
+        'maximum_outdoor_Air_flow_rate': 'autosize'
       }
     }
   }
