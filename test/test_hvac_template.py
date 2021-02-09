@@ -32,7 +32,7 @@ class TestHVACTemplateObject(unittest.TestCase):
                 }
             }
         })
-        self.assertTrue(self.hvac_template.epjson_is_valid)
+        self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertFalse(self.hvac_template.templates_exist)
         self.assertIsNone(self.hvac_template.templates)
 
@@ -47,7 +47,7 @@ class TestHVACTemplateObject(unittest.TestCase):
             }
         })
         self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
-        self.assertTrue(self.hvac_template.epjson_is_valid)
+        self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertTrue(self.hvac_template.templates_exist)
         self.assertEqual(len(self.hvac_template.templates.keys()), 1)
 
@@ -66,7 +66,7 @@ class TestHVACTemplateObject(unittest.TestCase):
             }
         })
         self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
-        self.assertTrue(self.hvac_template.epjson_is_valid)
+        self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertTrue(self.hvac_template.templates_exist)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
 
@@ -89,7 +89,7 @@ class TestHVACTemplateObject(unittest.TestCase):
             }
         })
         self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
-        self.assertTrue(self.hvac_template.epjson_is_valid)
+        self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertTrue(self.hvac_template.templates_exist)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)

@@ -17,8 +17,10 @@ class HVACTemplate(EPJSON):
     templates : list of HVACTemplate objects from epJSON file
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(
+            self,
+            no_schema=True):
+        super().__init__(no_schema=no_schema)
         self.templates_exist = None
         self.templates = None
         self.templates_thermostat = None

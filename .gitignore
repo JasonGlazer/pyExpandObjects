@@ -3,6 +3,7 @@ logs/*
 !logs/logging.conf
 .idea
 cover
+test/scratchpad/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -25,8 +25,9 @@ class EPJSON(Logger):
     *_is_valid : initialized as None.  False if failed, True if passed.
     """
 
-    def __init__(self):
+    def __init__(self, no_schema=True):
         super().__init__()
+        self.no_schema = no_schema
         self.Validator = jsonschema.Draft4Validator
         self.schema = None
         self.schema_is_valid = None
@@ -85,22 +86,24 @@ class EPJSON(Logger):
         -----
         class attribute 'schema' which contains the validated epjson schema
         """
-        self.schema = False
-        self.schema_is_valid = False
-        self.schema_validated = False
-        if not schema_location:
-            try:
-                schema_location = str(this_script_path.parent / 'resources' / 'Energy+.schema.epJSON')
-            except Exception as e:
-                self.logger.exception('Schema file path is not valid; \n%s', str(e))
-                return
-        self.schema_location = schema_location
-        self.schema = self._get_json_file(schema_location)
-        if self.schema:
-            self.logger.info('Schema loaded: %s', schema_location)
-            self.schema_validated = self._validate_schema(self.schema)
-            if self.schema_validated:
-                self.schema_is_valid = True
+        if self.no_schema:
+            self.schema = False
+            self.schema_is_valid = False
+            self.schema_validated = False
+            if not schema_location:
+                try:
+                    schema_location = str(this_script_path.parent / 'resources' / 'Energy+.schema.epJSON')
+                except Exception as e:
+                    self.logger.exception('Schema file path is not valid; \n%s', str(e))
+                    return
+            self.schema_location = schema_location
+            self.schema = self._get_json_file(schema_location)
+            if self.schema:
+                self.logger.info('Schema loaded: %s', schema_location)
+                self.schema_validated = self._validate_schema(self.schema)
+                if self.schema_validated:
+                    self.schema_is_valid = True
+        return
 
     def _validate_epjson(self, input_epjson):
         """
@@ -143,17 +146,21 @@ class EPJSON(Logger):
         -----
         class object (epjson_ref, schema_location)
         """
-        self.input_epjson = False
-        self.input_epjson_is_valid = False
-        if isinstance(epjson_ref, dict):
-            self.input_epjson = epjson_ref
-        else:
-            self.input_epjson = self._get_json_file(epjson_ref)
+
+        # allow for epjson_ref to be file path or object
+        try:
+            if isinstance(epjson_ref, dict):
+                self.input_epjson = epjson_ref
+            else:
+                self.input_epjson = self._get_json_file(epjson_ref)
+        except FileNotFoundError:
+            self.logger.error('epJSON file not found')
+            self.input_epjson = False
         if self.input_epjson:
             self.logger.info(
                 'input EPJSON file loaded, %s top level objects',
                 len(self.input_epjson.keys())
             )
-            if validate:
-                self.epjson_is_valid = self._validate_epjson(self.input_epjson)
+            if validate and self.schema_is_valid:
+                self.input_epjson_is_valid = self._validate_epjson(self.input_epjson)
         return
