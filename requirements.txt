@@ -1,6 +1,7 @@
 
 # always needed
 jsonschema==3.2.0
+pyYaml==5.4.1
 
 # for building sphinx
 sphinx==3.4.3

@@ -108,7 +108,7 @@ HVACTemplate:System:VAV:
       minimum_outdoor_Air_flow_rate: autosize
       maximum_outdoor_Air_flow_rate: autosize
 
-# Option btrees
+# Option trees
 OptionTree:HVACTemplate:System:VAV:
   BuildPaths:
     Base: default_build_path
