@@ -1,6 +1,7 @@
 import unittest
 import subprocess
 import os
+import sys
 from argparse import Namespace
 
 from expand_objects.main import main
@@ -49,6 +50,7 @@ class TestHVACTemplateObject(unittest.TestCase):
         self.assertIsNone(output_epjson)
         return
 
+    @unittest.skip
     def test_no_schema_command_line_args(self):
         sub_process = subprocess.Popen(
             [
