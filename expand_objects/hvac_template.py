@@ -56,7 +56,7 @@ class HVACTemplate(EPJSON):
         """
         # return none with warning if no schema is loaded
         if not self.schema_is_valid or\
-                not self.schema_validated:
+                not self.schema_validator:
             self.logger.error("No schema loaded. Unable to retrieve objcet")
             return None
         # get all values from patternProperties key.
@@ -110,3 +110,14 @@ class HVACTemplate(EPJSON):
                 )
             ] = tmp_obj
         return output_object
+
+    def run(self, input_epjson):
+        """
+        Execute HVAC Template process workflow
+        """
+        self.load_schema()
+        self.load_epjson(epjson_ref=input_epjson)
+        self.check_epjson_for_templates(self.input_epjson)
+        # Do manipulations and make output epjson
+        output_epjson = input_epjson
+        return output_epjson
