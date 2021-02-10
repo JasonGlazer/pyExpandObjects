@@ -57,13 +57,34 @@ Coils:
             << : *CoilsCoolingCommonFields
           Connectors:
             << : *CoilsCoolingCommonConnectors
+  Heating:
+    Water:
+      CommonFields: &CoilsHeatingCommonFields
+        Air_inlet_node_name: '{} Cooling Coil Inlet'
+        Air_Outlet_node_name: '{} Cooling Coil Outlet'
+        water_inlet_node_name: '{} Cooling Coil Chw Inlet'
+        water_Outlet_node_name: '{} Cooling Coil Chw Outlet'
+      CommonConnectors: &CoilsHeatingCommonConnectors
+        Air:
+          inlet: air_inlet_node_name
+          Outlet: air_Outlet_node_name
+        HotWater:
+          inlet: water_inlet_node_name
+          Outlet: water_Outlet_node_name
+      Base: &CoilsHeatingWaterBase
+        Coil:Heating:Water:
+          Fields:
+            <<: *CoilsCommonFields
+            <<: *CoilsHeatingCommonFields
+          Connectors:
+            <<: *CoilsHeatingCommonConnectors
 
 # Basic Systems
 SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
   - << : *OutdoorAirNodeListBase
   - << : *OutdoorAirMixerBase
 
-#HVAC System Templates
+# HVAC System Templates
 HVACTemplate:System:VAV:
   buildPath:
     - *SystemConfigOutdoorAirBase
@@ -86,3 +107,25 @@ HVACTemplate:System:VAV:
         OutdoorAir:Mixer: return_Air_stream_node_name
       minimum_outdoor_Air_flow_rate: autosize
       maximum_outdoor_Air_flow_rate: autosize
+
+# Option trees
+OptionTree:HVACTemplate:System:VAV:
+  BuildPaths:
+    Base: default_build_path
+    Alternates:
+      field_key_that_flags_alternate_build_path: # e.g. heat recovery specified
+        field_value: yaml_build_path_name # e.g. FixedDryBulb: Yaml object with HR in buildPath
+      economizer_type_preheat_coil_type: # example of a multi field change to build path (preheat + economizer)
+        FixedDryBulb_Electric: yaml_build_path_name # concatenated values
+  SwapElements: # these fields are filled out for a simple example
+    heating_coil_type: # assume base default is anything except None
+      SwapRegex: '^Coil:Heating:*' # regular expression to find object in the buildPath
+      SwapElements: # elements to replace existing element based on value
+        None: None
+        HotWater: *CoilsHeatingWaterBase # anchor/map reference to coil
+  AddControllers: # just append to base controllers
+    field_key_that_flags_controller:
+      field_value: controller_object
+  AddSetpointManagers: # just append to setpointManagers
+    field_key_that_flags_setpoint_manager:
+      field_value: setpoint_manager_object
