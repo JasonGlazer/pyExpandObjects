@@ -2,6 +2,7 @@ import yaml
 import sys
 import re
 import copy
+from pprint import pprint
 
 test_epjson = {
     "HVACTemplate:System:VAV": {
@@ -85,6 +86,32 @@ def replace_values(ep_object, text_replacement):
                 )
     return ep_object
 
+def build_controller_manager(yaml_object, ep_d):
+    """
+    Builds a setpoint manager or controller using an existing epJSON dictionary for a HVAC System
+
+    returns key and value to be inserted into epJSON
+    """
+    for energyplus_object, energyplus_arguments in yaml_object.items():
+        tmp_d = {}
+        # if the value is a string, then it's a direct input.  if it's not, then it's a dictionary
+        # where the key-value pair is the
+        for controller_manager_field_name, value_reference in energyplus_arguments.items():
+            if isinstance(value_reference, str):
+                tmp_d[controller_manager_field_name] = value_reference.format(system_name)
+            else:
+                for object_type, reference_node in value_reference.items():
+                    print(object_type)
+                    print(reference_node)
+                    print(ep_d[object_type])
+                    for k, v in ep_d[object_type].items():
+                        print(ep_d[object_type][k])
+                    for k in ep_d[object_type].keys():
+                        print(ep_d[object_type][k])
+                        print(ep_d[object_type][k][reference_node])
+                        tmp_d[controller_manager_field_name] = ep_d[object_type][k][reference_node]
+    return energyplus_object, tmp_d
+
 # In this process note one import aspect. Actual structure/object names are 
 # # not used.  The path is built
 # entirely from yaml structures, which means that very little (comparatively)
@@ -95,7 +122,8 @@ with open(sys.argv[1], 'r') as f:
     templates = [i for i in test_epjson if i.startswith('HVACTemplate:System')]
     for t in templates:
         hvac_template_obj = test_epjson[t]
-        for system_name, field_d in hvac_template_obj.items():
+        for system_name, template_dictionary in hvac_template_obj.items():
+            print('System Name')
             print(system_name)
             option_tree = copy.deepcopy(data[':'.join(['OptionTree', t])])
             print("option_tree")
@@ -103,28 +131,22 @@ with open(sys.argv[1], 'r') as f:
             selected_template = option_tree['Base']
             print('selected_template')
             print(selected_template)
-            print(field_d['humidifier_type'])
             replace_keys = [
-                field_name for field_name in field_d.keys()
+                field_name for field_name in template_dictionary.keys()
                 if field_name in option_tree['ReplaceElements'].keys()
-                and field_d[field_name] != "None"
+                and template_dictionary[field_name] != "None"
             ]
             insert_keys = [
-                field_name for field_name in field_d.keys()
+                field_name for field_name in template_dictionary.keys()
                 if field_name in option_tree['InsertElements'].keys()
-                and field_d[field_name] != "None"
+                and template_dictionary[field_name] != "None"
             ]
-            print('replace keys')
-            print(replace_keys)
-            print('insert keys')
-            print(insert_keys)
             flattened_path = flatten_build_path(selected_template['buildPath'])
-            print('pre-replaced path')
+            print('pre-replaced element path')
             for idx, i in enumerate(flattened_path):
                 print('object {} - {}'.format(idx, i))
             # replace example
             # replace happens even if correct equipment in place.
-
             if replace_keys:
                 for field_name in replace_keys:
                     for idx, obj in enumerate(flattened_path):
@@ -132,9 +154,9 @@ with open(sys.argv[1], 'r') as f:
                         object_type = list(obj.keys())[0]
                         if re.match(replace_regex, object_type):
                             new_object = copy.deepcopy(
-                                option_tree['ReplaceElements'][field_name]['ReplaceElement'][field_d[field_name]]['Object']
+                                option_tree['ReplaceElements'][field_name]['ReplaceElement'][template_dictionary[field_name]]['Object']
                             )
-                            replacement = option_tree['ReplaceElements'][field_name]['ReplaceElement'][field_d[field_name]]\
+                            replacement = option_tree['ReplaceElements'][field_name]['ReplaceElement'][template_dictionary[field_name]]\
                             .get('FieldNameReplacement')
                             # rename if applicable
                             new_object = replace_values(
@@ -142,7 +164,7 @@ with open(sys.argv[1], 'r') as f:
                                 replacement
                             )
                             flattened_path[idx] = new_object
-                            test = option_tree['ReplaceElements'][field_name]['ReplaceElement'][field_d[field_name]]
+                            test = option_tree['ReplaceElements'][field_name]['ReplaceElement'][template_dictionary[field_name]]
             print('post-replaced path')
             for idx, i in enumerate(flattened_path):
                 print('object {} - {}'.format(idx, i))
@@ -150,10 +172,11 @@ with open(sys.argv[1], 'r') as f:
             if insert_keys:
                 for field_name in insert_keys:
                     # try the 'before' option first, then 'after'
+                    reference_object = None
                     if option_tree['InsertElements'][field_name]['Location'].get('BeforeObject'):
                         reference_object = option_tree['InsertElements'][field_name]['Location'].get('BeforeObject')
                         insert_offset = 0
-                    elif option_tree['InsertElements'][field_name]['Location'].get('AfterObject'):
+                    elif not reference_object and option_tree['InsertElements'][field_name]['Location'].get('AfterObject'):
                         reference_object = option_tree['InsertElements'][field_name]['Location'].get('AfterObject')
                         insert_offset = 1
                     else:
@@ -165,9 +188,9 @@ with open(sys.argv[1], 'r') as f:
                                 insert_location = idx + insert_offset
                         if insert_location >= 0:
                             new_object = copy.deepcopy(
-                                option_tree['InsertElements'][field_name]['ObjectType'][field_d[field_name]]['Object']
+                                option_tree['InsertElements'][field_name]['ObjectType'][template_dictionary[field_name]]['Object']
                             )
-                            replacement = option_tree['InsertElements'][field_name]['ObjectType'][field_d[field_name]]\
+                            replacement = option_tree['InsertElements'][field_name]['ObjectType'][template_dictionary[field_name]]\
                                 .get('FieldNameReplacement')
                             new_object = replace_values(
                                 new_object,
@@ -179,10 +202,83 @@ with open(sys.argv[1], 'r') as f:
                             )
                         else:
                             print('error')
-            print('post-insert path')
+            print('post-insert elemet path')
             for idx, i in enumerate(flattened_path):
                 print('object {} - {}'.format(idx, i))
-            # collapse objects to EP objects
-            # make sure to save last output air node as branch output for building splitters/mixers
+            # insert system name
+            for build_object in flattened_path:
+                for energyplus_object, energyplus_arguments in build_object.items():
+                    for field_name, field_value in energyplus_arguments['Fields'].items():
+                        build_object[energyplus_object]['Fields'][field_name] = field_value.format(system_name)
+            print('post-variable rename path')
+            for idx, i in enumerate(flattened_path):
+                print('object {} - {}'.format(idx, i))
+            ep_object_d = {}
+            # create airflow system epJSON dictionary
+            # need to check for unique names within objects
+            for idx, build_object in enumerate(flattened_path):
+                for energyplus_object, energyplus_arguments in build_object.items():
+                    object_key = energyplus_arguments['Fields'].pop('name')
+                    object_values = energyplus_arguments['Fields']
+                    if not ep_object_d.get(energyplus_object):
+                        ep_object_d[energyplus_object] = {}
+                    if idx == 0:
+                        ep_object_d[energyplus_object][object_key] = object_values
+                        out_node_name = energyplus_arguments['Fields']\
+                            [energyplus_arguments['Connectors']['Air']['Outlet']]
+                    else:
+                        energyplus_arguments['Fields']\
+                            [energyplus_arguments['Connectors']['Air']['Inlet']] = out_node_name
+                        ep_object_d[energyplus_object][object_key] = object_values
+                        out_node_name = energyplus_arguments['Fields']\
+                            [energyplus_arguments['Connectors']['Air']['Outlet']]
+            # assign Template value inputs
+            transition_object = selected_template['Transitions']
+            for transition_field_name, value_reference in transition_object.items():
+                for ep_object, node_name in value_reference.items():
+                    #should only be one key
+                    for k in ep_object_d[ep_object].keys():
+                        ep_object_d[ep_object][k][node_name] = template_dictionary[transition_field_name]
+            # build Controllers (if/else statements can be copied from Fortran code)
+            # however, note that we can also call the build_path or the epJSON dictionary
+            # now to make decisions as well
+            # Mixed Air setpoint Manager
+
+            # These objects need to be fixed 'name' needs to be a key with the rest as values.
+            # fix the calling function and both will be fixed.
+
+
+            pprint(ep_object_d)
+            setpoint_managers = copy.deepcopy(data['SetpointManagers'])
+            energyplus_object, tmp_d = build_controller_manager(
+                copy.deepcopy(setpoint_managers['MixedAir']['Base']),
+                ep_object_d
+            )
+            ep_object_d[energyplus_object] = tmp_d
+            # build Controllers (if/else statements can be copied from Fortran code)
+            # however, note that we can also call the build_path or the epJSON dictionary
+            # now to make decisions as well
+            controllers = copy.deepcopy(data['Controllers'])
+            energyplus_object, tmp_d = build_controller_manager(
+                copy.deepcopy(controllers['OutdoorAir']['Base']),
+                ep_object_d
+            )
+            ep_object_d[energyplus_object] = tmp_d
+            print('Energyplus epJSON objects')
+            pprint(ep_object_d, width=150)
+            print('Supply Path outlet')
+            for energyplus_arguments in flattened_path[-1].values():
+                last_node = energyplus_arguments['Fields'][energyplus_arguments['Connectors']['Air']['Outlet']]
+            print(last_node)
+            print('Supply Path inlet')
+            # loops like these need to be removed.
+            for k, v in selected_template['Connectors']['Supply']['Inlet'].items():
+                for object_name, object_values in ep_object_d[k].items():
+                    print(ep_object_d[k][object_name][v])
+            print('Demand Path inlet')
+            print(selected_template['Connectors']['Demand']['Inlet'].format(system_name))
+            print('Demand Path outlet')
+            print(selected_template['Connectors']['Demand']['Outlet'].format(system_name))
+
             # three lists: branch, setpointManagers, and Controllers
             # maybe search by object name 'preheat' for preheat setpoint managers? same for other objects?

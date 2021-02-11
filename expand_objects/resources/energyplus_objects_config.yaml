@@ -1,12 +1,12 @@
 # Objects
-OutdoorAir:NodeLists:
-  BaseConfig: &OutdoorAirNodeListBase
-    OutdoorAir:NodeList:
-      Fields:
-        - '{} Outside Air Inlet'
-      Connectors:
-        Air:
-          Outlet: '{} Outside Air Inlet'
+#OutdoorAir:NodeLists:
+#  BaseConfig: &OutdoorAirNodeListBase
+#    OutdoorAir:NodeList:
+#      Fields:
+#        - '{} Outside Air Inlet'
+#      Connectors:
+#        Air:
+#          Outlet: '{} Outside Air Inlet'
 
 OutdoorAir:Mixers: # structure might be unnecessary but is being used for example
   CommonFields: &OutdoorAirMixersCommonFields
@@ -17,7 +17,7 @@ OutdoorAir:Mixers: # structure might be unnecessary but is being used for exampl
     return_air_stream_node_name: '{} Return Air Loop Inlet'
   CommonConnectors: &OutdoorAirMixersCommonConnectors
     Air:
-      inlet: outdoor_air_stream_node_name
+      Inlet: outdoor_air_stream_node_name
       Outlet: mixed_air_node_name
   BaseConfig: &OutdoorAirMixerBase
     OutdoorAir:Mixer:
@@ -80,7 +80,7 @@ Coils:
       CommonConnectors: &CoilsHeatingWaterCommonConnectors
         << : *CoilsHeatingCommonConnectors
         HotWater:
-          inlet: water_inlet_node_name
+          Inlet: water_inlet_node_name
           Outlet: water_outlet_node_name
       Base: &CoilsHeatingWaterBase
         Coil:Heating:Water:
@@ -109,7 +109,7 @@ Fan:
 
 # Basic Systems
 SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
-  - << : *OutdoorAirNodeListBase
+#  - << : *OutdoorAirNodeListBase
   - << : *OutdoorAirMixerBase
 
 # HVAC System Templates
@@ -129,19 +129,6 @@ HVACTemplate:System:VAV: &HVACTemplateSystemVAVBaseTemplate
     Demand:
       Inlet: '{} Supply Path Inlet'
       Outlet: '{} Return Air Outlet'
-  SetpointManagers:
-    SetpointManager:MixedAir:
-      name: '{} Cooling Coil Air Temp Manager'
-      control_variable: 'Temperature'
-      reference_setpoint_node_name:
-        AirLoopHVAC: 'supply_side_outlet_node_names'
-  Controllers:
-    Controller:OutdoorAir:
-      name: '{} OA Controller'
-      revief_air_outlet_node_name:
-        OutdoorAir:Mixer: relief_air_stream_node_name
-      return_air_node_name:
-        OutdoorAir:Mixer: return_air_stream_node_name
 
 # Option trees
 OptionTree:HVACTemplate:System:VAV:
@@ -163,9 +150,29 @@ OptionTree:HVACTemplate:System:VAV:
           Object: *CoilsHeatingElectricBase
           FieldNameReplacement: '{} Preheat Electric'
   RemoveElements: # Not sure if this is needed but it's possible using list.pop()
-  AddControllers: # objects to create new objects not in base list
-    field_key_that_flags_controller:
-      field_value: controller_object_to_be_merged
-  AddSetpointManagers: # options to create new objects not in list
-    preheat_coil_type:
-      any: setpoint_manager_object_to_be_merged
+
+# setpoint managers
+SetpointManagers:
+  MixedAir:
+    Base:
+      SetpointManager:MixedAir:
+        name: '{} Cooling Coil Air Temp Manager'
+        control_variable: Temperature
+        reference_setpoint_node_name:
+          Fan:VariableVolume: air_outlet_node_name
+        fan_inlet_node_name:
+          Fan:VariableVolume: air_inlet_node_name
+        fan_outlet_node_name:
+          Fan:VariableVolume: air_outlet_node_name
+        setpoint_node_or_nodelist_name: '{} Mixed Air Nodes'
+
+# Controllers
+Controllers:
+  OutdoorAir:
+    Base:
+      Controller:OutdoorAir:
+        name: '{} OA Controller'
+        revief_air_outlet_node_name:
+          OutdoorAir:Mixer: relief_air_stream_node_name
+        return_air_node_name:
+          OutdoorAir:Mixer: return_air_stream_node_name
