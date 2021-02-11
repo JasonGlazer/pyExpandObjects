@@ -149,6 +149,8 @@ OptionTree:HVACTemplate:System:VAV:
         Electric:
           Object: *CoilsHeatingElectricBase
           FieldNameReplacement: '{} Preheat Electric'
+      Transitions: #template_name: object_name
+        preheat_efficiency: efficiency # doesn't curently exist, just an example
   RemoveElements: # Not sure if this is needed but it's possible using list.pop()
 
 # setpoint managers
