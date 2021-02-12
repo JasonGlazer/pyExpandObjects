@@ -1,6 +1,6 @@
-# Objects
-OutdoorAir:NodeLists:
-  BaseConfig: &OutdoorAirNodeListBase
+# Base Objects
+OutdoorAir:NodeList:
+  Base:
     OutdoorAir:NodeList:
       Fields:
         - '{} Outside Air Inlet'
@@ -8,124 +8,174 @@ OutdoorAir:NodeLists:
         Air:
           Outlet: '{} Outside Air Inlet'
 
-OutdoorAir:Mixers: # structure might be unnecessary but is being used for example
-  CommonFields: &OutdoorAirMixersCommonFields
+OutdoorAir:Mixer: # structure might be unnecessary but is being used for example
+  Fields: &OutdoorAirMixerFields
     name: '{} OA Mixing Box'
-    mixed_Air_node_name: '{} Mixed Air Outlet'
-    outdoor_Air_stream_node_name: '{} Outside Air Inlet' #will be overridden
-    relief_Air_stream_node_name: '{} Relief Air Outlet'
-    return_Air_stream_node_name: '{} Return Air Loop Inlet'
-  CommonConnectors: &OutdoorAirMixersCommonConnectors
+    mixed_air_node_name: '{} Mixed Air Outlet'
+    outdoor_air_stream_node_name: '{} Outside Air Inlet' #will be overridden
+    relief_air_stream_node_name: '{} Relief Air Outlet'
+    return_air_stream_node_name: '{} Return Air Loop Inlet'
+  Connectors: &OutdoorAirMixersConnectors
     Air:
-      inlet: outdoor_Air_stream_node_name
-      Outlet: mixed_Air_node_name
-  BaseConfig: &OutdoorAirMixerBase
+      Inlet: outdoor_air_stream_node_name
+      Outlet: mixed_air_node_name
+  Base: &OutdoorAirMixerBase
     OutdoorAir:Mixer:
       Fields:
-        << : *OutdoorAirMixersCommonFields
+        << : *OutdoorAirMixerFields
       Connectors:
-        << : *OutdoorAirMixersCommonConnectors
+        << : *OutdoorAirMixersConnectors
 
-Coils:
-  CommonFields: &CoilsCommonFields
-    name: '{} Cooling Coil'
+Coil:
   Cooling:
     Water:
-      CommonFields: &CoilsCoolingCommonFields
-        Air_inlet_node_name: '{} Cooling Coil Inlet'
-        Air_Outlet_node_name: '{} Cooling Coil Outlet'
+      Fields: &CoilsCoolingFields
+        name: '{} Cooling Coil'
+        air_inlet_node_name: '{} Cooling Coil Inlet'
+        air_outlet_node_name: '{} Cooling Coil Outlet'
         water_inlet_node_name: '{} Cooling Coil Chw Inlet'
-        water_Outlet_node_name: '{} Cooling Coil Chw Outlet'
-      CommonConnectors: &CoilsCoolingCommonConnectors
+        water_outlet_node_name: '{} Cooling Coil Chw Outlet'
+      Connectors: &CoilsCoolingConnectors
         Air:
-          inlet: Air_inlet_node_name
-          Outlet: Air_Outlet_node_name
+          Inlet: air_inlet_node_name
+          Outlet: air_outlet_node_name
         ChilledWater:
-          inlet: water_inlet_node_name
-          Outlet: water_Outlet_node_name
+          Inlet: water_inlet_node_name
+          Outlet: water_outlet_node_name
       Base: &CoilsCoolingWaterBase
         Coil:Cooling:Water:
           Fields:
-            << : *CoilsCommonFields
-            << : *CoilsCoolingCommonFields
+            << : *CoilsCoolingFields
           Connectors:
-            << : *CoilsCoolingCommonConnectors
-      DetailedGeometry: &CoilsCoolingWaterDetailedGeometry
+            << : *CoilsCoolingConnectors
+      DetailedGeometry:
         Coil:Cooling:Water:DetailedGeometry:
           Fields:
-            << : *CoilsCommonFields
-            << : *CoilsCoolingCommonFields
+            << : *CoilsCoolingFields
           Connectors:
-            << : *CoilsCoolingCommonConnectors
+            << : *CoilsCoolingConnectors
   Heating:
+    Fields: &CoilsHeatingFields
+      name: '{} Heating Coil'
+      air_inlet_node_name: '{} Heating Coil Inlet'
+      air_outlet_node_name: '{} Heating Coil Outlet'
+    Connectors: &CoilsHeatingConnectors
+      Air:
+        Inlet: air_inlet_node_name
+        Outlet: air_outlet_node_name
+    Electric:
+      Fields:
+      Connectors:
+      Base: &CoilsHeatingElectricBase
+        Coil:Heating:Electric:
+          Fields:
+            <<: *CoilsHeatingFields
+          Connectors:
+            <<: *CoilsHeatingConnectors
     Water:
-      CommonFields: &CoilsHeatingCommonFields
-        Air_inlet_node_name: '{} Cooling Coil Inlet'
-        Air_Outlet_node_name: '{} Cooling Coil Outlet'
-        water_inlet_node_name: '{} Cooling Coil Chw Inlet'
-        water_Outlet_node_name: '{} Cooling Coil Chw Outlet'
-      CommonConnectors: &CoilsHeatingCommonConnectors
-        Air:
-          inlet: air_inlet_node_name
-          Outlet: air_Outlet_node_name
+      Fields: &CoilsHeatingWaterFields
+        << : *CoilsHeatingFields
+        water_inlet_node_name: '{} Heating Coil Hw Inlet'
+        water_outlet_node_name: '{} Heating Coil Hw Outlet'
+      Connectors: &CoilsHeatingWaterConnectors
+        << : *CoilsHeatingConnectors
         HotWater:
-          inlet: water_inlet_node_name
-          Outlet: water_Outlet_node_name
+          Inlet: water_inlet_node_name
+          Outlet: water_outlet_node_name
       Base: &CoilsHeatingWaterBase
         Coil:Heating:Water:
           Fields:
-            <<: *CoilsCommonFields
-            <<: *CoilsHeatingCommonFields
+            <<: *CoilsHeatingWaterFields
           Connectors:
-            <<: *CoilsHeatingCommonConnectors
+            <<: *CoilsHeatingWaterConnectors
 
-# Basic Systems
+Fan:
+  Fields: &FanFields # example of default inputs, but i'm not sure if it's necessary.
+    motor_efficiency: 0.9
+    maximum_flow_rate: Autosize
+  Connectors: &FanConnectors
+    Air:
+      Inlet: air_inlet_node_name
+      Outlet: air_outlet_node_name
+  VariableVolume:
+    Base: &FanVariableVolumeBase
+      Fan:VariableVolume:
+        Fields:
+          name: '{} Supply Fan'
+          << : *FanFields
+          fan_power_minimum_flow_fraction: 0.25
+          air_inlet_node_name: '{} Supply Fan Inlet'
+          air_outlet_node_name: '{} Supply Fan Outlet'
+        Connectors:
+          << : *FanConnectors
+
+# common sub-system components.  Mostly used to reduce redundant code
 SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
-  - << : *OutdoorAirNodeListBase
   - << : *OutdoorAirMixerBase
+  - << : *CoilsCoolingWaterBase
+  - << : *CoilsHeatingWaterBase
+  - << : *FanVariableVolumeBase
 
 # HVAC System Templates
-HVACTemplate:System:VAV:
-  buildPath:
+HVACTemplate:System:VAV: &HVACTemplateSystemVAVBaseTemplate
+  BuildPath: # path of airflow through components
     - *SystemConfigOutdoorAirBase
-    - *CoilsCoolingWaterBase
-  transitions:
+  Transitions: # values to transition from template to child objects {object_type: object_field_name}
     supply_fan_total_efficiency:
       Fan:VariableVolume: fan_total_efficiency
-  setpointManagers:
-    SetpointManager:MixedAir:
-      name: '{} Cooling Coil Air Temp Manager'
-      control_variable: 'Temperature'
-      reference_setpoint_node_name:
-        AirLoopHVAC: 'supply_side_Outlet_node_names'
-  controllers:
-    Controller:OutdoorAir:
-      name: '{} OA Controller'
-      revief_Air_Outlet_node_name:
-        OutdoorAir:Mixer: relief_Air_stream_node_name
-      return_Air_node_name:
-        OutdoorAir:Mixer: return_Air_stream_node_name
-      minimum_outdoor_Air_flow_rate: autosize
-      maximum_outdoor_Air_flow_rate: autosize
+  Connectors: # define system level connections
+    Supply: # we can easily get the outlet name from the last object in the buildPath so it's not referenced here
+      Inlet:
+        OutdoorAir:Mixer: return_air_stream_node_name
+    Demand:
+      Inlet: '{} Supply Path Inlet'
+      Outlet: '{} Return Air Outlet'
 
 # Option trees
-OptionTree:HVACTemplate:System:VAV:
-  BuildPaths:
-    Base: default_build_path
-    Alternates:
-      field_key_that_flags_alternate_build_path: # e.g. heat recovery specified
-        field_value: yaml_build_path_name # e.g. FixedDryBulb: Yaml object with HR in buildPath
-      economizer_type_preheat_coil_type: # example of a multi field change to build path (preheat + economizer)
-        FixedDryBulb_Electric: yaml_build_path_name # concatenated values
-  SwapElements: # these fields are filled out for a simple example
-    heating_coil_type: # assume base default is anything except None
-      SwapRegex: '^Coil:Heating:*' # regular expression to find object in the buildPath
-      SwapElements: # elements to replace existing element based on value
+OptionTree:HVACTemplate:System:VAV: # configuration to store options for altering a base build
+  Base: *HVACTemplateSystemVAVBaseTemplate
+  ReplaceElements: # replace an existing element with something else
+    heating_coil_type: # base path must have an object to replace for this to work
+      ReplaceRegex: '^Coil:Heating:*' # regular expression to find object in the buildPath
+      ReplaceElement: # one entry for each option in the template dropdown
         None: None
-        HotWater: *CoilsHeatingWaterBase # anchor/map reference to coil
-  AddControllers: # just append to base controllers
-    field_key_that_flags_controller:
-      field_value: controller_object
-  AddSetpointManagers: # just append to setpointManagers
-    field_key_that_flags_setpoint_manager:
-      field_value: setpoint_manager_object
+        Electric:
+          Object: *CoilsHeatingElectricBase # anchor/map reference to coil
+          FieldNameReplacement: '{} Electric'
+  InsertElements: # Insert element before or after another element
+    preheat_coil_type:
+      Location:
+        BeforeObject: OutdoorAir:Mixer
+      ObjectType:
+        Electric:
+          Object: *CoilsHeatingElectricBase
+          FieldNameReplacement: '{} Preheat Electric'
+      Transitions: # transition template variable to this specific inserted object {template_field_name: object_field_name}
+        preheat_efficiency: efficiency # doesn't currently exist as an option, this is just an example
+  RemoveElements: # Not sure if this is needed but it should be possible, probably using list.pop()
+
+# setpoint managers
+SetpointManagers:
+  MixedAir:
+    Base:
+      SetpointManager:MixedAir:
+        name: '{} Cooling Coil Air Temp Manager'
+        control_variable: Temperature
+        reference_setpoint_node_name:
+          Fan:VariableVolume: air_outlet_node_name
+        fan_inlet_node_name:
+          Fan:VariableVolume: air_inlet_node_name
+        fan_outlet_node_name:
+          Fan:VariableVolume: air_outlet_node_name
+        setpoint_node_or_nodelist_name: '{} Mixed Air Nodes'
+
+# Controllers
+Controllers:
+  OutdoorAir:
+    Base:
+      Controller:OutdoorAir:
+        name: '{} OA Controller'
+        relief_air_outlet_node_name:
+          OutdoorAir:Mixer: relief_air_stream_node_name
+        return_air_node_name:
+          OutdoorAir:Mixer: return_air_stream_node_name
