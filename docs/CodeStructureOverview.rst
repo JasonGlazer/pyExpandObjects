@@ -138,8 +138,8 @@ This object provides a structural hierarchy to the template expansion process.
 This object outlines alternate build instructions based on user inputs to the HVACTemplate
 
   * Base - HVACTemplate object
-  * ReplaceElements - mappings from template input selections that result in a replacement operation.  For example, selecting an electric heating coil when a water coil is specified in the base build.
-  * InsertElements - mappings from template input selections that result in insertion operations.  For example, specifying that a preheat coil should be included in the build path.
+  * ReplaceElements - mappings from template input selections that result in a replacement operation.  For example, selecting an electric heating coil when a water coil is specified in the base build.  The EnergyPlus object reference names can be regular expressions (e.g. '^Coil:Heating:.*')
+  * InsertElements - mappings from template input selections that result in insertion operations.  For example, specifying that a preheat coil should be included in the build path.  The EnergyPlus object reference names can be regular expressions (e.g. '^Fan:.*).
   * RemoveElements - Currently unused
 
 .. code-block:: yaml
@@ -148,7 +148,7 @@ This object outlines alternate build instructions based on user inputs to the HV
     Base: *HVACTemplateSystemVAVBaseTemplate
     ReplaceElements:
       heating_coil_type:
-        ReplaceRegex: '^Coil:Heating:*'
+        ReplaceRegex: ^Coil:Heating:*
         ReplaceElement:
           None: None
           Electric:
@@ -157,7 +157,7 @@ This object outlines alternate build instructions based on user inputs to the HV
     InsertElements:
       preheat_coil_type:
         Location:
-          BeforeObject: OutdoorAir:Mixer
+          BeforeObject: ^OutdoorAir:.*
         ObjectType:
           Electric:
             Object: *CoilsHeatingElectricBase
@@ -188,9 +188,9 @@ Various objects that can be built with complex input types or other mappings.
 
 **Complex Value Type**
 
-Some values can be expressed as one of two types:
+These values can be expressed as either one of two types.
 
-1. static value - Number or string which does not contain '{}' for further formatting
+1. static value - Numeric or string.
 2. Dictionary mapping :
 
   * Required Sub-dictionary
