@@ -122,7 +122,7 @@ HVACTemplate:System:VAV: &HVACTemplateSystemVAVBaseTemplate
     - *SystemConfigOutdoorAirBase
   Transitions: # values to transition from template to child objects {object_type: object_field_name}
     supply_fan_total_efficiency:
-      Fan:VariableVolume: fan_total_efficiency
+      Fan:.*: fan_total_efficiency
   Connectors: # define system level connections
     Supply: # we can easily get the outlet name from the last object in the buildPath so it's not referenced here
       Inlet:
@@ -136,7 +136,7 @@ OptionTree:HVACTemplate:System:VAV: # configuration to store options for alterin
   Base: *HVACTemplateSystemVAVBaseTemplate
   ReplaceElements: # replace an existing element with something else
     heating_coil_type: # base path must have an object to replace for this to work
-      ReplaceRegex: '^Coil:Heating:*' # regular expression to find object in the buildPath
+      ReplaceRegex: '^Coil:Heating:.*' # regular expression to find object in the buildPath
       ReplaceElement: # one entry for each option in the template dropdown
         None: None
         Electric:

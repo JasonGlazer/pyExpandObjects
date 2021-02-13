@@ -2,6 +2,7 @@ import yaml
 import re
 import copy
 import argparse
+import numbers
 from pprint import pprint
 
 test_epjson = {
@@ -123,23 +124,39 @@ def replace_values(super_object, text_replacement):
     return super_object
 
 
-def build_controller_manager(yaml_object, ep_d, system_name):
+def build_energyplus_object_from_complex_inputs(yaml_object, energyplus_object_dictionary, unique_name_input):
     """
-    Builds a setpoint manager or controller using an existing epJSON dictionary for a HVAC System
+    Builds an energyplus object from a yaml object which uses complex inputs.
 
-    returns key and value to be inserted into epJSON
+    Parameters:
+    yaml_object: template yaml object
+    energyplus_object_dictionary: epJSON formatted dictionary containing reference objects
+    unique_name_input: string to convert text to unique name
+    using an existing epJSON dictionary for a HVAC System
+
+    Returns:
+    returns valid epJSON format for an EnergyPlus Object - {EnergyPlus Object: {field_names: field_values}}
     """
     (energyplus_object_type, energyplus_object_constructors), = yaml_object.items()
     tmp_d = {}
-    # if the value is a string, then it's a direct input.  if it's not, then it's a dictionary
-    # where the key-value pair is the object type and reference node holding the value to be input.
+    # if the value is a string or numeric, then it's a direct input.  If it is a dictionary
+    # then the key-value pair is the object type and reference node holding the value to be input.
+    # Anything else should return an error.
     for controller_manager_field_name, object_node_reference in energyplus_object_constructors.items():
         if isinstance(object_node_reference, str):
-            tmp_d[controller_manager_field_name] = object_node_reference.format(system_name)
-        else:
+            tmp_d[controller_manager_field_name] = object_node_reference.format(unique_name_input)
+        elif isinstance(object_node_reference, numbers.Number):
+            tmp_d[controller_manager_field_name] = object_node_reference
+        elif isinstance(object_node_reference, dict):
+            # Further coding could possibly allow for Regex values as the 'object_type'
+            # This is where {'Occurrence': N} could be used for multiple matches.  This process
+            # could be extended to other Regex matching in the program.
             for object_type, reference_node in object_node_reference.items():
-                (energyplus_object_name, _), = ep_d[object_type].items()
-                tmp_d[controller_manager_field_name] = ep_d[object_type][energyplus_object_name][reference_node]
+                (energyplus_object_name, _), = energyplus_object_dictionary[object_type].items()
+                tmp_d[controller_manager_field_name] = \
+                    energyplus_object_dictionary[object_type][energyplus_object_name][reference_node]
+        else:
+            print('error')
     key_val = tmp_d.pop('name')
     return energyplus_object_type, {key_val: tmp_d}
 
@@ -241,7 +258,7 @@ def main(input_args):
                         for energyplus_super_object in flattened_path:
                             # there should only be one key, so this method is used to unpack.
                             (energyplus_object_type, _), = energyplus_super_object.items()
-                            if reference_energyplus_object_type == energyplus_object_type:
+                            if re.match(reference_energyplus_object_type, energyplus_object_type):
                                 energyplus_super_object[energyplus_object_type]['Fields'][field_name] = (
                                     template_dictionary[transition_field_name]
                                 )
@@ -267,7 +284,7 @@ def main(input_args):
                             for idx, energyplus_super_object in enumerate(flattened_path):
                                 # should only be one key
                                 (energyplus_object_type, _), = energyplus_super_object.items()
-                                if reference_object == energyplus_object_type:
+                                if re.match(reference_object, energyplus_object_type):
                                     insert_location = idx + insert_offset
                             if insert_location >= 0:
                                 # get object to be inserted from yaml option tree
@@ -347,7 +364,7 @@ def main(input_args):
                 # now to make decisions as well
                 # Mixed Air setpoint Manager
                 setpoint_managers = copy.deepcopy(data['SetpointManagers'])
-                energyplus_object, tmp_d = build_controller_manager(
+                energyplus_object, tmp_d = build_energyplus_object_from_complex_inputs(
                     copy.deepcopy(setpoint_managers['MixedAir']['Base']),
                     energyplus_epjson_object,
                     system_name
@@ -357,7 +374,7 @@ def main(input_args):
                 # however, note that we can also call the build_path or the epJSON dictionary
                 # now to make decisions as well
                 controllers = copy.deepcopy(data['Controllers'])
-                energyplus_object, tmp_d = build_controller_manager(
+                energyplus_object, tmp_d = build_energyplus_object_from_complex_inputs(
                     copy.deepcopy(controllers['OutdoorAir']['Base']),
                     energyplus_epjson_object,
                     system_name
