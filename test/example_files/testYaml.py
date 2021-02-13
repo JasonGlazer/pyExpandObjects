@@ -378,6 +378,25 @@ def main(input_args):
                 pprint(energyplus_epjson_object, width=150)
     return
 
+####################
+# todo_eo: Remaining example buildout
+# Zone equipment
+# build paths can happen the same way; however, the zone coils make a parallel branch from an internal
+# AirTerminal:* node that is merged to the AirTerminal output.  The build path can create all elements
+# and populate the heating_coil_type field.  The program can then iterate over the list looking for
+# these types of objects, identify the heating/cooling coil types and then insert a coil
+#
+# Need to figure out how to handle recirculation systems (e.g. PIU).  Maybe same way, just build a path then
+# iterate back over for recirculation loops to be applied.
+#
+# Dual duct systems and zones may need their own build logic, as they are parallel air flow loops.
+#
+# Plant Loops
+# Supply side should be similar to the HVACTemplate system build
+# Demand side, loop through all objects in all air loops and set in a list.  Then, build loop for each object like
+# how zones are created.
+#######################
+
 
 if __name__ == "__main__":
     parser = build_parser()
