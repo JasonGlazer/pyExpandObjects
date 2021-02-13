@@ -154,7 +154,7 @@ OptionTree:HVACTemplate:System:VAV: # configuration to store options for alterin
         preheat_efficiency: efficiency # doesn't currently exist as an option, this is just an example
   RemoveElements: # Not sure if this is needed but it should be possible, probably using list.pop()
 
-# setpoint managers
+# Miscellaneous
 SetpointManagers:
   MixedAir:
     Base:
@@ -169,7 +169,6 @@ SetpointManagers:
           Fan:VariableVolume: air_outlet_node_name
         setpoint_node_or_nodelist_name: '{} Mixed Air Nodes'
 
-# Controllers
 Controllers:
   OutdoorAir:
     Base:

@@ -49,6 +49,27 @@ test_epjson = {
             "supply_fan_total_efficiency": 0.7,
             "system_availability_schedule_name": "FanAvailSched"
         }
+    },
+    "HVACTemplate:Zone:VAV": {
+        "HVACTemplate:Zone:VAV 1": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+            "outdoor_air_method": "Flow/Person",
+            "reheat_coil_type": "HotWater",
+            "supply_air_maximum_flow_rate": "Autosize",
+            "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "VAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
+            "zone_name": "SPACE1-1"
+        }
     }
 }
 
@@ -378,9 +399,55 @@ def main(input_args):
                 pprint(energyplus_epjson_object, width=150)
     return
 
-####################
+
+if __name__ == "__main__":
+    parser = build_parser()
+    args = parser.parse_args()
+    main(args)
+
+##########################
 # todo_eo: Remaining example buildout
+##########################
+# System ideas and cleanup
+##########################
+# Try to make regex for when equipment is specified as key.  E.g. instead of this:
+# reference_setpoint_node_name:
+#           Fan:VariableVolume: air_outlet_node_name
+#
+# do this
+# reference_setpoint_node_name:
+#           Fan:.*: air_outlet_node_name
+#
+# Maybe make a sub function to find the equipment b/c it's likely to get reused often.
+# This function could also hold the logic to just return a string if the value from
+# reference_setpoint_node_name is a string.
+# For really complex operations, you could add a parameter to match the nth occurrence
+# reference_setpoint_node_name:
+#           Fan:.*: air_outlet_node_name
+#           Occurrence: 1
+#
+# Replace Regex should be changed to a dictionary where the key is the regex and the
+# value is the occurrence, or the format above with just no value output for the regex
+# Can we do this for FieldNameReplacement too?  It seems like it would be better if all
+# key/value fields had the same options
+#
+# Possible text to replace code structure overview
+# Some values can be expressed as one of two types:
+#
+# 1. static value - Number or string which does not contain '{}' for further formatting
+#     2. Dictionary mapping :
+#
+# * Required Sub-dictionary
+# * Key - EnergyPlus Object.  This can be a regular expression
+# * Value - the reference node of the object
+#
+# * Optional Sub-dictionary
+# * Key - 'Occurrence'
+# * Value - The number occurrence from a match in the required sub-dictionary key.
+# This is in case multiple matches are possible.
+################
 # Zone equipment
+################
 # build paths can happen the same way; however, the zone coils make a parallel branch from an internal
 # AirTerminal:* node that is merged to the AirTerminal output.  The build path can create all elements
 # and populate the heating_coil_type field.  The program can then iterate over the list looking for
@@ -390,15 +457,10 @@ def main(input_args):
 # iterate back over for recirculation loops to be applied.
 #
 # Dual duct systems and zones may need their own build logic, as they are parallel air flow loops.
-#
+#############
 # Plant Loops
+#############
 # Supply side should be similar to the HVACTemplate system build
 # Demand side, loop through all objects in all air loops and set in a list.  Then, build loop for each object like
 # how zones are created.
 #######################
-
-
-if __name__ == "__main__":
-    parser = build_parser()
-    args = parser.parse_args()
-    main(args)
