@@ -175,6 +175,7 @@ Controllers:
       Controller:OutdoorAir:
         name: '{} OA Controller'
         relief_air_outlet_node_name:
-          OutdoorAir:Mixer: relief_air_stream_node_name
+          OutdoorAir:M.*: relief_air_stream_node_name
+#          Occurrence: 1
         return_air_node_name:
           OutdoorAir:Mixer: return_air_stream_node_name

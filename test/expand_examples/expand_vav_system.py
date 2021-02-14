@@ -142,21 +142,29 @@ def build_energyplus_object_from_complex_inputs(yaml_object, energyplus_object_d
     # if the value is a string or numeric, then it's a direct input.  If it is a dictionary
     # then the key-value pair is the object type and reference node holding the value to be input.
     # Anything else should return an error.
-    for controller_manager_field_name, object_node_reference in energyplus_object_constructors.items():
+    for reference_field_name, object_node_reference in energyplus_object_constructors.items():
         if isinstance(object_node_reference, str):
-            tmp_d[controller_manager_field_name] = object_node_reference.format(unique_name_input)
+            tmp_d[reference_field_name] = object_node_reference.format(unique_name_input)
         elif isinstance(object_node_reference, numbers.Number):
-            tmp_d[controller_manager_field_name] = object_node_reference
+            tmp_d[reference_field_name] = object_node_reference
         elif isinstance(object_node_reference, dict):
-            # Further coding could possibly allow for Regex values as the 'object_type'
-            # This is where {'Occurrence': N} could be used for multiple matches.  This process
-            # could be extended to other Regex matching in the program.
-            for object_type, reference_node in object_node_reference.items():
-                (energyplus_object_name, _), = energyplus_object_dictionary[object_type].items()
-                tmp_d[controller_manager_field_name] = \
-                    energyplus_object_dictionary[object_type][energyplus_object_name][reference_node]
+            # Optional key 'Occurrence' can be used with the value being an integer.
+            # {'Occurrence': N} is used to get nth match of the object_type search.
+            object_occurrence = object_node_reference.pop('Occurrence', 1)
+            print(object_node_reference)
+            (reference_object_type, reference_node), = object_node_reference.items()
+            # Regular expression match the object type and the reference object type
+            count_matches = 1
+            for object_type in energyplus_object_dictionary.keys():
+                if re.match(reference_object_type, object_type) and count_matches == object_occurrence:
+                    (energyplus_object_name, _), = energyplus_object_dictionary[object_type].items()
+                    tmp_d[reference_field_name] = \
+                        energyplus_object_dictionary[object_type][energyplus_object_name][reference_node]
+                elif re.match(reference_object_type, object_type):
+                    count_matches += 1
         else:
             print('error')
+    # Make a check that every reference node was applied
     key_val = tmp_d.pop('name')
     return energyplus_object_type, {key_val: tmp_d}
 
