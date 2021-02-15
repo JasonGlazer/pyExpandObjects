@@ -23,7 +23,7 @@ class TestEPJSONHandler(unittest.TestCase):
         self.epjson_handler = EPJSON()
         self.epjson_handler_no_schema = EPJSON(no_schema=True)
         self.epjson_handler.logger.setLevel('ERROR')
-        self.example_file_dir = Path(__file__).resolve().parent / 'example_files'
+        self.example_file_dir = Path(__file__).resolve().parent / 'resources'
 
     def test_default_schema_is_valid(self):
         self.epjson_handler.load_schema()

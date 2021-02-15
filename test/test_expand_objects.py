@@ -8,7 +8,7 @@ class TestExpandObject(unittest.TestCase):
     def setUp(self):
         self.expand_object = ExpandObjects()
         self.expand_object.logger.setLevel('ERROR')
-        self.example_file_dir = Path(__file__).resolve().parent / 'example_files'
+        self.example_file_dir = Path(__file__).resolve().parent / 'resources'
 
     def test_full_good_file_is_verified(self):
         self.expand_object.run(

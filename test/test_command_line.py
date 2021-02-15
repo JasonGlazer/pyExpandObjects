@@ -1,7 +1,6 @@
 import unittest
 import subprocess
 import os
-import sys
 from argparse import Namespace
 
 from expand_objects.main import main

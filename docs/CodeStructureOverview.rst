@@ -148,22 +148,22 @@ This object outlines alternate build instructions based on user inputs to the HV
     Base: *HVACTemplateSystemVAVBaseTemplate
     ReplaceElements:
       heating_coil_type:
-        ReplaceRegex: ^Coil:Heating:*
-        ReplaceElement:
-          None: None
-          Electric:
-            Object:
+        None: None
+        Electric:
+          ^Coil:Heating:.*:
+            Occurrence: 1
+            Object: *CoilsHeatingElectricBase
             FieldNameReplacement: '{} Electric'
     InsertElements:
       preheat_coil_type:
-        Location:
-          BeforeObject: ^OutdoorAir:.*
-        ObjectType:
-          Electric:
+        Electric:
+          OutdoorAir:M.*:
+            Location: Before
+            Occurrence: 1
             Object: *CoilsHeatingElectricBase
             FieldNameReplacement: '{} Preheat Electric'
-        Transitions:
-          preheat_efficiency: efficiency
+            Transitions:
+              preheat_efficiency: efficiency
     RemoveElements:
 
 **Miscellaneous**
@@ -199,7 +199,8 @@ These values can be expressed as either one of two types.
 
   * Optional Sub-dictionary
   * Key - 'Occurrence'
-  * Value - The nth occurence of the object match.  Default is first occurrence
+  * Value - The nth occurrence of the object match.  Default is first occurrence
+
 ----------------------
 Command Line Interface
 ----------------------
