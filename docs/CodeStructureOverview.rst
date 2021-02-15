@@ -182,7 +182,8 @@ Various objects that can be built with complex input types or other mappings.
         Controller:OutdoorAir:
           name: '{} OA Controller'
           relief_air_outlet_node_name:
-            OutdoorAir:Mixer: relief_air_stream_node_name
+            OutdoorAir:M.*: relief_air_stream_node_name
+            Occurrence: 1
           return_air_node_name:
             OutdoorAir:Mixer: return_air_stream_node_name
 
@@ -194,12 +195,14 @@ These values can be expressed as either one of two types.
 2. Dictionary mapping :
 
   * Required Sub-dictionary
-  * Key - EnergyPlus Object.  This may be in regular expression format (e.g. '^Fan:.*'
-  * Value - the reference node of the object
+
+    * Key - EnergyPlus Object.  This may be in regular expression format (e.g. '^Fan:.*'
+    * Value - the reference node of the object
 
   * Optional Sub-dictionary
-  * Key - 'Occurrence'
-  * Value - The nth occurrence of the object match.  Default is first occurrence
+
+    * Key - 'Occurrence'
+    * Value - The nth occurrence of the object match.  Default is first occurrence
 
 ----------------------
 Command Line Interface
