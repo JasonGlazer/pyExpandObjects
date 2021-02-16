@@ -190,7 +190,9 @@ OptionTree:
         Base: *HVACTemplateZoneVAV
         RemoveElements:
           reheat_coil_type:
-            None: ^Coil:Heating:.*
+            None:
+              ^Coil:Heating:.*:
+                Object: _
         ReplaceElements:
           reheat_coil_type:
             Electric:
@@ -230,7 +232,8 @@ OptionTree:
                 Object: *CoilsHeatingElectricBase
                 FieldNameReplacement: '{} Preheat Electric'
                 Transitions: # transition template variable to this specific inserted object {template_field_name: object_field_name}
-                  preheat_efficiency: efficiency # doesn't currently exist as an option, this is just an example
+                  preheat_efficiency:
+                    .*: efficiency # doesn't currently exist as an option, this is just an example. Use '.*' because it references only the current object.
 
 # Miscellaneous
 SetpointManagers:
