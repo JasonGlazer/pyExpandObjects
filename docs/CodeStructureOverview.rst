@@ -140,7 +140,7 @@ This object outlines alternate build instructions based on user inputs to the HV
   * Base - HVACTemplate object
   * ReplaceElements - mappings from template input selections that result in a replacement operation.  For example, selecting an electric heating coil when a water coil is specified in the base build.  The EnergyPlus object reference names can be regular expressions (e.g. '^Coil:Heating:.*')
   * InsertElements - mappings from template input selections that result in insertion operations.  For example, specifying that a preheat coil should be included in the build path.  The EnergyPlus object reference names can be regular expressions (e.g. '^Fan:.*).
-  * RemoveElements - Currently unused
+  * RemoveElements - Currently unused, but needs the structure indicated below if it is to be used (i.e Object: _ is necessary for all entries).
 
 .. code-block:: yaml
 
@@ -165,6 +165,10 @@ This object outlines alternate build instructions based on user inputs to the HV
             Transitions:
               preheat_efficiency: efficiency
     RemoveElements:
+      reheat_coil_type:
+        None:
+          ^Coil:Heating:.*:
+            Object: _
 
 **Miscellaneous**
 
@@ -197,7 +201,16 @@ These values can be expressed as either one of two types.
   * Required Sub-dictionary
 
     * Key - EnergyPlus Object.  This may be in regular expression format (e.g. '^Fan:.*'
-    * Value - the reference node of the object
+    * Value - the reference node of the object, which can be in three formats:
+
+      * key/value pair where the key is the object and the value is the field name
+      * 'self' - returns the key used to find the reference object (useful for regex)
+
+      '^AirTerminal:.*': self - will return the full Air terminal object name
+
+      * 'key' - returns the key of the nested dictionary of the reference object
+
+      '^AirTerminal:.*': key - will return 'Space1-1 VAV Reheat' from {AirTerminal:SingleDuct:VAV:Reheat: 'Space1-1 VAV Reheat': {...}
 
   * Optional Sub-dictionary
 

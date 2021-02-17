@@ -188,12 +188,22 @@ def build_energyplus_object_from_complex_inputs(
             # Regular expression match the object type and the reference object type
             count_matches = 0
             for object_type in energyplus_object_dictionary.keys():
+                # if 'self' is used as the reference node, just return the energyplus object type
+                # break the loop to prevent un-hashable entries
                 if re.match(reference_object_type, object_type):
+                    if reference_node == 'self':
+                        tmp_d[reference_field_name] = object_type
+                        continue
                     count_matches += 1
                     if count_matches == object_occurrence:
                         (energyplus_object_name, _), = energyplus_object_dictionary[object_type].items()
-                        tmp_d[reference_field_name] = \
-                            energyplus_object_dictionary[object_type][energyplus_object_name][reference_node]
+                        # if 'key' is used as the reference node, just get the unique object name
+                        # e.g. {object_type: {unique_object_name: object_fields}
+                        if reference_node == 'key':
+                            tmp_d[reference_field_name] = energyplus_object_name
+                        else:
+                            tmp_d[reference_field_name] = \
+                                energyplus_object_dictionary[object_type][energyplus_object_name][reference_node]
         else:
             print('error')
     # Make a check that every reference node was applied
@@ -328,15 +338,11 @@ def remove_objects(
         # If 'Occurrence' is specified, then only replace when that occurrence happens.
         remove_at_occurrence = remove_option_structure.get('Occurrence', 1)
         for idx, energyplus_super_object in enumerate(build_path):
-            ############333
-            # todo_eo: work from here
-            # this zone type has two dictionary objects b/c heating coil is combined,
-            # need to rewrite all insert, replace, remove code to account for this.
-            (energyplus_object_type, _), = energyplus_super_object.items()
-            if re.match(remove_object_reference, energyplus_object_type):
-                count_matches += 1
-                if count_matches == remove_at_occurrence:
-                    build_path.pop(idx)
+            for energyplus_object_type in energyplus_super_object.keys():
+                if re.match(remove_object_reference, energyplus_object_type):
+                    count_matches += 1
+                    if count_matches == remove_at_occurrence:
+                        build_path.pop(idx)
         # check if the number of matches actually met the occurrence threshold
         if not count_matches >= remove_at_occurrence:
             print('error')
@@ -372,31 +378,124 @@ def replace_objects(
         # If 'Occurrence' is specified, then only replace when that occurrence happens.
         replace_at_occurrence = replace_option_structure.get('Occurrence', 1)
         for idx, energyplus_super_object in enumerate(build_path):
-            (energyplus_object_type, _), = energyplus_super_object.items()
-            if re.match(replace_object_reference, energyplus_object_type):
-                count_matches += 1
-                if count_matches == replace_at_occurrence:
-                    # get object from template
-                    new_object = copy.deepcopy(
-                        replace_option_structure['Object']
-                    )
-                    # rename fields
-                    replacement = (
-                        replace_option_structure.get('FieldNameReplacement')
-                    )
-                    # rename if applicable
-                    new_object = replace_values(
-                        new_object,
-                        replacement
-                    )
-                    # replace old object with new
-                    build_path[idx] = new_object
+            for energyplus_object_type in energyplus_super_object.keys():
+                if re.match(replace_object_reference, energyplus_object_type):
+                    count_matches += 1
+                    if count_matches == replace_at_occurrence:
+                        # get object from template
+                        new_object = copy.deepcopy(
+                            replace_option_structure['Object']
+                        )
+                        # rename fields
+                        replacement = (
+                            replace_option_structure.get('FieldNameReplacement')
+                        )
+                        # rename if applicable
+                        new_object = replace_values(
+                            new_object,
+                            replacement
+                        )
+                        # replace old object with new
+                        build_path[idx] = new_object
         # check if the number of matches actually met the occurrence threshold
         if not count_matches >= replace_at_occurrence:
             print('error')
             print('replace error')
             sys.exit()
     return build_path
+
+
+def perform_alternate_operations(
+        option_tree: dict,
+        template_dictionary: dict,
+        unique_name: str):
+
+    selected_template = option_tree['Base']
+    # a side effect of the yaml structure is that nested lists are produced
+    # so we need to flatten them.
+    build_path = flatten_build_path(selected_template['BuildPath'])
+    actions = get_all_action_field_names(
+        option_tree=option_tree,
+        template_dictionary=template_dictionary
+    )
+    print('pre-replaced element path')
+    for idx, energyplus_super_object in enumerate(build_path):
+        print('object {} - {}'.format(idx, energyplus_super_object))
+    # remove example
+    if actions.get('remove'):
+        build_path = remove_objects(
+            action='remove',
+            action_list=actions['remove'],
+            option_tree=option_tree,
+            template_dictionary=template_dictionary,
+            build_path=build_path
+        )
+    print('post-removed path')
+    for idx, energyplus_super_object in enumerate(build_path):
+        print('object {} - {}'.format(idx, energyplus_super_object))
+    # replace example
+    # At the moment, replace happens even if correct equipment in place.
+    # I'm sure there is a work-around to this but for now it doesn't break anything.
+    if actions.get('replace'):
+        build_path = replace_objects(
+            action='replace',
+            action_list=actions['replace'],
+            option_tree=option_tree,
+            template_dictionary=template_dictionary,
+            build_path=build_path
+        )
+    print('post-replaced path')
+    for idx, energyplus_super_object in enumerate(build_path):
+        print('object {} - {}'.format(idx, energyplus_super_object))
+    # apply base transitions.  This needs to be done before inserting optional elements.
+    # If an element is inserted that is the same object type, then the transition mapping
+    # would output to both objects.
+    if selected_template.get('Transitions'):
+        build_path = apply_transitions_to_objects(
+            transition_structure=selected_template['Transitions'],
+            template_dictionary=template_dictionary,
+            build_path=build_path
+        )
+    print('post-transition path')
+    for idx, energyplus_super_object in enumerate(build_path):
+        print('object {} - {}'.format(idx, energyplus_super_object))
+    # insert example
+    if actions.get('insert'):
+        build_path = insert_objects(
+            action='insert',
+            action_list=actions['insert'],
+            option_tree=option_tree,
+            template_dictionary=template_dictionary,
+            build_path=build_path
+        )
+    print('post-insert element path')
+    for idx, energyplus_super_object in enumerate(build_path):
+        print('object {} - {}'.format(idx, energyplus_super_object))
+    # insert system name
+    build_path = insert_unique_name(
+        unique_name=unique_name,
+        build_path=build_path
+    )
+    print('post-variable rename path')
+    for idx, energyplus_super_object in enumerate(build_path):
+        print('object {} - {}'.format(idx, energyplus_super_object))
+    # Build a dictionary of valid epJSON objects from constructors
+    # from build path
+    energyplus_epjson_object = build_epjson(
+        connector_path='air',
+        unique_name=unique_name,
+        build_path=build_path
+    )
+    # build additional objects (e.g. Controllers)
+    # these are stored in the option tree under AdditionalObjects
+    # for standard objects, and AdditionalTemplateObjects for
+    # template triggered objects
+    energyplus_epjson_object = build_additional_objects(
+        option_tree=option_tree,
+        energyplus_object_dictionary=energyplus_epjson_object,
+        unique_name=unique_name
+    )
+    return energyplus_epjson_object, build_path
 
 
 def apply_transitions_to_objects(
@@ -421,14 +520,13 @@ def apply_transitions_to_objects(
     for transition_field_name, value_reference in transition_structure.items():
         for reference_energyplus_object_type, field_name in value_reference.items():
             for energyplus_super_object in build_path:
-                # there should only be one key, so this method is used to unpack.
-                (energyplus_object_type, _), = energyplus_super_object.items()
-                if re.match(reference_energyplus_object_type, energyplus_object_type):
-                    if not energyplus_super_object[energyplus_object_type]['Fields'].get(field_name):
-                        energyplus_super_object[energyplus_object_type]['Fields'][field_name] = None
-                    energyplus_super_object[energyplus_object_type]['Fields'][field_name] = (
-                        template_dictionary[transition_field_name]
-                    )
+                for energyplus_object_type in energyplus_super_object:
+                    if re.match(reference_energyplus_object_type, energyplus_object_type):
+                        if not energyplus_super_object[energyplus_object_type]['Fields'].get(field_name):
+                            energyplus_super_object[energyplus_object_type]['Fields'][field_name] = None
+                        energyplus_super_object[energyplus_object_type]['Fields'][field_name] = (
+                            template_dictionary[transition_field_name]
+                        )
     if as_object:
         return build_path[0]
     else:
@@ -461,46 +559,46 @@ def insert_objects(
         # iterate over regex matches and do operations when the right occurrence happens
         count_matches = 0
         for idx, energyplus_super_object in enumerate(build_path):
-            (energyplus_object_type, _), = energyplus_super_object.items()
-            if re.match(insert_object_reference, energyplus_object_type):
-                count_matches += 1
-                if count_matches == insert_option_structure.get('Occurrence', 1):
-                    # Look for 'BeforeObject' the 'After'.  Prevent inserting twice with check
-                    # on reference_object
-                    object_location_offset = insert_option_structure['Location']
-                    insert_offset = None
-                    if object_location_offset == 'After"':
-                        insert_offset = 1
-                    elif not insert_offset and object_location_offset == 'Before':
-                        insert_offset = 0
-                    else:
-                        print("error")
-                        print("insert location error")
-                        sys.exit()
-                    insert_location = idx + insert_offset
-                    # get object to be inserted from yaml option tree
-                    new_object = copy.deepcopy(
-                        insert_option_structure['Object']
-                    )
-                    # get rename format
-                    replacement = (
-                        insert_option_structure.get('FieldNameReplacement')
-                    )
-                    # rename if possible
-                    new_object = replace_values(
-                        new_object,
-                        replacement
-                    )
-                    # apply specific transitions
-                    new_object = apply_transitions_to_objects(
-                        transition_structure=insert_option_structure['Transitions'],
-                        template_dictionary=template_dictionary,
-                        build_path=new_object
-                    )
-                    build_path.insert(
-                        insert_location,
-                        new_object
-                    )
+            for energyplus_object_type in energyplus_super_object.keys():
+                if re.match(insert_object_reference, energyplus_object_type):
+                    count_matches += 1
+                    if count_matches == insert_option_structure.get('Occurrence', 1):
+                        # Look for 'BeforeObject' the 'After'.  Prevent inserting twice with check
+                        # on reference_object
+                        object_location_offset = insert_option_structure['Location']
+                        insert_offset = None
+                        if object_location_offset == 'After"':
+                            insert_offset = 1
+                        elif not insert_offset and object_location_offset == 'Before':
+                            insert_offset = 0
+                        else:
+                            print("error")
+                            print("insert location error")
+                            sys.exit()
+                        insert_location = idx + insert_offset
+                        # get object to be inserted from yaml option tree
+                        new_object = copy.deepcopy(
+                            insert_option_structure['Object']
+                        )
+                        # get rename format
+                        replacement = (
+                            insert_option_structure.get('FieldNameReplacement')
+                        )
+                        # rename if possible
+                        new_object = replace_values(
+                            new_object,
+                            replacement
+                        )
+                        # apply specific transitions
+                        new_object = apply_transitions_to_objects(
+                            transition_structure=insert_option_structure['Transitions'],
+                            template_dictionary=template_dictionary,
+                            build_path=new_object
+                        )
+                        build_path.insert(
+                            insert_location,
+                            new_object
+                        )
         # check if the number of matches actually met the occurrence threshold
         if not count_matches >= insert_option_structure.get('Occurrence', 1):
             print('error')
@@ -527,11 +625,11 @@ def insert_unique_name(
     else:
         as_object = False
     for energyplus_super_object in build_path:
-        (energyplus_object_type, energyplus_object_constructors), = energyplus_super_object.items()
-        for field_name, field_value in energyplus_object_constructors['Fields'].items():
-            if isinstance(field_value, str):
-                energyplus_super_object[energyplus_object_type]['Fields'][field_name] = \
-                    field_value.format(unique_name)
+        for energyplus_object_type, energyplus_object_constructors in energyplus_super_object.items():
+            for field_name, field_value in energyplus_object_constructors['Fields'].items():
+                if isinstance(field_value, str):
+                    energyplus_super_object[energyplus_object_type]['Fields'][field_name] = \
+                        field_value.format(unique_name)
     if as_object:
         return build_path[0]
     else:
@@ -540,13 +638,13 @@ def insert_unique_name(
 
 def build_epjson(
         connector_path: str,
-        build_path: typing.Union[dict, typing.List[dict]],
-        epjson_object: dict = {}) -> dict:
+        unique_name: str,
+        build_path: typing.Union[dict, typing.List[dict]]) -> dict:
     """
     Build epJSON formatted dictionary of EnergyPlus objects from super objects.
 
-    :param epjson_object: epjson dictionary to pass for build.  Empty (new) if not specified
     :param connector_path: air, HotWater, ChilledWater, or MixedWater connectors to use
+    :param unique_name: unique name string.
     :param build_path: list of EnergyPlus super objects in build order
 
     :return: epJSON formatted dictionary
@@ -554,35 +652,80 @@ def build_epjson(
     if isinstance(build_path, dict):
         build_path = [build_path, ]
     out_node_name = None
+    epjson_object = {}
     for idx, energyplus_super_object in enumerate(build_path):
-        (energyplus_object_type, energyplus_object_constructors), = energyplus_super_object.items()
-        # use copy so that the original structure is preserved for future queries
-        tmp_d = copy.deepcopy(energyplus_object_constructors['Fields'])
-        object_key = tmp_d.pop('name')
-        # not necessary but it's a good reminder that this object is the target value
-        object_values = tmp_d
-        # create the object type if it doesn't exist
-        if not epjson_object.get(energyplus_object_type):
-            epjson_object[energyplus_object_type] = {}
-        # for the first object, do not alter the input node name.
-        # for subsequent objects, set the input node name value to the
-        # output node name value of the previous object.
-        if idx == 0:
-            epjson_object[energyplus_object_type][object_key] = object_values
-            out_node_name = (
-                energyplus_object_constructors['Fields']
-                [energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Outlet']]
-            )
-        else:
-            object_values[
-                energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Inlet']
-            ] = out_node_name
-            epjson_object[energyplus_object_type][object_key] = object_values
-            out_node_name = (
-                energyplus_object_constructors['Fields']
-                [energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Outlet']]
-            )
+        # store object key and make sure not in list as you iterate:
+        unique_object_names = []
+        for energyplus_object_type, energyplus_object_constructors in energyplus_super_object.items():
+            # use copy so that the original structure is preserved for future queries
+            tmp_d = copy.deepcopy(energyplus_object_constructors['Fields'])
+            object_key = tmp_d.pop('name')
+            # not necessary but it's a good reminder that this object is the target value
+            object_values = tmp_d
+            # create the object type if it doesn't exist
+            if not epjson_object.get(energyplus_object_type):
+                epjson_object[energyplus_object_type] = {}
+            # for the first object, do not alter the input node name.
+            # for subsequent objects, set the input node name value to the
+            # output node name value of the previous object.
+            # also check for duplicates
+            if object_key in unique_object_names:
+                print('non-unique object error')
+                sys.exit()
+            unique_object_names.append(object_key)
+            if idx == 0:
+                epjson_object[energyplus_object_type][object_key] = object_values
+                out_node = energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Outlet']
+                if isinstance(out_node, str) and '{}' in out_node:
+                    out_node_name = out_node.format(unique_name)
+                else:
+                    out_node_name = (
+                        energyplus_object_constructors['Fields']
+                        [energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Outlet']]
+                    )
+            else:
+                object_values[
+                    energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Inlet']
+                ] = out_node_name
+                epjson_object[energyplus_object_type][object_key] = object_values
+                out_node = energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Outlet']
+                if isinstance(out_node, str) and '{}' in out_node:
+                    out_node_name = out_node.format(unique_name)
+                else:
+                    out_node_name = (
+                        energyplus_object_constructors['Fields']
+                        [energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Outlet']]
+                    )
     return epjson_object
+
+
+def build_additional_objects(option_tree: dict, energyplus_object_dictionary: dict, unique_name: str) -> dict:
+    """
+    Build additional objects in option tree
+
+    :param option_tree: Dictionary containing build path variations
+    :param energyplus_object_dictionary: epjson dictionary of EnergyPlus objects
+    :param unique_name: unique name string
+    :return:
+    """
+
+    if option_tree['AdditionalObjects']:
+        for additional_object, additional_object_fields in option_tree['AdditionalObjects'].items():
+
+            energyplus_object, tmp_d = build_energyplus_object_from_complex_inputs(
+                yaml_object={additional_object: copy.deepcopy(additional_object_fields)},
+                energyplus_object_dictionary=energyplus_object_dictionary,
+                unique_name_input=unique_name
+            )
+            if not energyplus_object_dictionary.get(energyplus_object):
+                energyplus_object_dictionary[energyplus_object] = {}
+            for object_name, object_fields in tmp_d.items():
+                if object_name in energyplus_object_dictionary[energyplus_object].keys():
+                    print('unique name error')
+                    sys.exit()
+            energyplus_object_dictionary[energyplus_object] = tmp_d
+    # Do optional template objects as well
+    return energyplus_object_dictionary
 
 # In this process note one import aspect. Specific field names are
 # rarely used, if at all.  Most of the structure comes from the yaml
@@ -606,100 +749,19 @@ def main(input_args):
                 print('System Name')
                 print(system_name)
                 option_tree = get_option_tree(st, data)
-                selected_template = option_tree['Base']
-                print('selected_template')
-                print(selected_template)
-                actions = get_all_action_field_names(
+                energyplus_epjson_object, build_path = perform_alternate_operations(
                     option_tree=option_tree,
-                    template_dictionary=system_template_dictionary
+                    template_dictionary=system_template_dictionary,
+                    unique_name=system_name
                 )
-                # a side effect of the yaml structure is that nested lists are produced
-                # so we need to flatten them.
-                flattened_path = flatten_build_path(selected_template['BuildPath'])
-                print('pre-replaced element path')
-                for idx, energyplus_super_object in enumerate(flattened_path):
-                    print('object {} - {}'.format(idx, energyplus_super_object))
-                # replace example
-                # At the moment, replace happens even if correct equipment in place.
-                # I'm sure there is a work-around to this but for now it doesn't break anything.
-                if actions.get('replace'):
-                    flattened_path = replace_objects(
-                        action='replace',
-                        action_list=actions['replace'],
-                        option_tree=option_tree,
-                        template_dictionary=system_template_dictionary,
-                        build_path=flattened_path
-                    )
-                print('post-replaced path')
-                for idx, energyplus_super_object in enumerate(flattened_path):
-                    print('object {} - {}'.format(idx, energyplus_super_object))
-                # apply base transitions.  This needs to be done before inserting optional elements.
-                # If an element is inserted that is the same object type, then the transition mapping
-                # would output to both objects.
-                if selected_template.get('Transitions'):
-                    flattened_path = apply_transitions_to_objects(
-                        transition_structure=selected_template['Transitions'],
-                        template_dictionary=system_template_dictionary,
-                        build_path=flattened_path
-                    )
-                print('post-transition path')
-                for idx, energyplus_super_object in enumerate(flattened_path):
-                    print('object {} - {}'.format(idx, energyplus_super_object))
-                # insert example
-                if actions.get('insert'):
-                    flattened_path = insert_objects(
-                        action='insert',
-                        action_list=actions['insert'],
-                        option_tree=option_tree,
-                        template_dictionary=system_template_dictionary,
-                        build_path=flattened_path
-                    )
-                print('post-insert element path')
-                for idx, energyplus_super_object in enumerate(flattened_path):
-                    print('object {} - {}'.format(idx, energyplus_super_object))
-                # insert system name
-                flattened_path = insert_unique_name(
-                    unique_name=system_name,
-                    build_path=flattened_path
-                )
-                print('post-variable rename path')
-                for idx, energyplus_super_object in enumerate(flattened_path):
-                    print('object {} - {}'.format(idx, energyplus_super_object))
-                # Build a dictionary of valid epJSON objects from constructors
-                # from build path
-                # need to check for unique names within objects when in production
-                energyplus_epjson_object = build_epjson(
-                    connector_path='air',
-                    build_path=flattened_path
-                )
-                # build Controllers (if/else statements can be copied from Fortran code)
-                # however, note that we can also call the build_path or the epJSON dictionary
-                # now to make decisions as well
-                # Mixed Air setpoint Manager
-                setpoint_managers = copy.deepcopy(data['SetpointManagers'])
-                energyplus_object, tmp_d = build_energyplus_object_from_complex_inputs(
-                    copy.deepcopy(setpoint_managers['MixedAir']['Base']),
-                    energyplus_epjson_object,
-                    system_name
-                )
-                energyplus_epjson_object[energyplus_object] = tmp_d
-                # build Controllers (if/else statements can be copied from Fortran code)
-                # however, note that we can also call the build_path or the epJSON dictionary
-                # now to make decisions as well
-                controllers = copy.deepcopy(data['Controllers'])
-                energyplus_object, tmp_d = build_energyplus_object_from_complex_inputs(
-                    copy.deepcopy(controllers['OutdoorAir']['Base']),
-                    energyplus_epjson_object,
-                    system_name
-                )
-                energyplus_epjson_object[energyplus_object] = tmp_d
                 print('Energyplus epJSON objects')
                 pprint(energyplus_epjson_object, width=150)
                 print('Supply Path outlet')
-                for energyplus_arguments in flattened_path[-1].values():
+                for energyplus_arguments in build_path[-1].values():
                     last_node = energyplus_arguments['Fields'][energyplus_arguments['Connectors']['Air']['Outlet']]
                 print(last_node)
                 print('Supply Path inlet')
+                selected_template = option_tree['Base']
                 (controller_reference_object_type, controller_reference_field_name), = \
                     selected_template['Connectors']['Supply']['Inlet'].items()
                 (energyplus_object_name, _), = energyplus_epjson_object[controller_reference_object_type].items()
@@ -714,7 +776,7 @@ def main(input_args):
                 # NodeLists, other controllers, etc. can be created based on logically parsing the epJSON object,
                 # the super object, the flattened path, or any combination of these objects
                 # OutdoorAir:Nodelist Example:
-                (energyplus_object_type, energyplus_object_constructors), = flattened_path[0].items()
+                (energyplus_object_type, energyplus_object_constructors), = build_path[0].items()
                 # rename the inlet node to current conventions
                 energyplus_epjson_object[energyplus_object_type][
                     energyplus_object_constructors['Fields']['name']]['air_inlet_node_name'] = \
@@ -731,6 +793,7 @@ def main(input_args):
         # get system information when necessary.
         zone_templates = [i for i in test_epjson if i.startswith('HVACTemplate:Zone')]
         # iterate over templates
+        energyplus_epjson_zone_objects = []
         for zt in zone_templates:
             # get template object as dictionary
             hvac_zone_template_obj = test_epjson[zt]
@@ -739,25 +802,14 @@ def main(input_args):
                 print('Zone Name')
                 print(template_zone_name)
                 option_tree = get_option_tree(zt, data)
-                selected_template = option_tree['Base']
-                print('selected_template')
-                print(selected_template)
-                # in cases where the template needs a whole new object, like vav w reheat vs no reheat, then a remove
-                # all extraneous equipment, and then replace the terminal unit.
-                # perform remove elements
-                actions = get_all_action_field_names(
+                energyplus_epjson_zone_object, build_path = perform_alternate_operations(
                     option_tree=option_tree,
-                    template_dictionary=zone_template_dictionary
+                    template_dictionary=zone_template_dictionary,
+                    unique_name=zone_template_dictionary["zone_name"]
                 )
-                flattened_path = flatten_build_path(selected_template['BuildPath'])
-                if actions.get('remove'):
-                    flattened_path = remove_objects(
-                        action='remove',
-                        action_list=actions['remove'],
-                        option_tree=option_tree,
-                        template_dictionary=zone_template_dictionary,
-                        build_path=flattened_path
-                    )
+                energyplus_epjson_zone_objects.append(energyplus_epjson_zone_object)
+        print('zone object list')
+        pprint(energyplus_epjson_zone_objects, width=150)
     return
 
 
@@ -770,21 +822,12 @@ if __name__ == "__main__":
 # todo_eo: Remaining example buildout
 ##########################
 # System ideas and cleanup
-# Need to try better alignment to zone flexibility if possible.
 ##########################
 
 ################
 # Zone equipment
 ################
-# build paths can happen the same way; however, the zone coils make a parallel branch from an internal
-# AirTerminal:* node that is merged to the AirTerminal output.  The build path can create all elements
-# and populate the heating_coil_type field.  The program can then iterate over the list looking for
-# these types of objects, identify the heating/cooling coil types and then insert a coil
-#
-# Need to figure out how to handle recirculation systems (e.g. PIU).  Maybe same way, just build a path then
-# iterate back over for recirculation loops to be applied.
-#
-# Dual duct systems and zones may need their own build logic, as they are parallel air flow loops.
+
 #############
 # Plant Loops
 #############
@@ -792,3 +835,9 @@ if __name__ == "__main__":
 # Demand side, loop through all objects in all air loops and set in a list.  Then, build loop for each object like
 # how zones are created.
 #######################
+
+#################
+# Cleanup
+# Input all necessary fields into yaml for energyplus objects
+# build out all necessary additional equipment
+#################
