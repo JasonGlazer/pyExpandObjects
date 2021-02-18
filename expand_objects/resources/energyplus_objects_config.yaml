@@ -238,10 +238,13 @@ HVACTemplate:
     Chiller: &HVACTemplatePlantChiller
       BuildPath:
         - *ChillerElectricEIR
+      Transitions:
+        capacity:
+          ^Chiller:.*: reference_capacity
     ChilledWaterLoop: &HVACTemplatePlantChilledWaterLoop
       BuildPath:
         - <<: *PipeAdiabaticDemandInlet
-        - HVACTemplate:Plant:Chiller # specify the t
+        - HVACTemplate:Plant:Chiller # specify a nested template with just a text reference to the object
         - <<: *PipeAdiabaticDemandOutlet
 
 # Miscellaneous

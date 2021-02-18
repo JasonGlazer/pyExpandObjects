@@ -888,7 +888,7 @@ def main(input_args):
                     data=data
                 )
                 print('0000000000000')
-                # pprint(energyplus_epjson_plant_object, width=150)
+                pprint(energyplus_epjson_plant_object, width=150)
                 print('00000000000000')
                 pprint(build_path, width=150)
     return
