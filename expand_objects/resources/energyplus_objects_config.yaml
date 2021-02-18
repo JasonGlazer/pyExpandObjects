@@ -244,7 +244,7 @@ HVACTemplate:
     ChilledWaterLoop: &HVACTemplatePlantChilledWaterLoop
       BuildPath:
         - <<: *PipeAdiabaticDemandInlet
-        - HVACTemplate:Plant:Chiller # specify a nested template with just a text reference to the object
+        - HVACTemplate:Plant:Chiller # specify a nested template with a text reference to the object under the OptionTree object
         - <<: *PipeAdiabaticDemandOutlet
 
 # Miscellaneous
