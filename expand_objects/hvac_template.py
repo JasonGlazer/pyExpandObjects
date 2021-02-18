@@ -7,12 +7,10 @@ class HVACTemplate(EPJSON):
     Manage overall HVAC Template objects and handle
     their conversion to regular objects.
 
-    Inheritance
-    -----
+    Inheritance:
     EPJSON <- Logger
 
     Parameters:
-    -----
     templates_exist : boolean indicating if templates are present
     templates : list of HVACTemplate objects from epJSON file
     """

@@ -1,7 +1,6 @@
 import unittest
 import subprocess
 import os
-import sys
 from argparse import Namespace
 
 from expand_objects.main import main
@@ -19,7 +18,7 @@ class TestHVACTemplateObject(unittest.TestCase):
             output_epjson = main(
                 Namespace(
                     no_schema=True,
-                    files=[os.path.join(this_script_path, 'example_files', 'HVACTemplate-5ZonePurchAir.epJSON')]
+                    files=[os.path.join(this_script_path, 'test/resources', 'HVACTemplate-5ZonePurchAir.epJSON')]
                 )
             )
         except Exception as e:
@@ -57,7 +56,7 @@ class TestHVACTemplateObject(unittest.TestCase):
                 'python',
                 os.path.join(this_script_path, '..', 'expand_objects', 'main.py'),
                 '-ns',
-                os.path.join(this_script_path, 'example_files', 'RefBldgMediumOfficeNew2004_Chicago_epJSON.epJSON2')
+                os.path.join(this_script_path, 'test/resources', 'RefBldgMediumOfficeNew2004_Chicago_epJSON.epJSON2')
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
