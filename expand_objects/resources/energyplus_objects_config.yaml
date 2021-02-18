@@ -39,7 +39,7 @@ Coil:
         Air:
           Inlet: air_inlet_node_name
           Outlet: air_outlet_node_name
-        ChilledWater:
+        ChilledWaterLoop:
           Inlet: water_inlet_node_name
           Outlet: water_outlet_node_name
       Base: &CoilsCoolingWaterBase
@@ -130,10 +130,12 @@ AirTerminal:
           Coil:Heating:Water:
             Fields:
               <<: *CoilsHeatingWaterFields
+              air_inlet_node_name: '{} Damper Outlet' # keys can be overridden like this
+              air_outlet_node_name: '{} Supply Inlet'
             Connectors:
               Air:
-                Inlet: '{} Damper Outlet'
-                Outlet: '{} Supply Inlet'
+                Inlet: air_inlet_node_name
+                Outlet: air_outlet_node_name
               HotWater:
                 Inlet: water_inlet_node_name
                 Outlet: water_outlet_node_name
@@ -147,6 +149,57 @@ AirTerminal:
               Air:
                 Inlet: air_inlet_node_name
                 Outlet: air_outlet_node_name
+
+Pipe:
+  Adiabatic:
+    Base: &PipeAdiabatic
+      Pipe:Adiabatic:
+        Fields:
+          name: '{} Pipe'
+          inlet_node_name: '{} Pipe Inlet'
+          outlet_node_name: '{} Pipe Outlet'
+        Connectors: &PipeAdiabaticConnectors
+          ChilledWaterLoop:
+            Inlet: inlet_node_name
+            Outlet: outlet_node_name
+    DemandInlet: &PipeAdiabaticDemandInlet
+      Pipe:Adiabatic:
+        Fields:
+          name: '{} Demand Inlet Pipe'
+          inlet_node_name: '{} Demand Inlet'
+          outlet_node_name: '{} Demand Inlet Pipe Outlet'
+        Connectors:
+          <<: *PipeAdiabaticConnectors
+    DemandOutlet: &PipeAdiabaticDemandOutlet
+      Pipe:Adiabatic:
+        Fields:
+          name: '{} Demand Outlet Pipe'
+          inlet_node_name: '{} Demand Outlet Pipe Inlet'
+          outlet_node_name: '{} Demand Outlet'
+        Connectors:
+          <<: *PipeAdiabaticConnectors
+
+Chiller:
+  Electric:
+    EIR:
+      Base: &ChillerElectricEIR
+        Chiller:Electric:EIR:
+          Fields:
+            name: '{} Chiller'
+            chilled_water_inlet_node_name: '{} Chiller ChW Inlet'
+            chilled_water_outlet_node_name: '{} Chiller ChW Outlet'
+            total_cooling_capacity_function_of_temperature_curve_name: Main Chiller RecipCapFT
+          Connectors:
+            ChilledWaterLoop:
+              Inlet: chilled_water_inlet_node_name
+              Outlet: chilled_water_outlet_node_name
+        Pipe:Adiabatic:
+          Fields:
+            name: '{} Demand Side Bypass Pipe'
+            inlet_node_name: '{} Demand Bypass Inlet'
+            outlet_node_name: '{} Demand Bypass Outlet'
+          Connectors:
+            <<: *PipeAdiabaticConnectors
 
 # common sub-system components.  Mostly used to reduce redundant code
 SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
@@ -181,6 +234,15 @@ HVACTemplate:
         Demand:
           Inlet: '{} Supply Path Inlet'
           Outlet: '{} Return Air Outlet'
+  Plant:
+    Chiller: &HVACTemplatePlantChiller
+      BuildPath:
+        - *ChillerElectricEIR
+    ChilledWaterLoop: &HVACTemplatePlantChilledWaterLoop
+      BuildPath:
+        - <<: *PipeAdiabaticDemandInlet
+        - HVACTemplate:Plant:Chiller # specify the t
+        - <<: *PipeAdiabaticDemandOutlet
 
 # Miscellaneous
 ZoneHVAC:
@@ -243,6 +305,8 @@ OptionTree:
                   Coil:Heating:Electric:
                     Fields:
                       <<: *CoilsHeatingFields
+                      air_inlet_node_name: '{} Damper Outlet'
+                      air_outlet_node_name: '{} Supply Inlet'
                     Connectors:
                       Air:
                         Inlet: '{} Damper Outlet'
@@ -285,3 +349,9 @@ OptionTree:
 #          template_field:
 #            template_choice:
 #              - object_list
+    Plant:
+      Chiller:
+        Base: *HVACTemplatePlantChiller
+        ReplaceElements:
+      ChilledWaterLoop:
+        Base: *HVACTemplatePlantChilledWaterLoop

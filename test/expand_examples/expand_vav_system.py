@@ -92,6 +92,34 @@ test_epjson = {
             "zone_minimum_air_flow_input_method": "Constant",
             "zone_name": "SPACE1-2"
         }
+    },
+    "HVACTemplate:Plant:ChilledWaterLoop": {
+        "Chilled Water Loop": {
+            "chilled_water_design_setpoint": 7.22,
+            "chilled_water_pump_configuration": "ConstantPrimaryNoSecondary",
+            "chilled_water_reset_outdoor_dry_bulb_high": 26.7,
+            "chilled_water_reset_outdoor_dry_bulb_low": 15.6,
+            "chilled_water_setpoint_at_outdoor_dry_bulb_high": 6.7,
+            "chilled_water_setpoint_at_outdoor_dry_bulb_low": 12.2,
+            "chilled_water_setpoint_reset_type": "None",
+            "chiller_plant_operation_scheme_type": "Default",
+            "condenser_plant_operation_scheme_type": "Default",
+            "condenser_water_design_setpoint": 29.4,
+            "condenser_water_pump_rated_head": 179352,
+            "minimum_outdoor_dry_bulb_temperature": 7.22,
+            "primary_chilled_water_pump_rated_head": 179352,
+            "pump_control_type": "Intermittent",
+            "secondary_chilled_water_pump_rated_head": 179352
+        }
+    },
+    "HVACTemplate:Plant:Chiller": {
+        "Main Chiller": {
+            "capacity": "Autosize",
+            "chiller_type": "ElectricReciprocatingChiller",
+            "condenser_type": "WaterCooled",
+            "nominal_cop": 3.2,
+            "priority": "1"
+        }
     }
 }
 
@@ -299,13 +327,15 @@ def get_action_structure(
 
     :return: Iterator of [EnergyPlus object reference, action_structure]
     """
+    # capitalize action
+    action = action[0].upper() + action[1:]
     for field_name in action_list:
         # get the replacement subtree
-        if option_tree[''.join([action.capitalize(), 'Elements'])].get(field_name) and \
-                option_tree[''.join([action.capitalize(), 'Elements'])][field_name] \
+        if option_tree[''.join([action, 'Elements'])].get(field_name) and \
+                option_tree[''.join([action, 'Elements'])][field_name] \
                 .get(template_dictionary[field_name]):
             objects_reference = \
-                option_tree[''.join([action.capitalize(), 'Elements'])][field_name][template_dictionary[field_name]]
+                option_tree[''.join([action, 'Elements'])][field_name][template_dictionary[field_name]]
             # for each subtree reference (more than one can be done)
             for object_reference, option_structure in objects_reference.items():
                 yield object_reference, option_structure
@@ -406,14 +436,37 @@ def replace_objects(
 
 
 def perform_alternate_operations(
+        connector_path: str,
         option_tree: dict,
         template_dictionary: dict,
-        unique_name: str):
-
+        unique_name: str,
+        **kwargs):
+    # capitalize connector path
+    connector_path = connector_path[0].upper() + connector_path[1:]
     selected_template = option_tree['Base']
     # a side effect of the yaml structure is that nested lists are produced
     # so we need to flatten them.
     build_path = flatten_build_path(selected_template['BuildPath'])
+    # check for nested HVACTemplate objects.  They will appear as string objects with the
+    # template name (e.g. HVACTemplate:Plant:Chiller).
+    # if so do a recursive build on that object, insert it into the original position, and then flatten the
+    # build path again.
+    for idx, energyplus_super_object in enumerate(build_path):
+        if isinstance(energyplus_super_object, str):
+            # in this test program, we have to grab global objects, which are the yaml data and the
+            # epjson object.  In production, these should be stored class attributes.
+            sub_data = kwargs['data']
+            sub_template_object = test_epjson[energyplus_super_object]
+            for sub_object_name, sub_object_dictionary in sub_template_object.items():
+                sub_option_tree = get_option_tree(energyplus_super_object, sub_data)
+                sub_energyplus_epjson_plant_object, sub_build_path = perform_alternate_operations(
+                    connector_path=connector_path,
+                    option_tree=sub_option_tree,
+                    template_dictionary=sub_object_dictionary,
+                    unique_name=sub_object_name
+                )
+            build_path[idx] = sub_build_path
+            build_path = flatten_build_path(build_path)
     actions = get_all_action_field_names(
         option_tree=option_tree,
         template_dictionary=template_dictionary
@@ -482,7 +535,7 @@ def perform_alternate_operations(
     # Build a dictionary of valid epJSON objects from constructors
     # from build path
     energyplus_epjson_object = build_epjson(
-        connector_path='air',
+        connector_path=connector_path,
         unique_name=unique_name,
         build_path=build_path
     )
@@ -649,6 +702,8 @@ def build_epjson(
 
     :return: epJSON formatted dictionary
     """
+    # capitalize connector path
+    connector_path = connector_path[0].upper() + connector_path[1:]
     if isinstance(build_path, dict):
         build_path = [build_path, ]
     out_node_name = None
@@ -675,26 +730,26 @@ def build_epjson(
             unique_object_names.append(object_key)
             if idx == 0:
                 epjson_object[energyplus_object_type][object_key] = object_values
-                out_node = energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Outlet']
+                out_node = energyplus_object_constructors['Connectors'][connector_path]['Outlet']
                 if isinstance(out_node, str) and '{}' in out_node:
                     out_node_name = out_node.format(unique_name)
                 else:
                     out_node_name = (
                         energyplus_object_constructors['Fields']
-                        [energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Outlet']]
+                        [energyplus_object_constructors['Connectors'][connector_path]['Outlet']]
                     )
             else:
                 object_values[
-                    energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Inlet']
+                    energyplus_object_constructors['Connectors'][connector_path]['Inlet']
                 ] = out_node_name
                 epjson_object[energyplus_object_type][object_key] = object_values
-                out_node = energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Outlet']
+                out_node = energyplus_object_constructors['Connectors'][connector_path]['Outlet']
                 if isinstance(out_node, str) and '{}' in out_node:
                     out_node_name = out_node.format(unique_name)
                 else:
                     out_node_name = (
                         energyplus_object_constructors['Fields']
-                        [energyplus_object_constructors['Connectors'][connector_path.capitalize()]['Outlet']]
+                        [energyplus_object_constructors['Connectors'][connector_path]['Outlet']]
                     )
     return epjson_object
 
@@ -708,8 +763,7 @@ def build_additional_objects(option_tree: dict, energyplus_object_dictionary: di
     :param unique_name: unique name string
     :return:
     """
-
-    if option_tree['AdditionalObjects']:
+    if option_tree.get('AdditionalObjects'):
         for additional_object, additional_object_fields in option_tree['AdditionalObjects'].items():
 
             energyplus_object, tmp_d = build_energyplus_object_from_complex_inputs(
@@ -750,6 +804,7 @@ def main(input_args):
                 print(system_name)
                 option_tree = get_option_tree(st, data)
                 energyplus_epjson_object, build_path = perform_alternate_operations(
+                    connector_path='air',
                     option_tree=option_tree,
                     template_dictionary=system_template_dictionary,
                     unique_name=system_name
@@ -794,6 +849,7 @@ def main(input_args):
         zone_templates = [i for i in test_epjson if i.startswith('HVACTemplate:Zone')]
         # iterate over templates
         energyplus_epjson_zone_objects = []
+        energyplus_zone_build_paths = []
         for zt in zone_templates:
             # get template object as dictionary
             hvac_zone_template_obj = test_epjson[zt]
@@ -803,13 +859,38 @@ def main(input_args):
                 print(template_zone_name)
                 option_tree = get_option_tree(zt, data)
                 energyplus_epjson_zone_object, build_path = perform_alternate_operations(
+                    connector_path='air',
                     option_tree=option_tree,
                     template_dictionary=zone_template_dictionary,
                     unique_name=zone_template_dictionary["zone_name"]
                 )
                 energyplus_epjson_zone_objects.append(energyplus_epjson_zone_object)
+                energyplus_zone_build_paths.append(build_path)
         print('zone object list')
         pprint(energyplus_epjson_zone_objects, width=150)
+        # plant system loop build
+        plant_templates = [i for i in test_epjson if re.match('HVACTemplate:Plant:.*Loop', i)]
+        for pt in plant_templates:
+            hvac_plant_template_obj = test_epjson[pt]
+            print(hvac_plant_template_obj)
+            for template_plant_name, plant_template_dictionary in hvac_plant_template_obj.items():
+                print('##### New Plant Template #####')
+                print('Plant Name')
+                print(template_plant_name)
+                # print(pt)
+                connector_path_rgx = re.match(r'^HVACTemplate:Plant:(.*)', pt)
+                option_tree = get_option_tree(pt, data)
+                energyplus_epjson_plant_object, build_path = perform_alternate_operations(
+                    connector_path=connector_path_rgx.group(1),
+                    option_tree=option_tree,
+                    template_dictionary=plant_template_dictionary,
+                    unique_name='ChilledWaterLoop',
+                    data=data
+                )
+                print('0000000000000')
+                # pprint(energyplus_epjson_plant_object, width=150)
+                print('00000000000000')
+                pprint(build_path, width=150)
     return
 
 

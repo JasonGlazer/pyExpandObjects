@@ -117,6 +117,8 @@ This object provides a structural hierarchy to the template expansion process.
   * Transitions - Mapping dictionary that transfers HVACTemplate inputs to objects (e.g. fan efficiency)
   * Connectors - System level supply and demand connectors.  The values can be expressed as a special 'complex value type'.  Please see the following section for further explanation.
 
+**Make note that text references to other HVACTemplate objects can happen for recursive builds**
+
 .. code-block:: yaml
 
   HVACTemplate:System:VAV:
