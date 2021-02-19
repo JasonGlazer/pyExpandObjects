@@ -120,6 +120,17 @@ test_epjson = {
             "nominal_cop": 3.2,
             "priority": "1"
         }
+    },
+    "HVACTemplate:Plant:Tower": {
+        "Main Tower": {
+            "free_convection_capacity": "Autosize",
+            "high_speed_fan_power": "Autosize",
+            "high_speed_nominal_capacity": "Autosize",
+            "low_speed_fan_power": "Autosize",
+            "low_speed_nominal_capacity": "Autosize",
+            "priority": "1",
+            "tower_type": "SingleSpeed"
+        }
     }
 }
 
@@ -435,12 +446,13 @@ def replace_objects(
     return build_path
 
 
-def perform_alternate_operations(
+def perform_build_operations(
         connector_path: str,
         option_tree: dict,
         template_dictionary: dict,
         unique_name: str,
         **kwargs):
+    energyplus_epjson_object = {}
     # capitalize connector path
     connector_path = connector_path[0].upper() + connector_path[1:]
     selected_template = option_tree['Base']
@@ -452,18 +464,19 @@ def perform_alternate_operations(
     # if so do a recursive build on that object, insert it into the original position, and then flatten the
     # build path again.
     for idx, energyplus_super_object in enumerate(build_path):
-        if isinstance(energyplus_super_object, str):
+        if isinstance(energyplus_super_object, str) and re.match('^HVACTemplate:.*', energyplus_super_object):
             # in this test program, we have to grab global objects, which are the yaml data and the
             # epjson object.  In production, these should be stored class attributes.
             sub_data = kwargs['data']
             sub_template_object = test_epjson[energyplus_super_object]
             for sub_object_name, sub_object_dictionary in sub_template_object.items():
                 sub_option_tree = get_option_tree(energyplus_super_object, sub_data)
-                sub_energyplus_epjson_plant_object, sub_build_path = perform_alternate_operations(
+                tmp_d, sub_build_path = perform_build_operations(
                     connector_path=connector_path,
                     option_tree=sub_option_tree,
                     template_dictionary=sub_object_dictionary,
-                    unique_name=sub_object_name
+                    unique_name=sub_object_name,
+                    **kwargs
                 )
             build_path[idx] = sub_build_path
             build_path = flatten_build_path(build_path)
@@ -534,20 +547,35 @@ def perform_alternate_operations(
         print('object {} - {}'.format(idx, energyplus_super_object))
     # Build a dictionary of valid epJSON objects from constructors
     # from build path
-    energyplus_epjson_object = build_epjson(
+    object_from_path = build_epjson(
         connector_path=connector_path,
         unique_name=unique_name,
         build_path=build_path
     )
+    for ao_key, ao_dictionary in object_from_path.items():
+        if not energyplus_epjson_object.get(ao_key):
+            energyplus_epjson_object[ao_key] = {}
+        for uname, fields in ao_dictionary.items():
+            if uname not in energyplus_epjson_object[ao_key].keys():
+                energyplus_epjson_object[ao_key][uname] = fields
     # build additional objects (e.g. Controllers)
     # these are stored in the option tree under AdditionalObjects
     # for standard objects, and AdditionalTemplateObjects for
     # template triggered objects
-    energyplus_epjson_object = build_additional_objects(
+    additional_objects = build_additional_objects(
         option_tree=option_tree,
+        connector_path=connector_path,
         energyplus_object_dictionary=energyplus_epjson_object,
-        unique_name=unique_name
+        unique_name=unique_name,
+        template_dictionary=template_dictionary,
+        **kwargs
     )
+    for ao_key, ao_dictionary in additional_objects.items():
+        if not energyplus_epjson_object.get(ao_key):
+            energyplus_epjson_object[ao_key] = {}
+        for uname, fields in ao_dictionary.items():
+            if uname not in energyplus_epjson_object[ao_key].keys():
+                energyplus_epjson_object[ao_key][uname] = fields
     return energyplus_epjson_object, build_path
 
 
@@ -754,7 +782,86 @@ def build_epjson(
     return epjson_object
 
 
-def build_additional_objects(option_tree: dict, energyplus_object_dictionary: dict, unique_name: str) -> dict:
+def process_additional_object_input(
+        object_or_template,
+        object_structure,
+        connector_path,
+        energyplus_object_dictionary,
+        unique_name,
+        **kwargs):
+    object_dictionary = {}
+    if not object_or_template.startswith('HVACTemplate'):
+        additional_object = {object_or_template: object_structure}
+        for additional_sub_object, additional_sub_object_fields in additional_object.items():
+            energyplus_object, tmp_d = build_energyplus_object_from_complex_inputs(
+                yaml_object={additional_sub_object: copy.deepcopy(additional_sub_object_fields)},
+                energyplus_object_dictionary=energyplus_object_dictionary,
+                unique_name_input=unique_name
+            )
+            if not object_dictionary.get(energyplus_object):
+                object_dictionary[energyplus_object] = {}
+            for object_name, object_fields in tmp_d.items():
+                if object_name in object_dictionary[energyplus_object].keys():
+                    print('unique name error')
+                    sys.exit()
+            object_dictionary[energyplus_object] = tmp_d
+    # if the object is just a string, it should be for an HVACTemplate OptionTree build.
+    # The key is the unique name modifier
+    elif object_or_template.startswith('HVACTemplate'):
+        # in this test program, we have to grab global objects, which are the yaml data and the
+        # epjson object.  In production, these should be stored class attributes.
+        sub_data = kwargs['data']
+        sub_template_object = test_epjson.get(object_or_template)
+        # some internal yaml templates are not accessible via EnergyPlus, so they will not have
+        # a json input
+        sub_option_tree = get_option_tree(object_or_template, sub_data)
+        if isinstance(sub_template_object, dict):
+            for sub_object_name, sub_object_dictionary in sub_template_object.items():
+                energyplus_epjson_objects, _ = perform_build_operations(
+                    connector_path=object_structure.get('ConnectorPath', connector_path),
+                    option_tree=sub_option_tree,
+                    template_dictionary=sub_object_dictionary,
+                    unique_name=object_structure['UniqueName'],
+                    data=sub_data
+                )
+                for energyplus_object, tmp_d in energyplus_epjson_objects.items():
+                    if not object_dictionary.get(energyplus_object):
+                        object_dictionary[energyplus_object] = {}
+                    for object_name, object_fields in tmp_d.items():
+                        if object_name in object_dictionary[energyplus_object].keys():
+                            print('unique name error')
+                            sys.exit()
+                    object_dictionary[energyplus_object] = tmp_d
+        else:
+            # for now, just specify the connector_path.  Will have to make a mapping dictionary later
+            energyplus_epjson_objects, _ = perform_build_operations(
+                connector_path=object_structure.get('ConnectorPath', connector_path),
+                option_tree=sub_option_tree,
+                template_dictionary={},
+                unique_name=object_structure['UniqueName'],
+                data=sub_data
+            )
+            for energyplus_object, tmp_d in energyplus_epjson_objects.items():
+                if not object_dictionary.get(energyplus_object):
+                    object_dictionary[energyplus_object] = {}
+                for object_name, object_fields in tmp_d.items():
+                    if object_name in object_dictionary[energyplus_object].keys():
+                        print('unique name error')
+                        sys.exit()
+                object_dictionary[energyplus_object] = tmp_d
+    else:
+        print('value was not additional object key nor an HVACTemplate string')
+        sys.exit()
+    return object_dictionary
+
+
+def build_additional_objects(
+        option_tree: dict,
+        energyplus_object_dictionary: dict,
+        connector_path: str,
+        unique_name: str,
+        template_dictionary: dict,
+        **kwargs) -> dict:
     """
     Build additional objects in option tree
 
@@ -763,23 +870,37 @@ def build_additional_objects(option_tree: dict, energyplus_object_dictionary: di
     :param unique_name: unique name string
     :return:
     """
+    object_dictionary = {}
     if option_tree.get('AdditionalObjects'):
-        for additional_object, additional_object_fields in option_tree['AdditionalObjects'].items():
-
-            energyplus_object, tmp_d = build_energyplus_object_from_complex_inputs(
-                yaml_object={additional_object: copy.deepcopy(additional_object_fields)},
+        # check if additional object iterator is a energyplus object key or an HVACTemplate object key.
+        for object_or_template, object_structure in option_tree['AdditionalObjects'].items():
+            object_dictionary = process_additional_object_input(
+                object_or_template=object_or_template,
+                object_structure=object_structure,
+                option_tree=option_tree,
+                connector_path=connector_path,
                 energyplus_object_dictionary=energyplus_object_dictionary,
-                unique_name_input=unique_name
+                unique_name=unique_name,
+                **kwargs
             )
-            if not energyplus_object_dictionary.get(energyplus_object):
-                energyplus_object_dictionary[energyplus_object] = {}
-            for object_name, object_fields in tmp_d.items():
-                if object_name in energyplus_object_dictionary[energyplus_object].keys():
-                    print('unique name error')
-                    sys.exit()
-            energyplus_object_dictionary[energyplus_object] = tmp_d
-    # Do optional template objects as well
-    return energyplus_object_dictionary
+    if option_tree.get('AdditionalTemplateObjects'):
+        for template_field, template_structure in option_tree['AdditionalTemplateObjects'].items():
+            for template_option, add_object_structure in template_structure.items():
+                if template_option == template_dictionary[template_field]:
+                    for object_or_template, object_structure in add_object_structure.items():
+                        object_dictionary = process_additional_object_input(
+                            object_or_template=object_or_template,
+                            object_structure=object_structure,
+                            option_tree=option_tree,
+                            connector_path=connector_path,
+                            energyplus_object_dictionary=energyplus_object_dictionary,
+                            unique_name=unique_name,
+                            **kwargs
+                        )
+    # print('rrrrrrrrrrrrrrr')
+    # pprint(energyplus_object_dictionary, width=150)
+    # sys.exit()
+    return object_dictionary
 
 # In this process note one import aspect. Specific field names are
 # rarely used, if at all.  Most of the structure comes from the yaml
@@ -797,17 +918,19 @@ def main(input_args):
         system_templates = [i for i in test_epjson if i.startswith('HVACTemplate:System')]
         # iterate over templates
         for st in system_templates:
+            continue
             # get template object as dictionary
             hvac_system_template_obj = test_epjson[st]
             for system_name, system_template_dictionary in hvac_system_template_obj.items():
                 print('System Name')
                 print(system_name)
                 option_tree = get_option_tree(st, data)
-                energyplus_epjson_object, build_path = perform_alternate_operations(
+                energyplus_epjson_object, build_path = perform_build_operations(
                     connector_path='air',
                     option_tree=option_tree,
                     template_dictionary=system_template_dictionary,
-                    unique_name=system_name
+                    unique_name=system_name,
+                    data=data
                 )
                 print('Energyplus epJSON objects')
                 pprint(energyplus_epjson_object, width=150)
@@ -843,7 +966,9 @@ def main(input_args):
                 energyplus_epjson_object[outdoor_air_node_list_object_type] = \
                     ['{} Outside Air Inlet'.format(system_name), ]
                 print('epJSON with Nodelist')
+                print('##### System Template Output #####')
                 pprint(energyplus_epjson_object, width=150)
+                pprint(build_path, width=150)
         # do zone builds in scope of the system build.  In production, these will be separate or child classes that
         # get system information when necessary.
         zone_templates = [i for i in test_epjson if i.startswith('HVACTemplate:Zone')]
@@ -854,16 +979,18 @@ def main(input_args):
             # get template object as dictionary
             hvac_zone_template_obj = test_epjson[zt]
             for template_zone_name, zone_template_dictionary in hvac_zone_template_obj.items():
+                continue
                 print('##### New Zone Template #####')
                 print('Zone Name')
                 print(template_zone_name)
                 option_tree = get_option_tree(zt, data)
-                energyplus_epjson_zone_object, build_path = perform_alternate_operations(
+                energyplus_epjson_zone_object, build_path = perform_build_operations(
                     connector_path='air',
                     option_tree=option_tree,
                     template_dictionary=zone_template_dictionary,
                     unique_name=zone_template_dictionary["zone_name"]
                 )
+                print('##### Zone Template Output #####')
                 energyplus_epjson_zone_objects.append(energyplus_epjson_zone_object)
                 energyplus_zone_build_paths.append(build_path)
         print('zone object list')
@@ -872,25 +999,23 @@ def main(input_args):
         plant_templates = [i for i in test_epjson if re.match('HVACTemplate:Plant:.*Loop', i)]
         for pt in plant_templates:
             hvac_plant_template_obj = test_epjson[pt]
-            print(hvac_plant_template_obj)
             for template_plant_name, plant_template_dictionary in hvac_plant_template_obj.items():
                 print('##### New Plant Template #####')
                 print('Plant Name')
                 print(template_plant_name)
-                # print(pt)
                 connector_path_rgx = re.match(r'^HVACTemplate:Plant:(.*)', pt)
                 option_tree = get_option_tree(pt, data)
-                energyplus_epjson_plant_object, build_path = perform_alternate_operations(
+                energyplus_epjson_plant_object, build_path = perform_build_operations(
                     connector_path=connector_path_rgx.group(1),
                     option_tree=option_tree,
                     template_dictionary=plant_template_dictionary,
                     unique_name='ChilledWaterLoop',
                     data=data
                 )
-                print('0000000000000')
+                print('##### New Plant Template Output #####')
                 pprint(energyplus_epjson_plant_object, width=150)
-                print('00000000000000')
-                pprint(build_path, width=150)
+                # pprint(build_path, width=150)
+                sys.exit()
     return
 
 
