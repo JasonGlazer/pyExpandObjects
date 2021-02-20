@@ -201,8 +201,6 @@ Chiller:
             name: '{} Demand Side Bypass Pipe'
             inlet_node_name: '{} Demand Bypass Inlet'
             outlet_node_name: '{} Demand Bypass Outlet'
-          Connectors:
-            <<: *PipeAdiabaticConnectors
 
 CoolingTower:
   SingleSpeed:

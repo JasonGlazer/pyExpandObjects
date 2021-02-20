@@ -446,16 +446,18 @@ def replace_objects(
     return build_path
 
 
-def perform_build_operations(
+def perform_build_path(
         connector_path: str,
         option_tree: dict,
         template_dictionary: dict,
         unique_name: str,
+        object_list=[],
         **kwargs):
-    energyplus_epjson_object = {}
     # capitalize connector path
     connector_path = connector_path[0].upper() + connector_path[1:]
     selected_template = option_tree['Base']
+    print('### selected template ###')
+    print(selected_template)
     # a side effect of the yaml structure is that nested lists are produced
     # so we need to flatten them.
     build_path = flatten_build_path(selected_template['BuildPath'])
@@ -471,11 +473,12 @@ def perform_build_operations(
             sub_template_object = test_epjson[energyplus_super_object]
             for sub_object_name, sub_object_dictionary in sub_template_object.items():
                 sub_option_tree = get_option_tree(energyplus_super_object, sub_data)
-                tmp_d, sub_build_path = perform_build_operations(
+                _, sub_build_path = perform_build_operations(
                     connector_path=connector_path,
                     option_tree=sub_option_tree,
                     template_dictionary=sub_object_dictionary,
                     unique_name=sub_object_name,
+                    objects_list=object_list,
                     **kwargs
                 )
             build_path[idx] = sub_build_path
@@ -542,6 +545,28 @@ def perform_build_operations(
         unique_name=unique_name,
         build_path=build_path
     )
+    return build_path
+
+global_obj_d = {}
+
+
+def perform_build_operations(
+        connector_path: str,
+        option_tree: dict,
+        template_dictionary: dict,
+        unique_name: str,
+        object_list: list = [],
+        **kwargs):
+    build_path = perform_build_path(
+        connector_path=connector_path,
+        option_tree=option_tree,
+        template_dictionary=template_dictionary,
+        unique_name=unique_name,
+        **kwargs
+    )
+    global global_obj_d
+    print('BuldPath complete')
+    print(build_path)
     print('post-variable rename path')
     for idx, energyplus_super_object in enumerate(build_path):
         print('object {} - {}'.format(idx, energyplus_super_object))
@@ -552,12 +577,13 @@ def perform_build_operations(
         unique_name=unique_name,
         build_path=build_path
     )
+    object_list.append(object_from_path)
     for ao_key, ao_dictionary in object_from_path.items():
-        if not energyplus_epjson_object.get(ao_key):
-            energyplus_epjson_object[ao_key] = {}
+        if not global_obj_d.get(ao_key):
+            global_obj_d[ao_key] = {}
         for uname, fields in ao_dictionary.items():
-            if uname not in energyplus_epjson_object[ao_key].keys():
-                energyplus_epjson_object[ao_key][uname] = fields
+            # if uname not in tmp_obj_d[ao_key].keys():
+            global_obj_d[ao_key][uname] = fields
     # build additional objects (e.g. Controllers)
     # these are stored in the option tree under AdditionalObjects
     # for standard objects, and AdditionalTemplateObjects for
@@ -565,18 +591,20 @@ def perform_build_operations(
     additional_objects = build_additional_objects(
         option_tree=option_tree,
         connector_path=connector_path,
-        energyplus_object_dictionary=energyplus_epjson_object,
+        energyplus_object_dictionary=global_obj_d,
         unique_name=unique_name,
         template_dictionary=template_dictionary,
         **kwargs
     )
+    object_list.append(additional_objects)
     for ao_key, ao_dictionary in additional_objects.items():
-        if not energyplus_epjson_object.get(ao_key):
-            energyplus_epjson_object[ao_key] = {}
+        if not global_obj_d.get(ao_key):
+            global_obj_d[ao_key] = {}
         for uname, fields in ao_dictionary.items():
-            if uname not in energyplus_epjson_object[ao_key].keys():
-                energyplus_epjson_object[ao_key][uname] = fields
-    return energyplus_epjson_object, build_path
+            if uname not in global_obj_d[ao_key].keys():
+                global_obj_d[ao_key][uname] = fields
+    # build global object dictionary
+    return global_obj_d, build_path
 
 
 def apply_transitions_to_objects(
@@ -756,29 +784,32 @@ def build_epjson(
                 print('non-unique object error')
                 sys.exit()
             unique_object_names.append(object_key)
-            if idx == 0:
-                epjson_object[energyplus_object_type][object_key] = object_values
-                out_node = energyplus_object_constructors['Connectors'][connector_path]['Outlet']
-                if isinstance(out_node, str) and '{}' in out_node:
-                    out_node_name = out_node.format(unique_name)
+            if energyplus_object_constructors.get('Connectors'):
+                if idx == 0:
+                    epjson_object[energyplus_object_type][object_key] = object_values
+                    out_node = energyplus_object_constructors['Connectors'][connector_path]['Outlet']
+                    if isinstance(out_node, str) and '{}' in out_node:
+                        out_node_name = out_node.format(unique_name)
+                    else:
+                        out_node_name = (
+                            energyplus_object_constructors['Fields']
+                            [energyplus_object_constructors['Connectors'][connector_path]['Outlet']]
+                        )
                 else:
-                    out_node_name = (
-                        energyplus_object_constructors['Fields']
-                        [energyplus_object_constructors['Connectors'][connector_path]['Outlet']]
-                    )
+                    object_values[
+                        energyplus_object_constructors['Connectors'][connector_path]['Inlet']
+                    ] = out_node_name
+                    epjson_object[energyplus_object_type][object_key] = object_values
+                    out_node = energyplus_object_constructors['Connectors'][connector_path]['Outlet']
+                    if isinstance(out_node, str) and '{}' in out_node:
+                        out_node_name = out_node.format(unique_name)
+                    else:
+                        out_node_name = (
+                            energyplus_object_constructors['Fields']
+                            [energyplus_object_constructors['Connectors'][connector_path]['Outlet']]
+                        )
             else:
-                object_values[
-                    energyplus_object_constructors['Connectors'][connector_path]['Inlet']
-                ] = out_node_name
                 epjson_object[energyplus_object_type][object_key] = object_values
-                out_node = energyplus_object_constructors['Connectors'][connector_path]['Outlet']
-                if isinstance(out_node, str) and '{}' in out_node:
-                    out_node_name = out_node.format(unique_name)
-                else:
-                    out_node_name = (
-                        energyplus_object_constructors['Fields']
-                        [energyplus_object_constructors['Connectors'][connector_path]['Outlet']]
-                    )
     return epjson_object
 
 
@@ -788,6 +819,7 @@ def process_additional_object_input(
         connector_path,
         energyplus_object_dictionary,
         unique_name,
+        object_list,
         **kwargs):
     object_dictionary = {}
     if not object_or_template.startswith('HVACTemplate'):
@@ -822,6 +854,7 @@ def process_additional_object_input(
                     option_tree=sub_option_tree,
                     template_dictionary=sub_object_dictionary,
                     unique_name=object_structure['UniqueName'],
+                    object_list=object_list,
                     data=sub_data
                 )
                 for energyplus_object, tmp_d in energyplus_epjson_objects.items():
@@ -839,6 +872,7 @@ def process_additional_object_input(
                 option_tree=sub_option_tree,
                 template_dictionary={},
                 unique_name=object_structure['UniqueName'],
+                object_list=object_list,
                 data=sub_data
             )
             for energyplus_object, tmp_d in energyplus_epjson_objects.items():
@@ -861,6 +895,7 @@ def build_additional_objects(
         connector_path: str,
         unique_name: str,
         template_dictionary: dict,
+        object_list=[],
         **kwargs) -> dict:
     """
     Build additional objects in option tree
@@ -880,6 +915,7 @@ def build_additional_objects(
                 option_tree=option_tree,
                 connector_path=connector_path,
                 energyplus_object_dictionary=energyplus_object_dictionary,
+                object_list=object_list,
                 unique_name=unique_name,
                 **kwargs
             )
@@ -894,12 +930,10 @@ def build_additional_objects(
                             option_tree=option_tree,
                             connector_path=connector_path,
                             energyplus_object_dictionary=energyplus_object_dictionary,
+                            object_list=object_list,
                             unique_name=unique_name,
                             **kwargs
                         )
-    # print('rrrrrrrrrrrrrrr')
-    # pprint(energyplus_object_dictionary, width=150)
-    # sys.exit()
     return object_dictionary
 
 # In this process note one import aspect. Specific field names are
@@ -968,7 +1002,7 @@ def main(input_args):
                 print('epJSON with Nodelist')
                 print('##### System Template Output #####')
                 pprint(energyplus_epjson_object, width=150)
-                pprint(build_path, width=150)
+                # pprint(build_path, width=150)
         # do zone builds in scope of the system build.  In production, these will be separate or child classes that
         # get system information when necessary.
         zone_templates = [i for i in test_epjson if i.startswith('HVACTemplate:Zone')]
