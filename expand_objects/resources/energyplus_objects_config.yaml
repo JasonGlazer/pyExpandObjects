@@ -342,8 +342,6 @@ OptionTree:
           ZoneHVAC:AirDistributionUnit:
             <<: *ZoneHVACAirDistributionUnit
         AdditionalTemplateObjects:
-          cooling_coil_type:
-            ChilledWater:
 
     System:
       VAV: # configuration to store options for altering a base build
@@ -369,9 +367,9 @@ OptionTree:
                   preheat_efficiency:
                     .*: efficiency # doesn't currently exist as an option, this is just an example. Use '.*' because it references only the current object.
         AdditionalObjects: # nested hvac template in AdditionalObjects.
-          HVACTemplate:Plant:CondenserWaterLoop: # just an example, doesn't make sense here
-            ConnectorPath: CondenserWaterLoop
-            UniqueName: 'Main CndW'  #Value is the unique name modifier
+#          HVACTemplate:Plant:CondenserWaterLoop: # just an example, doesn't make sense here
+#            ConnectorPath: CondenserWaterLoop
+#            UniqueName: 'Main CndW'  #Value is the unique name modifier
           SetpointManager:MixedAir:
             <<: *SetpointManagerMixedAir
 #            sample_additional_field: sample_transition_value
