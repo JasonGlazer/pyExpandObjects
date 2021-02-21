@@ -451,7 +451,6 @@ def perform_build_path(
         option_tree: dict,
         template_dictionary: dict,
         unique_name: str,
-        object_list=[],
         **kwargs):
     # capitalize connector path
     connector_path = connector_path[0].upper() + connector_path[1:]
@@ -478,7 +477,6 @@ def perform_build_path(
                     option_tree=sub_option_tree,
                     template_dictionary=sub_object_dictionary,
                     unique_name=sub_object_name,
-                    objects_list=object_list,
                     **kwargs
                 )
             build_path[idx] = sub_build_path
@@ -547,7 +545,34 @@ def perform_build_path(
     )
     return build_path
 
+
 global_obj_d = {}
+
+
+def merge_dictionaries(
+        super_dictionary,
+        object_dictionary,
+        unique_name_override=True):
+    """
+    Merge the global epJSON object dictionary with a sub-dictionary
+
+    :param super_dictionary:
+    :param object_dictionary:
+    :param unique_name_override:
+    :return:
+    """
+    for energyplus_object_type, tmp_d in object_dictionary.items():
+        if not super_dictionary.get(energyplus_object_type):
+            super_dictionary[energyplus_object_type] = {}
+        if isinstance(tmp_d, dict):
+            for object_name, object_fields in tmp_d.items():
+                if not unique_name_override and object_name in super_dictionary[energyplus_object_type].keys():
+                    print('unique name error')
+                    sys.exit()
+            super_dictionary[energyplus_object_type] = tmp_d
+        elif isinstance(tmp_d, list):
+            super_dictionary[energyplus_object_type] = tmp_d
+    return super_dictionary
 
 
 def perform_build_operations(
@@ -555,7 +580,6 @@ def perform_build_operations(
         option_tree: dict,
         template_dictionary: dict,
         unique_name: str,
-        object_list: list = [],
         **kwargs):
     build_path = perform_build_path(
         connector_path=connector_path,
@@ -577,13 +601,10 @@ def perform_build_operations(
         unique_name=unique_name,
         build_path=build_path
     )
-    object_list.append(object_from_path)
-    for ao_key, ao_dictionary in object_from_path.items():
-        if not global_obj_d.get(ao_key):
-            global_obj_d[ao_key] = {}
-        for uname, fields in ao_dictionary.items():
-            # if uname not in tmp_obj_d[ao_key].keys():
-            global_obj_d[ao_key][uname] = fields
+    merge_dictionaries(
+        super_dictionary=global_obj_d,
+        object_dictionary=object_from_path,
+        unique_name_override=True)
     # build additional objects (e.g. Controllers)
     # these are stored in the option tree under AdditionalObjects
     # for standard objects, and AdditionalTemplateObjects for
@@ -596,14 +617,10 @@ def perform_build_operations(
         template_dictionary=template_dictionary,
         **kwargs
     )
-    object_list.append(additional_objects)
-    for ao_key, ao_dictionary in additional_objects.items():
-        if not global_obj_d.get(ao_key):
-            global_obj_d[ao_key] = {}
-        for uname, fields in ao_dictionary.items():
-            if uname not in global_obj_d[ao_key].keys():
-                global_obj_d[ao_key][uname] = fields
-    # build global object dictionary
+    merge_dictionaries(
+        super_dictionary=global_obj_d,
+        object_dictionary=additional_objects,
+        unique_name_override=True)
     return global_obj_d, build_path
 
 
@@ -819,7 +836,6 @@ def process_additional_object_input(
         connector_path,
         energyplus_object_dictionary,
         unique_name,
-        object_list,
         **kwargs):
     object_dictionary = {}
     if not object_or_template.startswith('HVACTemplate'):
@@ -854,7 +870,6 @@ def process_additional_object_input(
                     option_tree=sub_option_tree,
                     template_dictionary=sub_object_dictionary,
                     unique_name=object_structure['UniqueName'],
-                    object_list=object_list,
                     data=sub_data
                 )
                 for energyplus_object, tmp_d in energyplus_epjson_objects.items():
@@ -872,17 +887,12 @@ def process_additional_object_input(
                 option_tree=sub_option_tree,
                 template_dictionary={},
                 unique_name=object_structure['UniqueName'],
-                object_list=object_list,
                 data=sub_data
             )
-            for energyplus_object, tmp_d in energyplus_epjson_objects.items():
-                if not object_dictionary.get(energyplus_object):
-                    object_dictionary[energyplus_object] = {}
-                for object_name, object_fields in tmp_d.items():
-                    if object_name in object_dictionary[energyplus_object].keys():
-                        print('unique name error')
-                        sys.exit()
-                object_dictionary[energyplus_object] = tmp_d
+            object_dictionary = merge_dictionaries(
+                super_dictionary=object_dictionary,
+                object_dictionary=energyplus_epjson_objects,
+                unique_name_override=False)
     else:
         print('value was not additional object key nor an HVACTemplate string')
         sys.exit()
@@ -895,7 +905,6 @@ def build_additional_objects(
         connector_path: str,
         unique_name: str,
         template_dictionary: dict,
-        object_list=[],
         **kwargs) -> dict:
     """
     Build additional objects in option tree
@@ -909,31 +918,38 @@ def build_additional_objects(
     if option_tree.get('AdditionalObjects'):
         # check if additional object iterator is a energyplus object key or an HVACTemplate object key.
         for object_or_template, object_structure in option_tree['AdditionalObjects'].items():
-            object_dictionary = process_additional_object_input(
+            sub_object_dictionary = process_additional_object_input(
                 object_or_template=object_or_template,
                 object_structure=object_structure,
                 option_tree=option_tree,
                 connector_path=connector_path,
                 energyplus_object_dictionary=energyplus_object_dictionary,
-                object_list=object_list,
                 unique_name=unique_name,
                 **kwargs
             )
+            object_dictionary = merge_dictionaries(
+                super_dictionary=object_dictionary,
+                object_dictionary=sub_object_dictionary,
+                unique_name_override=True)
     if option_tree.get('AdditionalTemplateObjects'):
         for template_field, template_structure in option_tree['AdditionalTemplateObjects'].items():
             for template_option, add_object_structure in template_structure.items():
                 if template_option == template_dictionary[template_field]:
+                    print(template_option)
                     for object_or_template, object_structure in add_object_structure.items():
-                        object_dictionary = process_additional_object_input(
+                        sub_object_dictionary = process_additional_object_input(
                             object_or_template=object_or_template,
                             object_structure=object_structure,
                             option_tree=option_tree,
                             connector_path=connector_path,
                             energyplus_object_dictionary=energyplus_object_dictionary,
-                            object_list=object_list,
                             unique_name=unique_name,
                             **kwargs
                         )
+                        object_dictionary = merge_dictionaries(
+                            super_dictionary=object_dictionary,
+                            object_dictionary=sub_object_dictionary,
+                            unique_name_override=True)
     return object_dictionary
 
 # In this process note one import aspect. Specific field names are
@@ -952,14 +968,14 @@ def main(input_args):
         system_templates = [i for i in test_epjson if i.startswith('HVACTemplate:System')]
         # iterate over templates
         for st in system_templates:
-            continue
+            # continue
             # get template object as dictionary
             hvac_system_template_obj = test_epjson[st]
             for system_name, system_template_dictionary in hvac_system_template_obj.items():
                 print('System Name')
                 print(system_name)
                 option_tree = get_option_tree(st, data)
-                energyplus_epjson_object, build_path = perform_build_operations(
+                energyplus_epjson_system_object, system_build_path = perform_build_operations(
                     connector_path='air',
                     option_tree=option_tree,
                     template_dictionary=system_template_dictionary,
@@ -967,18 +983,18 @@ def main(input_args):
                     data=data
                 )
                 print('Energyplus epJSON objects')
-                pprint(energyplus_epjson_object, width=150)
+                pprint(energyplus_epjson_system_object, width=150)
                 print('Supply Path outlet')
-                for energyplus_arguments in build_path[-1].values():
+                for energyplus_arguments in system_build_path[-1].values():
                     last_node = energyplus_arguments['Fields'][energyplus_arguments['Connectors']['Air']['Outlet']]
                 print(last_node)
                 print('Supply Path inlet')
                 selected_template = option_tree['Base']
                 (controller_reference_object_type, controller_reference_field_name), = \
                     selected_template['Connectors']['Supply']['Inlet'].items()
-                (energyplus_object_name, _), = energyplus_epjson_object[controller_reference_object_type].items()
+                (energyplus_object_name, _), = energyplus_epjson_system_object[controller_reference_object_type].items()
                 print(
-                    energyplus_epjson_object[controller_reference_object_type]
+                    energyplus_epjson_system_object[controller_reference_object_type]
                     [energyplus_object_name][controller_reference_field_name]
                 )
                 print('Demand Path inlet')
@@ -988,20 +1004,20 @@ def main(input_args):
                 # NodeLists, other controllers, etc. can be created based on logically parsing the epJSON object,
                 # the super object, the flattened path, or any combination of these objects
                 # OutdoorAir:Nodelist Example:
-                (energyplus_object_type, energyplus_object_constructors), = build_path[0].items()
+                (energyplus_object_type, energyplus_object_constructors), = system_build_path[0].items()
                 # rename the inlet node to current conventions
-                energyplus_epjson_object[energyplus_object_type][
+                energyplus_epjson_system_object[energyplus_object_type][
                     energyplus_object_constructors['Fields']['name']]['air_inlet_node_name'] = \
                     '{} Outside Air Inlet'.format(system_name)
                 # get the yaml object to construct
                 outdoor_air_node_list = copy.deepcopy(data['OutdoorAir:NodeList']['Base'])
                 # build object and add to dictionary
                 (outdoor_air_node_list_object_type, _), = outdoor_air_node_list.items()
-                energyplus_epjson_object[outdoor_air_node_list_object_type] = \
+                energyplus_epjson_system_object[outdoor_air_node_list_object_type] = \
                     ['{} Outside Air Inlet'.format(system_name), ]
                 print('epJSON with Nodelist')
                 print('##### System Template Output #####')
-                pprint(energyplus_epjson_object, width=150)
+                pprint(energyplus_epjson_system_object, width=150)
                 # pprint(build_path, width=150)
         # do zone builds in scope of the system build.  In production, these will be separate or child classes that
         # get system information when necessary.
@@ -1018,7 +1034,7 @@ def main(input_args):
                 print('Zone Name')
                 print(template_zone_name)
                 option_tree = get_option_tree(zt, data)
-                energyplus_epjson_zone_object, build_path = perform_build_operations(
+                energyplus_epjson_zone_object, zone_build_path = perform_build_operations(
                     connector_path='air',
                     option_tree=option_tree,
                     template_dictionary=zone_template_dictionary,
@@ -1026,7 +1042,7 @@ def main(input_args):
                 )
                 print('##### Zone Template Output #####')
                 energyplus_epjson_zone_objects.append(energyplus_epjson_zone_object)
-                energyplus_zone_build_paths.append(build_path)
+                energyplus_zone_build_paths.append(zone_build_path)
         print('zone object list')
         pprint(energyplus_epjson_zone_objects, width=150)
         # plant system loop build
@@ -1039,7 +1055,7 @@ def main(input_args):
                 print(template_plant_name)
                 connector_path_rgx = re.match(r'^HVACTemplate:Plant:(.*)', pt)
                 option_tree = get_option_tree(pt, data)
-                energyplus_epjson_plant_object, build_path = perform_build_operations(
+                energyplus_epjson_plant_object, plant_build_path = perform_build_operations(
                     connector_path=connector_path_rgx.group(1),
                     option_tree=option_tree,
                     template_dictionary=plant_template_dictionary,
@@ -1049,7 +1065,39 @@ def main(input_args):
                 print('##### New Plant Template Output #####')
                 pprint(energyplus_epjson_plant_object, width=150)
                 # pprint(build_path, width=150)
-                sys.exit()
+        # build branches
+        global_obj_d['Branch'] = {}
+        # collect all connector path keys to use as the key for each branch iteration
+        connectors_list = []
+        for build_object in system_build_path:
+            print('-----------')
+            for super_object in build_object.values():
+                connector_object = super_object.get('Connectors')
+                if connector_object:
+                    for connector_type in connector_object.keys():
+                        connectors_list.append(connector_type)
+        print(connectors_list)
+        print(system_build_path)
+        # iterate over build path for each connector type and build the branch
+        for connector_type in set(connectors_list):
+            print('--------------')
+            print(connector_type)
+            component_list = []
+            for build_object in system_build_path:
+                for object_type, super_object in build_object.items():
+                    # do I need to run a check that consecutive objects have inlet/outlet nodes?
+                    connector_object = super_object.get('Connectors')
+                    if connector_object:
+                        object_connector = connector_object.get(connector_type)
+                        if object_connector:
+                            component_dictionary = {
+                                'component_object_type': object_type,
+                                'component_object_name': super_object['Fields']['name'],
+                                'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
+                                'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
+                            component_list.append(component_dictionary)
+            global_obj_d['Branch'] = {connector_type: component_list}
+            pprint(global_obj_d['Branch'], width=150)
     return
 
 

@@ -174,24 +174,31 @@ This object outlines alternate build instructions based on user inputs to the HV
 
 **Miscellaneous**
 
-Various objects that can be built with complex input types or other mappings.
+Various objects, outside of the build path, also need to be created given certain system configurations and template options.  for these objects, `AdditionalObjects` or `AdditionalTemplateObjects` can be specified within the option tree.  Additionally, the transition from HVACTemplate input to object field value can be specified:
 
-  * controllers - Dictionary of Controller objects to use as and node locations for input values.  These objects will be created after the buildPath.
-  * setpointManagers - Dictionary of SetpointManager objects to use and node locations for input values.  These objects will be created after the buildPath.
-  * transitions - Dictionary of mappings from the template input variable name to the equipment variable name to be updated.
+  * AdditionalObjects - Group of objects to be created for the specified option tree build path.  This can reference regular objects and assign variables with 'complex inputs' (see below for details).  Additionally, the input value can reference HVACTemplate objects to be built in parallel to the current group.
+  * AdditionalTemplateObjects - Similar to AdditionalObjects, but will on be created if specific template values are selected.
+  * Transitions - Dictionary of mappings from the template input variable name to the equipment variable name to be updated.
 
 .. code-block:: yaml
 
-  Controllers:
-    OutdoorAir:
-      Base:
-        Controller:OutdoorAir:
-          name: '{} OA Controller'
-          relief_air_outlet_node_name:
-            OutdoorAir:M.*: relief_air_stream_node_name
-            Occurrence: 1
-          return_air_node_name:
-            OutdoorAir:Mixer: return_air_stream_node_name
+  OptionTree:
+    HVACTemplate:
+      ...:
+        ...:
+          AdditionalObjects: # nested hvac template in AdditionalObjects.
+            HVACTemplate:Plant:CondenserWaterLoop: # just an example, doesn't make sense here
+              ConnectorPath: CondenserWaterLoop
+              UniqueName: 'Main CndW'  #Value is the unique name modifier
+            SetpointManager:MixedAir:
+              <<: *SetpointManagerMixedAir
+              sample_additional_field: sample_transition_value
+            Controller:OutdoorAir:
+              <<: *ControllerOutdoorAir
+          AdditionalTemplateObjects: # template triggered objects
+            template_field:
+              template_choice:
+                object_groups:
 
 **Complex Value Type**
 
