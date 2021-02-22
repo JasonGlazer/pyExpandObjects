@@ -1,3 +1,12 @@
+Schedule:
+  Compact:
+    ALWAYS_VAL:
+      data:
+        - Through 12/31
+        - For AllDays
+        - Until 24:00
+        - '{:.1f}'
+
 # Base Objects
 OutdoorAir:NodeList:
   Base:
@@ -152,7 +161,7 @@ AirTerminal:
 
 Pipe:
   Adiabatic:
-    Base: &PipeAdiabatic
+    Base:
       Pipe:Adiabatic:
         Fields:
           name: '{} Pipe'

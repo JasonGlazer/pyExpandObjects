@@ -7,6 +7,8 @@ import sys
 import typing
 from pprint import pprint
 
+global_obj_d = {}
+
 test_epjson = {
     "HVACTemplate:System:VAV": {
         "VAV Sys 1": {
@@ -131,7 +133,14 @@ test_epjson = {
             "priority": "1",
             "tower_type": "SingleSpeed"
         }
-    }
+    },
+    "HVACTemplate:Thermostat": {
+        "All Zones": {
+            "constant_heating_setpoint": 12,
+            # "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
+            # "heating_setpoint_schedule_name": "Htg-SetP-Sch"
+        }
+    },
 }
 
 
@@ -546,9 +555,6 @@ def perform_build_path(
     return build_path
 
 
-global_obj_d = {}
-
-
 def merge_dictionaries(
         super_dictionary,
         object_dictionary,
@@ -956,7 +962,11 @@ def build_additional_objects(
     return object_dictionary
 
 
-def build_branches(epjson_dictionary, build_path, unique_name, connectors_to_build=['Air', 'ChilledWater', 'HotWater']):
+def build_branches(
+        epjson_dictionary,
+        build_path,
+        unique_name,
+        connectors_to_build=['Air', 'ChilledWaterLoop', 'HotWaterLoop']):
     """
     Build branches from build_paths
 
@@ -978,6 +988,8 @@ def build_branches(epjson_dictionary, build_path, unique_name, connectors_to_bui
                 for connector_type in connector_object.keys():
                     connectors_list.append(connector_type)
     connectors_set = set(connectors_to_build).intersection(set(connectors_list))
+    print(unique_name)
+    print(connectors_set)
     # iterate over build path for each connector type and build the branch
     for connector_type in connectors_set:
         component_list = []
@@ -1006,6 +1018,7 @@ def build_branches(epjson_dictionary, build_path, unique_name, connectors_to_bui
 
 
 def main(input_args):
+    global global_obj_d
     with open(input_args.yaml_file, 'r') as f:
         # get yaml data
         data = yaml.load(f, Loader=yaml.FullLoader)
@@ -1061,6 +1074,8 @@ def main(input_args):
         pprint(global_obj_d, width=150)
         # plant system loop build
         plant_templates = [i for i in test_epjson if re.match('HVACTemplate:Plant:.*Loop', i)]
+        energyplus_plant_build_paths = []
+        energyplus_plant_unique_names = []
         for pt in plant_templates:
             hvac_plant_template_obj = test_epjson[pt]
             for template_plant_name, plant_template_dictionary in hvac_plant_template_obj.items():
@@ -1073,12 +1088,97 @@ def main(input_args):
                     connector_path=connector_path_rgx.group(1),
                     option_tree=option_tree,
                     template_dictionary=plant_template_dictionary,
-                    unique_name='ChilledWaterLoop',
+                    unique_name=connector_path_rgx.group(1),
                     data=data
                 )
+                energyplus_plant_build_paths.append(plant_build_path)
+                energyplus_plant_unique_names.append(template_plant_name)
         print('##### New Plant Template Output #####')
         pprint(global_obj_d, width=150)
-        # pprint(build_path, width=150)
+        # build thermostats
+        thermostat_templates = [i for i in test_epjson if re.match('HVACTemplate:Thermostat', i)]
+        for tt in thermostat_templates:
+            hvac_thermostat_template_obj = test_epjson[tt]
+            for template_thermostat_name, thermostat_template_dictionary in hvac_thermostat_template_obj.items():
+                print('##### New Thermostat Template #####')
+                print('Thermostat Name')
+                # Do simple if-else statements to find the right thermostat type, then write it to an object dictionary.
+                has_heating_schedule = thermostat_template_dictionary.get('heating_setpoint_schedule_name')
+                constant_heating_setpoint = thermostat_template_dictionary.get('constant_heating_setpoint')
+                cooling_schedule = thermostat_template_dictionary.get('cooling_setpoint_schedule_name')
+                constant_cooling_setpoint = thermostat_template_dictionary.get('constant_cooling_setpoint')
+                # it's easier to just construct thermostats from if-else statements than to build an alternate
+                # yaml hierarchy.
+                # build constant setpoints into schedule.  make error if both type specified:
+                # make this a sub function to build default schedules.
+                # The default schedule names e.g. ALWAYS_ON, ALWAYS_65 can be written into the yaml
+                # and each field name can be scanned at the end and created if missing
+                if constant_heating_setpoint:
+                    if not has_heating_schedule:
+                        schedule_dictionary = {'Schedule:Compact': {}}
+                        always_temperature_object = copy.deepcopy(data['Schedule']['Compact']['ALWAYS_VAL'])
+                        for object_data, object_data_lines in always_temperature_object.items():
+                            formatted_data_lines = [
+                                float(i.format(thermostat_template_dictionary['constant_heating_setpoint']))
+                                if re.match(r'.*{.*}', i) else i
+                                for i in object_data_lines]
+                            schedule_dictionary['Schedule:Compact']['ALWAYS_{}'.format(constant_heating_setpoint)] = \
+                                formatted_data_lines
+                            global_obj_d = merge_dictionaries(
+                                super_dictionary=global_obj_d,
+                                object_dictionary=schedule_dictionary
+                            )
+                            heating_schedule = 'ALWAYS_{}'.format(constant_heating_setpoint)
+                elif constant_cooling_setpoint:
+                    if not cooling_schedule:
+                        schedule_dictionary = {'Schedule:Compact': {}}
+                        always_temperature_object = copy.deepcopy(data['Schedule']['Compact']['ALWAYS_VAL'])
+                        for object_data, object_data_lines in always_temperature_object.items():
+                            # format to a float if a number is inserted into text.
+                            formatted_data_lines = [
+                                float(i.format(thermostat_template_dictionary['constant_cooling_setpoint']))
+                                if re.match(r'.*{.*}', i) else i
+                                for i in object_data_lines]
+                            schedule_dictionary['Schedule:Compact']['ALWAYS_{}'.format(constant_cooling_setpoint)] = \
+                                formatted_data_lines
+                            global_obj_d = merge_dictionaries(
+                                super_dictionary=global_obj_d,
+                                object_dictionary=schedule_dictionary
+                            )
+                            cooling_schedule = 'ALWAYS_{}'.format(constant_cooling_setpoint)
+                    else:
+                        print('heating schedule error')
+                thermostat_object = {}
+                if heating_schedule and cooling_schedule:
+                    thermostat_object['ThermostatSetpointDualSetpoint'] = {}
+                    thermostat_object['ThermostatSetpointDualSetpoint'][template_thermostat_name] = {}
+                    thermostat_object['ThermostatSetpointDualSetpoint'][template_thermostat_name][
+                        'heating_setpoint_temperature_schedule_name'] = \
+                        heating_schedule
+                    thermostat_object['ThermostatSetpointDualSetpoint'][template_thermostat_name][
+                        'cooling_setpoint_temperature_schedule_name'] = \
+                        cooling_schedule
+                elif heating_schedule and not cooling_schedule:
+                    thermostat_object['ThermostatSetpointSingleHeating'] = {}
+                    thermostat_object['ThermostatSetpointSingleHeating'][template_thermostat_name] = {}
+                    thermostat_object['ThermostatSetpointSingleHeating'][template_thermostat_name][
+                        'setpoint_temperature_schedule_name'] = \
+                        heating_schedule
+                elif not heating_schedule and cooling_schedule:
+                    thermostat_object['ThermostatSetpointSingleCooling'] = {}
+                    thermostat_object['ThermostatSetpointSingleCooling'][template_thermostat_name] = {}
+                    thermostat_object['ThermostatSetpointSingleCooling'][template_thermostat_name][
+                        'setpoint_temperature_schedule_name'] = \
+                        cooling_schedule
+                # Now check if constant values are used:
+                else:
+                    print('thermostat error')
+                    sys.exit()
+                global_obj_d = merge_dictionaries(
+                    super_dictionary=global_obj_d,
+                    object_dictionary=thermostat_object)
+        pprint(global_obj_d, width=150)
+        sys.exit()
         # build system branches
         print('##### Branch Build #####')
         for sbp, unique_name in zip(energyplus_system_build_paths, energyplus_system_unique_names):
@@ -1086,13 +1186,17 @@ def main(input_args):
                 epjson_dictionary=global_obj_d,
                 build_path=sbp,
                 unique_name=unique_name)
-        print('-----------------')
         for zbp, unique_name in zip(energyplus_zone_build_paths, energyplus_zone_unique_names):
             build_branches(
                 epjson_dictionary=global_obj_d,
                 build_path=zbp,
                 unique_name=unique_name,
                 connectors_to_build=['HotWater', 'ChilledWater'])
+        for pbp, unique_name in zip(energyplus_plant_build_paths, energyplus_plant_unique_names):
+            build_branches(
+                epjson_dictionary=global_obj_d,
+                build_path=pbp,
+                unique_name=unique_name)
         pprint(global_obj_d['Branch'], width=150)
     return
 
