@@ -479,6 +479,7 @@ def perform_build_path(
             # epjson object.  In production, these should be stored class attributes.
             sub_data = kwargs['data']
             sub_template_object = test_epjson[energyplus_super_object]
+            sub_build_path = None
             for sub_object_name, sub_object_dictionary in sub_template_object.items():
                 sub_option_tree = get_option_tree(energyplus_super_object, sub_data)
                 _, sub_build_path = perform_build_operations(
@@ -575,9 +576,11 @@ def merge_dictionaries(
                 if not unique_name_override and object_name in super_dictionary[energyplus_object_type].keys():
                     print('unique name error')
                     sys.exit()
-            super_dictionary[energyplus_object_type] = tmp_d
+            for tmp_d_name, tmp_d_structure in tmp_d.items():
+                super_dictionary[energyplus_object_type][tmp_d_name] = tmp_d_structure
         elif isinstance(tmp_d, list):
-            super_dictionary[energyplus_object_type] = tmp_d
+            print('untested merge attmpet')
+            sys.exit()
     return super_dictionary
 
 
@@ -926,6 +929,8 @@ def build_additional_objects(
     if option_tree.get('AdditionalObjects'):
         # check if additional object iterator is a energyplus object key or an HVACTemplate object key.
         for object_or_template, object_structure in option_tree['AdditionalObjects'].items():
+            # check for transitions and pop them if present
+            transition_structure = object_structure.pop('Transitions', None)
             sub_object_dictionary = process_additional_object_input(
                 object_or_template=object_or_template,
                 object_structure=object_structure,
@@ -935,6 +940,14 @@ def build_additional_objects(
                 unique_name=unique_name,
                 **kwargs
             )
+            # apply transition fields
+            if transition_structure:
+                for sub_object_type, sub_object_structure in sub_object_dictionary.items():
+                    for sub_object_name, sub_object_fields in sub_object_structure.items():
+                        tmp_d = {}
+                        for template_field, object_field in transition_structure.items():
+                            tmp_d[object_field] = template_dictionary[template_field]
+                        sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
             object_dictionary = merge_dictionaries(
                 super_dictionary=object_dictionary,
                 object_dictionary=sub_object_dictionary,
@@ -942,8 +955,6 @@ def build_additional_objects(
     if option_tree.get('AdditionalTemplateObjects'):
         for template_field, template_structure in option_tree['AdditionalTemplateObjects'].items():
             for template_option, add_object_structure in template_structure.items():
-                print(template_option)
-                print(template_dictionary)
                 if template_option == template_dictionary[template_field]:
                     for object_or_template, object_structure in add_object_structure.items():
                         sub_object_dictionary = process_additional_object_input(
@@ -962,11 +973,145 @@ def build_additional_objects(
     return object_dictionary
 
 
+def build_compact_schedule(data, schedule_type, insert_values: typing.Union[int, str, list]):
+    """
+    Create compact schedule from specified yaml object and value
+    :return:
+    """
+    if not isinstance(insert_values, list):
+        insert_values = [insert_values, ]
+    schedule_object = {'Schedule:Compact': {}}
+    always_temperature_object = copy.deepcopy(data['Schedule']['Compact'][schedule_type])
+    formatted_data_lines = [
+        float(i.format(*insert_values))
+        if re.match(r'.*{.*}', i) else i
+        for i in always_temperature_object['data']]
+    schedule_object['Schedule:Compact'][always_temperature_object['name'].format(insert_values[0])] = \
+        formatted_data_lines
+    return schedule_object
+
+
+def build_thermostats(super_dictionary, template_dictionary, thermostat_name, **kwargs):
+    """
+    Create thermostat objects and associated equipment
+
+    :return:
+    """
+    # Do simple if-else statements to find the right thermostat type, then write it to an object dictionary.
+    # it's easier to just construct thermostats from if-else statements than to build an alternate
+    # yaml hierarchy.
+    thermostat_options_object = {
+        'heating_schedule': template_dictionary.get('heating_setpoint_schedule_name'),
+        'constant_heating_setpoint': template_dictionary.get('constant_heating_setpoint'),
+        'cooling_schedule': template_dictionary.get('cooling_setpoint_schedule_name'),
+        'constant_cooling_setpoint': template_dictionary.get('constant_cooling_setpoint')
+    }
+    for thermostat_type in ['heating', 'cooling']:
+        # build constant setpoints into schedule.  make error if both type specified:
+        if thermostat_options_object.get('constant_{}_setpoint'.format(thermostat_type)):
+            if not thermostat_options_object.get('{}_schedule'.format(thermostat_type)):
+                # make this a sub function to build default schedules.
+                # The default schedule names e.g. ALWAYS_ON, ALWAYS_65 can be written into the yaml
+                # and each field name can be scanned at the end and created if missing
+                schedule_object = build_compact_schedule(
+                    data=kwargs['data'],
+                    schedule_type='ALWAYS_VAL',
+                    insert_values=template_dictionary['constant_{}_setpoint'.format(thermostat_type)]
+                )
+                super_dictionary = merge_dictionaries(
+                    super_dictionary=super_dictionary,
+                    object_dictionary=schedule_object
+                )
+                thermostat_options_object['{}_schedule'.format(thermostat_type)] = \
+                    'ALWAYS_{}'.format(thermostat_options_object['constant_{}_setpoint'.format(thermostat_type)])
+            else:
+                print('schedule error')
+                sys.exit()
+    thermostat_object = {}
+    if thermostat_options_object.get('heating_schedule') and \
+            thermostat_options_object.get('cooling_schedule'):
+        thermostat_object['ThermostatSetpoint:DualSetpoint'] = {}
+        thermostat_object['ThermostatSetpoint:DualSetpoint'][thermostat_name] = {}
+        thermostat_object['ThermostatSetpoint:DualSetpoint'][thermostat_name][
+            'heating_setpoint_temperature_schedule_name'] = \
+            thermostat_options_object['heating_schedule']
+        thermostat_object['ThermostatSetpoint:DualSetpoint'][thermostat_name][
+            'cooling_setpoint_temperature_schedule_name'] = \
+            thermostat_options_object['cooling_schedule']
+    elif thermostat_options_object.get('heating_schedule') and not \
+            thermostat_options_object.get('cooling_schedule'):
+        thermostat_object['ThermostatSetpoint:SingleHeating'] = {}
+        thermostat_object['ThermostatSetpoint:SingleHeating'][thermostat_name] = {}
+        thermostat_object['ThermostatSetpoint:SingleHeating'][thermostat_name][
+            'setpoint_temperature_schedule_name'] = \
+            thermostat_options_object['heating_schedule']
+    elif not thermostat_options_object.get('heating_schedule') and \
+            thermostat_options_object.get('cooling_schedule'):
+        thermostat_object['ThermostatSetpoint:SingleCooling'] = {}
+        thermostat_object['ThermostatSetpoint:SingleCooling'][thermostat_name] = {}
+        thermostat_object['ThermostatSetpoint:SingleCooling'][thermostat_name][
+            'setpoint_temperature_schedule_name'] = \
+            thermostat_options_object['cooling_schedule']
+    else:
+        print('thermostat error')
+        sys.exit()
+    super_dictionary = merge_dictionaries(
+        super_dictionary=super_dictionary,
+        object_dictionary=thermostat_object)
+    # need to find ZoneControlThermostats with each thermostat name and update fields
+    # get thermostat name
+    tmp_schedule_dictionary = {}
+    tmp_super_dictionary = {}
+    for object_type, energyplus_object in super_dictionary.items():
+        if object_type == 'ZoneControl:Thermostat':
+            for object_name, object_fields in energyplus_object.items():
+                thermostat_name = energyplus_object[object_name]['control_1_name']
+                # get thermostat type
+                thermostats = {i: j for i, j in super_dictionary.items() if re.match(r'^ThermostatSetpoint', i)}
+                # iterate over thermostats looking for a name match
+                for thermostat_type, thermostat_structure in thermostats.items():
+                    for thermostat_search_name, thermostat_search_fields in thermostat_structure.items():
+                        # after a match is found, create an always available schedule and update the object
+                        # fields for the ZoenControl:Thermostat.  Save these as temp dictionaries to avoid
+                        # update a dictionary while iterating through it.
+                        if thermostat_search_name == thermostat_name:
+                            tmp_super_dictionary = copy.deepcopy(super_dictionary)
+                            tmp_schedule_dictionary = {}
+                            # todo_eo
+                            # Build out schedule for each thermostat type
+                            if re.match(r'.*SingleHeating$', thermostat_type):
+                                control_schedule = build_compact_schedule(
+                                    data=kwargs['data'],
+                                    schedule_type='ALWAYS_VAL',
+                                    insert_values=1
+                                )
+                                super_dictionary = merge_dictionaries(
+                                    super_dictionary=super_dictionary,
+                                    object_dictionary=control_schedule
+                                )
+                                tmp_super_dictionary[object_type][object_name]['control_1_object_type'] = \
+                                    thermostat_type
+                                (control_schedule_type, control_schedule_structure), = control_schedule.items()
+                                tmp_schedule_dictionary[control_schedule_type] = control_schedule_structure
+                                (control_schedule_name, _), = control_schedule_structure.items()
+                                tmp_super_dictionary[object_type][object_name]['control_type_schedule_name'] = \
+                                    control_schedule_name
+    super_dictionary = merge_dictionaries(
+        super_dictionary=super_dictionary,
+        object_dictionary=tmp_schedule_dictionary
+    )
+    super_dictionary = merge_dictionaries(
+        super_dictionary=super_dictionary,
+        object_dictionary=tmp_super_dictionary
+    )
+    return super_dictionary
+
+
 def build_branches(
         epjson_dictionary,
         build_path,
         unique_name,
-        connectors_to_build=['Air', 'ChilledWaterLoop', 'HotWaterLoop']):
+        connectors_to_build=('Air', 'ChilledWaterLoop', 'HotWaterLoop')):
     """
     Build branches from build_paths
 
@@ -981,15 +1126,12 @@ def build_branches(
     # collect all connector path keys to use as the key for each branch iteration
     connectors_list = []
     for build_object in build_path:
-        # print(build_object)
         for super_object in build_object.values():
             connector_object = super_object.get('Connectors')
             if connector_object:
                 for connector_type in connector_object.keys():
                     connectors_list.append(connector_type)
     connectors_set = set(connectors_to_build).intersection(set(connectors_list))
-    print(unique_name)
-    print(connectors_set)
     # iterate over build path for each connector type and build the branch
     for connector_type in connectors_set:
         component_list = []
@@ -1102,81 +1244,12 @@ def main(input_args):
             for template_thermostat_name, thermostat_template_dictionary in hvac_thermostat_template_obj.items():
                 print('##### New Thermostat Template #####')
                 print('Thermostat Name')
-                # Do simple if-else statements to find the right thermostat type, then write it to an object dictionary.
-                has_heating_schedule = thermostat_template_dictionary.get('heating_setpoint_schedule_name')
-                constant_heating_setpoint = thermostat_template_dictionary.get('constant_heating_setpoint')
-                cooling_schedule = thermostat_template_dictionary.get('cooling_setpoint_schedule_name')
-                constant_cooling_setpoint = thermostat_template_dictionary.get('constant_cooling_setpoint')
-                # it's easier to just construct thermostats from if-else statements than to build an alternate
-                # yaml hierarchy.
-                # build constant setpoints into schedule.  make error if both type specified:
-                # make this a sub function to build default schedules.
-                # The default schedule names e.g. ALWAYS_ON, ALWAYS_65 can be written into the yaml
-                # and each field name can be scanned at the end and created if missing
-                if constant_heating_setpoint:
-                    if not has_heating_schedule:
-                        schedule_dictionary = {'Schedule:Compact': {}}
-                        always_temperature_object = copy.deepcopy(data['Schedule']['Compact']['ALWAYS_VAL'])
-                        for object_data, object_data_lines in always_temperature_object.items():
-                            formatted_data_lines = [
-                                float(i.format(thermostat_template_dictionary['constant_heating_setpoint']))
-                                if re.match(r'.*{.*}', i) else i
-                                for i in object_data_lines]
-                            schedule_dictionary['Schedule:Compact']['ALWAYS_{}'.format(constant_heating_setpoint)] = \
-                                formatted_data_lines
-                            global_obj_d = merge_dictionaries(
-                                super_dictionary=global_obj_d,
-                                object_dictionary=schedule_dictionary
-                            )
-                            heating_schedule = 'ALWAYS_{}'.format(constant_heating_setpoint)
-                elif constant_cooling_setpoint:
-                    if not cooling_schedule:
-                        schedule_dictionary = {'Schedule:Compact': {}}
-                        always_temperature_object = copy.deepcopy(data['Schedule']['Compact']['ALWAYS_VAL'])
-                        for object_data, object_data_lines in always_temperature_object.items():
-                            # format to a float if a number is inserted into text.
-                            formatted_data_lines = [
-                                float(i.format(thermostat_template_dictionary['constant_cooling_setpoint']))
-                                if re.match(r'.*{.*}', i) else i
-                                for i in object_data_lines]
-                            schedule_dictionary['Schedule:Compact']['ALWAYS_{}'.format(constant_cooling_setpoint)] = \
-                                formatted_data_lines
-                            global_obj_d = merge_dictionaries(
-                                super_dictionary=global_obj_d,
-                                object_dictionary=schedule_dictionary
-                            )
-                            cooling_schedule = 'ALWAYS_{}'.format(constant_cooling_setpoint)
-                    else:
-                        print('heating schedule error')
-                thermostat_object = {}
-                if heating_schedule and cooling_schedule:
-                    thermostat_object['ThermostatSetpointDualSetpoint'] = {}
-                    thermostat_object['ThermostatSetpointDualSetpoint'][template_thermostat_name] = {}
-                    thermostat_object['ThermostatSetpointDualSetpoint'][template_thermostat_name][
-                        'heating_setpoint_temperature_schedule_name'] = \
-                        heating_schedule
-                    thermostat_object['ThermostatSetpointDualSetpoint'][template_thermostat_name][
-                        'cooling_setpoint_temperature_schedule_name'] = \
-                        cooling_schedule
-                elif heating_schedule and not cooling_schedule:
-                    thermostat_object['ThermostatSetpointSingleHeating'] = {}
-                    thermostat_object['ThermostatSetpointSingleHeating'][template_thermostat_name] = {}
-                    thermostat_object['ThermostatSetpointSingleHeating'][template_thermostat_name][
-                        'setpoint_temperature_schedule_name'] = \
-                        heating_schedule
-                elif not heating_schedule and cooling_schedule:
-                    thermostat_object['ThermostatSetpointSingleCooling'] = {}
-                    thermostat_object['ThermostatSetpointSingleCooling'][template_thermostat_name] = {}
-                    thermostat_object['ThermostatSetpointSingleCooling'][template_thermostat_name][
-                        'setpoint_temperature_schedule_name'] = \
-                        cooling_schedule
-                # Now check if constant values are used:
-                else:
-                    print('thermostat error')
-                    sys.exit()
-                global_obj_d = merge_dictionaries(
+                build_thermostats(
                     super_dictionary=global_obj_d,
-                    object_dictionary=thermostat_object)
+                    template_dictionary=thermostat_template_dictionary,
+                    thermostat_name=template_thermostat_name,
+                    data=data
+                )
         pprint(global_obj_d, width=150)
         sys.exit()
         # build system branches
@@ -1219,10 +1292,11 @@ if __name__ == "__main__":
 #############
 # Plant Loops
 #############
-# Supply side should be similar to the HVACTemplate system build
-# Demand side, loop through all objects in all air loops and set in a list.  Then, build loop for each object like
-# how zones are created.
-#######################
+
+#############
+# Thermostats
+# build out thermostat schedule for each type, see todo
+#############
 
 #################
 # Cleanup

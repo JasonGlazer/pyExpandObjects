@@ -1,6 +1,7 @@
 Schedule:
   Compact:
     ALWAYS_VAL:
+      name: 'ALWAYS_{}'
       data:
         - Through 12/31
         - For AllDays
@@ -257,13 +258,18 @@ Controller:
         return_air_node_name:
           OutdoorAir:Mixer: return_air_stream_node_name
 
+ZoneControl:
+  Thermostat:
+    Base: &ZoneControlThermostat
+        name: '{} Thermostat'
+
 # HVAC System Templates
 HVACTemplate:
   Zone:
     VAV: &HVACTemplateZoneVAV
       BuildPath:
         - *AirTerminalSingleDuctVAVReheat
-      Transition:
+      Transitions:
         supply_air_maximum_flow_rate:
           AirTerminal:.*: 'autosize'
       Connectors:
@@ -350,6 +356,11 @@ OptionTree:
         AdditionalObjects:
           ZoneHVAC:AirDistributionUnit:
             <<: *ZoneHVACAirDistributionUnit
+          ZoneControl:Thermostat:
+            <<: *ZoneControlThermostat
+            Transitions:
+              zone_name: zone_or_zone_list_name
+              template_thermostat_name: control_1_name
         AdditionalTemplateObjects:
 
     System:

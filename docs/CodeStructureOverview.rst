@@ -202,9 +202,16 @@ Various objects, outside of the build path, also need to be created given certai
 
 **Complex Value Type**
 
-These values can be expressed as either one of two types.
+These values can be expressed as one of three types.
 
 1. static value - Numeric or string.
+2. Template transition - This option transitions a template input to the object
+
+  * Required Sub-dictionary
+
+    * Key - template field name
+    * Value - object field name to apply template field name value
+
 2. Dictionary mapping :
 
   * Required Sub-dictionary
