@@ -725,11 +725,18 @@ def insert_objects(
                             replacement
                         )
                         # apply specific transitions
-                        new_object = apply_transitions_to_objects(
-                            transition_structure=insert_option_structure['Transitions'],
-                            template_dictionary=template_dictionary,
-                            build_path=new_object
-                        )
+                        transition_structure = insert_option_structure.pop('Transitions', None)
+                        if transition_structure:
+                            for sub_object_type, sub_object_structure in new_object.items():
+                                for sub_object_name, sub_object_fields in sub_object_structure.items():
+                                    # This is similar to the additional object method of inserting transitions
+                                    # however, the object here is a super object, not an additional object, so it
+                                    # has an extra level of Fields/Connectors.
+                                    # it could be refactored with an optional flag
+                                    if sub_object_name == 'Fields':
+                                        for sub_template_field, object_field in transition_structure.items():
+                                            new_object[sub_object_type][sub_object_name][object_field] = \
+                                                template_dictionary[sub_template_field]
                         build_path.insert(
                             insert_location,
                             new_object
@@ -945,8 +952,8 @@ def build_additional_objects(
                 for sub_object_type, sub_object_structure in sub_object_dictionary.items():
                     for sub_object_name, sub_object_fields in sub_object_structure.items():
                         tmp_d = {}
-                        for template_field, object_field in transition_structure.items():
-                            tmp_d[object_field] = template_dictionary[template_field]
+                        for sub_template_field, object_field in transition_structure.items():
+                            tmp_d[object_field] = template_dictionary[sub_template_field]
                         sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
             object_dictionary = merge_dictionaries(
                 super_dictionary=object_dictionary,
@@ -954,9 +961,13 @@ def build_additional_objects(
                 unique_name_override=True)
     if option_tree.get('AdditionalTemplateObjects'):
         for template_field, template_structure in option_tree['AdditionalTemplateObjects'].items():
+            print('00000000000000')
+            print(template_structure)
             for template_option, add_object_structure in template_structure.items():
                 if template_option == template_dictionary[template_field]:
                     for object_or_template, object_structure in add_object_structure.items():
+                        # check for transitions and pop them if present
+                        transition_structure = object_structure.pop('Transitions', None)
                         sub_object_dictionary = process_additional_object_input(
                             object_or_template=object_or_template,
                             object_structure=object_structure,
@@ -966,6 +977,14 @@ def build_additional_objects(
                             unique_name=unique_name,
                             **kwargs
                         )
+                        # apply transition fields
+                        if transition_structure:
+                            for sub_object_type, sub_object_structure in sub_object_dictionary.items():
+                                for sub_object_name, sub_object_fields in sub_object_structure.items():
+                                    tmp_d = {}
+                                    for sub_template_field, object_field in transition_structure.items():
+                                        tmp_d[object_field] = template_dictionary[sub_template_field]
+                                    sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
                         object_dictionary = merge_dictionaries(
                             super_dictionary=object_dictionary,
                             object_dictionary=sub_object_dictionary,
@@ -1058,10 +1077,12 @@ def build_thermostats(super_dictionary, template_dictionary, thermostat_name, **
     super_dictionary = merge_dictionaries(
         super_dictionary=super_dictionary,
         object_dictionary=thermostat_object)
-    # need to find ZoneControlThermostats with each thermostat name and update fields
+    # find ZoneControlThermostats with each thermostat name and update fields
     # get thermostat name
     tmp_schedule_dictionary = {}
-    tmp_super_dictionary = {}
+    # copy of super dictionary is necessary in case any transitions or other
+    # default values were applied to the objects before this process.
+    tmp_super_dictionary = copy.deepcopy(super_dictionary)
     for object_type, energyplus_object in super_dictionary.items():
         if object_type == 'ZoneControl:Thermostat':
             for object_name, object_fields in energyplus_object.items():
@@ -1072,30 +1093,48 @@ def build_thermostats(super_dictionary, template_dictionary, thermostat_name, **
                 for thermostat_type, thermostat_structure in thermostats.items():
                     for thermostat_search_name, thermostat_search_fields in thermostat_structure.items():
                         # after a match is found, create an always available schedule and update the object
-                        # fields for the ZoenControl:Thermostat.  Save these as temp dictionaries to avoid
-                        # update a dictionary while iterating through it.
+                        # fields for the ZoneControl:Thermostat.  Save these as temp dictionaries to avoid
+                        # updating a dictionary while iterating through itself.
                         if thermostat_search_name == thermostat_name:
-                            tmp_super_dictionary = copy.deepcopy(super_dictionary)
-                            tmp_schedule_dictionary = {}
-                            # todo_eo
-                            # Build out schedule for each thermostat type
                             if re.match(r'.*SingleHeating$', thermostat_type):
                                 control_schedule = build_compact_schedule(
                                     data=kwargs['data'],
                                     schedule_type='ALWAYS_VAL',
                                     insert_values=1
                                 )
-                                super_dictionary = merge_dictionaries(
-                                    super_dictionary=super_dictionary,
-                                    object_dictionary=control_schedule
+                            elif re.match(r'.*SingleCooling$', thermostat_type):
+                                control_schedule = build_compact_schedule(
+                                    data=kwargs['data'],
+                                    schedule_type='ALWAYS_VAL',
+                                    insert_values=2
                                 )
-                                tmp_super_dictionary[object_type][object_name]['control_1_object_type'] = \
-                                    thermostat_type
-                                (control_schedule_type, control_schedule_structure), = control_schedule.items()
-                                tmp_schedule_dictionary[control_schedule_type] = control_schedule_structure
-                                (control_schedule_name, _), = control_schedule_structure.items()
-                                tmp_super_dictionary[object_type][object_name]['control_type_schedule_name'] = \
-                                    control_schedule_name
+                            elif re.match(r'.*DualSetpoint$', thermostat_type):
+                                control_schedule = build_compact_schedule(
+                                    data=kwargs['data'],
+                                    schedule_type='ALWAYS_VAL',
+                                    insert_values=4
+                                )
+                            else:
+                                print('thermostat schedule error')
+                                sys.exit()
+                            # add new schedules to super dictionary
+                            super_dictionary = merge_dictionaries(
+                                super_dictionary=super_dictionary,
+                                object_dictionary=control_schedule
+                            )
+                            # populate new object fields and add to temporary dictionaries
+                            (control_schedule_type, control_schedule_structure), = control_schedule.items()
+                            tmp_schedule_dictionary[control_schedule_type] = control_schedule_structure
+                            (control_schedule_name, _), = control_schedule_structure.items()
+                            if not tmp_super_dictionary.get(object_type):
+                                tmp_super_dictionary[object_type] = {object_name: {}}
+                            if not tmp_super_dictionary[object_type].get(object_name):
+                                tmp_super_dictionary[object_type][object_name] = {}
+                            tmp_super_dictionary[object_type][object_name]['control_1_object_type'] = \
+                                thermostat_type
+                            tmp_super_dictionary[object_type][object_name]['control_type_schedule_name'] = \
+                                control_schedule_name
+    # update super dictionary with new objects
     super_dictionary = merge_dictionaries(
         super_dictionary=super_dictionary,
         object_dictionary=tmp_schedule_dictionary
@@ -1295,11 +1334,19 @@ if __name__ == "__main__":
 
 #############
 # Thermostats
-# build out thermostat schedule for each type, see todo
 #############
 
 #################
 # Cleanup
 # Input all necessary fields into yaml for energyplus objects
 # build out all necessary additional equipment
+# change anchor scheme to be consistent
 #################
+
+################
+# Additional
+# Change all string comparisons to be case insensitive
+# Check references to non-standard inputs referenced in Input Output Reference
+# e.g. HVACTemplate:Plant:Chiller:ObjectReference and make sure these are handled
+# similarly.  If they need to differ, then include it in the NFP.
+###############

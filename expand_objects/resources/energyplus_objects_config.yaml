@@ -29,8 +29,8 @@ OutdoorAir:Mixer: # structure might be unnecessary but is being used for example
     Air:
       Inlet: outdoor_air_stream_node_name
       Outlet: mixed_air_node_name
-  Base: &OutdoorAirMixerBase
-    OutdoorAir:Mixer:
+  Base:
+    OutdoorAir:Mixer: &OutdoorAirMixer
       Fields:
         << : *OutdoorAirMixerFields
       Connectors:
@@ -39,65 +39,65 @@ OutdoorAir:Mixer: # structure might be unnecessary but is being used for example
 Coil:
   Cooling:
     Water:
-      Fields: &CoilsCoolingFields
+      Fields: &CoilCoolingFields
         name: '{} Cooling Coil'
         air_inlet_node_name: '{} Cooling Coil Inlet'
         air_outlet_node_name: '{} Cooling Coil Outlet'
         water_inlet_node_name: '{} Cooling Coil Chw Inlet'
         water_outlet_node_name: '{} Cooling Coil Chw Outlet'
-      Connectors: &CoilsCoolingConnectors
+      Connectors: &CoilCoolingConnectors
         Air:
           Inlet: air_inlet_node_name
           Outlet: air_outlet_node_name
         ChilledWaterLoop:
           Inlet: water_inlet_node_name
           Outlet: water_outlet_node_name
-      Base: &CoilsCoolingWaterBase
+      Base: &CoilCoolingWaterBase
         Coil:Cooling:Water:
           Fields:
-            << : *CoilsCoolingFields
+            << : *CoilCoolingFields
           Connectors:
-            << : *CoilsCoolingConnectors
+            << : *CoilCoolingConnectors
       DetailedGeometry:
         Coil:Cooling:Water:DetailedGeometry:
           Fields:
-            << : *CoilsCoolingFields
+            << : *CoilCoolingFields
           Connectors:
-            << : *CoilsCoolingConnectors
+            << : *CoilCoolingConnectors
   Heating:
-    Fields: &CoilsHeatingFields
+    Fields: &CoilHeatingFields
       name: '{} Heating Coil'
       air_inlet_node_name: '{} Heating Coil Inlet'
       air_outlet_node_name: '{} Heating Coil Outlet'
-    Connectors: &CoilsHeatingConnectors
+    Connectors: &CoilHeatingConnectors
       Air:
         Inlet: air_inlet_node_name
         Outlet: air_outlet_node_name
     Electric:
       Fields:
       Connectors:
-      Base: &CoilsHeatingElectricBase
-        Coil:Heating:Electric:
+      Base:
+        Coil:Heating:Electric: &CoilHeatingElectricBase
           Fields:
-            <<: *CoilsHeatingFields
+            <<: *CoilHeatingFields
           Connectors:
-            <<: *CoilsHeatingConnectors
+            <<: *CoilHeatingConnectors
     Water:
-      Fields: &CoilsHeatingWaterFields
-        << : *CoilsHeatingFields
+      Fields: &CoilHeatingWaterFields
+        << : *CoilHeatingFields
         water_inlet_node_name: '{} Heating Coil Hw Inlet'
         water_outlet_node_name: '{} Heating Coil Hw Outlet'
-      Connectors: &CoilsHeatingWaterConnectors
-        << : *CoilsHeatingConnectors
+      Connectors: &CoilHeatingWaterConnectors
+        << : *CoilHeatingConnectors
         HotWater:
           Inlet: water_inlet_node_name
           Outlet: water_outlet_node_name
-      Base: &CoilsHeatingWaterBase
+      Base: &CoilHeatingWaterBase
         Coil:Heating:Water:
           Fields:
-            <<: *CoilsHeatingWaterFields
+            <<: *CoilHeatingWaterFields
           Connectors:
-            <<: *CoilsHeatingWaterConnectors
+            <<: *CoilHeatingWaterConnectors
 
 Fan:
   Fields: &FanFields # example of default inputs, but i'm not sure if it's necessary.
@@ -139,7 +139,7 @@ AirTerminal:
                 Outlet: air_outlet_node_name
           Coil:Heating:Water:
             Fields:
-              <<: *CoilsHeatingWaterFields
+              <<: *CoilHeatingWaterFields
               air_inlet_node_name: '{} Damper Outlet' # keys can be overridden like this
               air_outlet_node_name: '{} Supply Inlet'
             Connectors:
@@ -228,9 +228,9 @@ CoolingTower:
 
 # common sub-system components.  Mostly used to reduce redundant code
 SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
-  - << : *OutdoorAirMixerBase
-  - << : *CoilsCoolingWaterBase
-  - << : *CoilsHeatingWaterBase
+  - OutdoorAir:Mixer: *OutdoorAirMixer
+  - << : *CoilCoolingWaterBase
+  - << : *CoilHeatingWaterBase
   - << : *FanVariableVolumeBase
 
 SetpointManagers:
@@ -261,7 +261,12 @@ Controller:
 ZoneControl:
   Thermostat:
     Base: &ZoneControlThermostat
-        name: '{} Thermostat'
+      name: '{} Thermostat'
+
+DesignSpecification:
+  OutdoorAir:
+    Base: &DesignSpecificationOutdoorAir
+      name: '{} SZ DSOA'
 
 # HVAC System Templates
 HVACTemplate:
@@ -345,7 +350,7 @@ OptionTree:
                 Object:
                   Coil:Heating:Electric:
                     Fields:
-                      <<: *CoilsHeatingFields
+                      <<: *CoilHeatingFields
                       air_inlet_node_name: '{} Damper Outlet'
                       air_outlet_node_name: '{} Supply Inlet'
                     Connectors:
@@ -362,7 +367,13 @@ OptionTree:
               zone_name: zone_or_zone_list_name
               template_thermostat_name: control_1_name
         AdditionalTemplateObjects:
-
+          outdoor_air_method:
+            Flow/Person:
+              DesignSpecification:OutdoorAir:
+                <<: *DesignSpecificationOutdoorAir
+                Transitions:
+                  outdoor_air_method: outdoor_air_method
+                  outdoor_air_flow_rate_per_person: outdoor_air_flow_per_person
     System:
       VAV: # configuration to store options for altering a base build
         Base: *HVACTemplateSystemVAV
@@ -373,7 +384,8 @@ OptionTree:
             Electric:
               ^Coil:Heating:.*:
                 Occurrence: 1
-                Object: *CoilsHeatingElectricBase # anchor/map reference to coil
+                Object:
+                  Coil:Heating:Electric: *CoilHeatingElectricBase # anchor/map reference to coil
                 FieldNameReplacement: '{} Electric'
         InsertElements: # Insert element before or after another element
           preheat_coil_type:
@@ -381,11 +393,11 @@ OptionTree:
               OutdoorAir:M.*:
                 Location: Before
                 Occurrence: 1
-                Object: *CoilsHeatingElectricBase
+                Object:
+                  Coil:Heating:Electric: *CoilHeatingElectricBase
                 FieldNameReplacement: '{} Preheat Electric'
                 Transitions: # transition template variable to this specific inserted object {template_field_name: object_field_name}
-                  preheat_efficiency:
-                    .*: efficiency # doesn't currently exist as an option, this is just an example. Use '.*' because it references only the current object.
+                  preheat_efficiency: efficiency # doesn't currently exist as an option, this is just an example. Use '.*' because it references only the current object.
         AdditionalObjects: # nested hvac template in AdditionalObjects.
 #          HVACTemplate:Plant:CondenserWaterLoop: # just an example, doesn't make sense here
 #            ConnectorPath: CondenserWaterLoop
