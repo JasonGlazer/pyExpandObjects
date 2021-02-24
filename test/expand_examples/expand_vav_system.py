@@ -239,7 +239,7 @@ def build_energyplus_object_from_complex_inputs(
                 # if 'self' is used as the reference node, just return the energyplus object type
                 # break the loop to prevent un-hashable entries
                 if re.match(reference_object_type, object_type):
-                    if reference_node == 'self':
+                    if reference_node.lower() == 'self':
                         tmp_d[reference_field_name] = object_type
                         continue
                     count_matches += 1
@@ -1340,7 +1340,6 @@ if __name__ == "__main__":
 # Cleanup
 # Input all necessary fields into yaml for energyplus objects
 # build out all necessary additional equipment
-# change anchor scheme to be consistent
 #################
 
 ################
