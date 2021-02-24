@@ -4,7 +4,8 @@ Create HVACTemplate and ExpandObjects Support for epJSON files
 **John Grando, GARD Analytics**
 
  - Original Date: February 11, 2021
- - Revision Date: None (original date)
+ - Revision Date:  
+   - February 23, 2021
 
 ## Justification for New Feature ##
 
@@ -12,7 +13,9 @@ The addition of epJSON as an input file is impacting current workflows which rel
 
 ## E-mail and  Conference Call Conclusions ##
 
-N/A
+February 23, 2021:  
+  - The ability to turn off schema validation is a contested feature.  Some believe that users should not be passing epJSON incompatible files through the pipeline at all, while others argue that schema validation occurs anyways during pre-simulation and turning it off in pyExpandObjects could provide a performance boost for high performance computing instances.  It was decided to leave this option but with the default set to validate schemas. 
+  - There was unanimous support for changing the expanded file naming scheme from <original-file-name>.expepJSON to <original-file-name>_expanded.epJSON.
 
 ## Overview ##
 
@@ -42,7 +45,7 @@ Python's built-in unittest package will be used in conjunction with external pac
 ***10.2.1 Introduction***  
 *Much like the ExpandObjects program in Section 10.1, the pyExpandObjects expands HVACTemplate objects from an input epJSON file into an expanded file that can be directly run in EnergyPlus.  However, pyExpandObjects does not process GroundHeatTransfer objects or provide support for the Slab or Basement executables.*  
 
-*The pyExpandObjects program works as a preprocessor that maps HVACTemplate objects to regular objects in EnergyPlus.  This processor reads an **epJSON** file and generates and expanded **expepJSON** file.  No further pre-processing should be required after the conversion has been performed.  Unlike ExpandObjects (10.1), a schema validation does occur when the file is read into the program, and error messages will be shown in the usual EnergyPlus error file.  By default, an invalid epJSON file will stop the program, but this requirement can be removed via command line options.  Please see the [documentation](https://epjson-expandobjects.readthedocs.io/en/latest/?badge=latest) or '--help' command line option for further details.  By default, only an expanded file (expepJSON) is produced as an output, which has the same name as the original file. If the '--backup' option is used in the command line, then a file containing only the HVACTemplate objects ("\<original-file-name\>_hvac_templates.epJSON"), and a file containing all other objects ("\<original-file-name\>_base.epJSON") will also be output.  The pyExpandObjects program can recreate the input file by merging the hvac_templates.epJSON and base.epJSON files.  Please refer to the documentation for further details.*
+*The pyExpandObjects program works as a preprocessor that maps HVACTemplate objects to regular objects in EnergyPlus.  This processor reads an epJSON file and generates and expanded epJSON file.  No further pre-processing should be required after the conversion has been performed.  Unlike ExpandObjects (10.1), a schema validation does occur when the file is read into the program, and error messages will be shown in the usual EnergyPlus error file.  By default, an invalid epJSON file will stop the program, but this requirement can be removed via command line options.  Please see the [documentation](https://epjson-expandobjects.readthedocs.io/en/latest/?badge=latest) or '--help' command line option for further details.  Additionally, the default settings only produce an expanded file with an adjusted name ("\<original-file-name\>_expanded.epJSON"). If the '--backup' option is used in the command line, then a file containing only the HVACTemplate objects ("\<original-file-name\>_hvac_templates.epJSON"), and a file containing all other objects ("\<original-file-name\>_base.epJSON") will also be output.*
 
 **10.2.2 HVAC Template Objects Processed**  
 All HVACTemplate objects supported by the ExpandObjects program are supported in pyExpandObjects.  Please refer to section 10.1.2 for further details.
@@ -73,12 +76,12 @@ RunEPlus.bat, this preprocessor step is performed automatically using *one of th
 
 ***epJSON Files***
 1. *The preprocessor program, pyExpandObjects, reads your IDF file, verifies it meets the current schema requirements, and converts all the HVACTemplate objects into other EnergyPlus objects.*
-2. *The pyExpandObjects program writes one to three new files*  
-  a. *A file with the extension “expepJSON”. This “expepJSON” file may be used as a standard EnergyPlus epJSON file if the extension is changed to epJSON; however, for safety’s sake, both filename and extension should be changed.  Note, the HVACTemplate objects will be completely removed from the expepJSON file, so ensure to save a copy of the original file before overwriting!*  
-  b. *Optional - A file with the name "\<original-file-name\>_hvac_templates.epJSON" which has all the HVACTemplate objects from the input file.*  
+2. *The pyExpandObjects program writes one to three new files.  
+   a. *A renamed file with the naming format "\<original-file-name\>_expanded.epJSON". This “expanded” file may be used as a standard EnergyPlus epJSON file if the extension is changed to epJSON; however, for safety’s sake, both filename and extension should be changed.  Note, the HVACTemplate objects will be completely removed from the expanded file, so ensure to save a copy of the original file before overwriting!*  
+   b. *Optional - A file with the name "\<original-file-name\>_hvac_templates.epJSON" which has all the HVACTemplate objects from the input file.*  
   c. *Optional - A file with the name "\<original-file-name\>_base.epJSON" which has all the HVACTemplate objects removed.*
-3. *The EnergyPlus simulation proceeds using the expepJSON file as the input stream.*
-4. *If there are error messages from EnergyPlus, they will refer to the contents of the expepJSON file. Specific objects referred to in error messages may exist in the original epJSON, but they may be objects created by pyExpandObjects and only exist in the expepJSON. Remember that the expepJSON, "\<original-file-name\>_hvac_templates.epJSON", and "\<original-file-name\>_base.epJSON" files will be overwritten everytime the original epJSON is run using EP-Launch or RunEPlus.bat.  Also note, the "\<original-file-name\>_hvac_templates.epJSON" and "\<original-file-name\>_base.epJSON" files can be merged to recreate the original epJSON file.*
+3. *The EnergyPlus simulation proceeds using the expanded file as the input stream.*
+4. *If there are error messages from EnergyPlus, they will refer to the contents of the expanded file. Specific objects referred to in error messages may exist in the original epJSON, but they may be objects created by pyExpandObjects and only exist in the expanded file. Remember that the "\<original-file-name\>_expanded.epJSON", "\<original-file-name\>_hvac_templates.epJSON", and "\<original-file-name\>_base.epJSON" files will be overwritten everytime the original epJSON is run using EP-Launch or RunEPlus.bat.  Also note, the "\<original-file-name\>_hvac_templates.epJSON" and "\<original-file-name\>_base.epJSON" files can be merged to recreate the original epJSON file.*
 
 If you are trying to go beyond the capabilities of the HVACTemplate objects, one strategy you can use is to start your specification using the HVACTemplate objects, run EnergyPlus using EP-Launch and producing an expidf *or epJSON* file, rename that file and start making modifications. This approach may help with getting all of the objects needed and the node names set consistently.  Users need to remember that no objects related to HVAC except for HVAC template objects are needed in the IDF */ epJSON* file. The existence of other objects (unless specifically described in the following sections) may cause unexpected errors to occur. Sizing:Zone, Sizing:System, and Sizing:Plant objects will be generated by the corresponding HVACTemplate objects; the user does not need to create these elsewhere in the input file. There are some exceptions to this rule:  
 - HVACTemplate:Plant:Chiller:ObjectReference which requires that the corresponding chiller object be present in the idf */ epJSON* file along with any required curve or performance objects. In this case, the HVACTemplate object does not create the chiller object, but adds all of the connections. HVACTemplate:Plant:Tower:ObjectReference and HVACTemplate:Plant:Boiler;ObjectReferences are similar.  
@@ -108,13 +111,13 @@ present in the idf */ epJSON* file.
 -xb --output-backups     Output separated epJSON  
 ```
 
-*It is not possible to comment sections of code in JSON formatted files.  Therefore, expepJSON files do not have the ability to retain the HVACTemplate objects used to create the current document.  If the original file were to be overwritten, then all template data would be lost.  In an attempt to provide and additional layer of backups, this option will output two files: one with HVACTemplate objects, and one with all other objects.  With these files, the original input file can be created, or specific objects can be copied and pasted.*
+*It is not possible to comment sections of code in JSON formatted files.  Therefore, the output expanded files do not have the ability to retain the HVACTemplate objects used to create the current document.  If the original file were to be overwritten, then all template data would be lost.  In an attempt to provide and additional layer of backups, this option will output two files: one with HVACTemplate objects, and one with all other objects.  With these files, the original input file can be created, or specific objects can be copied and pasted.*
 
 ```
 -ns --no-schema     Skip all schema validation checks
 ```
 
-*One benefit of the JSON file format is that files can be validated before simulation.  This means that erroneous inputs can be found before simulation, which saves time debugging output files and reading through logs, unsure of the error source.  This includes syntax errors, values that are out of range, and missing required inputs.  However, situations may occur when the user wishes to skip schema validation, in which case this flag should be used.*
+*One benefit of the JSON file format is that files can be validated before simulation.  This means that erroneous inputs can be found before simulation, which saves time debugging output files and reading through logs, unsure of the error source.  This includes syntax errors, values that are out of range, and missing required inputs.  However, situations may occur when the user wishes to skip schema validation, in which case this flag should be used.  By default, schema validation is enabled.*
 
 ***2.1.2.2 ExpandObjects***
 
@@ -151,7 +154,7 @@ To implement the features described above, the following will be done:
 - Create a testing suite consisting of all HVACTemplate objects to verify outputs.
 - Create ExpandObjects file conversion process.
   - Outputs:
-    - "\<original-file-name\>.expepJSON" - Expanded epJSON file
+    - "\<original-file-name\>_expanded.epJSON" - Expanded epJSON file
     - "\<original-file-name\>_hvac_templates.epJSON" - File containing HVACTemplate objects (optional output)
     - "\<original-file-name\>_base.epJSON" - Original file without HVACTemplate objects (optional output)
 - Test and refactor code based on findings from above item.
