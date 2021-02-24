@@ -238,7 +238,7 @@ def build_energyplus_object_from_complex_inputs(
             for object_type in energyplus_object_dictionary.keys():
                 # if 'self' is used as the reference node, just return the energyplus object type
                 # break the loop to prevent un-hashable entries
-                if re.match(reference_object_type, object_type):
+                if re.match(reference_object_type, object_type, re.IGNORECASE):
                     if reference_node.lower() == 'self':
                         tmp_d[reference_field_name] = object_type
                         continue
@@ -247,7 +247,7 @@ def build_energyplus_object_from_complex_inputs(
                         (energyplus_object_name, _), = energyplus_object_dictionary[object_type].items()
                         # if 'key' is used as the reference node, just get the unique object name
                         # e.g. {object_type: {unique_object_name: object_fields}
-                        if reference_node == 'key':
+                        if reference_node.lower() == 'key':
                             tmp_d[reference_field_name] = energyplus_object_name
                         else:
                             tmp_d[reference_field_name] = \
@@ -267,7 +267,7 @@ def get_option_tree(template_name: str, data: dict) -> dict:
     :param data: yaml data in dictionary form
     :return: Dictionary of alternate build instructions
     """
-    template_parse_regex = re.compile(r'HVACTemplate:(.*):(.*)')
+    template_parse_regex = re.compile(r'HVACTemplate:(.*):(.*)', re.IGNORECASE)
     template_classes = re.match(template_parse_regex, template_name)
     # whenever getting values that you might edit later, use copy.deepcopy()
     # so a new dictionary is created; otherwise, every time you call that
@@ -389,7 +389,7 @@ def remove_objects(
         remove_at_occurrence = remove_option_structure.get('Occurrence', 1)
         for idx, energyplus_super_object in enumerate(build_path):
             for energyplus_object_type in energyplus_super_object.keys():
-                if re.match(remove_object_reference, energyplus_object_type):
+                if re.match(remove_object_reference, energyplus_object_type, re.IGNORECASE):
                     count_matches += 1
                     if count_matches == remove_at_occurrence:
                         build_path.pop(idx)
@@ -429,7 +429,7 @@ def replace_objects(
         replace_at_occurrence = replace_option_structure.get('Occurrence', 1)
         for idx, energyplus_super_object in enumerate(build_path):
             for energyplus_object_type in energyplus_super_object.keys():
-                if re.match(replace_object_reference, energyplus_object_type):
+                if re.match(replace_object_reference, energyplus_object_type, re.IGNORECASE):
                     count_matches += 1
                     if count_matches == replace_at_occurrence:
                         # get object from template
@@ -474,7 +474,8 @@ def perform_build_path(
     # if so do a recursive build on that object, insert it into the original position, and then flatten the
     # build path again.
     for idx, energyplus_super_object in enumerate(build_path):
-        if isinstance(energyplus_super_object, str) and re.match('^HVACTemplate:.*', energyplus_super_object):
+        if isinstance(energyplus_super_object, str) and \
+                re.match('^HVACTemplate:.*', energyplus_super_object, re.IGNORECASE):
             # in this test program, we have to grab global objects, which are the yaml data and the
             # epjson object.  In production, these should be stored class attributes.
             sub_data = kwargs['data']
@@ -656,7 +657,7 @@ def apply_transitions_to_objects(
         for reference_energyplus_object_type, field_name in value_reference.items():
             for energyplus_super_object in build_path:
                 for energyplus_object_type in energyplus_super_object:
-                    if re.match(reference_energyplus_object_type, energyplus_object_type):
+                    if re.match(reference_energyplus_object_type, energyplus_object_type, re.IGNORECASE):
                         if not energyplus_super_object[energyplus_object_type]['Fields'].get(field_name):
                             energyplus_super_object[energyplus_object_type]['Fields'][field_name] = None
                         energyplus_super_object[energyplus_object_type]['Fields'][field_name] = (
@@ -695,16 +696,16 @@ def insert_objects(
         count_matches = 0
         for idx, energyplus_super_object in enumerate(build_path):
             for energyplus_object_type in energyplus_super_object.keys():
-                if re.match(insert_object_reference, energyplus_object_type):
+                if re.match(insert_object_reference, energyplus_object_type, re.IGNORECASE):
                     count_matches += 1
                     if count_matches == insert_option_structure.get('Occurrence', 1):
                         # Look for 'BeforeObject' the 'After'.  Prevent inserting twice with check
                         # on reference_object
                         object_location_offset = insert_option_structure['Location']
                         insert_offset = None
-                        if object_location_offset == 'After"':
+                        if object_location_offset.capitalize() == 'After"':
                             insert_offset = 1
-                        elif not insert_offset and object_location_offset == 'Before':
+                        elif not insert_offset and object_location_offset.capitalize() == 'Before':
                             insert_offset = 0
                         else:
                             print("error")
@@ -733,7 +734,7 @@ def insert_objects(
                                     # however, the object here is a super object, not an additional object, so it
                                     # has an extra level of Fields/Connectors.
                                     # it could be refactored with an optional flag
-                                    if sub_object_name == 'Fields':
+                                    if sub_object_name.capitalize() == 'Fields':
                                         for sub_template_field, object_field in transition_structure.items():
                                             new_object[sub_object_type][sub_object_name][object_field] = \
                                                 template_dictionary[sub_template_field]
@@ -961,10 +962,8 @@ def build_additional_objects(
                 unique_name_override=True)
     if option_tree.get('AdditionalTemplateObjects'):
         for template_field, template_structure in option_tree['AdditionalTemplateObjects'].items():
-            print('00000000000000')
-            print(template_structure)
             for template_option, add_object_structure in template_structure.items():
-                if template_option == template_dictionary[template_field]:
+                if template_option.lower() == template_dictionary[template_field].lower():
                     for object_or_template, object_structure in add_object_structure.items():
                         # check for transitions and pop them if present
                         transition_structure = object_structure.pop('Transitions', None)
@@ -1003,7 +1002,7 @@ def build_compact_schedule(data, schedule_type, insert_values: typing.Union[int,
     always_temperature_object = copy.deepcopy(data['Schedule']['Compact'][schedule_type])
     formatted_data_lines = [
         float(i.format(*insert_values))
-        if re.match(r'.*{.*}', i) else i
+        if re.match(r'.*{.*}', i, re.IGNORECASE) else i
         for i in always_temperature_object['data']]
     schedule_object['Schedule:Compact'][always_temperature_object['name'].format(insert_values[0])] = \
         formatted_data_lines
@@ -1084,31 +1083,34 @@ def build_thermostats(super_dictionary, template_dictionary, thermostat_name, **
     # default values were applied to the objects before this process.
     tmp_super_dictionary = copy.deepcopy(super_dictionary)
     for object_type, energyplus_object in super_dictionary.items():
-        if object_type == 'ZoneControl:Thermostat':
+        if object_type.lower() == 'zonecontrol:thermostat':
             for object_name, object_fields in energyplus_object.items():
                 thermostat_name = energyplus_object[object_name]['control_1_name']
                 # get thermostat type
-                thermostats = {i: j for i, j in super_dictionary.items() if re.match(r'^ThermostatSetpoint', i)}
+                thermostats = {
+                    i: j for i, j
+                    in super_dictionary.items()
+                    if re.match(r'^ThermostatSetpoint', i, re.IGNORECASE)}
                 # iterate over thermostats looking for a name match
                 for thermostat_type, thermostat_structure in thermostats.items():
                     for thermostat_search_name, thermostat_search_fields in thermostat_structure.items():
                         # after a match is found, create an always available schedule and update the object
                         # fields for the ZoneControl:Thermostat.  Save these as temp dictionaries to avoid
                         # updating a dictionary while iterating through itself.
-                        if thermostat_search_name == thermostat_name:
-                            if re.match(r'.*SingleHeating$', thermostat_type):
+                        if thermostat_search_name.lower() == thermostat_name.lower():
+                            if re.match(r'.*SingleHeating$', thermostat_type, re.IGNORECASE):
                                 control_schedule = build_compact_schedule(
                                     data=kwargs['data'],
                                     schedule_type='ALWAYS_VAL',
                                     insert_values=1
                                 )
-                            elif re.match(r'.*SingleCooling$', thermostat_type):
+                            elif re.match(r'.*SingleCooling$', thermostat_type, re.IGNORECASE):
                                 control_schedule = build_compact_schedule(
                                     data=kwargs['data'],
                                     schedule_type='ALWAYS_VAL',
                                     insert_values=2
                                 )
-                            elif re.match(r'.*DualSetpoint$', thermostat_type):
+                            elif re.match(r'.*DualSetpoint$', thermostat_type, re.IGNORECASE):
                                 control_schedule = build_compact_schedule(
                                     data=kwargs['data'],
                                     schedule_type='ALWAYS_VAL',
@@ -1254,7 +1256,7 @@ def main(input_args):
         print('zone object list')
         pprint(global_obj_d, width=150)
         # plant system loop build
-        plant_templates = [i for i in test_epjson if re.match('HVACTemplate:Plant:.*Loop', i)]
+        plant_templates = [i for i in test_epjson if re.match('HVACTemplate:Plant:.*Loop', i, re.IGNORECASE)]
         energyplus_plant_build_paths = []
         energyplus_plant_unique_names = []
         for pt in plant_templates:
@@ -1263,7 +1265,7 @@ def main(input_args):
                 print('##### New Plant Template #####')
                 print('Plant Name')
                 print(template_plant_name)
-                connector_path_rgx = re.match(r'^HVACTemplate:Plant:(.*)', pt)
+                connector_path_rgx = re.match(r'^HVACTemplate:Plant:(.*)', pt, re.IGNORECASE)
                 option_tree = get_option_tree(pt, data)
                 _, plant_build_path = perform_build_operations(
                     connector_path=connector_path_rgx.group(1),
@@ -1277,7 +1279,7 @@ def main(input_args):
         print('##### New Plant Template Output #####')
         pprint(global_obj_d, width=150)
         # build thermostats
-        thermostat_templates = [i for i in test_epjson if re.match('HVACTemplate:Thermostat', i)]
+        thermostat_templates = [i for i in test_epjson if re.match('HVACTemplate:Thermostat', i, re.IGNORECASE)]
         for tt in thermostat_templates:
             hvac_thermostat_template_obj = test_epjson[tt]
             for template_thermostat_name, thermostat_template_dictionary in hvac_thermostat_template_obj.items():
@@ -1321,6 +1323,21 @@ if __name__ == "__main__":
 ##########################
 # todo_eo: Remaining example buildout
 ##########################
+# General High Priority
+# Need to find a way to scope each
+# dictionary creation to the system/zone/plant
+# being created so that when complex inputs reference
+# other equipment, we are sure that it is equipment made from that
+# HVACTemplate.  Try simply setting a dictionary in main() for each
+# HVACTemplate, passing an empty dictionary to the first function,
+# and then saving that to the unique name key.
+# In production, this might not be an issue since the scope can be set via
+# class instantiation.  This needs to get done first, as building out additional
+# objects is going to become too complex if there are multiple tyeps of the same equipemnt
+# existing in one global dictionary.
+###########################
+
+##########################
 # System ideas and cleanup
 ##########################
 
@@ -1344,7 +1361,10 @@ if __name__ == "__main__":
 
 ################
 # Additional
-# Change all string comparisons to be case insensitive
+# set default schedules (e.g. always on) as default values
+# make one of the last steps of the program to iterate over fields and add missing schedules.
+# can be generalized to a function that just adds any missing default objects
+#######
 # Check references to non-standard inputs referenced in Input Output Reference
 # e.g. HVACTemplate:Plant:Chiller:ObjectReference and make sure these are handled
 # similarly.  If they need to differ, then include it in the NFP.
