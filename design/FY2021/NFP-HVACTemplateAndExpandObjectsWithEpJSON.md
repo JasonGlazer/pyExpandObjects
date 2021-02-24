@@ -9,7 +9,7 @@ Create HVACTemplate and ExpandObjects Support for epJSON files
 
 ## Justification for New Feature ##
 
-The addition of epJSON as an input file is impacting current workflows which rely on HVACTemplate objects. Similarly, HVACTemplate is useful for learning EnergyPlus, and provides an aid on projects focused on envelope or lighting measures, simplified interfaces, and scripted workflows.  It is important that model files built in the epJSON format have the same functionality as their equivalents written in IDF format in order to support existing workflows as well as foster future adoption.  The HVACTemplate and ExpandObjects features have proven to be valuable in the previous format, and new implementations of these tools should be developed.  
+The addition of epJSON as an input file is impacting current workflows which rely on HVACTemplate objects. Similarly, HVACTemplate is useful for learning EnergyPlus, and provides an aid on projects focused on envelope or lighting measures, simplified interfaces, and scripted workflows.  It is important that model files built in the epJSON format have the same functionality as their equivalents written in IDF format in order to support existing workflows as well as foster future adoption.  The HVACTemplate and ExpandObjects features have proven to be valuable in the previous format, and new implementations of these tools should be developed.  Additionally, the explanations provided for this feature are considered the basic operations of the program.  Additional capabilities can be provided in future updates to this package.
 
 ## E-mail and  Conference Call Conclusions ##
 
@@ -19,7 +19,7 @@ February 23, 2021:
 
 ## Overview ##
 
-In order to achieve greater alignment with other programming initiatives in EnergyPlus, take advantage of the epJSON schema structure, and make use of object-oriented programming methodologies, Python was chosen for this effort.  This updated tool will provide the same deliverable as its predecessor, which is an output file with regular objects that have been mapped from template objects.  However, the epJSON file format will be used for this program.   
+In order to achieve greater alignment with other programming initiatives in EnergyPlus, take advantage of the epJSON schema structure, and make use of object-oriented programming methodologies, Python was chosen for this effort.  This updated tool will provide the same deliverable as its predecessor, which is an output file with regular objects that have been mapped from template objects.  However, the epJSON file format will be used for this program.
 
 ## Approach ##
 
