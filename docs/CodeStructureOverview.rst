@@ -79,6 +79,7 @@ These are EnergyPlus 'super' objects.  Their field names mirror those of EnergyP
 
             * Inlet - EnergyPlus inlet node name for the loop type.
             * Outlet - EnergyPlus outlet node name for the loop type.
+            * UseInBasePath (Optional) - Boolean value to determine if the object should be used when connecting the loop type.  This value should be set to `false` in cases of parallel equipment, such as bypass pipes or reheat coils in an AirTerminal object.  Note, the default value is `true`, but if any more than one EnergyPlus object is defined as a Base Object, then all but one EnergyPlus object should have this value set to `false` for each loop type. 
 
 Example:
 
@@ -96,6 +97,35 @@ Example:
       Air:
         Inlet: outdoor_air_stream_node_name
         Outlet: mixed_air_node_name
+
+Example with parallel equipment:
+
+.. code-block:: yaml
+
+  Chiller:
+    Electric:
+      EIR:
+        Base: &ChillerElectricEIRComponents
+          Chiller:Electric:EIR:
+            Fields:
+              name: '{} Chiller'
+              chilled_water_inlet_node_name: '{} Chiller ChW Inlet'
+              chilled_water_outlet_node_name: '{} Chiller ChW Outlet'
+              total_cooling_capacity_function_of_temperature_curve_name: Main Chiller RecipCapFT
+            Connectors:
+              ChilledWaterLoop:
+                Inlet: chilled_water_inlet_node_name
+                Outlet: chilled_water_outlet_node_name
+          Pipe:Adiabatic:
+            Fields:
+              name: '{} Demand Side Bypass Pipe'
+              inlet_node_name: '{} Demand Bypass Inlet'
+              outlet_node_name: '{} Demand Bypass Outlet'
+            Connectors:
+              ChilledWaterLoop:
+                Inlet: inlet_node_name
+                Outlet: outlet_node_name
+                UseInBuildPath: false #Necessary for all parallel objects
 
 **Sub-system Components**
 

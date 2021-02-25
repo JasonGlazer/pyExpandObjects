@@ -862,9 +862,6 @@ def build_epjson(
                 # the easiest thing to do is to probably rewrite the process to also take lists and get the first
                 # object if that is the case.
                 # If the constructor has a None value, then it is just there for branch build
-                print('---------------')
-                print(energyplus_object_constructors['Connectors'][connector_path].get('UseInBuildPath', True))
-                print('---------------')
                 if energyplus_object_constructors['Connectors'][connector_path].get('UseInBuildPath', True):
                     if idx == 0:
                         epjson_object[energyplus_object_type][object_key] = object_values
@@ -1219,23 +1216,27 @@ def modify_zone_control_thermostats(
 
 
 def build_branches(
-        epjson_dictionary,
+        super_dictionary,
         build_path,
         unique_name,
         connectors_to_build=('Air', 'ChilledWaterLoop', 'HotWaterLoop')):
     """
     Build branches from build_paths
 
-    :param epjson_dictionary:
+    :param super_dictionary:
     :param build_path:
     :param unique_name:
     :param connectors_to_build:
     :return:
     """
     # collect all connector path keys to use as the key for each branch iteration
-    #todo_eo: make branchlists along with branches as output,
-    # e.g. {Branchlist_name: [{Branch_1_name: {fields: values}}, {Branch_2_name...}]
-    # and then unpack when merging to epjson dictionary
+    if not super_dictionary.get('BranchList'):
+        super_dictionary['BranchList'] = {}
+    if not super_dictionary.get('Branch'):
+        super_dictionary['Branch'] = {}
+    demand_chilled_water_objects = []
+    demand_hot_water_objects = []
+    demand_mixed_water_objects = []
     connectors_list = []
     for build_object in build_path:
         for super_object in build_object.values():
@@ -1246,22 +1247,49 @@ def build_branches(
     connectors_set = set(connectors_to_build).intersection(set(connectors_list))
     # iterate over build path for each connector type and build the branch
     for connector_type in connectors_set:
-        component_list = []
-        for build_object in build_path:
-            for object_type, super_object in build_object.items():
-                # do I need to run a check that consecutive objects have inlet/outlet nodes?
-                connector_object = super_object.get('Connectors')
-                if connector_object:
-                    object_connector = connector_object.get(connector_type)
-                    if object_connector:
-                        component_dictionary = {
-                            'component_object_type': object_type,
-                            'component_object_name': super_object['Fields']['name'],
-                            'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
-                            'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
-                        component_list.append(component_dictionary)
-                        epjson_dictionary[' '.join([unique_name, connector_type, 'Branch'])] = component_list
-    return epjson_dictionary
+        if connector_type.capitalize() == 'Air':
+            component_list = []
+            for build_object in build_path:
+                for object_type, super_object in build_object.items():
+                    # do I need to run a check that consecutive objects have inlet/outlet nodes?
+                    connector_object = super_object.get('Connectors')
+                    if connector_object:
+                        object_connector = connector_object.get(connector_type)
+                        if object_connector:
+                            component_dictionary = {
+                                'component_object_type': object_type,
+                                'component_object_name': super_object['Fields']['name'],
+                                'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
+                                'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
+                            component_list.append(component_dictionary)
+            super_dictionary["Branch"][' '.join([unique_name, connector_type, 'Branch'])] = component_list
+            super_dictionary["BranchList"][' '.join([unique_name, connector_type, 'Branches'])] =  \
+                {"branches": [{"branch_name": ' '.join([unique_name, connector_type, 'Branch'])}]}
+        else:
+            for build_object in build_path:
+                for object_type, super_object in build_object.items():
+                    # do I need to run a check that consecutive objects have inlet/outlet nodes?
+                    connector_object = super_object.get('Connectors')
+                    if connector_object:
+                        object_connector = connector_object.get(connector_type)
+                        if object_connector:
+                            super_dictionary["Branch"][' '.join([super_object['Fields']['name'], 'Branch'])] = {
+                                'component_object_type': object_type,
+                                'component_object_name': super_object['Fields']['name'],
+                                'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
+                                'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
+                    # build demand branch list
+                    if re.match('^Coil:Cooling:Water.*', object_type, re.IGNORECASE):
+                        demand_chilled_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
+                    elif re.match('^Coil:Heating:Water.*', object_type, re.IGNORECASE):
+                        demand_hot_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
+                    elif re.match('^Coil:.*HeatPump.*', object_type, re.IGNORECASE):
+                        demand_mixed_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
+    demand_dictionary = {
+        "DemandChilledWater": demand_chilled_water_objects,
+        "DemandHotWater": demand_hot_water_objects,
+        "DemandMixedWater": demand_mixed_water_objects}
+    return super_dictionary, demand_dictionary
 
 # In this process note one import aspect. Specific field names are
 # rarely used, if at all.  Most of the structure comes from the yaml
@@ -1358,6 +1386,8 @@ def main(input_args):
                 plant_dictionary[template_plant_name] = sub_plant_dictionary
                 energyplus_plant_build_paths.append(plant_build_path)
                 energyplus_plant_unique_names.append(template_plant_name)
+        pprint(plant_dictionary, width=150)
+        sys.exit()
         print('##### New Plant Template Output #####')
         pprint(plant_dictionary, width=150)
         # Collect all template objects to one epjson object for further processing
@@ -1371,35 +1401,51 @@ def main(input_args):
                 )
         # build system branches
         print('##### Branch Build #####')
-        system_branch_dictionary = []
-        zone_branch_dictionary = []
-        plant_branch_dictionary = []
+        system_branch_dictionary = {}
+        zone_branch_dictionary = {}
+        plant_branch_dictionary = {}
+        system_demand_branchlist = []
+        zone_demand_branchlist = []
         for sbp, unique_name in zip(energyplus_system_build_paths, energyplus_system_unique_names):
-            system_branch_dictionary = build_branches(
-                epjson_dictionary={},
+            system_branch_dictionary, sub_system_demand_branchlist = build_branches(
+                super_dictionary=system_branch_dictionary,
                 build_path=sbp,
                 unique_name=unique_name)
+            system_demand_branchlist.append(sub_system_demand_branchlist)
         for zbp, unique_name in zip(energyplus_zone_build_paths, energyplus_zone_unique_names):
-            zone_branch_dictionary = build_branches(
-                epjson_dictionary={},
+            zone_branch_dictionary, sub_zone_demand_branchlist = build_branches(
+                super_dictionary=zone_branch_dictionary,
                 build_path=zbp,
                 unique_name=unique_name,
-                connectors_to_build=['HotWater', 'ChilledWater'])
+                connectors_to_build=['HotWaterLoop', 'ChilledWaterLoop', 'CondenserWaterLoop'])
+            zone_demand_branchlist.append(sub_zone_demand_branchlist)
         for pbp, unique_name in zip(energyplus_plant_build_paths, energyplus_plant_unique_names):
-            plant_branch_dictionary = build_branches(
-                epjson_dictionary={},
+            plant_branch_dictionary, _ = build_branches(
+                super_dictionary=plant_branch_dictionary,
                 build_path=pbp,
                 unique_name=unique_name)
+        pprint(plant_dictionary, width=150)
+        sys.exit()
         pprint(plant_branch_dictionary, width=150)
+        branch_dictionary = {}
         for bd in [system_branch_dictionary, zone_branch_dictionary, plant_branch_dictionary]:
-            epjson_dictionary = merge_dictionaries(
-                super_dictionary=epjson_dictionary,
+            # returned value is a nested object of branchlist -> branches
+            branch_dictionary = merge_dictionaries(
+                super_dictionary=branch_dictionary,
                 object_dictionary=bd,
                 unique_name_override=False
             )
+        sys.exit()
         print('##### New Branch Output #####')
-        for bd in [system_branch_dictionary, zone_branch_dictionary, plant_branch_dictionary]:
-            pprint(bd, width=150)
+        pprint(branch_dictionary, width=150)
+        epjson_dictionary = merge_dictionaries(
+            super_dictionary=epjson_dictionary,
+            object_dictionary=branch_dictionary
+        )
+        # use the stored demand branch lists to create a BranchList
+        # Add pumps and pipes.  This will require the use of the template input fields as well.
+        print(system_demand_branchlist)
+        print(zone_demand_branchlist)
         # build thermostats
         # this should be one of the last steps as it scans the epjson_dictionary
         thermostat_templates = [i for i in test_epjson if re.match('HVACTemplate:Thermostat', i, re.IGNORECASE)]
@@ -1466,12 +1512,15 @@ if __name__ == "__main__":
 
 #############
 # Plant Loops
+# equipment that falls outside of build path is not having branches created
+# e.g. CoolingTower, Chiller condenser, etc.  Need to figure a way to add these into
+# branches and branchlists
+# maybe just make all the branches via AdditionalObjects  it would be easier, then can handle custom functions
+# for BranchList.  Example has been started under the CoolingTower
 #############
 
 #############
 # Thermostats
-# clean up so references to super dictionary are only made when necessary
-# and outptut is a sub_dictionary to be merged
 #############
 
 #################

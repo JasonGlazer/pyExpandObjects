@@ -22,7 +22,7 @@ Chiller:
             ChilledWaterLoop:
               Inlet: inlet_node_name
               Outlet: outlet_node_name
-              UseInBuildPath: false
+              UseInBuildPath: false #Necessary for all parallel objects
 
 Coil:
   Cooling:
@@ -74,7 +74,7 @@ Coil:
         water_outlet_node_name: '{} Heating Coil Hw Outlet'
       Connectors: &CoilHeatingWaterConnectors
         << : *CoilHeatingConnectors
-        HotWater:
+        HotWaterLoop:
           Inlet: water_inlet_node_name
           Outlet: water_outlet_node_name
       Base: &CoilHeatingWater
@@ -147,7 +147,10 @@ Pipe:
           CondenserWaterLoop:
             Inlet: inlet_node_name
             Outlet: outlet_node_name
-    DemandInlet: &PipeAdiabaticDemandInlet
+          HotWaterLoop:
+            Inlet: inlet_node_name
+            Outlet: outlet_node_name
+    SuppyInlet: &PipeAdiabaticSupplyInlet
       Pipe:Adiabatic:
         Fields:
           name: '{} Demand Inlet Pipe'
@@ -155,7 +158,7 @@ Pipe:
           outlet_node_name: '{} Demand Inlet Pipe Outlet'
         Connectors:
           <<: *PipeAdiabaticConnectors
-    DemandOutlet: &PipeAdiabaticDemandOutlet
+    SupplyOutlet: &PipeAdiabaticSupplyOutlet
       Pipe:Adiabatic:
         Fields:
           name: '{} Demand Outlet Pipe'
@@ -163,6 +166,23 @@ Pipe:
           outlet_node_name: '{} Demand Outlet'
         Connectors:
           <<: *PipeAdiabaticConnectors
+
+Pump:
+  ConstantSpeed: &PumpConstantSpeed
+    Fields:
+      name: '{} Supply Pump'
+      inlet_node_name: '{} Pump Inlet'
+      outlet_node_name: '{} Pump Outlet'
+    Connectors:
+      ChilledWaterLoop:
+        Inlet: inlet_node_name
+        Outlet: outlet_node_name
+      HotWaterLoop:
+        Inlet: inlet_node_name
+        Outlet: outlet_node_name
+      CondenserWaterLoop:
+        Inlet: inlet_node_name
+        Outlet: outlet_node_name
 
 ### Complex Objects
 AirTerminal:
@@ -195,7 +215,9 @@ AirTerminal:
               air_outlet_node_name: '{} Supply Inlet'
             Connectors:
               Air: *AirTerminalSingleDuctConnectorsAir
-              HotWater: *AirTerminalSingleDuctConnectorsWater
+              HotWaterLoop:
+                <<: *AirTerminalSingleDuctConnectorsWater
+                UseInBuildPath: false
       NoReheat:
         Base: &AirTerminalSingleDuctVAVNoReheat
           Fields:
@@ -318,14 +340,14 @@ HVACTemplate:
           ^Chiller:.*: reference_capacity
     ChilledWaterLoop: &HVACTemplatePlantChilledWaterLoop
       BuildPath:
-        - <<: *PipeAdiabaticDemandInlet
+        - Pump:ConstantSpeed: *PumpConstantSpeed
         - HVACTemplate:Plant:Chiller # specify a nested template with a text reference to the object under the OptionTree object
-        - <<: *PipeAdiabaticDemandOutlet
+        - <<: *PipeAdiabaticSupplyOutlet
     CondenserWaterLoop: &HVACTemplatePlantCondenserWaterLoop
       BuildPath:
-        - <<: *PipeAdiabaticDemandInlet
+        - <<: *PipeAdiabaticSupplyInlet
         - HVACTemplate:Plant:Tower
-        - <<: *PipeAdiabaticDemandOutlet
+        - <<: *PipeAdiabaticSupplyOutlet
     Tower: &HVACTemplatePlantTower
       BuildPath:
         - CoolingTower:SingleSpeed: *CoolingTowerSingleSpeed
@@ -338,7 +360,7 @@ OptionTree:
         Base: *HVACTemplateZoneVAV
 #        RemoveElements:
 #          reheat_coil_type:
-#            HotWater:
+#            HotWaterLoop:
 #              ^Coil:Heating:.*:
 #                Object: _ # necessary to preserve same structure as other actions
         ReplaceElements:
@@ -473,3 +495,8 @@ OptionTree:
         Base: *HVACTemplatePlantCondenserWaterLoop
       Tower:
         Base: *HVACTemplatePlantTower
+        AdditionalObjects: # Work on this
+          Branch:
+            name: '{}'
+            type:
+              CoolingTower.*: self
