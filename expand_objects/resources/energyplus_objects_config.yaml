@@ -2,21 +2,27 @@
 Chiller:
   Electric:
     EIR:
-      Base: &ChillerElectricEIR
-        Fields:
-          name: '{} Chiller'
-          chilled_water_inlet_node_name: '{} Chiller ChW Inlet'
-          chilled_water_outlet_node_name: '{} Chiller ChW Outlet'
-          total_cooling_capacity_function_of_temperature_curve_name: Main Chiller RecipCapFT
-        Connectors:
-          ChilledWaterLoop:
-            Inlet: chilled_water_inlet_node_name
-            Outlet: chilled_water_outlet_node_name
-      Pipe:Adiabatic:
-        Fields:
-          name: '{} Demand Side Bypass Pipe'
-          inlet_node_name: '{} Demand Bypass Inlet'
-          outlet_node_name: '{} Demand Bypass Outlet'
+      Base: &ChillerElectricEIRComponents
+        Chiller:Electric:EIR:
+          Fields:
+            name: '{} Chiller'
+            chilled_water_inlet_node_name: '{} Chiller ChW Inlet'
+            chilled_water_outlet_node_name: '{} Chiller ChW Outlet'
+            total_cooling_capacity_function_of_temperature_curve_name: Main Chiller RecipCapFT
+          Connectors:
+            ChilledWaterLoop:
+              Inlet: chilled_water_inlet_node_name
+              Outlet: chilled_water_outlet_node_name
+        Pipe:Adiabatic:
+          Fields:
+            name: '{} Demand Side Bypass Pipe'
+            inlet_node_name: '{} Demand Bypass Inlet'
+            outlet_node_name: '{} Demand Bypass Outlet'
+          Connectors:
+            ChilledWaterLoop:
+              Inlet: inlet_node_name
+              Outlet: outlet_node_name
+              UseInBuildPath: false
 
 Coil:
   Cooling:
@@ -306,7 +312,7 @@ HVACTemplate:
   Plant:
     Chiller: &HVACTemplatePlantChiller
       BuildPath:
-        - Chiller:Electric:EIR: *ChillerElectricEIR
+        - <<: *ChillerElectricEIRComponents
       Transitions:
         capacity:
           ^Chiller:.*: reference_capacity
@@ -375,7 +381,7 @@ OptionTree:
               template_thermostat_name: control_1_name
         AdditionalTemplateObjects:
           outdoor_air_method: # This group should be created in an anchor for re-use
-            Flow/Person:
+            Flow/Per.*: # can be regex
               DesignSpecification:OutdoorAir: # aliases can be mapped using <<: *var to add more key/values to that level of dictionary.
                 <<: *DesignSpecificationOutdoorAir
                 Transitions:
