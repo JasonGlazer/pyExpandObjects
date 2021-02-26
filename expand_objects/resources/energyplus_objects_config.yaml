@@ -1,4 +1,18 @@
 ### Base Objects
+
+Boiler:
+  HotWater:
+    Base: &BoilerHotWater
+      Boiler:HotWater:
+        Fields:
+          name: '{} Boiler'
+          boiler_water_inlet_node_name: '{} HW Inlet'
+          boiler_water_outlet_node_name: '{} HW Outlet'
+        Connectors:
+          HotWaterLoop:
+            Inlet: boiler_water_inlet_node_name
+            Outlet: boiler_water_outlet_node_name
+
 Chiller:
   Electric:
     EIR:
@@ -143,7 +157,7 @@ Pipe:
           HotWaterLoop:
             Inlet: inlet_node_name
             Outlet: outlet_node_name
-    SuppyInlet: &PipeAdiabaticSupplyInlet
+    SuppyInlet:
       Pipe:Adiabatic:
         Fields:
           name: '{} Demand Inlet Pipe'
@@ -199,11 +213,14 @@ AirTerminal:
             Fields:
               name: '{} VAV Reheat'
               <<: *AirTerminalSingleDuctFields
+              reheat_coil_type: Coil:Heating:Water
+              reheat_coil_name: '{} Reheat Coil'
             Connectors:
               Air: *AirTerminalSingleDuctConnectorsAir
           Coil:Heating:Water:
             Fields:
               <<: *CoilHeatingWaterFields
+              name: '{} Reheat Coil'
               air_inlet_node_name: '{} Damper Outlet' # keys can be overridden like this
               air_outlet_node_name: '{} Supply Inlet'
             Connectors:
@@ -276,9 +293,36 @@ Sizing:
     Base: &SizingZone
       name: '{} Sizing Zone'
       zone_cooling_design_supply_air_temperature: 12.8
+      zone_cooling_design_supply_air_temperature_difference: 11.11
       zone_cooling_design_supply_air_humidity_ratio: 0.0085
       zone_heating_design_supply_air_temperature: 50.0
       zone_heating_design_supply_air_humidity_ratio: 0.008
+      design_specification_outdoor_air_object_name: '{} SZ DSOA'
+    Transitions: &SizingZoneTransitions
+      zone_or_zonelist_name: zone_name
+      zone_cooling_design_supply_air_humidity_ratio: zone_cooling_design_supply_air_humidity_ratio,
+      zone_cooling_design_supply_air_temperature: zone_cooling_design_supply_air_temperature,
+      zone_cooling_design_supply_air_temperature_input_method: zone_cooling_design_supply_air_temperature_input_method,
+      zone_heating_design_supply_air_temperature_input_method: zone_heating_design_supply_air_temperature_input_method,
+      zone_heating_design_supply_air_temperature: zone_heating_design_supply_air_temperature
+      design_specification_outdoor_air_object_name_for_sizing: design_specification_outdoor_air_object_name
+      design_specification_zone_air_distribution_object_name: design_specification_zone_air_distribution_object_name
+      zone_heating_sizing_factor: zone_heating_sizing_factor
+      zone_cooling_sizing_factor: zone_cooling_sizing_factor
+  System:
+    Base: &SizingSystem
+      name: '{} Sizing System'
+      preheat_design_temperature: 7.2
+      preheat_design_humidity_ratio: 0.008
+      precool_design_temperature: 11
+      precool_design_humidity_ratio: 0.008
+      central_cooling_design_supply_air_temperature: 12.8
+      central_heating_design_supply_air_temperature: 12.8
+    Transitions: &SizingSystemTransitions
+  Plant:
+    Base: &SizingPlant
+      name: '{} Sizing Plant'
+    Transitions:
 
 ZoneControl:
   Thermostat:
@@ -295,6 +339,15 @@ ZoneHVAC:
         ^AirTerminal:.*: self
       air_terminal_name:
         ^AirTerminal:.*: key
+  Baseboard:
+    RadiantConvective:
+      Water:
+        Base: &ZoneHVACBaseboardRadiantConvectiveWaterBase
+          name: '{} Baseboard Heat'
+          inlet_node_name: '{} Baseboard HW Inlet'
+          outlet_node_name: '{} Baseboard HW Outlet'
+          maximum_water_flow_rate: 'Autosize'
+          fraction_radieant: 0
 
 ### Common Combinations
 SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
@@ -330,6 +383,14 @@ HVACTemplate:
           Inlet: '{} Supply Path Inlet'
           Outlet: '{} Return Air Outlet'
   Plant:
+    Boiler: &HVACTemplatePlantBoiler
+      BuildPath:
+        - <<: *BoilerHotWater
+      Transitions:
+        fuel_type:
+          ^Boiler.*: fuel_type
+        efficiency:
+          ^Boiler.*: nominal_thermal_efficiency
     Chiller: &HVACTemplatePlantChiller
       BuildPath:
         - <<: *ChillerElectricEIRComponents
@@ -344,6 +405,9 @@ HVACTemplate:
     CondenserWaterLoop: &HVACTemplatePlantCondenserWaterLoop
       BuildPath:
         - HVACTemplate:Plant:Tower
+    HotWaterLoop: &HVACTemplatePlantHotWaterLoop
+      BuildPath:
+        - HVACTemplate:Plant:Boiler
     Tower: &HVACTemplatePlantTower
       BuildPath:
         - <<: *CoolingTowerSingleSpeed
@@ -362,98 +426,134 @@ OptionTree:
         ReplaceElements:
           reheat_coil_type:
             None:
-              '^AirTerminal:.*':
-                Object:
-                  AirTerminal:SingleDuct:VAV:NoReheat: *AirTerminalSingleDuctVAVNoReheat
+              - '^AirTerminal:.*':
+                  Object:
+                    AirTerminal:SingleDuct:VAV:NoReheat: *AirTerminalSingleDuctVAVNoReheat
             Electric:
-              ^Coil:Heating.*:
-                Object:
-                  Coil:Heating:Electric:
-                    Fields:
-                      <<: *CoilHeatingFields
-                      air_inlet_node_name: '{} Damper Outlet'
-                      air_outlet_node_name: '{} Supply Inlet'
-                    Connectors:
-                      Air:
-                        Inlet: '{} Damper Outlet'
-                        Outlet: '{} Supply Inlet'
+              - ^AirTerminal:.*:
+                  Object:
+                    AirTerminal:SingleDuct:VAV:Reheat:
+                      <<: *AirTerminalSingleDuctVAVReheat
+                      reheat_coil_type: Coil:Heating:Electric
+              - ^Coil:Heating.*:
+                  Object:
+                    Coil:Heating:Electric:
+                      Fields:
+                        <<: *CoilHeatingFields
+                        air_inlet_node_name: '{} Damper Outlet'
+                        air_outlet_node_name: '{} Supply Inlet'
+                      Connectors:
+                        Air:
+                          Inlet: '{} Damper Outlet'
+                          Outlet: '{} Supply Inlet'
             Gas:
-              ^Coil:Heating.*:
-                Object:
-                  Coil:Heating:Fuel:
-                    Fields:
-                      <<: *CoilHeatingFields
-                      air_inlet_node_name: '{} Damper Outlet'
-                      air_outlet_node_name: '{} Supply Inlet'
-                    Connectors:
-                      Air:
-                        Inlet: '{} Damper Outlet'
-                        Outlet: '{} Supply Inlet'
+              - ^AirTerminal:.*:
+                  Object:
+                    AirTerminal:SingleDuct:VAV:Reheat:
+                      <<: *AirTerminalSingleDuctVAVReheat
+                      reheat_coil_type: Coil:Heating:Fuel
+              - ^Coil:Heating.*:
+                  Object:
+                    Coil:Heating:Fuel:
+                      Fields:
+                        <<: *CoilHeatingFields
+                        air_inlet_node_name: '{} Damper Outlet'
+                        air_outlet_node_name: '{} Supply Inlet'
+                      Connectors:
+                        Air:
+                          Inlet: '{} Damper Outlet'
+                          Outlet: '{} Supply Inlet'
         InsertElements:
         AdditionalObjects:
           - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
-          - ZoneControl:Thermostat:
-              <<: *ZoneControlThermostat
-              Transitions:
-               zone_name: zone_or_zone_list_name
-               template_thermostat_name: control_1_name
         AdditionalTemplateObjects:
+          template_thermostat_name:
+            .*:
+              - ZoneControl:Thermostat:
+                  <<: *ZoneControlThermostat
+                  Transitions:
+                    zone_name: zone_or_zone_list_name
+                    template_thermostat_name: control_1_name
           outdoor_air_method: # This group should be created in an anchor for re-use
             None:
-              - DesignSpecification:OutdoorAir: # aliases can be mapped using <<: *var to add more key/values to that level of dictionary.
+              - DesignSpecification:OutdoorAir:
                   <<: *DesignSpecificationOutdoorAir
                   Transitions:
                     outdoor_air_method: outdoor_air_method
                     outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution #Aliases are added this way typically
+              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution
+              - Sizing:Zone:
+                  <<: *SizingZone
+                  Transitions: *SizingZoneTransitions
             Flow/Per.*: # can be regex
-              - DesignSpecification:OutdoorAir: # aliases can be mapped using <<: *var to add more key/values to that level of dictionary.
+              - DesignSpecification:OutdoorAir:
                   <<: *DesignSpecificationOutdoorAir
                   Transitions:
                     outdoor_air_method: outdoor_air_method
                     outdoor_air_flow_rate_per_person: outdoor_air_flow_per_person
+              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution
+              - Sizing:Zone:
+                  <<: *SizingZone
+                  Transitions: *SizingZoneTransitions
+            Flow/Area:
+              - DesignSpecification:OutdoorAir:
+                  <<: *DesignSpecificationOutdoorAir
+                  Transitions:
+                    outdoor_air_method: outdoor_air_method
+                    outdoor_air_flow_rate_per_zone_floor_area: outdoor_air_flow_per_zone_floor_area
+              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution
+              - Sizing:Zone:
+                  <<: *SizingZone
+                  Transitions: *SizingZoneTransitions
+            Flow/Zone:
+              - DesignSpecification:OutdoorAir:
+                  <<: *DesignSpecificationOutdoorAir
+                  Transitions:
+                    outdoor_air_method: outdoor_air_method
+                    outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
+              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution
+              - Sizing:Zone:
+                  <<: *SizingZone
+                  Transitions: *SizingZoneTransitions
+            Sum:
+              - DesignSpecification:OutdoorAir:
+                  <<: *DesignSpecificationOutdoorAir
+                  Transitions:
+                    outdoor_air_method: outdoor_air_method
+                    outdoor_air_flow_rate_per_person: outdoor_air_flow_per_person
+                    outdoor_air_flow_rate_per_zone_floor_area: outdoor_air_flow_per_zone_floor_area
+                    outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
+              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution
+              - Sizing:Zone:
+                  <<: *SizingZone
+                  Transitions: *SizingZoneTransitions
+            Max:
+              - DesignSpecification:OutdoorAir:
+                  <<: *DesignSpecificationOutdoorAir
+                  Transitions:
+                    outdoor_air_method: outdoor_air_method
+                    outdoor_air_flow_rate_per_person: outdoor_air_flow_per_person
+                    outdoor_air_flow_rate_per_zone_floor_area: outdoor_air_flow_per_zone_floor_area
+                    outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
               - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution #Aliases are added this way typically
               - Sizing:Zone:
                   <<: *SizingZone
-                  design_specification_outdoor_air_object_name: '{} SZ DSOA'
-                  Transitions:
-                    zone_cooling_design_supply_air_humidity_ratio: zone_cooling_design_supply_air_humidity_ratio,
-                    zone_cooling_design_supply_air_temperature: zone_cooling_design_supply_air_temperature,
-                    zone_cooling_design_supply_air_temperature_input_method: zone_cooling_design_supply_air_temperature_input_method,
-                    zone_heating_design_supply_air_temperature_input_method: zone_heating_design_supply_air_temperature_input_method,
-                    zone_or_zonelist_name: zone_name
-            Flow/Area:
-              - DesignSpecification:OutdoorAir: # aliases can be mapped using <<: *var to add more key/values to that level of dictionary.
-                  <<: *DesignSpecificationOutdoorAir
-                  Transitions:
-                    outdoor_air_method: outdoor_air_method
-                    outdoor_air_flow_rate_per_zone_floor_area: outdoor_air_flow_per_zone_floor_area
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution #Aliases are added this way typically
-            Flow/Zone:
-              - DesignSpecification:OutdoorAir: # aliases can be mapped using <<: *var to add more key/values to that level of dictionary.
-                  <<: *DesignSpecificationOutdoorAir
-                  Transitions:
-                    outdoor_air_method: outdoor_air_method
-                    outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution #Aliases are added this way typically
-            Sum:
-              - DesignSpecification:OutdoorAir: # aliases can be mapped using <<: *var to add more key/values to that level of dictionary.
-                  <<: *DesignSpecificationOutdoorAir
-                  Transitions:
-                    outdoor_air_method: outdoor_air_method
-                    outdoor_air_flow_rate_per_person: outdoor_air_flow_per_person
-                    outdoor_air_flow_rate_per_zone_floor_area: outdoor_air_flow_per_zone_floor_area
-                    outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution #Aliases are added this way typically
-            Max:
-              - DesignSpecification:OutdoorAir: # aliases can be mapped using <<: *var to add more key/values to that level of dictionary.
-                  <<: *DesignSpecificationOutdoorAir
-                  Transitions:
-                    outdoor_air_method: outdoor_air_method
-                    outdoor_air_flow_rate_per_person: outdoor_air_flow_per_person
-                    outdoor_air_flow_rate_per_zone_floor_area: outdoor_air_flow_per_zone_floor_area
-                    outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution #Aliases are added this way typically
+                  Transitions: *SizingZoneTransitions
+          baseboard_heating_type:
+            HotWater:
+              - ZoneHVAC:Baseboard:Radiant:Convective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterBase
+              - ZoneHVAC:EquipmentList:
+                  name: '{} Equipment'
+                  load_distribution_scheme: SequentialLoad
+                  equipment:
+                    - zone_equipment_1_object_type: ZoneHVAC:AirDistributionUnit
+                      zone_equipment_1_name: "{} ATU"
+                      zone_equipment_1_cooling_sequence: 1
+                      zone_equipment_1_heating_or_no_load_sequence: 1
+                    - zone_equipment_2_object_type: ZoneHVAC:Baseboard:RadiantConvective:Water
+                      zone_equipment_2_name: "{} Baseboard Heat"
+                      zone_equipment_2_cooling_sequence: 2
+                      zone_equipment_2_heating_or_no_load_sequence: 2
     System:
       VAV: # configuration to store options for altering a base build
         Base: *HVACTemplateSystemVAV
@@ -462,33 +562,34 @@ OptionTree:
           heating_coil_type: # base path must have an object to replace for this to work
             None: None
             Electric:
-              ^Coil:Heating:.*:
-                Occurrence: 1
-                Object:
-                  Coil:Heating:Electric: *CoilHeatingElectric # anchor/map reference to coil
-                FieldNameReplacement: '{} Electric'
+              - ^Coil:Heating:.*:
+                  Occurrence: 1
+                  Object:
+                    Coil:Heating:Electric: *CoilHeatingElectric # anchor/map reference to coil
+                  FieldNameReplacement: '{} Electric'
         InsertElements: # Insert element before or after another element
           preheat_coil_type:
             Electric:
-              OutdoorAir:M.*:
-                Location: Before
-                Occurrence: 1
-                Object:
-                  Coil:Heating:Electric: *CoilHeatingElectric
-                FieldNameReplacement: '{} Preheat Electric'
-                Transitions: # transition template variable to this specific inserted object {template_field_name: object_field_name}
-                  preheat_efficiency: efficiency # doesn't currently exist as an option, this is just an example. Use '.*' because it references only the current object.
-        AdditionalObjects: # nested hvac template in AdditionalObjects.
-#          - HVACTemplate:Plant:CondenserWaterLoop: # just an example, doesn't make sense here
-#             ConnectorPath: CondenserWaterLoop
-#             UniqueName: 'Main CndW'  #Value is the unique name modifier
+              - OutdoorAir:M.*:
+                  Location: Before
+                  Occurrence: 1
+                  Object:
+                    Coil:Heating:Electric: *CoilHeatingElectric
+                  FieldNameReplacement: '{} Preheat Electric'
+                  Transitions: # transition template variable to this specific inserted object {template_field_name: object_field_name}
+                    preheat_efficiency: efficiency # doesn't currently exist as an option, this is just an example. Use '.*' because it references only the current object.
+        AdditionalObjects:
           - SetpointManager:MixedAir:
              <<: *SetpointManagerMixedAir
-#             sample_additional_field: sample_transition_value
           - Controller:OutdoorAir:
               <<: *ControllerOutdoorAir
+          - Sizing:System:
+              <<: *SizingSystem
+              Transitions: *SizingSystemTransitions
         AdditionalTemplateObjects: # template triggered objects
     Plant:
+      Boiler:
+        Base: *HVACTemplatePlantBoiler
       Chiller:
         Base: *HVACTemplatePlantChiller
         ReplaceElements:
@@ -501,6 +602,12 @@ OptionTree:
       ChilledWaterLoop:
         Base: *HVACTemplatePlantChilledWaterLoop
         AdditionalObjects:
+          - Sizing:Plant:
+              <<: *SizingPlant
+              loop_type: Cooling
+              loop_design_temperature_difference: 6.67
+              Transitions:
+                chilled_water_design_setpoint: design_loop_exit_temperature
           - Pipe:Adiabatic:
               name: '{} Supply Inlet Pipe'
               inlet_node_name: '{} Supply Inlet'
@@ -509,9 +616,9 @@ OptionTree:
               name: '{} Supply Inlet Branch'
               components:
                 - component_object_type: Pipe:Adiabatic
-                - component_name: '{} Supply Inlet Pipe'
-                - component_inlet_node_name: '{} Supply Inlet'
-                - component_outlet_node_name: '{} Supply Inlet Pipe Outlet'
+                  component_name: '{} Supply Inlet Pipe'
+                  component_inlet_node_name: '{} Supply Inlet'
+                  component_outlet_node_name: '{} Supply Inlet Pipe Outlet'
           - Pipe:Adiabatic:
               name: '{} Supply Bypass Pipe'
               inlet_node_name: '{} Supply Bypass Inlet'
@@ -521,19 +628,19 @@ OptionTree:
               components:
                 - component_object_type:
                     Chiller.*: self
-                - component_name:
+                  component_name:
                     Chiller.*: key
-                - component_inlet_node_name:
+                  component_inlet_node_name:
                     Chiller.*: chilled_water_inlet_node_name
-                - component_outet_node_name:
+                  component_outet_node_name:
                     Chiller.*: chilled_water_outlet_node_name
           - Branch:
               name: '{} Supply Bypass Branch'
               components:
                 - component_object_type: Pipe:Adiabatic
-                - component_name: '{} Supply Bypass Pipe'
-                - component_inlet_node_name: '{} Supply Bypass Inlet'
-                - component_outlet_node_name: '{} Supply Bypass Outlet'
+                  component_name: '{} Supply Bypass Pipe'
+                  component_inlet_node_name: '{} Supply Bypass Inlet'
+                  component_outlet_node_name: '{} Supply Bypass Outlet'
           - Pipe:Adiabatic:
               name: '{} Supply Outlet Pipe'
               inlet_node_name: '{} Supply Outlet Pipe Inlet'
@@ -542,9 +649,9 @@ OptionTree:
               name: '{} Supply Outlet Branch'
               components:
                 - component_object_type: Pipe:Adiabatic
-                - component_name: '{} Supply Outlet Pipe'
-                - component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
-                - component_outlet_node_name: '{} Supply Outlet'
+                  component_name: '{} Supply Outlet Pipe'
+                  component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
+                  component_outlet_node_name: '{} Supply Outlet'
           - BranchList:
               name: '{} Branches'
               branches:
@@ -555,6 +662,12 @@ OptionTree:
       CondenserWaterLoop:
         Base: *HVACTemplatePlantCondenserWaterLoop
         AdditionalObjects:
+          - Sizing:Plant:
+              <<: *SizingPlant
+              loop_type: Condenser
+              loop_design_temperature_difference: 5.6
+              Transitions:
+                condenser_water_design_setpoint: design_loop_exit_temperature
           - Pipe:Adiabatic:
               name: '{} Supply Inlet Pipe'
               inlet_node_name: '{} Supply Inlet'
@@ -563,19 +676,19 @@ OptionTree:
               name: '{} Supply Inlet Branch'
               components:
                 - component_object_type: Pipe:Adiabatic
-                - component_name: '{} Supply Inlet Pipe'
-                - component_inlet_node_name: '{} Supply Inlet'
-                - component_outlet_node_name: '{} Supply Inlet Pipe Outlet'
+                  component_name: '{} Supply Inlet Pipe'
+                  component_inlet_node_name: '{} Supply Inlet'
+                  component_outlet_node_name: '{} Supply Inlet Pipe Outlet'
           - Branch:
               name: '{} CoolingTower Branch'
               components:
                 - component_object_type:
                     CoolingTower.*: self
-                - component_name:
+                  component_name:
                     CoolingTower.*: key
-                - component_inlet_node_name:
+                  component_inlet_node_name:
                     CoolingTower.*: water_inlet_node_name
-                - component_outet_node_name:
+                  component_outet_node_name:
                     CoolingTower.*: water_outlet_node_name
           - Pipe:Adiabatic:
               name: '{} Supply Bypass Pipe'
@@ -585,9 +698,9 @@ OptionTree:
               name: '{} Supply Bypass Branch'
               components:
                 - component_object_type: Pipe:Adiabatic
-                - component_name: '{} Supply Bypass Pipe'
-                - component_inlet_node_name: '{} Supply Bypass Inlet'
-                - component_outlet_node_name: '{} Supply Bypass Outlet'
+                  component_name: '{} Supply Bypass Pipe'
+                  component_inlet_node_name: '{} Supply Bypass Inlet'
+                  component_outlet_node_name: '{} Supply Bypass Outlet'
           - Pipe:Adiabatic:
               name: '{} Supply Outlet Pipe'
               inlet_node_name: '{} Supply Outlet Pipe Inlet'
@@ -596,14 +709,74 @@ OptionTree:
               name: '{} Supply Outlet Branch'
               components:
                 - component_object_type: Pipe:Adiabatic
-                - component_name: '{} Supply Outlet Pipe'
-                - component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
-                - component_outlet_node_name: '{} Supply Outlet'
+                  component_name: '{} Supply Outlet Pipe'
+                  component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
+                  component_outlet_node_name: '{} Supply Outlet'
           - BranchList:
               name: '{} Branches'
               branches:
                 - branch_name: '{} Supply Inlet Branch'
                 - branch_name: '{} CoolingTower Branch'
+                - branch_name: '{} Supply Bypass Pipe'
+                - branch_name: '{} Supply Outlet Branch'
+      HotWaterLoop:
+        Base: *HVACTemplatePlantHotWaterLoop
+        AdditionalObjects:
+          - Sizing:Plant:
+              <<: *SizingPlant
+              loop_type: Heating
+              loop_design_temperature_difference: 11
+              Transitions:
+                hot_water_water_design_setpoint: design_loop_exit_temperature
+          - Pipe:Adiabatic:
+              name: '{} Supply Inlet Pipe'
+              inlet_node_name: '{} Supply Inlet'
+              outlet_node_name: '{} Supply Inlet Pipe Outlet'
+          - Branch:
+              name: '{} Supply Inlet Branch'
+              components:
+                - component_object_type: Pipe:Adiabatic
+                  component_name: '{} Supply Inlet Pipe'
+                  component_inlet_node_name: '{} Supply Inlet'
+                  component_outlet_node_name: '{} Supply Inlet Pipe Outlet'
+          - Pipe:Adiabatic:
+              name: '{} Supply Bypass Pipe'
+              inlet_node_name: '{} Supply Bypass Inlet'
+              outlet_node_name: '{} Supply Bypass Outlet'
+          - Branch:
+              name: '{} Boiler Branch'
+              components:
+                - component_object_type:
+                    Boiler.*: self
+                  component_name:
+                    Boiler.*: key
+                  component_inlet_node_name:
+                    Boiler.*: boiler_water_inlet_node_name
+                  component_outet_node_name:
+                    Boier.*: boiler_water_outlet_node_name
+          - Branch:
+              name: '{} Supply Bypass Branch'
+              components:
+                - component_object_type: Pipe:Adiabatic
+                  component_name: '{} Supply Bypass Pipe'
+                  component_inlet_node_name: '{} Supply Bypass Inlet'
+                  component_outlet_node_name: '{} Supply Bypass Outlet'
+          - Pipe:Adiabatic:
+              name: '{} Supply Outlet Pipe'
+              inlet_node_name: '{} Supply Outlet Pipe Inlet'
+              outlet_node_name: '{} Supply Outlet'
+          - Branch:
+              name: '{} Supply Outlet Branch'
+              components:
+                - component_object_type: Pipe:Adiabatic
+                  component_name: '{} Supply Outlet Pipe'
+                  component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
+                  component_outlet_node_name: '{} Supply Outlet'
+          - BranchList:
+              name: '{} Branches'
+              branches:
+                - branch_name: '{} Supply Inlet Branch'
+                - branch_name: '{} Chiller Branch'
                 - branch_name: '{} Supply Bypass Pipe'
                 - branch_name: '{} Supply Outlet Branch'
       Tower:

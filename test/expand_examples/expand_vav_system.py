@@ -77,7 +77,7 @@ test_epjson = {
         },
         "HVACTemplate:Zone:VAV 2": {
             "baseboard_heating_capacity": "Autosize",
-            "baseboard_heating_type": "None",
+            "baseboard_heating_type": "HotWater",
             "constant_minimum_air_flow_fraction": 0.3,
             "damper_heating_action": "Reverse",
             "outdoor_air_flow_rate_per_person": 0.00944,
@@ -120,6 +120,29 @@ test_epjson = {
             "chiller_type": "ElectricReciprocatingChiller",
             "condenser_type": "WaterCooled",
             "nominal_cop": 3.2,
+            "priority": "1"
+        }
+    },
+    "HVACTemplate:Plant:HotWaterLoop": {
+        "Hot Water Loop": {
+            "hot_water_design_setpoint": 82,
+            "hot_water_plant_operation_scheme_type": "Default",
+            "hot_water_pump_configuration": "ConstantFlow",
+            "hot_water_pump_rated_head": 179352,
+            "hot_water_reset_outdoor_dry_bulb_high": 10,
+            "hot_water_reset_outdoor_dry_bulb_low": -6.7,
+            "hot_water_setpoint_at_outdoor_dry_bulb_high": 65.6,
+            "hot_water_setpoint_at_outdoor_dry_bulb_low": 82.2,
+            "hot_water_setpoint_reset_type": "OutdoorAirTemperatureReset",
+            "pump_control_type": "Intermittent"
+        }
+    },
+    "HVACTemplate:Plant:Boiler": {
+        "Main Boiler": {
+            "boiler_type": "HotWaterBoiler",
+            "capacity": "Autosize",
+            "efficiency": 0.8,
+            "fuel_type": "NaturalGas",
             "priority": "1"
         }
     },
@@ -255,14 +278,16 @@ def process_complex_inputs(
     elif isinstance(object_node_reference, list):
         onr_list = []
         for onr in object_node_reference:
-            (onr_field_name, onr_sub_object_structure), = onr.items()
-            onr_generator = process_complex_inputs(
-                energyplus_object_dictionary,
-                onr_sub_object_structure,
-                unique_name_input,
-                onr_field_name)
-            for onr_yield_val in onr_generator:
-                onr_list.append({onr_yield_val["field"]: onr_yield_val["value"]})
+            onr_dictionary = {}
+            for onr_field_name, onr_sub_object_structure in onr.items():
+                onr_generator = process_complex_inputs(
+                    energyplus_object_dictionary,
+                    onr_sub_object_structure,
+                    unique_name_input,
+                    onr_field_name)
+                for onr_yield_val in onr_generator:
+                    onr_dictionary[onr_yield_val["field"]] = onr_yield_val["value"]
+            onr_list.append(onr_dictionary)
         yield {"field": reference_field_name, "value": onr_list}
     else:
         print('error')
@@ -397,8 +422,9 @@ def get_action_structure(
             objects_reference = \
                 option_tree[''.join([action, 'Elements'])][field_name][template_dictionary[field_name]]
             # for each subtree reference (more than one can be done)
-            for object_reference, option_structure in objects_reference.items():
-                yield object_reference, option_structure
+            for object_structure in objects_reference:
+                for object_reference, option_structure in object_structure.items():
+                    yield object_reference, option_structure
 
 
 def remove_objects(
@@ -720,6 +746,7 @@ def apply_transitions_to_objects(
     else:
         as_object = False
     for transition_field_name, value_reference in transition_structure.items():
+        print(value_reference)
         for reference_energyplus_object_type, field_name in value_reference.items():
             for energyplus_super_object in build_path:
                 for energyplus_object_type in energyplus_super_object:
@@ -885,11 +912,6 @@ def build_epjson(
                 sys.exit()
             unique_object_names.append(object_key)
             if energyplus_object_constructors.get('Connectors'):
-                # todo_eo need to work this over for bypass (and other parallel equipment) to not be included in
-                # the node name handoff
-                # the easiest thing to do is to probably rewrite the process to also take lists and get the first
-                # object if that is the case.
-                # If the constructor has a None value, then it is just there for branch build
                 if energyplus_object_constructors['Connectors'][connector_path].get('UseInBuildPath', True):
                     if idx == 0:
                         epjson_object[energyplus_object_type][object_key] = object_values
@@ -1024,8 +1046,7 @@ def build_additional_objects(
                     super_dictionary=super_dictionary,
                     # energyplus_object_dictionary=energyplus_object_dictionary,
                     unique_name=unique_name,
-                    **kwargs
-                )
+                    **kwargs)
                 # apply transition fields
                 if transition_structure:
                     for sub_object_type, sub_object_structure in sub_object_dictionary.items():
@@ -1049,8 +1070,9 @@ def build_additional_objects(
                 # If a default option is specified, then a comparison of None for that template object and
                 # "None" for the yaml object will yield a path
                 if (not template_dictionary.get(template_field) and template_option == "None") or \
-                        (template_dictionary.get(template_field, None) and \
-                         re.match(template_option, template_dictionary[template_field])):
+                        (template_dictionary.get(template_field, None) and re.match(
+                            template_option,
+                            template_dictionary[template_field])):
                     for new_object_structure in add_object_structure:
                         for object_or_template, object_structure in new_object_structure.items():
                             # check for transitions and pop them if present
@@ -1063,8 +1085,7 @@ def build_additional_objects(
                                 super_dictionary=super_dictionary,
                                 # energyplus_object_dictionary=energyplus_object_dictionary,
                                 unique_name=unique_name,
-                                **kwargs
-                            )
+                                **kwargs)
                             # apply transition fields
                             if transition_structure:
                                 for sub_object_type, sub_object_structure in sub_object_dictionary.items():
@@ -1408,7 +1429,7 @@ def main(input_args):
                 energyplus_zone_unique_names.append(zone_template_dictionary["zone_name"])
         print('zone object list')
         pprint(zone_dictionary, width=150)
-        sys.exit()
+        # sys.exit()
         # plant system loop build
         plant_templates = [i for i in test_epjson if re.match('HVACTemplate:Plant:.*Loop', i, re.IGNORECASE)]
         # save outputs to dictionary
@@ -1485,7 +1506,6 @@ def main(input_args):
         print(system_demand_branchlist)
         print(zone_demand_branchlist)
         pprint(epjson_dictionary, width=150)
-        sys.exit()
         # build thermostats
         # this should be one of the last steps as it scans the epjson_dictionary
         thermostat_templates = [i for i in test_epjson if re.match('HVACTemplate:Thermostat', i, re.IGNORECASE)]
