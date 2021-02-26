@@ -234,7 +234,6 @@ Controller:
         name: '{} OA Controller'
         relief_air_outlet_node_name:
           OutdoorAir:M.*: relief_air_stream_node_name
-        #          Occurrence: 1
         return_air_node_name:
           OutdoorAir:Mixer: return_air_stream_node_name
 
@@ -245,9 +244,6 @@ DesignSpecification:
   ZoneAirDistribution:
     Base: &DesignSpecificationZoneAirDistribution
       name: '{} SZ DSZAD'
-      zone_air_distribution_effectiveness_in_cooling_mode: 1
-      zone_air_distribution_effectiveness_in_heating_mode: 1
-
 
 OutdoorAir:NodeList:
   Base:
@@ -403,6 +399,13 @@ OptionTree:
               template_thermostat_name: control_1_name
         AdditionalTemplateObjects:
           outdoor_air_method: # This group should be created in an anchor for re-use
+            None:
+              DesignSpecification:OutdoorAir: # aliases can be mapped using <<: *var to add more key/values to that level of dictionary.
+                <<: *DesignSpecificationOutdoorAir
+                Transitions:
+                  outdoor_air_method: outdoor_air_method
+                  outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
+                DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution #Aliases are added this way typically
             Flow/Per.*: # can be regex
               DesignSpecification:OutdoorAir: # aliases can be mapped using <<: *var to add more key/values to that level of dictionary.
                 <<: *DesignSpecificationOutdoorAir

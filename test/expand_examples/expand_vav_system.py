@@ -63,7 +63,7 @@ test_epjson = {
             "outdoor_air_flow_rate_per_person": 0.00944,
             "outdoor_air_flow_rate_per_zone": 0.0,
             "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person",
+            # "outdoor_air_method": "Flow/Person",
             "reheat_coil_type": "HotWater",
             "supply_air_maximum_flow_rate": "Autosize",
             "template_thermostat_name": "All Zones",
@@ -1012,7 +1012,11 @@ def build_additional_objects(
     if option_tree.get('AdditionalTemplateObjects'):
         for template_field, template_structure in option_tree['AdditionalTemplateObjects'].items():
             for template_option, add_object_structure in template_structure.items():
-                if re.match(template_option, template_dictionary[template_field]):
+                # If a default option is specified, then a comparison of None for that template object and
+                # "None" for the yaml object will yield a path
+                if (not template_dictionary.get(template_field) and template_option == "None") or \
+                        (template_dictionary.get(template_field, None) and \
+                         re.match(template_option, template_dictionary[template_field])):
                     for object_or_template, object_structure in add_object_structure.items():
                         # check for transitions and pop them if present
                         transition_structure = object_structure.pop('Transitions', None)
@@ -1361,6 +1365,7 @@ def main(input_args):
                 energyplus_zone_unique_names.append(zone_template_dictionary["zone_name"])
         print('zone object list')
         pprint(zone_dictionary, width=150)
+        sys.exit()
         # plant system loop build
         plant_templates = [i for i in test_epjson if re.match('HVACTemplate:Plant:.*Loop', i, re.IGNORECASE)]
         # save outputs to dictionary
