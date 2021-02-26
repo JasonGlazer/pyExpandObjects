@@ -63,12 +63,13 @@ test_epjson = {
             "outdoor_air_flow_rate_per_person": 0.00944,
             "outdoor_air_flow_rate_per_zone": 0.0,
             "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
-            # "outdoor_air_method": "Flow/Person",
+            "outdoor_air_method": "Flow/Person",
             "reheat_coil_type": "HotWater",
             "supply_air_maximum_flow_rate": "Autosize",
             "template_thermostat_name": "All Zones",
             "template_vav_system_name": "VAV Sys 1",
             "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            # "zone_cooling_design_supply_air_temperature": 22,
             "zone_heating_design_supply_air_temperature": 50.0,
             "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_minimum_air_flow_input_method": "Constant",
@@ -215,6 +216,59 @@ def replace_values(
     return super_object
 
 
+def process_complex_inputs(
+        energyplus_object_dictionary,
+        object_node_reference,
+        unique_name_input,
+        reference_field_name):
+    # if the value is a string or numeric, then it's a direct input.  If it is a dictionary
+    # then the key-value pair is the object type and reference node holding the value to be input.
+    # If it is a list, then the object will be iterated for each and the same process applied recursively
+    # Anything else should return an error.
+    if isinstance(object_node_reference, str):
+        yield {"field": reference_field_name, "value": object_node_reference.format(unique_name_input)}
+    elif isinstance(object_node_reference, numbers.Number):
+        yield {"field": reference_field_name, "value": object_node_reference}
+    elif isinstance(object_node_reference, dict):
+        # Optional key 'Occurrence' can be used with the value being an integer.
+        # {'Occurrence': N} is used to get nth match of the object_type search.
+        object_occurrence = object_node_reference.pop('Occurrence', 1)
+        (reference_object_type, reference_node), = object_node_reference.items()
+        # Regular expression match the object type and the reference object type
+        count_matches = 0
+        for object_type in energyplus_object_dictionary.keys():
+            if re.match(reference_object_type, object_type, re.IGNORECASE):
+                count_matches += 1
+                if count_matches == object_occurrence:
+                    (energyplus_object_name, _), = energyplus_object_dictionary[object_type].items()
+                    # if 'self' is used as the reference node, just return the energyplus object type
+                    # if 'key' is used as the reference node, just get the unique object name
+                    if reference_node.lower() == 'self':
+                        yield {"field": reference_field_name, "value": object_type}
+                    elif reference_node.lower() == 'key':
+                        yield {"field": reference_field_name, "value": energyplus_object_name}
+                    else:
+                        yield {"field": reference_field_name,
+                               "value": energyplus_object_dictionary[object_type]
+                               [energyplus_object_name][reference_node]}
+    # if a list is provided, then recursively apply the function
+    elif isinstance(object_node_reference, list):
+        onr_list = []
+        for onr in object_node_reference:
+            (onr_field_name, onr_sub_object_structure), = onr.items()
+            onr_generator = process_complex_inputs(
+                energyplus_object_dictionary,
+                onr_sub_object_structure,
+                unique_name_input,
+                onr_field_name)
+            for onr_yield_val in onr_generator:
+                onr_list.append({onr_yield_val["field"]: onr_yield_val["value"]})
+        yield {"field": reference_field_name, "value": onr_list}
+    else:
+        print('error')
+    return
+
+
 def build_energyplus_object_from_complex_inputs(
         yaml_object: dict,
         energyplus_object_dictionary: dict,
@@ -230,40 +284,14 @@ def build_energyplus_object_from_complex_inputs(
     """
     (energyplus_object_type, energyplus_object_constructors), = yaml_object.items()
     tmp_d = {}
-    # if the value is a string or numeric, then it's a direct input.  If it is a dictionary
-    # then the key-value pair is the object type and reference node holding the value to be input.
-    # Anything else should return an error.
     for reference_field_name, object_node_reference in energyplus_object_constructors.items():
-        if isinstance(object_node_reference, str):
-            tmp_d[reference_field_name] = object_node_reference.format(unique_name_input)
-        elif isinstance(object_node_reference, numbers.Number):
-            tmp_d[reference_field_name] = object_node_reference
-        elif isinstance(object_node_reference, dict):
-            # Optional key 'Occurrence' can be used with the value being an integer.
-            # {'Occurrence': N} is used to get nth match of the object_type search.
-            object_occurrence = object_node_reference.pop('Occurrence', 1)
-            (reference_object_type, reference_node), = object_node_reference.items()
-            # Regular expression match the object type and the reference object type
-            count_matches = 0
-            for object_type in energyplus_object_dictionary.keys():
-                # if 'self' is used as the reference node, just return the energyplus object type
-                # break the loop to prevent un-hashable entries
-                if re.match(reference_object_type, object_type, re.IGNORECASE):
-                    if reference_node.lower() == 'self':
-                        tmp_d[reference_field_name] = object_type
-                        continue
-                    count_matches += 1
-                    if count_matches == object_occurrence:
-                        (energyplus_object_name, _), = energyplus_object_dictionary[object_type].items()
-                        # if 'key' is used as the reference node, just get the unique object name
-                        # e.g. {object_type: {unique_object_name: object_fields}
-                        if reference_node.lower() == 'key':
-                            tmp_d[reference_field_name] = energyplus_object_name
-                        else:
-                            tmp_d[reference_field_name] = \
-                                energyplus_object_dictionary[object_type][energyplus_object_name][reference_node]
-        else:
-            print('error')
+        processed_inputs = process_complex_inputs(
+            energyplus_object_dictionary,
+            object_node_reference,
+            unique_name_input,
+            reference_field_name)
+        for pd in processed_inputs:
+            tmp_d[pd["field"]] = pd["value"]
     # Make a check that every reference node was applied
     key_val = tmp_d.pop('name')
     return energyplus_object_type, {key_val: tmp_d}
@@ -984,31 +1012,37 @@ def build_additional_objects(
     object_dictionary = {}
     if option_tree.get('AdditionalObjects'):
         # check if additional object iterator is a energyplus object key or an HVACTemplate object key.
-        for object_or_template, object_structure in option_tree['AdditionalObjects'].items():
-            # check for transitions and pop them if present
-            transition_structure = object_structure.pop('Transitions', None)
-            sub_object_dictionary = process_additional_object_input(
-                object_or_template=object_or_template,
-                object_structure=object_structure,
-                option_tree=option_tree,
-                connector_path=connector_path,
-                super_dictionary=super_dictionary,
-                # energyplus_object_dictionary=energyplus_object_dictionary,
-                unique_name=unique_name,
-                **kwargs
-            )
-            # apply transition fields
-            if transition_structure:
-                for sub_object_type, sub_object_structure in sub_object_dictionary.items():
-                    for sub_object_name, sub_object_fields in sub_object_structure.items():
+        for new_object_structure in option_tree['AdditionalObjects']:
+            for object_or_template, object_structure in new_object_structure.items():
+                # check for transitions and pop them if present
+                transition_structure = object_structure.pop('Transitions', None)
+                sub_object_dictionary = process_additional_object_input(
+                    object_or_template=object_or_template,
+                    object_structure=object_structure,
+                    option_tree=option_tree,
+                    connector_path=connector_path,
+                    super_dictionary=super_dictionary,
+                    # energyplus_object_dictionary=energyplus_object_dictionary,
+                    unique_name=unique_name,
+                    **kwargs
+                )
+                # apply transition fields
+                if transition_structure:
+                    for sub_object_type, sub_object_structure in sub_object_dictionary.items():
                         tmp_d = {}
-                        for sub_template_field, object_field in transition_structure.items():
-                            tmp_d[object_field] = template_dictionary[sub_template_field]
-                        sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
-            object_dictionary = merge_dictionaries(
-                super_dictionary=object_dictionary,
-                object_dictionary=sub_object_dictionary,
-                unique_name_override=True)
+                        for sub_object_name, sub_object_fields in sub_object_structure.items():
+                            # apply all base fields and values to object before transition
+                            for field, value in sub_object_fields.items():
+                                tmp_d[field] = value
+                            # overwrite, or add, fields and values to object
+                            for sub_template_field, object_field in transition_structure.items():
+                                if template_dictionary.get(sub_template_field):
+                                    tmp_d[object_field] = template_dictionary[sub_template_field]
+                            sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
+                object_dictionary = merge_dictionaries(
+                    super_dictionary=object_dictionary,
+                    object_dictionary=sub_object_dictionary,
+                    unique_name_override=True)
     if option_tree.get('AdditionalTemplateObjects'):
         for template_field, template_structure in option_tree['AdditionalTemplateObjects'].items():
             for template_option, add_object_structure in template_structure.items():
@@ -1017,31 +1051,37 @@ def build_additional_objects(
                 if (not template_dictionary.get(template_field) and template_option == "None") or \
                         (template_dictionary.get(template_field, None) and \
                          re.match(template_option, template_dictionary[template_field])):
-                    for object_or_template, object_structure in add_object_structure.items():
-                        # check for transitions and pop them if present
-                        transition_structure = object_structure.pop('Transitions', None)
-                        sub_object_dictionary = process_additional_object_input(
-                            object_or_template=object_or_template,
-                            object_structure=object_structure,
-                            option_tree=option_tree,
-                            connector_path=connector_path,
-                            super_dictionary=super_dictionary,
-                            # energyplus_object_dictionary=energyplus_object_dictionary,
-                            unique_name=unique_name,
-                            **kwargs
-                        )
-                        # apply transition fields
-                        if transition_structure:
-                            for sub_object_type, sub_object_structure in sub_object_dictionary.items():
-                                for sub_object_name, sub_object_fields in sub_object_structure.items():
+                    for new_object_structure in add_object_structure:
+                        for object_or_template, object_structure in new_object_structure.items():
+                            # check for transitions and pop them if present
+                            transition_structure = object_structure.pop('Transitions', None)
+                            sub_object_dictionary = process_additional_object_input(
+                                object_or_template=object_or_template,
+                                object_structure=object_structure,
+                                option_tree=option_tree,
+                                connector_path=connector_path,
+                                super_dictionary=super_dictionary,
+                                # energyplus_object_dictionary=energyplus_object_dictionary,
+                                unique_name=unique_name,
+                                **kwargs
+                            )
+                            # apply transition fields
+                            if transition_structure:
+                                for sub_object_type, sub_object_structure in sub_object_dictionary.items():
                                     tmp_d = {}
-                                    for sub_template_field, object_field in transition_structure.items():
-                                        tmp_d[object_field] = template_dictionary[sub_template_field]
-                                    sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
-                        object_dictionary = merge_dictionaries(
-                            super_dictionary=object_dictionary,
-                            object_dictionary=sub_object_dictionary,
-                            unique_name_override=True)
+                                    for sub_object_name, sub_object_fields in sub_object_structure.items():
+                                        # apply all base fields and values to object before transition
+                                        for field, value in sub_object_fields.items():
+                                            tmp_d[field] = value
+                                        # overwrite, or add, fields and values to object
+                                        for sub_template_field, object_field in transition_structure.items():
+                                            if template_dictionary.get(sub_template_field):
+                                                tmp_d[object_field] = template_dictionary[sub_template_field]
+                                        sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
+                            object_dictionary = merge_dictionaries(
+                                super_dictionary=object_dictionary,
+                                object_dictionary=sub_object_dictionary,
+                                unique_name_override=True)
     return object_dictionary
 
 
@@ -1272,23 +1312,26 @@ def build_branches(
         else:
             for build_object in build_path:
                 for object_type, super_object in build_object.items():
-                    # do I need to run a check that consecutive objects have inlet/outlet nodes?
-                    connector_object = super_object.get('Connectors')
-                    if connector_object:
-                        object_connector = connector_object.get(connector_type)
-                        if object_connector:
-                            super_dictionary["Branch"][' '.join([super_object['Fields']['name'], 'Branch'])] = {
-                                'component_object_type': object_type,
-                                'component_object_name': super_object['Fields']['name'],
-                                'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
-                                'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
-                    # build demand branch list
-                    if re.match('^Coil:Cooling:Water.*', object_type, re.IGNORECASE):
-                        demand_chilled_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
-                    elif re.match('^Coil:Heating:Water.*', object_type, re.IGNORECASE):
-                        demand_hot_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
-                    elif re.match('^Coil:.*HeatPump.*', object_type, re.IGNORECASE):
-                        demand_mixed_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
+                    # only retrieve demand-side water coils or air loop objects.  Supply side water loopp
+                    # branches are created in the additional objects fields of the templates
+                    if re.match('^Coil.*', object_type, re.IGNORECASE):
+                        # do I need to run a check that consecutive objects have inlet/outlet nodes?
+                        connector_object = super_object.get('Connectors')
+                        if connector_object:
+                            object_connector = connector_object.get(connector_type)
+                            if object_connector:
+                                super_dictionary["Branch"][' '.join([super_object['Fields']['name'], 'Branch'])] = {
+                                    'component_object_type': object_type,
+                                    'component_object_name': super_object['Fields']['name'],
+                                    'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
+                                    'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
+                        # build demand branch list
+                        if re.match('^Coil:Cooling:Water.*', object_type, re.IGNORECASE):
+                            demand_chilled_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
+                        elif re.match('^Coil:Heating:Water.*|^ZoneHVAC:Baseboard.*Water', object_type, re.IGNORECASE):
+                            demand_hot_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
+                        elif re.match('^Coil:.*HeatPump.*', object_type, re.IGNORECASE):
+                            demand_mixed_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
     demand_dictionary = {
         "DemandChilledWater": demand_chilled_water_objects,
         "DemandHotWater": demand_hot_water_objects,
@@ -1392,7 +1435,7 @@ def main(input_args):
                 energyplus_plant_build_paths.append(plant_build_path)
                 energyplus_plant_unique_names.append(template_plant_name)
         pprint(plant_dictionary, width=150)
-        sys.exit()
+        # sys.exit()
         print('##### New Plant Template Output #####')
         pprint(plant_dictionary, width=150)
         # Collect all template objects to one epjson object for further processing
@@ -1408,7 +1451,6 @@ def main(input_args):
         print('##### Branch Build #####')
         system_branch_dictionary = {}
         zone_branch_dictionary = {}
-        plant_branch_dictionary = {}
         system_demand_branchlist = []
         zone_demand_branchlist = []
         for sbp, unique_name in zip(energyplus_system_build_paths, energyplus_system_unique_names):
@@ -1424,23 +1466,14 @@ def main(input_args):
                 unique_name=unique_name,
                 connectors_to_build=['HotWaterLoop', 'ChilledWaterLoop', 'CondenserWaterLoop'])
             zone_demand_branchlist.append(sub_zone_demand_branchlist)
-        for pbp, unique_name in zip(energyplus_plant_build_paths, energyplus_plant_unique_names):
-            plant_branch_dictionary, _ = build_branches(
-                super_dictionary=plant_branch_dictionary,
-                build_path=pbp,
-                unique_name=unique_name)
-        pprint(plant_dictionary, width=150)
-        sys.exit()
-        pprint(plant_branch_dictionary, width=150)
         branch_dictionary = {}
-        for bd in [system_branch_dictionary, zone_branch_dictionary, plant_branch_dictionary]:
-            # returned value is a nested object of branchlist -> branches
+        for bd in [system_branch_dictionary, zone_branch_dictionary]:
+            # returned value is an object with Branch and BranchList keys
             branch_dictionary = merge_dictionaries(
                 super_dictionary=branch_dictionary,
                 object_dictionary=bd,
                 unique_name_override=False
             )
-        sys.exit()
         print('##### New Branch Output #####')
         pprint(branch_dictionary, width=150)
         epjson_dictionary = merge_dictionaries(
@@ -1451,6 +1484,8 @@ def main(input_args):
         # Add pumps and pipes.  This will require the use of the template input fields as well.
         print(system_demand_branchlist)
         print(zone_demand_branchlist)
+        pprint(epjson_dictionary, width=150)
+        sys.exit()
         # build thermostats
         # this should be one of the last steps as it scans the epjson_dictionary
         thermostat_templates = [i for i in test_epjson if re.match('HVACTemplate:Thermostat', i, re.IGNORECASE)]
@@ -1517,11 +1552,6 @@ if __name__ == "__main__":
 
 #############
 # Plant Loops
-# equipment that falls outside of build path is not having branches created
-# e.g. CoolingTower, Chiller condenser, etc.  Need to figure a way to add these into
-# branches and branchlists
-# maybe just make all the branches via AdditionalObjects  it would be easier, then can handle custom functions
-# for BranchList.  Example has been started under the CoolingTower
 #############
 
 #############

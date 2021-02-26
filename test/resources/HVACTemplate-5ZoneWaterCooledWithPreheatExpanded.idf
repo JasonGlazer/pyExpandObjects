@@ -1775,7 +1775,7 @@ Sizing:Parameters,
 !     ,                        !- Design Specification Outdoor Air Object Name for Control
 !     ,                        !- Supply Plenum Name
 !     ,                        !- Return Plenum Name
-!     None,                    !- Baseboard Heating Type
+!     HotWater,                !- Baseboard Heating Type
 !     ,                        !- Baseboard Heating Availability Schedule Name
 !     autosize,                !- Baseboard Heating Capacity {W}
 !     SystemSupplyAirTemperature,  !- Zone Cooling Design Supply Air Temperature Input Method
@@ -2192,6 +2192,12 @@ ZoneHVAC:EquipmentList,
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
+  ,                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
+  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Zone Equipment Object Type
+  SPACE1-1 Baseboard Heat,                                 !- Zone Equipment Name
+  2,                                                       !- Zone Equipment Cooling Sequence
+  2,                                                       !- Zone Equipment Heating or No-Load Sequence
+  ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
 
 ZoneHVAC:AirDistributionUnit,
@@ -2246,6 +2252,30 @@ Branch,
   SPACE1-1 Reheat Coil,                                    !- Component Name
   SPACE1-1 Reheat Coil HW Inlet,                           !- Component Inlet Node Name
   SPACE1-1 Reheat Coil HW Outlet;                          !- Component Outlet Node Name
+
+ZoneHVAC:Baseboard:RadiantConvective:Water,
+  SPACE1-1 Baseboard Heat,                                 !- Name
+  ,                                                        !- Availability Schedule Name
+  SPACE1-1 Baseboard HW Inlet,                             !- Inlet Node Name
+  SPACE1-1 Baseboard HW Outlet,                            !- Outlet Node Name
+  87.78,                                                   !- Rated Average Water Temperature {C}
+  0.063,                                                   !- Rated Water Mass Flow Rate {m3/s}
+  HeatingDesignCapacity,                                   !- Heating Design Capacity Method
+  autosize,                                                !- Heating Design Capacity {W}
+  ,                                                        !- Heating Design Capacity Per Floor Area {W/m2}
+  ,                                                        !- Fraction of Autosized Heating Design Capacity
+  autosize,                                                !- Maximum Water Flow Rate
+  0.001,                                                   !- Convergence Tolerance
+  0.0,                                                     !- Fraction Radiant
+  0.0;                                                     !- Fraction of Radiant Energy Incident on People
+
+Branch,
+  SPACE1-1 Baseboard Heat HW Branch,                       !- Name
+  ,                                                        !- Pressure Drop Curve Name
+  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Component Object Type
+  SPACE1-1 Baseboard Heat,                                 !- Component Name
+  SPACE1-1 Baseboard HW Inlet,                             !- Component Inlet Node Name
+  SPACE1-1 Baseboard HW Outlet;                            !- Component Outlet Node Name
 
 ZoneControl:Thermostat,
   SPACE2-1 Thermostat,                                     !- Name
@@ -3366,6 +3396,7 @@ BranchList,
   Hot Water Loop HW Demand Side Branches,                  !- Name
   Hot Water Loop HW Demand Inlet Branch,                   !- Name
   SPACE1-1 Reheat Coil HW Branch,                          !- Name
+  SPACE1-1 Baseboard Heat HW Branch,                       !- Name
   SPACE2-1 Reheat Coil HW Branch,                          !- Name
   SPACE3-1 Reheat Coil HW Branch,                          !- Name
   SPACE4-1 Reheat Coil HW Branch,                          !- Name
@@ -3386,6 +3417,7 @@ Connector:Splitter,
   Hot Water Loop HW Demand Inlet Branch,                   !- Inlet Branch Name
   Hot Water Loop HW Demand Bypass Branch,                  !- Outlet Branch Name
   SPACE1-1 Reheat Coil HW Branch,                          !- Name
+  SPACE1-1 Baseboard Heat HW Branch,                       !- Name
   SPACE2-1 Reheat Coil HW Branch,                          !- Name
   SPACE3-1 Reheat Coil HW Branch,                          !- Name
   SPACE4-1 Reheat Coil HW Branch,                          !- Name
@@ -3397,6 +3429,7 @@ Connector:Mixer,
   Hot Water Loop HW Demand Outlet Branch,                  !- Outlet Branch Name
   Hot Water Loop HW Demand Bypass Branch,                  !- Inlet Branch Name
   SPACE1-1 Reheat Coil HW Branch,                          !- Name
+  SPACE1-1 Baseboard Heat HW Branch,                       !- Name
   SPACE2-1 Reheat Coil HW Branch,                          !- Name
   SPACE3-1 Reheat Coil HW Branch,                          !- Name
   SPACE4-1 Reheat Coil HW Branch,                          !- Name
