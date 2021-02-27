@@ -22,11 +22,16 @@ Chiller:
             name: '{} Chiller'
             chilled_water_inlet_node_name: '{} Chiller ChW Inlet'
             chilled_water_outlet_node_name: '{} Chiller ChW Outlet'
+            condenser_water_inlet_node_name: '{} Chiller Cnd Inlet'
+            condenser_water_outlet_node_name: '{} Chiller Cnd Outlet'
             total_cooling_capacity_function_of_temperature_curve_name: Main Chiller RecipCapFT
           Connectors:
             ChilledWaterLoop:
               Inlet: chilled_water_inlet_node_name
               Outlet: chilled_water_outlet_node_name
+            CondenserWAterLoop:
+              Inlet: condenser_water_inlet_node_name
+              Outlet: condenser_water_outlet_node_name
 
 Coil:
   Cooling:
@@ -99,8 +104,6 @@ CoolingTower:
           CondenserWaterLoop:
             Inlet: water_inlet_node_name
             Outlet: water_outlet_node_name
-
-
 
 Fan:
   Fields: &FanFields # example of default inputs, but i'm not sure if it's necessary.
@@ -371,7 +374,7 @@ HVACTemplate:
   System:
     VAV: &HVACTemplateSystemVAV
       BuildPath: # path of airflow through components
-        - *SystemConfigOutdoorAirBase
+        *SystemConfigOutdoorAirBase
       Transitions: # values to transition from template to child objects {object_type: object_field_name}
         supply_fan_total_efficiency:
           Fan:.*: fan_total_efficiency
@@ -399,9 +402,7 @@ HVACTemplate:
           ^Chiller:.*: reference_capacity
     ChilledWaterLoop: &HVACTemplatePlantChilledWaterLoop
       BuildPath:
-        - Pump:ConstantSpeed: *PumpConstantSpeed
         - HVACTemplate:Plant:Chiller # specify a nested template with a text reference to the object under the OptionTree object
-        - <<: *PipeAdiabaticSupplyOutlet
     CondenserWaterLoop: &HVACTemplatePlantCondenserWaterLoop
       BuildPath:
         - HVACTemplate:Plant:Tower
@@ -410,7 +411,7 @@ HVACTemplate:
         - HVACTemplate:Plant:Boiler
     Tower: &HVACTemplatePlantTower
       BuildPath:
-        - <<: *CoolingTowerSingleSpeed
+        - *CoolingTowerSingleSpeed
 
 ### Option Trees
 OptionTree:
