@@ -314,7 +314,7 @@ def perform_build_operations(
     print('BuldPath complete')
     print(build_path)
     # Build a dictionary of valid epJSON objects from build path
-    object_from_path = build_epjson(
+    object_from_path = create_epjson(
         connector_path=connector_path,
         unique_name=unique_name,
         build_path=build_path)
@@ -326,7 +326,7 @@ def perform_build_operations(
     # these are stored in the option tree under AdditionalObjects
     # for standard objects, and AdditionalTemplateObjects for
     # template triggered objects
-    additional_objects = build_additional_objects(
+    additional_objects = create_additional_objects(
         option_tree=option_tree,
         connector_path=connector_path,
         super_dictionary=super_dictionary,
@@ -723,7 +723,7 @@ def insert_unique_name(
         return build_path
 
 
-def build_epjson(
+def create_epjson(
         connector_path: str,
         unique_name: str,
         build_path: typing.Union[dict, typing.List[dict]]) -> dict:
@@ -740,158 +740,89 @@ def build_epjson(
     if isinstance(build_path, dict):
         build_path = [build_path, ]
     out_node_name = None
-    epjson_object = {}
-    for idx, energyplus_super_object in enumerate(build_path):
+    object_dictionary = {}
+    for idx, super_object in enumerate(build_path):
         # store object key and make sure not in list as you iterate:
         unique_object_names = []
-        for energyplus_object_type, energyplus_object_constructors in energyplus_super_object.items():
+        for object_type, object_constructors in super_object.items():
             # use copy so that the original structure is preserved for future queries
-            tmp_d = copy.deepcopy(energyplus_object_constructors['Fields'])
-            object_key = tmp_d.pop('name')
+            tmp_d = copy.deepcopy(object_constructors['Fields'])
+            object_name = tmp_d.pop('name')
             # not necessary but it's a good reminder that this object is the target value
             object_values = tmp_d
             # create the object type if it doesn't exist
-            if not epjson_object.get(energyplus_object_type):
-                epjson_object[energyplus_object_type] = {}
+            if not object_dictionary.get(object_type):
+                object_dictionary[object_type] = {}
             # for the first object, do not alter the input node name.
             # for subsequent objects, set the input node name value to the
             # output node name value of the previous object.
             # also check for duplicates
-            if object_key in unique_object_names:
+            if object_name in unique_object_names:
                 print('non-unique object error')
                 sys.exit()
-            unique_object_names.append(object_key)
-            if energyplus_object_constructors.get('Connectors'):
-                if energyplus_object_constructors['Connectors'][connector_path].get('UseInBuildPath', True):
+            unique_object_names.append(object_name)
+            if object_constructors.get('Connectors'):
+                # An id in the build path can actually have N objects; however, only one should be
+                # used to connect the nodes along a build path.  Therefore, all objects except one should
+                # have a variable 'UseInBuildPath' set to False.  check for that here.  If that is the case,
+                # then just write out the object to the epjson dictionary and do not do any connections.
+                if object_constructors['Connectors'][connector_path].get('UseInBuildPath', True):
                     if idx == 0:
-                        epjson_object[energyplus_object_type][object_key] = object_values
-                        out_node = energyplus_object_constructors['Connectors'][connector_path]['Outlet']
+                        object_dictionary[object_type][object_name] = object_values
+                        out_node = object_constructors['Connectors'][connector_path]['Outlet']
                         if isinstance(out_node, str) and '{}' in out_node:
                             out_node_name = out_node.format(unique_name)
                         else:
                             out_node_name = (
-                                energyplus_object_constructors['Fields']
-                                [energyplus_object_constructors['Connectors'][connector_path]['Outlet']]
+                                object_constructors['Fields']
+                                [object_constructors['Connectors'][connector_path]['Outlet']]
                             )
                     else:
                         object_values[
-                            energyplus_object_constructors['Connectors'][connector_path]['Inlet']
+                            object_constructors['Connectors'][connector_path]['Inlet']
                         ] = out_node_name
-                        epjson_object[energyplus_object_type][object_key] = object_values
-                        out_node = energyplus_object_constructors['Connectors'][connector_path]['Outlet']
+                        object_dictionary[object_type][object_name] = object_values
+                        out_node = object_constructors['Connectors'][connector_path]['Outlet']
                         if isinstance(out_node, str) and '{}' in out_node:
                             out_node_name = out_node.format(unique_name)
                         else:
                             out_node_name = (
-                                energyplus_object_constructors['Fields']
-                                [energyplus_object_constructors['Connectors'][connector_path]['Outlet']]
+                                object_constructors['Fields']
+                                [object_constructors['Connectors'][connector_path]['Outlet']]
                             )
                 else:
-                    epjson_object[energyplus_object_type][object_key] = object_values
+                    object_dictionary[object_type][object_name] = object_values
             else:
-                epjson_object[energyplus_object_type][object_key] = object_values
-    return epjson_object
-
-
-def process_additional_object_input(
-        object_or_template,
-        object_structure,
-        connector_path,
-        super_dictionary,
-        unique_name,
-        input_epjson,
-        data):
-    object_dictionary = {}
-    if not object_or_template.startswith('HVACTemplate'):
-        additional_object = {object_or_template: object_structure}
-        for additional_sub_object, additional_sub_object_fields in additional_object.items():
-            energyplus_object, tmp_d = build_object_from_complex_inputs(
-                super_dictionary=super_dictionary,
-                yaml_object={additional_sub_object: copy.deepcopy(additional_sub_object_fields)},
-                unique_name_input=unique_name
-            )
-            # todo_eo the above function needs to be rewritten to output an epJSON dictionary
-            if not object_dictionary.get(energyplus_object):
-                object_dictionary[energyplus_object] = {}
-            for object_name, object_fields in tmp_d.items():
-                if object_name in object_dictionary[energyplus_object].keys():
-                    print('unique name error')
-                    sys.exit()
-            object_dictionary[energyplus_object] = tmp_d
-    # if the object is just a string, it should be for an HVACTemplate OptionTree build.
-    # The key is the unique name modifier
-    elif object_or_template.startswith('HVACTemplate'):
-        sub_template_object = input_epjson.get(object_or_template)
-        # in this test program, we have to grab global objects, which are the yaml data and the
-        # epjson object.  In production, these should be stored class attributes.
-        # Also, some internal yaml templates are not accessible via EnergyPlus, so they will not have
-        # a template input
-        sub_option_tree = get_option_tree(object_or_template, data)
-        if isinstance(sub_template_object, dict):
-            # todo_eo: it does not appear this code is ever used.  Inspect and remove if so.
-            for sub_object_name, sub_object_dictionary in sub_template_object.items():
-                energyplus_epjson_objects, _ = perform_build_operations(
-                    connector_path=object_structure.get('ConnectorPath', connector_path),
-                    option_tree=sub_option_tree,
-                    template_dictionary=sub_object_dictionary,
-                    super_dictionary=super_dictionary,
-                    unique_name=object_structure['UniqueName'],
-                    input_epjson=input_epjson,
-                    data=data)
-                for energyplus_object, tmp_d in energyplus_epjson_objects.items():
-                    if not object_dictionary.get(energyplus_object):
-                        object_dictionary[energyplus_object] = {}
-                    for object_name, object_fields in tmp_d.items():
-                        if object_name in object_dictionary[energyplus_object].keys():
-                            print('unique name error')
-                            sys.exit()
-                    object_dictionary[energyplus_object] = tmp_d
-        else:
-            # for now, just specify the connector_path.  Will have to make a mapping dictionary later
-            energyplus_epjson_objects, _ = perform_build_operations(
-                connector_path=object_structure.get('ConnectorPath', connector_path),
-                option_tree=sub_option_tree,
-                template_dictionary={},
-                super_dictionary=super_dictionary,
-                unique_name=object_structure['UniqueName'],
-                input_epjson=input_epjson,
-                data=data)
-            object_dictionary = merge_dictionaries(
-                super_dictionary=object_dictionary,
-                object_dictionary=energyplus_epjson_objects,
-                unique_name_override=False)
-    else:
-        print('value was not additional object key nor an HVACTemplate string')
-        sys.exit()
+                object_dictionary[object_type][object_name] = object_values
     return object_dictionary
 
 
-def build_additional_objects(
-        option_tree: dict,
+def create_additional_objects(
         super_dictionary: dict,
+        option_tree: dict,
         connector_path: str,
         unique_name: str,
         template_dictionary: dict,
         input_epjson: dict,
         data: dict) -> dict:
     """
-    Build additional objects in option tree
+    Convert additional objects from yaml OptionTree into epJSON objects.
 
-    :param option_tree: Dictionary containing build path variations
-    :param super_dictionary: epjson dictionary of EnergyPlus objects
-    :param connector_path: connector path name to use
-    :param unique_name: unique name string
-    :param template_dictionary: input HVACTemplate object
-    :param input_epjson:
-    :param data:
-    :return:
+    :param super_dictionary: epJSON dictionary of EnergyPlus objects
+    :param option_tree: dictionary containing build path variations
+    :param connector_path: fluid flow path to follow
+    :param unique_name: unique name modifier
+    :param template_dictionary: HVACTemplate user inputs
+    :param input_epjson: epJSON file containing HVACTemplate objects
+    :param data: loaded yaml object
+    :return: epJSON dictionary of created additional objects
     """
     object_dictionary = {}
+    # iterate over AdditionalObjects and process
     if option_tree.get('AdditionalObjects'):
-        # check if additional object iterator is a energyplus object key or an HVACTemplate object key.
         for new_object_structure in option_tree['AdditionalObjects']:
             for object_or_template, object_structure in new_object_structure.items():
-                # check for transitions and pop them if present
+                # check for 'Transitions' structure and pop it if present
                 transition_structure = object_structure.pop('Transitions', None)
                 sub_object_dictionary = process_additional_object_input(
                     object_or_template=object_or_template,
@@ -918,11 +849,14 @@ def build_additional_objects(
                     super_dictionary=object_dictionary,
                     object_dictionary=sub_object_dictionary,
                     unique_name_override=True)
+    # process additional template objects
     if option_tree.get('AdditionalTemplateObjects'):
         for template_field, template_structure in option_tree['AdditionalTemplateObjects'].items():
             for template_option, add_object_structure in template_structure.items():
-                # If a default option is specified, then a comparison of None for that template object and
-                # "None" for the yaml object will yield a path
+                # check the option that triggers the object to be created.
+                # If a default option is specified (e.g. the field is left blank),
+                # then a comparison of None for that template object and
+                # "None" is performed.
                 if (not template_dictionary.get(template_field) and template_option == "None") or \
                         (template_dictionary.get(template_field, None) and re.match(
                             template_option,
@@ -959,15 +893,112 @@ def build_additional_objects(
     return object_dictionary
 
 
-def build_compact_schedule(data, schedule_type, insert_values: typing.Union[int, str, list]):
+def process_additional_object_input(
+        object_or_template,
+        object_structure,
+        connector_path,
+        super_dictionary,
+        unique_name,
+        input_epjson,
+        data):
+    """
+    Perform operations to convert instructions from a yaml 'additional object' into epJSON object.
+
+    :param object_or_template: key value of instruction.  It is either an EnergyPlus object (regex alowed) or a
+        reference to an HVACTemplate.
+    :param object_structure: structure of passed instructions
+    :param connector_path: fluid flow path to follow
+    :param super_dictionary: high level dictionary containing epJSON objects from the build path
+    :param unique_name: unique name modifier
+    :param input_epjson: epJSON file containing HVACTemplate objects
+    :param data: loaded yaml objects
+    :return: epJSON formatted dictionary
+    """
+    object_dictionary = {}
+    # check if additional object iterator is a energyplus object key or an HVACTemplate object key.
+    if not object_or_template.startswith('HVACTemplate'):
+        additional_object = {object_or_template: object_structure}
+        for additional_sub_object, additional_sub_object_fields in additional_object.items():
+            energyplus_object, tmp_d = build_object_from_complex_inputs(
+                super_dictionary=super_dictionary,
+                yaml_object={additional_sub_object: copy.deepcopy(additional_sub_object_fields)},
+                unique_name_input=unique_name)
+            # todo_eo the above function needs to be rewritten to output an epJSON dictionary
+            # then this below section can be replaced with merge_dictionaries
+            if not object_dictionary.get(energyplus_object):
+                object_dictionary[energyplus_object] = {}
+            for object_name, object_fields in tmp_d.items():
+                if object_name in object_dictionary[energyplus_object].keys():
+                    print('unique name error')
+                    sys.exit()
+            object_dictionary[energyplus_object] = tmp_d
+    # if the object is just a string, it should be for an HVACTemplate OptionTree build.
+    # The key is the unique name modifier
+    elif object_or_template.startswith('HVACTemplate'):
+        sub_template_object = input_epjson.get(object_or_template)
+        # in this test program, we have to grab global objects, which are the yaml data and the
+        # epjson object.  In production, these should be stored class attributes.
+        # Also, some internal yaml templates are not accessible via EnergyPlus, so they will not have
+        # a template input
+        sub_option_tree = get_option_tree(object_or_template, data)
+        if isinstance(sub_template_object, dict):
+            # todo_eo: it does not appear this code is ever used.  Inspect and remove if so.
+            for sub_object_name, sub_template_dictionary in sub_template_object.items():
+                sub_object_dictionary, _ = perform_build_operations(
+                    connector_path=object_structure.get('ConnectorPath', connector_path),
+                    option_tree=sub_option_tree,
+                    template_dictionary=sub_template_dictionary,
+                    super_dictionary=super_dictionary,
+                    unique_name=object_structure['UniqueName'],
+                    input_epjson=input_epjson,
+                    data=data)
+                for energyplus_object, tmp_d in sub_object_dictionary.items():
+                    if not object_dictionary.get(energyplus_object):
+                        object_dictionary[energyplus_object] = {}
+                    for object_name, object_fields in tmp_d.items():
+                        if object_name in object_dictionary[energyplus_object].keys():
+                            print('unique name error')
+                            sys.exit()
+                    object_dictionary[energyplus_object] = tmp_d
+        else:
+            # if a template was not found for the nested HVACTemplate object, then process with a blank
+            # template object.
+            # for now, just specify the connector_path.  Will have to make a mapping dictionary later
+            sub_object_dictionary, _ = perform_build_operations(
+                connector_path=object_structure.get('ConnectorPath', connector_path),
+                option_tree=sub_option_tree,
+                template_dictionary={},
+                super_dictionary=super_dictionary,
+                unique_name=object_structure['UniqueName'],
+                input_epjson=input_epjson,
+                data=data)
+            object_dictionary = merge_dictionaries(
+                super_dictionary=object_dictionary,
+                object_dictionary=sub_object_dictionary,
+                unique_name_override=False)
+    else:
+        print('value was not additional object key nor an HVACTemplate string')
+        sys.exit()
+    return object_dictionary
+
+
+def build_compact_schedule(
+        data: dict,
+        schedule_type: str,
+        insert_values: typing.Union[int, str, list]) -> dict:
     """
     Create compact schedule from specified yaml object and value
-    :return:
+
+    :param data: loaded yamle object
+    :param schedule_type: string value identifying schedule template
+    :param insert_values: list of values to insert in template
+    :return: epJSON formatted schedule object
     """
     if not isinstance(insert_values, list):
         insert_values = [insert_values, ]
     schedule_object = {'Schedule:Compact': {}}
     always_temperature_object = copy.deepcopy(data['Schedule']['Compact'][schedule_type])
+    # for each element in the schedule, convert to numeric if value replacement occurs
     formatted_data_lines = [
         float(i.format(*insert_values))
         if re.match(r'.*{.*}', i, re.IGNORECASE) else i
@@ -977,20 +1008,19 @@ def build_compact_schedule(data, schedule_type, insert_values: typing.Union[int,
     return schedule_object
 
 
-def build_thermostats(
-        super_dictionary,
-        template_dictionary,
-        thermostat_name,
-        data):
+def create_thermostats(
+        template_dictionary: dict,
+        thermostat_name: str,
+        data: dict) -> dict:
     """
     Create thermostat objects and associated equipment
 
-    :param super_dictionary: Dictionary of thermostat objects
-    :param template_dictionary: Dictionary of template fields
+    :param template_dictionary: HVACTemplate dictionary of user inputs
     :param thermostat_name: unique name of thermostat object
-    :param data:
-    :return:
+    :param data: loaded yaml object
+    :return: dictionary of epJSON objects containing original super_dictionary objects and epJSON objects.
     """
+    object_dictionary = {}
     # Do simple if-else statements to find the right thermostat type, then write it to an object dictionary.
     # it's easier to just construct thermostats from if-else statements than to build an alternate
     # yaml hierarchy.
@@ -1049,32 +1079,39 @@ def build_thermostats(
         sys.exit()
     # update super dictionary with new objects
     for so in schedule_objects:
-        super_dictionary = merge_dictionaries(
-            super_dictionary=super_dictionary,
+        object_dictionary = merge_dictionaries(
+            super_dictionary=object_dictionary,
             object_dictionary=so
         )
-    super_dictionary = merge_dictionaries(
-        super_dictionary=super_dictionary,
+    object_dictionary = merge_dictionaries(
+        super_dictionary=object_dictionary,
         object_dictionary=thermostat_object)
-    return super_dictionary
+    return object_dictionary
 
 
 def modify_zone_control_thermostats(
         super_dictionary: dict,
-        epjson_dictionary: dict,
         data: dict):
+    """
+    Edit ZoneControl:Thermostat objects with information present within the super_dictionary of epJSON obects.
+
+    :param super_dictionary: high level dictionary of epJSON objects
+    :param data: loaded yaml object
+    :return: modified epJSON objects from super dictionary
+    """
+    object_dictionary = {}
     # find ZoneControlThermostats with each thermostat name and update fields
     # get thermostat name
     tmp_schedule_dictionary = {}
     tmp_modified_object_dictionary = {}
-    for object_type, energyplus_object in epjson_dictionary.items():
+    for object_type, energyplus_object in super_dictionary.items():
         if object_type.lower() == 'zonecontrol:thermostat':
             for object_name, object_fields in energyplus_object.items():
                 thermostat_name = energyplus_object[object_name]['control_1_name']
                 # get thermostat type
                 thermostats = {
                     i: j for i, j
-                    in epjson_dictionary.items()
+                    in super_dictionary.items()
                     if re.match(r'^ThermostatSetpoint', i, re.IGNORECASE)}
                 # iterate over thermostats looking for a name match
                 for thermostat_type, thermostat_structure in thermostats.items():
@@ -1114,45 +1151,46 @@ def modify_zone_control_thermostats(
                                 tmp_modified_object_dictionary[object_type] = {object_name: {}}
                             if not tmp_modified_object_dictionary[object_type].get(object_name):
                                 tmp_modified_object_dictionary[object_type][object_name] = {}
-                            if epjson_dictionary.get(object_type):
-                                if epjson_dictionary[object_type].get(object_name):
+                            if super_dictionary.get(object_type):
+                                if super_dictionary[object_type].get(object_name):
                                     tmp_modified_object_dictionary[object_type][object_name] = \
-                                        copy.deepcopy(epjson_dictionary[object_type][object_name])
+                                        copy.deepcopy(super_dictionary[object_type][object_name])
                             tmp_modified_object_dictionary[object_type][object_name]['control_1_object_type'] = \
                                 thermostat_type
                             tmp_modified_object_dictionary[object_type][object_name]['control_type_schedule_name'] = \
                                 control_schedule_name
     # update super dictionary with new objects
-    super_dictionary = merge_dictionaries(
-        super_dictionary=super_dictionary,
+    object_dictionary = merge_dictionaries(
+        super_dictionary=object_dictionary,
         object_dictionary=tmp_schedule_dictionary
     )
-    super_dictionary = merge_dictionaries(
-        super_dictionary=super_dictionary,
+    object_dictionary = merge_dictionaries(
+        super_dictionary=object_dictionary,
         object_dictionary=tmp_modified_object_dictionary
     )
-    return super_dictionary
+    return object_dictionary
 
 
-def build_branches(
-        super_dictionary,
-        build_path,
-        unique_name,
-        connectors_to_build=('Air', 'ChilledWaterLoop', 'HotWaterLoop')):
+def create_branches(
+        build_path: typing.List[dict],
+        unique_name: str,
+        connectors_to_build: tuple = ('Air', 'ChilledWaterLoop', 'HotWaterLoop', 'CondenserWaterLoop')):
     """
     Build branches from build_paths
 
-    :param super_dictionary:
-    :param build_path:
-    :param unique_name:
-    :param connectors_to_build:
-    :return:
+    :param build_path: path of objects along a fluid flow
+    :param unique_name: unique name modifier
+    :param connectors_to_build: fluid flows to track
+    :return: Two items:
+        - dictionary of epJSON objects containing original object_dictionary objects plus new objects.
+        - dictionary of demand-side coils in each water type fluid flow path (e.g. ChilledWaterLoop).
     """
+    object_dictionary = {}
     # collect all connector path keys to use as the key for each branch iteration
-    if not super_dictionary.get('BranchList'):
-        super_dictionary['BranchList'] = {}
-    if not super_dictionary.get('Branch'):
-        super_dictionary['Branch'] = {}
+    if not object_dictionary.get('BranchList'):
+        object_dictionary['BranchList'] = {}
+    if not object_dictionary.get('Branch'):
+        object_dictionary['Branch'] = {}
     demand_chilled_water_objects = []
     demand_hot_water_objects = []
     demand_mixed_water_objects = []
@@ -1181,8 +1219,8 @@ def build_branches(
                                 'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
                                 'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
                             component_list.append(component_dictionary)
-            super_dictionary["Branch"][' '.join([unique_name, connector_type, 'Branch'])] = component_list
-            super_dictionary["BranchList"][' '.join([unique_name, connector_type, 'Branches'])] =  \
+            object_dictionary["Branch"][' '.join([unique_name, connector_type, 'Branch'])] = component_list
+            object_dictionary["BranchList"][' '.join([unique_name, connector_type, 'Branches'])] =  \
                 {"branches": [{"branch_name": ' '.join([unique_name, connector_type, 'Branch'])}]}
         else:
             for build_object in build_path:
@@ -1195,7 +1233,7 @@ def build_branches(
                         if connector_object:
                             object_connector = connector_object.get(connector_type)
                             if object_connector:
-                                super_dictionary["Branch"][' '.join([super_object['Fields']['name'], 'Branch'])] = {
+                                object_dictionary["Branch"][' '.join([super_object['Fields']['name'], 'Branch'])] = {
                                     'component_object_type': object_type,
                                     'component_object_name': super_object['Fields']['name'],
                                     'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
@@ -1211,7 +1249,7 @@ def build_branches(
         "DemandChilledWater": demand_chilled_water_objects,
         "DemandHotWater": demand_hot_water_objects,
         "DemandMixedWater": demand_mixed_water_objects}
-    return super_dictionary, demand_dictionary
+    return object_dictionary, demand_dictionary
 
 # In this process note one import aspect. Specific field names are
 # rarely used, if at all.  Most of the structure comes from the yaml
@@ -1333,18 +1371,26 @@ def main(input_args):
         system_demand_branchlist = []
         zone_demand_branchlist = []
         for sbp, unique_name in zip(energyplus_system_build_paths, energyplus_system_unique_names):
-            system_branch_dictionary, sub_system_demand_branchlist = build_branches(
-                super_dictionary=system_branch_dictionary,
+            sub_system_branch_dictionary, sub_system_demand_branchlist = create_branches(
                 build_path=sbp,
                 unique_name=unique_name)
             system_demand_branchlist.append(sub_system_demand_branchlist)
+            system_branch_dictionary = merge_dictionaries(
+                super_dictionary=system_branch_dictionary,
+                object_dictionary=sub_system_branch_dictionary,
+                unique_name_override=False
+            )
         for zbp, unique_name in zip(energyplus_zone_build_paths, energyplus_zone_unique_names):
-            zone_branch_dictionary, sub_zone_demand_branchlist = build_branches(
-                super_dictionary=zone_branch_dictionary,
+            sub_zone_branch_dictionary, sub_zone_demand_branchlist = create_branches(
                 build_path=zbp,
                 unique_name=unique_name,
-                connectors_to_build=['HotWaterLoop', 'ChilledWaterLoop', 'CondenserWaterLoop'])
+                connectors_to_build=('HotWaterLoop', 'ChilledWaterLoop', 'CondenserWaterLoop'))
             zone_demand_branchlist.append(sub_zone_demand_branchlist)
+            zone_branch_dictionary = merge_dictionaries(
+                super_dictionary=zone_branch_dictionary,
+                object_dictionary=sub_zone_branch_dictionary,
+                unique_name_override=False
+            )
         branch_dictionary = {}
         for bd in [system_branch_dictionary, zone_branch_dictionary]:
             # returned value is an object with Branch and BranchList keys
@@ -1373,8 +1419,7 @@ def main(input_args):
                 print('##### New Thermostat Template #####')
                 print('Thermostat Name')
                 print(template_thermostat_name)
-                thermostat_sub_dictionary = build_thermostats(
-                    super_dictionary={},
+                thermostat_sub_dictionary = create_thermostats(
                     template_dictionary=thermostat_template_dictionary,
                     thermostat_name=template_thermostat_name,
                     data=data)
@@ -1390,8 +1435,7 @@ def main(input_args):
         # This should serve as a last step for only objects that can't be
         # completed in above processes.
         modified_epjson_objects = modify_zone_control_thermostats(
-            super_dictionary={},
-            epjson_dictionary=epjson_dictionary,
+            super_dictionary=epjson_dictionary,
             data=data)
         epjson_dictionary = merge_dictionaries(
             super_dictionary=epjson_dictionary,
