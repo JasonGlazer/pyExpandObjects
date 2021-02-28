@@ -168,7 +168,7 @@ Pipe:
           outlet_node_name: '{} Demand Inlet Pipe Outlet'
         Connectors:
           <<: *PipeAdiabaticConnectors
-    SupplyOutlet: &PipeAdiabaticSupplyOutlet
+    SupplyOutlet:
       Pipe:Adiabatic:
         Fields:
           name: '{} Demand Outlet Pipe'
@@ -178,7 +178,7 @@ Pipe:
           <<: *PipeAdiabaticConnectors
 
 Pump:
-  ConstantSpeed: &PumpConstantSpeed
+  ConstantSpeed:
     Fields:
       name: '{} Supply Pump'
       inlet_node_name: '{} Pump Inlet'
