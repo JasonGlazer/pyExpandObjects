@@ -825,11 +825,15 @@ def create_additional_objects(
             for object_or_template, object_structure in new_object_structure.items():
                 # check for 'Transitions' structure and pop it if present
                 transition_structure = object_structure.pop('Transitions', None)
+                # when you need the current objects being built included into the
+                # super dictionary, you can quickly append them with d_new = dict(d_super, **d_current)
+                # it is done here because some AdditionalObjects need to reference nodes of other AdditionalObjects
+                # via complex inputs
                 sub_object_dictionary = process_additional_object_input(
                     object_or_template=object_or_template,
                     object_structure=object_structure,
                     connector_path=connector_path,
-                    super_dictionary=super_dictionary,
+                    super_dictionary=dict(super_dictionary, **object_dictionary),
                     unique_name=unique_name,
                     input_epjson=input_epjson,
                     data=data)
@@ -870,7 +874,7 @@ def create_additional_objects(
                                 object_or_template=object_or_template,
                                 object_structure=object_structure,
                                 connector_path=connector_path,
-                                super_dictionary=super_dictionary,
+                                super_dictionary=dict(super_dictionary, **object_dictionary),
                                 unique_name=unique_name,
                                 input_epjson=input_epjson,
                                 data=data)
@@ -925,7 +929,7 @@ def process_additional_object_input(
                 yaml_object={additional_sub_object: copy.deepcopy(additional_sub_object_fields)},
                 unique_name_input=unique_name)
             object_dictionary = merge_dictionaries(
-                super_dictionary=super_dictionary,
+                super_dictionary=object_dictionary,
                 object_dictionary=sub_additional_object_dictionary,
                 unique_name_override=False
             )
@@ -953,7 +957,7 @@ def process_additional_object_input(
                     input_epjson=input_epjson,
                     data=data)
                 object_dictionary = merge_dictionaries(
-                    super_dictionary=super_dictionary,
+                    super_dictionary=object_dictionary,
                     object_dictionary=sub_object_dictionary,
                     unique_name_override=False
                 )

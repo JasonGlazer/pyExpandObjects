@@ -350,7 +350,19 @@ ZoneHVAC:
           inlet_node_name: '{} Baseboard HW Inlet'
           outlet_node_name: '{} Baseboard HW Outlet'
           maximum_water_flow_rate: 'Autosize'
-          fraction_radieant: 0
+          fraction_radiant: 0
+  EquipmentList: &ZoneHVACEquipmentList
+    name: '{} Equipment'
+    load_distribution_scheme: SequentialLoad
+    equipment:
+      - zone_equipment_1_object_type:
+          ^ZoneHVAC:.*: self
+        zone_equipment_1_name: "{} ATU"
+        zone_equipment_1_cooling_sequence: 1
+        zone_equipment_1_heating_or_no_load_sequence: 1
+  EquipmentConnections:
+    Base: &ZoneHVACEquipmentConnections
+      name: "{} Equipment Connections"
 
 ### Common Combinations
 SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
@@ -467,6 +479,14 @@ OptionTree:
         InsertElements:
         AdditionalObjects:
           - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
+          - ZoneHVAC:EquipmentList:
+              <<: *ZoneHVACEquipmentList
+          - ZoneHVAC:EquipmentConnections:
+              <<: *ZoneHVACEquipmentConnections
+              zone_conditioning_equipment_list_name:
+                ^ZoneHVAC:EquipmentList: key
+              Transitions:
+                zone_name: zone_name
         AdditionalTemplateObjects:
           template_thermostat_name:
             .*:
@@ -486,7 +506,7 @@ OptionTree:
               - Sizing:Zone:
                   <<: *SizingZone
                   Transitions: *SizingZoneTransitions
-            Flow/Per.*: # can be regex
+            ^Flow/Per.*: # can be regex
               - DesignSpecification:OutdoorAir:
                   <<: *DesignSpecificationOutdoorAir
                   Transitions:
@@ -544,14 +564,15 @@ OptionTree:
             HotWater:
               - ZoneHVAC:Baseboard:Radiant:Convective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterBase
               - ZoneHVAC:EquipmentList:
-                  name: '{} Equipment'
-                  load_distribution_scheme: SequentialLoad
+                  <<: *ZoneHVACEquipmentList
                   equipment:
-                    - zone_equipment_1_object_type: ZoneHVAC:AirDistributionUnit
+                    - zone_equipment_1_object_type:
+                        ^ZoneHVAC:AirDist*: self
                       zone_equipment_1_name: "{} ATU"
                       zone_equipment_1_cooling_sequence: 1
                       zone_equipment_1_heating_or_no_load_sequence: 1
-                    - zone_equipment_2_object_type: ZoneHVAC:Baseboard:RadiantConvective:Water
+                    - zone_equipment_2_object_type:
+                        ^ZoneHVAC:Baseboard.*: self
                       zone_equipment_2_name: "{} Baseboard Heat"
                       zone_equipment_2_cooling_sequence: 2
                       zone_equipment_2_heating_or_no_load_sequence: 2
