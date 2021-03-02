@@ -17,7 +17,7 @@
       "heat_recovery_type": "None",
       "heating_coil_design_setpoint": 10.0,
       "heating_coil_setpoint_reset_type": "None",
-      "heating_coil_type": "Electric",
+      "heating_coil_type": "HotWater",
       "humidifier_rated_capacity": 1e-06,
       "humidifier_rated_electric_power": 2690.0,
       "humidifier_setpoint": 30.0,

@@ -601,6 +601,7 @@ def apply_transitions_to_objects(
     else:
         as_object = False
     for transition_field_name, value_reference in transition_structure.items():
+        print(value_reference)
         for reference_object_type, field_name in value_reference.items():
             for super_object in build_path:
                 for object_type in super_object:
@@ -1252,6 +1253,79 @@ def create_branches(
         "DemandMixedWater": demand_mixed_water_objects}
     return object_dictionary, demand_dictionary
 
+
+def create_controller_list(
+        object_dictionary,
+        unique_name):
+    controller_list_dictionary = {'AirLoopHVAC:ControllerList': {}}
+    for object_type, objects in object_dictionary.items():
+        if object_type == 'Controller:WaterCoil':
+            controller_name = '{} Controllers'.format(unique_name)
+        elif object_type == 'Controller:OutdoorAir':
+            controller_name = '{} OA Controllers'.format(unique_name)
+        else:
+            continue
+        if not controller_list_dictionary.get(controller_name):
+            controller_list_dictionary['AirLoopHVAC:ControllerList'][controller_name] = {}
+        object_count = 1
+        for object_name in objects:
+            controller_list_dictionary['AirLoopHVAC:ControllerList'][controller_name][
+                'controller_{}_name'.format(object_count)] = object_name
+            controller_list_dictionary['AirLoopHVAC:ControllerList'][controller_name][
+                'controller_{}_object_type'.format(object_count)] = object_type
+            object_count += 1
+    return controller_list_dictionary
+
+
+def create_oa_equipment_list(
+        build_path,
+        unique_name):
+    # build AirLoopOutdoorAirSystemEquipmentList
+    oa_equipment_list_dictionary = {'AirLoopHVAC:OutdoorAirSystem:EquipmentList': {}}
+    object_count = 1
+    stop_loop = False
+    for super_object in build_path:
+        for object_type, object_constructor in super_object.items():
+            if stop_loop:
+                continue
+            oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList'][
+                '{} OA System Equipment'.format(unique_name)] = {}
+            oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList'][
+                '{} OA System Equipment'.format(unique_name)][
+                'component_{}_object_type'.format(object_count)] = \
+                object_type
+            oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList'][
+                '{} OA System Equipment'.format(unique_name)][
+                'component_{}_object_name'.format(object_count)] = \
+                object_constructor['Fields']['name']
+            if object_type == 'OutdoorAir:Mixer':
+                stop_loop = True
+        object_count += 1
+    return oa_equipment_list_dictionary
+
+
+def create_static_system_objects(
+        super_dictionary,
+        data,
+        unique_name):
+    static_objects = {}
+    for yaml_base_object in [
+        data['AirLoopHVAC']['OutdoorAirSystem']['Base'],
+        # data['AirLoopHVAC']['Base']
+    ]:
+        yaml_copy = copy.deepcopy(yaml_base_object)
+        additional_object = build_object_from_complex_inputs(
+            yaml_object=yaml_copy,
+            super_dictionary=super_dictionary,
+            unique_name_input=unique_name
+        )
+        static_objects = merge_dictionaries(
+            super_dictionary=static_objects,
+            object_dictionary=additional_object,
+            unique_name_override=False
+        )
+    return static_objects
+
 # In this process note one import aspect. Specific field names are
 # rarely used, if at all.  Most of the structure comes from the yaml
 # object, which means that very little (comparatively)
@@ -1293,6 +1367,31 @@ def main(input_args):
                 system_dictionary[system_name] = sub_system_dictionary
                 system_build_paths.append(system_build_path)
                 system_unique_names.append(system_name)
+                pprint(sub_system_dictionary, width=150)
+                # build AirLoopHVACControllerList by looping through controllers in each system
+                system_controller_list_dictionary = create_controller_list(
+                    object_dictionary=sub_system_dictionary,
+                    unique_name=system_name
+                )
+                system_oa_equipment_list_dictionary = create_oa_equipment_list(
+                    build_path=system_build_path,
+                    unique_name=system_name
+                )
+                for additional_dictionary in [system_controller_list_dictionary, system_oa_equipment_list_dictionary]:
+                    system_dictionary[system_name] = merge_dictionaries(
+                        super_dictionary=system_dictionary[system_name],
+                        object_dictionary=additional_dictionary,
+                        unique_name_override=False
+                    )
+                static_objects = create_static_system_objects(
+                    super_dictionary=system_dictionary[system_name],
+                    data=data,
+                    unique_name=system_name)
+                system_dictionary[system_name] = merge_dictionaries(
+                    super_dictionary=system_dictionary[system_name],
+                    object_dictionary=static_objects,
+                    unique_name_override=False
+                )
         print('Energyplus epJSON objects')
         pprint(system_dictionary, width=150)
         # do zone builds in scope of the system build.  In production, these will be separate or child classes that
@@ -1327,6 +1426,13 @@ def main(input_args):
         print('zone object list')
         pprint(zone_dictionary, width=150)
         # sys.exit()
+        # build AirLoopHVAC splitters and paths
+        # print('##### New AirLoopHVAC Objects ######')
+        # for system_name, system_template_dictionary in hvac_system_template_obj.items():
+        #     for template_zone_name, zone_template_dictionary in hvac_zone_template_obj.items():
+        #         if system_name == zone_template_dictionary['template_vav_system_name']:
+        #             print(template_zone_name)
+        # sys.exit()
         # plant system loop build
         plant_templates = [i for i in test_epjson if re.match('HVACTemplate:Plant:.*Loop', i, re.IGNORECASE)]
         # save outputs to dictionary
@@ -1358,7 +1464,10 @@ def main(input_args):
         pprint(plant_dictionary, width=150)
         # Collect all template objects to one epjson object for further processing
         epjson_dictionary = {}
-        for template_dictionary in [system_dictionary, zone_dictionary, plant_dictionary]:
+        for template_dictionary in [
+                system_dictionary,
+                zone_dictionary,
+                plant_dictionary]:
             for template_name, epjson_object in template_dictionary.items():
                 epjson_dictionary = merge_dictionaries(
                     super_dictionary=epjson_dictionary,
@@ -1483,6 +1592,7 @@ if __name__ == "__main__":
 
 ################
 # Additional
+# Make AirLoopHVAC at end of script to connect nodes
 # set default schedules (e.g. always on) as default values
 # make one of the last steps of the program to iterate over fields and add missing schedules.
 # can be generalized to a function that just adds any missing default objects
