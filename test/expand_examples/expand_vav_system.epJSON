@@ -53,7 +53,7 @@
       "outdoor_air_flow_rate_per_person": 0.00944,
       "outdoor_air_flow_rate_per_zone": 0.0,
       "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
-      "outdoor_air_method": "Flow/Person",
+      "outdoor_air_method": "Flow/Zone",
       "reheat_coil_type": "HotWater",
       "supply_air_maximum_flow_rate": "Autosize",
       "template_thermostat_name": "All Zones",

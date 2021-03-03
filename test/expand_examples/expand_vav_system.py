@@ -1423,6 +1423,8 @@ def main(input_args):
                 zone_dictionary[template_zone_name] = sub_zone_dictionary
                 zone_build_paths.append(zone_build_path)
                 zone_unique_names.append(zone_template_dictionary["zone_name"])
+                # build equipmentlist and connections for zone
+
         print('zone object list')
         pprint(zone_dictionary, width=150)
         # sys.exit()

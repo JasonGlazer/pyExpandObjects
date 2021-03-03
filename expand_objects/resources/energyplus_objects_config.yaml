@@ -240,26 +240,6 @@ AirTerminal:
             Air: *AirTerminalSingleDuctConnectorsAir
 
 ### Additional Equipment
-AirLoopHVAC:
-  Base:
-    AirLoopHVAC:
-      name: '{}'
-      controller_list_name: '{} Controllers'
-      availability_manager_list_name: '{} Availability Managers'
-      design_supply_air_flow_rate: autosize
-      branch_list_name: '{} Branches'
-      supply_side_name:
-  OutdoorAirSystem:
-    Base:
-      AirLoopHVAC:OutdoorAirSystem:
-        name: '{} OA System'
-        controller_list_name: '{} OA System Controllers'
-        outdoor_air_equipment_list_name:
-          ^AirLoopHVAC:OutdoorAirSystem:EquipmentList: self
-        availability_manager: '{} Availability Managers'
-        supply_side_inlet_node_name:
-          ^Controller:OutdoorAir: return_air_node_name
-
 Controller:
   WaterCoil:
     Base:
@@ -289,9 +269,16 @@ DesignSpecification:
   OutdoorAir:
     Base: &DesignSpecificationOutdoorAir
       name: '{} SZ DSOA'
+      Transitions:
+        outdoor_air_method: outdoor_air_method
+        outdoor_air_flow_rate_per_person: outdoor_air_flow_per_person
+        outdoor_air_flow_rate_per_zone_floor_area: outdoor_air_flow_per_zone_floor_area
+        outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
   ZoneAirDistribution:
     Base: &DesignSpecificationZoneAirDistribution
       name: '{} SZ DSZAD'
+      zone_air_distribution_effectiveness_in_cooling_mode: 1
+      zone_air_distribution_effectiveness_in_heating_mode: 1
 
 OutdoorAir:NodeList:
   Base:
@@ -335,7 +322,8 @@ Sizing:
       zone_cooling_design_supply_air_humidity_ratio: 0.0085
       zone_heating_design_supply_air_temperature: 50.0
       zone_heating_design_supply_air_humidity_ratio: 0.008
-      design_specification_outdoor_air_object_name: '{} SZ DSOA'
+      design_specification_outdoor_air_object_name:
+        ^DesignSpecification:Outdoor.*: key
     Transitions: &SizingZoneTransitions
       zone_or_zonelist_name: zone_name
       zone_cooling_design_supply_air_humidity_ratio: zone_cooling_design_supply_air_humidity_ratio,
@@ -399,6 +387,27 @@ ZoneHVAC:
     Base: &ZoneHVACEquipmentConnections
       name: "{} Equipment Connections"
       zone_air_node_name: '{} Zone Air Node'
+
+#Non Option Tree Additional Equipment
+AirLoopHVAC:
+  Base:
+    AirLoopHVAC:
+      name: '{}'
+      controller_list_name: '{} Controllers'
+      availability_manager_list_name: '{} Availability Managers'
+      design_supply_air_flow_rate: autosize
+      branch_list_name: '{} Branches'
+      supply_side_name:
+  OutdoorAirSystem:
+    Base:
+      AirLoopHVAC:OutdoorAirSystem:
+        name: '{} OA System'
+        controller_list_name: '{} OA System Controllers'
+        outdoor_air_equipment_list_name:
+          ^AirLoopHVAC:OutdoorAirSystem:EquipmentList: self
+        availability_manager: '{} Availability Managers'
+        supply_side_inlet_node_name:
+          ^Controller:OutdoorAir: return_air_node_name
 
 ### Common Combinations
 SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
@@ -518,9 +527,15 @@ OptionTree:
               zone_air_inlet_node_or_nodelist_name:
                 ^AirTerminal:.*: air_outlet_node_name
               zone_air_return_node_or_nodelist_name: '{} Return Outlet'
-
               Transitions:
                 zone_name: zone_name
+          - DesignSpecification:OutdoorAir:
+              <<: *DesignSpecificationOutdoorAir
+          - DesignSpecification:ZoneAirDistribution:
+              <<: *DesignSpecificationZoneAirDistribution
+          - Sizing:Zone:
+              <<: *SizingZone
+              Transitions: *SizingZoneTransitions
         AdditionalTemplateObjects:
           template_thermostat_name:
             .*:
@@ -529,71 +544,6 @@ OptionTree:
                   Transitions:
                     zone_name: zone_or_zone_list_name
                     template_thermostat_name: control_1_name
-          outdoor_air_method: # This group should be created in an anchor for re-use
-            None:
-              - DesignSpecification:OutdoorAir:
-                  <<: *DesignSpecificationOutdoorAir
-                  Transitions:
-                    outdoor_air_method: outdoor_air_method
-                    outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution
-              - Sizing:Zone:
-                  <<: *SizingZone
-                  Transitions: *SizingZoneTransitions
-            ^Flow/Per.*: # can be regex
-              - DesignSpecification:OutdoorAir:
-                  <<: *DesignSpecificationOutdoorAir
-                  Transitions:
-                    outdoor_air_method: outdoor_air_method
-                    outdoor_air_flow_rate_per_person: outdoor_air_flow_per_person
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution
-              - Sizing:Zone:
-                  <<: *SizingZone
-                  Transitions: *SizingZoneTransitions
-            Flow/Area:
-              - DesignSpecification:OutdoorAir:
-                  <<: *DesignSpecificationOutdoorAir
-                  Transitions:
-                    outdoor_air_method: outdoor_air_method
-                    outdoor_air_flow_rate_per_zone_floor_area: outdoor_air_flow_per_zone_floor_area
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution
-              - Sizing:Zone:
-                  <<: *SizingZone
-                  Transitions: *SizingZoneTransitions
-            Flow/Zone:
-              - DesignSpecification:OutdoorAir:
-                  <<: *DesignSpecificationOutdoorAir
-                  Transitions:
-                    outdoor_air_method: outdoor_air_method
-                    outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution
-              - Sizing:Zone:
-                  <<: *SizingZone
-                  Transitions: *SizingZoneTransitions
-            Sum:
-              - DesignSpecification:OutdoorAir:
-                  <<: *DesignSpecificationOutdoorAir
-                  Transitions:
-                    outdoor_air_method: outdoor_air_method
-                    outdoor_air_flow_rate_per_person: outdoor_air_flow_per_person
-                    outdoor_air_flow_rate_per_zone_floor_area: outdoor_air_flow_per_zone_floor_area
-                    outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution
-              - Sizing:Zone:
-                  <<: *SizingZone
-                  Transitions: *SizingZoneTransitions
-            Max:
-              - DesignSpecification:OutdoorAir:
-                  <<: *DesignSpecificationOutdoorAir
-                  Transitions:
-                    outdoor_air_method: outdoor_air_method
-                    outdoor_air_flow_rate_per_person: outdoor_air_flow_per_person
-                    outdoor_air_flow_rate_per_zone_floor_area: outdoor_air_flow_per_zone_floor_area
-                    outdoor_air_flow_rate_per_zone: outdoor_air_flow_per_zone
-              - DesignSpecificationZoneAirDistribution: *DesignSpecificationZoneAirDistribution #Aliases are added this way typically
-              - Sizing:Zone:
-                  <<: *SizingZone
-                  Transitions: *SizingZoneTransitions
           baseboard_heating_type:
             HotWater:
               - ZoneHVAC:Baseboard:Radiant:Convective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterBase
