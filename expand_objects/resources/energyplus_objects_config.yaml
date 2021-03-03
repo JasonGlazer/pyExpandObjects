@@ -130,7 +130,7 @@ OutdoorAir:Mixer: # structure might be unnecessary but is being used for example
     mixed_air_node_name: '{} Mixed Air Outlet'
     outdoor_air_stream_node_name: '{} Outside Air Inlet' #will be overridden
     relief_air_stream_node_name: '{} Relief Air Outlet'
-    return_air_stream_node_name: '{} Return Air Loop Inlet'
+    return_air_stream_node_name: '{} Air Loop Inlet'
   Connectors: &OutdoorAirMixersConnectors
     Air:
       Inlet: outdoor_air_stream_node_name
@@ -247,10 +247,6 @@ Controller:
         name: '{} Coil Controller'
         control_variable: Temperature
         actuator_variable: Flow
-        sensor_node:
-          ^Coil:(Cooling|Heating):Water: air_outlet_node_name
-        actuator_node:
-          ^Coil:(Cooling|Heating):Water: water_inlet_node_name
 
   OutdoorAir:
     Base:
@@ -386,7 +382,13 @@ ZoneHVAC:
   EquipmentConnections:
     Base: &ZoneHVACEquipmentConnections
       name: "{} Equipment Connections"
+      zone_name: '{}'
+      zone_conditioning_equipment_list_name:
+        ZoneHVAC:EquipmentList: key
+      zone_air_inlet_node_or_nodelist_name:
+        ^AirTerminal:.*: air_outlet_node_name
       zone_air_node_name: '{} Zone Air Node'
+      zone_return_air_node_or_nodelist_name: '{} Return Outlet'
 
 #Non Option Tree Additional Equipment
 AirLoopHVAC:
@@ -397,7 +399,8 @@ AirLoopHVAC:
       availability_manager_list_name: '{} Availability Managers'
       design_supply_air_flow_rate: autosize
       branch_list_name: '{} Branches'
-      supply_side_name:
+      supply_side_inlet_node_name:
+        OutdoorAir:Mixer: return_air_stream_node_name
   OutdoorAirSystem:
     Base:
       AirLoopHVAC:OutdoorAirSystem:
@@ -408,6 +411,37 @@ AirLoopHVAC:
         availability_manager: '{} Availability Managers'
         supply_side_inlet_node_name:
           ^Controller:OutdoorAir: return_air_node_name
+  ReturnPath:
+    Base: &AirloopHVACReturnPath
+      name: '{} Return Path'
+      return_air_path_outlet_node_name:
+        ReturnPlenum: outlet_node_name
+      components:
+        - component_object_type:
+            AirLoopHVAC:ReturnPlenum: self
+          component_name:
+            AirLoopHVAC:ReturnPlenum: key
+  ReturnPlenum:
+    Base: &AirloopHVACReturnPlenum
+      name: '{} Return Plenum'
+      outlet_node_name: '{} Return Air Outlet'
+  SupplyPath:
+    Base: &AirLoopHVACSupplyPath
+      name: '{} Supply Path'
+      supply_air_path_inlet_node_name: '{} Supply Path Inlet'
+      components:
+        - component_object_type:
+            AirLoopHVAC:ZoneSplitter: self
+          component_name:
+            AirLoopHVAC:ZoneSplitter: key
+  SupplyPlenum:
+    Base:
+      name: '{} Supply Plenum'
+      inlet_node_name: '{} Supply Path Inlet'
+  ZoneSplitter:
+    Base:
+      name: '{} Zone Splitter'
+      inlet_node_name: '{} Supply Path Inlet'
 
 ### Common Combinations
 SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
@@ -594,15 +628,23 @@ OptionTree:
               Transitions: *SizingSystemTransitions
         AdditionalTemplateObjects: # template triggered objects
           cooling_coil_type:
-              ChilledWater:
-                  - Controller:WaterCoil:
-                      <<: *ControllerWaterCoil
-                      name: '{} Cooling Coil Controller'
+            ChilledWater:
+              - Controller:WaterCoil:
+                  <<: *ControllerWaterCoil
+                  name: '{} Cooling Coil Controller'
+                  sensor_node:
+                    ^Coil:Cooling:Water: air_outlet_node_name
+                  actuator_node:
+                    ^Coil:Cooling:Water: water_inlet_node_name
           heating_coil_type:
             HotWater:
               - Controller:WaterCoil:
                   <<: *ControllerWaterCoil
                   name: '{} Heating Coil Controller'
+                  sensor_node:
+                    ^Coil:Heating:Water: air_outlet_node_name
+                  actuator_node:
+                    ^Coil:Heating:Water: water_inlet_node_name
     Plant:
       Boiler:
         Base: *HVACTemplatePlantBoiler

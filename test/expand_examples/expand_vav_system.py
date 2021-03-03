@@ -1288,8 +1288,10 @@ def create_oa_equipment_list(
         for object_type, object_constructor in super_object.items():
             if stop_loop:
                 continue
-            oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList'][
-                '{} OA System Equipment'.format(unique_name)] = {}
+            if not oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList']\
+                    .get('{} OA System Equipment'.format(unique_name)):
+                oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList'][
+                    '{} OA System Equipment'.format(unique_name)] = {}
             oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList'][
                 '{} OA System Equipment'.format(unique_name)][
                 'component_{}_object_type'.format(object_count)] = \
@@ -1300,31 +1302,64 @@ def create_oa_equipment_list(
                 object_constructor['Fields']['name']
             if object_type == 'OutdoorAir:Mixer':
                 stop_loop = True
-        object_count += 1
+            object_count += 1
     return oa_equipment_list_dictionary
 
 
-def create_static_system_objects(
+def create_airloop_system_objects(
+        system_name,
         super_dictionary,
+        system_template_dictionary,
+        zone_template_dictionaries,
+        zone_dictionaries,
         data,
         unique_name):
-    static_objects = {}
-    for yaml_base_object in [
-        data['AirLoopHVAC']['OutdoorAirSystem']['Base'],
-        # data['AirLoopHVAC']['Base']
-    ]:
+    airloop_objects = {}
+    # [
+    #     data['AirLoopHVAC'],
+    #     data['AirLoopHVAC']['OutdoorAirSystem']['Base'],
+    #     # data['AirLoopHVAC']['Base']
+    # ]
+    yaml_list = []
+    zone_splitters = []
+    # create zone lists for plenums/splitters/mixers
+    for zone_template_name, zone_template_structure in zone_template_dictionaries.items():
+        if zone_template_structure.get('template_vav_system_name'):
+            # todo_eo: need to verify the right system type is specified (e.g. VAV)
+            if zone_template_structure['template_vav_system_name'] == system_name:
+                (zone_equipment_name, zone_equipment_object), = \
+                    zone_dictionaries[zone_template_name]['ZoneHVAC:EquipmentConnections'].items()
+                zone_splitters.append(
+                    {
+                        "outlet_node_name": zone_equipment_object['zone_return_air_node_or_nodelist_name']
+                    }
+                )
+    # create plenums or splitters/mixers
+    if system_template_dictionary.get('supply_plenum_name'):
+        yaml_copy = {'AirLoopHVAC:SupplyPlenum': copy.deepcopy(data['AirLoopHVAC']['SupplyPlenum']['Base'])}
+        yaml_copy['AirLoopHVAC:SupplyPlenum']['zone_name'] = system_template_dictionary['supply_plenum_name']
+        yaml_copy['AirLoopHVAC:SupplyPlenum']['zone_node_name'] = '{} Zone Air Node'\
+            .format(system_template_dictionary['supply_plenum_name'])
+        yaml_copy['AirLoopHVAC:SupplyPlenum']["nodes"] = zone_splitters
+    else:
+        yaml_copy = {'AirLoopHVAC:ZoneSplitter': copy.deepcopy(data['AirLoopHVAC']['ZoneSplitter']['Base'])}
+        yaml_copy['AirLoopHVAC:ZoneSplitter']["nodes"] = zone_splitters
+    yaml_list.append(yaml_copy)
+    # create paths
+    # run objects through complex inputs
+    for yaml_base_object in yaml_list:
         yaml_copy = copy.deepcopy(yaml_base_object)
         additional_object = build_object_from_complex_inputs(
             yaml_object=yaml_copy,
             super_dictionary=super_dictionary,
             unique_name_input=unique_name
         )
-        static_objects = merge_dictionaries(
-            super_dictionary=static_objects,
+        airloop_objects = merge_dictionaries(
+            super_dictionary=airloop_objects,
             object_dictionary=additional_object,
             unique_name_override=False
         )
-    return static_objects
+    return airloop_objects
 
 # In this process note one import aspect. Specific field names are
 # rarely used, if at all.  Most of the structure comes from the yaml
@@ -1350,8 +1385,7 @@ def main(input_args):
             # continue
             # get template object as dictionary
             hvac_system_template_obj = test_epjson[st]
-            system_build_paths = []
-            system_unique_names = []
+            system_build_path_dictionary = {}
             for system_name, system_template_dictionary in hvac_system_template_obj.items():
                 print('System Name')
                 print(system_name)
@@ -1365,33 +1399,8 @@ def main(input_args):
                     input_epjson=test_epjson,
                     data=data)
                 system_dictionary[system_name] = sub_system_dictionary
-                system_build_paths.append(system_build_path)
-                system_unique_names.append(system_name)
+                system_build_path_dictionary[system_name] = system_build_path
                 pprint(sub_system_dictionary, width=150)
-                # build AirLoopHVACControllerList by looping through controllers in each system
-                system_controller_list_dictionary = create_controller_list(
-                    object_dictionary=sub_system_dictionary,
-                    unique_name=system_name
-                )
-                system_oa_equipment_list_dictionary = create_oa_equipment_list(
-                    build_path=system_build_path,
-                    unique_name=system_name
-                )
-                for additional_dictionary in [system_controller_list_dictionary, system_oa_equipment_list_dictionary]:
-                    system_dictionary[system_name] = merge_dictionaries(
-                        super_dictionary=system_dictionary[system_name],
-                        object_dictionary=additional_dictionary,
-                        unique_name_override=False
-                    )
-                static_objects = create_static_system_objects(
-                    super_dictionary=system_dictionary[system_name],
-                    data=data,
-                    unique_name=system_name)
-                system_dictionary[system_name] = merge_dictionaries(
-                    super_dictionary=system_dictionary[system_name],
-                    object_dictionary=static_objects,
-                    unique_name_override=False
-                )
         print('Energyplus epJSON objects')
         pprint(system_dictionary, width=150)
         # do zone builds in scope of the system build.  In production, these will be separate or child classes that
@@ -1400,8 +1409,7 @@ def main(input_args):
         # save outputs to dictionary
         zone_dictionary = {}
         # iterate over templates
-        zone_build_paths = []
-        zone_unique_names = []
+        zone_build_path_dictionary = {}
         print('##### Zone Template Output #####')
         for zt in zone_templates:
             # get template object as dictionary
@@ -1421,17 +1429,43 @@ def main(input_args):
                     input_epjson=test_epjson,
                     data=data)
                 zone_dictionary[template_zone_name] = sub_zone_dictionary
-                zone_build_paths.append(zone_build_path)
-                zone_unique_names.append(zone_template_dictionary["zone_name"])
-                # build equipmentlist and connections for zone
-
+                zone_build_path_dictionary[template_zone_name] = zone_build_path
         print('zone object list')
         pprint(zone_dictionary, width=150)
         # sys.exit()
-        # build AirLoopHVAC splitters and paths
-        # print('##### New AirLoopHVAC Objects ######')
-        # for system_name, system_template_dictionary in hvac_system_template_obj.items():
-        #     for template_zone_name, zone_template_dictionary in hvac_zone_template_obj.items():
+        # Build AirLoop objects
+        print('##### New AirLoopHVAC Objects ######')
+        for system_name, system_template_dictionary in hvac_system_template_obj.items():
+            # build AirLoopHVAC objects
+            system_controller_list_dictionary = create_controller_list(
+                object_dictionary=system_dictionary[system_name],
+                unique_name=system_name
+            )
+            system_oa_equipment_list_dictionary = create_oa_equipment_list(
+                build_path=system_build_path_dictionary[system_name],
+                unique_name=system_name
+            )
+            for additional_dictionary in [system_controller_list_dictionary, system_oa_equipment_list_dictionary]:
+                system_dictionary[system_name] = merge_dictionaries(
+                    super_dictionary=system_dictionary[system_name],
+                    object_dictionary=additional_dictionary,
+                    unique_name_override=False
+                )
+            airloop_objects = create_airloop_system_objects(
+                system_name=system_name,
+                super_dictionary=system_dictionary[system_name],
+                system_template_dictionary=system_template_dictionary,
+                zone_template_dictionaries=test_epjson[zt],
+                zone_dictionaries=zone_dictionary,
+                data=data,
+                unique_name=system_name)
+            system_dictionary[system_name] = merge_dictionaries(
+                super_dictionary=system_dictionary[system_name],
+                object_dictionary=airloop_objects,
+                unique_name_override=False
+            )
+            pprint(system_dictionary, width=150)
+            sys.exit()
         #         if system_name == zone_template_dictionary['template_vav_system_name']:
         #             print(template_zone_name)
         # sys.exit()
@@ -1482,7 +1516,7 @@ def main(input_args):
         zone_branch_dictionary = {}
         system_demand_branchlist = []
         zone_demand_branchlist = []
-        for sbp, unique_name in zip(system_build_paths, system_unique_names):
+        for unique_name, sbp in system_build_path_dictionary.items():
             sub_system_branch_dictionary, sub_system_demand_branchlist = create_branches(
                 build_path=sbp,
                 unique_name=unique_name)
@@ -1492,7 +1526,7 @@ def main(input_args):
                 object_dictionary=sub_system_branch_dictionary,
                 unique_name_override=False
             )
-        for zbp, unique_name in zip(zone_build_paths, zone_unique_names):
+        for unique_name, zbp in zone_build_path_dictionary.items():
             sub_zone_branch_dictionary, sub_zone_demand_branchlist = create_branches(
                 build_path=zbp,
                 unique_name=unique_name,
@@ -1567,7 +1601,8 @@ if __name__ == "__main__":
 ##########################
 # todo_eo: Remaining example buildout
 ##########################
-# General High Priority
+# General
+# have complex inputs take build path arguments by positions and fluid flow loop
 ###########################
 
 ##########################
