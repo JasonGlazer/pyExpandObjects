@@ -3,7 +3,6 @@
 Boiler:
   HotWater:
     Base: &BoilerHotWater
-      Boiler:HotWater:
         Fields:
           name: '{} Boiler'
           boiler_water_inlet_node_name: '{} HW Inlet'
@@ -16,22 +15,21 @@ Boiler:
 Chiller:
   Electric:
     EIR:
-      Base: &ChillerElectricEIRComponents
-        Chiller:Electric:EIR:
-          Fields:
-            name: '{} Chiller'
-            chilled_water_inlet_node_name: '{} Chiller ChW Inlet'
-            chilled_water_outlet_node_name: '{} Chiller ChW Outlet'
-            condenser_water_inlet_node_name: '{} Chiller Cnd Inlet'
-            condenser_water_outlet_node_name: '{} Chiller Cnd Outlet'
-            total_cooling_capacity_function_of_temperature_curve_name: Main Chiller RecipCapFT
-          Connectors:
-            ChilledWaterLoop:
-              Inlet: chilled_water_inlet_node_name
-              Outlet: chilled_water_outlet_node_name
-            CondenserWAterLoop:
-              Inlet: condenser_water_inlet_node_name
-              Outlet: condenser_water_outlet_node_name
+      Base: &ChillerElectricEIR
+        Fields:
+          name: '{} Chiller'
+          chilled_water_inlet_node_name: '{} Chiller ChW Inlet'
+          chilled_water_outlet_node_name: '{} Chiller ChW Outlet'
+          condenser_water_inlet_node_name: '{} Chiller Cnd Inlet'
+          condenser_water_outlet_node_name: '{} Chiller Cnd Outlet'
+          total_cooling_capacity_function_of_temperature_curve_name: Main Chiller RecipCapFT
+        Connectors:
+          ChilledWaterLoop:
+            Inlet: chilled_water_inlet_node_name
+            Outlet: chilled_water_outlet_node_name
+          CondenserWAterLoop:
+            Inlet: condenser_water_inlet_node_name
+            Outlet: condenser_water_outlet_node_name
 
 Coil:
   Cooling:
@@ -95,15 +93,14 @@ Coil:
 CoolingTower:
   SingleSpeed:
     Base: &CoolingTowerSingleSpeed
-      CoolingTower:SingleSpeed:
-        Fields:
-          name: '{} Tower'
-          water_inlet_node_name: '{} CndW Inlet'
-          water_outlet_node_name: '{} CndW Outlet'
-        Connectors:
-          CondenserWaterLoop:
-            Inlet: water_inlet_node_name
-            Outlet: water_outlet_node_name
+      Fields:
+        name: '{} Tower'
+        water_inlet_node_name: '{} CndW Inlet'
+        water_outlet_node_name: '{} CndW Outlet'
+      Connectors:
+        CondenserWaterLoop:
+          Inlet: water_inlet_node_name
+          Outlet: water_outlet_node_name
 
 Fan:
   Fields: &FanFields # example of default inputs, but i'm not sure if it's necessary.
@@ -135,8 +132,7 @@ OutdoorAir:Mixer: # structure might be unnecessary but is being used for example
     Air:
       Inlet: outdoor_air_stream_node_name
       Outlet: mixed_air_node_name
-  Base:
-    OutdoorAir:Mixer: &OutdoorAirMixer
+  Base: &OutdoorAirMixer
       Fields:
         << : *OutdoorAirMixerFields
       Connectors:
@@ -242,24 +238,21 @@ AirTerminal:
 ### Additional Equipment
 Controller:
   WaterCoil:
-    Base:
-      Controller:WaterCoil: &ControllerWaterCoil
-        name: '{} Coil Controller'
-        control_variable: Temperature
-        actuator_variable: Flow
-
+    Base: &ControllerWaterCoil
+      name: '{} Coil Controller'
+      control_variable: Temperature
+      actuator_variable: Flow
   OutdoorAir:
-    Base:
-      Controller:OutdoorAir: &ControllerOutdoorAir
-        name: '{} OA Controller'
-        relief_air_outlet_node_name:
-          OutdoorAir:M.*: relief_air_stream_node_name
-        return_air_node_name:
-          OutdoorAir:Mixer: return_air_stream_node_name
-        mixed_air_node_name:
-          OutdoorAir:Mixer: mixed_air_node_name
-        actuator_node_name:
-          OutdoorAir:Mixer: outdoor_air_stream_node_name
+    Base: &ControllerOutdoorAir
+      name: '{} OA Controller'
+      relief_air_outlet_node_name:
+        OutdoorAir:M.*: relief_air_stream_node_name
+      return_air_node_name:
+        OutdoorAir:Mixer: return_air_stream_node_name
+      mixed_air_node_name:
+        OutdoorAir:Mixer: mixed_air_node_name
+      actuator_node_name:
+        OutdoorAir:Mixer: outdoor_air_stream_node_name
 
 DesignSpecification:
   OutdoorAir:
@@ -275,15 +268,6 @@ DesignSpecification:
       name: '{} SZ DSZAD'
       zone_air_distribution_effectiveness_in_cooling_mode: 1
       zone_air_distribution_effectiveness_in_heating_mode: 1
-
-OutdoorAir:NodeList:
-  Base:
-    OutdoorAir:NodeList:
-      Fields:
-        - '{} Outside Air Inlet'
-      Connectors:
-        Air:
-          Outlet: '{} Outside Air Inlet'
 
 Schedule:
   Compact:
@@ -302,11 +286,20 @@ SetpointManagers:
         name: '{} Cooling Coil Air Temp Manager'
         control_variable: Temperature
         reference_setpoint_node_name:
-          Fan:VariableVolume: air_outlet_node_name
+          BuildPath:
+            Location: -1
+            ConnectorPath: Air
+            ValueLocation: Outlet
         fan_inlet_node_name:
-          Fan:VariableVolume: air_inlet_node_name
+          BuildPath:
+            Location: -1
+            ConnectorPath: Air
+            ValueLocation: Inlet
         fan_outlet_node_name:
-          Fan:VariableVolume: air_outlet_node_name
+          BuildPath:
+            Location: -1
+            ConnectorPath: Air
+            ValueLocation: Outlet
         setpoint_node_or_nodelist_name: '{} Mixed Air Nodes'
 
 Sizing:
@@ -393,47 +386,52 @@ ZoneHVAC:
 #Non Option Tree Additional Equipment
 AirLoopHVAC:
   Base:
-    AirLoopHVAC:
-      name: '{}'
-      controller_list_name: '{} Controllers'
-      availability_manager_list_name: '{} Availability Managers'
-      design_supply_air_flow_rate: autosize
-      branch_list_name: '{} Branches'
-      supply_side_inlet_node_name:
-        OutdoorAir:Mixer: return_air_stream_node_name
+    name: '{}'
+    controller_list_name: '{} Controllers'
+    availability_manager_list_name: '{} Availability Managers'
+    design_supply_air_flow_rate: autosize
+    branch_list_name: '{} Branches'
+    supply_side_inlet_node_name:
+      OutdoorAir:Mixer: return_air_stream_node_name
+  ControllerList:
+    Base:
+      name: '{} Controllers'
   OutdoorAirSystem:
     Base:
-      AirLoopHVAC:OutdoorAirSystem:
-        name: '{} OA System'
-        controller_list_name: '{} OA System Controllers'
-        outdoor_air_equipment_list_name:
-          ^AirLoopHVAC:OutdoorAirSystem:EquipmentList: self
-        availability_manager: '{} Availability Managers'
-        supply_side_inlet_node_name:
-          ^Controller:OutdoorAir: return_air_node_name
+      name: '{} OA System'
+      controller_list_name: '{} OA System Controllers'
+      outdoor_air_equipment_list_name:
+        ^AirLoopHVAC:OutdoorAirSystem:EquipmentList: self
+      availability_manager: '{} Availability Managers'
+      supply_side_inlet_node_name:
+        ^Controller:OutdoorAir: return_air_node_name
+    EquipmentList:
+      Base:
+        name: '{} OA System Equipment'
   ReturnPath:
-    Base: &AirloopHVACReturnPath
+    Base:
       name: '{} Return Path'
       return_air_path_outlet_node_name:
-        ReturnPlenum: outlet_node_name
+        ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): outlet_node_name
       components:
         - component_object_type:
-            AirLoopHVAC:ReturnPlenum: self
+            ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): self
           component_name:
-            AirLoopHVAC:ReturnPlenum: key
+            ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): key
   ReturnPlenum:
-    Base: &AirloopHVACReturnPlenum
+    Base:
       name: '{} Return Plenum'
       outlet_node_name: '{} Return Air Outlet'
   SupplyPath:
-    Base: &AirLoopHVACSupplyPath
+    Base:
       name: '{} Supply Path'
-      supply_air_path_inlet_node_name: '{} Supply Path Inlet'
+      supply_air_path_inlet_node_name:
+        ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): inlet_node_name
       components:
         - component_object_type:
-            AirLoopHVAC:ZoneSplitter: self
+            ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): self
           component_name:
-            AirLoopHVAC:ZoneSplitter: key
+            ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): key
   SupplyPlenum:
     Base:
       name: '{} Supply Plenum'
@@ -442,13 +440,18 @@ AirLoopHVAC:
     Base:
       name: '{} Zone Splitter'
       inlet_node_name: '{} Supply Path Inlet'
+  ZoneMixer:
+    Base:
+      name: '{} Zone Mixer'
+      outlet_node_name: '{} Return Air Outlet'
 
 ### Common Combinations
-SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
-  - OutdoorAir:Mixer: *OutdoorAirMixer
-  - Coil:Cooling:Water: *CoilCoolingWater
-  - Coil:Heating:Water: *CoilHeatingWater
-  - Fan:VariableVolume: *FanVariableVolume
+SystemConfiguration:
+  WaterLoopBase: &SystemConfigurationWaterLoopBase
+    - OutdoorAir:Mixer: *OutdoorAirMixer
+    - Coil:Cooling:Water: *CoilCoolingWater
+    - Coil:Heating:Water: *CoilHeatingWater
+    - Fan:VariableVolume: *FanVariableVolume
 
 ### HVAC System Templates
 HVACTemplate:
@@ -462,7 +465,7 @@ HVACTemplate:
   System:
     VAV: &HVACTemplateSystemVAV
       BuildPath: # path of airflow through components
-        *SystemConfigOutdoorAirBase
+        *SystemConfigurationWaterLoopBase
       Transitions: # values to transition from template to child objects {object_type: object_field_name}
         supply_fan_total_efficiency:
           Fan:.*: fan_total_efficiency
@@ -473,7 +476,7 @@ HVACTemplate:
   Plant:
     Boiler: &HVACTemplatePlantBoiler
       BuildPath:
-        - <<: *BoilerHotWater
+        - Boiler:HotWater: *BoilerHotWater
       Transitions:
         fuel_type:
           ^Boiler.*: fuel_type
@@ -481,7 +484,7 @@ HVACTemplate:
           ^Boiler.*: nominal_thermal_efficiency
     Chiller: &HVACTemplatePlantChiller
       BuildPath:
-        - <<: *ChillerElectricEIRComponents
+        - Chiller:Electric:EIR: *ChillerElectricEIR
       Transitions:
         capacity:
           ^Chiller:.*: reference_capacity
@@ -496,7 +499,7 @@ HVACTemplate:
         - HVACTemplate:Plant:Boiler
     Tower: &HVACTemplatePlantTower
       BuildPath:
-        - *CoolingTowerSingleSpeed
+        - CoolingTower:SingleSpeed: *CoolingTowerSingleSpeed
 
 ### Option Trees
 OptionTree:
@@ -620,7 +623,15 @@ OptionTree:
                     preheat_efficiency: efficiency # doesn't currently exist as an option, this is just an example. Use '.*' because it references only the current object.
         AdditionalObjects:
           - SetpointManager:MixedAir:
-             <<: *SetpointManagerMixedAir
+              <<: *SetpointManagerMixedAir
+          - Nodelist:
+              name:
+                ^SetpointManager:MixedAir: setpoint_node_or_nodelist_name
+              nodes:
+                - node_name:
+                    ^Coil:Cooling:.*: air_outlet_node_name
+                - node_name:
+                    ^OutdoorAir:Mixer: mixed_air_node_name
           - Controller:OutdoorAir:
               <<: *ControllerOutdoorAir
           - Sizing:System:
@@ -696,7 +707,7 @@ OptionTree:
               name: '{} Supply Bypass Branch'
               components:
                 - component_object_type: Pipe:Adiabatic
-                  component_name: '{} Supply Bypass Pipe'
+                  component_name: '{} Supply Bypass Pipe Branch'
                   component_inlet_node_name: '{} Supply Bypass Inlet'
                   component_outlet_node_name: '{} Supply Bypass Outlet'
           - Pipe:Adiabatic:
@@ -715,7 +726,7 @@ OptionTree:
               branches:
                 - branch_name: '{} Supply Inlet Branch'
                 - branch_name: '{} Chiller Branch'
-                - branch_name: '{} Supply Bypass Pipe'
+                - branch_name: '{} Supply Bypass Pipe Branch'
                 - branch_name: '{} Supply Outlet Branch'
       CondenserWaterLoop:
         Base: *HVACTemplatePlantCondenserWaterLoop

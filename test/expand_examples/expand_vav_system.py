@@ -119,7 +119,8 @@ def process_complex_inputs(
         super_dictionary: dict,
         lookup_value: typing.Union[str, int, float, dict, list],
         unique_name_input: str,
-        reference_field_name: str) -> typing.Generator[str, typing.Dict[str, str], None]:
+        reference_field_name: str,
+        build_path: list = ()) -> typing.Generator[str, typing.Dict[str, str], None]:
     """
     Process Yaml input and perform varying operations based on the input type.  This function cannot handle
     lookups that have more than one object type in the super dictionary path. A generator is returned due to
@@ -129,6 +130,7 @@ def process_complex_inputs(
     :param lookup_value: value to lookup, which can be in complex format
     :param unique_name_input: unique name modifier
     :param reference_field_name: field name to be populated with lookup value
+    :param build_path: list of super objects in build order
     :return: dictionary with two values: "field" -> reference_field_name, "value" -> output from lookup value
     """
     # if the value is a string or numeric, then it's a direct input.
@@ -136,6 +138,7 @@ def process_complex_inputs(
     # and lookup instructions.
     # If it is a list, then the object will be iterated for each item and the same process applied recursively
     # Anything else should return an error.
+    # todo_eo: would adding a field name modifier reduce code?
     if isinstance(lookup_value, str):
         yield {"field": reference_field_name, "value": lookup_value.format(unique_name_input)}
     elif isinstance(lookup_value, numbers.Number):
@@ -143,6 +146,19 @@ def process_complex_inputs(
     elif isinstance(lookup_value, dict):
         # unpack the referenced object type and the lookup instructions
         (reference_object_type, lookup_instructions), = lookup_value.items()
+        # if build_path is the specified key, then use the super object to find the values
+        if reference_object_type.lower() == "buildpath":
+            super_object = build_path[lookup_instructions['Location']]
+            (super_object_type, super_object_structure), = super_object.items()
+            if lookup_instructions['ValueLocation'].lower() == 'self':
+                yield {"field": reference_field_name, "value": super_object_type}
+            if lookup_instructions['ValueLocation'].lower() == 'key':
+                yield {"field": reference_field_name, "value": super_object_structure['Fields']['name']}
+            else:
+                reference_node = \
+                    super_object_structure['Connectors'][
+                        lookup_instructions['ConnectorPath']][lookup_instructions['ValueLocation']]
+                yield {"field": reference_field_name, "value": super_object_structure['Fields'][reference_node]}
         # try to match the reference object with EnergyPlus objects in the super_dictionary
         for object_type in super_dictionary.keys():
             if re.match(reference_object_type, object_type, re.IGNORECASE):
@@ -183,13 +199,15 @@ def process_complex_inputs(
 def build_object_from_complex_inputs(
         yaml_object: dict,
         super_dictionary: dict,
-        unique_name_input: str) -> dict:
+        unique_name_input: str,
+        build_path: list = ()) -> dict:
     """
     Builds an energyplus object from a yaml object which uses complex inputs.
 
     :param yaml_object: template yaml object in dictionary format
     :param super_dictionary: epJSON formatted dictionary containing reference objects
     :param unique_name_input: unique name modifier
+    :param build_path: list of super objects in build order
     :return: Valid epJSON key-value pair for an EnergyPlus Object - EnergyPlus Object, {field_names: field_values}
     """
     (object_type, object_constructors), = yaml_object.items()
@@ -199,7 +217,8 @@ def build_object_from_complex_inputs(
             super_dictionary=super_dictionary,
             lookup_value=lookup_value,
             unique_name_input=unique_name_input,
-            reference_field_name=reference_field_name)
+            reference_field_name=reference_field_name,
+            build_path=build_path)
         # iterate over generate and apply to a dictionary
         for pd in processed_inputs:
             tmp_d[pd["field"]] = pd["value"]
@@ -331,6 +350,7 @@ def perform_build_operations(
         option_tree=option_tree,
         connector_path=connector_path,
         super_dictionary=super_dictionary,
+        build_path=build_path,
         unique_name=unique_name,
         template_dictionary=template_dictionary,
         input_epjson=input_epjson,
@@ -806,7 +826,8 @@ def create_additional_objects(
         unique_name: str,
         template_dictionary: dict,
         input_epjson: dict,
-        data: dict) -> dict:
+        data: dict,
+        build_path: dict = ()) -> dict:
     """
     Convert additional objects from yaml OptionTree into epJSON objects.
 
@@ -817,6 +838,7 @@ def create_additional_objects(
     :param template_dictionary: HVACTemplate user inputs
     :param input_epjson: epJSON file containing HVACTemplate objects
     :param data: loaded yaml object
+    :param build_path: list of super objects in build order
     :return: epJSON dictionary of created additional objects
     """
     object_dictionary = {}
@@ -835,6 +857,7 @@ def create_additional_objects(
                     object_structure=object_structure,
                     connector_path=connector_path,
                     super_dictionary=dict(super_dictionary, **object_dictionary),
+                    build_path=build_path,
                     unique_name=unique_name,
                     input_epjson=input_epjson,
                     data=data)
@@ -876,6 +899,7 @@ def create_additional_objects(
                                 object_structure=object_structure,
                                 connector_path=connector_path,
                                 super_dictionary=dict(super_dictionary, **object_dictionary),
+                                build_path=build_path,
                                 unique_name=unique_name,
                                 input_epjson=input_epjson,
                                 data=data)
@@ -906,7 +930,8 @@ def process_additional_object_input(
         super_dictionary,
         unique_name,
         input_epjson,
-        data):
+        data,
+        build_path=()):
     """
     Perform operations to convert instructions from a yaml 'additional object' into epJSON object.
 
@@ -918,6 +943,7 @@ def process_additional_object_input(
     :param unique_name: unique name modifier
     :param input_epjson: epJSON file containing HVACTemplate objects
     :param data: loaded yaml objects
+    :param build_path: list of super objects in build order
     :return: epJSON formatted dictionary
     """
     object_dictionary = {}
@@ -928,7 +954,8 @@ def process_additional_object_input(
             sub_additional_object_dictionary = build_object_from_complex_inputs(
                 super_dictionary=super_dictionary,
                 yaml_object={additional_sub_object: copy.deepcopy(additional_sub_object_fields)},
-                unique_name_input=unique_name)
+                unique_name_input=unique_name,
+                build_path=build_path)
             object_dictionary = merge_dictionaries(
                 super_dictionary=object_dictionary,
                 object_dictionary=sub_additional_object_dictionary,
@@ -1256,82 +1283,92 @@ def create_branches(
 
 def create_controller_list(
         object_dictionary,
-        unique_name):
-    controller_list_dictionary = {'AirLoopHVAC:ControllerList': {}}
-    for object_type, objects in object_dictionary.items():
-        if object_type == 'Controller:WaterCoil':
-            controller_name = '{} Controllers'.format(unique_name)
-        elif object_type == 'Controller:OutdoorAir':
-            controller_name = '{} OA Controllers'.format(unique_name)
-        else:
-            continue
-        if not controller_list_dictionary.get(controller_name):
-            controller_list_dictionary['AirLoopHVAC:ControllerList'][controller_name] = {}
-        object_count = 1
-        for object_name in objects:
-            controller_list_dictionary['AirLoopHVAC:ControllerList'][controller_name][
-                'controller_{}_name'.format(object_count)] = object_name
-            controller_list_dictionary['AirLoopHVAC:ControllerList'][controller_name][
-                'controller_{}_object_type'.format(object_count)] = object_type
-            object_count += 1
-    return controller_list_dictionary
+        data):
+    controller_lists = []
+    for controller in ['Controller:WaterCoil', 'Controller:OutdoorAir']:
+        controller_list_dictionary = {
+            'AirLoopHVAC:ControllerList': copy.deepcopy(data['AirLoopHVAC']['ControllerList']['Base'])
+        }
+        if controller == 'Controller:OutdoorAir':
+            controller_list_dictionary['AirLoopHVAC:ControllerList']['name'] = '{} OA Controllers'
+        for object_type, objects in object_dictionary.items():
+            if object_type == controller:
+                object_count = 1
+                for object_name in objects:
+                    controller_list_dictionary['AirLoopHVAC:ControllerList'][
+                        'controller_{}_name'.format(object_count)] = object_name
+                    controller_list_dictionary['AirLoopHVAC:ControllerList'][
+                        'controller_{}_object_type'.format(object_count)] = object_type
+                    object_count += 1
+        controller_lists.append(controller_list_dictionary)
+    return controller_lists
 
 
 def create_oa_equipment_list(
         build_path,
-        unique_name):
-    # build AirLoopOutdoorAirSystemEquipmentList
-    oa_equipment_list_dictionary = {'AirLoopHVAC:OutdoorAirSystem:EquipmentList': {}}
+        data):
+    oa_equipment_list_dictionary = {
+        'AirLoopHVAC:OutdoorAirSystem:EquipmentList':
+            copy.deepcopy(data['AirLoopHVAC']['OutdoorAirSystem']['EquipmentList']['Base'])
+    }
     object_count = 1
     stop_loop = False
     for super_object in build_path:
         for object_type, object_constructor in super_object.items():
             if stop_loop:
                 continue
-            if not oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList']\
-                    .get('{} OA System Equipment'.format(unique_name)):
-                oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList'][
-                    '{} OA System Equipment'.format(unique_name)] = {}
             oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList'][
-                '{} OA System Equipment'.format(unique_name)][
                 'component_{}_object_type'.format(object_count)] = \
                 object_type
             oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList'][
-                '{} OA System Equipment'.format(unique_name)][
                 'component_{}_object_name'.format(object_count)] = \
                 object_constructor['Fields']['name']
             if object_type == 'OutdoorAir:Mixer':
                 stop_loop = True
             object_count += 1
-    return oa_equipment_list_dictionary
+    return [oa_equipment_list_dictionary, ]
 
 
 def create_airloop_system_objects(
         system_name,
+        system_type,
         super_dictionary,
+        build_path,
         system_template_dictionary,
         zone_template_dictionaries,
         zone_dictionaries,
         data,
         unique_name):
     airloop_objects = {}
-    # [
-    #     data['AirLoopHVAC'],
-    #     data['AirLoopHVAC']['OutdoorAirSystem']['Base'],
-    #     # data['AirLoopHVAC']['Base']
-    # ]
     yaml_list = []
+    # build custom airloop objects
+    system_controller_lists = create_controller_list(
+        object_dictionary=super_dictionary,
+        data=data
+    )
+    yaml_list.extend(system_controller_lists)
+    system_oa_equipment_list = create_oa_equipment_list(
+        build_path=build_path,
+        data=data,
+    )
+    yaml_list.extend(system_oa_equipment_list)
     zone_splitters = []
+    zone_mixers = []
     # create zone lists for plenums/splitters/mixers
+    # todo_eo: build out for other system types
     for zone_template_name, zone_template_structure in zone_template_dictionaries.items():
-        if zone_template_structure.get('template_vav_system_name'):
-            # todo_eo: need to verify the right system type is specified (e.g. VAV)
+        if zone_template_structure.get('template_vav_system_name') and system_type == 'HVACTemplate:System:VAV':
             if zone_template_structure['template_vav_system_name'] == system_name:
                 (zone_equipment_name, zone_equipment_object), = \
                     zone_dictionaries[zone_template_name]['ZoneHVAC:EquipmentConnections'].items()
                 zone_splitters.append(
                     {
-                        "outlet_node_name": zone_equipment_object['zone_return_air_node_or_nodelist_name']
+                        "outlet_node_name": zone_equipment_object['zone_air_inlet_node_or_nodelist_name']
+                    }
+                )
+                zone_mixers.append(
+                    {
+                        "inlet_node_name": zone_equipment_object['zone_return_air_node_or_nodelist_name']
                     }
                 )
     # create plenums or splitters/mixers
@@ -1341,17 +1378,32 @@ def create_airloop_system_objects(
         yaml_copy['AirLoopHVAC:SupplyPlenum']['zone_node_name'] = '{} Zone Air Node'\
             .format(system_template_dictionary['supply_plenum_name'])
         yaml_copy['AirLoopHVAC:SupplyPlenum']["nodes"] = zone_splitters
+        yaml_list.append(yaml_copy)
     else:
         yaml_copy = {'AirLoopHVAC:ZoneSplitter': copy.deepcopy(data['AirLoopHVAC']['ZoneSplitter']['Base'])}
         yaml_copy['AirLoopHVAC:ZoneSplitter']["nodes"] = zone_splitters
-    yaml_list.append(yaml_copy)
-    # create paths
-    # run objects through complex inputs
+        yaml_list.append(yaml_copy)
+    if system_template_dictionary.get('return_plenum_name'):
+        yaml_copy = {'AirLoopHVAC:ReturnPlenum': copy.deepcopy(data['AirLoopHVAC']['ReturnPlenum']['Base'])}
+        yaml_copy['AirLoopHVAC:ReturnPlenum']['zone_name'] = system_template_dictionary['return_plenum_name']
+        yaml_copy['AirLoopHVAC:ReturnPlenum']['zone_node_name'] = '{} Zone Air Node' \
+            .format(system_template_dictionary['return_plenum_name'])
+        yaml_copy['AirLoopHVAC:ReturnPlenum']["nodes"] = zone_mixers
+        yaml_list.append(yaml_copy)
+    else:
+        yaml_copy = {'AirLoopHVAC:ZoneMixer': copy.deepcopy(data['AirLoopHVAC']['ZoneMixer']['Base'])}
+        yaml_copy['AirLoopHVAC:ZoneMixer']["nodes"] = zone_mixers
+        yaml_list.append(yaml_copy)
+    # add paths
+    yaml_list.append({'AirLoopHVAC:SupplyPath': copy.deepcopy(data['AirLoopHVAC']['SupplyPath']['Base'])})
+    yaml_list.append({'AirLoopHVAC:ReturnPath': copy.deepcopy(data['AirLoopHVAC']['ReturnPath']['Base'])})
+    yaml_list.append({'AirLoopHVAC': copy.deepcopy(data['AirLoopHVAC']['Base'])})
+    # run objects through complex inputs, ensure to include the newly created objects
     for yaml_base_object in yaml_list:
         yaml_copy = copy.deepcopy(yaml_base_object)
         additional_object = build_object_from_complex_inputs(
             yaml_object=yaml_copy,
-            super_dictionary=super_dictionary,
+            super_dictionary=dict(super_dictionary, **airloop_objects),
             unique_name_input=unique_name
         )
         airloop_objects = merge_dictionaries(
@@ -1377,7 +1429,7 @@ def main(input_args):
         # get yaml data
         data = yaml.load(f, Loader=yaml.FullLoader)
         # extract system template objects from epJSON
-        system_templates = [i for i in test_epjson if i.startswith('HVACTemplate:System')]
+        system_templates = [i for i in test_epjson.keys() if i.startswith('HVACTemplate:System')]
         # save outputs to dictionary
         system_dictionary = {}
         # iterate over templates
@@ -1435,25 +1487,18 @@ def main(input_args):
         # sys.exit()
         # Build AirLoop objects
         print('##### New AirLoopHVAC Objects ######')
+        system_type = None
         for system_name, system_template_dictionary in hvac_system_template_obj.items():
             # build AirLoopHVAC objects
-            system_controller_list_dictionary = create_controller_list(
-                object_dictionary=system_dictionary[system_name],
-                unique_name=system_name
-            )
-            system_oa_equipment_list_dictionary = create_oa_equipment_list(
-                build_path=system_build_path_dictionary[system_name],
-                unique_name=system_name
-            )
-            for additional_dictionary in [system_controller_list_dictionary, system_oa_equipment_list_dictionary]:
-                system_dictionary[system_name] = merge_dictionaries(
-                    super_dictionary=system_dictionary[system_name],
-                    object_dictionary=additional_dictionary,
-                    unique_name_override=False
-                )
+            for st in system_templates:
+                for sub_system_name, _ in test_epjson[st].items():
+                    if sub_system_name == system_name:
+                        system_type = st
             airloop_objects = create_airloop_system_objects(
                 system_name=system_name,
+                system_type=system_type,
                 super_dictionary=system_dictionary[system_name],
+                build_path=system_build_path_dictionary[system_name],
                 system_template_dictionary=system_template_dictionary,
                 zone_template_dictionaries=test_epjson[zt],
                 zone_dictionaries=zone_dictionary,
@@ -1465,10 +1510,6 @@ def main(input_args):
                 unique_name_override=False
             )
             pprint(system_dictionary, width=150)
-            sys.exit()
-        #         if system_name == zone_template_dictionary['template_vav_system_name']:
-        #             print(template_zone_name)
-        # sys.exit()
         # plant system loop build
         plant_templates = [i for i in test_epjson if re.match('HVACTemplate:Plant:.*Loop', i, re.IGNORECASE)]
         # save outputs to dictionary
@@ -1510,17 +1551,17 @@ def main(input_args):
                     object_dictionary=epjson_object,
                     unique_name_override=False
                 )
-        # build system branches
+        # build branches, branchlists, and connectors
         print('##### Branch Build #####')
         system_branch_dictionary = {}
         zone_branch_dictionary = {}
-        system_demand_branchlist = []
-        zone_demand_branchlist = []
+        # todo_eo: only one list needed for demand side?
+        demand_branchlist = []
         for unique_name, sbp in system_build_path_dictionary.items():
             sub_system_branch_dictionary, sub_system_demand_branchlist = create_branches(
                 build_path=sbp,
                 unique_name=unique_name)
-            system_demand_branchlist.append(sub_system_demand_branchlist)
+            demand_branchlist.append(sub_system_demand_branchlist)
             system_branch_dictionary = merge_dictionaries(
                 super_dictionary=system_branch_dictionary,
                 object_dictionary=sub_system_branch_dictionary,
@@ -1531,12 +1572,14 @@ def main(input_args):
                 build_path=zbp,
                 unique_name=unique_name,
                 connectors_to_build=('HotWaterLoop', 'ChilledWaterLoop', 'CondenserWaterLoop'))
-            zone_demand_branchlist.append(sub_zone_demand_branchlist)
+            demand_branchlist.append(sub_zone_demand_branchlist)
             zone_branch_dictionary = merge_dictionaries(
                 super_dictionary=zone_branch_dictionary,
                 object_dictionary=sub_zone_branch_dictionary,
                 unique_name_override=False
             )
+        # create demand side branchlist
+
         branch_dictionary = {}
         for bd in [system_branch_dictionary, zone_branch_dictionary]:
             # returned value is an object with Branch and BranchList keys
@@ -1544,6 +1587,7 @@ def main(input_args):
                 super_dictionary=branch_dictionary,
                 object_dictionary=bd,
                 unique_name_override=False)
+        # build connectors/mixers, and demand side branches
         print('##### New Branch Output #####')
         pprint(branch_dictionary, width=150)
         epjson_dictionary = merge_dictionaries(
@@ -1551,8 +1595,8 @@ def main(input_args):
             object_dictionary=branch_dictionary)
         # use the stored demand branch lists to create a BranchList
         # Add pumps and pipes.  This will require the use of the template input fields as well.
-        print(system_demand_branchlist)
-        print(zone_demand_branchlist)
+        print(demand_branchlist)
+        # sys.exit()
         pprint(epjson_dictionary, width=150)
         # build thermostats
         # this should be one of the last steps as it scans the epjson_dictionary
@@ -1599,10 +1643,7 @@ if __name__ == "__main__":
     main(args)
 
 ##########################
-# todo_eo: Remaining example buildout
-##########################
 # General
-# have complex inputs take build path arguments by positions and fluid flow loop
 ###########################
 
 ##########################
@@ -1629,7 +1670,6 @@ if __name__ == "__main__":
 
 ################
 # Additional
-# Make AirLoopHVAC at end of script to connect nodes
 # set default schedules (e.g. always on) as default values
 # make one of the last steps of the program to iterate over fields and add missing schedules.
 # can be generalized to a function that just adds any missing default objects
