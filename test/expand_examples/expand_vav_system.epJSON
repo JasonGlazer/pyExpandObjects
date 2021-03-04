@@ -110,6 +110,13 @@
       "condenser_type": "WaterCooled",
       "nominal_cop": 3.2,
       "priority": "1"
+    },
+    "Second Chiller": {
+      "capacity": "Autosize",
+      "chiller_type": "ElectricReciprocatingChiller",
+      "condenser_type": "WaterCooled",
+      "nominal_cop": 3.2,
+      "priority": "1"
     }
   },
   "HVACTemplate:Plant:HotWaterLoop": {

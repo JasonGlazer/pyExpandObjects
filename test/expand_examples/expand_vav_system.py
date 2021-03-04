@@ -68,13 +68,15 @@ def flatten_build_path(
 def merge_dictionaries(
         super_dictionary: dict,
         object_dictionary: dict,
-        unique_name_override: bool = True) -> dict:
+        unique_name_override: bool = True,
+        unique_name_fail: bool = True) -> dict:
     """
     Merge a high level dictionary with a sub-dictionary, both in epJSON format
 
     :param super_dictionary: high level dictionary used as the base object
     :param object_dictionary: dictionary to merge into base object
     :param unique_name_override: allow a duplicate unique name to overwrite an existing object
+    :param unique_name_fail: if override is set to False, choose whether to skip object or fail
     :return: merged output of the two input dictionaries
     """
     for object_type, tmp_d in object_dictionary.items():
@@ -83,8 +85,11 @@ def merge_dictionaries(
         if isinstance(tmp_d, dict):
             for object_name, object_fields in tmp_d.items():
                 if not unique_name_override and object_name in super_dictionary[object_type].keys():
-                    print('unique name error')
-                    sys.exit()
+                    if unique_name_fail:
+                        print('unique name error')
+                        sys.exit()
+                    else:
+                        continue
             for tmp_d_name, tmp_d_structure in tmp_d.items():
                 super_dictionary[object_type][tmp_d_name] = tmp_d_structure
         elif isinstance(tmp_d, list):
@@ -331,7 +336,7 @@ def perform_build_operations(
         unique_name=unique_name,
         input_epjson=input_epjson,
         data=data)
-    print('BuldPath complete')
+    print('BuildPath complete')
     print(build_path)
     # Build a dictionary of valid epJSON objects from build path
     object_from_path = create_epjson(
@@ -346,6 +351,7 @@ def perform_build_operations(
     # these are stored in the option tree under AdditionalObjects
     # for standard objects, and AdditionalTemplateObjects for
     # template triggered objects
+    # save a list for later use
     additional_objects = create_additional_objects(
         option_tree=option_tree,
         connector_path=connector_path,
@@ -397,87 +403,90 @@ def create_build_path(
     # template name (e.g. HVACTemplate:Plant:Chiller).
     # if so do a recursive build on that object, insert it into the original position, and then flatten the
     # build path again.
-    for idx, super_object in enumerate(build_path):
-        if isinstance(super_object, str) and \
-                re.match('^HVACTemplate:.*', super_object, re.IGNORECASE):
-            # in this test program, we have to grab global objects, which are the yaml data and the
-            # epjson object.  In production, these should be stored class attributes.
-            sub_template_object = input_epjson[super_object]
-            sub_build_path = None
-            for sub_object_name, sub_object_dictionary in sub_template_object.items():
-                sub_option_tree = get_option_tree(super_object, data)
-                _, sub_build_path = perform_build_operations(
-                    connector_path=connector_path,
-                    option_tree=sub_option_tree,
-                    template_dictionary=sub_object_dictionary,
-                    super_dictionary=super_dictionary,
-                    unique_name=sub_object_name,
-                    input_epjson=input_epjson,
-                    data=data)
-            # a side effect of the recursion is that nested lists are produced
-            # so we need to flatten them.
-            build_path[idx] = sub_build_path
-            build_path = flatten_build_path(build_path)
-    actions = get_all_action_field_names(
-        option_tree=option_tree,
-        template_dictionary=template_dictionary)
-    print('pre-replaced element path')
-    for idx, super_object in enumerate(build_path):
-        print('object {} - {}'.format(idx, super_object))
-    # remove example
-    if actions.get('remove'):
-        build_path = remove_objects(
-            action='remove',
-            action_list=actions['remove'],
+    if build_path:
+        for idx, super_object in enumerate(build_path):
+            if isinstance(super_object, str) and \
+                    re.match('^HVACTemplate:.*', super_object, re.IGNORECASE):
+                # in this test program, we have to grab global objects, which are the yaml data and the
+                # epjson object.  In production, these should be stored class attributes.
+                sub_template_object = input_epjson[super_object]
+                sub_build_path = None
+                for sub_object_name, sub_object_dictionary in sub_template_object.items():
+                    sub_option_tree = get_option_tree(super_object, data)
+                    _, sub_build_path = perform_build_operations(
+                        connector_path=connector_path,
+                        option_tree=sub_option_tree,
+                        template_dictionary=sub_object_dictionary,
+                        super_dictionary=super_dictionary,
+                        unique_name=sub_object_name,
+                        input_epjson=input_epjson,
+                        data=data)
+                # a side effect of the recursion is that nested lists are produced
+                # so we need to flatten them.
+                build_path[idx] = sub_build_path
+                build_path = flatten_build_path(build_path)
+        actions = get_all_action_field_names(
             option_tree=option_tree,
-            template_dictionary=template_dictionary,
-            build_path=build_path)
-    print('post-removed path')
-    for idx, super_object in enumerate(build_path):
-        print('object {} - {}'.format(idx, super_object))
-    # replace example
-    # At the moment, replace happens even if correct equipment in place.
-    # I'm sure there is a work-around to this but for now it doesn't break anything.
-    if actions.get('replace'):
-        build_path = replace_objects(
-            action='replace',
-            action_list=actions['replace'],
-            option_tree=option_tree,
-            template_dictionary=template_dictionary,
-            build_path=build_path)
-    print('post-replaced path')
-    for idx, super_object in enumerate(build_path):
-        print('object {} - {}'.format(idx, super_object))
-    # apply base transitions.  This needs to be done before inserting optional elements.
-    # If an element is inserted that is the same object type, then the transition mapping
-    # would output to both objects.
-    if selected_template.get('Transitions'):
-        build_path = apply_transitions_to_objects(
-            transition_structure=selected_template['Transitions'],
-            template_dictionary=template_dictionary,
-            build_path=build_path)
-    print('post-transition path')
-    for idx, super_object in enumerate(build_path):
-        print('object {} - {}'.format(idx, super_object))
-    # insert example
-    if actions.get('insert'):
-        build_path = insert_objects(
-            action='insert',
-            action_list=actions['insert'],
-            option_tree=option_tree,
-            template_dictionary=template_dictionary,
-            build_path=build_path)
-    print('post-insert element path')
-    for idx, super_object in enumerate(build_path):
-        print('object {} - {}'.format(idx, super_object))
-    # insert unique name
-    build_path = insert_unique_name(
-        unique_name=unique_name,
-        build_path=build_path
-    )
-    print('post-variable rename path')
-    for idx, super_object in enumerate(build_path):
-        print('object {} - {}'.format(idx, super_object))
+            template_dictionary=template_dictionary)
+        print('pre-replaced element path')
+        for idx, super_object in enumerate(build_path):
+            print('object {} - {}'.format(idx, super_object))
+        # remove example
+        if actions.get('remove'):
+            build_path = remove_objects(
+                action='remove',
+                action_list=actions['remove'],
+                option_tree=option_tree,
+                template_dictionary=template_dictionary,
+                build_path=build_path)
+        print('post-removed path')
+        for idx, super_object in enumerate(build_path):
+            print('object {} - {}'.format(idx, super_object))
+        # replace example
+        # At the moment, replace happens even if correct equipment in place.
+        # I'm sure there is a work-around to this but for now it doesn't break anything.
+        if actions.get('replace'):
+            build_path = replace_objects(
+                action='replace',
+                action_list=actions['replace'],
+                option_tree=option_tree,
+                template_dictionary=template_dictionary,
+                build_path=build_path)
+        print('post-replaced path')
+        for idx, super_object in enumerate(build_path):
+            print('object {} - {}'.format(idx, super_object))
+        # apply base transitions.  This needs to be done before inserting optional elements.
+        # If an element is inserted that is the same object type, then the transition mapping
+        # would output to both objects.
+        if selected_template.get('Transitions'):
+            build_path = apply_transitions_to_objects(
+                transition_structure=selected_template['Transitions'],
+                template_dictionary=template_dictionary,
+                build_path=build_path)
+        print('post-transition path')
+        for idx, super_object in enumerate(build_path):
+            print('object {} - {}'.format(idx, super_object))
+        # insert example
+        if actions.get('insert'):
+            build_path = insert_objects(
+                action='insert',
+                action_list=actions['insert'],
+                option_tree=option_tree,
+                template_dictionary=template_dictionary,
+                build_path=build_path)
+        print('post-insert element path')
+        for idx, super_object in enumerate(build_path):
+            print('object {} - {}'.format(idx, super_object))
+        # insert unique name
+        build_path = insert_unique_name(
+            unique_name=unique_name,
+            build_path=build_path
+        )
+        print('post-variable rename path')
+        for idx, super_object in enumerate(build_path):
+            print('object {} - {}'.format(idx, super_object))
+    else:
+        build_path = []
     return build_path
 
 
@@ -621,7 +630,6 @@ def apply_transitions_to_objects(
     else:
         as_object = False
     for transition_field_name, value_reference in transition_structure.items():
-        print(value_reference)
         for reference_object_type, field_name in value_reference.items():
             for super_object in build_path:
                 for object_type in super_object:
@@ -969,14 +977,30 @@ def process_additional_object_input(
         # epjson object.  In production, these should be stored class attributes.
         # Also, some internal yaml templates are not accessible via EnergyPlus, so they will not have
         # a template input
+
+        # check for added AdditionalObjects or AdditionalTemplateObjects added from parent and apply
+        additional_objects = object_structure.pop('AdditionalObjects', None)
+        additional_template_objects = object_structure.pop('AdditionalTemplateObjects', None)
         sub_option_tree = get_option_tree(object_or_template, data)
+        if additional_objects:
+            for ao in additional_objects:
+                if not sub_option_tree.get('AdditionalObjects'):
+                    sub_option_tree['AdditionalObjects'] = ao
+                else:
+                    sub_option_tree['AdditionalObjects'].extend(ao)
+        if additional_template_objects:
+            for ato in additional_template_objects:
+                if not sub_option_tree.get('AdditionalTemplateObjects'):
+                    sub_option_tree['AdditionalTemplateObjects'] = ato
+                else:
+                    sub_option_tree['AdditionalTemplateObjects'].extend(ato)
         if isinstance(sub_template_object, dict):
             # todo_eo: It is unclear if this section is necessary.
             # It does not appear this code is ever used.  It appears that
             # when additional objects are called, an associated HVACTemplate is not usually specified.
             # This code is left here in case that situation occurs, but additional debugging might be necessary.
             for sub_object_name, sub_template_dictionary in sub_template_object.items():
-                sub_object_dictionary, _ = perform_build_operations(
+                sub_object_dictionary = perform_build_operations(
                     connector_path=object_structure.get('ConnectorPath', connector_path),
                     option_tree=sub_option_tree,
                     template_dictionary=sub_template_dictionary,
@@ -993,7 +1017,7 @@ def process_additional_object_input(
             # if a template was not found for the nested HVACTemplate object, then process with a blank
             # template object.
             # for now, just specify the connector_path.  Will have to make a mapping dictionary later
-            sub_object_dictionary, _ = perform_build_operations(
+            sub_object_dictionary, build_path = perform_build_operations(
                 connector_path=object_structure.get('ConnectorPath', connector_path),
                 option_tree=sub_option_tree,
                 template_dictionary={},
@@ -1535,10 +1559,55 @@ def main(input_args):
                 plant_dictionary[template_plant_name] = sub_plant_dictionary
                 plant_build_paths.append(plant_build_path)
                 plant_unique_names.append(template_plant_name)
-        pprint(plant_dictionary, width=150)
+        # create waterloop objects separately (e.g. chiller, boiler, etc.)
+        # so that multiple objects can be created
+        # todo: working on multiple plant objects
+        plant_equipment_templates = [
+            i for i in test_epjson if re.match('HVACTemplate:Plant:Chiller.*', i, re.IGNORECASE)
+        ]
+        plant_equipment_dictionary = {}
+        equipment_branch_dictionary = {}
+        for pet in plant_equipment_templates:
+            # todo continue plant build out and make as a function
+            for equipment_name, template_dictionary in test_epjson[pet].items():
+                option_tree = get_option_tree(pet, data)
+                equipment_dictionary, equipment_build_path = perform_build_operations(
+                    connector_path='ChilledWaterLoop',
+                    option_tree=option_tree,
+                    template_dictionary=template_dictionary,
+                    super_dictionary={},
+                    unique_name=equipment_name,
+                    input_epjson=test_epjson,
+                    data=data)
+                plant_equipment_dictionary = merge_dictionaries(
+                    super_dictionary=plant_equipment_dictionary,
+                    object_dictionary=equipment_dictionary
+                )
+                # group branches by loop and side (demand/supply)
+                # use a loop type check for boiler and towers
+                if equipment_dictionary.get('Branch'):
+                    for object_name in equipment_dictionary['Branch'].keys():
+                        if re.match(r'.*Chiller.*CndW Branch$', object_name, re.IGNORECASE):
+                            if not equipment_branch_dictionary.get('CondenserWaterLoop_Demand'):
+                                equipment_branch_dictionary['CondenserWaterLoop_Demand'] = []
+                            equipment_branch_dictionary['CondenserWaterLoop_Demand'].append(object_name)
+                        if re.match(r'.*Chiller.*ChW Branch$', object_name, re.IGNORECASE):
+                            if not equipment_branch_dictionary.get('ChilledWaterLoop_Supply'):
+                                equipment_branch_dictionary['ChilledWaterLoop_Supply'] = []
+                            equipment_branch_dictionary['ChilledWaterLoop_Supply'].append(object_name)
+        # go by set names to make branchlists/connectors/etc.
+        # Repeat for boiler and tower
+        print('--------')
+        pprint(plant_equipment_dictionary, width=150)
+        pprint(equipment_branch_dictionary)
+        # Create equipment specific branches, branchlists, etc.
+        # Create connectors/splitters, etc. for all loops
+        sys.exit()
+        # pprint(plant_dictionary, width=150)
         # sys.exit()
         print('##### New Plant Template Output #####')
         pprint(plant_dictionary, width=150)
+        # sys.exit()
         # Collect all template objects to one epjson object for further processing
         epjson_dictionary = {}
         for template_dictionary in [
@@ -1604,7 +1673,6 @@ def main(input_args):
             super_dictionary=epjson_dictionary,
             object_dictionary=branch_dictionary)
         # use the stored demand branch lists to create a BranchList
-        # Add pumps and pipes.  This will require the use of the template input fields as well.
         print(demand_branchlist)
         chilled_water_branches = []
         hot_water_branches = []
