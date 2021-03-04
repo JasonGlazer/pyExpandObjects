@@ -1254,7 +1254,7 @@ def create_branches(
         else:
             for build_object in build_path:
                 for object_type, super_object in build_object.items():
-                    # only retrieve demand-side water coils or air loop objects.  Supply side water loopp
+                    # only retrieve demand-side water coils or air loop objects.  Supply side water loop
                     # branches are created in the additional objects fields of the templates
                     if re.match('^Coil.*', object_type, re.IGNORECASE):
                         # do I need to run a check that consecutive objects have inlet/outlet nodes?
@@ -1267,17 +1267,17 @@ def create_branches(
                                     'component_object_name': super_object['Fields']['name'],
                                     'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
                                     'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
-                        # build demand branch list
-                        if re.match('^Coil:Cooling:Water.*', object_type, re.IGNORECASE):
-                            demand_chilled_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
-                        elif re.match('^Coil:Heating:Water.*|^ZoneHVAC:Baseboard.*Water', object_type, re.IGNORECASE):
-                            demand_hot_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
-                        elif re.match('^Coil:.*HeatPump.*', object_type, re.IGNORECASE):
-                            demand_mixed_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
+                    # build demand branch list
+                    if re.match('^Coil:Cooling:Water.*', object_type, re.IGNORECASE):
+                        demand_chilled_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
+                    elif re.match('^Coil:Heating:Water.*|^ZoneHVAC:Baseboard.*Water', object_type, re.IGNORECASE):
+                        demand_hot_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
+                    elif re.match('^Coil:.*HeatPump.*', object_type, re.IGNORECASE):
+                        demand_mixed_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
     demand_dictionary = {
-        "DemandChilledWater": demand_chilled_water_objects,
-        "DemandHotWater": demand_hot_water_objects,
-        "DemandMixedWater": demand_mixed_water_objects}
+        "ChilledWaterLoop": list(set(demand_chilled_water_objects)),
+        "HotWaterLoop": list(set(demand_hot_water_objects)),
+        "MixedWaterLoop": list(set(demand_mixed_water_objects))}
     return object_dictionary, demand_dictionary
 
 
@@ -1578,8 +1578,18 @@ def main(input_args):
                 object_dictionary=sub_zone_branch_dictionary,
                 unique_name_override=False
             )
+            # Find branches created outside of build path
+            additional_hw_branches = []
+            for object_type, object_structure in sub_zone_dictionary.items():
+                if object_type == 'Branch':
+                    (object_name, object_fields), = object_structure.items()
+                    object_type = [object_type for component_dict in object_fields['components']
+                                   for object_type in component_dict.values()
+                                   if re.match(r'^Coil.*|ZoneHVAC.*Baseboard', object_type)]
+                    if object_type:
+                        additional_hw_branches.append(object_name)
+            demand_branchlist.append({"HotWaterLoop": additional_hw_branches})
         # create demand side branchlist
-
         branch_dictionary = {}
         for bd in [system_branch_dictionary, zone_branch_dictionary]:
             # returned value is an object with Branch and BranchList keys
@@ -1596,8 +1606,99 @@ def main(input_args):
         # use the stored demand branch lists to create a BranchList
         # Add pumps and pipes.  This will require the use of the template input fields as well.
         print(demand_branchlist)
-        # sys.exit()
+        chilled_water_branches = []
+        hot_water_branches = []
+        mixed_water_branches = []
+        for db in demand_branchlist:
+            for looptype, branches in db.items():
+                if looptype == 'ChilledWaterLoop':
+                    chilled_water_branches.extend(branches)
+                elif looptype == 'HotWaterLoop':
+                    hot_water_branches.extend(branches)
+                elif looptype == 'MixedWaterLoop':
+                    mixed_water_branches.extend(branches)
+        demand_branchlist = {'BranchList': {}}
+        demand_connector_splitter = {'Connector:Splitter': {}}
+        demand_connector_mixer = {'Connector:Mixer': {}}
+        connector_list = {'ConnectorList': {}}
+        if chilled_water_branches:
+            formatted_branchlist = [{"branch_name": i} for i in list(set(chilled_water_branches))]
+            demand_branchlist['BranchList']["Chilled Water Loop ChW Demand Side Branches"] = {
+                "branches": [
+                    {"branch_name": "Chilled Water Loop ChW Demand Inlet Branch"},
+                    *formatted_branchlist,
+                    {"branch_name": "Chilled Water Loop ChW Demand Bypass Branch"},
+                    {"branch_name": "Chilled Water Loop ChW Demand Outlet Branch"}
+                ]
+            }
+            formatted_branchlist = [{"outlet_branch_name": i} for i in list(set(chilled_water_branches))]
+            demand_connector_splitter['Connector:Splitter']['Chilled Water Loop ChW Demand Splitter'] = {
+                "inlet_branch_name": "Chilled Water Loop ChW Demand Inlet Branch",
+                "branches": [
+                    *formatted_branchlist,
+                    {"outlet_branch_name": "Chilled Water Loop ChW Demand Bypass Branch"}
+                ]
+            }
+            formatted_branchlist = [{"inlet_branch_name": i} for i in list(set(chilled_water_branches))]
+            demand_connector_mixer['Connector:Mixer']['Chilled Water Loop ChW Demand Mixer'] = {
+                "outlet_branch_name": "Chilled Water Loop ChW Demand Outlet Branch",
+                "branches": [
+                    {"inlet_branch_name": "Chilled Water Loop ChW Demand Bypass Branch"},
+                    *formatted_branchlist
+                ]
+            }
+            connector_list['ConnectorList']['Chilled Water Loop ChW Demand Side Connectors'] = {
+                'connector_1_object_type': 'Connector:Splitter',
+                'connecotr_1_name': 'Chilled Water Loop ChW Demand Splitter',
+                'connector_2_object_type': 'Connector:Mixer',
+                'connecotr_2_name': 'Chilled Water Loop ChW Demand Mixer'
+            }
+        if hot_water_branches:
+            formatted_branchlist = [{"branch_name": i} for i in list(set(hot_water_branches))]
+            demand_branchlist['BranchList']["Hot Water Loop HW Demand Side Branches"] = {
+                "branches": [
+                    {"branch_name": "Hot Water Loop HW Demand Inlet Branch"},
+                    *formatted_branchlist,
+                    {"branch_name": "Hot Water Loop HW Demand Bypass Branch"},
+                    {"branch_name": "Hot Water Loop HW Demand Outlet Branch"}
+                ]
+            }
+            formatted_branchlist = [{"outlet_branch_name": i} for i in list(set(chilled_water_branches))]
+            demand_connector_splitter['Connector:Splitter']['Hot Water Loop HW Demand Splitter'] = {
+                "inlet_branch_name": "Hot Water Loop HW Demand Inlet Branch",
+                "branches": [
+                    *formatted_branchlist,
+                    {"outlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"}
+                ]
+            }
+            formatted_branchlist = [{"inlet_branch_name": i} for i in list(set(chilled_water_branches))]
+            demand_connector_mixer['Connector:Mixer']['Hot Water Loop HW Demand Mixer'] = {
+                "outlet_branch_name": "Hot Water Loop HW Demand Outlet Branch",
+                "branches": [
+                    {"inlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"},
+                    *formatted_branchlist
+                ]
+            }
+            connector_list['ConnectorList']['Hot Water Loop HW Demand Side Connectors'] = {
+                'connector_1_object_type': 'Connector:Splitter',
+                'connecotr_1_name': 'Hot Water Loop HW Demand Splitter',
+                'connector_2_object_type': 'Connector:Mixer',
+                'connecotr_2_name': 'Hot Water Loop HW Demand Mixer'
+            }
+        # do for mixedwaterloop
+        # todo_eo: add supply side water loop connectors/splitters/lists in yaml
+        pprint(demand_branchlist, width=150)
+        epjson_dictionary = merge_dictionaries(
+            super_dictionary=epjson_dictionary,
+            object_dictionary=dict(
+                **demand_branchlist,
+                **demand_connector_splitter,
+                **demand_connector_mixer,
+                **connector_list),
+            unique_name_override=False
+        )
         pprint(epjson_dictionary, width=150)
+        sys.exit()
         # build thermostats
         # this should be one of the last steps as it scans the epjson_dictionary
         thermostat_templates = [i for i in test_epjson if re.match('HVACTemplate:Thermostat', i, re.IGNORECASE)]

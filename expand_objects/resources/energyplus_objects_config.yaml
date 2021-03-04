@@ -584,6 +584,17 @@ OptionTree:
           baseboard_heating_type:
             HotWater:
               - ZoneHVAC:Baseboard:Radiant:Convective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterBase
+              - Branch:
+                  name: '{} Baseboard Heat HW Branch'
+                  components:
+                    - component_object_type:
+                        ^ZoneHVAC:Baseboard.*: self
+                      component_name:
+                        ^ZoneHVAC:Baseboard.*: key
+                      component_inlet_node_name:
+                        ^ZoneHVAC:Baseboard.*: inlet_node_name
+                      component_outlet_node_name:
+                        ^ZoneHVAC:Baseboard.*: outlet_node_name
               - ZoneHVAC:EquipmentList:
                   <<: *ZoneHVACEquipmentList
                   equipment:
@@ -668,6 +679,82 @@ OptionTree:
               - HVACTemplate:Plant:CondenserWaterLoop:
                   ConnectorPath: CondenserWaterLoop
                   UniqueName: 'Main CndW'
+              - Pipe:Adiabatic:
+                  name: '{} Demand CndW Inlet Pipe'
+                  inlet_node_name: '{} Demand CndW Inlet'
+                  outlet_node_name: '{} Demand CndW Inlet Pipe Outlet'
+              - Branch:
+                  name: '{} Demand CndW Inlet Branch'
+                  components:
+                    - component_object_type: Pipe:Adiabatic
+                      component_name: '{} Demand CndW Inlet Pipe'
+                      component_inlet_node_name: '{} Demand CndW Inlet'
+                      component_outlet_node_name: '{} Demand CndW Inlet Pipe Outlet'
+              - Pipe:Adiabatic:
+                  name: '{} Demand CndW Bypass Pipe'
+                  inlet_node_name: '{} Demand CndW Bypass Inlet'
+                  outlet_node_name: '{} Demand CndW Bypass Outlet'
+              - Branch:
+                  name: '{} Chiller CndW Branch'
+                  components:
+                    - component_object_type:
+                        Chiller.*: self
+                      component_name:
+                        Chiller.*: key
+                      component_inlet_node_name:
+                        Chiller.*: condenser_water_inlet_node_name
+                      component_outet_node_name:
+                        Chiller.*: condenser_water_outlet_node_name
+              - Branch:
+                  name: '{} Demand CndW Bypass Branch'
+                  components:
+                    - component_object_type: Pipe:Adiabatic
+                      component_name: '{} Demand CndW Bypass Pipe Branch'
+                      component_inlet_node_name: '{} Demand CndW Bypass Inlet'
+                      component_outlet_node_name: '{} Demand CndW Bypass Outlet'
+              - Pipe:Adiabatic:
+                  name: '{} Demand CndW Outlet Pipe'
+                  inlet_node_name: '{} Demand CndW Outlet Pipe Inlet'
+                  outlet_node_name: '{} Demand CndW Outlet'
+              - Branch:
+                  name: '{} Demand CndW Outlet Branch'
+                  components:
+                    - component_object_type: Pipe:Adiabatic
+                      component_name: '{} Demand CndW Outlet Pipe'
+                      component_inlet_node_name: '{} Demand CndW Outlet Pipe Inlet'
+                      component_outlet_node_name: '{} Demand CndW Outlet'
+              - BranchList:
+                  name: '{} Branches'
+                  branches:
+                    - branch_name: '{} Supply Inlet Branch'
+                    - branch_name: '{} Chiller Branch'
+                    - branch_name: '{} Supply Bypass Pipe Branch'
+                    - branch_name: '{} Supply Outlet Branch'
+              - BranchList:
+                  name: 'Chiled Water Loop CndW Demand Side Branches'
+                  branches:
+                    - branch_name: '{} Demand CndW Inlet Branch'
+                    - branch_name: '{} CndW Chiller Branch'
+                    - branch_name: '{} Demand CndW Bypass Pipe Branch'
+                    - branch_name: '{} Demand CndW Outlet Branch'
+              - Connector:Splitter:
+                  name: Chilled Water Loop CndW Demand Splitter
+                  inlet_branch_name: '{} Demand CndW Inlet Branch'
+                  branches:
+                    - outlet_branch_name: '{} Demand CndW Bypass Pipe Branch'
+                    - outlet_branch_name: '{} CndW Chiller Branch'
+              - Connector:Mixer:
+                  name: Chilled Water Loop CndW Demand Mixer
+                  outlet_branch_name: '{} Demand CndW Outlet Branch'
+                  branches:
+                    - inlet_branch_name: '{} Demand CndW Bypass Pipe Branch'
+                    - inlet_branch_name: '{} CndW Chiller Branch'
+              - ConnectorList:
+                  name: Chilled Water Loop CndW Demand Side Connectors
+                  connector_1_object_type: Connector:Splitter
+                  connector_1_object_name: Chilled Water Loop CndW Demand Splitter
+                  connector_2_object_type: Connector:Mixer
+                  connector_2_object_name: Chilled Water Loop CndW Demand Mixer
       ChilledWaterLoop:
         Base: *HVACTemplatePlantChilledWaterLoop
         AdditionalObjects:
@@ -693,7 +780,7 @@ OptionTree:
               inlet_node_name: '{} Supply Bypass Inlet'
               outlet_node_name: '{} Supply Bypass Outlet'
           - Branch:
-              name: '{} Chiller Branch'
+              name: '{} CndW Chiller Branch'
               components:
                 - component_object_type:
                     Chiller.*: self
@@ -721,13 +808,6 @@ OptionTree:
                   component_name: '{} Supply Outlet Pipe'
                   component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
                   component_outlet_node_name: '{} Supply Outlet'
-          - BranchList:
-              name: '{} Branches'
-              branches:
-                - branch_name: '{} Supply Inlet Branch'
-                - branch_name: '{} Chiller Branch'
-                - branch_name: '{} Supply Bypass Pipe Branch'
-                - branch_name: '{} Supply Outlet Branch'
       CondenserWaterLoop:
         Base: *HVACTemplatePlantCondenserWaterLoop
         AdditionalObjects:
