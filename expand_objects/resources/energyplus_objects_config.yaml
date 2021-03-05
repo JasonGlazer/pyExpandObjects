@@ -11,6 +11,9 @@ Boiler:
           HotWaterLoop:
             Inlet: boiler_water_inlet_node_name
             Outlet: boiler_water_outlet_node_name
+          CondenserWaterLoop:
+            Inlet: boiler_water_inlet_node_name
+            Outlet: boiler_water_outlet_node_name
 
 Chiller:
   Electric:
@@ -97,6 +100,7 @@ CoolingTower:
         name: '{} Tower'
         water_inlet_node_name: '{} CndW Inlet'
         water_outlet_node_name: '{} CndW Outlet'
+        outdoor_air_inlet_node_name: '{} Outdoor Air Inlet Node Name'
       Connectors:
         CondenserWaterLoop:
           Inlet: water_inlet_node_name
@@ -176,19 +180,14 @@ Pipe:
 Pump:
   ConstantSpeed:
     Fields:
-      name: '{} Supply Pump'
+      name: '{} Pump'
       inlet_node_name: '{} Pump Inlet'
       outlet_node_name: '{} Pump Outlet'
-    Connectors:
-      ChilledWaterLoop:
-        Inlet: inlet_node_name
-        Outlet: outlet_node_name
-      HotWaterLoop:
-        Inlet: inlet_node_name
-        Outlet: outlet_node_name
-      CondenserWaterLoop:
-        Inlet: inlet_node_name
-        Outlet: outlet_node_name
+  VariableSpeed:
+    Fields:
+      name: '{} Pump'
+      inlet_node_name: '{} Pump Inlet'
+      outlet_node_name: '{} Pump Outlet'
 
 ### Complex Objects
 AirTerminal:
@@ -645,6 +644,14 @@ OptionTree:
                     ^OutdoorAir:Mixer: mixed_air_node_name
           - Controller:OutdoorAir:
               <<: *ControllerOutdoorAir
+          - OutdoorAir:Nodelist:
+              name: '{} Outdoor Air Nodelist'
+              nodes:
+                - node_or_nodelist_name:
+                    BuildPath:
+                      Location: 0
+                      ConnectorPath: Air
+                      ValueLocation: Inlet
           - Sizing:System:
               <<: *SizingSystem
               Transitions: *SizingSystemTransitions
@@ -671,17 +678,44 @@ OptionTree:
       Boiler:
         Base: *HVACTemplatePlantBoiler
         AdditionalObjects:
-          - Branch:
-              name: '{} Boiler Branch'
-              components:
-                - component_object_type:
-                    Boiler.*: self
-                  component_name:
-                    Boiler.*: key
-                  component_inlet_node_name:
-                    Boiler.*: boiler_water_inlet_node_name
-                  component_outet_node_name:
-                    Boier.*: boiler_water_outlet_node_name
+        AdditionalTemplateObjects:
+          template_plant_loop_type:
+            None:
+              - Branch:
+                  name: '{} Boiler HW Branch'
+                  components:
+                    - component_object_type:
+                        Boiler.*: self
+                      component_name:
+                        Boiler.*: key
+                      component_inlet_node_name:
+                        Boiler.*: boiler_water_inlet_node_name
+                      component_outet_node_name:
+                        Boier.*: boiler_water_outlet_node_name
+            HotWater:
+              - Branch:
+                  name: '{} Boiler HW Branch'
+                  components:
+                    - component_object_type:
+                        Boiler.*: self
+                      component_name:
+                        Boiler.*: key
+                      component_inlet_node_name:
+                        Boiler.*: boiler_water_inlet_node_name
+                      component_outet_node_name:
+                        Boier.*: boiler_water_outlet_node_name
+            MixedWater:
+              - Branch:
+                  name: '{} Boiler MW Branch'
+                  components:
+                    - component_object_type:
+                        Boiler.*: self
+                      component_name:
+                        Boiler.*: key
+                      component_inlet_node_name:
+                        Boiler.*: boiler_water_inlet_node_name
+                      component_outet_node_name:
+                        Boier.*: boiler_water_outlet_node_name
       Chiller:
         Base: *HVACTemplatePlantChiller
         ReplaceElements:
@@ -714,32 +748,6 @@ OptionTree:
               - HVACTemplate:Plant:CondenserWaterLoop:
                   ConnectorPath: CondenserWaterLoop
                   UniqueName: 'Condenser Water Loop'
-                  AdditionalObjects:
-#                    - BranchList:
-#                        name: '{} Demand Side Branches'
-#                        branches:
-#                          - branch_name: '{} Demand Inlet Branch'
-#                          - branch_name: '{} Chiller CndW Branch'
-#                          - branch_name: '{} Demand Bypass Pipe'
-#                          - branch_name: '{} Demand Outlet Branch'
-#                    - Connector:Splitter:
-#                        name: Chilled Water Loop CndW Demand Splitter
-#                        inlet_branch_name: '{} Demand Inlet Branch'
-#                        branches:
-#                          - outlet_branch_name: '{} Demand Bypass Pipe'
-#                          - outlet_branch_name: '{} CndW Chiller Branch'
-#                    - Connector:Mixer:
-#                        name: Chilled Water Loop CndW Demand Mixer
-#                        outlet_branch_name: '{} Demand Outlet Branch'
-#                        branches:
-#                          - inlet_branch_name: '{} Demand Bypass Pipe'
-#                          - inlet_branch_name: '{} Chiller CndW Branch'
-#                    - ConnectorList:
-#                        name: Chilled Water Loop CndW Demand Side Connectors
-#                        connector_1_object_type: Connector:Splitter
-#                        connector_1_object_name: Chilled Water Loop CndW Demand Splitter
-#                        connector_2_object_type: Connector:Mixer
-#                        connector_2_object_name: Chilled Water Loop CndW Demand Mixer
       ChilledWaterLoop:
         Base: *HVACTemplatePlantChilledWaterLoop
         AdditionalObjects:
@@ -749,17 +757,6 @@ OptionTree:
               loop_design_temperature_difference: 6.67
               Transitions:
                 chilled_water_design_setpoint: design_loop_exit_temperature
-          - Pipe:Adiabatic:
-              name: '{} Supply Inlet Pipe'
-              inlet_node_name: '{} Supply Inlet'
-              outlet_node_name: '{} Supply Inlet Pipe Outlet'
-          - Branch:
-              name: '{} Supply Inlet Branch'
-              components:
-                - component_object_type: Pipe:Adiabatic
-                  component_name: '{} Supply Inlet Pipe'
-                  component_inlet_node_name: '{} Supply Inlet'
-                  component_outlet_node_name: '{} Supply Inlet Pipe Outlet'
           - Pipe:Adiabatic:
               name: '{} Supply Bypass Pipe'
               inlet_node_name: '{} Supply Bypass Inlet'
@@ -782,6 +779,55 @@ OptionTree:
                   component_name: '{} Supply Outlet Pipe'
                   component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
                   component_outlet_node_name: '{} Supply Outlet'
+          - Pipe:Adiabatic:
+              name: '{} Demand Bypass Pipe'
+              inlet_node_name: '{} Demand Bypass Inlet'
+              outlet_node_name: '{} Demand Bypass Outlet'
+          - Branch:
+              name: '{} Demand Bypass Branch'
+              components:
+                - component_object_type: Pipe:Adiabatic
+                  component_name: '{} Demand Bypass Pipe'
+                  component_inlet_node_name: '{} Demand Bypass Inlet'
+                  component_outlet_node_name: '{} Demand Bypass Outlet'
+          - Pipe:Adiabatic:
+              name: '{} Demand Outlet Pipe'
+              inlet_node_name: '{} Demand Outlet Pipe Inlet'
+              outlet_node_name: '{} Demand Outlet'
+          - Branch:
+              name: '{} Demand Outlet Branch'
+              components:
+                - component_object_type: Pipe:Adiabatic
+                  component_name: '{} Demand Outlet Pipe'
+                  component_inlet_node_name: '{} Demand Outlet Pipe Inlet'
+                  component_outlet_node_name: '{} Demand Outlet'
+        AdditionalTemplateObjects:
+          chilled_water_pump_configuration:
+            ConstantPrimaryNoSecondary:
+              - Pump:ConstantSpeed:
+                  name: '{} Supply Pump'
+                  inlet_node_name: '{} Supply Inlet'
+                  outlet_node_name: '{} Supply Inlet Pump Outlet'
+                  Transitions:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+              - Branch:
+                  name: '{} Supply Inlet Branch'
+                  components:
+                    - component_object_type: Pump:ConstantSpeed
+                      component_name: '{} Supply Inlet Pipe'
+                      component_inlet_node_name: '{} Supply Inlet'
+                      component_outlet_node_name: '{} Supply Inlet Pipe Outlet'
+              - Pipe:Adiabatic:
+                  name: '{} Demand Inlet Pipe'
+                  inlet_node_name: '{} Demand Inlet'
+                  outlet_node_name: '{} Demand Inlet Pipe Outlet'
+              - Branch:
+                  name: '{} Demand Inlet Branch'
+                  components:
+                    - component_object_type: Pipe:Adiabatic
+                      component_name: '{} Demand Inlet Pipe'
+                      component_inlet_node_name: '{} Demand Inlet'
+                      component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
       CondenserWaterLoop:
         Base: *HVACTemplatePlantCondenserWaterLoop
         AdditionalObjects:
@@ -791,17 +837,19 @@ OptionTree:
               loop_design_temperature_difference: 5.6
               Transitions:
                 condenser_water_design_setpoint: design_loop_exit_temperature
-          - Pipe:Adiabatic:
-              name: '{} Supply Inlet Pipe'
+          - Pump:VariableSpeed:
+              name: '{} Supply Pump'
               inlet_node_name: '{} Supply Inlet'
-              outlet_node_name: '{} Supply Inlet Pipe Outlet'
+              outlet_node_name: '{} Supply Inlet Pump Outlet'
+              Transitions:
+                condenser_water_pump_rated_head: design_pump_head
           - Branch:
               name: '{} Supply Inlet Branch'
               components:
-                - component_object_type: Pipe:Adiabatic
-                  component_name: '{} Supply Inlet Pipe'
+                - component_object_type: Pump:VariableSpeed
+                  component_name: '{} Supply Pump'
                   component_inlet_node_name: '{} Supply Inlet'
-                  component_outlet_node_name: '{} Supply Inlet Pipe Outlet'
+                  component_outlet_node_name: '{} Supply Inlet Pump Outlet'
           - Pipe:Adiabatic:
               name: '{} Supply Bypass Pipe'
               inlet_node_name: '{} Supply Bypass Inlet'
@@ -824,13 +872,6 @@ OptionTree:
                   component_name: '{} Supply Outlet Pipe'
                   component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
                   component_outlet_node_name: '{} Supply Outlet'
-#          - BranchList:
-#              name: '{} Supply Side Branches'
-#              branches:
-#                - branch_name: '{} Supply Inlet Branch'
-#                - branch_name: '{} CoolingTower Branch'
-#                - branch_name: '{} Supply Bypass Pipe'
-#                - branch_name: '{} Supply Outlet Branch'
           - Pipe:Adiabatic:
               name: '{} Demand Inlet Pipe'
               inlet_node_name: '{} Demand Inlet'
@@ -843,9 +884,9 @@ OptionTree:
                   component_inlet_node_name: '{} Demand Inlet'
                   component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
           - Pipe:Adiabatic:
-              name: '{} Supply Bypass Pipe'
-              inlet_node_name: '{} Supply Bypass Inlet'
-              outlet_node_name: '{} Supply Bypass Outlet'
+              name: '{} Demand Bypass Pipe'
+              inlet_node_name: '{} Demand Bypass Inlet'
+              outlet_node_name: '{} Demand Bypass Outlet'
           - Branch:
               name: '{} Demand Bypass Branch'
               components:
@@ -910,7 +951,7 @@ OptionTree:
         Base: *HVACTemplatePlantTower
         AdditionalObjects:
           - Branch:
-              name: '{} CoolingTower Branch'
+              name: '{} Cooling Tower CndW Branch'
               components:
                 - component_object_type:
                     CoolingTower.*: self
@@ -920,3 +961,6 @@ OptionTree:
                     CoolingTower.*: water_inlet_node_name
                   component_outet_node_name:
                     CoolingTower.*: water_outlet_node_name
+          - OutdoorAir:Node:
+              name:
+                CoolingTower.*: outdoor_air_inlet_node_name

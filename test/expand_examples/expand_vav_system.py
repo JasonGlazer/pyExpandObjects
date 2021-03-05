@@ -191,7 +191,8 @@ def process_complex_inputs(
                     super_dictionary=super_dictionary,
                     lookup_value=onr_sub_object_structure,
                     unique_name_input=unique_name_input,
-                    reference_field_name=onr_field_name)
+                    reference_field_name=onr_field_name,
+                    build_path=build_path)
                 for onr_yield_val in onr_generator:
                     onr_dictionary[onr_yield_val["field"]] = onr_yield_val["value"]
             onr_list.append(onr_dictionary)
@@ -995,12 +996,11 @@ def process_additional_object_input(
                 else:
                     sub_option_tree['AdditionalTemplateObjects'].extend(ato)
         if isinstance(sub_template_object, dict):
-            # todo_eo: It is unclear if this section is necessary.
             # It does not appear this code is ever used.  It appears that
             # when additional objects are called, an associated HVACTemplate is not usually specified.
             # This code is left here in case that situation occurs, but additional debugging might be necessary.
             for sub_object_name, sub_template_dictionary in sub_template_object.items():
-                sub_object_dictionary = perform_build_operations(
+                sub_object_dictionary, build_path = perform_build_operations(
                     connector_path=object_structure.get('ConnectorPath', connector_path),
                     option_tree=sub_option_tree,
                     template_dictionary=sub_template_dictionary,
@@ -1017,6 +1017,7 @@ def process_additional_object_input(
             # if a template was not found for the nested HVACTemplate object, then process with a blank
             # template object.
             # for now, just specify the connector_path.  Will have to make a mapping dictionary later
+            # todo_eo: It is unclear if this section is necessary.
             sub_object_dictionary, build_path = perform_build_operations(
                 connector_path=object_structure.get('ConnectorPath', connector_path),
                 option_tree=sub_option_tree,
@@ -1299,9 +1300,9 @@ def create_branches(
                     elif re.match('^Coil:.*HeatPump.*', object_type, re.IGNORECASE):
                         demand_mixed_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
     demand_dictionary = {
-        "ChilledWaterLoop": list(set(demand_chilled_water_objects)),
-        "HotWaterLoop": list(set(demand_hot_water_objects)),
-        "MixedWaterLoop": list(set(demand_mixed_water_objects))}
+        "ChilledWaterLoop_Demand": list(set(demand_chilled_water_objects)),
+        "HotWaterLoop_Demand": list(set(demand_hot_water_objects)),
+        "MixedWaterLoop_Demand": list(set(demand_mixed_water_objects))}
     return object_dictionary, demand_dictionary
 
 
@@ -1437,12 +1438,89 @@ def create_airloop_system_objects(
         )
     return airloop_objects
 
-# In this process note one import aspect. Specific field names are
-# rarely used, if at all.  Most of the structure comes from the yaml
-# object, which means that very little (comparatively)
-# python code will need to be rewritten, i.e. this chunk should work for
-# (hopefully) all HVACTemplate:System objects.  Possibly, most of the code
-# could be reused for zone and water loop templates as well.
+
+def build_waterloop_connectors(
+        waterloop_branch_dictionary):
+    connector_objects = {
+        'BranchList': {},
+        'Connector:Mixer': {},
+        'Connector:Splitter': {},
+        'ConnectorList': {},
+        'PlantEquipmentList': {}
+    }
+    for looptype, branches in waterloop_branch_dictionary.items():
+        loop, side = looptype.split('_')
+        if branches:
+            formatted_branchlist = [{"branch_name": i} for i in list(set(branches))]
+            connector_objects['BranchList']["{} {} Side Branches".format(loop, side)] = {
+                "branches": [
+                    {"branch_name": "{} {} Inlet Branch".format(loop, side)},
+                    *formatted_branchlist,
+                    {"branch_name": "{} {} Bypass Branch".format(loop, side)},
+                    {"branch_name": "{} {} Outlet Branch".format(loop, side)}
+                ]
+            }
+            formatted_branchlist = [{"outlet_branch_name": i} for i in list(set(branches))]
+            connector_objects['Connector:Splitter']['{} {} Demand Splitter'.format(loop, side)] = {
+                "inlet_branch_name": "{} {} Inlet Branch".format(loop, side),
+                "branches": [
+                    *formatted_branchlist,
+                    {"outlet_branch_name": "{} {} Bypass Branch".format(loop, side)}
+                ]
+            }
+            formatted_branchlist = [{"inlet_branch_name": i} for i in list(set(branches))]
+            connector_objects['Connector:Mixer']['{} {} Mixer'.format(loop, side)] = {
+                "outlet_branch_name": "{} {} Outlet Branch".format(loop, side),
+                "branches": [
+                    {"inlet_branch_name": "{} {} Bypass Branch".format(loop, side)},
+                    *formatted_branchlist
+                ]
+            }
+            connector_objects['ConnectorList']['{} {} Side Connectors'.format(loop, side)] = {
+                'connector_1_object_type': 'Connector:Splitter',
+                'connecotr_1_name': '{} {} Splitter'.format(loop, side),
+                'connector_2_object_type': 'Connector:Mixer',
+                'connecotr_2_name': '{} {} Mixer'.format(loop, side)
+            }
+    return connector_objects
+
+
+def build_plant_equipment_lists(
+        waterloop_branch_dictionary,
+        super_dictionary):
+    plant_equipment_objects = {
+        'PlantEquipmentList': {},
+        'CondenserEquipmentList': {}
+    }
+    for loop_side in ('HotWaterLoop_Supply', 'ChilledWaterLoop_Supply'):
+        loop, side = loop_side.split('_')
+        plant_equipment_objects['PlantEquipmentList']['{} All Equpment'.format(loop)] = {'equipment': []}
+        if waterloop_branch_dictionary.get(loop_side):
+            for branch_name in waterloop_branch_dictionary[loop_side]:
+                branch_components = super_dictionary["Branch"][branch_name]['components']
+                for bc in branch_components:
+                    plant_equipment_objects['PlantEquipmentList']['{} All Equpment'.format(loop)]['equipment'].append(
+                        {
+                            "equipment_name": bc['component_name'],
+                            "equipment_object_type": bc['component_object_type']
+                        },
+                    )
+    for loop_side in ('CondenserWaterLoop_Supply',):
+        loop, side = loop_side.split('_')
+        plant_equipment_objects['CondenserEquipmentList']['{} All Equpment'.format(loop)] = {'equipment': []}
+        if waterloop_branch_dictionary.get(loop_side):
+            for branch_name in waterloop_branch_dictionary[loop_side]:
+                branch_components = super_dictionary["Branch"][branch_name]['components']
+                for bc in branch_components:
+                    plant_equipment_objects['CondenserEquipmentList']['{} All Equpment'.format(loop)]['equipment']\
+                        .append(
+                            {
+                                "equipment_name": bc['component_name'],
+                                "equipment_object_type": bc['component_object_type']
+                            }
+                    )
+    # todo_eo continue building out PlantEquipmentOperation with this subfunction
+    return plant_equipment_objects
 
 
 def main(input_args):
@@ -1559,17 +1637,41 @@ def main(input_args):
                 plant_dictionary[template_plant_name] = sub_plant_dictionary
                 plant_build_paths.append(plant_build_path)
                 plant_unique_names.append(template_plant_name)
-        # create waterloop objects separately (e.g. chiller, boiler, etc.)
+        # sys.exit()
+        print('##### New Plant Template Output #####')
+        pprint(plant_dictionary, width=150)
+        # Collect all template objects to one epjson object for further processing
+        epjson_dictionary = {}
+        for template_dictionary in [
+            system_dictionary,
+            zone_dictionary,
+            plant_dictionary
+        ]:
+            for template_name, epjson_object in template_dictionary.items():
+                epjson_dictionary = merge_dictionaries(
+                    super_dictionary=epjson_dictionary,
+                    object_dictionary=epjson_object,
+                    unique_name_override=False
+                )
+        # create waterloop equipment objects separately (e.g. chiller, boiler, etc.)
         # so that multiple objects can be created
-        # todo: working on multiple plant objects
         plant_equipment_templates = [
             i for i in test_epjson if re.match('HVACTemplate:Plant:Chiller.*', i, re.IGNORECASE)
         ]
         plant_equipment_dictionary = {}
-        equipment_branch_dictionary = {}
+        waterloop_branch_dictionary = {}
         for pet in plant_equipment_templates:
-            # todo continue plant build out and make as a function
             for equipment_name, template_dictionary in test_epjson[pet].items():
+                condenser_loop_settings = {}
+                # to pass along loop configurations, just make a new object in the input epjson and populate it
+                # with the fields.  It will get called when an HVACTemplate is shown in the recursive builds
+                if template_dictionary['condenser_type'] == 'WaterCooled':
+                    chw_template = test_epjson['HVACTemplate:Plant:ChilledWaterLoop']
+                    for template_input in chw_template.values():
+                        for template_field, template_value in template_input.items():
+                            if template_field.startswith('condenser'):
+                                condenser_loop_settings[template_field] = template_value
+                test_epjson['HVACTemplate:Plant:CondenserWaterLoop'] = {"Condenser Water Loop": condenser_loop_settings}
                 option_tree = get_option_tree(pet, data)
                 equipment_dictionary, equipment_build_path = perform_build_operations(
                     connector_path='ChilledWaterLoop',
@@ -1583,48 +1685,80 @@ def main(input_args):
                     super_dictionary=plant_equipment_dictionary,
                     object_dictionary=equipment_dictionary
                 )
-                # group branches by loop and side (demand/supply)
-                # use a loop type check for boiler and towers
-                if equipment_dictionary.get('Branch'):
-                    for object_name in equipment_dictionary['Branch'].keys():
-                        if re.match(r'.*Chiller.*CndW Branch$', object_name, re.IGNORECASE):
-                            if not equipment_branch_dictionary.get('CondenserWaterLoop_Demand'):
-                                equipment_branch_dictionary['CondenserWaterLoop_Demand'] = []
-                            equipment_branch_dictionary['CondenserWaterLoop_Demand'].append(object_name)
-                        if re.match(r'.*Chiller.*ChW Branch$', object_name, re.IGNORECASE):
-                            if not equipment_branch_dictionary.get('ChilledWaterLoop_Supply'):
-                                equipment_branch_dictionary['ChilledWaterLoop_Supply'] = []
-                            equipment_branch_dictionary['ChilledWaterLoop_Supply'].append(object_name)
-        # go by set names to make branchlists/connectors/etc.
-        # Repeat for boiler and tower
-        print('--------')
-        pprint(plant_equipment_dictionary, width=150)
-        pprint(equipment_branch_dictionary)
-        # Create equipment specific branches, branchlists, etc.
-        # Create connectors/splitters, etc. for all loops
-        sys.exit()
-        # pprint(plant_dictionary, width=150)
-        # sys.exit()
-        print('##### New Plant Template Output #####')
-        pprint(plant_dictionary, width=150)
-        # sys.exit()
-        # Collect all template objects to one epjson object for further processing
-        epjson_dictionary = {}
-        for template_dictionary in [
-                system_dictionary,
-                zone_dictionary,
-                plant_dictionary]:
-            for template_name, epjson_object in template_dictionary.items():
-                epjson_dictionary = merge_dictionaries(
-                    super_dictionary=epjson_dictionary,
-                    object_dictionary=epjson_object,
-                    unique_name_override=False
+        plant_equipment_templates = [
+            i for i in test_epjson if re.match('HVACTemplate:Plant:Boiler.*', i, re.IGNORECASE)
+        ]
+        for pet in plant_equipment_templates:
+            for equipment_name, template_dictionary in test_epjson[pet].items():
+                loop_type = '{}Loop'.format(template_dictionary.get('template_plant_loop_type', 'HotWater'))
+                option_tree = get_option_tree(pet, data)
+                equipment_dictionary, equipment_build_path = perform_build_operations(
+                    connector_path=loop_type,
+                    option_tree=option_tree,
+                    template_dictionary=template_dictionary,
+                    super_dictionary={},
+                    unique_name=equipment_name,
+                    input_epjson=test_epjson,
+                    data=data)
+                plant_equipment_dictionary = merge_dictionaries(
+                    super_dictionary=plant_equipment_dictionary,
+                    object_dictionary=equipment_dictionary
                 )
+        plant_equipment_templates = [
+            i for i in test_epjson if re.match('HVACTemplate:Plant:Tower.*', i, re.IGNORECASE)
+        ]
+        for pet in plant_equipment_templates:
+            for equipment_name, template_dictionary in test_epjson[pet].items():
+                loop_type = '{}Loop'.format(template_dictionary.get('template_plant_loop_type', 'CondenserWater'))
+                option_tree = get_option_tree(pet, data)
+                equipment_dictionary, equipment_build_path = perform_build_operations(
+                    connector_path=loop_type,
+                    option_tree=option_tree,
+                    template_dictionary=template_dictionary,
+                    super_dictionary={},
+                    unique_name=equipment_name,
+                    input_epjson=test_epjson,
+                    data=data)
+                plant_equipment_dictionary = merge_dictionaries(
+                    super_dictionary=plant_equipment_dictionary,
+                    object_dictionary=equipment_dictionary
+                )
+        print("#### Plant Equipment")
+        pprint(plant_equipment_dictionary, width=150)
+        epjson_dictionary = merge_dictionaries(
+            super_dictionary=epjson_dictionary,
+            object_dictionary=plant_equipment_dictionary
+        )
+        # group branches by loop and side (demand/supply)
+        if plant_equipment_dictionary.get('Branch'):
+            for object_name, object_structure in plant_equipment_dictionary['Branch'].items():
+                for component in object_structure['components']:
+                    object_type = component.get('component_object_type')
+                    if re.match(r'.*Chiller:.*', object_type, re.IGNORECASE) \
+                            and re.match('.*CndW.*Branch', object_name, re.IGNORECASE):
+                        if not waterloop_branch_dictionary.get('CondenserWaterLoop_Demand'):
+                            waterloop_branch_dictionary['CondenserWaterLoop_Demand'] = []
+                        waterloop_branch_dictionary['CondenserWaterLoop_Demand'].append(object_name)
+                    if re.match(r'.*Chiller:.*', object_type, re.IGNORECASE) \
+                            and re.match('.*ChW Branch$', object_name, re.IGNORECASE):
+                        if not waterloop_branch_dictionary.get('ChilledWaterLoop_Supply'):
+                            waterloop_branch_dictionary['ChilledWaterLoop_Supply'] = []
+                        waterloop_branch_dictionary['ChilledWaterLoop_Supply'].append(object_name)
+                    if re.match(r'.*Boiler:.*', object_type, re.IGNORECASE) \
+                            and re.match('.*HW Branch$', object_name, re.IGNORECASE):
+                        if not waterloop_branch_dictionary.get('HotWaterLoop_Supply'):
+                            waterloop_branch_dictionary['HotWaterLoop_Supply'] = []
+                        waterloop_branch_dictionary['HotWaterLoop_Supply'].append(object_name)
+                    if re.match(r'.*Tower:.*', object_type, re.IGNORECASE) \
+                            and re.match('.*CndW Branch$', object_name, re.IGNORECASE):
+                        if not waterloop_branch_dictionary.get('CondenserWaterLoop_Supply'):
+                            waterloop_branch_dictionary['CondenserWaterLoop_Supply'] = []
+                        waterloop_branch_dictionary['CondenserWaterLoop_Supply'].append(object_name)
+        # sys.exit()
         # build branches, branchlists, and connectors
         print('##### Branch Build #####')
         system_branch_dictionary = {}
         zone_branch_dictionary = {}
-        # todo_eo: only one list needed for demand side?
         demand_branchlist = []
         for unique_name, sbp in system_build_path_dictionary.items():
             sub_system_branch_dictionary, sub_system_demand_branchlist = create_branches(
@@ -1657,11 +1791,9 @@ def main(input_args):
                                    if re.match(r'^Coil.*|ZoneHVAC.*Baseboard', object_type)]
                     if object_type:
                         additional_hw_branches.append(object_name)
-            demand_branchlist.append({"HotWaterLoop": additional_hw_branches})
-        # create demand side branchlist
+            demand_branchlist.append({"HotWaterLoop_Demand": additional_hw_branches})
         branch_dictionary = {}
         for bd in [system_branch_dictionary, zone_branch_dictionary]:
-            # returned value is an object with Branch and BranchList keys
             branch_dictionary = merge_dictionaries(
                 super_dictionary=branch_dictionary,
                 object_dictionary=bd,
@@ -1672,101 +1804,44 @@ def main(input_args):
         epjson_dictionary = merge_dictionaries(
             super_dictionary=epjson_dictionary,
             object_dictionary=branch_dictionary)
-        # use the stored demand branch lists to create a BranchList
-        print(demand_branchlist)
-        chilled_water_branches = []
-        hot_water_branches = []
-        mixed_water_branches = []
+        # use the stored demand branch lists from system and zone builds, and append them to the
+        # existing waterloop branch dictionary
         for db in demand_branchlist:
             for looptype, branches in db.items():
-                if looptype == 'ChilledWaterLoop':
-                    chilled_water_branches.extend(branches)
-                elif looptype == 'HotWaterLoop':
-                    hot_water_branches.extend(branches)
-                elif looptype == 'MixedWaterLoop':
-                    mixed_water_branches.extend(branches)
-        demand_branchlist = {'BranchList': {}}
-        demand_connector_splitter = {'Connector:Splitter': {}}
-        demand_connector_mixer = {'Connector:Mixer': {}}
-        connector_list = {'ConnectorList': {}}
-        if chilled_water_branches:
-            formatted_branchlist = [{"branch_name": i} for i in list(set(chilled_water_branches))]
-            demand_branchlist['BranchList']["Chilled Water Loop ChW Demand Side Branches"] = {
-                "branches": [
-                    {"branch_name": "Chilled Water Loop ChW Demand Inlet Branch"},
-                    *formatted_branchlist,
-                    {"branch_name": "Chilled Water Loop ChW Demand Bypass Branch"},
-                    {"branch_name": "Chilled Water Loop ChW Demand Outlet Branch"}
-                ]
-            }
-            formatted_branchlist = [{"outlet_branch_name": i} for i in list(set(chilled_water_branches))]
-            demand_connector_splitter['Connector:Splitter']['Chilled Water Loop ChW Demand Splitter'] = {
-                "inlet_branch_name": "Chilled Water Loop ChW Demand Inlet Branch",
-                "branches": [
-                    *formatted_branchlist,
-                    {"outlet_branch_name": "Chilled Water Loop ChW Demand Bypass Branch"}
-                ]
-            }
-            formatted_branchlist = [{"inlet_branch_name": i} for i in list(set(chilled_water_branches))]
-            demand_connector_mixer['Connector:Mixer']['Chilled Water Loop ChW Demand Mixer'] = {
-                "outlet_branch_name": "Chilled Water Loop ChW Demand Outlet Branch",
-                "branches": [
-                    {"inlet_branch_name": "Chilled Water Loop ChW Demand Bypass Branch"},
-                    *formatted_branchlist
-                ]
-            }
-            connector_list['ConnectorList']['Chilled Water Loop ChW Demand Side Connectors'] = {
-                'connector_1_object_type': 'Connector:Splitter',
-                'connecotr_1_name': 'Chilled Water Loop ChW Demand Splitter',
-                'connector_2_object_type': 'Connector:Mixer',
-                'connecotr_2_name': 'Chilled Water Loop ChW Demand Mixer'
-            }
-        if hot_water_branches:
-            formatted_branchlist = [{"branch_name": i} for i in list(set(hot_water_branches))]
-            demand_branchlist['BranchList']["Hot Water Loop HW Demand Side Branches"] = {
-                "branches": [
-                    {"branch_name": "Hot Water Loop HW Demand Inlet Branch"},
-                    *formatted_branchlist,
-                    {"branch_name": "Hot Water Loop HW Demand Bypass Branch"},
-                    {"branch_name": "Hot Water Loop HW Demand Outlet Branch"}
-                ]
-            }
-            formatted_branchlist = [{"outlet_branch_name": i} for i in list(set(chilled_water_branches))]
-            demand_connector_splitter['Connector:Splitter']['Hot Water Loop HW Demand Splitter'] = {
-                "inlet_branch_name": "Hot Water Loop HW Demand Inlet Branch",
-                "branches": [
-                    *formatted_branchlist,
-                    {"outlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"}
-                ]
-            }
-            formatted_branchlist = [{"inlet_branch_name": i} for i in list(set(chilled_water_branches))]
-            demand_connector_mixer['Connector:Mixer']['Hot Water Loop HW Demand Mixer'] = {
-                "outlet_branch_name": "Hot Water Loop HW Demand Outlet Branch",
-                "branches": [
-                    {"inlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"},
-                    *formatted_branchlist
-                ]
-            }
-            connector_list['ConnectorList']['Hot Water Loop HW Demand Side Connectors'] = {
-                'connector_1_object_type': 'Connector:Splitter',
-                'connecotr_1_name': 'Hot Water Loop HW Demand Splitter',
-                'connector_2_object_type': 'Connector:Mixer',
-                'connecotr_2_name': 'Hot Water Loop HW Demand Mixer'
-            }
-        # do for mixedwaterloop
-        # todo_eo: add supply side water loop connectors/splitters/lists in yaml
-        pprint(demand_branchlist, width=150)
+                if looptype == 'ChilledWaterLoop_Demand':
+                    if not waterloop_branch_dictionary.get('ChilledWaterLoop_Demand'):
+                        waterloop_branch_dictionary['ChilledWaterLoop_Demand'] = []
+                    waterloop_branch_dictionary['ChilledWaterLoop_Demand'].extend(branches)
+                elif looptype == 'HotWaterLoop_Demand':
+                    if not waterloop_branch_dictionary.get('HotWaterLoop_Demand'):
+                        waterloop_branch_dictionary['HotWaterLoop_Demand'] = []
+                    waterloop_branch_dictionary['HotWaterLoop_Demand'].extend(branches)
+                elif looptype == 'CondenserWaterLoop_Demand':
+                    if not waterloop_branch_dictionary.get('CondenserWaterLoop_Demand'):
+                        waterloop_branch_dictionary['CondenserWaterLoop_Demand'] = []
+                    waterloop_branch_dictionary['CondenserWaterLoop_Demand'].extend(branches)
+                elif looptype == 'MixedWaterLoop_Demand':
+                    if not waterloop_branch_dictionary.get('MixedWaterLoop_Demand'):
+                        waterloop_branch_dictionary['MixedWaterLoop_Demand'] = []
+                    waterloop_branch_dictionary['MixedWaterLoop_Demand'].extend(branches)
+        pprint(waterloop_branch_dictionary, width=150)
+        waterloop_objects = build_waterloop_connectors(
+            waterloop_branch_dictionary=waterloop_branch_dictionary)
         epjson_dictionary = merge_dictionaries(
             super_dictionary=epjson_dictionary,
-            object_dictionary=dict(
-                **demand_branchlist,
-                **demand_connector_splitter,
-                **demand_connector_mixer,
-                **connector_list),
+            object_dictionary=waterloop_objects,
+            unique_name_override=False
+        )
+        # get plant equipment branches to make plant list
+        plant_equipment_list_objects = build_plant_equipment_lists(
+            waterloop_branch_dictionary=waterloop_branch_dictionary,
+            super_dictionary=epjson_dictionary)
+        epjson_dictionary = merge_dictionaries(
+            super_dictionary=epjson_dictionary,
+            object_dictionary=plant_equipment_list_objects,
             unique_name_override=False
         )
         pprint(epjson_dictionary, width=150)
-        sys.exit()
         # build thermostats
         # this should be one of the last steps as it scans the epjson_dictionary
         thermostat_templates = [i for i in test_epjson if re.match('HVACTemplate:Thermostat', i, re.IGNORECASE)]
