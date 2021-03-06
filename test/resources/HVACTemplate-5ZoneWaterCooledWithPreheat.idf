@@ -1775,7 +1775,7 @@ HVACTemplate:Zone:VAV,
     ,                        !- Design Specification Outdoor Air Object Name for Control
     ,                        !- Supply Plenum Name
     ,                        !- Return Plenum Name
-    None,                    !- Baseboard Heating Type
+    HotWater,                !- Baseboard Heating Type
     ,                        !- Baseboard Heating Availability Schedule Name
     autosize,                !- Baseboard Heating Capacity {W}
     SystemSupplyAirTemperature,  !- Zone Cooling Design Supply Air Temperature Input Method

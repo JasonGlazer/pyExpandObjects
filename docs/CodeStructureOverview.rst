@@ -3,9 +3,259 @@ Code Structure Overview
 ***********************
 
 ------------------------------
+Process Flow
+------------------------------
+Given that pyExpandObject serves a simple overall purpose, the processing path is fairly static.  Outlined below are the general steps that the program takes to perform its operation.
+
+1. A schema file is read and validated using the jsonschema package `Versioned Validator`_ class.  In this case, the Draft4Validator is used.  If the `--no-schema` option has been passed to the program, then no validation will occur at any point in the process.
+2. The epJSON file is read, validated, and loaded as a dictionary object.
+3. All HVACTemplate objects are loaded into HVACTemplate classes for processing.
+4. The template objects are processed to create regular objects for the specific system, zone, plant, or loop.
+
+  i. An `OptionTree` is loaded from the yaml file, which specifies build instructions for a given template.
+  ii. EnergyPlus objects are created according to the `BuildPath` provided within the `OptionTree`.  A `BuildPath` is an ordered list of objects that follow a given fluid flow path (e.g. Air, ChilledWaterLoop, HotWaterLoop).  Alternative `BuildPath` can be created from template inputs, which cause the based `BuildPath` to have objects inserted, replaced, or removed.
+  iii. Additional objects outside of the build path, but specific to the template, are created.  These are objects such as Controllers, NodeLists, SetpointManagers, etc.
+  iv. Objects that connect equipment to each other are created (e.g. Zone:Splitters/Mixers, SupplyPath, Connectors, BranchLists, etc.).  Note, this is one of the few points in the process that relies on scanning the document for statically typed values.  While the values are input by the program, it is still not a preferable method and alternate solutions are under consideration.
+
+5. HVAC:Thermostat objects are handled in a similar, but more simplified way.
+6. Checks for data quality (e.g. duplicate values, missing values, malformed objects, etc.) are performed.
+7. The original non-template epJSON objects are merged with the newly created objects.
+8. The epJSON file is validated against the schema.
+9. A dictionary output is provided to the downstream process.  At a minimum, this object will have a key called 'outputPreProcessMessage' which will contain all warnings and errors generated from this process.  On a successful template expansion, a valid epJSON object will also be produced with the file name \<original-file-name\>_expanded.epJSON
+10. If the `--backup-files` option has been specified, the optional "\<original-file-name\>_hvac_templates.epJSON" and "\<original-file-name\>_base.epJSON" files will be output.
+
+.. _Versioned Validator: https://python-jsonschema.readthedocs.io/en/stable/validate/#versioned-validators
+
+------------------------------
+Yaml Description
+------------------------------
+
+**Object Structure**
+
+To hold the necessary information for construction, the Yaml objects which represent EnergyPlus objects have additional higher-level information, and are termed 'super' objects.  These object's standard format is as follows:
+
+.. code-block:: yaml
+
+  EnergyPlusObject:
+    Fields:
+      field_name: field_value
+    Connectors:
+      ConnectorPathType:
+        Inlet: inlet_node_name
+        Outlet: outlet_node_name
+
+* EnergyPlusObject: This value can be entered with the full EnergyPlus object name, or a regular expression may be provided.
+* field_name: The exact EnergyPlus field name must be provided.
+* field_value: A 'complex reference' may be provided.  Please see below for further details
+* ConnectorPathType: Must be a selection of Air, ChilledWaterLoop, CondenserWaterLoop, or MixedWaterLoop
+* inlet_node_name, outlet_node_name: Must be a field_name provided from Fields
+
+**BuildPath Objects**
+
+This is a list of EnergyPlus 'super' objects which are in order of their fluid flow path.  Their field names mirror those of EnergyPlus objects while also holding extra information necessary to connect their input/output nodes in an overall path.
+
+    * Fields - key/value pairs of EnergyPlus object fields and values.
+
+        * Key: EnergyPlus field name
+        * Value: Value to be inserted as default text.  A unique name, based on the template provided, can be applied by using brackets '{}' in the text.
+
+    * Connectors - object for identifying how the fluid flow loop passes through the object.  This is used to connect nodes between objects in a `BuildPath` as well as identify inlet and outlet nodes for associated objects, like branches.
+
+        * Loop Type [Air, ChilledWater, CondenserWater, MixedWater]
+
+            * Inlet - EnergyPlus inlet node name for the loop type.
+            * Outlet - EnergyPlus outlet node name for the loop type.
+            * UseInBasePath (Optional) - Boolean value to determine if the object should be used when connecting the loop type.  This value should be set to `false` in cases of parallel equipment, such as bypass pipes or reheat coils in an AirTerminal object.  Note, the default value is `true`, but if any more than one EnergyPlus object is defined as a Base Object, then all but one EnergyPlus object should have this value set to `false` for each loop type. 
+
+Example:
+
+.. code-block:: yaml
+
+  OutdoorAir:Mixer:
+    Fields:
+      name: '{} OA Mixing Box'
+      mixed_air_node_name: '{} Mixed Air Outlet'
+      outdoor_air_stream_node_name: '{} Outside Air Inlet'
+      relief_air_stream_node_name: '{} Relief Air Outlet'
+      return_air_stream_node_name: '{} Return Air Loop Inlet'
+    Connectors:
+      Air:
+        Inlet: outdoor_air_stream_node_name
+        Outlet: mixed_air_node_name
+
+**HVACTemplate Objects**
+
+This object provides a structural mapping for template expansion process.  Note, the `BuildPath` may contain other HVACTemplate objects, which will be inserted into that location recursively.
+
+  * BuildPath - Ordered list of objects to create along the fluid flow path.
+  * Transitions - Mapping of template inputs to object values (e.g. supply_fan_total_efficiency -> Fan Object -> Field [fan efficiency])
+
+.. code-block:: yaml
+
+  HVACTemplate:System:VAV:
+    BuildPath:
+      - OutdoorAir:Mixer: *OutdoorAirMixer
+      - Coil:Cooling:Water: *CoilCoolingWater
+      - Coil:Heating:Water: *CoilHeatingWater
+      - Fan:VariableVolume: *FanVariableVolume
+    Transitions:
+      supply_fan_total_efficiency:
+        Fan:VariableVolume: fan_total_efficiency
+
+**OptionTree Objects**
+
+This object outlines alternate build instructions and additional objects to be constructed based on user inputs to the HVACTemplate
+
+  * Base - HVACTemplate object with pre-set `BuildPath`
+  * ReplaceElements - Replace an object with another object.  For example, selecting an electric heating coil when a water coil is specified in the base build.  The EnergyPlus object references can be of various types, see the 'complex references' section for further details
+
+    * Occurrence: Instance to select, if more than one exists
+    * Object: Object to replace specified object
+    * FieldNameReplacement: New unique name to be applied to object ('{}' -> '{} New Text)
+
+
+  * InsertElements - Add an object before or after another object.  For example, specifying that a preheat coil should be included in the build path.
+
+    * Location: Before or after selected object
+    * Occurrence: Instance to select, if more than one exists
+    * FieldNameReplacement: New unique name to be applied to object ('{}' -> '{} New Text)
+    * Transitions: template input to object value mapping
+
+  * RemoveElements - Remove an object. (Not currently in use)
+
+    * Location: Before or after selected object
+    * Occurrence: Instance to select, if more than one exists
+
+.. code-block:: yaml
+
+  OptionTree:HVACTemplate:System:VAV:
+    Base: *HVACTemplateSystemVAVBaseTemplate
+    ReplaceElements:
+      heating_coil_type:
+        None: None
+        Electric:
+          - ^Coil:Heating:.*:
+              Occurrence: 1
+              Object: *CoilsHeatingElectricBase
+              FieldNameReplacement: '{} Electric'
+    InsertElements:
+      preheat_coil_type:
+        Electric:
+          - OutdoorAir:M.*:
+              Location: Before
+              Occurrence: 1
+              Object: *CoilsHeatingElectricBase
+              FieldNameReplacement: '{} Preheat Electric'
+              Transitions:
+                preheat_efficiency: efficiency
+    RemoveElements:
+      reheat_coil_type:
+        None:
+          ^Coil:Heating:.*:
+            Object: _
+
+**Additional Objects**
+
+Various objects outside of the build path also need to be created, given certain system configurations and template options.  for these objects, `AdditionalObjects` or `AdditionalTemplateObjects` can be specified within the option tree.  Additionally, the transition from HVACTemplate input to object field value can be specified:
+
+  * AdditionalObjects - Group of objects to be created for the specified option tree build path.  This can reference regular objects and assign variables with 'complex references' (see below for details).  Additionally, the input value can reference HVACTemplate objects to be built in parallel to the current group.
+  * AdditionalTemplateObjects - Similar to AdditionalObjects, but will on be created if specific template values are selected.
+  * Transitions - Dictionary of mappings from the template input variable name to the equipment variable name to be updated.
+
+.. code-block:: yaml
+
+  OptionTree:
+    HVACTemplate:
+      ...:
+        ...:
+          AdditionalObjects:
+            - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
+            - ZoneHVAC:EquipmentList:
+                <<: *ZoneHVACEquipmentList
+          AdditionalTemplateObjects:
+            template_thermostat_name:
+              .*:
+                - ZoneControl:Thermostat:
+                    <<: *ZoneControlThermostat
+                    Transitions:
+                      zone_name: zone_or_zone_list_name
+                      template_thermostat_name: control_1_name
+
+**Complex References**
+
+References to object field values may take multiple forms.  This feature is intended to provide greater flexibility for object definition and to link nodes without relying on static text fields.  References may be specified as follows:
+
+* Static value: numeric or string.
+    Use a directly typed value.  Note, the use of brackets ({}) will insert a unique name based on the template inputs.
+
+.. code-block:: yaml
+
+  SupplyPlenum:
+    name: '{} Supply Plenum'
+
+* Build Path Location Reference: object.
+    Reference a node by it's location in the `BuildPath`.  This is only useful for System and Zone templates, not Plant or Loop templates.
+
+  * Location: Location in build path to reference.  A value of -1 is the last object.
+  * ConnectorPath: Fluid flow connector to use
+  * ValueLocation: Inlet or Outlet of object
+
+.. code-block:: yaml
+
+  OutdoorAir:Nodelist:
+    name: '{} Outdoor Air Nodelist'
+      nodes:
+        - node_or_nodelist_name:
+            BuildPath:
+              Location: 0
+              ConnectorPath: Air
+              ValueLocation: Inlet
+
+* Self-Referential: 'self' or 'key'.
+    Return either the EnergyPlusObject specified (self) or the unique name of the object (key).
+
+.. code-block:: yaml
+
+  ZoneHVAC:
+    AirDistributionUnit:
+      Base: &ZoneHVACAirDistributionUnit
+        name: '{} ATU'
+        air_distribution_unit_outlet_node_name:
+          ^AirTerminal:.*: air_outlet_node_name
+        air_terminal_object_type:
+          ^AirTerminal:.*: self
+        air_terminal_name:
+          ^AirTerminal:.*: key
+
+* Referenced value: string.
+    Return the value of another object by specifying the field name.
+
+.. code-block:: yaml
+
+  Nodelist:
+    name:
+      ^SetpointManager:MixedAir: setpoint_node_or_nodelist_name
+
+
+
+The function that performs these operations takes a dictionary of epJSON objects and/or a `BuildPath` object.  Therefore, the references provided can be appropriately applied by scoping the input arguments.  For example, if the objects to be created are for a specific HVACTemplate system, then input arguments consisting only of those dependent objects can be applied.  For most cases, the input arguments are scoped to the system, zone, plant or loop template being created.
+
+----------------------
+Command Line Interface
+----------------------
+
+`-xb --output-backups     Output separated epJSON`
+
+It is not possible to comment sections of code in JSON formatted files.  Therefore, \<original-file-name\>_expanded.epJSON files do not have the ability to retain the HVACTemplate objects used to create the current document.  If the original file were to be overwritten, then all template data would be lost.  In an attempt to provide and additional layer of backups, this option will output two files: one with HVACTemplate objects, and one with all other objects.  With these files, the original input file can be created, or specific objects can be copied and pasted.
+
+`-ns --no-schema     Skip all schema validation checks`
+
+One benefit of the JSON file format is that files can be validated before simulation.  This means that erroneous inputs can be found before simulation, which saves time debugging output files and reading through logs, unsure of the error source.  This includes syntax errors, values that are out of range, and missing required inputs.  However, situations may occur when the user wishes to skip schema validation, in which case this flag should be used.
+
+------------------------------
 Class Inheritance and Overview
 ------------------------------
-The pyExpandObject classes are loosely structured to reflect the hierarchy of the EnergyPlus HVACTemplate naming conventions.  These classes will hold common methods and procedures that can be shared to child classes.  Also, some classes will hold high-level variables and flags which will inform the child classes.  These classes build the necessary functions to identify and organize the various template objects.  The actual expansion mapping from template to regular object is held within a set of yaml files which are discussed in detail in a later section.  While some command line arguments are provided, this program serves a simple static service; it translates epJSON files which contain HVACTemplate objects to expanded epJSON files with only regular objects that are ready for simulation.
+The pyExpandObject classes are loosely structured to reflect the hierarchy of the EnergyPlus HVACTemplate naming conventions.  These classes will hold common methods and procedures that can be shared as well as hold high-level variables which will inform child classes.  These classes build the necessary functions to identify and organize the various template objects.  The structural elements that map template to regular objects are mostly held within a yaml file.  While some command line arguments are provided, this program serves a simple static service; it translates epJSON files which contain HVACTemplate objects to expanded, simulation ready, epJSON files with only regular objects.
 
 **Class Inheritance Tree**
 
@@ -32,201 +282,3 @@ EPJSON
 The input and output file type (epJSON) are JSON objects which follow a schema structure.  This class is where all input/output operations occur; such as reading, writing, and validating epJSON files.
 
 .... Remaining classes ....
-
-------------------------------
-Process Flow
-------------------------------
-Given that pyExpandObject serves a simple overall purpose, the processing path is fairly static.  Outlined below are the general steps that the program takes to perform its operation.
-
-1. A schema file is read and validated using the jsonschema package `Versioned Validator`_ class.  In this case, the Draft4Validator is used.  If the `--no-schema` option has been passed to the program, then no validation will occur at any point in the process.
-2. The epJSON file is read, validated, and loaded as a dictionary object.
-3. All HVACTemplate objects are extracted from the epJSON input file object and loaded into an HVACTemplate class for processing.
-4. The template objects are organized into groups by their dependencies to the top-level HVACTemplate:System object and stored as a an attribute in the System class.  For HVACTemplate:Zone level objects that require no System class, a special 'NA' system will be created.
-5. For each System group a yaml object will be called to construct the necessary EnergyPlus objects.  These build lists have built-in overrides based on selected template options.  Additionally, programming logic is performed to further manipulate these structures and customize the final output.  The result of this process will be a a group of epJSON EnergyPlus objects stored as a class variable as well as the structural elements used to build it.  A detailed description of Yaml file structure can be found in the following section.
-6. For each zone in a system group, a yaml object will be called to construct the necessary EnergyPlus objects.  The output will be an epJSON object for all zone objects as well as the structural elements used to build it.
-7. For each HVACTemplate:Plant[Chilled,Hot,Mixed]WaterLoop:
-
-  1. Supply side equipment loops are created using a similar process as described above.
-  2. The system and zone groups created above are scanned for loop objects.
-  3. If water loop equipment is found, yaml objects are used to build the all the elements necessary to connect the demand side water loop system to those objects.
-  4. The output will be an epJSON object for all created branches as well as the structural elements used to build them.
-
-8. HVAC:Thermostat objects are handled in a similar, but more simplified way.
-9. Controllers, SetpointManagers, Branches, and other objects which do not exist as equipment objects in the air/water loop paths are constructed.
-10. Checks for data quality (e.g. duplicate values, missing values, malformed objects, etc.) are performed.
-11. All previously created epJSON objects are merged to form a single object.
-12. The epJSON file is validated against the schema.
-13. A dictionary output is provided to the downstream process.  At a minimum, this object will have a key called 'outputPreProcessMessage' which will contain all warnings and errors generated from this process.  On a successful template expansion, a valid epJSON object will also be produced.
-14. If the `--backup-files` option has been specified, the optional "\<original-file-name\>_hvac_templates.epJSON" and "\<original-file-name\>_base.epJSON" files will be output.
-
-
-.. _Versioned Validator: https://python-jsonschema.readthedocs.io/en/stable/validate/#versioned-validators
-
-**Detailed Yaml Description**
-
-**Base Objects**
-
-These are EnergyPlus 'super' objects.  Their field names mirror those of EnergyPlus objects while also holding extra information necessary to build them in an overall path.
-
-    * Fields
-
-        * Key: EnergyPlus field names
-        * Value: Values to be inserted as default text.  if a '{}' is present, then the value is intended to have additional text inserted via the python `.format()` method.
-
-    * Connectors
-
-        * Loop Type [Air, ChilledWater, MixedWater]
-
-            * Inlet - EnergyPlus inlet node name for the loop type.
-            * Outlet - EnergyPlus outlet node name for the loop type.
-
-Example:
-
-
-.. code-block:: yaml
-
-  OutdoorAir:Mixer:
-    Fields:
-      name: '{} OA Mixing Box'
-      mixed_air_node_name: '{} Mixed Air Outlet'
-      outdoor_air_stream_node_name: '{} Outside Air Inlet'
-      relief_air_stream_node_name: '{} Relief Air Outlet'
-      return_air_stream_node_name: '{} Return Air Loop Inlet'
-    Connectors:
-      Air:
-        Inlet: outdoor_air_stream_node_name
-        Outlet: mixed_air_node_name
-
-**Sub-system Components**
-
-These are intermediate groupings of base objects which do not fit in the typical hierarchy structures to be reused in more complex systems
-
-.. code-block:: yaml
-
-  SystemConfigOutdoorAirBase: &SystemConfigOutdoorAirBase
-  - << : *OutdoorAirMixerBase
-  - << : *CoilsCoolingWaterBase
-  - << : *CoilsHeatingWaterBase
-  - << : *FanVariableVolumeBase
-
-**HVACTemplate**
-
-This object provides a structural hierarchy to the template expansion process.
-
-  * BuildPath - Ordered list of objects to create along the flow path of the network
-  * Transitions - Mapping dictionary that transfers HVACTemplate inputs to objects (e.g. fan efficiency)
-  * Connectors - System level supply and demand connectors.  The values can be expressed as a special 'complex value type'.  Please see the following section for further explanation.
-
-**Make note that text references to other HVACTemplate objects can happen for recursive builds**
-
-.. code-block:: yaml
-
-  HVACTemplate:System:VAV:
-    BuildPath:
-      - *SystemConfigOutdoorAirBase
-    Transitions:
-      supply_fan_total_efficiency:
-        Fan:VariableVolume: fan_total_efficiency
-    Connectors:
-      Supply:
-        Inlet:
-          OutdoorAir:Mixer: return_air_stream_node_name
-      Demand:
-        Inlet: '{} Supply Path Inlet'
-        Outlet: '{} Return Air Outlet'
-
-**OptionTree**
-
-This object outlines alternate build instructions based on user inputs to the HVACTemplate
-
-  * Base - HVACTemplate object
-  * ReplaceElements - mappings from template input selections that result in a replacement operation.  For example, selecting an electric heating coil when a water coil is specified in the base build.  The EnergyPlus object reference names can be regular expressions (e.g. '^Coil:Heating:.*')
-  * InsertElements - mappings from template input selections that result in insertion operations.  For example, specifying that a preheat coil should be included in the build path.  The EnergyPlus object reference names can be regular expressions (e.g. '^Fan:.*).
-  * RemoveElements - Currently unused, but needs the structure indicated below if it is to be used (i.e Object: _ is necessary for all entries).
-
-.. code-block:: yaml
-
-  OptionTree:HVACTemplate:System:VAV:
-    Base: *HVACTemplateSystemVAVBaseTemplate
-    ReplaceElements:
-      heating_coil_type:
-        None: None
-        Electric:
-          ^Coil:Heating:.*:
-            Occurrence: 1
-            Object: *CoilsHeatingElectricBase
-            FieldNameReplacement: '{} Electric'
-    InsertElements:
-      preheat_coil_type:
-        Electric:
-          OutdoorAir:M.*:
-            Location: Before
-            Occurrence: 1
-            Object: *CoilsHeatingElectricBase
-            FieldNameReplacement: '{} Preheat Electric'
-            Transitions:
-              preheat_efficiency: efficiency
-    RemoveElements:
-      reheat_coil_type:
-        None:
-          ^Coil:Heating:.*:
-            Object: _
-
-**Miscellaneous**
-
-Various objects that can be built with complex input types or other mappings.
-
-  * controllers - Dictionary of Controller objects to use as and node locations for input values.  These objects will be created after the buildPath.
-  * setpointManagers - Dictionary of SetpointManager objects to use and node locations for input values.  These objects will be created after the buildPath.
-  * transitions - Dictionary of mappings from the template input variable name to the equipment variable name to be updated.
-
-.. code-block:: yaml
-
-  Controllers:
-    OutdoorAir:
-      Base:
-        Controller:OutdoorAir:
-          name: '{} OA Controller'
-          relief_air_outlet_node_name:
-            OutdoorAir:M.*: relief_air_stream_node_name
-            Occurrence: 1
-          return_air_node_name:
-            OutdoorAir:Mixer: return_air_stream_node_name
-
-**Complex Value Type**
-
-These values can be expressed as either one of two types.
-
-1. static value - Numeric or string.
-2. Dictionary mapping :
-
-  * Required Sub-dictionary
-
-    * Key - EnergyPlus Object.  This may be in regular expression format (e.g. '^Fan:.*'
-    * Value - the reference node of the object, which can be in three formats:
-
-      * key/value pair where the key is the object and the value is the field name
-      * 'self' - returns the key used to find the reference object (useful for regex)
-
-      '^AirTerminal:.*': self - will return the full Air terminal object name
-
-      * 'key' - returns the key of the nested dictionary of the reference object
-
-      '^AirTerminal:.*': key - will return 'Space1-1 VAV Reheat' from {AirTerminal:SingleDuct:VAV:Reheat: 'Space1-1 VAV Reheat': {...}
-
-  * Optional Sub-dictionary
-
-    * Key - 'Occurrence'
-    * Value - The nth occurrence of the object match.  Default is first occurrence
-
-----------------------
-Command Line Interface
-----------------------
-
-`-xb --output-backups     Output separated epJSON`
-
-It is not possible to comment sections of code in JSON formatted files.  Therefore, expepJSON files do not have the ability to retain the HVACTemplate objects used to create the current document.  If the original file were to be overwritten, then all template data would be lost.  In an attempt to provide and additional layer of backups, this option will output two files: one with HVACTemplate objects, and one with all other objects.  With these files, the original input file can be created, or specific objects can be copied and pasted.
-
-`-ns --no-schema     Skip all schema validation checks`
-
-One benefit of the JSON file format is that files can be validated before simulation.  This means that erroneous inputs can be found before simulation, which saves time debugging output files and reading through logs, unsure of the error source.  This includes syntax errors, values that are out of range, and missing required inputs.  However, situations may occur when the user wishes to skip schema validation, in which case this flag should be used.
