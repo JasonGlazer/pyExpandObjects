@@ -1239,6 +1239,8 @@ def create_branches(
         - dictionary of epJSON objects containing original object_dictionary objects plus new objects.
         - dictionary of demand-side coils in each water type fluid flow path (e.g. ChilledWaterLoop).
     """
+    # todo_eo: it might make more sense to build the branches in the yaml and then just pick them up
+    # in this function afterwards, which would reduce the need for regex checking objects.
     object_dictionary = {}
     # collect all connector path keys to use as the key for each branch iteration
     if not object_dictionary.get('BranchList'):

@@ -107,7 +107,7 @@ CoolingTower:
           Outlet: water_outlet_node_name
 
 Fan:
-  Fields: &FanFields # example of default inputs, but i'm not sure if it's necessary.
+  Fields: &FanFields
     motor_efficiency: 0.9
     maximum_flow_rate: Autosize
   Connectors: &FanConnectors
@@ -284,7 +284,7 @@ SetpointManagers:
       SetpointManager:MixedAir: &SetpointManagerMixedAir
         name: '{} Cooling Coil Air Temp Manager'
         control_variable: Temperature
-        reference_setpoint_node_name:
+        reference_setpoint_node_name: # These refs to be checked against blowthrough/drawthrough specifications for fans
           BuildPath:
             Location: -1
             ConnectorPath: Air
@@ -489,13 +489,10 @@ HVACTemplate:
           ^Chiller:.*: reference_capacity
     ChilledWaterLoop: &HVACTemplatePlantChilledWaterLoop
       BuildPath:
-#        - HVACTemplate:Plant:Chiller # specify a nested template with a text reference to the object under the OptionTree object
     CondenserWaterLoop: &HVACTemplatePlantCondenserWaterLoop
       BuildPath:
-#        - HVACTemplate:Plant:Tower
     HotWaterLoop: &HVACTemplatePlantHotWaterLoop
       BuildPath:
-#        - HVACTemplate:Plant:Boiler
     Tower: &HVACTemplatePlantTower
       BuildPath:
         - CoolingTower:SingleSpeed: *CoolingTowerSingleSpeed
