@@ -236,7 +236,33 @@ References to object field values may take multiple forms.  This feature is inte
     name:
       ^SetpointManager:MixedAir: setpoint_node_or_nodelist_name
 
+* Transitions
+    A template value can be passed directly to an object field
 
+.. code-block:: yaml
+
+  - AvailabilityManager:LowTemperatureTurnOff:
+      name: '{} Availability Low Temp TurnOff'
+      sensor_node_name: '{} Outside Air Sensor'
+      Transitions:
+        chilled_water_design_setpoint: temperature
+
+* Transitions with string reformatting
+    A string reformat may be specified to mutate the input value.  For example, if the template value provided for `cooling_coil_design_setpoint` is 12.8, then The following code will yield a string value in the schedule_name field of 'HVACTemplate-Always12.8
+
+.. code-block:: yaml
+
+  - SetpointManager:Scheduled:
+      name: '{} Cooling Supply Air Temp Manager'
+      control_variable: Scheduled
+      setpoint_node_or_nodelist_name:
+        BuildPath:
+        Location: -1
+        ConnectorPath: Air
+        ValueLocation: Outlet
+      Transitions:
+        cooling_coil_design_setpoint:
+          schedule_name: 'HVACTemplate-Always{}'
 
 The function that performs these operations takes a dictionary of epJSON objects and/or a `BuildPath` object.  Therefore, the references provided can be appropriately applied by scoping the input arguments.  For example, if the objects to be created are for a specific HVACTemplate system, then input arguments consisting only of those dependent objects can be applied.  For most cases, the input arguments are scoped to the system, zone, plant or loop template being created.
 

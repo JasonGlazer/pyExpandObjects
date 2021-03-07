@@ -280,26 +280,30 @@ Schedule:
 
 SetpointManagers:
   MixedAir:
-    Base:
-      SetpointManager:MixedAir: &SetpointManagerMixedAir
+    Cooling:
+      SetpointManager:MixedAir: &SetpointManagerMixedAirCooling
         name: '{} Cooling Coil Air Temp Manager'
         control_variable: Temperature
-        reference_setpoint_node_name: # These refs to be checked against blowthrough/drawthrough specifications for fans
+        reference_setpoint_node_name:
           BuildPath:
             Location: -1
             ConnectorPath: Air
             ValueLocation: Outlet
         fan_inlet_node_name:
-          BuildPath:
-            Location: -1
-            ConnectorPath: Air
-            ValueLocation: Inlet
+          Fan:.*: air_inlet_node_name
         fan_outlet_node_name:
-          BuildPath:
-            Location: -1
-            ConnectorPath: Air
-            ValueLocation: Outlet
+          Fan:.*: air_inlet_node_name
         setpoint_node_or_nodelist_name: '{} Mixed Air Nodes'
+    Heating:
+      SetpointManager:MixedAir: &SetpointManagerMixedAirHeating
+        name: '{} Heating Coil Air Temp Manager'
+        control_variable: Temperature
+        reference_setpoint_node_name: '{} Supply Path Inlet'
+        fan_inlet_node_name:
+          Fan:.*: air_inlet_node_name
+        fan_outlet_node_name:
+          Fan:.*: air_inlet_node_name
+        Fan:.*: air_inlet_node_name
 
 Sizing:
   Zone:
@@ -626,12 +630,10 @@ OptionTree:
                   Object:
                     Coil:Heating:Electric: *CoilHeatingElectric
                   FieldNameReplacement: '{} Preheat Electric'
-                  Transitions: # transition template variable to this specific inserted object {template_field_name: object_field_name}
-                    preheat_efficiency: efficiency # doesn't currently exist as an option, this is just an example. Use '.*' because it references only the current object.
         AdditionalObjects:
           - SetpointManager:MixedAir:
-              <<: *SetpointManagerMixedAir
-          - Nodelist:
+              <<: *SetpointManagerMixedAirCooling
+          - NodeList:
               name:
                 ^SetpointManager:MixedAir: setpoint_node_or_nodelist_name
               nodes:
@@ -652,6 +654,31 @@ OptionTree:
           - Sizing:System:
               <<: *SizingSystem
               Transitions: *SizingSystemTransitions
+          - Availability:Manager:NightCycle:
+              name: '{} Availability'
+              applicability_schedule_name: HVACTemplate-Always1
+              fan_schedule_name: FanAvailSched
+          - SetpointManager:Scheduled:
+              name: '{} Cooling Supply Air Temp Manager'
+              control_variable: Scheduled
+              setpoint_node_or_nodelist_name:
+                BuildPath:
+                  Location: -1
+                  ConnectorPath: Air
+                  ValueLocation: Outlet
+              Transitions:
+                cooling_coil_design_setpoint:
+                  schedule_name: 'HVACTemplate-Always{}'
+          - SetpointManager:Scheduled:
+              name: '{} Heating Supply Air Temp Manager'
+              control_variable: Scheduled
+              setpoint_node_or_nodelist_name:
+                SetpointManager:MixedAir: reference_setpoint_node_name
+              Transitions:
+                heating_coil_design_setpoint:
+                  schedule_name: 'HVACTemplate-Always{}'
+          - SetpointManager:MixedAir:
+              <<: *SetpointManagerMixedAirHeating
         AdditionalTemplateObjects: # template triggered objects
           cooling_coil_type:
             ChilledWater:
@@ -671,10 +698,28 @@ OptionTree:
                     ^Coil:Heating:Water: air_outlet_node_name
                   actuator_node:
                     ^Coil:Heating:Water: water_inlet_node_name
+          preheat_coil_type:
+            .*:
+              - SetpointManager:Scheduled:
+                  name: '{} Preheat Coil Air Temp Manager'
+                  control_variable: Scheduled
+                  setpoint_node_or_nodelist_name:
+                    OutdoorAir:Mixer: outdoor_air_stream_node_name
+                  schedule_name: HVACTemplate-Always7.2
+                  Transitions:
+                    preheat_coil_design_setpoint:
+                      schedule_name: 'HVACTemplate-Always{}'
     Plant:
       Boiler:
         Base: *HVACTemplatePlantBoiler
         AdditionalObjects:
+          - Curve:Quadratic:
+              name: Main Boiler Efficiency Curve
+              coefficient1_constant: 0.97
+              coefficient2_x: 0.0633
+              coefficient3_x_2: -0.0333
+              maximum_value_of_x: 1.0
+              minimum_value_of_x: 0.0
         AdditionalTemplateObjects:
           template_plant_loop_type:
             None:
@@ -687,8 +732,8 @@ OptionTree:
                         Boiler.*: key
                       component_inlet_node_name:
                         Boiler.*: boiler_water_inlet_node_name
-                      component_outet_node_name:
-                        Boier.*: boiler_water_outlet_node_name
+                      component_outlet_node_name:
+                        Boiler.*: boiler_water_outlet_node_name
             HotWater:
               - Branch:
                   name: '{} Boiler HW Branch'
@@ -699,8 +744,8 @@ OptionTree:
                         Boiler.*: key
                       component_inlet_node_name:
                         Boiler.*: boiler_water_inlet_node_name
-                      component_outet_node_name:
-                        Boier.*: boiler_water_outlet_node_name
+                      component_outlet_node_name:
+                        Boiler.*: boiler_water_outlet_node_name
             MixedWater:
               - Branch:
                   name: '{} Boiler MW Branch'
@@ -711,8 +756,8 @@ OptionTree:
                         Boiler.*: key
                       component_inlet_node_name:
                         Boiler.*: boiler_water_inlet_node_name
-                      component_outet_node_name:
-                        Boier.*: boiler_water_outlet_node_name
+                      component_outlet_node_name:
+                        Boiler.*: boiler_water_outlet_node_name
       Chiller:
         Base: *HVACTemplatePlantChiller
         ReplaceElements:
@@ -726,8 +771,39 @@ OptionTree:
                     Chiller.*: key
                   component_inlet_node_name:
                     Chiller.*: chilled_water_inlet_node_name
-                  component_outet_node_name:
+                  component_outlet_node_name:
                     Chiller.*: chilled_water_outlet_node_name
+          - Curve:Quadratic:
+              name: Main Chiller RecipEIRFPLR
+              coefficient1_constant: 0.088065
+              coefficient2_x: 1.137742
+              coefficient3_x_2: -0.225806
+              maximum_value_of_x: 1
+              minimum_value_of_x: 0
+          - Curve:Quadratic:
+              name: Main Chiller RecipCapFT
+              coefficient1_constant: 0.507883
+              coefficient2_x: 0.145228
+              coefficient3_x_2: -0.00625644
+              coefficient4_y: -0.0011178
+              coefficient5_y_2: -0.0001296
+              coefficient6_x_y: -0.00028188
+              maximum_value_of_x: 10
+              maximum_value_of_y: 35
+              minimum_value_of_x: 5
+              minimum_value_of_y: 24
+          - Curve:Quadratic:
+              name: Main Chiller RecipEIRFT
+              coefficient1_constant: 1.03076
+              coefficient2_x: -0.103536
+              coefficient3_x_2: 0.00710208
+              coefficient4_y: 0.0093186
+              coefficient5_y_2: 0.00031752
+              coefficient6_x_y: -0.00104328
+              maximum_value_of_x: 10
+              maximum_value_of_y: 35
+              minimum_value_of_x: 5
+              minimum_value_of_y: 24
         AdditionalTemplateObjects:
           condenser_type:
             WaterCooled:
@@ -740,7 +816,7 @@ OptionTree:
                         Chiller.*: key
                       component_inlet_node_name:
                         Chiller.*: condenser_water_inlet_node_name
-                      component_outet_node_name:
+                      component_outlet_node_name:
                         Chiller.*: condenser_water_outlet_node_name
               - HVACTemplate:Plant:CondenserWaterLoop:
                   ConnectorPath: CondenserWaterLoop
@@ -825,6 +901,13 @@ OptionTree:
                       component_name: '{} Demand Inlet Pipe'
                       component_inlet_node_name: '{} Demand Inlet'
                       component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
+              - AvailabilityManager:LowTemperatureTurnOff:
+                  name: '{} Availability Low Temp TurnOff'
+                  sensor_node_name: '{} Outside Air Sensor'
+                  Transitions:
+                    chilled_water_design_setpoint: temperature
+              - OutdoorAir:Node:
+                  name: '{} Outside Air Sensor'
       CondenserWaterLoop:
         Base: *HVACTemplatePlantCondenserWaterLoop
         AdditionalObjects:
@@ -956,7 +1039,7 @@ OptionTree:
                     CoolingTower.*: key
                   component_inlet_node_name:
                     CoolingTower.*: water_inlet_node_name
-                  component_outet_node_name:
+                  component_outlet_node_name:
                     CoolingTower.*: water_outlet_node_name
           - OutdoorAir:Node:
               name:
