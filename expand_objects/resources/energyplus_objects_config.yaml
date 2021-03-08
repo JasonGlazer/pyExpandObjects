@@ -277,6 +277,27 @@ Schedule:
         - For AllDays
         - Until 24:00
         - '{:.1f}'
+    FanAvailSched:
+      name: 'FanAvailSched'
+      schedule_type_limits_name: "Fraction"
+      data:
+        - field: "Through: 12/31"
+        - field: "For: WeekDays CustomDay1 CustomDay2"
+        - field: "Until: 7:00"
+        - field: 0.0
+        - field: "Until: 21:00"
+        - field: 1.0
+        - field: "Until: 24:00"
+        - field: 0.0
+        - field: "For: Weekends Holiday"
+        - field: "Until: 24:00"
+        - field: 0.0
+        - field: "For: SummerDesignDay"
+        - field: "Until: 24:00"
+        - field: 1.0
+        - field: "For: WinterDesignDay"
+        - field: "Until: 24:00"
+        - field: 1.0
 
 SetpointManagers:
   MixedAir:
@@ -658,6 +679,10 @@ OptionTree:
               name: '{} Availability'
               applicability_schedule_name: HVACTemplate-Always1
               fan_schedule_name: FanAvailSched
+          - Schedule:Compact:
+              name: FanAvailSched
+          - Schedule:Compact:
+              name: HVACTemplate-Always1
           - SetpointManager:Scheduled:
               name: '{} Cooling Supply Air Temp Manager'
               control_variable: Scheduled
@@ -669,6 +694,10 @@ OptionTree:
               Transitions:
                 cooling_coil_design_setpoint:
                   schedule_name: 'HVACTemplate-Always{}'
+          - Schedule:Compact:
+              Transitions:
+                cooling_coil_design_setpoint:
+                     name: 'HVACTemplate-Always{}'
           - SetpointManager:Scheduled:
               name: '{} Heating Supply Air Temp Manager'
               control_variable: Scheduled
@@ -677,6 +706,10 @@ OptionTree:
               Transitions:
                 heating_coil_design_setpoint:
                   schedule_name: 'HVACTemplate-Always{}'
+          - Schedule:Compact:
+              Transitions:
+                heating_coil_design_setpoint:
+                  name: 'HVACTemplate-Always{}'
           - SetpointManager:MixedAir:
               <<: *SetpointManagerMixedAirHeating
         AdditionalTemplateObjects: # template triggered objects
@@ -709,6 +742,11 @@ OptionTree:
                   Transitions:
                     preheat_coil_design_setpoint:
                       schedule_name: 'HVACTemplate-Always{}'
+              - Schedule:Compact:
+                  name: HVACTemplate-Always7.2
+                  Transitions:
+                    preheat_coil_design_setpoint:
+                      name: 'HVACTemplate-Always{}'
     Plant:
       Boiler:
         Base: *HVACTemplatePlantBoiler

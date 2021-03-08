@@ -870,6 +870,19 @@ def create_additional_objects(
                 # super dictionary, you can quickly append them with d_new = dict(d_super, **d_current)
                 # it is done here because some AdditionalObjects need to reference nodes of other AdditionalObjects
                 # via complex inputs
+
+                # check if 'name' is a provided value in Transitions and apply
+                if transition_structure:
+                    for sub_transition_field, sub_transition_structure in transition_structure.items():
+                        if isinstance(sub_transition_structure, dict) and 'name' in sub_transition_structure.keys():
+                            new_name = transition_structure[sub_transition_field].pop('name')
+                            # try to apply, but not guaranteed to have a value since the transition field
+                            # is probably different that the field used to trigger the action
+                            try:
+                                object_structure['name'] = new_name.format(template_dictionary[sub_transition_field])
+                            except Exception as e:
+                                print(e)
+                                pass
                 sub_object_dictionary = process_additional_object_input(
                     object_or_template=object_or_template,
                     object_structure=object_structure,
@@ -892,12 +905,15 @@ def create_additional_objects(
                                 # if the field reference in the Transition is a dictionary, it is a string format
                                 # renamer; so reformat the input here
                                 if template_dictionary.get(sub_template_field):
-                                    if isinstance(object_field, dict):
-                                        (object_field, rename_format), = object_field.items()
-                                        tmp_d[object_field] = \
-                                            rename_format.format(template_dictionary[sub_template_field])
-                                    else:
-                                        tmp_d[object_field] = template_dictionary[sub_template_field]
+                                    # available fields could have been popped from above so make sure the dictionary
+                                    # isn't empty
+                                    if object_field:
+                                        if isinstance(object_field, dict):
+                                            (object_field, rename_format), = object_field.items()
+                                            tmp_d[object_field] = \
+                                                rename_format.format(template_dictionary[sub_template_field])
+                                        else:
+                                            tmp_d[object_field] = template_dictionary[sub_template_field]
                             sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
                 object_dictionary = merge_dictionaries(
                     super_dictionary=object_dictionary,
@@ -919,6 +935,20 @@ def create_additional_objects(
                         for object_or_template, object_structure in new_object_structure.items():
                             # check for transitions and pop them if present
                             transition_structure = object_structure.pop('Transitions', None)
+                            # check if 'name' is a provided value in Transitions and apply it before processing
+                            if transition_structure:
+                                for sub_transition_field, sub_transition_structure in transition_structure.items():
+                                    if isinstance(sub_transition_structure, dict) and 'name' \
+                                            in sub_transition_structure.keys():
+                                        new_name = transition_structure[sub_transition_field].pop('name')
+                                        # try to apply, but not guaranteed to have a value since the transition field
+                                        # is probably different that the field used to trigger the action
+                                        try:
+                                            object_structure['name'] = \
+                                                new_name.format(template_dictionary[sub_transition_field])
+                                        except Exception as e:
+                                            print(e)
+                                            pass
                             sub_object_dictionary = process_additional_object_input(
                                 object_or_template=object_or_template,
                                 object_structure=object_structure,
@@ -942,12 +972,15 @@ def create_additional_objects(
                                             # it is a string format
                                             # renamer; so reformat the input here
                                             if template_dictionary.get(sub_template_field):
-                                                if isinstance(object_field, dict):
-                                                    (object_field, rename_format), = object_field.items()
-                                                    tmp_d[object_field] = \
-                                                        rename_format.format(template_dictionary[sub_template_field])
-                                                else:
-                                                    tmp_d[object_field] = template_dictionary[sub_template_field]
+                                                # available fields could have been popped from above so make sure the
+                                                # dictionary isn't empty
+                                                if object_field:
+                                                    if isinstance(object_field, dict):
+                                                        (object_field, rename_format), = object_field.items()
+                                                        tmp_d[object_field] = \
+                                                            rename_format.format(template_dictionary[sub_template_field])
+                                                    else:
+                                                        tmp_d[object_field] = template_dictionary[sub_template_field]
                                         sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
                             object_dictionary = merge_dictionaries(
                                 super_dictionary=object_dictionary,
@@ -1063,7 +1096,8 @@ def process_additional_object_input(
 def build_compact_schedule(
         data: dict,
         schedule_type: str,
-        insert_values: typing.Union[int, str, list]) -> dict:
+        insert_values: typing.Union[int, str, list],
+        name=None) -> dict:
     """
     Create compact schedule from specified yaml object and value
 
@@ -1077,12 +1111,18 @@ def build_compact_schedule(
     schedule_object = {'Schedule:Compact': {}}
     always_temperature_object = copy.deepcopy(data['Schedule']['Compact'][schedule_type])
     # for each element in the schedule, convert to numeric if value replacement occurs
-    formatted_data_lines = [
-        float(i.format(*insert_values))
-        if re.match(r'.*{.*}', i, re.IGNORECASE) else i
-        for i in always_temperature_object['data']]
-    schedule_object['Schedule:Compact'][always_temperature_object['name'].format(insert_values[0])] = \
-        formatted_data_lines
+    if insert_values:
+        formatted_data_lines = [
+            float(i.format(*insert_values))
+            if re.match(r'.*{.*}', i, re.IGNORECASE) else i
+            for i in always_temperature_object['data']]
+    else:
+        formatted_data_lines = always_temperature_object['data']
+    if not name:
+        schedule_object['Schedule:Compact'][always_temperature_object['name'].format(insert_values[0])] = \
+            formatted_data_lines
+    else:
+        schedule_object['Schedule:Compact'][name] = formatted_data_lines
     return schedule_object
 
 
@@ -2035,15 +2075,47 @@ def main(input_args):
         # Modify epjson object using its own sub-objects as references
         # This should serve as a last step for only objects that can't be
         # completed in above processes.
-        # todo_eo: add function that scans schedule field names and auto-creates them based on their names
         modified_epjson_objects = modify_zone_control_thermostats(
             super_dictionary=epjson_dictionary,
             data=data)
+        print('##### Modified Objects Output #####')
+        pprint(modified_epjson_objects, width=150)
         epjson_dictionary = merge_dictionaries(
             super_dictionary=epjson_dictionary,
             object_dictionary=modified_epjson_objects)
-        print('##### Modified Objects Output #####')
-        pprint(modified_epjson_objects, width=150)
+        # scan through compact schedules in dictionary and format them properly
+        formatted_schedule_objects = {}
+        for object_name, object_structure in epjson_dictionary['Schedule:Compact'].items():
+            print(object_name)
+            # continue
+            if not object_structure:
+                schedule_object = None
+                # create thermostat schedules and save them to temporary dictionaries
+                hvac_template_rgx = re.match(r'HVACTemplate-Always([\d\.]+)', object_name)
+                if hvac_template_rgx:
+                    if not formatted_schedule_objects.get('Schedule:Compact'):
+                        formatted_schedule_objects['Schedule:Compact'] = {}
+                    schedule_object = build_compact_schedule(
+                        data=data,
+                        schedule_type='ALWAYS_VAL',
+                        insert_values=[float(hvac_template_rgx.group(1)), ]
+                    )
+                if object_name == 'FanAvailSched':
+                    schedule_object = build_compact_schedule(
+                        data=data,
+                        schedule_type='FanAvailSched',
+                        insert_values=[],
+                        name='FanAvailSched'
+                    )
+                if schedule_object:
+                    formatted_schedule_objects = merge_dictionaries(
+                        super_dictionary=formatted_schedule_objects,
+                        object_dictionary=schedule_object)
+        print('##### Formatted Schedules #####')
+        pprint(formatted_schedule_objects, width=150)
+        epjson_dictionary = merge_dictionaries(
+            super_dictionary=epjson_dictionary,
+            object_dictionary=formatted_schedule_objects)
         print('##### EPJSON Output #####')
         pprint(epjson_dictionary, width=150)
     return
