@@ -870,6 +870,19 @@ def create_additional_objects(
                 # super dictionary, you can quickly append them with d_new = dict(d_super, **d_current)
                 # it is done here because some AdditionalObjects need to reference nodes of other AdditionalObjects
                 # via complex inputs
+
+                # check if 'name' is a provided value in Transitions and apply
+                if transition_structure:
+                    for sub_transition_field, sub_transition_structure in transition_structure.items():
+                        if isinstance(sub_transition_structure, dict) and 'name' in sub_transition_structure.keys():
+                            new_name = transition_structure[sub_transition_field].pop('name')
+                            # try to apply, but not guaranteed to have a value since the transition field
+                            # is probably different that the field used to trigger the action
+                            try:
+                                object_structure['name'] = new_name.format(template_dictionary[sub_transition_field])
+                            except Exception as e:
+                                print(e)
+                                pass
                 sub_object_dictionary = process_additional_object_input(
                     object_or_template=object_or_template,
                     object_structure=object_structure,
@@ -892,12 +905,15 @@ def create_additional_objects(
                                 # if the field reference in the Transition is a dictionary, it is a string format
                                 # renamer; so reformat the input here
                                 if template_dictionary.get(sub_template_field):
-                                    if isinstance(object_field, dict):
-                                        (object_field, rename_format), = object_field.items()
-                                        tmp_d[object_field] = \
-                                            rename_format.format(template_dictionary[sub_template_field])
-                                    else:
-                                        tmp_d[object_field] = template_dictionary[sub_template_field]
+                                    # available fields could have been popped from above so make sure the dictionary
+                                    # isn't empty
+                                    if object_field:
+                                        if isinstance(object_field, dict):
+                                            (object_field, rename_format), = object_field.items()
+                                            tmp_d[object_field] = \
+                                                rename_format.format(template_dictionary[sub_template_field])
+                                        else:
+                                            tmp_d[object_field] = template_dictionary[sub_template_field]
                             sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
                 object_dictionary = merge_dictionaries(
                     super_dictionary=object_dictionary,
@@ -919,6 +935,20 @@ def create_additional_objects(
                         for object_or_template, object_structure in new_object_structure.items():
                             # check for transitions and pop them if present
                             transition_structure = object_structure.pop('Transitions', None)
+                            # check if 'name' is a provided value in Transitions and apply it before processing
+                            if transition_structure:
+                                for sub_transition_field, sub_transition_structure in transition_structure.items():
+                                    if isinstance(sub_transition_structure, dict) and 'name' \
+                                            in sub_transition_structure.keys():
+                                        new_name = transition_structure[sub_transition_field].pop('name')
+                                        # try to apply, but not guaranteed to have a value since the transition field
+                                        # is probably different that the field used to trigger the action
+                                        try:
+                                            object_structure['name'] = \
+                                                new_name.format(template_dictionary[sub_transition_field])
+                                        except Exception as e:
+                                            print(e)
+                                            pass
                             sub_object_dictionary = process_additional_object_input(
                                 object_or_template=object_or_template,
                                 object_structure=object_structure,
@@ -942,12 +972,16 @@ def create_additional_objects(
                                             # it is a string format
                                             # renamer; so reformat the input here
                                             if template_dictionary.get(sub_template_field):
-                                                if isinstance(object_field, dict):
-                                                    (object_field, rename_format), = object_field.items()
-                                                    tmp_d[object_field] = \
-                                                        rename_format.format(template_dictionary[sub_template_field])
-                                                else:
-                                                    tmp_d[object_field] = template_dictionary[sub_template_field]
+                                                # available fields could have been popped from above so make sure the
+                                                # dictionary isn't empty
+                                                if object_field:
+                                                    if isinstance(object_field, dict):
+                                                        (object_field, rename_format), = object_field.items()
+                                                        tmp_d[object_field] = \
+                                                            rename_format.\
+                                                            format(template_dictionary[sub_template_field])
+                                                    else:
+                                                        tmp_d[object_field] = template_dictionary[sub_template_field]
                                         sub_object_dictionary[sub_object_type][sub_object_name] = tmp_d
                             object_dictionary = merge_dictionaries(
                                 super_dictionary=object_dictionary,
@@ -1063,7 +1097,8 @@ def process_additional_object_input(
 def build_compact_schedule(
         data: dict,
         schedule_type: str,
-        insert_values: typing.Union[int, str, list]) -> dict:
+        insert_values: typing.Union[int, str, list],
+        name=None) -> dict:
     """
     Create compact schedule from specified yaml object and value
 
@@ -1077,12 +1112,23 @@ def build_compact_schedule(
     schedule_object = {'Schedule:Compact': {}}
     always_temperature_object = copy.deepcopy(data['Schedule']['Compact'][schedule_type])
     # for each element in the schedule, convert to numeric if value replacement occurs
-    formatted_data_lines = [
-        float(i.format(*insert_values))
-        if re.match(r'.*{.*}', i, re.IGNORECASE) else i
-        for i in always_temperature_object['data']]
-    schedule_object['Schedule:Compact'][always_temperature_object['name'].format(insert_values[0])] = \
-        formatted_data_lines
+    if insert_values:
+        formatted_data_lines = [
+            {j: float(k.format(*insert_values))}
+            if re.match(r'.*{.*}', k, re.IGNORECASE) else {j: k}
+            for i in always_temperature_object['data'] for j, k in i.items()]
+    else:
+        formatted_data_lines = [{j: k} for i in always_temperature_object['data'] for j, k in i.items()]
+    if not name:
+        schedule_object['Schedule:Compact'][always_temperature_object['name'].format(insert_values[0])] = \
+            {"data": formatted_data_lines}
+        if always_temperature_object.get('schedule_type_limits_name', None):
+            schedule_object['Schedule:Compact'][always_temperature_object['name'].format(
+                insert_values[0])]['schedule_type_limits_name'] = 'Any Number'
+    else:
+        schedule_object['Schedule:Compact'][name] = {"data": formatted_data_lines}
+        if always_temperature_object.get('schedule_type_limits_name', None):
+            schedule_object['Schedule:Compact'][name]['schedule_type_limits_name'] = 'Any Number'
     return schedule_object
 
 
@@ -1121,8 +1167,9 @@ def create_thermostats(
                 )
                 schedule_objects.append(schedule_object)
                 # apply new schedule to the thermostat object
-                thermostat_options_object['{}_schedule'.format(thermostat_type)] = \
-                    'ALWAYS_{}'.format(thermostat_options_object['constant_{}_setpoint'.format(thermostat_type)])
+                (schedule_type, _), = schedule_object.items()
+                (schedule_name, _), = schedule_object[schedule_type].items()
+                thermostat_options_object['{}_schedule'.format(thermostat_type)] = schedule_name
             else:
                 print('schedule error')
                 sys.exit()
@@ -1286,20 +1333,34 @@ def create_branches(
     for connector_type in connectors_set:
         if connector_type.capitalize() == 'Air':
             component_list = []
+            oa_loop = True
+            out_node = None
             for build_object in build_path:
                 for object_type, super_object in build_object.items():
-                    # do I need to run a check that consecutive objects have inlet/outlet nodes?
                     connector_object = super_object.get('Connectors')
                     if connector_object:
                         object_connector = connector_object.get(connector_type)
                         if object_connector:
-                            component_dictionary = {
-                                'component_object_type': object_type,
-                                'component_object_name': super_object['Fields']['name'],
-                                'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
-                                'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
-                            component_list.append(component_dictionary)
-            object_dictionary["Branch"][' '.join([unique_name, connector_type, 'Branch'])] = component_list
+                            if oa_loop:
+                                if object_type == 'OutdoorAir:Mixer':
+                                    out_node = '{} Mixed Air Outlet'.format(unique_name)
+                                    component_dictionary = {
+                                        'component_object_type': 'AirLoopHVAC:OutdoorAirSystem',
+                                        'component_name': '{} OA System'.format(unique_name),
+                                        'component_inlet_node_name': '{} Air Loop Inlet'.format(unique_name),
+                                        'component_outlet_node_name': out_node}
+                                    component_list.append(component_dictionary)
+                                    oa_loop = False
+                            else:
+                                component_dictionary = {
+                                    'component_object_type': object_type,
+                                    'component_name': super_object['Fields']['name'],
+                                    'component_inlet_node_name': out_node,
+                                    'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
+                                out_node = super_object['Fields'][object_connector['Outlet']]
+                                component_list.append(component_dictionary)
+            object_dictionary["Branch"][' '.join([unique_name, connector_type, 'Branch'])] = \
+                {"components": component_list}
             object_dictionary["BranchList"][' '.join([unique_name, connector_type, 'Branches'])] =  \
                 {"branches": [{"branch_name": ' '.join([unique_name, connector_type, 'Branch'])}]}
         else:
@@ -1314,10 +1375,12 @@ def create_branches(
                             object_connector = connector_object.get(connector_type)
                             if object_connector:
                                 object_dictionary["Branch"][' '.join([super_object['Fields']['name'], 'Branch'])] = {
-                                    'component_object_type': object_type,
-                                    'component_object_name': super_object['Fields']['name'],
-                                    'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
-                                    'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]}
+                                    "components": [{
+                                        'component_object_type': object_type,
+                                        'component_name': super_object['Fields']['name'],
+                                        'component_inlet_node_name': super_object['Fields'][object_connector['Inlet']],
+                                        'component_outlet_node_name': super_object['Fields'][object_connector['Outlet']]
+                                    }]}
                     # build demand branch list
                     if re.match('^Coil:Cooling:Water.*', object_type, re.IGNORECASE):
                         demand_chilled_water_objects.append(' '.join([super_object['Fields']['name'], 'Branch']))
@@ -1372,7 +1435,7 @@ def create_oa_equipment_list(
                 'component_{}_object_type'.format(object_count)] = \
                 object_type
             oa_equipment_list_dictionary['AirLoopHVAC:OutdoorAirSystem:EquipmentList'][
-                'component_{}_object_name'.format(object_count)] = \
+                'component_{}_name'.format(object_count)] = \
                 object_constructor['Fields']['name']
             if object_type == 'OutdoorAir:Mixer':
                 stop_loop = True
@@ -1412,9 +1475,10 @@ def create_airloop_system_objects(
             if zone_template_structure['template_vav_system_name'] == system_name:
                 (zone_equipment_name, zone_equipment_object), = \
                     zone_dictionaries[zone_template_name]['ZoneHVAC:EquipmentConnections'].items()
+                print(zone_template_structure['zone_name'])
                 zone_splitters.append(
                     {
-                        "outlet_node_name": zone_equipment_object['zone_air_inlet_node_or_nodelist_name']
+                        "outlet_node_name": '{} Zone Equip Inlet'.format(zone_template_structure['zone_name'])
                     }
                 )
                 zone_mixers.append(
@@ -1455,6 +1519,7 @@ def create_airloop_system_objects(
         additional_object = build_object_from_complex_inputs(
             yaml_object=yaml_copy,
             super_dictionary=dict(super_dictionary, **airloop_objects),
+            build_path=build_path,
             unique_name_input=unique_name
         )
         airloop_objects = merge_dictionaries(
@@ -1486,7 +1551,7 @@ def build_waterloop_connectors(
                 ]
             }
             formatted_branchlist = [{"outlet_branch_name": i} for i in list(set(branches))]
-            connector_objects['Connector:Splitter']['{} {} Demand Splitter'.format(loop, side)] = {
+            connector_objects['Connector:Splitter']['{} {} Splitter'.format(loop, side)] = {
                 "inlet_branch_name": "{} {} Inlet Branch".format(loop, side),
                 "branches": [
                     *formatted_branchlist,
@@ -1503,9 +1568,9 @@ def build_waterloop_connectors(
             }
             connector_objects['ConnectorList']['{} {} Side Connectors'.format(loop, side)] = {
                 'connector_1_object_type': 'Connector:Splitter',
-                'connecotr_1_name': '{} {} Splitter'.format(loop, side),
+                'connector_1_name': '{} {} Splitter'.format(loop, side),
                 'connector_2_object_type': 'Connector:Mixer',
-                'connecotr_2_name': '{} {} Mixer'.format(loop, side)
+                'connector_2_name': '{} {} Mixer'.format(loop, side)
             }
     return connector_objects
 
@@ -1583,7 +1648,7 @@ def build_plant_equipment_lists(
             plant_equipment_objects[scheme_type]['{} Operation'.format(loop)] = {
                 "control_scheme_1_name": "{} Operation All Hours".format(loop),
                 "control_scheme_1_object_type": equipment_operation,
-                "control_scheme_1_schedule_name": "HVACTemplate-Always 1"
+                "control_scheme_1_schedule_name": "HVACTemplate-Always1"
             }
     # create PlantLoops
     for loop_side, min_temp, max_temp in zip(
@@ -1606,7 +1671,8 @@ def build_plant_equipment_lists(
                 "loop_temperature_setpoint_node_name": "{} Supply Outlet".format(loop),
                 "maximum_loop_flow_rate": "Autosize",
                 "maximum_loop_temperature": max_temp,
-                "minimum_loop_flow_rate": min_temp,
+                "minimum_loop_flow_rate": 0,
+                "minimum_loop_temperature": min_temp,
                 "plant_equipment_operation_scheme_name": "{} Operation".format(loop),
                 "plant_side_branch_list_name": "{} Supply Side Branches".format(loop),
                 "plant_side_connector_list_name": "{} Supply Side Connectors".format(loop),
@@ -1622,7 +1688,7 @@ def build_plant_equipment_lists(
         if waterloop_branch_dictionary.get(loop_side):
             if not plant_equipment_objects.get('CondenserLoop'):
                 plant_equipment_objects['CondenserLoop'] = {}
-            plant_equipment_objects['CondenserLoop']['{} Condenser Loop'.format(loop)] = {
+            plant_equipment_objects['CondenserLoop']['{} PlantLoop'.format(loop)] = {
                 "condenser_demand_side_branch_list_name": "{} Demand Side Branches".format(loop),
                 "condenser_demand_side_connector_list_name": "{} Demand Side Connectors".format(loop),
                 "condenser_equipment_operation_scheme_name": "{} Operation".format(loop),
@@ -1646,13 +1712,13 @@ def build_plant_equipment_lists(
     # also read in the setpoint temperature and make it a HVACTemplate schedule
     for loop_side, temp in zip(
             ('CondenserWaterLoop_Supply', 'ChilledWaterLoop_Supply'),
-            (29.4, 7.22)
+            (29.4, 5.0)
     ):
         loop, side = loop_side.split('_')
         if waterloop_branch_dictionary.get(loop_side):
             if not plant_equipment_objects.get('SetpointManager:Scheduled'):
                 plant_equipment_objects['SetpointManager:Scheduled'] = {}
-            plant_equipment_objects['CondenserLoop']['{} Condenser Loop'.format(loop)] = {
+            plant_equipment_objects['SetpointManager:Scheduled']['{} Condenser Loop'.format(loop)] = {
                 'control_variable': 'Temperature',
                 'schedule_name': 'HVACTemplate-Always{}'.format(temp),
                 'setpoint_node_or_nodelist_name': '{} Supply Setpoint Nodes'.format(loop)
@@ -1732,6 +1798,7 @@ def main(input_args):
         # iterate over templates
         zone_build_path_dictionary = {}
         print('##### Zone Template Output #####')
+        demand_branchlist = []
         for zt in zone_templates:
             # get template object as dictionary
             hvac_zone_template_obj = test_epjson[zt]
@@ -1751,6 +1818,18 @@ def main(input_args):
                     data=data)
                 zone_dictionary[template_zone_name] = sub_zone_dictionary
                 zone_build_path_dictionary[template_zone_name] = zone_build_path
+                # Find branches created outside of build path
+                additional_hw_branches = []
+                for object_type, object_structure in sub_zone_dictionary.items():
+                    if object_type == 'Branch':
+                        (object_name, object_fields), = object_structure.items()
+                        object_type = [object_type for component_dict in object_fields['components']
+                                       for object_type in component_dict.values()
+                                       if re.match(r'^Coil.*|ZoneHVAC.*Baseboard', object_type)]
+                        if object_type:
+                            additional_hw_branches.append(object_name)
+                    print(object_type)
+                demand_branchlist.append({"HotWaterLoop_Demand": additional_hw_branches})
         print('zone object list')
         pprint(zone_dictionary, width=150)
         # sys.exit()
@@ -1838,7 +1917,7 @@ def main(input_args):
                         for template_field, template_value in template_input.items():
                             if template_field.startswith('condenser'):
                                 condenser_loop_settings[template_field] = template_value
-                test_epjson['HVACTemplate:Plant:CondenserWaterLoop'] = {"Condenser Water Loop": condenser_loop_settings}
+                test_epjson['HVACTemplate:Plant:CondenserWaterLoop'] = {"CondenserWaterLoop": condenser_loop_settings}
                 option_tree = get_option_tree(pet, data)
                 equipment_dictionary, equipment_build_path = perform_build_operations(
                     connector_path='ChilledWaterLoop',
@@ -1926,7 +2005,6 @@ def main(input_args):
         print('##### Branch Build #####')
         system_branch_dictionary = {}
         zone_branch_dictionary = {}
-        demand_branchlist = []
         for unique_name, sbp in system_build_path_dictionary.items():
             sub_system_branch_dictionary, sub_system_demand_branchlist = create_branches(
                 build_path=sbp,
@@ -1948,17 +2026,6 @@ def main(input_args):
                 object_dictionary=sub_zone_branch_dictionary,
                 unique_name_override=False
             )
-            # Find branches created outside of build path
-            additional_hw_branches = []
-            for object_type, object_structure in sub_zone_dictionary.items():
-                if object_type == 'Branch':
-                    (object_name, object_fields), = object_structure.items()
-                    object_type = [object_type for component_dict in object_fields['components']
-                                   for object_type in component_dict.values()
-                                   if re.match(r'^Coil.*|ZoneHVAC.*Baseboard', object_type)]
-                    if object_type:
-                        additional_hw_branches.append(object_name)
-            demand_branchlist.append({"HotWaterLoop_Demand": additional_hw_branches})
         branch_dictionary = {}
         for bd in [system_branch_dictionary, zone_branch_dictionary]:
             branch_dictionary = merge_dictionaries(
@@ -2003,9 +2070,14 @@ def main(input_args):
         plant_equipment_list_objects = build_plant_equipment_lists(
             waterloop_branch_dictionary=waterloop_branch_dictionary,
             super_dictionary=epjson_dictionary)
+        schedule_object = build_compact_schedule(
+            data=data,
+            schedule_type='ALWAYS_VAL',
+            insert_values=[1, ]
+        )
         epjson_dictionary = merge_dictionaries(
             super_dictionary=epjson_dictionary,
-            object_dictionary=plant_equipment_list_objects,
+            object_dictionary=dict(**plant_equipment_list_objects, **schedule_object),
             unique_name_override=False
         )
         pprint(epjson_dictionary, width=150)
@@ -2035,17 +2107,59 @@ def main(input_args):
         # Modify epjson object using its own sub-objects as references
         # This should serve as a last step for only objects that can't be
         # completed in above processes.
-        # todo_eo: add function that scans schedule field names and auto-creates them based on their names
         modified_epjson_objects = modify_zone_control_thermostats(
             super_dictionary=epjson_dictionary,
             data=data)
+        print('##### Modified Objects Output #####')
+        pprint(modified_epjson_objects, width=150)
         epjson_dictionary = merge_dictionaries(
             super_dictionary=epjson_dictionary,
             object_dictionary=modified_epjson_objects)
-        print('##### Modified Objects Output #####')
-        pprint(modified_epjson_objects, width=150)
+        # scan through compact schedules in dictionary and format them properly
+        formatted_schedule_objects = {}
+        for object_name, object_structure in epjson_dictionary['Schedule:Compact'].items():
+            print(object_name)
+            # continue
+            if not object_structure:
+                schedule_object = None
+                # create thermostat schedules and save them to temporary dictionaries
+                hvac_template_rgx = re.match(r'HVACTemplate-Always([\d\.]+)', object_name)
+                if hvac_template_rgx:
+                    if not formatted_schedule_objects.get('Schedule:Compact'):
+                        formatted_schedule_objects['Schedule:Compact'] = {}
+                    schedule_object = build_compact_schedule(
+                        data=data,
+                        schedule_type='ALWAYS_VAL',
+                        insert_values=[float(hvac_template_rgx.group(1)), ]
+                    )
+                if object_name == 'FanAvailSched':
+                    schedule_object = build_compact_schedule(
+                        data=data,
+                        schedule_type='FanAvailSched',
+                        insert_values=[],
+                        name='FanAvailSched'
+                    )
+                if schedule_object:
+                    formatted_schedule_objects = merge_dictionaries(
+                        super_dictionary=formatted_schedule_objects,
+                        object_dictionary=schedule_object)
+        print('##### Formatted Schedules #####')
+        pprint(formatted_schedule_objects, width=150)
+        epjson_dictionary = merge_dictionaries(
+            super_dictionary=epjson_dictionary,
+            object_dictionary=formatted_schedule_objects,
+            unique_name_override=True)
         print('##### EPJSON Output #####')
         pprint(epjson_dictionary, width=150)
+    # remove hvactemplate objects from original file
+    base_epjson = {i: j for i, j in test_epjson.items() if not i.startswith('HVACTemplate')}
+    # merge created epjson with base
+    output_epjson = merge_dictionaries(
+        super_dictionary=base_epjson,
+        object_dictionary=epjson_dictionary
+    )
+    with open('test/expand_examples/epjson_test.epJSON', 'w') as f:
+        json.dump(output_epjson, f, indent=4, sort_keys=True)
     return
 
 
