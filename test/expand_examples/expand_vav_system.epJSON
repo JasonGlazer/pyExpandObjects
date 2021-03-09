@@ -1723,6 +1723,13 @@
       "visible_absorptance": 0.65
     }
   },
+  "Output:Diagnostics": {
+    "Diagnostics 1": {
+      "diagnostics": [
+        {"key_name": "DisplayExtraWarnings"}
+      ]
+    }
+  },
   "Output:Meter:MeterFileOnly": {
     "Output:Meter:MeterFileOnly 1": {
       "key_name": "Electricity:Facility",
@@ -1941,7 +1948,7 @@
     "SPACE1-1 People 1": {
       "activity_level_schedule_name": "ActSchd",
       "fraction_radiant": 0.3,
-      "number_of_people": 11,
+      "number_of_people": 30,
       "number_of_people_calculation_method": "People",
       "number_of_people_schedule_name": "OCCUPY-1",
       "zone_or_zonelist_name": "SPACE1-1"
@@ -1949,7 +1956,7 @@
     "SPACE2-1 People 1": {
       "activity_level_schedule_name": "ActSchd",
       "fraction_radiant": 0.3,
-      "number_of_people": 5,
+      "number_of_people": 30,
       "number_of_people_calculation_method": "People",
       "number_of_people_schedule_name": "OCCUPY-1",
       "zone_or_zonelist_name": "SPACE2-1"
@@ -1957,7 +1964,7 @@
     "SPACE3-1 People 1": {
       "activity_level_schedule_name": "ActSchd",
       "fraction_radiant": 0.3,
-      "number_of_people": 11,
+      "number_of_people": 30,
       "number_of_people_calculation_method": "People",
       "number_of_people_schedule_name": "OCCUPY-1",
       "zone_or_zonelist_name": "SPACE3-1"
@@ -1965,7 +1972,7 @@
     "SPACE4-1 People 1": {
       "activity_level_schedule_name": "ActSchd",
       "fraction_radiant": 0.3,
-      "number_of_people": 5,
+      "number_of_people": 30,
       "number_of_people_calculation_method": "People",
       "number_of_people_schedule_name": "OCCUPY-1",
       "zone_or_zonelist_name": "SPACE4-1"
@@ -1982,10 +1989,10 @@
   "RunPeriod": {
     "Run Period 2": {
       "apply_weekend_holiday_rule": "No",
-      "begin_day_of_month": 14,
+      "begin_day_of_month": 1,
       "begin_month": 1,
       "day_of_week_for_start_day": "Tuesday",
-      "end_day_of_month": 14,
+      "end_day_of_month": 15,
       "end_month": 1,
       "use_weather_file_daylight_saving_period": "Yes",
       "use_weather_file_holidays_and_special_days": "Yes",
@@ -1997,7 +2004,7 @@
       "begin_day_of_month": 7,
       "begin_month": 7,
       "day_of_week_for_start_day": "Tuesday",
-      "end_day_of_month": 7,
+      "end_day_of_month": 22,
       "end_month": 7,
       "use_weather_file_daylight_saving_period": "Yes",
       "use_weather_file_holidays_and_special_days": "Yes",
@@ -2932,7 +2939,7 @@
       "dehumidification_setpoint": 60.0,
       "economizer_lockout": "NoLockout",
       "economizer_lower_temperature_limit": 4,
-      "economizer_type": "DifferentialDryBulb",
+      "economizer_type": "NoEconomizer",
       "economizer_upper_temperature_limit": 19,
       "gas_heating_coil_efficiency": 0.8,
       "gas_heating_coil_parasitic_electric_load": 0.0,
@@ -2953,6 +2960,7 @@
       "minimum_outdoor_air_schedule_name": "Min OA Sched",
       "night_cycle_control": "CycleOnAny",
       "preheat_coil_type": "Electric",
+      "preheat_coil_design_setpoint": 4,
       "preheat_efficiency": 1,
       "return_plenum_name": "PLENUM-1",
       "sensible_heat_recovery_effectiveness": 0.7,
@@ -2977,12 +2985,12 @@
       "outdoor_air_flow_rate_per_person": 0.00944,
       "outdoor_air_flow_rate_per_zone": 0.0,
       "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
-      "outdoor_air_method": "Flow/Zone",
+      "outdoor_air_method": "Flow/Person",
       "reheat_coil_type": "HotWater",
       "supply_air_maximum_flow_rate": "Autosize",
       "template_thermostat_name": "All Zones",
       "template_vav_system_name": "VAV Sys 1",
-      "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+      "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
       "zone_heating_design_supply_air_temperature": 50.0,
       "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
       "zone_minimum_air_flow_input_method": "Constant",
@@ -3001,11 +3009,68 @@
       "supply_air_maximum_flow_rate": "Autosize",
       "template_thermostat_name": "All Zones",
       "template_vav_system_name": "VAV Sys 1",
-      "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+      "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
       "zone_heating_design_supply_air_temperature": 50.0,
       "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
       "zone_minimum_air_flow_input_method": "Constant",
       "zone_name": "SPACE2-1"
+    },
+    "HVACTemplate:Zone:VAV 3": {
+      "baseboard_heating_capacity": "Autosize",
+      "baseboard_heating_type": "None",
+      "constant_minimum_air_flow_fraction": 0.3,
+      "damper_heating_action": "Reverse",
+      "outdoor_air_flow_rate_per_person": 0.00944,
+      "outdoor_air_flow_rate_per_zone": 0.0,
+      "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+      "outdoor_air_method": "Flow/Person",
+      "reheat_coil_type": "HotWater",
+      "supply_air_maximum_flow_rate": "Autosize",
+      "template_thermostat_name": "All Zones",
+      "template_vav_system_name": "VAV Sys 1",
+      "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+      "zone_heating_design_supply_air_temperature": 50.0,
+      "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+      "zone_minimum_air_flow_input_method": "Constant",
+      "zone_name": "SPACE3-1"
+    },
+    "HVACTemplate:Zone:VAV 4": {
+      "baseboard_heating_capacity": "Autosize",
+      "baseboard_heating_type": "None",
+      "constant_minimum_air_flow_fraction": 0.3,
+      "damper_heating_action": "Reverse",
+      "outdoor_air_flow_rate_per_person": 0.00944,
+      "outdoor_air_flow_rate_per_zone": 0.0,
+      "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+      "outdoor_air_method": "Flow/Person",
+      "reheat_coil_type": "HotWater",
+      "supply_air_maximum_flow_rate": "Autosize",
+      "template_thermostat_name": "All Zones",
+      "template_vav_system_name": "VAV Sys 1",
+      "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+      "zone_heating_design_supply_air_temperature": 50.0,
+      "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+      "zone_minimum_air_flow_input_method": "Constant",
+      "zone_name": "SPACE4-1"
+    },
+    "HVACTemplate:Zone:VAV 5": {
+      "baseboard_heating_capacity": "Autosize",
+      "baseboard_heating_type": "None",
+      "constant_minimum_air_flow_fraction": 0.3,
+      "damper_heating_action": "Reverse",
+      "outdoor_air_flow_rate_per_person": 0.00944,
+      "outdoor_air_flow_rate_per_zone": 0.0,
+      "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+      "outdoor_air_method": "Flow/Person",
+      "reheat_coil_type": "HotWater",
+      "supply_air_maximum_flow_rate": "Autosize",
+      "template_thermostat_name": "All Zones",
+      "template_vav_system_name": "VAV Sys 1",
+      "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+      "zone_heating_design_supply_air_temperature": 50.0,
+      "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+      "zone_minimum_air_flow_input_method": "Constant",
+      "zone_name": "SPACE5-1"
     }
   },
   "HVACTemplate:Plant:ChilledWaterLoop": {
@@ -3079,8 +3144,8 @@
   },
   "HVACTemplate:Thermostat": {
     "All Zones": {
-      "constant_heating_setpoint": 12,
-      "constant_cooling_setpoint": 18
+      "constant_heating_setpoint": 21,
+      "constant_cooling_setpoint": 24
     }
   }
 }
