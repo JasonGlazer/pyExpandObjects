@@ -6,6 +6,7 @@ import numbers
 import sys
 import typing
 import json
+import os
 from pprint import pprint
 
 
@@ -2158,7 +2159,7 @@ def main(input_args):
         super_dictionary=base_epjson,
         object_dictionary=epjson_dictionary
     )
-    with open('test/expand_examples/epjson_test.epJSON', 'w') as f:
+    with open(os.path.join(os.path.dirname(__file__), 'epjson_test.epJSON'), 'w') as f:
         json.dump(output_epjson, f, indent=4, sort_keys=True)
     return
 
