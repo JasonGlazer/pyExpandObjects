@@ -1713,13 +1713,13 @@ def build_plant_equipment_lists(
     # also read in the setpoint temperature and make it a HVACTemplate schedule
     for loop_side, temp in zip(
             ('CondenserWaterLoop_Supply', 'ChilledWaterLoop_Supply'),
-            (29.4, 5.0)
+            (29.4, 7.22)
     ):
         loop, side = loop_side.split('_')
         if waterloop_branch_dictionary.get(loop_side):
             if not plant_equipment_objects.get('SetpointManager:Scheduled'):
                 plant_equipment_objects['SetpointManager:Scheduled'] = {}
-            plant_equipment_objects['SetpointManager:Scheduled']['{} Condenser Loop'.format(loop)] = {
+            plant_equipment_objects['SetpointManager:Scheduled']['{} Temp Manager'.format(loop)] = {
                 'control_variable': 'Temperature',
                 'schedule_name': 'HVACTemplate-Always{}'.format(temp),
                 'setpoint_node_or_nodelist_name': '{} Supply Setpoint Nodes'.format(loop)
