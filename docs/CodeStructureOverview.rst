@@ -30,6 +30,12 @@ Given that pyExpandObject serves a simple overall purpose, the processing path i
 Yaml Description
 ------------------------------
 
+This program makes use of a YAML file to hold structured objects as well as instructions for alternative object creation based on template inputs. This `EnergyPlus Object Configuration`_ YAML file makes use of `anchors and aliases`_ to reduce the amount of redundant code, ensure object consistency between definitions, and provide a more reliable framework.  With these tools, a structure has been created to define EnergyPlus objects and reference node locations without the need to statically type text values.  The overall intent behind creating this file is to provide a repository for storing customized structures and information while the Python files perform generalized expansion operations.
+
+.. _EnergyPlus Object Configuration: https://github.com/john-grando/pyExpandObjects/blob/main/expand_objects/resources/energyplus_objects_config.yaml
+
+.. _anchors and aliases: https://support.atlassian.com/bitbucket-cloud/docs/yaml-anchors
+
 **Object Structure**
 
 To hold the necessary information for construction, the Yaml objects which represent EnergyPlus objects have additional higher-level information, and are termed 'super' objects.  These object's standard format is as follows:
