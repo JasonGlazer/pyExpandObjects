@@ -36,7 +36,7 @@ class TestHVACTemplateObject(unittest.TestCase):
         if self.doc_text and self.func_name:
             try:
                 self.testing_logger.info(
-                    '%s, %s, %s, %s',
+                    '%s,%s,%s,%s',
                     self.doc_text,
                     os.path.basename(__file__),
                     self.func_name,

@@ -37,7 +37,7 @@ class Logger:
             if not os.path.isfile(log_file):
                 with open(log_file, 'w') as f:
                     if re.match(r'.*test.log$', log_file):
-                        f.write("TimeStamp, DocText, FileName, FunctionName, FunctionStatus\n")
+                        f.write("TimeStamp,DocText,FileName,FunctionName,FunctionStatus\n")
                     else:
                         pass
         fileConfig(
