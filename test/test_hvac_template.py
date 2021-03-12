@@ -14,7 +14,6 @@ minimum_objects_d = {
             "coordinate_system": "Relative",
             "starting_vertex_position": "UpperLeftCorner",
             "vertex_entry_direction": "Counterclockwise"
-
         }
     }
 }
@@ -72,7 +71,7 @@ class TestHVACTemplateObject(unittest.TestCase):
             return wrapper
         return _test_logger_wrapper
 
-    @_test_logger(doc_text="HVACTemplate:Base:NoTemplatesReturnFlag")
+    @_test_logger(doc_text="HVACTemplate:epJSON Handling:Verify if no templates are provided")
     def test_no_hvac_objects_returns_false(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -87,7 +86,7 @@ class TestHVACTemplateObject(unittest.TestCase):
         self.assertIsNone(self.hvac_template.templates)
         return
 
-    @_test_logger()
+    @_test_logger(doc_text="HVACTemplate:epJSON Handling:Verify if templates are provided")
     def test_one_hvac_object_one_template_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -104,6 +103,7 @@ class TestHVACTemplateObject(unittest.TestCase):
         self.assertEqual(len(self.hvac_template.templates.keys()), 1)
         return
 
+    @_test_logger()
     def test_n_hvac_objects_one_template_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
