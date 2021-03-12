@@ -103,7 +103,6 @@ class TestHVACTemplateObject(unittest.TestCase):
         self.assertEqual(len(self.hvac_template.templates.keys()), 1)
         return
 
-
     def test_n_hvac_objects_one_template_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,

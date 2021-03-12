@@ -12,7 +12,7 @@ def make_table(df, total_levels):
     html_tables = {}
     for level in reversed(range(total_levels)):
         html_text = ''
-        for section, sub_df in df.groupby(level=level-1):
+        for section, sub_df in df.groupby(level=level - 1):
             # Remove specific test text from DocText for a header
             title_text_list = sub_df['DocText'].iloc[0].split(":")[0:-1]
             title_text = ':'.join(title_text_list) if \
@@ -32,7 +32,7 @@ def make_table(df, total_levels):
                 "FunctionStatus": "Status"
             }, inplace=True)
             html_text += sub_df.to_html(index=False) + '\n'
-            df = df.drop(section, level=level-1)
+            df = df.drop(section, level=level - 1)
             html_tables[section] = html_text
     return html_tables
 
