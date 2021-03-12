@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 from pathlib import Path
 from logging.config import fileConfig
 
@@ -35,7 +34,7 @@ class Logger:
         )
         for log_file in [log_file_location, testing_log_file_location]:
             if not os.path.isfile(log_file):
-                with open(log_file, 'w') as f:
+                with open(log_file, 'w'):
                     pass
         fileConfig(
             os.path.join(
