@@ -137,7 +137,7 @@ class EPJSON(Logger):
 
         Arguments
         -----
-        epjson_ref : location of epjson file to read
+        epjson_ref : location of epjson file to read or object itself
         schema_location (optional) : location of json schema.  If not provided
             then the default environment variable path (ENERGYPLUS_ROOT_DIR) and
             file (Energy+.schema.epJSON) will be used.
@@ -146,8 +146,6 @@ class EPJSON(Logger):
         -----
         class object (epjson_ref, schema_location)
         """
-
-        # allow for epjson_ref to be file path or object
         try:
             if isinstance(epjson_ref, dict):
                 self.input_epjson = epjson_ref

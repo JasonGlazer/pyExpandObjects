@@ -16,9 +16,9 @@ def build_parser():  # pragma: no cover
         action='store_false',
         help='Skip schema validations')
     parser.add_argument(
-        "files",
-        nargs='+',
-        help='Paths of epJSON files to convert'
+        "file",
+        nargs='?',
+        help='Path of epJSON file to convert'
     )
     return parser
 
@@ -27,20 +27,23 @@ def main(args=None):
     hvt = HVACTemplate(
         no_schema=args.no_schema
     )
-    for f in args.files:
-        output_epjson = None
-        if f.endswith('.epJSON'):
-            if os.path.exists(f):
-                hvt.logger.info('Proceessing %s', f)
-                output_epjson = hvt.run(input_epjson=f)
-            else:
-                hvt.logger.warning('File does not exist: %s. file not processed', f)
+    output = {'outputPreProcessorMessage': []}
+    if args.file.endswith('.epJSON'):
+        if os.path.exists(args.file):
+            hvt.logger.info('Proceessing %s', args.file)
+            output['epjson'] = hvt.run(input_epjson=args.file)
         else:
-            hvt.logger.warning('Bad file extension for %s.  File not processed', f)
-    return output_epjson
+            hvt.logger.warning('File does not exist: %s. file not processed', args.file)
+            output['outputPreProcessorMessage'].append(
+                'File does not exist: {}.  File not processed'.format(args.file))
+    else:
+        hvt.logger.warning('Bad file extension for %s.  File not processed', args.file)
+        output['outputPreProcessorMessage'].append(
+            'Bad file extension for {}.  File not processed'.format(args.file))
+    return output
 
 
 if __name__ == "__main__":
-    parser = build_parser()
-    args = parser.parse_args()
-    main(args)
+    epJSON_parser = build_parser()
+    epJSON_args = epJSON_parser.parse_args()
+    main(epJSON_args)
