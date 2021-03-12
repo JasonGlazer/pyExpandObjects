@@ -22,21 +22,28 @@ class Logger:
         # also prevent bad logger name from being called
         global loggers
         # noinspection PyBroadException
+        # Use a different file for testing logger
         logging_dir = str(this_script_path.parent.parent / 'logs')
         log_file_location = os.path.join(
             logging_dir,
             '{}.log'.format(log_file_name)
         )
-        if not os.path.isfile(log_file_location):
-            with open(log_file_location, 'w'):
-                pass
+        testing_log_file_location = os.path.join(
+            logging_dir,
+            '{}.log'.format('test')
+        )
+        for log_file in [log_file_location, testing_log_file_location]:
+            if not os.path.isfile(log_file):
+                with open(log_file, 'w'):
+                    pass
         fileConfig(
             os.path.join(
                 logging_dir,
                 logging_file_name
             ),
             defaults={
-                "logfilename": log_file_location
+                "base_logfilename": log_file_location,
+                "testing_logfilename": testing_log_file_location
             }
         )
         # if the code fails, fall back to root logger

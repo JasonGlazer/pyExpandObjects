@@ -13,6 +13,7 @@ coverage==5.4
 
 # for testing on CI so it can push to coveralls
 coveralls==3.0.0
+pandas==1.2.3
 
 # for building packages
 pyinstaller==4.2
