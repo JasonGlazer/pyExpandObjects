@@ -37,9 +37,6 @@ def main():
         .last()\
         .reset_index()
     section_split_df = df['DocText'].str.split(':', expand=True)
-    # df = pd.concat([df, section_split_df], axis=1)
-    # section split columns are ascending integers
-    # df = df.set_index(section_split_df.columns.tolist())
     html_text = make_table(df, total_levels=len(section_split_df.columns.tolist()))
     sections = sorted([i for i in html_text.keys()])
     # Push the general section to the top
