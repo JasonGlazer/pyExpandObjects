@@ -19,10 +19,46 @@
 <h3>
     Completed Tests
 </h3>
-<h4> HVACTemplate:epJSON Handling</h4><table border="1" class="dataframe">
+<h4> Core</h4><table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
       <th>Test</th>
+      <th>FileName</th>
+      <th>FunctionName</th>
+      <th>Last Check</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Bad file extensions are rejected</td>
+      <td>test_command_line.py</td>
+      <td>test_bad_file_extension_returns_message</td>
+      <td>2021-03-11 23:09:15</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Bad file paths are rejected</td>
+      <td>test_command_line.py</td>
+      <td>test_bad_file_path_returns_message</td>
+      <td>2021-03-11 23:09:15</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>No schema flag works</td>
+      <td>test_command_line.py</td>
+      <td>test_no_schema_main</td>
+      <td>2021-03-11 23:09:16</td>
+      <td>True</td>
+    </tr>
+  </tbody>
+</table>
+<h4> HVACTemplate : epJSON Handling</h4><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Test</th>
+      <th>FileName</th>
+      <th>FunctionName</th>
       <th>Last Check</th>
       <th>Status</th>
     </tr>
@@ -30,12 +66,16 @@
   <tbody>
     <tr>
       <td>Verify if no templates are provided</td>
-      <td>2021-03-11 19:24:32</td>
+      <td>test_hvac_template.py</td>
+      <td>test_no_hvac_objects_returns_false</td>
+      <td>2021-03-11 23:09:23</td>
       <td>True</td>
     </tr>
     <tr>
       <td>Verify if templates are provided</td>
-      <td>2021-03-11 19:24:33</td>
+      <td>test_hvac_template.py</td>
+      <td>test_one_hvac_object_one_template_returns_true</td>
+      <td>2021-03-11 23:09:24</td>
       <td>True</td>
     </tr>
   </tbody>

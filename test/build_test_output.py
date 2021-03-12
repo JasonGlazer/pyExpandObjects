@@ -10,30 +10,18 @@ base_project_path = os.path.dirname(
 
 def make_table(df, total_levels):
     html_tables = {}
-    for level in reversed(range(total_levels)):
+    df[['DocSection', 'DocText']] = df["DocText"].str.rsplit(":", 1, expand=True)
+    for section, sub_df in df.groupby(['DocSection']):
+        sub_df.drop(['DocSection'], axis=1, inplace=True)
         html_text = ''
-        for section, sub_df in df.groupby(level=level - 1):
-            # Remove specific test text from DocText for a header
-            title_text_list = sub_df['DocText'].iloc[0].split(":")[0:-1]
-            title_text = ':'.join(title_text_list) if \
-                len(title_text_list) > 0 else \
-                sub_df['DocText'].iloc[0]
-            html_text += '<h4>' + title_text + "</h4>"
-            sub_df = sub_df.unstack(level=-1).reset_index(drop=True).stack()
-            # Retrieve specific function text
-            sub_df['DocTextParse'] = sub_df["DocText"].str.extract('.*:(.*)$')
-            sub_df['DocText'] = sub_df[['FileName', 'FunctionName', 'DocTextParse']]\
-                .apply(lambda x: x[2] if not pd.isnull(x[2]) else ' - '.join([x[0], x[1]]), axis=1)
-            # format
-            sub_df.drop(['DocTextParse', 'FileName', 'FunctionName'], axis=1, inplace=True)
-            sub_df.rename(columns={
-                "DocText": "Test",
-                "TimeStamp": "Last Check",
-                "FunctionStatus": "Status"
-            }, inplace=True)
-            html_text += sub_df.to_html(index=False) + '\n'
-            df = df.drop(section, level=level - 1)
-            html_tables[section] = html_text
+        html_text += '<h4>' + section.replace(":", " : ") + "</h4>"
+        sub_df.rename(columns={
+            "DocText": "Test",
+            "TimeStamp": "Last Check",
+            "FunctionStatus": "Status"
+        }, inplace=True)
+        html_text += sub_df.to_html(index=False) + '\n'
+        html_tables[section] = html_text
     return html_tables
 
 
@@ -49,9 +37,9 @@ def main():
         .last()\
         .reset_index()
     section_split_df = df['DocText'].str.split(':', expand=True)
-    df = pd.concat([df, section_split_df], axis=1)
+    # df = pd.concat([df, section_split_df], axis=1)
     # section split columns are ascending integers
-    df = df.set_index(section_split_df.columns.tolist())
+    # df = df.set_index(section_split_df.columns.tolist())
     html_text = make_table(df, total_levels=len(section_split_df.columns.tolist()))
     sections = sorted([i for i in html_text.keys()])
     # Push the general section to the top

@@ -4,49 +4,53 @@ import os
 from argparse import Namespace
 
 from expand_objects.main import main
+from test import BaseTest
 
 this_script_path = os.path.dirname(
     os.path.abspath(__file__)
 )
 
 
-class TestHVACTemplateObject(unittest.TestCase):
-
+class TestHVACTemplateObject(BaseTest, unittest.TestCase):
+    @BaseTest._test_logger(doc_text="Core:No schema flag works")
     def test_no_schema_main(self):
+        output = {}
         exception_raised = False
         try:
-            output_epjson = main(
+            output = main(
                 Namespace(
                     no_schema=True,
-                    files=[os.path.join(this_script_path, 'test/resources', 'HVACTemplate-5ZonePurchAir.epJSON')]
+                    file=os.path.join(this_script_path, 'resources', 'HVACTemplate-5ZonePurchAir.epJSON')
                 )
             )
         except Exception as e:
-            exception_raised = e
+            self.assertEqual(e, e)
             exception_raised = True
         self.assertFalse(exception_raised)
-        # Make more detailed test when output is constructed.
-        print(output_epjson)
+        self.assertIn('outputPreProcessorMessage', output.keys())
+        self.assertFalse(output['outputPreProcessorMessage'])
         return
 
-    def test_bad_file_path_returns_none(self):
+    @BaseTest._test_logger(doc_text="Core:Bad file paths are rejected")
+    def test_bad_file_path_returns_message(self):
+        output = main(
+            Namespace(
+                no_schema=True,
+                file='bad_path.epJSON'
+            )
+        )
+        self.assertIn('File does not exist', output['outputPreProcessorMessage'][0])
+        return
+
+    @BaseTest._test_logger(doc_text="Core:Bad file extensions are rejected")
+    def test_bad_file_extension_returns_message(self):
         output_epjson = main(
             Namespace(
                 no_schema=True,
-                files=['bad_path.epJSON', ]
+                file='bad_extension.epJSON_bad'
             )
         )
-        self.assertIsNone(output_epjson)
-        return
-
-    def test_bad_file_extension_returns_none(self):
-        output_epjson = main(
-            Namespace(
-                no_schema=True,
-                files=['bad_extension.epJSON_bad', ]
-            )
-        )
-        self.assertIsNone(output_epjson)
+        self.assertIn('Bad file extension', output_epjson['outputPreProcessorMessage'][0])
         return
 
     @unittest.skip
@@ -56,7 +60,7 @@ class TestHVACTemplateObject(unittest.TestCase):
                 'python',
                 os.path.join(this_script_path, '..', 'expand_objects', 'main.py'),
                 '-ns',
-                os.path.join(this_script_path, 'test/resources', 'RefBldgMediumOfficeNew2004_Chicago_epJSON.epJSON2')
+                os.path.join(this_script_path, 'resources', 'HVACTemplate-5ZonePurchAir.epJSON')
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
