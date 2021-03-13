@@ -10,39 +10,56 @@ class BaseTest(object):
     @classmethod
     def _test_logger(cls, doc_text="General"):
         """
-        Wrapper that sets class variables for csv output
-        :param doc_text: section for documentation file
+        Wrapper that writes a CSV formatted message to a log file for further processing
+        :param doc_text: Colon separated text for document
 
-        :return: class variable status indicators
-            doc_text: section for documentation file
-            func_name: name of function called
-            func_status: boolean of function return
+        :return: None
         """
         def _test_logger_wrapper(func):
             @wraps(func)
             def wrapper(self, *args, **kwargs):
                 func_name = func.__name__
-                func_status = True
-                # change func_status to false if an assertion was raised
+                func_status = False
+                output_msg = False
                 try:
-                    return func(self, *args, **kwargs)
-                except Exception as e:
-                    self.assertEqual(e, e)
-                    func_status = False
-                finally:
+                    func(self, *args, **kwargs)
+                    func_status = True
+                    output_msg = True
                     self.write_logger(
                         doc_text=doc_text,
                         file_name=os.path.basename(inspect.getfile(func)),
                         func_name=func_name,
                         func_status=func_status)
-                    return func(self, *args, **kwargs)
+                finally:
+                    # prevent double logging output
+                    if not output_msg:
+                        self.write_logger(
+                            doc_text=doc_text,
+                            file_name=os.path.basename(inspect.getfile(func)),
+                            func_name=func_name,
+                            func_status=func_status)
             # make output the called function for unittest to work
             _test_logger_wrapper.__wrapped__ = func
             return wrapper
         return _test_logger_wrapper
 
     @staticmethod
-    def write_logger(doc_text, file_name, func_name, func_status, testing_logger=Logger(logger_name='testing_logger').logger):
+    def write_logger(
+            doc_text,
+            file_name,
+            func_name,
+            func_status,
+            testing_logger=Logger(logger_name='testing_logger').logger):
+        """
+        Write a structured output to logging file.
+
+        :param doc_text: Colon separated string indicating Document section and message
+        :param file_name: Function file name
+        :param func_name: Function name
+        :param func_status: Final status of function
+        :param testing_logger: logger object to write with
+        :return: None
+        """
         try:
             testing_logger.info(
                 '%s,%s,%s,%s',
@@ -52,3 +69,4 @@ class BaseTest(object):
                 func_status)
         except AttributeError:
             pass
+        return

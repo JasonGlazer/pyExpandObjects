@@ -11,8 +11,8 @@ this_script_path = os.path.dirname(
 )
 
 
-class TestHVACTemplateObject(BaseTest, unittest.TestCase):
-    @BaseTest._test_logger(doc_text="Core:No schema flag works")
+class TestMain(BaseTest, unittest.TestCase):
+    @BaseTest._test_logger(doc_text="Core:No schema flag is allowed")
     def test_no_schema_main(self):
         output = {}
         exception_raised = False

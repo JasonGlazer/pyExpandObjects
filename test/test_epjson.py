@@ -63,8 +63,6 @@ class TestEPJSONHandler(unittest.TestCase):
         self.assertIsNone(self.epjson_handler_no_schema.schema_is_valid)
         self.assertIsNone(self.epjson_handler_no_schema.input_epjson_is_valid)
         self.assertEqual(len(self.epjson_handler_no_schema.input_epjson.keys()), 3)
+        return
 
-# make load_schema() and/or validate_schema() accept string and file implementations?
-# tests
-# - bad file path gives meaningful error
-# - good file outputs success
+    # todo_eo Need to test merge_dictionaries

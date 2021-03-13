@@ -38,8 +38,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             }
         })
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
-        self.assertFalse(self.hvac_template.templates_exist)
-        self.assertIsNone(self.hvac_template.templates)
+        self.assertEqual(0, len(self.hvac_template.templates))
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:epJSON Handling:Verify if templates are provided")
@@ -53,30 +52,12 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
+        self.hvac_template.pre_process(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
-        self.assertTrue(self.hvac_template.templates_exist)
         self.assertEqual(len(self.hvac_template.templates.keys()), 1)
-        return
-
-    def test_n_hvac_objects_one_template_returns_true(self):
-        self.hvac_template.load_epjson({
-            **minimum_objects_d,
-            "HVACTemplate:Thermostat": {
-                "All Zones": {
-                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
-                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
-                },
-                "All Zones 2": {
-                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
-                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
-                }
-            }
-        })
-        self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
-        self.assertTrue(self.hvac_template.input_epjson_is_valid)
-        self.assertTrue(self.hvac_template.templates_exist)
-        self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
+        self.assertIn(
+            'HVACTemplate:Thermostat',
+            self.hvac_template.templates.keys())
         return
 
     def test_n_hvac_objects_n_templates_returns_true(self):
@@ -97,27 +78,31 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 "HVACTemplate:Zone:IdealLoadsAirSystem 2": {"zone_name": "Zone 2"}
             }
         })
-        self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
+        self.hvac_template.pre_process(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
-        self.assertTrue(self.hvac_template.templates_exist)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
-        self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
+        self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Zone:IdealLoadsAirSystem'].keys()), 2)
         return
 
-    def test_thermostat_template_object_created(self):
+    def test_templates_thermostat_attribute_created(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
-                "All Zones 1": {
+                "All Zones": {
                     "heating_setpoint_schedule_name": "Htg-SetP-Sch",
                     "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
                 },
                 "All Zones 2": {
                     "heating_setpoint_schedule_name": "Htg-SetP-Sch",
                     "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
-                },
+                }
             }
         })
-        self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
-        self.assertEqual(len(self.hvac_template.templates_thermostat.keys()), 2)
+        self.hvac_template.pre_process(self.hvac_template.input_epjson)
+        self.assertTrue(self.hvac_template.input_epjson_is_valid)
+        self.assertEqual(
+            len(self.hvac_template.templates_thermostats['HVACTemplate:Thermostat'].keys()),
+            2)
         return
+
+    # todo_eo One test for each template type

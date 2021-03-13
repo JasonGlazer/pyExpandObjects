@@ -31,7 +31,13 @@ def main(args=None):
     if args.file.endswith('.epJSON'):
         if os.path.exists(args.file):
             hvt.logger.info('Proceessing %s', args.file)
-            output['epjson'] = hvt.run(input_epjson=args.file)
+            hvt_output = hvt.run(input_epjson=args.file)
+            # merge hvac template output to output dictionary
+            for k, v in hvt_output.items():
+                if k == 'outputPreProcessorMessage':
+                    output['outputPreProcessorMessage'].append(v)
+                else:
+                    output[k] = v
         else:
             hvt.logger.warning('File does not exist: %s. file not processed', args.file)
             output['outputPreProcessorMessage'].append(
