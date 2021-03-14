@@ -8,7 +8,7 @@ base_project_path = os.path.dirname(
 )
 
 
-def make_table(df, total_levels):
+def make_table(df):
     html_tables = {}
     df[['DocSection', 'DocText']] = df["DocText"].str.rsplit(":", 1, expand=True)
     for section, sub_df in df.groupby(['DocSection']):
@@ -36,13 +36,12 @@ def main():
         .groupby(['DocText', 'FileName', 'FunctionName'])\
         .last()\
         .reset_index()
-    section_split_df = df['DocText'].str.split(':', expand=True)
-    html_text = make_table(df, total_levels=len(section_split_df.columns.tolist()))
+    html_text = make_table(df)
     sections = sorted([i for i in html_text.keys()])
     # Push the general section to the top
     if "General" in sections:
         sections.remove("General")
-    sections.insert(0, "General")
+        sections.insert(0, "General")
     # create html file and save to docs static folder.
     with open(os.path.join(base_project_path, "docs", "_static", "testing_output.html"), 'w') as f:
         f.write("""
@@ -55,8 +54,7 @@ def main():
             notes_data = f2.read()
         f.write(notes_data)
         for section in sections:
-            if section in html_text.keys():
-                f.write(html_text[section])
+            f.write(html_text[section])
         f.write("""
             </head>
             <body>

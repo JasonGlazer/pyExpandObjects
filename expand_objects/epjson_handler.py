@@ -6,23 +6,26 @@ from expand_objects.logger import Logger
 this_script_path = Path(__file__).resolve()
 
 
+class UniqueNameException(Exception):
+    pass
+
+
 class EPJSON(Logger):
     """
     Handle epjson (and json) specific tasks
 
-    Inheritance
-    -----
+    Inheritance:
     Logger
 
-    Parameters
-    ------
-    Validator : schema validator from jsonschema
-    schema_validator : validated schema
-    schema : loaded schema.  This can be a failed or unvalidated schema.
+    Attributes:
+    Validator: schema validator from jsonschema
+    schema_validator: validated schema
+    schema: loaded schema.  This can be a failed or unvalidated schema.
         However, it requires a valid json object
-    schema_location : file path for schema
-    input_epjson : input epjson file
-    *_is_valid : initialized as None.  False if failed, True if passed.
+    schema_location: file path for schema
+    input_epjson: input epjson file
+    schema_is_valid: initialized as None.  False if failed, True if passed.
+    input_epjson_is_valid: initialized as None.  False if failed, True if passed.
     """
 
     def __init__(self, no_schema=True):
@@ -36,9 +39,45 @@ class EPJSON(Logger):
         self.input_epjson_is_valid = None
         self.schema_location = None
 
+    @staticmethod
+    def merge_epjson(
+            super_dictionary: dict,
+            object_dictionary: dict,
+            unique_name_override: bool = True,
+            unique_name_fail: bool = True) -> dict:
+        """
+        Merge a high level formatted dictionary with a sub-dictionary, both in epJSON format
+
+        :param super_dictionary: high level dictionary used as the base object
+        :param object_dictionary: dictionary to merge into base object
+        :param unique_name_override: allow a duplicate unique name to overwrite an existing object
+        :param unique_name_fail: if override is set to False, choose whether to skip object or fail
+        :return: merged output of the two input dictionaries
+        """
+        for object_type, object_structure in object_dictionary.items():
+            if not super_dictionary.get(object_type):
+                super_dictionary[object_type] = {}
+            if isinstance(object_structure, dict):
+                for object_name, object_fields in object_structure.items():
+                    if not unique_name_override and object_name in super_dictionary[object_type].keys():
+                        if unique_name_fail:
+                            raise UniqueNameException("Unique name {} already exists in object {}".format(
+                                object_name,
+                                object_type
+                            ))
+                        else:
+                            continue
+                    super_dictionary[object_type][object_name] = object_fields
+            elif isinstance(object_structure, list):
+                super_dictionary[object_type] = object_structure
+        return super_dictionary
+
     def _get_json_file(self, json_location=None):
         """
         Load json file and return an error and None if fails
+
+        :param json_location: file location for json object
+        :return: loaded json object
         """
         json_obj = None
         try:
@@ -55,7 +94,8 @@ class EPJSON(Logger):
         Validate schema based on the loaded
         jsonschema pre-built validator (self.Validator)
 
-        Returns line by line values of errors if not valid.
+        :param schema: loaded schema object
+        :return: validated schema object or False value if failed
         """
         schema_validator = False
         try:
@@ -74,17 +114,11 @@ class EPJSON(Logger):
         """
         Load schema to class object.
 
-        Arguments
-        -----
-        schema_location (optional) : location of json schema.  If not provided
+        :param schema_location: (Optional) location of json schema.  If not provided
             then the default environment variable path (ENERGYPLUS_ROOT_DIR) and
             file (Energy+.schema.epJSON) will be used.
 
-        A valid schema is required to load the file.
-
-        Return
-        -----
-        class attribute 'schema' which contains the validated epjson schema
+        :return: Validated schema as a class attribute
         """
         if self.no_schema:
             self.schema = False
@@ -109,7 +143,8 @@ class EPJSON(Logger):
         """
         Validate json file based on loaded schema.
 
-        If input epjson is not valid, line by line errors will be returned.
+        :param input_epjson: epJSON object
+        :return: boolean indicating whether object is valid
         """
         epjson_is_valid = False
         if not self.schema or \
@@ -135,16 +170,10 @@ class EPJSON(Logger):
         """
         Load schema to class object.
 
-        Arguments
-        -----
-        epjson_ref : location of epjson file to read or object itself
-        schema_location (optional) : location of json schema.  If not provided
-            then the default environment variable path (ENERGYPLUS_ROOT_DIR) and
-            file (Energy+.schema.epJSON) will be used.
+        :param epjson_ref: Location of epJSON file to read or object itself
+        :param validate: Whether or not to perform schema validation
 
-        Return
-        -----
-        class object (epjson_ref, schema_location)
+        :return: boolean flag for valid epJSON and epJSON object as class attributes
         """
         try:
             if isinstance(epjson_ref, dict):

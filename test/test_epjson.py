@@ -1,7 +1,7 @@
 from pathlib import Path
 import unittest
 
-from expand_objects.epjson_handler import EPJSON
+from expand_objects.epjson_handler import EPJSON, UniqueNameException
 
 minimum_objects_d = {
     "Building": {
@@ -24,6 +24,119 @@ class TestEPJSONHandler(unittest.TestCase):
         self.epjson_handler_no_schema = EPJSON(no_schema=True)
         self.epjson_handler.logger.setLevel('ERROR')
         self.example_file_dir = Path(__file__).resolve().parent / 'resources'
+
+    def test_merge_same_object_type(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            }
+        }
+        dict_2 = {
+            "Zone": {
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 239.247360229,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            }
+        }
+        dict_3 = self.epjson_handler.merge_epjson(
+            super_dictionary=dict_1,
+            object_dictionary=dict_2,
+        )
+        self.assertIn('SPACE1-1', dict_3['Zone'].keys())
+        self.assertIn('SPACE2-1', dict_3['Zone'].keys())
+        return
+
+    def test_merge_two_objects(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            }
+        }
+        dict_2 = {
+            "ZoneInfiltration:DesignFlowRate": {
+                "SPACE1-1 Infil 1": {
+                    "constant_term_coefficient": 0,
+                    "design_flow_rate": 0.0167,
+                    "design_flow_rate_calculation_method": "Flow/Zone",
+                    "schedule_name": "INFIL-SCH",
+                    "temperature_term_coefficient": 0,
+                    "velocity_squared_term_coefficient": 0,
+                    "velocity_term_coefficient": 0.2237,
+                    "zone_or_zonelist_name": "SPACE1-1"
+                }
+            }
+        }
+        dict_3 = self.epjson_handler.merge_epjson(
+            super_dictionary=dict_1,
+            object_dictionary=dict_2,
+        )
+        self.assertIn('Zone', dict_3.keys())
+        self.assertGreater(len(dict_3['Zone']['SPACE1-1'].keys()), 0)
+        self.assertIn('ZoneInfiltration:DesignFlowRate', dict_3.keys())
+        self.assertGreater(len(dict_3['ZoneInfiltration:DesignFlowRate']['SPACE1-1 Infil 1'].keys()), 0)
+        return
+
+    def test_merge_fail_duplicate_name(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            }
+        }
+        dict_2 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            }
+        }
+        with self.assertRaisesRegex(UniqueNameException, '.*SPACE1-1.*Zone') as context:
+            dict_3 = self.epjson_handler.merge_epjson(
+                super_dictionary=dict_1,
+                object_dictionary=dict_2,
+                unique_name_override=False
+            )
+        return
 
     def test_default_schema_is_valid(self):
         self.epjson_handler.load_schema()
@@ -63,8 +176,5 @@ class TestEPJSONHandler(unittest.TestCase):
         self.assertIsNone(self.epjson_handler_no_schema.schema_is_valid)
         self.assertIsNone(self.epjson_handler_no_schema.input_epjson_is_valid)
         self.assertEqual(len(self.epjson_handler_no_schema.input_epjson.keys()), 3)
+        return
 
-# make load_schema() and/or validate_schema() accept string and file implementations?
-# tests
-# - bad file path gives meaningful error
-# - good file outputs success

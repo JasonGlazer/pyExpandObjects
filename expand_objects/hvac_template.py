@@ -10,49 +10,75 @@ class HVACTemplate(EPJSON):
     Inheritance:
     EPJSON <- Logger
 
-    Parameters:
-    templates_exist : boolean indicating if templates are present
-    templates : list of HVACTemplate objects from epJSON file
+    Attributes:
+    templates: HVACTemplate objects from epJSON file
+    templates_thermostat: HVACTemplate:Thermostat objects
+    templates_zone: HVACTemplate:Zone: objects
+    templates_system: HVACTemplate:System: objects
+    templates_plant_equipment: HVACTemplate:Plant equipment objects
+    templates_plant_loop: HVACTemplate:Plant: loop objects
     """
 
     def __init__(
             self,
             no_schema=True):
+        """
+        :param no_schema: Boolean flag for skipping schema validation
+        """
         super().__init__(no_schema=no_schema)
-        self.templates_exist = None
-        self.templates = None
-        self.templates_thermostat = None
+        self.templates = {}
+        self.templates_system = {}
+        self.templates_zone = {}
+        self.templates_plant_equipment = {}
+        self.templates_plant_loop = {}
+        self.templates_thermostats = {}
         return
 
-    def check_epjson_for_templates(self, epjson_obj):
+    def pre_process(self, epjson):
         """
-        Extract and organize hvac template objects
+        Organize epJSON and assign objects to specific class attributes
 
-        templates : all HVACTemplate objects
-        templates_exist : boolean indicating if any HVACTemplates are in the file
-        templates_thermostat : All HVACTemplate:Thermostat objects
+        :param epjson: Input epJSON object
+        :return: organized epJSON template objects into templates, and templates_* as class variables..
         """
-        self.templates = {
-            i: j
-            for (i, j) in epjson_obj.items()
-            if re.match(r'^HVACTemplate:.*$', i)
-        }
-        self.templates_exist = True if len(self.templates.keys()) > 0 else False
-        self.templates_thermostat = {
-            k: l
-            for i, j in self.templates.items()
-            for k, l in j.items()
-            if re.match(r'^HVACTemplate:Thermostat$', i)
-        }
+        # Make blank dictionaries and run to do tests before saving as class attributes
+        templates = {}
+        # todo_eo: add object_type check by pulling all values from schema?
+        for object_type, object_structure in epjson.items():
+            if re.match('^HVACTemplate:*', object_type):
+                self.templates = self.merge_epjson(
+                    super_dictionary=templates,
+                    object_dictionary={object_type: object_structure},
+                    unique_name_override=False
+                )
+            if re.match('^HVACTemplate:Thermostat', object_type):
+                self.templates_thermostats = self.merge_epjson(
+                    super_dictionary=self.templates_thermostats,
+                    object_dictionary={object_type: object_structure},
+                    unique_name_override=False
+                )
+            # todo_eo build out for remaining templates
         return
 
     def run(self, input_epjson):
         """
         Execute HVAC Template process workflow
+
+        :param input_epjson: input epJSON file
+        :return: epJSON containing expanded objects from templates
         """
+        # todo_eo: the _base, _expanded, and _hvac_template files need to be created and added to the
+        # output_epJSON
+        # flush the stream handler
+        self.logger.stream_flush
         self.load_schema()
         self.load_epjson(epjson_ref=input_epjson)
-        self.check_epjson_for_templates(self.input_epjson)
-        # Do manipulations and make output epjson
-        output_epjson = input_epjson
+        self.pre_process(self.input_epjson)
+        # Do manipulations and make output epJSON
+        output_epjson = {
+            "epJSON": input_epjson,
+            'outputPreProcessorMessage': {
+                'HVACTemplate': self.stream.getvalue()
+            }
+        }
         return output_epjson

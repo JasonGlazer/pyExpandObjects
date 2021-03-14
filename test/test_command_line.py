@@ -11,9 +11,28 @@ this_script_path = os.path.dirname(
 )
 
 
-class TestHVACTemplateObject(BaseTest, unittest.TestCase):
-    @BaseTest._test_logger(doc_text="Core:No schema flag works")
+class TestMain(BaseTest, unittest.TestCase):
+    @BaseTest._test_logger(doc_text="Core:No schema flag is allowed")
     def test_no_schema_main(self):
+        output = {}
+        exception_raised = False
+        try:
+            output = main(
+                Namespace(
+                    no_schema=True,
+                    file=os.path.join(this_script_path, 'resources', 'HVACTemplate-5ZonePurchAir.epJSON')
+                )
+            )
+        except Exception as e:
+            self.assertEqual(e, e)
+            print(e)
+            print('test')
+            exception_raised = True
+        self.assertFalse(exception_raised)
+        self.assertIn('outputPreProcessorMessage', output.keys())
+        return
+
+    def test_output_message_contains_class_keys(self):
         output = {}
         exception_raised = False
         try:
@@ -28,7 +47,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             exception_raised = True
         self.assertFalse(exception_raised)
         self.assertIn('outputPreProcessorMessage', output.keys())
-        self.assertFalse(output['outputPreProcessorMessage'])
+        self.assertIn('HVACTemplate', [j for i in output['outputPreProcessorMessage'] for j in list(i.keys())])
         return
 
     @BaseTest._test_logger(doc_text="Core:Bad file paths are rejected")
