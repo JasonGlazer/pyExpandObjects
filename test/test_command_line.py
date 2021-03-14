@@ -1,18 +1,18 @@
 import unittest
 import subprocess
 import os
+import re
 from argparse import Namespace
 
 from expand_objects.main import main
-from test import BaseTest
 
 this_script_path = os.path.dirname(
     os.path.abspath(__file__)
 )
 
 
-class TestMain(BaseTest, unittest.TestCase):
-    @BaseTest._test_logger(doc_text="Core:No schema flag is allowed")
+class TestMain(unittest.TestCase):
+
     def test_no_schema_main(self):
         output = {}
         exception_raised = False
@@ -25,8 +25,6 @@ class TestMain(BaseTest, unittest.TestCase):
             )
         except Exception as e:
             self.assertEqual(e, e)
-            print(e)
-            print('test')
             exception_raised = True
         self.assertFalse(exception_raised)
         self.assertIn('outputPreProcessorMessage', output.keys())
@@ -47,10 +45,13 @@ class TestMain(BaseTest, unittest.TestCase):
             exception_raised = True
         self.assertFalse(exception_raised)
         self.assertIn('outputPreProcessorMessage', output.keys())
-        self.assertIn('HVACTemplate', [j for i in output['outputPreProcessorMessage'] for j in list(i.keys())])
+        msg_rgx = re.match('.*##### HVACTemplate #####.*', output['outputPreProcessorMessage'].replace('\n', ' '))
+        msg_status = False
+        if msg_rgx:
+            msg_status = True
+        self.assertTrue(msg_status)
         return
 
-    @BaseTest._test_logger(doc_text="Core:Bad file paths are rejected")
     def test_bad_file_path_returns_message(self):
         output = main(
             Namespace(
@@ -58,18 +59,25 @@ class TestMain(BaseTest, unittest.TestCase):
                 file='bad_path.epJSON'
             )
         )
-        self.assertIn('File does not exist', output['outputPreProcessorMessage'][0])
+        msg_rgx = re.match('.*File does not exist.*', output['outputPreProcessorMessage'].replace('\n', ' '))
+        msg_status = False
+        if msg_rgx:
+            msg_status = True
+        self.assertTrue(msg_status)
         return
 
-    @BaseTest._test_logger(doc_text="Core:Bad file extensions are rejected")
     def test_bad_file_extension_returns_message(self):
-        output_epjson = main(
+        output = main(
             Namespace(
                 no_schema=True,
                 file='bad_extension.epJSON_bad'
             )
         )
-        self.assertIn('Bad file extension', output_epjson['outputPreProcessorMessage'][0])
+        msg_rgx = re.match('.*Bad file extension.*', output['outputPreProcessorMessage'].replace('\n', ' '))
+        msg_status = False
+        if msg_rgx:
+            msg_status = True
+        self.assertTrue(msg_status)
         return
 
     @unittest.skip

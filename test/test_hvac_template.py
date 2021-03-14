@@ -1,7 +1,6 @@
 import unittest
 
 from expand_objects.hvac_template import HVACTemplate
-from test import BaseTest
 
 minimum_objects_d = {
     "Building": {
@@ -17,7 +16,7 @@ minimum_objects_d = {
 }
 
 
-class TestHVACTemplateObject(BaseTest, unittest.TestCase):
+class TestHVACTemplateObject(unittest.TestCase):
     def setUp(self):
         self.hvac_template = HVACTemplate()
         self.hvac_template.logger.setLevel('INFO')
@@ -27,7 +26,6 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     def tearDown(self):
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:epJSON Handling:Verify if no templates are provided")
     def test_no_hvac_objects_returns_false(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -41,7 +39,6 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         self.assertEqual(0, len(self.hvac_template.templates))
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:epJSON Handling:Verify if templates are provided")
     def test_one_hvac_object_one_template_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,

@@ -1,5 +1,6 @@
 import re
 from expand_objects.epjson_handler import EPJSON
+from expand_objects.expand_objects import ExpandThermostats
 
 
 class HVACTemplate(EPJSON):
@@ -17,6 +18,7 @@ class HVACTemplate(EPJSON):
     templates_system: HVACTemplate:System: objects
     templates_plant_equipment: HVACTemplate:Plant equipment objects
     templates_plant_loop: HVACTemplate:Plant: loop objects
+    expanded_*: List of class objects for each template type
     """
 
     def __init__(
@@ -32,6 +34,7 @@ class HVACTemplate(EPJSON):
         self.templates_plant_equipment = {}
         self.templates_plant_loop = {}
         self.templates_thermostats = {}
+        self.expanded_thermostats = []
         return
 
     def pre_process(self, epjson):
@@ -71,14 +74,19 @@ class HVACTemplate(EPJSON):
         # output_epJSON
         # flush the stream handler
         self.logger.stream_flush
+        self.logger.info('##### epJSON Setup #####')
         self.load_schema()
         self.load_epjson(epjson_ref=input_epjson)
+        self.logger.info('##### HVACTemplate #####')
         self.pre_process(self.input_epjson)
+        self.logger.info('##### Processing Thermostats #####')
+        for thermostat in self.expanded_thermostats:
+            self.expanded_thermostats.append(
+                ExpandThermostats(thermostat)
+            )
         # Do manipulations and make output epJSON
         output_epjson = {
             "epJSON": input_epjson,
-            'outputPreProcessorMessage': {
-                'HVACTemplate': self.stream.getvalue()
-            }
+            'outputPreProcessorMessage': self.stream.getvalue()
         }
         return output_epjson
