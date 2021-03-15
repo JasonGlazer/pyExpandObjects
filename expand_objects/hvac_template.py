@@ -1,6 +1,6 @@
 import re
 from expand_objects.epjson_handler import EPJSON
-from expand_objects.expand_objects import ExpandThermostats
+from expand_objects.expand_objects import ExpandThermostat
 
 
 class HVACTemplate(EPJSON):
@@ -82,7 +82,7 @@ class HVACTemplate(EPJSON):
         self.logger.info('##### Processing Thermostats #####')
         for thermostat in self.expanded_thermostats:
             self.expanded_thermostats.append(
-                ExpandThermostats(thermostat)
+                ExpandThermostat(thermostat)
             )
         # Do manipulations and make output epJSON
         output_epjson = {

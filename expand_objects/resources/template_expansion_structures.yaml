@@ -1,0 +1,5 @@
+
+ZoneControl:
+  Thermostat:
+    Base: &ZoneControlThermostat
+      name: '{} Thermostat'

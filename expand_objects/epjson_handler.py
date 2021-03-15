@@ -1,13 +1,10 @@
 import json
 import jsonschema
 from pathlib import Path
+from expand_objects.exceptions import UniqueNameException
 from expand_objects.logger import Logger
 
 this_script_path = Path(__file__).resolve()
-
-
-class UniqueNameException(Exception):
-    pass
 
 
 class EPJSON(Logger):
