@@ -2,6 +2,7 @@ import os
 import yaml
 import copy
 import re
+from pathlib import Path
 
 import expand_objects.exceptions as eoe
 from expand_objects.epjson_handler import EPJSON
@@ -22,15 +23,18 @@ class ExpansionStructureLocation:
         if isinstance(value, dict):
             parsed_value = value
         elif isinstance(value, str):
-            if os.path.isfile(value):
+            value_is_path = Path(value)
+            if value_is_path.is_file():
                 if not value.endswith(('.yaml', '.yml')):
                     raise eoe.TypeError('File extension does not match yaml type: {}'.format(value))
                 else:
                     with open(value, 'r') as f:
-                        parsed_value = yaml.load(f, Loader=yaml.Loader)
+                        # todo_eo: discuss safety issue if loader.
+                        # With FullLoader there would be more functionality but might not be necessary.
+                        parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
             else:
                 try:
-                    # if the string is not a file, then try to load it directly
+                    # if the string is not a file, then try to load it directly with SafeLoader.
                     parsed_value = yaml.load(value, Loader=yaml.SafeLoader)
                     # if the parsed value is the same as the input value, it's probably a bad file path
                     if parsed_value == value:
@@ -119,12 +123,12 @@ class ExpandObjects(EPJSON):
         :return: structured object as dictionary
         """
         try:
-            structure = self.expansion_structure
+            structure = copy.deepcopy(self.expansion_structure)
             for key in structure_hierarchy:
                 structure = structure[key]
         except KeyError:
             raise eoe.TypeError('YAML structure does not exist for hierarchy: {}'.format(structure_hierarchy))
-        return copy.deepcopy(structure)
+        return structure
 
     def build_compact_schedule(
             self,
@@ -132,7 +136,7 @@ class ExpandObjects(EPJSON):
             insert_values: list,
             name: str = None) -> dict:
         """
-        Build a compact schedule from inputs.  Return as an epJSON object.
+        Build a compact schedule from inputs.  Save epjJSON object to class dictionary and return to calling function.
 
         :param structure_hierarchy: list indicating YAML structure hierarchy
         :param insert_values: list of values to insert into object
@@ -164,6 +168,12 @@ class ExpandObjects(EPJSON):
                 }
             }
         }
+        # add objects to class epjson dictionary
+        self.epjson = self.merge_epjson(
+            super_dictionary=self.epjson,
+            object_dictionary=schedule_object,
+            unique_name_override=True
+        )
         return schedule_object
 
 
@@ -173,36 +183,60 @@ class ExpandThermostat(ExpandObjects):
     """
 
     def __init__(self, template):
+        # pre-set template inputs with None.  Is this better to have them pre-defined?
+        # todo_eo: discuss whether attribute validation should occur such that unknown field names raise exceptions
+        self.heating_setpoint_schedule_name = None
+        self.constant_heating_setpoint = None
+        self.cooling_setpoint_schedule_name = None
+        self.constant_cooling_setpoint = None
+        # fill values with template inputs
         super().__init__(template=template)
         return
 
-    def create_schedules(self):
+    def create_and_set_schedules(self):
         """
-        Create schedules, or use existing, and assign to class variable
+        Create, or use existing, schedules.  Assign schedule names to class variable
 
         :return: Cooling and/or Heating schedule variables as class attributes
         """
         for thermostat_type in ['heating', 'cooling']:
-            if not hasattr(self, '{}_setpoint_schedule_name'.format(thermostat_type)) \
-                    and hasattr(self, 'constant_{}_setpoint'.format(thermostat_type)):
+            if not getattr(self, '{}_setpoint_schedule_name'.format(thermostat_type), None) \
+                    and getattr(self, 'constant_{}_setpoint'.format(thermostat_type), None):
                 thermostat_schedule = self.build_compact_schedule(
                     structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=getattr(self, 'constant_{}_setpoint'.format(thermostat_type)),
                 )
                 (thermostat_schedule_name, _), = thermostat_schedule.items()
                 setattr(self, '{}_setpoint_schedule_name'.format(thermostat_type), thermostat_schedule_name)
-                # add objects to class epjson dictionary
-                self.epjson = self.merge_epjson(
-                    super_dictionary=self.epjson,
-                    object_dictionary=thermostat_schedule,
-                    unique_name_override=True
-                )
         return
+
+    # def create_thermostat_setpoints(self):
+    #     """
+    #     Create Thermostat:Sepoint objects based on class setpoint_schedule_name attributes
+    #     :return: Updated class epJSON dictionary with Thermostat:Setpoint objects added.
+    #     """
+    #     if getattr(self, 'heating_setpoint_schedule_name', None) \
+    #             and getattr(self, 'cooling_setpoint_schedule_name', None):
+    #         thermostat_setpoint_object = {
+    #             "Thermostat:DualSetpoint": {
+    #                 '{} SP Control'.format(self.template_name): {
+    #                     'heating_setpoint_schedule_name': self.heating_setpoint_schedule_name,
+    #                     'cooling_setpoint_schedule_name': self.cooling_setpoint_schedule_name
+    #                 }
+    #             }
+    #         }
+    #     self.epjson = self.merge_epjson(
+    #         super_dictionary=self.epjson,
+    #         object_dictionary=thermostat_setpoint_object,
+    #         unique_name_override=False
+    #     )
+    #     return
 
     def run(self):
         """
         Perform all template expansion operations and return the class to the parent calling function.
         :return: ExpandThermostat class with necessary attributes filled for output
         """
-        self.create_schedules()
+        self.create_and_set_schedules()
+        # self.create_thermostat_setpoints()
         return self

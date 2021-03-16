@@ -1,7 +1,9 @@
 from pathlib import Path
 import unittest
 
-from expand_objects.epjson_handler import EPJSON, UniqueNameException
+from expand_objects.epjson_handler import EPJSON
+import expand_objects.exceptions as eoe
+
 
 minimum_objects_d = {
     "Building": {
@@ -21,7 +23,7 @@ minimum_objects_d = {
 class TestEPJSONHandler(unittest.TestCase):
     def setUp(self):
         self.epjson_handler = EPJSON()
-        self.epjson_handler_no_schema = EPJSON(no_schema=True)
+        self.epjson_handler_no_schema = EPJSON()
         self.epjson_handler.logger.setLevel('ERROR')
         self.example_file_dir = Path(__file__).resolve().parent / 'resources'
 
@@ -130,8 +132,8 @@ class TestEPJSONHandler(unittest.TestCase):
                 }
             }
         }
-        with self.assertRaisesRegex(UniqueNameException, '.*SPACE1-1.*Zone') as context:
-            dict_3 = self.epjson_handler.merge_epjson(
+        with self.assertRaisesRegex(eoe.UniqueNameException, '.*SPACE1-1.*Zone'):
+            self.epjson_handler.merge_epjson(
                 super_dictionary=dict_1,
                 object_dictionary=dict_2,
                 unique_name_override=False
@@ -178,3 +180,4 @@ class TestEPJSONHandler(unittest.TestCase):
         self.assertEqual(len(self.epjson_handler_no_schema.input_epjson.keys()), 3)
         return
 
+    # todo_eo: need to provide path for user provided schema location

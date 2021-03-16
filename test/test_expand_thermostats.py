@@ -12,6 +12,7 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
     def teardown(self):
         return
 
+    @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Input Template Required")
     def test_check_templates_are_required(self):
         with self.assertRaises(TypeError):
             ExpandThermostat()
@@ -43,11 +44,10 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
     def test_create_thermostat_schedule_and_assign_from_constant_setpoint(self):
         thermostat_template = {
             'Thermostat 1': {
-                'constant_heating_setpoint': 55
+                'constant_heating_setpoint': 12
             }
         }
         eo = ExpandThermostat(template=thermostat_template).run()
         print(vars(eo))
-        # todo_eo: write out various failures and sucesses for this function
+        # todo_eo: write out various failures and successes for this function
         return
-

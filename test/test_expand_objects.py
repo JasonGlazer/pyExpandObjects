@@ -65,6 +65,7 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         self.assertTrue(name_match)
         return
 
+    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Reject bad YAML object")
     def test_exception_with_bad_structure(self):
         structure_hierarchy = ['Schedule', 'Compact', 'Bad']
         with self.assertRaises(TypeError):
@@ -72,7 +73,8 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
             eo.get_structure(structure_hierarchy=structure_hierarchy)
         return
 
-    def test_make_compact_schedule(self):
+    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Create always value schedule")
+    def test_make_compact_schedule_always_val(self):
         structure_hierarchy = ['Schedule', 'Compact', 'ALWAYS_VAL']
         eo = ExpandObjects(template=mock_template)
         schedule = eo.build_compact_schedule(structure_hierarchy=structure_hierarchy, insert_values=[3, ])

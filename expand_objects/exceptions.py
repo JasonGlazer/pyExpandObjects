@@ -1,4 +1,5 @@
 import yaml
+from jsonschema.exceptions import SchemaError
 from expand_objects.logger import Logger
 
 
@@ -28,6 +29,10 @@ class UniqueNameException(CustomException):
     """
     Unintentional key-overriding in dictionary/JSON objects
     """
+    pass
+
+
+class SchemaError(CustomException, SchemaError):
     pass
 
 

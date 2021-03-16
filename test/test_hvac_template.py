@@ -1,6 +1,7 @@
 import unittest
 
 from expand_objects.hvac_template import HVACTemplate
+from test import BaseTest
 
 minimum_objects_d = {
     "Building": {
@@ -16,7 +17,7 @@ minimum_objects_d = {
 }
 
 
-class TestHVACTemplateObject(unittest.TestCase):
+class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     def setUp(self):
         self.hvac_template = HVACTemplate()
         self.hvac_template.logger.setLevel('INFO')
@@ -26,7 +27,8 @@ class TestHVACTemplateObject(unittest.TestCase):
     def tearDown(self):
         return
 
-    def test_no_hvac_objects_returns_false(self):
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify no input templates returns no class templates")
+    def test_no_hvac_objects_returns_with_zero_templates(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
             "Version": {
@@ -39,6 +41,7 @@ class TestHVACTemplateObject(unittest.TestCase):
         self.assertEqual(0, len(self.hvac_template.templates))
         return
 
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify input templates returns class templates")
     def test_one_hvac_object_one_template_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -49,7 +52,7 @@ class TestHVACTemplateObject(unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.pre_process(self.hvac_template.input_epjson)
+        self.hvac_template.hvac_template_process(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertEqual(len(self.hvac_template.templates.keys()), 1)
         self.assertIn(
@@ -57,6 +60,8 @@ class TestHVACTemplateObject(unittest.TestCase):
             self.hvac_template.templates.keys())
         return
 
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify different templates returns "
+                                    "correct class templates")
     def test_n_hvac_objects_n_templates_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -75,13 +80,14 @@ class TestHVACTemplateObject(unittest.TestCase):
                 "HVACTemplate:Zone:IdealLoadsAirSystem 2": {"zone_name": "Zone 2"}
             }
         })
-        self.hvac_template.pre_process(self.hvac_template.input_epjson)
+        self.hvac_template.hvac_template_process(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Zone:IdealLoadsAirSystem'].keys()), 2)
         return
 
-    def test_templates_thermostat_attribute_created(self):
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify fields are saved within templates")
+    def test_templates_have_good_objects(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
@@ -95,7 +101,7 @@ class TestHVACTemplateObject(unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.pre_process(self.hvac_template.input_epjson)
+        self.hvac_template.hvac_template_process(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertEqual(
             len(self.hvac_template.templates_thermostats['HVACTemplate:Thermostat'].keys()),

@@ -2,10 +2,10 @@
 Schedule:
   Compact:
     ALWAYS_VAL:
-      name: !!python/str 'HVACTemplate-Always{}'
+      name: 'HVACTemplate-Always{}'
       schedule_type_limits_name: "Any Number"
       data:
         - field: Through 12/31
         - field: For AllDays
         - field: Until 24:00
-        - field: !!python/str '{:.1f}'
+        - field: '{:.1f}'

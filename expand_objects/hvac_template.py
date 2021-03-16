@@ -12,18 +12,17 @@ class HVACTemplate(EPJSON):
     EPJSON <- Logger
 
     Attributes:
-    templates: HVACTemplate objects from epJSON file
-    templates_thermostat: HVACTemplate:Thermostat objects
-    templates_zone: HVACTemplate:Zone: objects
-    templates_system: HVACTemplate:System: objects
-    templates_plant_equipment: HVACTemplate:Plant equipment objects
-    templates_plant_loop: HVACTemplate:Plant: loop objects
-    expanded_*: List of class objects for each template type
+        templates: HVACTemplate objects from epJSON file
+        templates_zone: HVACTemplate:Zone: objects
+        templates_system: HVACTemplate:System: objects
+        templates_plant_equipment: HVACTemplate:Plant equipment objects
+        templates_plant_loop: HVACTemplate:Plant: loop objects
+        expanded_*: List of class objects for each template type
     """
 
     def __init__(
             self,
-            no_schema=True):
+            no_schema=False):
         """
         :param no_schema: Boolean flag for skipping schema validation
         """
@@ -37,13 +36,14 @@ class HVACTemplate(EPJSON):
         self.expanded_thermostats = []
         return
 
-    def pre_process(self, epjson):
+    def hvac_template_process(self, epjson):
         """
         Organize epJSON and assign objects to specific class attributes
 
         :param epjson: Input epJSON object
         :return: organized epJSON template objects into templates, and templates_* as class variables..
         """
+        self.logger.info('##### HVACTemplate #####')
         # Make blank dictionaries and run to do tests before saving as class attributes
         templates = {}
         # todo_eo: add object_type check by pulling all values from schema?
@@ -74,17 +74,15 @@ class HVACTemplate(EPJSON):
         # output_epJSON
         # flush the stream handler
         self.logger.stream_flush
-        self.logger.info('##### epJSON Setup #####')
-        self.load_schema()
-        self.load_epjson(epjson_ref=input_epjson)
-        self.logger.info('##### HVACTemplate #####')
-        self.pre_process(self.input_epjson)
+        self.epjson_process(epjson_ref=input_epjson)
+        self.hvac_template_process(epjson=self.input_epjson)
         self.logger.info('##### Processing Thermostats #####')
         for thermostat in self.expanded_thermostats:
             self.expanded_thermostats.append(
                 ExpandThermostat(thermostat).run()
             )
         # Do manipulations and make output epJSON
+        # Write messages logged to stream to outputPreProcessorMessage
         output_epjson = {
             "epJSON": input_epjson,
             'outputPreProcessorMessage': self.stream.getvalue()
