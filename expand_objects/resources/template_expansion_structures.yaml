@@ -1,5 +1,11 @@
 
-ZoneControl:
-  Thermostat:
-    Base: &ZoneControlThermostat
-      name: '{} Thermostat'
+Schedule:
+  Compact:
+    ALWAYS_VAL:
+      name: !!python/str 'HVACTemplate-Always{}'
+      schedule_type_limits_name: "Any Number"
+      data:
+        - field: Through 12/31
+        - field: For AllDays
+        - field: Until 24:00
+        - field: !!python/str '{:.1f}'

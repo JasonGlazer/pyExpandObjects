@@ -27,7 +27,6 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         }
         output = ExpandThermostat(template=template)
         self.assertEqual('All Zones', list(output.template.keys())[0])
-        print(vars(output))
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Reject bad template object")
@@ -39,3 +38,16 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         with self.assertRaises(TypeError):
             ExpandThermostat(template=templates)
         return
+
+    @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Create and assign schedule from constant setpoint")
+    def test_create_thermostat_schedule_and_assign_from_constant_setpoint(self):
+        thermostat_template = {
+            'Thermostat 1': {
+                'constant_heating_setpoint': 55
+            }
+        }
+        eo = ExpandThermostat(template=thermostat_template).run()
+        print(vars(eo))
+        # todo_eo: write out various failures and sucesses for this function
+        return
+

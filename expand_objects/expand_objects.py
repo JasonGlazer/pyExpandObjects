@@ -1,8 +1,10 @@
 import os
 import yaml
+import copy
+import re
 
 import expand_objects.exceptions as eoe
-from expand_objects.logger import Logger
+from expand_objects.epjson_handler import EPJSON
 
 this_script_path = os.path.dirname(
     os.path.abspath(__file__)
@@ -20,11 +22,25 @@ class ExpansionStructureLocation:
         if isinstance(value, dict):
             parsed_value = value
         elif isinstance(value, str):
-            if not os.path.isfile(value):
-                raise eoe.FileNotFoundError('template expansion structure file not found: {}'.format(value))
-            if not value.endswith(('.yaml', '.yml')):
-                raise eoe.TypeError('File extension does not match yaml type: {}'.format(value))
-            parsed_value = yaml.safe_load(value)
+            if os.path.isfile(value):
+                if not value.endswith(('.yaml', '.yml')):
+                    raise eoe.TypeError('File extension does not match yaml type: {}'.format(value))
+                else:
+                    with open(value, 'r') as f:
+                        parsed_value = yaml.load(f, Loader=yaml.Loader)
+            else:
+                try:
+                    # if the string is not a file, then try to load it directly
+                    parsed_value = yaml.load(value, Loader=yaml.SafeLoader)
+                    # if the parsed value is the same as the input value, it's probably a bad file path
+                    if parsed_value == value:
+                        raise eoe.FileNotFoundError('File does not exist: {}'.format(value))
+                except yaml.YAMLError as exc:
+                    if hasattr(exc, 'problem_mark'):
+                        mark = exc.problem_mark
+                        raise eoe.YamlError("problem loading yaml at ({}, {})".format(mark.line + 1, mark.column + 1))
+                    else:
+                        raise eoe.YamlError()
         else:
             raise eoe.TypeError(
                 'template expansion structure reference is not a file path or dictionary: {}'.format(value))
@@ -49,7 +65,11 @@ class VerifyTemplate:
         try:
             # template dictionary should have one key (unique name) and one object as a value (field/value dict)
             # this assignment below will fail if that is not the case.
-            (_, _), = value.items()
+            (_, object_structure), = value.items()
+            # ensure object is dictionary
+            if not isinstance(object_structure, dict):
+                raise eoe.InvalidTemplateException(
+                    'An Invalid object {} was passed as an {} object'.format(value, self.template_type))
             template = value
         except ValueError:
             raise eoe.InvalidTemplateException(
@@ -58,13 +78,14 @@ class VerifyTemplate:
         return
 
 
-class ExpandObjects(Logger):
+class ExpandObjects(EPJSON):
     """
     General class for expanding template objects.
 
     Attributes:
     template: epJSON dictionary containing HVACTemplate to expand
     expansion_structure: file or dictionary of expansion structure details
+    epjson: dictionary of epSJON objects to write to file
     """
 
     template = VerifyTemplate(template_type='General Template')
@@ -85,7 +106,65 @@ class ExpandObjects(Logger):
         self.template_name = template_name
         for template_field in template_structure.keys():
             setattr(self, template_field, template_structure[template_field])
+        self.epjson = {}
         return
+
+    def get_structure(
+            self,
+            structure_hierarchy: list) -> dict:
+        """
+        Retrieve structure from dict created by yaml object
+
+        :param structure_hierarchy: list representing structure hierarchy
+        :return: structured object as dictionary
+        """
+        try:
+            structure = self.expansion_structure
+            for key in structure_hierarchy:
+                structure = structure[key]
+        except KeyError:
+            raise eoe.TypeError('YAML structure does not exist for hierarchy: {}'.format(structure_hierarchy))
+        return copy.deepcopy(structure)
+
+    def build_compact_schedule(
+            self,
+            structure_hierarchy: list,
+            insert_values: list,
+            name: str = None) -> dict:
+        """
+        Build a compact schedule from inputs.  Return as an epJSON object.
+
+        :param structure_hierarchy: list indicating YAML structure hierarchy
+        :param insert_values: list of values to insert into object
+        :param name: (optional) name of object.
+        :return: epJSON object of compact schedule
+        """
+        structure_object = self.get_structure(structure_hierarchy)
+        if not isinstance(insert_values, list):
+            insert_values = [insert_values, ]
+        if not name:
+            name = structure_object.pop('name')
+        if '{}' in name:
+            name = name.format(insert_values[0])
+        if not structure_object.get('schedule_type_limits_name', None):
+            structure_object['schedule_type_limits_name'] = 'Any Number'
+        # for each element in the schedule, convert to numeric if value replacement occurs
+        if insert_values:
+            formatted_data_lines = [
+                {j: float(k.format(*insert_values))}
+                if re.match(r'.*{.*f}', k, re.IGNORECASE) else {j: k}
+                for i in structure_object['data'] for j, k in i.items()]
+        else:
+            formatted_data_lines = [{j: k} for i in structure_object for j, k in i.items()]
+        schedule_object = {
+            'Schedule:Compact': {
+                name: {
+                    'schedule_type_limits_name': structure_object['schedule_type_limits_name'],
+                    'data': formatted_data_lines
+                }
+            }
+        }
+        return schedule_object
 
 
 class ExpandThermostat(ExpandObjects):
@@ -96,3 +175,34 @@ class ExpandThermostat(ExpandObjects):
     def __init__(self, template):
         super().__init__(template=template)
         return
+
+    def create_schedules(self):
+        """
+        Create schedules, or use existing, and assign to class variable
+
+        :return: Cooling and/or Heating schedule variables as class attributes
+        """
+        for thermostat_type in ['heating', 'cooling']:
+            if not hasattr(self, '{}_setpoint_schedule_name'.format(thermostat_type)) \
+                    and hasattr(self, 'constant_{}_setpoint'.format(thermostat_type)):
+                thermostat_schedule = self.build_compact_schedule(
+                    structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                    insert_values=getattr(self, 'constant_{}_setpoint'.format(thermostat_type)),
+                )
+                (thermostat_schedule_name, _), = thermostat_schedule.items()
+                setattr(self, '{}_setpoint_schedule_name'.format(thermostat_type), thermostat_schedule_name)
+                # add objects to class epjson dictionary
+                self.epjson = self.merge_epjson(
+                    super_dictionary=self.epjson,
+                    object_dictionary=thermostat_schedule,
+                    unique_name_override=True
+                )
+        return
+
+    def run(self):
+        """
+        Perform all template expansion operations and return the class to the parent calling function.
+        :return: ExpandThermostat class with necessary attributes filled for output
+        """
+        self.create_schedules()
+        return self

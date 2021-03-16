@@ -82,7 +82,7 @@ class HVACTemplate(EPJSON):
         self.logger.info('##### Processing Thermostats #####')
         for thermostat in self.expanded_thermostats:
             self.expanded_thermostats.append(
-                ExpandThermostat(thermostat)
+                ExpandThermostat(thermostat).run()
             )
         # Do manipulations and make output epJSON
         output_epjson = {

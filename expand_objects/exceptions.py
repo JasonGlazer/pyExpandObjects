@@ -1,3 +1,4 @@
+import yaml
 from expand_objects.logger import Logger
 
 
@@ -35,4 +36,8 @@ class FileNotFoundError(CustomException, FileNotFoundError):
 
 
 class TypeError(CustomException, TypeError):
+    pass
+
+
+class YamlError(CustomException, yaml.YAMLError):
     pass
