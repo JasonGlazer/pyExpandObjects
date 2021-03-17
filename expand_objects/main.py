@@ -1,6 +1,7 @@
 import argparse
 import os
 from expand_objects.hvac_template import HVACTemplate
+import logging
 
 
 def build_parser():  # pragma: no cover
@@ -27,19 +28,26 @@ def main(args=None):
     hvt = HVACTemplate(
         no_schema=args.no_schema
     )
-    output = {'outputPreProcessorMessage': []}
+    output = {'outputPreProcessorMessage': ''}
     if args.file.endswith('.epJSON'):
         if os.path.exists(args.file):
             hvt.logger.info('Proceessing %s', args.file)
-            output['epjson'] = hvt.run(input_epjson=args.file)
+            hvt_output = hvt.run(input_epjson=args.file)
+            # merge hvac template output to output dictionary
+            if hvt_output.get('outputPreProcessorMessage'):
+                output['outputPreProcessorMessage'] = r' '.join([
+                    output['outputPreProcessorMessage'],
+                    hvt_output['outputPreProcessorMessage']])
         else:
             hvt.logger.warning('File does not exist: %s. file not processed', args.file)
-            output['outputPreProcessorMessage'].append(
-                'File does not exist: {}.  File not processed'.format(args.file))
+            output['outputPreProcessorMessage'] = r' '.join([
+                output['outputPreProcessorMessage'],
+                'Error: File does not exist: {}.  File not processed'.format(args.file)])
     else:
         hvt.logger.warning('Bad file extension for %s.  File not processed', args.file)
-        output['outputPreProcessorMessage'].append(
-            'Bad file extension for {}.  File not processed'.format(args.file))
+        output['outputPreProcessorMessage'] = r' '.join([
+            output['outputPreProcessorMessage'],
+            'Error: Bad file extension for {}.  File not processed'.format(args.file)])
     return output
 
 
@@ -47,3 +55,4 @@ if __name__ == "__main__":
     epJSON_parser = build_parser()
     epJSON_args = epJSON_parser.parse_args()
     main(epJSON_args)
+    logging.shutdown()

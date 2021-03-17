@@ -1,0 +1,11 @@
+
+Schedule:
+  Compact:
+    ALWAYS_VAL:
+      name: 'HVACTemplate-Always{}'
+      schedule_type_limits_name: "Any Number"
+      data:
+        - field: Through 12/31
+        - field: For AllDays
+        - field: Until 24:00
+        - field: '{:.1f}'

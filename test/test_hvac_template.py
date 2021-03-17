@@ -20,15 +20,15 @@ minimum_objects_d = {
 class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     def setUp(self):
         self.hvac_template = HVACTemplate()
-        self.hvac_template.logger.setLevel('ERROR')
+        self.hvac_template.logger.setLevel('INFO')
         self.hvac_template.load_schema()
         return
 
     def tearDown(self):
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:epJSON Handling:Verify if no templates are provided")
-    def test_no_hvac_objects_returns_false(self):
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify no input templates returns no class templates")
+    def test_no_hvac_objects_returns_with_zero_templates(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
             "Version": {
@@ -38,11 +38,26 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             }
         })
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
-        self.assertFalse(self.hvac_template.templates_exist)
-        self.assertIsNone(self.hvac_template.templates)
+        self.assertEqual(0, len(self.hvac_template.templates))
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:epJSON Handling:Verify if templates are provided")
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify non HVACTemplate objects are passed to base dictionary")
+    def test_base_objects_are_stored(self):
+        self.hvac_template.load_epjson({
+            **minimum_objects_d,
+            "HVACTemplate:Thermostat": {
+                "All Zones": {
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+                }
+            }
+        })
+        self.hvac_template.hvac_template_process(self.hvac_template.input_epjson)
+        self.assertTrue(self.hvac_template.input_epjson_is_valid)
+        self.assertEqual(2, len(self.hvac_template.base_objects))
+        return
+
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify input templates returns class templates")
     def test_one_hvac_object_one_template_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -53,32 +68,16 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
+        self.hvac_template.hvac_template_process(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
-        self.assertTrue(self.hvac_template.templates_exist)
         self.assertEqual(len(self.hvac_template.templates.keys()), 1)
+        self.assertIn(
+            'HVACTemplate:Thermostat',
+            self.hvac_template.templates.keys())
         return
 
-    def test_n_hvac_objects_one_template_returns_true(self):
-        self.hvac_template.load_epjson({
-            **minimum_objects_d,
-            "HVACTemplate:Thermostat": {
-                "All Zones": {
-                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
-                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
-                },
-                "All Zones 2": {
-                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
-                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
-                }
-            }
-        })
-        self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
-        self.assertTrue(self.hvac_template.input_epjson_is_valid)
-        self.assertTrue(self.hvac_template.templates_exist)
-        self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
-        return
-
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify different templates returns "
+                                    "correct class templates")
     def test_n_hvac_objects_n_templates_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -97,27 +96,67 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 "HVACTemplate:Zone:IdealLoadsAirSystem 2": {"zone_name": "Zone 2"}
             }
         })
-        self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
+        self.hvac_template.hvac_template_process(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
-        self.assertTrue(self.hvac_template.templates_exist)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
-        self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
+        self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Zone:IdealLoadsAirSystem'].keys()), 2)
         return
 
-    def test_thermostat_template_object_created(self):
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify fields are saved within templates")
+    def test_templates_have_good_objects(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
-                "All Zones 1": {
+                "All Zones": {
                     "heating_setpoint_schedule_name": "Htg-SetP-Sch",
                     "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
                 },
                 "All Zones 2": {
                     "heating_setpoint_schedule_name": "Htg-SetP-Sch",
                     "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
-                },
+                }
             }
         })
-        self.hvac_template.check_epjson_for_templates(self.hvac_template.input_epjson)
-        self.assertEqual(len(self.hvac_template.templates_thermostat.keys()), 2)
+        self.hvac_template.hvac_template_process(self.hvac_template.input_epjson)
+        self.assertTrue(self.hvac_template.input_epjson_is_valid)
+        self.assertEqual(
+            len(self.hvac_template.templates_thermostats['HVACTemplate:Thermostat'].keys()),
+            2)
+        return
+
+    # todo_eo One test for each template type
+
+    @BaseTest._test_logger(doc_text="HVACTemplate:Validate processing steps")
+    def test_thermostat_processing(self):
+        self.hvac_template.load_epjson({
+            **minimum_objects_d,
+            "HVACTemplate:Thermostat": {
+                "All Zones": {
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+                },
+                "All Zones 2": {
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+                }
+            }
+        })
+        epjson = self.hvac_template.run(self.hvac_template.input_epjson)
+        name_check = True
+        object_check = True
+        outputs = self.hvac_template.unpack_epjson(epjson['epJSON'])
+        if len([i for i in outputs]) == 0:
+            name_check = False
+            object_check = False
+        for output in outputs:
+            (name, _), = output.items()
+            if name not in ['All Zones SP Control', 'All Zones 2 SP Control',
+                            'Test Building', 'GlobalGeometryRules 1']:
+                name_check = False
+        self.assertTrue(name_check)
+        for object_type in epjson.keys():
+            if object_type not in ['HVACTemplate:Thermostat', 'Building',
+                                   'GlobalGeometryRules', 'outputPreProcessorMessage', 'epJSON']:
+                object_check = False
+        self.assertTrue(object_check)
         return
