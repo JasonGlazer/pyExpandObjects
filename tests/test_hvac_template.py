@@ -1,12 +1,4 @@
 import unittest
-import os
-import sys
-
-this_script_path = os.path.dirname(
-    os.path.abspath(__file__)
-)
-
-sys.path.append(os.path.join(this_script_path, '..', 'src'))
 
 from hvac_template import HVACTemplate
 from . import BaseTest

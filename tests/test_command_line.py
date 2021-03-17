@@ -2,19 +2,17 @@ import unittest
 import subprocess
 import os
 import re
-import sys
 from argparse import Namespace
+
+from . import BaseTest
+from main import main
 
 this_script_path = os.path.dirname(
     os.path.abspath(__file__)
 )
 
-sys.path.append(os.path.join(this_script_path, '..', 'src'))
 
-from main import main
-
-
-class TestMain(unittest.TestCase):
+class TestMain(BaseTest, unittest.TestCase):
 
     def test_no_schema_main(self):
         output = {}

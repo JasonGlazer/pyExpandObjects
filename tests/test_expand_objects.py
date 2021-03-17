@@ -1,13 +1,6 @@
 import unittest
 import os
 import re
-import sys
-
-this_script_path = os.path.dirname(
-    os.path.abspath(__file__)
-)
-
-sys.path.append(os.path.join(this_script_path, '..', 'src'))
 
 from src.expand_objects import ExpandObjects
 from . import BaseTest

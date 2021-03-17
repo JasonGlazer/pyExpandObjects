@@ -5,12 +5,6 @@ import subprocess
 import sys
 import os
 
-this_script_path = os.path.dirname(
-    os.path.abspath(__file__)
-)
-
-sys.path.append(os.path.join(this_script_path, '..', 'src'))
-
 from expand_objects import ExpandThermostat
 from epjson_handler import EPJSON
 import custom_exceptions as eoe
