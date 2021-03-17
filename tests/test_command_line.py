@@ -13,10 +13,6 @@ sys.path.append(os.path.join(this_script_path, '..', 'src'))
 
 from main import main
 
-this_script_path = os.path.dirname(
-    os.path.abspath(__file__)
-)
-
 
 class TestMain(unittest.TestCase):
 
@@ -45,7 +41,7 @@ class TestMain(unittest.TestCase):
                 Namespace(
                     no_schema=True,
                     file=os.path.join(
-                        this_script_path, 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled.epJSON')
+                        this_script_path, '..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled.epJSON')
                 )
             )
         except Exception as e:
