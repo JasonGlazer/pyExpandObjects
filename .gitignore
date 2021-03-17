@@ -4,6 +4,9 @@ logs/*
 .idea
 cover
 test/scratchpad/*
+## simulation files
+test/simulation/test/*
+!test/simulation/test/*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

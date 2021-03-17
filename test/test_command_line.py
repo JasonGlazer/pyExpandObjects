@@ -37,7 +37,8 @@ class TestMain(unittest.TestCase):
             output = main(
                 Namespace(
                     no_schema=True,
-                    file=os.path.join(this_script_path, 'resources', 'HVACTemplate-5ZonePurchAir.epJSON')
+                    file=os.path.join(
+                        this_script_path, 'simulation', 'ExampleFiles', 'HVACTemplate-5ZonePurchAir.epJSON')
                 )
             )
         except Exception as e:

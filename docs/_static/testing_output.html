@@ -7,18 +7,131 @@
     In Progress
 </h3>
 <ol>
-    <li>Build core functionality fo epJSON handling and pre-process</li>
+    <li>Start Template expansion work</li>
 </ol>
 <h3>
     Todo
 </h3>
 <ol>
     <li>Build end-to-end processing for epJSON output and test</li>
-    <li>Start Template expansion work</li>
+    <li>Zone expansion work</li>
+    <li>Plant equipment expansion work</li>
+    <li>System expansion work</li>
+    <li>Plant loop expansion work</li>
 </ol>
 <h3>
     Completed Tests
 </h3>
+<h4> HVACTemplate</h4><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Test</th>
+      <th>FileName</th>
+      <th>FunctionName</th>
+      <th>Last Check</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Validate processing steps</td>
+      <td>test_hvac_template.py</td>
+      <td>test_thermostat_processing</td>
+      <td>2021-03-16 22:30:01</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Verify different templates returns correct class templates</td>
+      <td>test_hvac_template.py</td>
+      <td>test_n_hvac_objects_n_templates_returns_true</td>
+      <td>2021-03-16 22:29:53</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Verify fields are saved within templates</td>
+      <td>test_hvac_template.py</td>
+      <td>test_templates_have_good_objects</td>
+      <td>2021-03-16 22:29:58</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Verify input templates returns class templates</td>
+      <td>test_hvac_template.py</td>
+      <td>test_one_hvac_object_one_template_returns_true</td>
+      <td>2021-03-16 22:29:56</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Verify no input templates returns no class templates</td>
+      <td>test_hvac_template.py</td>
+      <td>test_no_hvac_objects_returns_with_zero_templates</td>
+      <td>2021-03-16 22:29:55</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Verify non HVACTemplate objects are passed to base dictionary</td>
+      <td>test_hvac_template.py</td>
+      <td>test_base_objects_are_stored</td>
+      <td>2021-03-16 22:29:52</td>
+      <td>True</td>
+    </tr>
+  </tbody>
+</table>
+<h4> HVACTemplate : Base</h4><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Test</th>
+      <th>FileName</th>
+      <th>FunctionName</th>
+      <th>Last Check</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Create always value schedule</td>
+      <td>test_expand_objects.py</td>
+      <td>test_make_compact_schedule_always_val</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Reject bad YAML object</td>
+      <td>test_expand_objects.py</td>
+      <td>test_exception_with_bad_structure</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Reject non-yaml structure files</td>
+      <td>test_expand_objects.py</td>
+      <td>test_reject_bad_expansion_file_format</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Reject other reference types</td>
+      <td>test_expand_objects.py</td>
+      <td>test_expansion_dictionary_okay</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Retrieve YAML object</td>
+      <td>test_expand_objects.py</td>
+      <td>test_retrieve_structure</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Verify file location exists</td>
+      <td>test_expand_objects.py</td>
+      <td>test_reject_bad_expansion_file_path</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+  </tbody>
+</table>
 <h4> HVACTemplate : Thermostat</h4><table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -31,10 +144,107 @@
   </thead>
   <tbody>
     <tr>
-      <td>VerifyTemplate</td>
-      <td>test_expand_objects.py</td>
+      <td>Assign schedule from constant setpoint</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_assign_thermostat_schedule_from_constant_setpoint</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Create schedule from constant setpoint</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_create_thermostat_schedule_from_constant_setpoint</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Input Template Required</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_check_templates_are_required</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Processing test</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_processing</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Reject bad template object</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_reject_bad_template</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Reject empty template</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_reject_no_inputs</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Verify valid template object</td>
+      <td>test_expand_thermostats.py</td>
       <td>test_verify_good_template</td>
-      <td>2021-03-13 22:38:21</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+  </tbody>
+</table>
+<h4> HVACTemplate : Thermostat : Options</h4><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Test</th>
+      <th>FileName</th>
+      <th>FunctionName</th>
+      <th>Last Check</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DualSetpoint from schedules</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_create_dual_thermostat_from_schedules</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>DualSetpoint from setpoints</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_create_dual_thermostat_from_setpoints</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>SingleCooling from schedule</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_create_thermostat_single_cooling_from_schedule</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>SingleCooling from setpoint</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_create_thermostat_single_cooling_from_setpoint</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>SingleHeating from schedule</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_create_thermostat_single_heating_from_schedule</td>
+      <td>2021-03-16 22:29:50</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>SingleHeating from setpoint</td>
+      <td>test_expand_thermostats.py</td>
+      <td>test_create_thermostat_single_heating_from_setpoint</td>
+      <td>2021-03-16 22:29:50</td>
       <td>True</td>
     </tr>
   </tbody>

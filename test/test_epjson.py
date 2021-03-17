@@ -140,6 +140,39 @@ class TestEPJSONHandler(unittest.TestCase):
             )
         return
 
+    def test_unpack_epjson(self):
+        outputs = self.epjson_handler.unpack_epjson({
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                },
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            }
+        })
+        key_check = True
+        for output in outputs:
+            (name, _), = output.items()
+            if name not in ['SPACE1-1', 'SPACE2-1']:
+                key_check = False
+        self.assertTrue(key_check)
+        return
+
     def test_default_schema_is_valid(self):
         self.epjson_handler.load_schema()
         assert self.epjson_handler.schema_is_valid

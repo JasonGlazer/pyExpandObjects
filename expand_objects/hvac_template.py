@@ -13,11 +13,13 @@ class HVACTemplate(EPJSON):
 
     Attributes:
         templates: HVACTemplate objects from epJSON file
+        base_objects: Non-HVACTemplate objects from epJSON file
         templates_zone: HVACTemplate:Zone: objects
         templates_system: HVACTemplate:System: objects
         templates_plant_equipment: HVACTemplate:Plant equipment objects
         templates_plant_loop: HVACTemplate:Plant: loop objects
         expanded_*: List of class objects for each template type
+        epjson: output epjson object
     """
 
     def __init__(
@@ -28,12 +30,14 @@ class HVACTemplate(EPJSON):
         """
         super().__init__(no_schema=no_schema)
         self.templates = {}
+        self.base_objects = {}
         self.templates_system = {}
         self.templates_zone = {}
         self.templates_plant_equipment = {}
         self.templates_plant_loop = {}
         self.templates_thermostats = {}
         self.expanded_thermostats = []
+        self.epjson = {}
         return
 
     def hvac_template_process(self, epjson):
@@ -45,12 +49,17 @@ class HVACTemplate(EPJSON):
         """
         self.logger.info('##### HVACTemplate #####')
         # Make blank dictionaries and run to do tests before saving as class attributes
-        templates = {}
         # todo_eo: add object_type check by pulling all values from schema?
         for object_type, object_structure in epjson.items():
             if re.match('^HVACTemplate:*', object_type):
                 self.templates = self.merge_epjson(
-                    super_dictionary=templates,
+                    super_dictionary=self.templates,
+                    object_dictionary={object_type: object_structure},
+                    unique_name_override=False
+                )
+            else:
+                self.base_objects = self.merge_epjson(
+                    super_dictionary=self.base_objects,
                     object_dictionary={object_type: object_structure},
                     unique_name_override=False
                 )
@@ -77,14 +86,22 @@ class HVACTemplate(EPJSON):
         self.epjson_process(epjson_ref=input_epjson)
         self.hvac_template_process(epjson=self.input_epjson)
         self.logger.info('##### Processing Thermostats #####')
-        for thermostat in self.expanded_thermostats:
+        thermostats = self.unpack_epjson(self.templates_thermostats)
+        for thermostat in thermostats:
             self.expanded_thermostats.append(
                 ExpandThermostat(thermostat).run()
             )
         # Do manipulations and make output epJSON
         # Write messages logged to stream to outputPreProcessorMessage
+        self.epjson = self.base_objects
+        epjson_objects = [i.epjson for i in self.expanded_thermostats]
+        for eo in epjson_objects:
+            self.epjson = self.merge_epjson(
+                super_dictionary=self.epjson,
+                object_dictionary=eo
+            )
         output_epjson = {
-            "epJSON": input_epjson,
+            "epJSON": self.epjson,
             'outputPreProcessorMessage': self.stream.getvalue()
         }
         return output_epjson

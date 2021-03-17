@@ -206,31 +206,52 @@ class ExpandThermostat(ExpandObjects):
                     structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=getattr(self, 'constant_{}_setpoint'.format(thermostat_type)),
                 )
-                (thermostat_schedule_name, _), = thermostat_schedule.items()
+                (thermostat_schedule_type, thermostat_schedule_structure), = thermostat_schedule.items()
+                (thermostat_schedule_name, _), = thermostat_schedule_structure.items()
                 setattr(self, '{}_setpoint_schedule_name'.format(thermostat_type), thermostat_schedule_name)
         return
 
-    # def create_thermostat_setpoints(self):
-    #     """
-    #     Create Thermostat:Sepoint objects based on class setpoint_schedule_name attributes
-    #     :return: Updated class epJSON dictionary with Thermostat:Setpoint objects added.
-    #     """
-    #     if getattr(self, 'heating_setpoint_schedule_name', None) \
-    #             and getattr(self, 'cooling_setpoint_schedule_name', None):
-    #         thermostat_setpoint_object = {
-    #             "Thermostat:DualSetpoint": {
-    #                 '{} SP Control'.format(self.template_name): {
-    #                     'heating_setpoint_schedule_name': self.heating_setpoint_schedule_name,
-    #                     'cooling_setpoint_schedule_name': self.cooling_setpoint_schedule_name
-    #                 }
-    #             }
-    #         }
-    #     self.epjson = self.merge_epjson(
-    #         super_dictionary=self.epjson,
-    #         object_dictionary=thermostat_setpoint_object,
-    #         unique_name_override=False
-    #     )
-    #     return
+    def create_thermostat_setpoints(self):
+        """
+        Create Thermostat:Sepoint objects based on class setpoint_schedule_name attributes
+        :return: Updated class epJSON dictionary with Thermostat:Setpoint objects added.
+        """
+        if getattr(self, 'heating_setpoint_schedule_name', None) \
+                and getattr(self, 'cooling_setpoint_schedule_name', None):
+            thermostat_setpoint_object = {
+                "Thermostat:DualSetpoint": {
+                    '{} SP Control'.format(self.template_name): {
+                        'heating_setpoint_schedule_name': self.heating_setpoint_schedule_name,
+                        'cooling_setpoint_schedule_name': self.cooling_setpoint_schedule_name
+                    }
+                }
+            }
+        elif getattr(self, 'heating_setpoint_schedule_name', None):
+            thermostat_setpoint_object = {
+                "Thermostat:SingleHeating": {
+                    '{} SP Control'.format(self.template_name): {
+                        'setpoint_schedule_name': self.heating_setpoint_schedule_name
+                    }
+                }
+            }
+        elif getattr(self, 'cooling_setpoint_schedule_name', None):
+            thermostat_setpoint_object = {
+                "Thermostat:SingleCooling": {
+                    '{} SP Control'.format(self.template_name): {
+                        'setpoint_schedule_name': self.cooling_setpoint_schedule_name
+                    }
+                }
+            }
+        else:
+            raise eoe.InvalidTemplateException(
+                'No setpoints or schedules provided to HVACTemplate:Thermostat object: {}'.format(self.template_name))
+        self.epjson = self.merge_epjson(
+            super_dictionary=self.epjson,
+            object_dictionary=thermostat_setpoint_object,
+            unique_name_override=False
+        )
+        # todo_eo make single setpoint schedules
+        return
 
     def run(self):
         """
@@ -238,5 +259,5 @@ class ExpandThermostat(ExpandObjects):
         :return: ExpandThermostat class with necessary attributes filled for output
         """
         self.create_and_set_schedules()
-        # self.create_thermostat_setpoints()
+        self.create_thermostat_setpoints()
         return self

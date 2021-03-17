@@ -72,6 +72,19 @@ class EPJSON(Logger):
         return super_dictionary
 
     @staticmethod
+    def unpack_epjson(epjson):
+        """
+        Create generator of epJSON objects
+
+        :param epjson: epJSON object
+        :return: generator which returns the subdictionaries of an epJSON object
+        """
+        for _, epjson_objects in epjson.items():
+            for object_name, object_structure in epjson_objects.items():
+                yield {object_name: object_structure}
+        return None
+
+    @staticmethod
     def _get_json_file(json_location=None):
         """
         Load json file and return an error and None if fails
