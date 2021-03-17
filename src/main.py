@@ -1,6 +1,6 @@
 import argparse
 import os
-from expand_objects.hvac_template import HVACTemplate
+from hvac_template import HVACTemplate
 import logging
 
 

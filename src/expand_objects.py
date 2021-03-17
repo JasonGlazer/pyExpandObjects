@@ -4,8 +4,8 @@ import copy
 import re
 from pathlib import Path
 
-import expand_objects.exceptions as eoe
-from expand_objects.epjson_handler import EPJSON
+import custom_exceptions as eoe
+from epjson_handler import EPJSON
 
 this_script_path = os.path.dirname(
     os.path.abspath(__file__)
@@ -213,32 +213,32 @@ class ExpandThermostat(ExpandObjects):
 
     def create_thermostat_setpoints(self):
         """
-        Create Thermostat:Sepoint objects based on class setpoint_schedule_name attributes
-        :return: Updated class epJSON dictionary with Thermostat:Setpoint objects added.
+        Create ThermostatSetpoint objects based on class setpoint_schedule_name attributes
+        :return: Updated class epJSON dictionary with ThermostatSetpoint objects added.
         """
         if getattr(self, 'heating_setpoint_schedule_name', None) \
                 and getattr(self, 'cooling_setpoint_schedule_name', None):
             thermostat_setpoint_object = {
-                "Thermostat:DualSetpoint": {
+                "ThermostatSetpoint:DualSetpoint": {
                     '{} SP Control'.format(self.template_name): {
-                        'heating_setpoint_schedule_name': self.heating_setpoint_schedule_name,
-                        'cooling_setpoint_schedule_name': self.cooling_setpoint_schedule_name
+                        'heating_setpoint_temperature_schedule_name': self.heating_setpoint_schedule_name,
+                        'cooling_setpoint_temperature_schedule_name': self.cooling_setpoint_schedule_name
                     }
                 }
             }
         elif getattr(self, 'heating_setpoint_schedule_name', None):
             thermostat_setpoint_object = {
-                "Thermostat:SingleHeating": {
+                "ThermostatSetpoint:SingleHeating": {
                     '{} SP Control'.format(self.template_name): {
-                        'setpoint_schedule_name': self.heating_setpoint_schedule_name
+                        'setpoint_temperature_schedule_name': self.heating_setpoint_schedule_name
                     }
                 }
             }
         elif getattr(self, 'cooling_setpoint_schedule_name', None):
             thermostat_setpoint_object = {
-                "Thermostat:SingleCooling": {
+                "ThermostatSetpoint:SingleCooling": {
                     '{} SP Control'.format(self.template_name): {
-                        'setpoint_schedule_name': self.cooling_setpoint_schedule_name
+                        'setpoint_temperature_schedule_name': self.cooling_setpoint_schedule_name
                     }
                 }
             }

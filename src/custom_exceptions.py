@@ -1,6 +1,6 @@
 import yaml
 from jsonschema.exceptions import SchemaError
-from expand_objects.logger import Logger
+from logger import Logger
 
 
 class CustomException(Logger, Exception):

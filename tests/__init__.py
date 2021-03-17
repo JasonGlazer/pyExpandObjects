@@ -2,7 +2,8 @@ import os
 import inspect
 from functools import wraps
 
-from expand_objects.logger import Logger
+import src
+from src.logger import Logger
 
 
 class BaseTest(object):

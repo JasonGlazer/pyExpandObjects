@@ -1,6 +1,6 @@
 import re
-from expand_objects.epjson_handler import EPJSON
-from expand_objects.expand_objects import ExpandThermostat
+from epjson_handler import EPJSON
+from expand_objects import ExpandThermostat
 
 
 class HVACTemplate(EPJSON):

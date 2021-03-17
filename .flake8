@@ -1,4 +1,4 @@
 [flake8]
 ignore = E501
 max-line-length = 100
-exclude = .git,.tox,conf.py,setup.py
+exclude = .git,.github,.idea,cover,design,docs,logs,tests,simulation,resources,.tox,conf.py,setup.py

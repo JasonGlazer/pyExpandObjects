@@ -1,7 +1,15 @@
 import unittest
+import os
+import sys
 
-from expand_objects.hvac_template import HVACTemplate
-from test import BaseTest
+this_script_path = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+sys.path.append(os.path.join(this_script_path, '..', 'src'))
+
+from hvac_template import HVACTemplate
+from . import BaseTest
 
 minimum_objects_d = {
     "Building": {

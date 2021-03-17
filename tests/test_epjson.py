@@ -1,8 +1,16 @@
 from pathlib import Path
 import unittest
+import os
+import sys
 
-from expand_objects.epjson_handler import EPJSON
-import expand_objects.exceptions as eoe
+this_script_path = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+sys.path.append(os.path.join(this_script_path, '..', 'src'))
+
+from epjson_handler import EPJSON
+import custom_exceptions as eoe
 
 
 minimum_objects_d = {

@@ -1,9 +1,10 @@
 import sys
+import re
 import json
 import jsonschema
 from pathlib import Path
-import expand_objects.exceptions as eoe
-from expand_objects.logger import Logger
+import custom_exceptions as eoe
+from logger import Logger
 
 this_script_path = Path(__file__).resolve()
 
@@ -70,6 +71,38 @@ class EPJSON(Logger):
             elif isinstance(object_structure, list):
                 super_dictionary[object_type] = object_structure
         return super_dictionary
+
+    # todo_eo count and summarize objects. Need to test
+    @staticmethod
+    def summarize_epjson(epjson):
+        """
+        Retrieve file, simulate, and compare it to a created epJSON object
+        :param epjson:
+        :return: dictionary of summaries
+        """
+        return
+
+    # todo_eo Need to test
+    @staticmethod
+    def purge_epjson(epjson, purge_dictionary=None):
+        """
+        Remove objects in an input epJSON object.
+        :param epjson: input epJSON
+        :param purge_dictionary: key-value pair of object_type and list of regular expressions to remove items
+            (.* removes all objects)
+        :return: epJSON
+        """
+        if purge_dictionary:
+            for object_type, object_structure in epjson.items():
+                if object_type in purge_dictionary.keys():
+                    for object_name, object_fields in object_structure.items():
+                        if isinstance(purge_dictionary[object_type], str):
+                            purge_dictionary[object_type] = [purge_dictionary[object_type], ]
+                        for rgx_match in purge_dictionary[object_type]:
+                            if re.match(rgx_match, object_name):
+                                print(epjson[object_type][object_name])
+                                epjson[object_type][object_name].pop()
+        return epjson
 
     @staticmethod
     def unpack_epjson(epjson):
