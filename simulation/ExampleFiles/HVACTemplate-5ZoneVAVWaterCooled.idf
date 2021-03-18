@@ -177,7 +177,7 @@
 !    Yes;                     !- Use WeatherFile Snow Indicators
 
   RunPeriod,
-    Run Period 2,            !- Name
+    Run Period 1,            !- Name
     1,                       !- Begin Month
     14,                      !- Begin Day of Month
     ,                        !- Begin Year
@@ -192,7 +192,7 @@
     Yes;                     !- Use Weather File Snow Indicators
 
   RunPeriod,
-    Run Period 3,            !- Name
+    Run Period 2,            !- Name
     7,                       !- Begin Month
     7,                       !- Begin Day of Month
     ,                        !- Begin Year
@@ -2136,20 +2136,6 @@
   Output:Surfaces:Drawing,dxf;
 
   Output:Surfaces:List,lines;
-
-  Output:Meter:MeterFileOnly,Electricity:Facility,monthly;
-
-  Output:Meter:MeterFileOnly,Electricity:Building,monthly;
-
-  Output:Meter:MeterFileOnly,InteriorLights:Electricity,monthly;
-
-  Output:Meter:MeterFileOnly,Electricity:HVAC,monthly;
-
-  Output:Meter:MeterFileOnly,Electricity:Plant,monthly;
-
-  Output:Meter:MeterFileOnly,NaturalGas:Plant,monthly;
-
-  Output:Meter:MeterFileOnly,NaturalGas:Facility,monthly;
 
   Output:Meter:MeterFileOnly,Electricity:Facility,runperiod;
 

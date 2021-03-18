@@ -174,6 +174,91 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         self.assertTrue(key_check)
         return
 
+    def test_purge_epjson(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                },
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            "ThermostatSetpoint:DualSetpoint": {
+                "All Zones Dual SP Control": {
+                    "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                    "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+                }
+            }
+        }
+        output = self.epjson_handler.purge_epjson(
+            epjson=dict_1,
+            purge_dictionary= {
+                "Zone": ["SPACE1-1", ]
+            }
+        )
+        self.assertEqual(1, len(output['Zone'].keys()))
+        self.assertTrue("All Zones Dual SP Control" == list(output['ThermostatSetpoint:DualSetpoint'].keys())[0])
+        output = self.epjson_handler.purge_epjson(
+            epjson=dict_1,
+            purge_dictionary= {
+                "Zone": '.*'
+            }
+        )
+        self.assertEqual(0, len(output['Zone'].keys()))
+        self.assertTrue("All Zones Dual SP Control" == list(output['ThermostatSetpoint:DualSetpoint'].keys())[0])
+        return
+
+    def test_epjson_count_summary(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                },
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            "ThermostatSetpoint:DualSetpoint": {
+                "All Zones Dual SP Control": {
+                    "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                    "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+                }
+            }
+        }
+        output = self.epjson_handler.summarize_epjson(dict_1)
+        self.assertEqual(2, output['Zone'])
+        self.assertEqual(1, output['ThermostatSetpoint:DualSetpoint'])
+        return
+
     def test_default_schema_is_valid(self):
         self.epjson_handler.load_schema()
         assert self.epjson_handler.schema_is_valid

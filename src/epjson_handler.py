@@ -2,6 +2,7 @@ import sys
 import re
 import json
 import jsonschema
+import copy
 from pathlib import Path
 import custom_exceptions as eoe
 from logger import Logger
@@ -78,9 +79,16 @@ class EPJSON(Logger):
         """
         Retrieve file, simulate, and compare it to a created epJSON object
         :param epjson:
-        :return: dictionary of summaries
+        :return: dictionary of count summaries
         """
-        return
+        output = {}
+        for object_type, epjson_objects in epjson.items():
+            for _, _ in epjson_objects.items():
+                if not output.get(object_type):
+                    output[object_type] = 1
+                else:
+                    output[object_type] = output[object_type] + 1
+        return output
 
     # todo_eo Need to test
     @staticmethod
@@ -92,6 +100,7 @@ class EPJSON(Logger):
             (.* removes all objects)
         :return: epJSON
         """
+        tmp_d = copy.deepcopy(epjson)
         if purge_dictionary:
             for object_type, object_structure in epjson.items():
                 if object_type in purge_dictionary.keys():
@@ -100,9 +109,8 @@ class EPJSON(Logger):
                             purge_dictionary[object_type] = [purge_dictionary[object_type], ]
                         for rgx_match in purge_dictionary[object_type]:
                             if re.match(rgx_match, object_name):
-                                print(epjson[object_type][object_name])
-                                epjson[object_type][object_name].pop()
-        return epjson
+                                tmp_d[object_type].pop(object_name)
+        return tmp_d
 
     @staticmethod
     def unpack_epjson(epjson):

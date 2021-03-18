@@ -39,7 +39,7 @@ class TestMain(BaseTest, unittest.TestCase):
                 Namespace(
                     no_schema=True,
                     file=os.path.join(
-                        this_script_path, '..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled.epJSON')
+                        this_script_path, '..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
                 )
             )
         except Exception as e:

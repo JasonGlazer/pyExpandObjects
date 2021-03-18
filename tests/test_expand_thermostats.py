@@ -1,16 +1,8 @@
 import unittest
-import json
-from pathlib import Path
-import subprocess
-import sys
-import os
 
 from expand_objects import ExpandThermostat
-from epjson_handler import EPJSON
 import custom_exceptions as eoe
 from . import BaseTest
-
-this_script_dir = Path(__file__).parent
 
 
 class TestExpandThermostats(BaseTest, unittest.TestCase):
@@ -197,6 +189,20 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
             'HVACTemplate-Always18')
         return
 
+    @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Options:Object summary test")
+    def test_check_output_objects(self):
+        thermostat_template = {
+            'Thermostat 1': {
+                'cooling_setpoint_schedule_name': 'HVACTemplate-Always18',
+                'heating_setpoint_schedule_name': 'HVACTemplate-Always12'
+            }
+        }
+        eo = ExpandThermostat(template=thermostat_template)
+        eo.run()
+        output = eo.summarize_epjson(eo.epjson)
+        self.assertEqual(1, output['ThermostatSetpoint:DualSetpoint'])
+        return
+
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Processing test")
     def test_processing(self):
         thermostat_template = {
@@ -216,49 +222,3 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
             ['heating_setpoint_temperature_schedule_name'],
             'HVACTemplate-Always12')
         return
-
-    # todo_eo test summary data
-
-    # todo_eo may need to run this under different file (sim_test_*) so it's skipped by CI
-    # this is likely a function that can be pushed up to base class
-    # def test_simulation(self):
-    #     base_file_path = str(this_script_dir / 'simulation' / 'ExampleFiles' /
-    #                          'HVACTemplate-5ZonePurchAir.epJSON')
-    #     with open(str(this_script_dir / 'simulation' / 'ExampleFiles' /
-    #                   'HVACTemplate-5ZonePurchAir.epJSON'), 'r') as f:
-    #         test_data = f.read()
-    #     base_raw_epjson = json.loads(test_data)
-    #     test_template = base_raw_epjson.pop('HVACTemplate:Thermostat')
-    #     epj = EPJSON()
-    #     epj.load_epjson(epjson_ref=base_raw_epjson)
-    #     base_epjson = epj.input_epjson
-    #     print(test_template)
-    #     eo = ExpandThermostat(template=test_template)
-    #     eo.run()
-    #     print(eo.epjson)
-    #     test_epjson = epj.merge_epjson(
-    #         super_dictionary=base_epjson,
-    #         object_dictionary=eo.epjson,
-    #         unique_name_override=False
-    #     )
-    #     subprocess.run(
-    #         [
-    #             'wine',
-    #             str(this_script_dir / 'simulation' / 'energyplus.exe'),
-    #             '-d',
-    #             str(this_script_dir / 'simulation' / 'test'),
-    #             '-w',
-    #             str(this_script_dir / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
-    #             base_file_path
-    #          ]
-    #     )
-    #     # get output
-    #     # run again with test_file
-    #     # compare mtr files
-    #     # compare err files for :
-    #     # ************* EnergyPlus Completed Successfully--
-    #     7 Warning; 0 Severe Errors; Elapsed Time=00hr 00min  1.32sec
-    #     # import os
-    #     # with open(os.path.join(os.path.dirname(__file__), 'epjson_test.epJSON'), 'w') as f:
-    #     #     json.dump(test_epjson, f, indent=4, sort_keys=True)
-    #     return
