@@ -4,7 +4,8 @@ import json
 import jsonschema
 import copy
 from pathlib import Path
-import custom_exceptions as eoe
+from custom_exceptions import PyExpandObjectsFileNotFoundError, PyExpandObjectsSchemaError, \
+    PyExpandObjectsTypeError, UniqueNameException
 from logger import Logger
 
 this_script_path = Path(__file__).resolve()
@@ -62,7 +63,7 @@ class EPJSON(Logger):
                 for object_name, object_fields in object_structure.items():
                     if not unique_name_override and object_name in super_dictionary[object_type].keys():
                         if unique_name_fail:
-                            raise eoe.UniqueNameException("Unique name {} already exists in object {}".format(
+                            raise UniqueNameException("Unique name {} already exists in object {}".format(
                                 object_name,
                                 object_type
                             ))
@@ -73,7 +74,6 @@ class EPJSON(Logger):
                 super_dictionary[object_type] = object_structure
         return super_dictionary
 
-    # todo_eo count and summarize objects. Need to test
     @staticmethod
     def summarize_epjson(epjson):
         """
@@ -90,7 +90,6 @@ class EPJSON(Logger):
                     output[object_type] = output[object_type] + 1
         return output
 
-    # todo_eo Need to test
     @staticmethod
     def purge_epjson(epjson, purge_dictionary=None):
         """
@@ -110,6 +109,8 @@ class EPJSON(Logger):
                         for rgx_match in purge_dictionary[object_type]:
                             if re.match(rgx_match, object_name):
                                 tmp_d[object_type].pop(object_name)
+                            if not tmp_d[object_type].keys():
+                                tmp_d.pop(object_type)
         return tmp_d
 
     @staticmethod
@@ -137,9 +138,9 @@ class EPJSON(Logger):
             with open(json_location) as f:
                 json_obj = json.load(f)
         except FileNotFoundError:
-            raise eoe.FileNotFoundError("file does not exist: {}", json_location)
+            raise PyExpandObjectsFileNotFoundError("file does not exist: {}", json_location)
         except Exception as e:
-            raise eoe.TypeError("file is not a valid json: %s\n%s", json_location, str(e))
+            raise PyExpandObjectsTypeError("file is not a valid json: %s\n%s", json_location, str(e))
         return json_obj
 
     def _validate_schema(self, schema):
@@ -157,7 +158,7 @@ class EPJSON(Logger):
             self.logger.info('schema version: %s', self.schema['epJSON_schema_version'])
             self.logger.info('schema build: %s', self.schema['epJSON_schema_build'])
         except jsonschema.exceptions.SchemaError as e:
-            raise eoe.SchemaError(e)
+            raise PyExpandObjectsSchemaError(e)
         except Exception as e:
             self.logger.exception('Schema validator failed:\n%s', str(e))
             sys.exit(1)
@@ -183,7 +184,7 @@ class EPJSON(Logger):
                 try:
                     schema_location = str(this_script_path.parent / 'resources' / 'Energy+.schema.epJSON')
                 except FileNotFoundError:
-                    raise eoe.FileNotFoundError('Schema file path is not valid; \n%s')
+                    raise PyExpandObjectsFileNotFoundError('Schema file path is not valid; \n%s')
             self.schema_location = schema_location
             self.schema = self._get_json_file(schema_location)
             if self.schema:
@@ -234,7 +235,7 @@ class EPJSON(Logger):
             else:
                 self.input_epjson = self._get_json_file(epjson_ref)
         except FileNotFoundError:
-            raise eoe.FileNotFoundError('epJSON file not found')
+            raise PyExpandObjectsFileNotFoundError('epJSON file not found')
         if self.input_epjson:
             self.logger.info(
                 'input EPJSON file loaded, %s top level objects',

@@ -1,7 +1,7 @@
 import unittest
 
 from src.expand_objects import ExpandThermostat
-import custom_exceptions as eoe
+from src.expand_objects import InvalidTemplateException
 from . import BaseTest
 
 
@@ -33,7 +33,7 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Reject bad template object")
     def test_reject_bad_template(self):
         templates = {}
-        with self.assertRaises(eoe.InvalidTemplateException):
+        with self.assertRaises(InvalidTemplateException):
             ExpandThermostat(template=templates)
         templates = []
         with self.assertRaises(TypeError):
@@ -79,7 +79,7 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         thermostat_template = {'Thermostat 1': {}}
         eo = ExpandThermostat(template=thermostat_template)
         eo.create_and_set_schedules()
-        with self.assertRaises(eoe.InvalidTemplateException):
+        with self.assertRaises(InvalidTemplateException):
             eo.create_thermostat_setpoints()
         return
 

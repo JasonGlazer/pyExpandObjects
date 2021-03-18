@@ -49,7 +49,6 @@ class HVACTemplate(EPJSON):
         """
         self.logger.info('##### HVACTemplate #####')
         # Make blank dictionaries and run to do tests before saving as class attributes
-        # todo_eo: add object_type check by pulling all values from schema?
         for object_type, object_structure in epjson.items():
             if re.match('^HVACTemplate:*', object_type):
                 self.templates = self.merge_epjson(

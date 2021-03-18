@@ -1,10 +1,11 @@
 import os
-import yaml
 import copy
+import yaml
 import re
 from pathlib import Path
 
-import custom_exceptions as eoe
+from custom_exceptions import PyExpandObjectsTypeError, InvalidTemplateException, \
+    PyExpandObjectsYamlError, PyExpandObjectsFileNotFoundError
 from epjson_handler import EPJSON
 
 this_script_path = os.path.dirname(
@@ -26,7 +27,7 @@ class ExpansionStructureLocation:
             value_is_path = Path(value)
             if value_is_path.is_file():
                 if not value.endswith(('.yaml', '.yml')):
-                    raise eoe.TypeError('File extension does not match yaml type: {}'.format(value))
+                    raise PyExpandObjectsTypeError('File extension does not match yaml type: {}'.format(value))
                 else:
                     with open(value, 'r') as f:
                         # todo_eo: discuss safety issue if loader.
@@ -38,15 +39,16 @@ class ExpansionStructureLocation:
                     parsed_value = yaml.load(value, Loader=yaml.SafeLoader)
                     # if the parsed value is the same as the input value, it's probably a bad file path
                     if parsed_value == value:
-                        raise eoe.FileNotFoundError('File does not exist: {}'.format(value))
+                        raise PyExpandObjectsFileNotFoundError('File does not exist: {}'.format(value))
                 except yaml.YAMLError as exc:
                     if hasattr(exc, 'problem_mark'):
                         mark = exc.problem_mark
-                        raise eoe.YamlError("problem loading yaml at ({}, {})".format(mark.line + 1, mark.column + 1))
+                        raise PyExpandObjectsYamlError("problem loading yaml at ({}, {})".format(
+                            mark.line + 1, mark.column + 1))
                     else:
-                        raise eoe.YamlError()
+                        raise PyExpandObjectsYamlError()
         else:
-            raise eoe.TypeError(
+            raise PyExpandObjectsTypeError(
                 'template expansion structure reference is not a file path or dictionary: {}'.format(value))
         self.expansion_structure = parsed_value
         return
@@ -65,18 +67,18 @@ class VerifyTemplate:
 
     def __set__(self, obj, value):
         if not isinstance(value, dict):
-            raise eoe.TypeError('Template must be a dictionary: {}'.format(value))
+            raise PyExpandObjectsTypeError('Template must be a dictionary: {}'.format(value))
         try:
             # template dictionary should have one key (unique name) and one object as a value (field/value dict)
             # this assignment below will fail if that is not the case.
             (_, object_structure), = value.items()
             # ensure object is dictionary
             if not isinstance(object_structure, dict):
-                raise eoe.InvalidTemplateException(
+                raise InvalidTemplateException(
                     'An Invalid object {} was passed as an {} object'.format(value, self.template_type))
             template = value
         except ValueError:
-            raise eoe.InvalidTemplateException(
+            raise InvalidTemplateException(
                 'An Invalid object {} was passed as an {} object'.format(value, self.template_type))
         self.template = template
         return
@@ -87,9 +89,9 @@ class ExpandObjects(EPJSON):
     General class for expanding template objects.
 
     Attributes:
-    template: epJSON dictionary containing HVACTemplate to expand
-    expansion_structure: file or dictionary of expansion structure details
-    epjson: dictionary of epSJON objects to write to file
+        template: epJSON dictionary containing HVACTemplate to expand
+        expansion_structure: file or dictionary of expansion structure details (from YAML)
+        epjson: dictionary of epSJON objects to write to file
     """
 
     template = VerifyTemplate(template_type='General Template')
@@ -127,7 +129,8 @@ class ExpandObjects(EPJSON):
             for key in structure_hierarchy:
                 structure = structure[key]
         except KeyError:
-            raise eoe.TypeError('YAML structure does not exist for hierarchy: {}'.format(structure_hierarchy))
+            raise PyExpandObjectsTypeError('YAML structure does not exist for hierarchy: {}'.format(
+                structure_hierarchy))
         return structure
 
     def build_compact_schedule(
@@ -243,14 +246,13 @@ class ExpandThermostat(ExpandObjects):
                 }
             }
         else:
-            raise eoe.InvalidTemplateException(
+            raise InvalidTemplateException(
                 'No setpoints or schedules provided to HVACTemplate:Thermostat object: {}'.format(self.template_name))
         self.epjson = self.merge_epjson(
             super_dictionary=self.epjson,
             object_dictionary=thermostat_setpoint_object,
             unique_name_override=False
         )
-        # todo_eo make single setpoint schedules
         return
 
     def run(self):

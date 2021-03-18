@@ -39,12 +39,12 @@ def main(args=None):
                     output['outputPreProcessorMessage'],
                     hvt_output['outputPreProcessorMessage']])
         else:
-            hvt.logger.warning('File does not exist: %s. file not processed', args.file)
+            hvt.logger.error('File does not exist: %s. file not processed', args.file)
             output['outputPreProcessorMessage'] = r' '.join([
                 output['outputPreProcessorMessage'],
                 'Error: File does not exist: {}.  File not processed'.format(args.file)])
     else:
-        hvt.logger.warning('Bad file extension for %s.  File not processed', args.file)
+        hvt.logger.error('Bad file extension for %s.  File not processed', args.file)
         output['outputPreProcessorMessage'] = r' '.join([
             output['outputPreProcessorMessage'],
             'Error: Bad file extension for {}.  File not processed'.format(args.file)])

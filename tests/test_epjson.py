@@ -3,7 +3,8 @@ import unittest
 
 from . import BaseTest
 from src.epjson_handler import EPJSON
-import custom_exceptions as eoe
+# must import exceptions directly from test code
+from src.epjson_handler import UniqueNameException
 
 
 minimum_objects_d = {
@@ -133,7 +134,7 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 }
             }
         }
-        with self.assertRaises(eoe.UniqueNameException):
+        with self.assertRaises(UniqueNameException):
             self.epjson_handler.merge_epjson(
                 super_dictionary=dict_1,
                 object_dictionary=dict_2,
@@ -218,8 +219,9 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 "Zone": '.*'
             }
         )
-        self.assertEqual(0, len(output['Zone'].keys()))
         self.assertTrue("All Zones Dual SP Control" == list(output['ThermostatSetpoint:DualSetpoint'].keys())[0])
+        with self.assertRaises(KeyError):
+            output['Zone']
         return
 
     def test_epjson_count_summary(self):
