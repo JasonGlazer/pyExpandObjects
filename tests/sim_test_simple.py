@@ -20,6 +20,7 @@ class TestSimulationSimple(BaseTest, unittest.TestCase):
         return
 
     # todo_eo: much of this function needs to be refactored and set up for reuse in subsequent tests
+    @unittest.skip
     def test_simulation(self):
         base_file_path = str(this_script_dir / '..' / 'simulation' / 'ExampleFiles' /
                              'HVACTemplate-5ZoneVAVWaterCooled.epJSON')
