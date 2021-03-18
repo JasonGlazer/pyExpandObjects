@@ -5,7 +5,7 @@ import re
 from argparse import Namespace
 
 from . import BaseTest
-from main import main
+from src.main import main
 
 this_script_path = os.path.dirname(
     os.path.abspath(__file__)

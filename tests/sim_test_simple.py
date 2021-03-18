@@ -6,8 +6,8 @@ import sys
 import os
 
 from . import BaseTest
-from epjson_handler import EPJSON
-from expand_objects import ExpandThermostat
+from src.epjson_handler import EPJSON
+from src.expand_objects import ExpandThermostat
 
 this_script_dir = Path(__file__).parent
 

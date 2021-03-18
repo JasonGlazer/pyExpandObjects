@@ -9,7 +9,7 @@ this_script_path = os.path.dirname(
 
 sys.path.append(os.path.join(this_script_path, '..', 'src'))
 
-from logger import Logger
+from src.logger import Logger
 
 
 class BaseTest(object):

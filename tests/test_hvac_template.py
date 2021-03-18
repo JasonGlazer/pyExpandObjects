@@ -1,6 +1,6 @@
 import unittest
 
-from hvac_template import HVACTemplate
+from src.hvac_template import HVACTemplate
 from . import BaseTest
 
 minimum_objects_d = {
