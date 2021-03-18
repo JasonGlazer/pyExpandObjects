@@ -1351,14 +1351,12 @@
             "outside_layer": "WD01"
         }
     },
-    "DesignSpecification:OutdoorAir": {
-        "Office Outdoor Air Spec": {
-            "outdoor_air_flow_air_changes_per_hour": 0.0,
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person",
-            "outdoor_air_schedule_name": "Min OA Sched"
+    "ConvergenceLimits": {
+        "ConvergenceLimits 1": {
+            "maximum_hvac_iterations": 20,
+            "maximum_plant_iterations": 10,
+            "minimum_plant_iterations": 4,
+            "minimum_system_timestep": 1
         }
     },
     "ElectricEquipment": {
@@ -1537,121 +1535,212 @@
             "vertex_entry_direction": "Counterclockwise"
         }
     },
+    "HVACTemplate:Plant:Boiler": {
+        "Main Boiler": {
+            "boiler_type": "HotWaterBoiler",
+            "capacity": "Autosize",
+            "efficiency": 0.8,
+            "fuel_type": "NaturalGas",
+            "priority": "1"
+        }
+    },
+    "HVACTemplate:Plant:ChilledWaterLoop": {
+        "Chilled Water Loop": {
+            "chilled_water_design_setpoint": 7.22,
+            "chilled_water_pump_configuration": "ConstantPrimaryNoSecondary",
+            "chilled_water_reset_outdoor_dry_bulb_high": 26.7,
+            "chilled_water_reset_outdoor_dry_bulb_low": 15.6,
+            "chilled_water_setpoint_at_outdoor_dry_bulb_high": 6.7,
+            "chilled_water_setpoint_at_outdoor_dry_bulb_low": 12.2,
+            "chilled_water_setpoint_reset_type": "None",
+            "chiller_plant_operation_scheme_type": "Default",
+            "condenser_plant_operation_scheme_type": "Default",
+            "condenser_water_design_setpoint": 29.4,
+            "condenser_water_pump_rated_head": 179352,
+            "minimum_outdoor_dry_bulb_temperature": 7.22,
+            "primary_chilled_water_pump_rated_head": 179352,
+            "pump_control_type": "Intermittent",
+            "secondary_chilled_water_pump_rated_head": 179352
+        }
+    },
+    "HVACTemplate:Plant:Chiller": {
+        "Main Chiller": {
+            "capacity": "Autosize",
+            "chiller_type": "ElectricReciprocatingChiller",
+            "condenser_type": "WaterCooled",
+            "nominal_cop": 3.2,
+            "priority": "1"
+        }
+    },
+    "HVACTemplate:Plant:HotWaterLoop": {
+        "Hot Water Loop": {
+            "hot_water_design_setpoint": 82,
+            "hot_water_plant_operation_scheme_type": "Default",
+            "hot_water_pump_configuration": "ConstantFlow",
+            "hot_water_pump_rated_head": 179352,
+            "hot_water_reset_outdoor_dry_bulb_high": 10,
+            "hot_water_reset_outdoor_dry_bulb_low": -6.7,
+            "hot_water_setpoint_at_outdoor_dry_bulb_high": 65.6,
+            "hot_water_setpoint_at_outdoor_dry_bulb_low": 82.2,
+            "hot_water_setpoint_reset_type": "OutdoorAirTemperatureReset",
+            "pump_control_type": "Intermittent"
+        }
+    },
+    "HVACTemplate:Plant:Tower": {
+        "Main Tower": {
+            "free_convection_capacity": "Autosize",
+            "high_speed_fan_power": "Autosize",
+            "high_speed_nominal_capacity": "Autosize",
+            "low_speed_fan_power": "Autosize",
+            "low_speed_nominal_capacity": "Autosize",
+            "priority": "1",
+            "tower_type": "SingleSpeed"
+        }
+    },
+    "HVACTemplate:System:VAV": {
+        "VAV Sys 1": {
+            "cooling_coil_design_setpoint": 12.8,
+            "cooling_coil_setpoint_reset_type": "None",
+            "cooling_coil_type": "ChilledWater",
+            "dehumidification_control_type": "None",
+            "dehumidification_setpoint": 60.0,
+            "economizer_lockout": "NoLockout",
+            "economizer_lower_temperature_limit": 4,
+            "economizer_type": "DifferentialDryBulb",
+            "economizer_upper_temperature_limit": 19,
+            "gas_heating_coil_efficiency": 0.8,
+            "gas_heating_coil_parasitic_electric_load": 0.0,
+            "gas_preheat_coil_efficiency": 0.8,
+            "gas_preheat_coil_parasitic_electric_load": 0.0,
+            "heat_recovery_type": "None",
+            "heating_coil_design_setpoint": 10.0,
+            "heating_coil_setpoint_reset_type": "None",
+            "heating_coil_type": "HotWater",
+            "humidifier_rated_capacity": 1e-06,
+            "humidifier_rated_electric_power": 2690.0,
+            "humidifier_setpoint": 30.0,
+            "humidifier_type": "None",
+            "latent_heat_recovery_effectiveness": 0.65,
+            "maximum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_control_type": "FixedMinimum",
+            "minimum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_schedule_name": "Min OA Sched",
+            "night_cycle_control": "CycleOnAny",
+            "preheat_coil_type": "None",
+            "return_plenum_name": "PLENUM-1",
+            "sensible_heat_recovery_effectiveness": 0.7,
+            "sizing_option": "NonCoincident",
+            "supply_fan_delta_pressure": 600,
+            "supply_fan_maximum_flow_rate": "Autosize",
+            "supply_fan_minimum_flow_rate": "Autosize",
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_motor_in_air_stream_fraction": 1,
+            "supply_fan_part_load_power_coefficients": "InletVaneDampers",
+            "supply_fan_placement": "DrawThrough",
+            "supply_fan_total_efficiency": 0.7,
+            "system_availability_schedule_name": "FanAvailSched"
+        }
+    },
     "HVACTemplate:Thermostat": {
         "All Zones": {
             "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
             "heating_setpoint_schedule_name": "Htg-SetP-Sch"
         }
     },
-    "HVACTemplate:Zone:IdealLoadsAirSystem": {
-        "HVACTemplate:Zone:IdealLoadsAirSystem 1": {
-            "cooling_limit": "NoLimit",
-            "cooling_sensible_heat_ratio": 0.7,
-            "dehumidification_control_type": "ConstantSensibleHeatRatio",
-            "demand_controlled_ventilation_type": "None",
-            "heat_recovery_type": "None",
-            "heating_limit": "NoLimit",
-            "humidification_control_type": "None",
-            "humidification_setpoint": 30,
-            "latent_heat_recovery_effectiveness": 0.65,
-            "maximum_heating_supply_air_humidity_ratio": 0.0156,
-            "maximum_heating_supply_air_temperature": 50,
-            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
-            "minimum_cooling_supply_air_temperature": 13,
-            "outdoor_air_economizer_type": "NoEconomizer",
+    "HVACTemplate:Zone:VAV": {
+        "HVACTemplate:Zone:VAV 1": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
             "outdoor_air_flow_rate_per_person": 0.00944,
-            "outdoor_air_method": "None",
-            "sensible_heat_recovery_effectiveness": 0.7,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+            "outdoor_air_method": "Flow/Person",
+            "reheat_coil_type": "HotWater",
+            "supply_air_maximum_flow_rate": "Autosize",
             "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "VAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
             "zone_name": "SPACE1-1"
         },
-        "HVACTemplate:Zone:IdealLoadsAirSystem 2": {
-            "cooling_limit": "NoLimit",
-            "cooling_sensible_heat_ratio": 0.7,
-            "dehumidification_control_type": "ConstantSensibleHeatRatio",
-            "demand_controlled_ventilation_type": "None",
-            "heat_recovery_type": "None",
-            "heating_limit": "NoLimit",
-            "humidification_control_type": "None",
-            "humidification_setpoint": 30,
-            "latent_heat_recovery_effectiveness": 0.65,
-            "maximum_heating_supply_air_humidity_ratio": 0.0156,
-            "maximum_heating_supply_air_temperature": 50,
-            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
-            "minimum_cooling_supply_air_temperature": 13,
-            "outdoor_air_economizer_type": "NoEconomizer",
+        "HVACTemplate:Zone:VAV 2": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
             "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
             "outdoor_air_method": "Flow/Person",
-            "sensible_heat_recovery_effectiveness": 0.7,
+            "reheat_coil_type": "HotWater",
+            "supply_air_maximum_flow_rate": "Autosize",
             "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "VAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
             "zone_name": "SPACE2-1"
         },
-        "HVACTemplate:Zone:IdealLoadsAirSystem 3": {
-            "cooling_limit": "LimitFlowRate",
-            "cooling_sensible_heat_ratio": 0.7,
-            "dehumidification_control_type": "ConstantSensibleHeatRatio",
-            "demand_controlled_ventilation_type": "None",
-            "heat_recovery_type": "None",
-            "heating_limit": "NoLimit",
-            "humidification_control_type": "None",
-            "humidification_setpoint": 30,
-            "latent_heat_recovery_effectiveness": 0.65,
-            "maximum_cooling_air_flow_rate": "Autosize",
-            "maximum_heating_supply_air_humidity_ratio": 0.0156,
-            "maximum_heating_supply_air_temperature": 50,
-            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
-            "minimum_cooling_supply_air_temperature": 13,
-            "outdoor_air_economizer_type": "DifferentialDryBulb",
+        "HVACTemplate:Zone:VAV 3": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
             "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
             "outdoor_air_method": "Flow/Person",
-            "sensible_heat_recovery_effectiveness": 0.7,
+            "reheat_coil_type": "HotWater",
+            "supply_air_maximum_flow_rate": "Autosize",
             "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "VAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
             "zone_name": "SPACE3-1"
         },
-        "HVACTemplate:Zone:IdealLoadsAirSystem 4": {
-            "cooling_limit": "LimitFlowRate",
-            "cooling_sensible_heat_ratio": 0.7,
-            "dehumidification_control_type": "ConstantSensibleHeatRatio",
-            "demand_controlled_ventilation_type": "None",
-            "design_specification_outdoor_air_object_name": "Office Outdoor Air Spec",
-            "heat_recovery_type": "Sensible",
-            "heating_limit": "NoLimit",
-            "humidification_control_type": "Humidistat",
-            "humidification_setpoint": 30,
-            "latent_heat_recovery_effectiveness": 0.65,
-            "maximum_cooling_air_flow_rate": "Autosize",
-            "maximum_heating_supply_air_humidity_ratio": 0.0156,
-            "maximum_heating_supply_air_temperature": 50,
-            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
-            "minimum_cooling_supply_air_temperature": 13,
-            "outdoor_air_economizer_type": "DifferentialDryBulb",
-            "outdoor_air_method": "DetailedSpecification",
-            "sensible_heat_recovery_effectiveness": 0.7,
+        "HVACTemplate:Zone:VAV 4": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+            "outdoor_air_method": "Flow/Person",
+            "reheat_coil_type": "HotWater",
+            "supply_air_maximum_flow_rate": "Autosize",
             "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "VAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
             "zone_name": "SPACE4-1"
         },
-        "HVACTemplate:Zone:IdealLoadsAirSystem 5": {
-            "cooling_limit": "LimitFlowRate",
-            "cooling_sensible_heat_ratio": 0.7,
-            "dehumidification_control_type": "Humidistat",
-            "dehumidification_setpoint": 60,
-            "demand_controlled_ventilation_type": "OccupancySchedule",
-            "design_specification_outdoor_air_object_name": "Office Outdoor Air Spec",
-            "heat_recovery_type": "Enthalpy",
-            "heating_limit": "LimitFlowRate",
-            "humidification_control_type": "Humidistat",
-            "humidification_setpoint": 30,
-            "latent_heat_recovery_effectiveness": 0.65,
-            "maximum_cooling_air_flow_rate": "Autosize",
-            "maximum_heating_air_flow_rate": "Autosize",
-            "maximum_heating_supply_air_humidity_ratio": 0.0156,
-            "maximum_heating_supply_air_temperature": 50,
-            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
-            "minimum_cooling_supply_air_temperature": 13,
-            "outdoor_air_economizer_type": "DifferentialEnthalpy",
-            "outdoor_air_method": "DetailedSpecification",
-            "sensible_heat_recovery_effectiveness": 0.7,
+        "HVACTemplate:Zone:VAV 5": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+            "outdoor_air_method": "Flow/Person",
+            "reheat_coil_type": "HotWater",
+            "supply_air_maximum_flow_rate": "Autosize",
             "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "VAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
             "zone_name": "SPACE5-1"
         }
     },
@@ -1668,7 +1757,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 1584,
-            "return_air_fraction": 0,
+            "return_air_fraction": 0.2,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE1-1"
         },
@@ -1679,7 +1768,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 684,
-            "return_air_fraction": 0,
+            "return_air_fraction": 0.2,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE2-1"
         },
@@ -1690,7 +1779,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 1584,
-            "return_air_fraction": 0,
+            "return_air_fraction": 0.2,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE3-1"
         },
@@ -1701,7 +1790,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 684,
-            "return_air_fraction": 0,
+            "return_air_fraction": 0.2,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE4-1"
         },
@@ -1712,7 +1801,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 2964,
-            "return_air_fraction": 0,
+            "return_air_fraction": 0.2,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE5-1"
         }
@@ -1843,162 +1932,21 @@
             "visible_absorptance": 0.65
         }
     },
-    "Output:Meter:MeterFileOnly": {
-        "Output:Meter:MeterFileOnly 1": {
-            "key_name": "Electricity:Facility",
-            "reporting_frequency": "Monthly"
-        },
-        "Output:Meter:MeterFileOnly 2": {
-            "key_name": "Electricity:Building",
-            "reporting_frequency": "Monthly"
-        },
-        "Output:Meter:MeterFileOnly 3": {
-            "key_name": "InteriorLights:Electricity",
-            "reporting_frequency": "Monthly"
-        },
-        "Output:Meter:MeterFileOnly 4": {
-            "key_name": "Electricity:Facility",
-            "reporting_frequency": "RunPeriod"
-        },
-        "Output:Meter:MeterFileOnly 5": {
-            "key_name": "Electricity:Building",
-            "reporting_frequency": "RunPeriod"
-        },
-        "Output:Meter:MeterFileOnly 6": {
-            "key_name": "InteriorLights:Electricity",
-            "reporting_frequency": "RunPeriod"
-        },
-        "Output:Meter:MeterFileOnly 7": {
-            "key_name": "DistrictCooling:Facility",
-            "reporting_frequency": "Monthly"
-        },
-        "Output:Meter:MeterFileOnly 8": {
-            "key_name": "DistrictCooling:Facility",
-            "reporting_frequency": "RunPeriod"
-        },
-        "Output:Meter:MeterFileOnly 9": {
-            "key_name": "DistrictHeating:Facility",
-            "reporting_frequency": "Monthly"
-        },
-        "Output:Meter:MeterFileOnly 10": {
-            "key_name": "DistrictHeating:Facility",
-            "reporting_frequency": "RunPeriod"
-        }
-    },
-    "Output:Surfaces:Drawing": {
-        "Output:Surfaces:Drawing 1": {
-            "report_type": "DXF"
-        }
-    },
-    "Output:Surfaces:List": {
-        "Output:Surfaces:List 1": {
-            "report_type": "Lines"
+    "Output:VariableDictionary": {
+        "Output:VariableDictionary 1": {
+            "key_field": "regular"
         }
     },
     "Output:Table:SummaryReports": {
-        "Output:Table:SummaryReports 1": {
+        "report 1" : {
             "reports": [
-                {
-                    "report_name": "AllSummary"
-                }
+                {"report_name": "EndUseEnergyConsumptionElectricityMonthly"}
             ]
         }
     },
-    "Output:Variable": {
-        "Output:Variable 1": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Site Outdoor Air Drybulb Temperature"
-        },
-        "Output:Variable 2": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Air Temperature"
-        },
-        "Output:Variable 3": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Air Relative Humidity"
-        },
-        "Output:Variable 4": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Ideal Loads Zone Sensible Cooling Rate"
-        },
-        "Output:Variable 5": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Ideal Loads Zone Sensible Heating Rate"
-        },
-        "Output:Variable 6": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Ideal Loads Supply Air Sensible Cooling Rate"
-        },
-        "Output:Variable 7": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Ideal Loads Supply Air Sensible Heating Rate"
-        },
-        "Output:Variable 8": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Ideal Loads Supply Air Latent Cooling Rate"
-        },
-        "Output:Variable 9": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Ideal Loads Supply Air Latent Heating Rate"
-        },
-        "Output:Variable 10": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Ideal Loads Supply Air Total Cooling Rate"
-        },
-        "Output:Variable 11": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Ideal Loads Supply Air Total Heating Rate"
-        },
-        "Output:Variable 12": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Ideal Loads Economizer Active Time"
-        },
-        "Output:Variable 13": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Zone Ideal Loads Heat Recovery Active Time"
-        },
-        "Output:Variable 14": {
-            "key_value": "SPACE2-1 Ideal Loads Outdoor Air Inlet",
-            "reporting_frequency": "Hourly",
-            "variable_name": "System Node Standard Density Volume Flow Rate"
-        },
-        "Output:Variable 15": {
-            "key_value": "SPACE3-1 Ideal Loads Outdoor Air Inlet",
-            "reporting_frequency": "Hourly",
-            "variable_name": "System Node Standard Density Volume Flow Rate"
-        },
-        "Output:Variable 16": {
-            "key_value": "SPACE4-1 Ideal Loads Outdoor Air Inlet",
-            "reporting_frequency": "Hourly",
-            "variable_name": "System Node Standard Density Volume Flow Rate"
-        },
-        "Output:Variable 17": {
-            "key_value": "SPACE5-1 Ideal Loads Outdoor Air Inlet",
-            "reporting_frequency": "Hourly",
-            "variable_name": "System Node Standard Density Volume Flow Rate"
-        }
-    },
-    "Output:VariableDictionary": {
-        "Output:VariableDictionary 1": {
-            "key_field": "IDF"
-        }
-    },
     "OutputControl:Table:Style": {
-        "OutputControl:Table:Style 1": {
-            "column_separator": "HTML"
+        "Style 1": {
+            "column_separator": "Comma"
         }
     },
     "People": {
@@ -2207,6 +2155,62 @@
                 },
                 {
                     "field": 0.02
+                }
+            ],
+            "schedule_type_limits_name": "Fraction"
+        },
+        "FanAvailSched": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: WeekDays CustomDay1 CustomDay2"
+                },
+                {
+                    "field": "Until: 7:00"
+                },
+                {
+                    "field": 0.0
+                },
+                {
+                    "field": "Until: 21:00"
+                },
+                {
+                    "field": 1.0
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 0.0
+                },
+                {
+                    "field": "For: Weekends Holiday"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 0.0
+                },
+                {
+                    "field": "For: SummerDesignDay"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 1.0
+                },
+                {
+                    "field": "For: WinterDesignDay"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 1.0
                 }
             ],
             "schedule_type_limits_name": "Fraction"
@@ -2651,8 +2655,8 @@
     "SimulationControl": {
         "SimulationControl 1": {
             "do_hvac_sizing_simulation_for_sizing_periods": "No",
-            "do_plant_sizing_calculation": "No",
-            "do_system_sizing_calculation": "No",
+            "do_plant_sizing_calculation": "Yes",
+            "do_system_sizing_calculation": "Yes",
             "do_zone_sizing_calculation": "Yes",
             "maximum_number_of_hvac_sizing_simulation_passes": 1,
             "run_simulation_for_sizing_periods": "No",

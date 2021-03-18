@@ -1,7 +1,7 @@
 import unittest
 
-from expand_objects.hvac_template import HVACTemplate
-from test import BaseTest
+from hvac_template import HVACTemplate
+from . import BaseTest
 
 minimum_objects_d = {
     "Building": {

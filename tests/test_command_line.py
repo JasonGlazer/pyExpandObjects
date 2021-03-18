@@ -4,14 +4,15 @@ import os
 import re
 from argparse import Namespace
 
-from expand_objects.main import main
+from . import BaseTest
+from main import main
 
 this_script_path = os.path.dirname(
     os.path.abspath(__file__)
 )
 
 
-class TestMain(unittest.TestCase):
+class TestMain(BaseTest, unittest.TestCase):
 
     def test_no_schema_main(self):
         output = {}
@@ -38,10 +39,12 @@ class TestMain(unittest.TestCase):
                 Namespace(
                     no_schema=True,
                     file=os.path.join(
-                        this_script_path, 'simulation', 'ExampleFiles', 'HVACTemplate-5ZonePurchAir.epJSON')
+                        this_script_path, '..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
                 )
             )
         except Exception as e:
+            print(e)
+            print('test')
             self.assertEqual(e, e)
             exception_raised = True
         self.assertFalse(exception_raised)

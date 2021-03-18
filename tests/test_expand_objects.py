@@ -2,12 +2,8 @@ import unittest
 import os
 import re
 
-from expand_objects.expand_objects import ExpandObjects
-from test import BaseTest
-
-this_script_path = os.path.dirname(
-    os.path.abspath(__file__)
-)
+from src.expand_objects import ExpandObjects
+from . import BaseTest
 
 mock_template = {
     'template_name': {

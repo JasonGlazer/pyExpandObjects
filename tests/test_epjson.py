@@ -1,8 +1,9 @@
 from pathlib import Path
 import unittest
 
-from expand_objects.epjson_handler import EPJSON
-import expand_objects.exceptions as eoe
+from . import BaseTest
+from epjson_handler import EPJSON
+import custom_exceptions as eoe
 
 
 minimum_objects_d = {
@@ -20,7 +21,7 @@ minimum_objects_d = {
 }
 
 
-class TestEPJSONHandler(unittest.TestCase):
+class TestEPJSONHandler(BaseTest, unittest.TestCase):
     def setUp(self):
         self.epjson_handler = EPJSON()
         self.epjson_handler_no_schema = EPJSON()
@@ -171,6 +172,91 @@ class TestEPJSONHandler(unittest.TestCase):
             if name not in ['SPACE1-1', 'SPACE2-1']:
                 key_check = False
         self.assertTrue(key_check)
+        return
+
+    def test_purge_epjson(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                },
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            "ThermostatSetpoint:DualSetpoint": {
+                "All Zones Dual SP Control": {
+                    "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                    "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+                }
+            }
+        }
+        output = self.epjson_handler.purge_epjson(
+            epjson=dict_1,
+            purge_dictionary= {
+                "Zone": ["SPACE1-1", ]
+            }
+        )
+        self.assertEqual(1, len(output['Zone'].keys()))
+        self.assertTrue("All Zones Dual SP Control" == list(output['ThermostatSetpoint:DualSetpoint'].keys())[0])
+        output = self.epjson_handler.purge_epjson(
+            epjson=dict_1,
+            purge_dictionary= {
+                "Zone": '.*'
+            }
+        )
+        self.assertEqual(0, len(output['Zone'].keys()))
+        self.assertTrue("All Zones Dual SP Control" == list(output['ThermostatSetpoint:DualSetpoint'].keys())[0])
+        return
+
+    def test_epjson_count_summary(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                },
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            "ThermostatSetpoint:DualSetpoint": {
+                "All Zones Dual SP Control": {
+                    "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                    "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+                }
+            }
+        }
+        output = self.epjson_handler.summarize_epjson(dict_1)
+        self.assertEqual(2, output['Zone'])
+        self.assertEqual(1, output['ThermostatSetpoint:DualSetpoint'])
         return
 
     def test_default_schema_is_valid(self):

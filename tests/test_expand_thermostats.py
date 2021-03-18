@@ -1,9 +1,8 @@
 import unittest
-import re
 
-from expand_objects.expand_objects import ExpandThermostat
-import expand_objects.exceptions as eoe
-from test import BaseTest
+from expand_objects import ExpandThermostat
+import custom_exceptions as eoe
+from . import BaseTest
 
 
 class TestExpandThermostats(BaseTest, unittest.TestCase):
@@ -96,10 +95,12 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         eo.create_and_set_schedules()
         eo.create_thermostat_setpoints()
         self.assertEqual(
-            eo.epjson['Thermostat:DualSetpoint']['Thermostat 1 SP Control']['cooling_setpoint_schedule_name'],
+            eo.epjson['ThermostatSetpoint:DualSetpoint']['Thermostat 1 SP Control']
+            ['cooling_setpoint_temperature_schedule_name'],
             'HVACTemplate-Always18')
         self.assertEqual(
-            eo.epjson['Thermostat:DualSetpoint']['Thermostat 1 SP Control']['heating_setpoint_schedule_name'],
+            eo.epjson['ThermostatSetpoint:DualSetpoint']['Thermostat 1 SP Control']
+            ['heating_setpoint_temperature_schedule_name'],
             'HVACTemplate-Always12')
         return
 
@@ -115,10 +116,12 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         eo.create_and_set_schedules()
         eo.create_thermostat_setpoints()
         self.assertEqual(
-            eo.epjson['Thermostat:DualSetpoint']['Thermostat 1 SP Control']['cooling_setpoint_schedule_name'],
+            eo.epjson['ThermostatSetpoint:DualSetpoint']['Thermostat 1 SP Control']
+            ['cooling_setpoint_temperature_schedule_name'],
             'HVACTemplate-Always18')
         self.assertEqual(
-            eo.epjson['Thermostat:DualSetpoint']['Thermostat 1 SP Control']['heating_setpoint_schedule_name'],
+            eo.epjson['ThermostatSetpoint:DualSetpoint']['Thermostat 1 SP Control']
+            ['heating_setpoint_temperature_schedule_name'],
             'HVACTemplate-Always12')
         return
 
@@ -133,7 +136,8 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         eo.create_and_set_schedules()
         eo.create_thermostat_setpoints()
         self.assertEqual(
-            eo.epjson['Thermostat:SingleHeating']['Thermostat 1 SP Control']['setpoint_schedule_name'],
+            eo.epjson['ThermostatSetpoint:SingleHeating']['Thermostat 1 SP Control']
+            ['setpoint_temperature_schedule_name'],
             'HVACTemplate-Always12')
         return
 
@@ -148,7 +152,8 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         eo.create_and_set_schedules()
         eo.create_thermostat_setpoints()
         self.assertEqual(
-            eo.epjson['Thermostat:SingleHeating']['Thermostat 1 SP Control']['setpoint_schedule_name'],
+            eo.epjson['ThermostatSetpoint:SingleHeating']['Thermostat 1 SP Control']
+            ['setpoint_temperature_schedule_name'],
             'HVACTemplate-Always12')
         return
 
@@ -163,7 +168,8 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         eo.create_and_set_schedules()
         eo.create_thermostat_setpoints()
         self.assertEqual(
-            eo.epjson['Thermostat:SingleCooling']['Thermostat 1 SP Control']['setpoint_schedule_name'],
+            eo.epjson['ThermostatSetpoint:SingleCooling']['Thermostat 1 SP Control']
+            ['setpoint_temperature_schedule_name'],
             'HVACTemplate-Always18')
         return
 
@@ -178,8 +184,23 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         eo.create_and_set_schedules()
         eo.create_thermostat_setpoints()
         self.assertEqual(
-            eo.epjson['Thermostat:SingleCooling']['Thermostat 1 SP Control']['setpoint_schedule_name'],
+            eo.epjson['ThermostatSetpoint:SingleCooling']['Thermostat 1 SP Control']
+            ['setpoint_temperature_schedule_name'],
             'HVACTemplate-Always18')
+        return
+
+    @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Options:Object summary test")
+    def test_check_output_objects(self):
+        thermostat_template = {
+            'Thermostat 1': {
+                'cooling_setpoint_schedule_name': 'HVACTemplate-Always18',
+                'heating_setpoint_schedule_name': 'HVACTemplate-Always12'
+            }
+        }
+        eo = ExpandThermostat(template=thermostat_template)
+        eo.run()
+        output = eo.summarize_epjson(eo.epjson)
+        self.assertEqual(1, output['ThermostatSetpoint:DualSetpoint'])
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Processing test")
@@ -193,10 +214,11 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         eo = ExpandThermostat(template=thermostat_template)
         eo.run()
         self.assertEqual(
-            eo.epjson['Thermostat:DualSetpoint']['Thermostat 1 SP Control']['cooling_setpoint_schedule_name'],
+            eo.epjson['ThermostatSetpoint:DualSetpoint']['Thermostat 1 SP Control']
+            ['cooling_setpoint_temperature_schedule_name'],
             'HVACTemplate-Always18')
         self.assertEqual(
-            eo.epjson['Thermostat:DualSetpoint']['Thermostat 1 SP Control']['heating_setpoint_schedule_name'],
+            eo.epjson['ThermostatSetpoint:DualSetpoint']['Thermostat 1 SP Control']
+            ['heating_setpoint_temperature_schedule_name'],
             'HVACTemplate-Always12')
         return
-

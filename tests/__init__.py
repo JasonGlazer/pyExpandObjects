@@ -1,8 +1,15 @@
 import os
 import inspect
+import sys
 from functools import wraps
 
-from expand_objects.logger import Logger
+this_script_path = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+sys.path.append(os.path.join(this_script_path, '..', 'src'))
+
+from logger import Logger
 
 
 class BaseTest(object):
