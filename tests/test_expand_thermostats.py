@@ -1,6 +1,6 @@
 import unittest
 
-from expand_objects import ExpandThermostat
+from src.expand_objects import ExpandThermostat
 import custom_exceptions as eoe
 from . import BaseTest
 

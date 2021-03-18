@@ -2,7 +2,7 @@ from pathlib import Path
 import unittest
 
 from . import BaseTest
-from epjson_handler import EPJSON
+from src.epjson_handler import EPJSON
 import custom_exceptions as eoe
 
 
@@ -133,12 +133,11 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 }
             }
         }
-        with self.assertRaisesRegex(eoe.UniqueNameException, '.*SPACE1-1.*Zone'):
+        with self.assertRaises(eoe.UniqueNameException):
             self.epjson_handler.merge_epjson(
                 super_dictionary=dict_1,
                 object_dictionary=dict_2,
-                unique_name_override=False
-            )
+                unique_name_override=False)
         return
 
     def test_unpack_epjson(self):
