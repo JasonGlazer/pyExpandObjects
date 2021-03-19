@@ -33,9 +33,11 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
             })
         # Create template for expansion
         test_thermostat_template = {
-            "All Zones Dual": {
-                "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
-                "heating_setpoint_schedule_name": "Htg-SetP-Sch"
+            "HVACTemplate:Thermostat": {
+                "All Zones Dual": {
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch"
+                }
             }
         }
         # todo_eo rework ExpandThermostat to take epjson level or individual level

@@ -58,9 +58,8 @@ class VerifyTemplate:
     """
     Verify if template dictionary is a valid type and structure
     """
-    def __init__(self, template_type):
+    def __init__(self):
         super().__init__()
-        self.template_type = template_type
 
     def __get__(self, obj, owner):
         return self.template
@@ -69,18 +68,19 @@ class VerifyTemplate:
         if not isinstance(value, dict):
             raise PyExpandObjectsTypeError('Template must be a dictionary: {}'.format(value))
         try:
-            # template dictionary should have one key (unique name) and one object as a value (field/value dict)
+            # template dictionary should have one template_ype, one key (unique name)
+            # and one object as a value (field/value dict)
             # this assignment below will fail if that is not the case.
-            (_, object_structure), = value.items()
+            (template_type, template_structure), = value.items()
+            (_, object_structure), = template_structure.items()
             # ensure object is dictionary
             if not isinstance(object_structure, dict):
                 raise InvalidTemplateException(
                     'An Invalid object {} was passed as an {} object'.format(value, self.template_type))
-            template = value
+            self.template = template_structure
         except ValueError:
             raise InvalidTemplateException(
-                'An Invalid object {} was passed as an {} object'.format(value, self.template_type))
-        self.template = template
+                'An Invalid object {} failed verification'.format(value))
         return
 
 
@@ -94,7 +94,7 @@ class ExpandObjects(EPJSON):
         epjson: dictionary of epSJON objects to write to file
     """
 
-    template = VerifyTemplate(template_type='General Template')
+    template = VerifyTemplate()
     expansion_structure = ExpansionStructureLocation()
 
     def __init__(
@@ -107,9 +107,15 @@ class ExpandObjects(EPJSON):
         super().__init__()
         self.expansion_structure = expansion_structure
         self.template = template
-        # apply template name and fields as class attributes
-        (template_name, template_structure), = template.items()
+        try:
+            (hvac_template_type, hvac_template_structure), = template.items()
+            (template_name, template_structure), = hvac_template_structure.items()
+        except ValueError:
+            raise InvalidTemplateException(
+                'An Invalid object {} failed verification'.format(template))
+        self.template_type = hvac_template_type
         self.template_name = template_name
+        # apply template name and fields as class attributes
         for template_field in template_structure.keys():
             setattr(self, template_field, template_structure[template_field])
         self.epjson = {}

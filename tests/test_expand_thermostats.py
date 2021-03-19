@@ -21,9 +21,11 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Verify valid template object")
     def test_verify_good_template(self):
         template = {
-            "All Zones": {
-                "heating_setpoint_schedule_name": "Htg-SetP-Sch",
-                "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+            'HVACTemplate:Thermostats': {
+                "All Zones": {
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+                }
             }
         }
         output = ExpandThermostat(template=template)
@@ -33,9 +35,11 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Create schedule from constant setpoint")
     def test_create_thermostat_schedule_from_constant_setpoint(self):
         thermostat_template = {
-            'Thermostat 1': {
-                'constant_cooling_setpoint': 18,
-                'constant_heating_setpoint': 12
+            'HVACTemplate:Thermostats': {
+                'Thermostat 1': {
+                    'constant_cooling_setpoint': 18,
+                    'constant_heating_setpoint': 12
+                }
             }
         }
         eo = ExpandThermostat(template=thermostat_template)
@@ -55,8 +59,10 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Assign schedule from constant setpoint")
     def test_assign_thermostat_schedule_from_constant_setpoint(self):
         thermostat_template = {
-            'Thermostat 1': {
-                'constant_heating_setpoint': 12
+            'HVACTemplate:Thermostats': {
+                'Thermostat 1': {
+                    'constant_heating_setpoint': 12
+                }
             }
         }
         eo = ExpandThermostat(template=thermostat_template)
@@ -66,7 +72,7 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Reject empty template")
     def test_reject_no_inputs(self):
-        thermostat_template = {'Thermostat 1': {}}
+        thermostat_template = {"HVACTemplate:Thermostat":{'Thermostat 1': {}}}
         eo = ExpandThermostat(template=thermostat_template)
         eo.create_and_set_schedules()
         with self.assertRaises(InvalidTemplateException):
@@ -76,9 +82,11 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Options:DualSetpoint from setpoints")
     def test_create_dual_thermostat_from_setpoints(self):
         thermostat_template = {
-            'Thermostat 1': {
-                'constant_cooling_setpoint': 18,
-                'constant_heating_setpoint': 12
+            'HVACTemplate:Thermostats': {
+                'Thermostat 1': {
+                    'constant_cooling_setpoint': 18,
+                    'constant_heating_setpoint': 12
+                }
             }
         }
         eo = ExpandThermostat(template=thermostat_template)
@@ -97,9 +105,11 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Options:DualSetpoint from schedules")
     def test_create_dual_thermostat_from_schedules(self):
         thermostat_template = {
-            'Thermostat 1': {
-                'cooling_setpoint_schedule_name': 'HVACTemplate-Always18',
-                'heating_setpoint_schedule_name': 'HVACTemplate-Always12'
+            'HVACTemplate:Thermostats': {
+                'Thermostat 1': {
+                    'cooling_setpoint_schedule_name': 'HVACTemplate-Always18',
+                    'heating_setpoint_schedule_name': 'HVACTemplate-Always12'
+                }
             }
         }
         eo = ExpandThermostat(template=thermostat_template)
@@ -118,8 +128,10 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Options:SingleHeating from setpoint")
     def test_create_thermostat_single_heating_from_setpoint(self):
         thermostat_template = {
-            'Thermostat 1': {
-                'constant_heating_setpoint': 12
+            'HVACTemplate:Thermostats': {
+                'Thermostat 1': {
+                    'constant_heating_setpoint': 12
+                }
             }
         }
         eo = ExpandThermostat(template=thermostat_template)
@@ -134,8 +146,10 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Options:SingleHeating from schedule")
     def test_create_thermostat_single_heating_from_schedule(self):
         thermostat_template = {
-            'Thermostat 1': {
-                'heating_setpoint_schedule_name': 'HVACTemplate-Always12'
+            'HVACTemplate:Thermostats': {
+                'Thermostat 1': {
+                    'heating_setpoint_schedule_name': 'HVACTemplate-Always12'
+                }
             }
         }
         eo = ExpandThermostat(template=thermostat_template)
@@ -150,8 +164,10 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Options:SingleCooling from setpoint")
     def test_create_thermostat_single_cooling_from_setpoint(self):
         thermostat_template = {
-            'Thermostat 1': {
-                'constant_cooling_setpoint': 18
+            'HVACTemplate:Thermostats': {
+                'Thermostat 1': {
+                    'constant_cooling_setpoint': 18
+                }
             }
         }
         eo = ExpandThermostat(template=thermostat_template)
@@ -166,8 +182,10 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Options:SingleCooling from schedule")
     def test_create_thermostat_single_cooling_from_schedule(self):
         thermostat_template = {
-            'Thermostat 1': {
-                'cooling_setpoint_schedule_name': 'HVACTemplate-Always18'
+            'HVACTemplate:Thermostats': {
+                'Thermostat 1': {
+                    'cooling_setpoint_schedule_name': 'HVACTemplate-Always18'
+                }
             }
         }
         eo = ExpandThermostat(template=thermostat_template)
@@ -182,9 +200,11 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Options:Object summary test")
     def test_check_output_objects(self):
         thermostat_template = {
-            'Thermostat 1': {
-                'cooling_setpoint_schedule_name': 'HVACTemplate-Always18',
-                'heating_setpoint_schedule_name': 'HVACTemplate-Always12'
+            'HVACTemplate:Thermostats': {
+                'Thermostat 1': {
+                    'cooling_setpoint_schedule_name': 'HVACTemplate-Always18',
+                    'heating_setpoint_schedule_name': 'HVACTemplate-Always12'
+                }
             }
         }
         eo = ExpandThermostat(template=thermostat_template)
@@ -196,9 +216,11 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Processing test")
     def test_processing(self):
         thermostat_template = {
-            'Thermostat 1': {
-                'cooling_setpoint_schedule_name': 'HVACTemplate-Always18',
-                'heating_setpoint_schedule_name': 'HVACTemplate-Always12'
+            'HVACTemplate:Thermostats': {
+                'Thermostat 1': {
+                    'cooling_setpoint_schedule_name': 'HVACTemplate-Always18',
+                    'heating_setpoint_schedule_name': 'HVACTemplate-Always12'
+                }
             }
         }
         eo = ExpandThermostat(template=thermostat_template)

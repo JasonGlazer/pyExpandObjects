@@ -120,12 +120,12 @@ class EPJSON(Logger):
         Create generator of epJSON objects
 
         :param epjson: epJSON object
-        :return: generator which returns the sub-dictionaries of an epJSON object
-            {object_type: {object_name: object_fields}, {...}} -> {object_name: object_fields}
+        :return: generator which returns one unqiue object in epJSON format for each object in an object_type
+            {object_type: {object_name: object_fields}, {...}} -> {object_type: {object_name: object_fields}}, {...}
         """
-        for _, epjson_objects in epjson.items():
+        for object_type, epjson_objects in epjson.items():
             for object_name, object_structure in epjson_objects.items():
-                yield {object_name: object_structure}
+                yield {object_type: {object_name: object_structure}}
         return None
 
     @staticmethod

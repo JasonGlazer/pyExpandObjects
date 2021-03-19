@@ -339,7 +339,6 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         template_check = True
         for template_type in self.hvac_template.templates_systems.keys():
-            print(template_type)
             if template_type not in ['HVACTemplate:System:VAV', 'HVACTemplate:System:UnitarySystem']:
                 template_check = False
         self.assertTrue(template_check)

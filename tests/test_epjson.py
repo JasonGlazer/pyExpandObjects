@@ -196,7 +196,8 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         })
         key_check = True
         for output in outputs:
-            (name, _), = output.items()
+            (object_type, object_structure), = output.items()
+            (name, _), = object_structure.items()
             if name not in ['SPACE1-1', 'SPACE2-1']:
                 key_check = False
         self.assertTrue(key_check)
