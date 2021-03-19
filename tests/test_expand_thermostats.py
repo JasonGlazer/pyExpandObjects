@@ -5,7 +5,7 @@ from src.expand_objects import InvalidTemplateException
 from . import BaseTest
 
 
-class TestExpandThermostats(BaseTest, unittest.TestCase):
+class TestExpandThermostat(BaseTest, unittest.TestCase):
     def setUp(self):
         return
 
@@ -28,16 +28,6 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         }
         output = ExpandThermostat(template=template)
         self.assertEqual('All Zones', list(output.template.keys())[0])
-        return
-
-    @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Reject bad template object")
-    def test_reject_bad_template(self):
-        templates = {}
-        with self.assertRaises(InvalidTemplateException):
-            ExpandThermostat(template=templates)
-        templates = []
-        with self.assertRaises(TypeError):
-            ExpandThermostat(template=templates)
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Create schedule from constant setpoint")

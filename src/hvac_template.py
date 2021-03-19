@@ -2,6 +2,8 @@ import re
 from epjson_handler import EPJSON
 from expand_objects import ExpandThermostat
 
+from custom_exceptions import InvalidTemplateException
+
 
 class HVACTemplate(EPJSON):
     """
@@ -14,10 +16,10 @@ class HVACTemplate(EPJSON):
     Attributes:
         templates: HVACTemplate objects from epJSON file
         base_objects: Non-HVACTemplate objects from epJSON file
-        templates_zone: HVACTemplate:Zone: objects
-        templates_system: HVACTemplate:System: objects
+        templates_zones: HVACTemplate:Zone: objects
+        templates_systems: HVACTemplate:System: objects
         templates_plant_equipment: HVACTemplate:Plant equipment objects
-        templates_plant_loop: HVACTemplate:Plant: loop objects
+        templates_plant_loops: HVACTemplate:Plant: loop objects
         expanded_*: List of class objects for each template type
         epjson: output epjson object
     """
@@ -31,10 +33,10 @@ class HVACTemplate(EPJSON):
         super().__init__(no_schema=no_schema)
         self.templates = {}
         self.base_objects = {}
-        self.templates_system = {}
-        self.templates_zone = {}
+        self.templates_systems = {}
+        self.templates_zones = {}
         self.templates_plant_equipment = {}
-        self.templates_plant_loop = {}
+        self.templates_plant_loops = {}
         self.templates_thermostats = {}
         self.expanded_thermostats = []
         self.epjson = {}
@@ -48,27 +50,52 @@ class HVACTemplate(EPJSON):
         :return: organized epJSON template objects into templates, and templates_* as class variables..
         """
         self.logger.info('##### HVACTemplate #####')
-        # Make blank dictionaries and run to do tests before saving as class attributes
         for object_type, object_structure in epjson.items():
             if re.match('^HVACTemplate:*', object_type):
+                if re.match('^HVACTemplate:Thermostat$', object_type):
+                    self.templates_thermostats = self.merge_epjson(
+                        super_dictionary=self.templates_thermostats,
+                        object_dictionary={object_type: object_structure},
+                        unique_name_override=False)
+                elif re.match('^HVACTemplate:Zone:('
+                              'IdealLoadsAirSystem|BaseboardHeat|FanCoil|PTAC|PTHP|WaterToAirHeatPump|'
+                              'VRF|Unitary|VAV|VAV:FanPowered|VAVHeatAndCool|ConstantVolumn|DualDuct)$',
+                              object_type):
+                    self.templates_zones = self.merge_epjson(
+                        super_dictionary=self.templates_zones,
+                        object_dictionary={object_type: object_structure},
+                        unique_name_override=False)
+                elif re.match('^HVACTemplate:System:('
+                              'VRF|Unitary|UnitaryHeatPump:AirToAir|UnitarySystem|VAV|PackagedVAV|'
+                              'ConstantVolume|DualDuct|DedicatedOutdoorAir'
+                              ')$', object_type):
+                    self.templates_systems = self.merge_epjson(
+                        super_dictionary=self.templates_systems,
+                        object_dictionary={object_type: object_structure},
+                        unique_name_override=False)
+                elif re.match('^HVACTemplate:Plant:(ChilledWater|HotWater|MixedWater)Loop$', object_type):
+                    self.templates_plant_loops = self.merge_epjson(
+                        super_dictionary=self.templates_plant_loops,
+                        object_dictionary={object_type: object_structure},
+                        unique_name_override=False)
+                elif re.match('^HVACTemplate:Plant:(Chiller|Tower|Boiler)(ObjectReference)*$', object_type):
+                    self.templates_plant_equipment = self.merge_epjson(
+                        super_dictionary=self.templates_plant_equipment,
+                        object_dictionary={object_type: object_structure},
+                        unique_name_override=False)
+                else:
+                    raise InvalidTemplateException(
+                        'Template object type {} was not recognized'.format(object_type))
+                # store original templates into dictionary
                 self.templates = self.merge_epjson(
                     super_dictionary=self.templates,
                     object_dictionary={object_type: object_structure},
-                    unique_name_override=False
-                )
+                    unique_name_override=False)
             else:
                 self.base_objects = self.merge_epjson(
                     super_dictionary=self.base_objects,
                     object_dictionary={object_type: object_structure},
-                    unique_name_override=False
-                )
-            if re.match('^HVACTemplate:Thermostat', object_type):
-                self.templates_thermostats = self.merge_epjson(
-                    super_dictionary=self.templates_thermostats,
-                    object_dictionary={object_type: object_structure},
-                    unique_name_override=False
-                )
-            # todo_eo build out for remaining templates
+                    unique_name_override=False)
         return
 
     def run(self, input_epjson):

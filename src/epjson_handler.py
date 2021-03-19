@@ -70,8 +70,9 @@ class EPJSON(Logger):
                         else:
                             continue
                     super_dictionary[object_type][object_name] = object_fields
-            elif isinstance(object_structure, list):
-                super_dictionary[object_type] = object_structure
+            else:
+                raise PyExpandObjectsTypeError(
+                    'An Invalid object {} failed to merge'.format(object_structure))
         return super_dictionary
 
     @staticmethod
@@ -119,7 +120,8 @@ class EPJSON(Logger):
         Create generator of epJSON objects
 
         :param epjson: epJSON object
-        :return: generator which returns the subdictionaries of an epJSON object
+        :return: generator which returns the sub-dictionaries of an epJSON object
+            {object_type: {object_name: object_fields}, {...}} -> {object_name: object_fields}
         """
         for _, epjson_objects in epjson.items():
             for object_name, object_structure in epjson_objects.items():
@@ -139,7 +141,7 @@ class EPJSON(Logger):
                 json_obj = json.load(f)
         except FileNotFoundError:
             raise PyExpandObjectsFileNotFoundError("file does not exist: {}", json_location)
-        except Exception as e:
+        except json.decoder.JSONDecodeError as e:
             raise PyExpandObjectsTypeError("file is not a valid json: %s\n%s", json_location, str(e))
         return json_obj
 

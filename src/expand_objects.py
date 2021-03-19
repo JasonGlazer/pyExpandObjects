@@ -186,13 +186,8 @@ class ExpandThermostat(ExpandObjects):
     """
 
     def __init__(self, template):
-        # pre-set template inputs with None.  Is this better to have them pre-defined?
-        # todo_eo: discuss whether attribute validation should occur such that unknown field names raise exceptions
-        self.heating_setpoint_schedule_name = None
-        self.constant_heating_setpoint = None
-        self.cooling_setpoint_schedule_name = None
-        self.constant_cooling_setpoint = None
-        # fill values with template inputs
+        # todo_eo: pre-set template inputs with None?  Discuss advantages of pre-definition.
+        # fill/create class attributes values with template inputs
         super().__init__(template=template)
         return
 
@@ -263,3 +258,23 @@ class ExpandThermostat(ExpandObjects):
         self.create_and_set_schedules()
         self.create_thermostat_setpoints()
         return self
+
+
+class ExpandSystem(ExpandObjects):
+    """
+    System expansion operations
+    """
+    def __init__(self, template):
+        # fill/create class attributes values with template inputs
+        super().__init__(template=template)
+        return
+
+
+class ExpandZone(ExpandObjects):
+    """
+    Zone expansion operations
+    """
+    def __init__(self, template):
+        # fill/create class attributes values with template inputs
+        super().__init__(template=template)
+        return
