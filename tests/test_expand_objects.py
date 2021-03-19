@@ -3,6 +3,7 @@ import os
 import re
 
 from src.expand_objects import ExpandObjects
+from src.expand_objects import InvalidTemplateException
 from . import BaseTest
 
 mock_template = {
@@ -43,7 +44,7 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Base:Reject other reference types")
-    def test_expansion_dictionary_okay(self):
+    def test_bad_expansion_dictionary_rejected(self):
         expansion_dictionary = []
         with self.assertRaises(TypeError):
             ExpandObjects(template=mock_template, expansion_structure=expansion_dictionary)
@@ -67,6 +68,16 @@ class TestExpandThermostats(BaseTest, unittest.TestCase):
         with self.assertRaises(TypeError):
             eo = ExpandObjects(template=mock_template)
             eo.get_structure(structure_hierarchy=structure_hierarchy)
+        return
+
+    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Reject bad template object")
+    def test_reject_bad_template(self):
+        templates = {}
+        with self.assertRaises(InvalidTemplateException):
+            ExpandObjects(template=templates)
+        templates = []
+        with self.assertRaises(TypeError):
+            ExpandObjects(template=templates)
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Base:Create always value schedule")

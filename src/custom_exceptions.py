@@ -32,17 +32,17 @@ class UniqueNameException(CustomException):
     pass
 
 
-class SchemaError(CustomException, SchemaError):
+class PyExpandObjectsSchemaError(CustomException, SchemaError):
     pass
 
 
-class FileNotFoundError(CustomException, FileNotFoundError):
+class PyExpandObjectsFileNotFoundError(CustomException, FileNotFoundError):
     pass
 
 
-class TypeError(CustomException, TypeError):
+class PyExpandObjectsTypeError(CustomException, TypeError):
     pass
 
 
-class YamlError(CustomException, yaml.YAMLError):
+class PyExpandObjectsYamlError(CustomException, yaml.YAMLError):
     pass

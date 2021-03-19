@@ -3,7 +3,8 @@ import unittest
 
 from . import BaseTest
 from src.epjson_handler import EPJSON
-import custom_exceptions as eoe
+# must import exceptions directly from test code
+from src.epjson_handler import UniqueNameException, PyExpandObjectsTypeError
 
 
 minimum_objects_d = {
@@ -27,6 +28,28 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         self.epjson_handler_no_schema = EPJSON()
         self.epjson_handler.logger.setLevel('ERROR')
         self.example_file_dir = Path(__file__).resolve().parent / 'resources'
+
+    def test_merge_bad_objects(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 239.247360229,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            }
+        }
+        dict_2 = {"Zone": ""}
+        with self.assertRaises(PyExpandObjectsTypeError):
+            self.epjson_handler.merge_epjson(
+                super_dictionary=dict_1,
+                object_dictionary=dict_2)
+        return
 
     def test_merge_same_object_type(self):
         dict_1 = {
@@ -104,7 +127,7 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         self.assertGreater(len(dict_3['ZoneInfiltration:DesignFlowRate']['SPACE1-1 Infil 1'].keys()), 0)
         return
 
-    def test_merge_fail_duplicate_name(self):
+    def test_merge_duplicate_name(self):
         dict_1 = {
             "Zone": {
                 "SPACE1-1": {
@@ -133,11 +156,17 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 }
             }
         }
-        with self.assertRaises(eoe.UniqueNameException):
+        with self.assertRaises(UniqueNameException):
             self.epjson_handler.merge_epjson(
                 super_dictionary=dict_1,
                 object_dictionary=dict_2,
                 unique_name_override=False)
+        output = self.epjson_handler.merge_epjson(
+            super_dictionary=dict_1,
+            object_dictionary=dict_2,
+            unique_name_override=False,
+            unique_name_fail=False)
+        self.assertEqual(1, len(output["Zone"].keys()))
         return
 
     def test_unpack_epjson(self):
@@ -206,7 +235,7 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         }
         output = self.epjson_handler.purge_epjson(
             epjson=dict_1,
-            purge_dictionary= {
+            purge_dictionary={
                 "Zone": ["SPACE1-1", ]
             }
         )
@@ -214,12 +243,13 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         self.assertTrue("All Zones Dual SP Control" == list(output['ThermostatSetpoint:DualSetpoint'].keys())[0])
         output = self.epjson_handler.purge_epjson(
             epjson=dict_1,
-            purge_dictionary= {
+            purge_dictionary={
                 "Zone": '.*'
             }
         )
-        self.assertEqual(0, len(output['Zone'].keys()))
         self.assertTrue("All Zones Dual SP Control" == list(output['ThermostatSetpoint:DualSetpoint'].keys())[0])
+        with self.assertRaises(KeyError):
+            output['Zone']
         return
 
     def test_epjson_count_summary(self):

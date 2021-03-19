@@ -1,19 +1,15 @@
 import unittest
-import subprocess
-import os
+from pathlib import Path
 import re
 from argparse import Namespace
 
 from . import BaseTest
 from src.main import main
 
-this_script_path = os.path.dirname(
-    os.path.abspath(__file__)
-)
+test_dir = Path(__file__).parent
 
 
 class TestMain(BaseTest, unittest.TestCase):
-
     def test_no_schema_main(self):
         output = {}
         exception_raised = False
@@ -21,7 +17,7 @@ class TestMain(BaseTest, unittest.TestCase):
             output = main(
                 Namespace(
                     no_schema=True,
-                    file=os.path.join(this_script_path, 'resources', 'HVACTemplate-5ZonePurchAir.epJSON')
+                    file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooled.epJSON')
                 )
             )
         except Exception as e:
@@ -38,13 +34,10 @@ class TestMain(BaseTest, unittest.TestCase):
             output = main(
                 Namespace(
                     no_schema=True,
-                    file=os.path.join(
-                        this_script_path, '..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
+                    file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooled.epJSON')
                 )
             )
         except Exception as e:
-            print(e)
-            print('test')
             self.assertEqual(e, e)
             exception_raised = True
         self.assertFalse(exception_raised)
@@ -82,23 +75,4 @@ class TestMain(BaseTest, unittest.TestCase):
         if msg_rgx:
             msg_status = True
         self.assertTrue(msg_status)
-        return
-
-    @unittest.skip
-    def test_no_schema_command_line_args(self):
-        sub_process = subprocess.Popen(
-            [
-                'python',
-                os.path.join(this_script_path, '..', 'expand_objects', 'main.py'),
-                '-ns',
-                os.path.join(this_script_path, 'resources', 'HVACTemplate-5ZonePurchAir.epJSON')
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-        process_error, _ = sub_process.communicate()
-        print(process_error)
-        print(sub_process.returncode)
-        # make additional tests when console output is generated
-        self.assertEqual(sub_process.returncode, 0)
         return

@@ -32,7 +32,7 @@ class BaseTest(object):
                     func(self, *args, **kwargs)
                     func_status = True
                     output_msg = True
-                    self.write_logger(
+                    self._write_logger(
                         doc_text=doc_text,
                         file_name=os.path.basename(inspect.getfile(func)),
                         func_name=func_name,
@@ -40,7 +40,7 @@ class BaseTest(object):
                 finally:
                     # prevent double logging output
                     if not output_msg:
-                        self.write_logger(
+                        self._write_logger(
                             doc_text=doc_text,
                             file_name=os.path.basename(inspect.getfile(func)),
                             func_name=func_name,
@@ -51,7 +51,7 @@ class BaseTest(object):
         return _test_logger_wrapper
 
     @staticmethod
-    def write_logger(
+    def _write_logger(
             doc_text,
             file_name,
             func_name,
