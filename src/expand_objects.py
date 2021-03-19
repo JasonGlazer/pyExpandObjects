@@ -89,9 +89,12 @@ class ExpandObjects(EPJSON):
     General class for expanding template objects.
 
     Attributes:
-        template: epJSON dictionary containing HVACTemplate to expand
         expansion_structure: file or dictionary of expansion structure details (from YAML)
+        template: epJSON dictionary containing HVACTemplate to expand
+        template_type: HVACTemplate object type
+        template_name: HVACTemplate unique name
         epjson: dictionary of epSJON objects to write to file
+        HVACTemplate fields are stored as class attributes
     """
 
     template = VerifyTemplate()

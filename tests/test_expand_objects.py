@@ -7,7 +7,7 @@ from src.expand_objects import InvalidTemplateException
 from . import BaseTest
 
 mock_template = {
-    'HVACTemplate:Thermostat':{
+    'HVACTemplate:Thermostat': {
         'template_name': {
             'field': 'value'
         }

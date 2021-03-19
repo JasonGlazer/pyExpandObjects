@@ -72,7 +72,7 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Reject empty template")
     def test_reject_no_inputs(self):
-        thermostat_template = {"HVACTemplate:Thermostat":{'Thermostat 1': {}}}
+        thermostat_template = {"HVACTemplate:Thermostat": {'Thermostat 1': {}}}
         eo = ExpandThermostat(template=thermostat_template)
         eo.create_and_set_schedules()
         with self.assertRaises(InvalidTemplateException):
