@@ -1,4 +1,3 @@
-import os
 import copy
 import yaml
 import re
@@ -8,9 +7,7 @@ from custom_exceptions import PyExpandObjectsTypeError, InvalidTemplateException
     PyExpandObjectsYamlError, PyExpandObjectsFileNotFoundError
 from epjson_handler import EPJSON
 
-this_script_path = os.path.dirname(
-    os.path.abspath(__file__)
-)
+source_dir = Path(__file__).parent
 
 
 class ExpansionStructureLocation:
@@ -86,7 +83,7 @@ class VerifyTemplate:
 
 class ExpandObjects(EPJSON):
     """
-    General class for expanding template objects.
+    Class to contain general expansion functions as well as methods to connect template outputs.
 
     Attributes:
         expansion_structure: file or dictionary of expansion structure details (from YAML)
@@ -103,10 +100,7 @@ class ExpandObjects(EPJSON):
     def __init__(
             self,
             template,
-            expansion_structure=os.path.join(
-                this_script_path,
-                'resources',
-                'template_expansion_structures.yaml')):
+            expansion_structure=str(source_dir / 'resources' / 'template_expansion_structures.yaml')):
         super().__init__()
         self.expansion_structure = expansion_structure
         self.template = template

@@ -40,7 +40,6 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 }
             }
         }
-        # todo_eo rework ExpandThermostat to take epjson level or individual level
         eo = ExpandThermostat(template=test_thermostat_template)
         eo.run()
         test_formatted_epjson = epj.merge_epjson(

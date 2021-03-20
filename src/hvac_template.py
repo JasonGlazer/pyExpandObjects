@@ -7,8 +7,7 @@ from custom_exceptions import InvalidTemplateException
 
 class HVACTemplate(EPJSON):
     """
-    Manage overall HVAC Template objects and handle
-    their conversion to regular objects.
+    Handle HVACTemplate conversion process and connect created objects together.
 
     Inheritance:
     EPJSON <- Logger
@@ -21,7 +20,7 @@ class HVACTemplate(EPJSON):
         templates_plant_equipment: HVACTemplate:Plant equipment objects
         templates_plant_loops: HVACTemplate:Plant: loop objects
         expanded_*: List of class objects for each template type
-        epjson: output epjson object
+        epjson: epJSON used to store connection objects
     """
 
     def __init__(
@@ -42,7 +41,7 @@ class HVACTemplate(EPJSON):
         self.epjson = {}
         return
 
-    def hvac_template_process(self, epjson):
+    def hvac_template_preprocess(self, epjson):
         """
         Organize epJSON and assign objects to specific class attributes
 
@@ -98,6 +97,22 @@ class HVACTemplate(EPJSON):
                     unique_name_override=False)
         return
 
+    def create_zonecontrol_thermostat(self):
+        """
+        Create ZoneControl:Thermostat objects, which require a connection between
+        HVACTemplate:Zone and HVACTemplate:Thermostat objects
+
+        :return: Updated class epJSON dictionary with ThermostatSetpoint objects added.
+        """
+        # Iterate over expanded_zones (ExpandZone objects)
+        # Get HVACTemplate:Thermostat name from template input (class attribute - template_thermostat_name)
+        # Retrieve ExpandedThermostat object from expanded_thermostats [list(ExpandThermostat)]
+        # with same name in attributes (template_name)
+        # Get ThermostatSetpoint object from that object's epJSON attribute
+        # Make zone control thermostat based on returned objects attributes
+        # Store ZoneControl:Thermostat to HVACTemplate epJSON attribute
+        return
+
     def run(self, input_epjson):
         """
         Execute HVAC Template process workflow
@@ -105,29 +120,38 @@ class HVACTemplate(EPJSON):
         :param input_epjson: input epJSON file
         :return: epJSON containing expanded objects from templates
         """
-        # todo_eo: the _base, _expanded, and _hvac_template files need to be created and added to the
         # output_epJSON
         # flush the stream handler
         self.logger.stream_flush
         self.epjson_process(epjson_ref=input_epjson)
-        self.hvac_template_process(epjson=self.input_epjson)
+        self.hvac_template_preprocess(epjson=self.input_epjson)
         self.logger.info('##### Processing Thermostats #####')
         thermostats = self.unpack_epjson(self.templates_thermostats)
         for thermostat in thermostats:
             self.expanded_thermostats.append(
                 ExpandThermostat(thermostat).run()
             )
-        # Do manipulations and make output epJSON
-        # Write messages logged to stream to outputPreProcessorMessage
-        self.epjson = self.base_objects
+        self.logger.info('##### Processing Zones #####')
+        self.logger.info('##### Building Connections #####')
+        # self.create_zonecontrol_thermostat()
+        self.logger.info('##### Creating epJSON #####')
+        # start by merging non-template and connector objects
+        output_epjson = self.merge_epjson(
+            super_dictionary=self.base_objects,
+            object_dictionary=self.epjson
+        )
+        # merge each ExpandObjects child class created
         epjson_objects = [i.epjson for i in self.expanded_thermostats]
         for eo in epjson_objects:
-            self.epjson = self.merge_epjson(
-                super_dictionary=self.epjson,
+            output_epjson = self.merge_epjson(
+                super_dictionary=output_epjson,
                 object_dictionary=eo
             )
+        # Create output format
         output_epjson = {
-            "epJSON": self.epjson,
+            "epJSON": output_epjson,
+            "epJSON_base": self.base_objects,
+            "epJSON_hvac_templates": self.templates,
             'outputPreProcessorMessage': self.stream.getvalue()
         }
         return output_epjson

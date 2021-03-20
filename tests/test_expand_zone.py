@@ -1,4 +1,3 @@
-# todo_eo ZoneControl:Thermostat should happen in this class.
 import unittest
 
 from src.expand_objects import ExpandZone
