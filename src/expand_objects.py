@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 from custom_exceptions import PyExpandObjectsTypeError, InvalidTemplateException, \
-    PyExpandObjectsYamlError, PyExpandObjectsFileNotFoundError
+    PyExpandObjectsYamlError, PyExpandObjectsFileNotFoundError, PyExpandObjectsYamlStructureException
 from epjson_handler import EPJSON
 
 source_dir = Path(__file__).parent
@@ -122,19 +122,83 @@ class ExpandObjects(EPJSON):
             self,
             structure_hierarchy: list) -> dict:
         """
-        Retrieve structure from dict created by yaml object
+        Retrieve structure from YAML loaded object
 
         :param structure_hierarchy: list representing structure hierarchy
         :return: structured object as dictionary
         """
         try:
             structure = copy.deepcopy(self.expansion_structure)
+            if not isinstance(structure_hierarchy, list):
+                raise PyExpandObjectsTypeError("Input must be a list of structure keys: {}".format(structure_hierarchy))
             for key in structure_hierarchy:
                 structure = structure[key]
         except KeyError:
             raise PyExpandObjectsTypeError('YAML structure does not exist for hierarchy: {}'.format(
                 structure_hierarchy))
         return structure
+
+    def get_option_tree(
+            self,
+            structure_hierarchy: list) -> dict:
+        """
+        Retrieve structure from YAML loaded object and verify it is correctly formatted for an option tree
+        :param structure_hierarchy: list representing structure hierarchy
+        :return: structured object as dictionary
+        """
+        try:
+            if not isinstance(structure_hierarchy, list):
+                raise PyExpandObjectsTypeError("Input must be a list of structure keys: {}".format(structure_hierarchy))
+            if structure_hierarchy[0] != 'OptionTree':
+                structure_hierarchy.insert(0, 'OptionTree')
+        except TypeError:
+            raise PyExpandObjectsTypeError(
+                "Call to YAML object was not a list of structure keys: {}".format(structure_hierarchy))
+        structure = self.get_structure(structure_hierarchy=structure_hierarchy)
+        # Check structure keys.  Return error if there is an unexpected value
+        for key in structure:
+            if key not in ['Template', 'InsertElement', 'ReplaceElement', 'RemoveElement',
+                           'AdditionalObjects', 'AdditionalTemplateObjects']:
+                raise PyExpandObjectsYamlStructureException(
+                    "YAML object is incorrectly formatted: {}, bad key: {}".format(structure, key))
+        return structure
+
+    @staticmethod
+    def _get_build_path(option_tree):
+        """
+        Return Build path from OptionTree
+
+        :param option_tree: Yaml object holding HVACTemplate option tree
+        :return: Verified BuildPath and Transition dictionary as keys in an object
+        """
+        if not option_tree.get('Template'):
+            raise PyExpandObjectsTypeError('Template key missing in OptionTree: {}'.format(option_tree))
+        try:
+            build_path = option_tree['Template']['BuildPath']
+        except (KeyError, TypeError):
+            raise PyExpandObjectsTypeError("Invalid or missing BuildPath location: {}".format(option_tree))
+        if option_tree['Template'].get('Transitions'):
+            transitions = option_tree['Template']['Transitions']
+        else:
+            transitions = None
+        return {
+            'build_path': build_path,
+            'transitions': transitions
+        }
+
+    def create_build_path(self):
+        """
+        Create a build path of EnergyPlus super objects for a given template
+
+        :return:
+        """
+        # Get Base BuildPath and specific transitions
+        # apply transition names
+        # Get each Remove/Insert/Etc actions
+        # apply transition names to each
+        # Perform insert/edit of build path for each action
+        # Connect nodes on systems only (first object in list is connected for multi-object build path locations)
+        return
 
     def build_compact_schedule(
             self,

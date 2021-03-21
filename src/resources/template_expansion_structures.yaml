@@ -1,11 +1,125 @@
+# Reused objects
+Connectors: &Connectors
+  AirLoop: &ConnectorsAirLoop
+    Inlet: air_inlet_node_name
+    Outlet: air_outlet_node_name
+  WaterLoop: &ConnectorsWaterLoop
+    Inlet: water_inlet_node_name
+    Outlet: water_outlet_node_name
 
+# Schedule Objects
 Schedule:
   Compact:
     ALWAYS_VAL:
       name: 'HVACTemplate-Always{}'
-      schedule_type_limits_name: "Any Number"
+      schedule_type_limits_name: Any Number
       data:
         - field: Through 12/31
         - field: For AllDays
         - field: Until 24:00
         - field: '{:.1f}'
+
+# Base objects
+Coil:
+  Cooling:
+    Water:
+      Fields: &CoilCoolingFields
+        name: '{} Cooling Coil'
+        air_inlet_node_name: '{} Cooling Coil Inlet'
+        air_outlet_node_name: '{} Cooling Coil Outlet'
+        water_inlet_node_name: '{} Cooling Coil Chw Inlet'
+        water_outlet_node_name: '{} Cooling Coil Chw Outlet'
+        design_water_flow_rate: Autosize
+      Connectors: &CoilCoolingConnectors
+        AirLoop: *ConnectorsAirLoop
+        ChilledWaterLoop: *ConnectorsWaterLoop
+      DetailedGeometry:
+        Fields:
+          << : *CoilCoolingFields
+        Connectors:
+          << : *CoilCoolingConnectors
+  Heating:
+    Fields: &CoilHeatingFields
+      name: '{} Heating Coil'
+      air_inlet_node_name: '{} Heating Coil Inlet'
+      air_outlet_node_name: '{} Heating Coil Outlet'
+    Connectors:
+      AirLoop: *ConnectorsAirLoop
+    Water:
+      Fields: &CoilHeatingWaterFields
+        << : *CoilHeatingFields
+        water_inlet_node_name: '{} Heating Coil Hw Inlet'
+        water_outlet_node_name: '{} Heating Coil Hw Outlet'
+        rated_inlet_air_temperature: 16.6 # todo_eo error messages without these fields
+        rated_inlet_water_temperature: 82.2
+        rated_outlet_air_temperature: 32.2
+        rated_outlet_water_temperature: 71.1
+        rated_ratio_for_air_and_water_convection: 0.5
+        u_factor_times_area_value: Autosize
+        performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+        rated_capacity: Autosize
+        maximum_water_flow_rate: Autosize
+      Connectors:
+        AirLoop: *ConnectorsAirLoop
+        HotWaterLoop: *ConnectorsWaterLoop
+
+# Zone Equipment
+AirTerminal:
+  SingleDuct:
+    Fields: &AirTerminalSingleDuctFields
+      maximum_air_flow_rate: Autosize
+      air_inlet_node_name: '{} Zone Equip Inlet'
+      air_outlet_node_name: '{} Supply Inlet'
+    Connectors:
+      AirLoop: &AirTerminalSingleDuctConnectorsAir
+        Inlet: air_inlet_node_name
+        Outlet: air_outlet_node_name
+      Water: &AirTerminalSingleDuctConnectorsWater
+        Inlet: water_inlet_node_name
+        Outlet: water_outlet_node_name
+    VAV:
+      Reheat: &AirTerminalSingleDuctVAVReheat
+        - AirTerminal:SingleDuct:VAV:Reheat:
+          Fields:
+            name: '{} VAV Reheat'
+            <<: *AirTerminalSingleDuctFields
+            damper_air_outlet_node_name: '{} Damper Outlet'
+            damper_heating_action: Reverse
+            reheat_coil_object_type: Coil:Heating:Water
+            maximum_hot_water_or_steam_flow_rate: Autosize
+            reheat_coil_name: '{} Reheat Coil'
+          Connectors:
+            AirLoop: *AirTerminalSingleDuctConnectorsAir
+        - Coil:Heating:Water:
+          Fields:
+            <<: *CoilHeatingWaterFields
+            name: '{} Reheat Coil'
+            air_inlet_node_name: '{} Damper Outlet'
+            air_outlet_node_name: '{} Supply Inlet'
+          Connectors:
+            AirLoop: *ConnectorsAirLoop
+            HotWaterLoop: *ConnectorsWaterLoop
+
+HVACTemplate:
+  Zone:
+    VAV: &HVACTemplateZoneVAV
+      BuildPath:
+        - *AirTerminalSingleDuctVAVReheat
+
+OptionTree:
+  Zone:
+    VAV:
+      Template:
+        <<: *HVACTemplateZoneVAV
+        Transitions:
+          supply_air_maximum_flow_rate:
+            AirTerminal:.*: maximum_air_flow_rate
+          damper_heating_action:
+            AirTerminal:.*:VAV:Reheat: damper_heating_action
+          zone_minimum_air_flow_input_method:
+            AirTerminal:.*: zone_minimum_air_flow_input_method
+      InsertElement:
+      ReplaceElement:
+      RemoveElement:
+      AdditionalObjects:
+      AdditionalTemplateObjects:

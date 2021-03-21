@@ -15,7 +15,10 @@ mock_template = {
 }
 
 
-class TestExpandThermostats(BaseTest, unittest.TestCase):
+class TestExpandObjects(BaseTest, unittest.TestCase):
+    """
+    General processing of ExpandObjects operations
+    """
     def setUp(self):
         return
 
