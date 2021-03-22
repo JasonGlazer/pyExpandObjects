@@ -159,15 +159,15 @@ class ExpandObjects(EPJSON):
         structure = self.get_structure(structure_hierarchy=structure_hierarchy)
         # Check structure keys.  Return error if there is an unexpected value
         for key in structure:
-            if key not in ['Template', 'InsertElement', 'ReplaceElement', 'RemoveElement',
-                           'AdditionalObjects', 'AdditionalTemplateObjects']:
+            if key not in ['BuildPath', 'InsertObject', 'ReplaceObject', 'RemoveObject',
+                           'BaseObjects', 'TemplateObjects']:
                 raise PyExpandObjectsYamlStructureException(
                     "YAML object is incorrectly formatted: {}, bad key: {}".format(structure, key))
         return structure
 
     def _get_option_tree_leaf(self, option_tree, leaf_path):
         """
-        Return Build path from OptionTree
+        Return leaf from OptionTree that has no template options (e.g. alternative options)
 
         :param option_tree: Yaml object holding HVACTemplate option tree
         :param leaf_path: path to leaf node of option tree
@@ -175,54 +175,67 @@ class ExpandObjects(EPJSON):
         """
         option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
         transitions = option_leaf.pop('Transitions', None)
-        if len(option_leaf.keys()) != 1:
-            raise PyExpandObjectsTypeError('OptionTree leaf is empty does not contain only '
-                                           'one key (plus transition): {}'.format(option_tree))
         try:
-            (_, objects), = option_leaf.items()
-        except TypeError:
-            raise PyExpandObjectsTypeError("Invalid or missing BuildPath location: {}".format(option_tree))
+            option_leaf['Objects']
+        except KeyError:
+            raise PyExpandObjectsTypeError("Invalid or missing Objects location: {}".format(option_tree))
         return {
-            'objects': objects,
-            'transitions': transitions
+            'Objects': option_leaf['Objects'],
+            'Transitions': transitions
         }
 
     def _apply_transitions(self, option_tree_leaf):
         """
-        Set object field values in an OptionTree branch (BuildPath, InsertElements, etc.)
-        from Template inputs using Transitions dictionary
+        Set object field values in an OptionTree leaf (BasObjects, InsertObjects, etc.)
+        using a supplied Transitions dictionary.
 
         :param option_tree_leaf: YAML loaded option tree end node with two keys: objects and transitions
         :return: dictionary of objects with transitions applied
         """
-        option_tree_transitions = option_tree_leaf.pop('transitions', None)
+        option_tree_transitions = option_tree_leaf.pop('Transitions', None)
         if option_tree_transitions:
+            # iterate over the transitions instructions
             for template_field, transition_structure in option_tree_transitions.items():
-                (object_type, object_field), = transition_structure.items()
-                (leaf_option, super_objects), = option_tree_leaf.items()
-                for super_object in super_objects:
-                    (super_object_type, super_object_name), = super_object.items()
-                    if re.match(object_type, super_object_type):
-                        if 'Fields' in super_object[super_object_type].keys():
-                            super_object[super_object_type]['Fields'][object_field] = \
-                                self.template[self.template_name][template_field]
-                        else:
-                            super_object[super_object_type][object_field] = \
-                                self.template[self.template_name][template_field]
+                for object_type_reference, object_field in transition_structure.items():
+                    # for each transition instruction, iterate over the objects and apply if the
+                    # object_type matches
+                    for _, tree_objects in option_tree_leaf.items():
+                        for tree_object in tree_objects:
+                            for object_type, object_name in tree_object.items():
+                                if re.match(object_type_reference, object_type):
+                                    # On a match, apply the field.  If the object is a 'super' object used in a
+                                    # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
+                                    # into the base level of the object.  The template field was loaded as a class
+                                    # attribute on initialization.
+                                    try:
+                                        if 'Fields' in tree_object[object_type].keys():
+                                            tree_object[object_type]['Fields'][object_field] = \
+                                                getattr(self, template_field)
+                                        else:
+                                            tree_object[object_type][object_field] = \
+                                                getattr(self, template_field)
+                                    except AttributeError:
+                                        self.logger.warning("Template field ({}) was attempted to be applied "
+                                                            "to object ({}) but was not present in template inputs"
+                                                            .format(template_field, object_type))
         return option_tree_leaf
 
-    def create_build_path(self):
+    def create_objects(self):
         """
-        Create a build path of EnergyPlus super objects for a given template
+        Create a set of EnergyPlus objects for a given template
 
         :return:
         """
-        # Get Base BuildPath and specific transitions (make generalized functions for other actions)
-        # apply transition names and return the action or build path
-        # Get each Remove/Insert/Etc actions
-        # apply transition names to each
-        # Perform insert/edit of build path for each action
-        # Connect nodes on systems only (first object in list is connected for multi-object build path locations)
+        # For systems, perform buildpath operations
+        # systems - get BuildPath
+        # systems - perform insert/remove/etc. operations
+        # systems - connect nodes and convert field values using name formatting and complex input operations
+        # systems - return list of objects created from BuildPath saved separately for future reference
+        # Get BaseObjects and Template objects, applying transitions from template before returning YAML objects
+        # Convert field values using name formatting and complex input operations
+        # BaseObjects and TemplateObjects stored in dictionary class attributes,
+        # BuildPath stored as a list of objects and dictionary in class attributes. List is necessary for future lookups
+        # Perform connections
         return
 
     def build_compact_schedule(
