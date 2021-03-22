@@ -120,15 +120,17 @@ class ExpandObjects(EPJSON):
 
     def get_structure(
             self,
-            structure_hierarchy: list) -> dict:
+            structure_hierarchy: list,
+            structure=None) -> dict:
         """
         Retrieve structure from YAML loaded object
 
         :param structure_hierarchy: list representing structure hierarchy
+        :param structure: YAML loaded dictionary, default is loaded yaml loaded object
         :return: structured object as dictionary
         """
         try:
-            structure = copy.deepcopy(self.expansion_structure)
+            structure = copy.deepcopy(structure or self.expansion_structure)
             if not isinstance(structure_hierarchy, list):
                 raise PyExpandObjectsTypeError("Input must be a list of structure keys: {}".format(structure_hierarchy))
             for key in structure_hierarchy:
@@ -163,28 +165,51 @@ class ExpandObjects(EPJSON):
                     "YAML object is incorrectly formatted: {}, bad key: {}".format(structure, key))
         return structure
 
-    @staticmethod
-    def _get_build_path(option_tree):
+    def _get_option_tree_leaf(self, option_tree, leaf_path):
         """
         Return Build path from OptionTree
 
         :param option_tree: Yaml object holding HVACTemplate option tree
+        :param leaf_path: path to leaf node of option tree
         :return: Verified BuildPath and Transition dictionary as keys in an object
         """
-        if not option_tree.get('Template'):
-            raise PyExpandObjectsTypeError('Template key missing in OptionTree: {}'.format(option_tree))
+        option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
+        transitions = option_leaf.pop('Transitions', None)
+        if len(option_leaf.keys()) != 1:
+            raise PyExpandObjectsTypeError('OptionTree leaf is empty does not contain only '
+                                           'one key (plus transition): {}'.format(option_tree))
         try:
-            build_path = option_tree['Template']['BuildPath']
-        except (KeyError, TypeError):
+            (_, objects), = option_leaf.items()
+        except TypeError:
             raise PyExpandObjectsTypeError("Invalid or missing BuildPath location: {}".format(option_tree))
-        if option_tree['Template'].get('Transitions'):
-            transitions = option_tree['Template']['Transitions']
-        else:
-            transitions = None
         return {
-            'build_path': build_path,
+            'objects': objects,
             'transitions': transitions
         }
+
+    def _apply_transitions(self, option_tree_leaf):
+        """
+        Set object field values in an OptionTree branch (BuildPath, InsertElements, etc.)
+        from Template inputs using Transitions dictionary
+
+        :param option_tree_leaf: YAML loaded option tree end node with two keys: objects and transitions
+        :return: dictionary of objects with transitions applied
+        """
+        option_tree_transitions = option_tree_leaf.pop('transitions', None)
+        if option_tree_transitions:
+            for template_field, transition_structure in option_tree_transitions.items():
+                (object_type, object_field), = transition_structure.items()
+                (leaf_option, super_objects), = option_tree_leaf.items()
+                for super_object in super_objects:
+                    (super_object_type, super_object_name), = super_object.items()
+                    if re.match(object_type, super_object_type):
+                        if 'Fields' in super_object[super_object_type].keys():
+                            super_object[super_object_type]['Fields'][object_field] = \
+                                self.template[self.template_name][template_field]
+                        else:
+                            super_object[super_object_type][object_field] = \
+                                self.template[self.template_name][template_field]
+        return option_tree_leaf
 
     def create_build_path(self):
         """
@@ -192,8 +217,8 @@ class ExpandObjects(EPJSON):
 
         :return:
         """
-        # Get Base BuildPath and specific transitions
-        # apply transition names
+        # Get Base BuildPath and specific transitions (make generalized functions for other actions)
+        # apply transition names and return the action or build path
         # Get each Remove/Insert/Etc actions
         # apply transition names to each
         # Perform insert/edit of build path for each action
@@ -213,7 +238,7 @@ class ExpandObjects(EPJSON):
         :param name: (optional) name of object.
         :return: epJSON object of compact schedule
         """
-        structure_object = self.get_structure(structure_hierarchy)
+        structure_object = self.get_structure(structure_hierarchy=structure_hierarchy)
         if not isinstance(insert_values, list):
             insert_values = [insert_values, ]
         if not name:

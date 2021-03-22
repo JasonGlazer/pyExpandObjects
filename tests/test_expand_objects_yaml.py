@@ -7,7 +7,7 @@ from . import BaseTest
 mock_template = {
     'HVACTemplate:Thermostat': {
         'template_name': {
-            'field': 'value'
+            'template_field': 'template_test_value'
         }
     }
 }
@@ -49,7 +49,9 @@ mock_option_tree = {
                         }
                     ],
                     'Transitions': {
-                        "test_key": "test_val"
+                        "template_field": {
+                            "AirTerminal:.*": "object_test_field"
+                        }
                     }
                 }
             },
@@ -80,11 +82,11 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=mock_option_tree)
         structure_hierarcy = ['OptionTree', 'Zone', 'VAV']
         output = eo.get_option_tree(structure_hierarchy=structure_hierarcy)
-        self.assertEqual('test_val', output['Template']['Transitions']['test_key'])
+        self.assertEqual('object_test_field', output['Template']['Transitions']["template_field"]['AirTerminal:.*'])
         # test without OptionTree
         structure_hierarcy = ['Zone', 'VAV']
         output = eo.get_option_tree(structure_hierarchy=structure_hierarcy)
-        self.assertEqual('test_val', output['Template']['Transitions']['test_key'])
+        self.assertEqual('object_test_field', output['Template']['Transitions']["template_field"]['AirTerminal:.*'])
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Base:Reject bad OptionTree request")
@@ -128,10 +130,10 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=mock_option_tree)
         structure_hierarcy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarcy)
-        build_path = eo._get_build_path(option_tree=option_tree)
+        build_path = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['Template', ])
         key_check = True
         for k in build_path.keys():
-            if k not in ['build_path', 'transitions']:
+            if k not in ['objects', 'transitions']:
                 key_check = False
         self.assertTrue(key_check)
         return
@@ -144,7 +146,20 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=mock_option_tree)
         structure_hierarcy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarcy)
-        build_path = eo._get_build_path(option_tree=option_tree)
-        print(build_path)
+        build_path = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['Template', ])
         self.assertIsNone(build_path['transitions'])
+        return
+
+    def test_apply_transitions(self):
+        # todo_eo: make comments and do better documentation on _get_opttion_tree_leaf and _apply_transitions
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        structure_hierarcy = ['OptionTree', 'Zone', 'VAV']
+        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarcy)
+        build_path = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['Template', ])
+        transitioned_build_path = eo._apply_transitions(build_path)
+        self.assertEqual(
+            'template_test_value',
+            transitioned_build_path['objects'][0]['AirTerminal:SingleDuct:VAV:Reheat']['Fields']['object_test_field'])
         return
