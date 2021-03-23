@@ -1,4 +1,5 @@
 import unittest
+import copy
 
 from src.expand_objects import ExpandObjects
 from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException
@@ -7,7 +8,8 @@ from . import BaseTest
 mock_template = {
     'HVACTemplate:Zone:VAV': {
         'template_name': {
-            'template_field': 'template_test_value'
+            'template_field': 'template_test_value',
+            'reheat_coil_type': 'HotWater'
         }
     }
 }
@@ -30,11 +32,11 @@ mock_option_tree = {
                         }
                     }
                 },
-                'TemplateObjects': [
-                    {
-                        'reheat_coil_type': {
-                            "HotWater": {
-                                'Objects': [
+                'TemplateObjects': {
+                    'reheat_coil_type': {
+                        "HotWater": {
+                            'Objects': [
+                                [
                                     {
                                         'AirTerminal:SingleDuct:VAV:Reheat': {
                                             'name': '{} VAV Reheat',
@@ -42,15 +44,20 @@ mock_option_tree = {
                                         }
                                     }
                                 ],
-                                'Transitions': {
-                                    "template_field": {
-                                        "AirTerminal:.*": "object_test_field"
+                                {
+                                    "Branch": {
+                                        "name": "{} HW Branch"
                                     }
+                                }
+                             ],
+                            'Transitions': {
+                                "template_field": {
+                                    "AirTerminal:.*": "object_test_field"
                                 }
                             }
                         }
                     }
-                ]
+                }
             }
         }
     }
@@ -125,13 +132,13 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             eo.get_option_tree(structure_hierarchy=structure_hierarchy)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Retrieve option tree branch")
-    def test_retrieve_base_option_tree_leaf(self):
+    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Retrieve BaseObjects OptionTree leaf")
+    def test_option_tree_leaf(self):
         eo = ExpandObjects(
             template=mock_template,
             expansion_structure=mock_option_tree)
-        structure_hierarcy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarcy)
+        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         key_check = True
         for k in option_tree_leaf.keys():
@@ -140,31 +147,72 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertTrue(key_check)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Retrieve build path without transition key")
-    def test_retrieve_base_leaf_without_transitions(self):
+    def test_option_tree_leaf_without_transitions(self):
         # remove Transitions for this test
-        mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects'].pop('Transitions')
+        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
+        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects'].pop('Transitions')
         eo = ExpandObjects(
             template=mock_template,
-            expansion_structure=mock_option_tree)
-        structure_hierarcy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarcy)
+            expansion_structure=bad_mock_option_tree)
+        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         self.assertIsNone(option_tree_leaf['Transitions'])
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Apply transitions to an object")
     def test_apply_transitions(self):
         eo = ExpandObjects(
             template=mock_template,
             expansion_structure=mock_option_tree)
-        structure_hierarcy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarcy)
+        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         transitioned_option_tree_leaf = eo._apply_transitions(option_tree_leaf)
+        print(transitioned_option_tree_leaf)
         self.assertEqual(
             'template_test_value',
-            transitioned_option_tree_leaf['Objects'][0]['ZoneHVAC:AirDistributionUnit']['object_test_field'])
+            transitioned_option_tree_leaf['ZoneHVAC:AirDistributionUnit']['template_name ATU']['object_test_field'])
+        return
+
+    def test_error_on_bad_object(self):
+        # make a bad template reference
+        # check missing 'name' field
+        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
+        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
+            {
+                'ZoneHVAC:AirDistributionUnit': {
+                    "bad_name": "{} ATU"
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=bad_mock_option_tree)
+        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
+        with self.assertRaises(PyExpandObjectsYamlStructureException):
+            eo._apply_transitions(option_tree_leaf)
+        # more than one object in a dictionary
+        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
+        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
+            {
+                'ZoneHVAC:AirDistributionUnit': {
+                    "name": "{} ATU"
+                },
+                'ZoneHVAC:AirDistributionUnit2': {
+                    "name": "{} ATU"
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=bad_mock_option_tree)
+        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
+        with self.assertRaises(PyExpandObjectsYamlStructureException):
+            eo._apply_transitions(option_tree_leaf)
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Base:Write warning on failed applying of transition fields")
@@ -187,9 +235,235 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertIn('Template field (template_bad_field) was', eo.stream.getvalue())
         return
 
-    # todo_eo: test function to get template inputs.
-    # convert each item to regular object {object_type: {object_name: object_fields}} and combine in epJSON dictionary
-    # using merge_dictionary.  Make sure to flatten list of objects, or iterate though each sub-list.
-    # These will have unresolved references (i.e. complex inputs)
-    # Build complex input function
-    # todo_eo: perform complex input for each object in dictionary, using recursion if another complex input is found.
+    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Retrieve Objects OptionTree leaf without transition key")
+    def test_retrieve_base_objects_from_option_tree_leaf(self):
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        template_objects = eo._get_option_tree_objects(
+            structure_hierarchy=structure_hierarchy,
+            leaf_type='BaseObjects')
+        key_check = True
+        for key in template_objects.keys():
+            if key not in ['ZoneHVAC:AirDistributionUnit', ]:
+                key_check = False
+        self.assertTrue(key_check)
+        return
+
+    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Retrieve TemplateObjects OptionTree leaf")
+    def test_retrieve_template_objects_from_option_tree_leaf(self):
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        template_objects = eo._get_option_tree_objects(
+            structure_hierarchy=structure_hierarchy,
+            leaf_type='TemplateObjects')
+        key_check = True
+        for key in template_objects.keys():
+            if key not in ['AirTerminal:SingleDuct:VAV:Reheat', 'Branch']:
+                key_check = False
+        self.assertTrue(key_check)
+        return
+
+    def test_complex_inputs_simple(self):
+        test_d = {
+            "Object:1": {
+                "name_1": {
+                    "field_1": "value_1"
+                }
+            }
+        }
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        # string test
+        output = eo._resolve_complex_input(
+            epjson=test_d,
+            field_name="field_1",
+            input_value="{} test_val"
+        )
+        self.assertEqual('template_name test_val', [i for i in output][0]["value"])
+        # number test
+        output = eo._resolve_complex_input(
+            epjson=test_d,
+            field_name="field_1",
+            input_value=3
+        )
+        self.assertEqual(3, [i for i in output][0]["value"])
+        return
+
+    def test_complex_inputs_dictionary(self):
+        test_d = {
+            "Object:1": {
+                "name_1": {
+                    "field_1": "value_1"
+                }
+            }
+        }
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        # field value check
+        output = eo._resolve_complex_input(
+            epjson=test_d,
+            field_name="field_1",
+            input_value={
+                "Object:1": "field_1"
+            }
+        )
+        tmp_d = {}
+        for o in output:
+            tmp_d[o['field']] = o['value']
+        self.assertEqual('field_1', list(tmp_d.keys())[0])
+        self.assertEqual('value_1', tmp_d['field_1'])
+        # dictionary key check
+        output = eo._resolve_complex_input(
+            epjson=test_d,
+            field_name="field_1",
+            input_value={
+                "Object:1": "self"
+            }
+        )
+        tmp_d = {}
+        for o in output:
+            tmp_d[o['field']] = o['value']
+        self.assertEqual('Object:1', tmp_d['field_1'])
+        # name check
+        output = eo._resolve_complex_input(
+            epjson=test_d,
+            field_name="field_1",
+            input_value={
+                "Object:1": "key"
+            }
+        )
+        tmp_d = {}
+        for o in output:
+            tmp_d[o['field']] = o['value']
+        self.assertEqual('name_1', tmp_d['field_1'])
+        return
+
+    def test_complex_inputs_recursion_dictionary(self):
+        test_d = {
+            "Object:1": {
+                "name_1": {
+                    "field_1": "value_1"
+                }
+            },
+            "Object:2": {
+              "name_1": {
+                  "field_1": {
+                      "Object:1": "field_1"
+                  }
+              }
+            }
+        }
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        # field value check
+        output = eo._resolve_complex_input(
+            epjson=test_d,
+            field_name="field_test",
+            input_value={
+                "Object:2": "field_1"
+            }
+        )
+        tmp_d = {}
+        for o in output:
+            tmp_d[o['field']] = o['value']
+        self.assertEqual('value_1', tmp_d['field_test'])
+        return
+
+    def test_complex_inputs_recursion_limit(self):
+        test_d = {
+            "Object:1": {
+                "name_1": {
+                    "field_1": {
+                        "Object:2": "field_1"
+                    }
+                }
+            },
+            "Object:2": {
+                "name_1": {
+                    "field_1": {
+                        "Object:1": "field_1"
+                    }
+                }
+            }
+        }
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        with self.assertRaises(PyExpandObjectsYamlStructureException):
+            output = eo._resolve_complex_input(
+                epjson=test_d,
+                field_name="field_test",
+                input_value={
+                    "Object:2": "field_1"
+                }
+            )
+            tmp_d = {}
+            for o in output:
+                tmp_d[o['field']] = o['value']
+        return
+
+    def test_complex_inputs_list(self):
+        test_d = {
+            "Object:2": {
+                "name_1": {
+                    "field_1": "value_1"
+                }
+            }
+        }
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        # field value check
+        output = eo._resolve_complex_input(
+            epjson=test_d,
+            field_name="field_test",
+            input_value=[
+                {"field_sub_test": {"Object:2": "field_1"}}
+            ]
+        )
+        tmp_d = {}
+        for o in output:
+            tmp_d[o['field']] = o['value']
+        self.assertEqual('value_1', tmp_d['field_test'][0]['field_sub_test'])
+        return
+
+    def test_complex_inputs_list_recursion(self):
+        test_d = {
+            "Object:1": {
+                "name_1": {
+                    "field_1": "value_1"
+                }
+            },
+            "Object:2": {
+                "name_1": {
+                    "field_1": {
+                        "Object:1": "field_1"
+                    }
+                }
+            }
+        }
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        # field value check
+        output = eo._resolve_complex_input(
+            epjson=test_d,
+            field_name="field_test",
+            input_value=[
+                {"field_sub_test": {"Object:2": "field_1"}}
+            ]
+        )
+        tmp_d = {}
+        for o in output:
+            tmp_d[o['field']] = o['value']
+        self.assertEqual('value_1', tmp_d['field_test'][0]['field_sub_test'])
+        return
+
+    # todo_eo: build process to walk through Objects and TemplateObjects

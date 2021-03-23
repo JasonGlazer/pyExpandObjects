@@ -2,6 +2,8 @@ import copy
 import yaml
 import re
 from pathlib import Path
+import numbers
+import typing
 
 from custom_exceptions import PyExpandObjectsTypeError, InvalidTemplateException, \
     PyExpandObjectsYamlError, PyExpandObjectsFileNotFoundError, PyExpandObjectsYamlStructureException
@@ -118,6 +120,28 @@ class ExpandObjects(EPJSON):
         self.epjson = {}
         return
 
+    def flatten_list(
+            self,
+            nested_list: list,
+            flat_list: list = [],
+            clear: bool = True) -> list:
+        """
+        Flattens list of lists to one list of items.
+
+        :param nested_list: list of nested dictionary objects
+        :param flat_list: list used to store recursive addition of objects
+        :param clear: Option to empty the recursive list
+        :return: flattened list of objects
+        """
+        if clear:
+            flat_list = []
+        for i in nested_list:
+            if isinstance(i, list):
+                self.flatten_list(i, flat_list, clear=False)
+            else:
+                flat_list.append(i)
+        return flat_list
+
     def get_structure(
             self,
             structure_hierarchy: list,
@@ -165,7 +189,39 @@ class ExpandObjects(EPJSON):
                     "YAML object is incorrectly formatted: {}, bad key: {}".format(structure, key))
         return structure
 
-    def _get_option_tree_leaf(self, option_tree, leaf_path):
+    def _get_option_tree_objects(
+            self,
+            structure_hierarchy: list,
+            leaf_type: str) -> dict:
+        """
+        Return objects from option tree leaf.
+
+        :return: epJSON dictionary with unresolved complex inputs
+        """
+        option_tree = self.get_option_tree(structure_hierarchy=structure_hierarchy)
+        if leaf_type == 'BaseObjects':
+            option_tree_leaf = self._get_option_tree_leaf(
+                option_tree=option_tree,
+                leaf_path=['BaseObjects', ])
+            return self._apply_transitions(option_tree_leaf=option_tree_leaf)
+        elif leaf_type == 'TemplateObjects':
+            for template_field, template_tree in option_tree['TemplateObjects'].items():
+                (field_option, objects), = template_tree.items()
+                if re.match(field_option, getattr(self, template_field)):
+                    option_tree_leaf = self._get_option_tree_leaf(
+                        option_tree=option_tree,
+                        leaf_path=['TemplateObjects', template_field, getattr(self, template_field)])
+                    return self._apply_transitions(option_tree_leaf=option_tree_leaf)
+        elif leaf_type == "BuildPath":
+            print('TBD')
+            return {}
+        else:
+            raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided: {}".format(leaf_type))
+
+    def _get_option_tree_leaf(
+            self,
+            option_tree: dict,
+            leaf_path: list) -> dict:
         """
         Return leaf from OptionTree that has no template options (e.g. alternative options)
 
@@ -176,17 +232,19 @@ class ExpandObjects(EPJSON):
         option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
         transitions = option_leaf.pop('Transitions', None)
         try:
-            option_leaf['Objects']
+            objects = self.flatten_list(option_leaf['Objects'])
         except KeyError:
             raise PyExpandObjectsTypeError("Invalid or missing Objects location: {}".format(option_tree))
         return {
-            'Objects': option_leaf['Objects'],
+            'Objects': objects,
             'Transitions': transitions
         }
 
-    def _apply_transitions(self, option_tree_leaf):
+    def _apply_transitions(
+            self,
+            option_tree_leaf: dict) -> dict:
         """
-        Set object field values in an OptionTree leaf (BasObjects, InsertObjects, etc.)
+        Set object field values in an OptionTree leaf, which consist of an 'Objects' and 'Transitions' key
         using a supplied Transitions dictionary.
 
         :param option_tree_leaf: YAML loaded option tree end node with two keys: objects and transitions
@@ -199,26 +257,111 @@ class ExpandObjects(EPJSON):
                 for object_type_reference, object_field in transition_structure.items():
                     # for each transition instruction, iterate over the objects and apply if the
                     # object_type matches
-                    for _, tree_objects in option_tree_leaf.items():
-                        for tree_object in tree_objects:
-                            for object_type, object_name in tree_object.items():
-                                if re.match(object_type_reference, object_type):
-                                    # On a match, apply the field.  If the object is a 'super' object used in a
-                                    # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
-                                    # into the base level of the object.  The template field was loaded as a class
-                                    # attribute on initialization.
-                                    try:
-                                        if 'Fields' in tree_object[object_type].keys():
-                                            tree_object[object_type]['Fields'][object_field] = \
-                                                getattr(self, template_field)
-                                        else:
-                                            tree_object[object_type][object_field] = \
-                                                getattr(self, template_field)
-                                    except AttributeError:
-                                        self.logger.warning("Template field ({}) was attempted to be applied "
-                                                            "to object ({}) but was not present in template inputs"
-                                                            .format(template_field, object_type))
-        return option_tree_leaf
+                    # Ensure there is only one object_key and it is 'Objects'
+                    (object_key, tree_objects), = option_tree_leaf.items()
+                    if not object_key == 'Objects':
+                        raise PyExpandObjectsYamlError(
+                            "Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
+                    for tree_object in tree_objects:
+                        for object_type, object_name in tree_object.items():
+                            if re.match(object_type_reference, object_type):
+                                # On a match, apply the field.  If the object is a 'super' object used in a
+                                # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
+                                # into the base level of the object.  The template field was loaded as a class
+                                # attribute on initialization.
+                                try:
+                                    if 'Fields' in tree_object[object_type].keys():
+                                        tree_object[object_type]['Fields'][object_field] = \
+                                            getattr(self, template_field)
+                                    else:
+                                        tree_object[object_type][object_field] = \
+                                            getattr(self, template_field)
+                                except AttributeError:
+                                    self.logger.warning("Template field ({}) was attempted to be applied "
+                                                        "to object ({}) but was not present in template inputs"
+                                                        .format(template_field, object_type))
+        # merge list of objects with transitions applied into a single epJSON dictionary and return
+        output_dictionary = {}
+        for transitioned_object in option_tree_leaf['Objects']:
+            try:
+                (transitioned_object_type, transitioned_object_structure), = transitioned_object.items()
+                object_name = transitioned_object_structure.pop('name').format(self.template_name)
+                output_dictionary = self.merge_epjson(
+                    super_dictionary=output_dictionary,
+                    object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}}
+                )
+            except (TypeError, KeyError, ValueError):
+                raise PyExpandObjectsYamlStructureException(
+                    "Transitioned object is incorrectly formatted: {}".format(transitioned_object))
+        return output_dictionary
+
+    def _resolve_complex_input(
+            self,
+            epjson: dict,
+            field_name: str,
+            input_value: typing.Union[str, int, float, dict, list]) -> \
+            typing.Generator[str, typing.Dict[str, str], None]:
+        """
+        Resolve a complex input into a field value
+
+        :param epjson: epJSON dictionary of objects
+        :param input_value: field value input
+        :return: resolved field value
+        """
+        if isinstance(input_value, numbers.Number):
+            yield {"field": field_name, "value": input_value}
+        elif isinstance(input_value, str):
+            yield {"field": field_name, "value": input_value.format(self.template_name)}
+        elif isinstance(input_value, dict):
+            # unpack the referenced object type and the lookup instructions
+            (reference_object_type, lookup_instructions), = input_value.items()
+            # try to match the reference object with EnergyPlus objects in the super_dictionary
+            for object_type in epjson.keys():
+                if re.match(reference_object_type, object_type):
+                    # retrieve value
+                    # if 'self' is used as the reference node, return the energyplus object type
+                    # if 'key' is used as the reference node, return the unique object name
+                    # After those checks, the lookup_instructions is the field name of the object.
+                    (object_name, _), = epjson[object_type].items()
+                    if lookup_instructions.lower() == 'self':
+                        yield {"field": field_name, "value": object_type}
+                    elif lookup_instructions.lower() == 'key':
+                        yield {"field": field_name, "value": object_name}
+                    elif isinstance(epjson[object_type][object_name][lookup_instructions], dict):
+                        try:
+                            complex_generator = self._resolve_complex_input(
+                                epjson=epjson,
+                                field_name=field_name,
+                                input_value=epjson[object_type][object_name][lookup_instructions])
+                            for cg in complex_generator:
+                                yield cg
+                        except RecursionError:
+                            raise PyExpandObjectsYamlStructureException(
+                                "Maximum Recursion limit exceeded when resolving {} for {}"
+                                .format(input_value, field_name))
+                    else:
+                        yield {"field": field_name,
+                               "value": epjson[object_type]
+                               [object_name][lookup_instructions]}
+        elif isinstance(input_value, list):
+            try:
+                tmp_list = []
+                for input_list_item in input_value:
+                    tmp_d = {}
+                    for input_list_field, input_list_value in input_list_item.items():
+                        complex_generator = self._resolve_complex_input(
+                            epjson=epjson,
+                            field_name=input_list_field,
+                            input_value=input_list_value)
+                        for cg in complex_generator:
+                            tmp_d[cg["field"]] = cg["value"]
+                        tmp_list.append(tmp_d)
+                yield {"field": field_name, "value": tmp_list}
+            except RecursionError:
+                raise PyExpandObjectsYamlStructureException(
+                    "Maximum Recursion limit exceeded when resolving {} for {}"
+                    .format(input_value, field_name))
+        return
 
     def create_objects(self):
         """
@@ -231,7 +374,7 @@ class ExpandObjects(EPJSON):
         # systems - perform insert/remove/etc. operations
         # systems - connect nodes and convert field values using name formatting and complex input operations
         # systems - return list of objects created from BuildPath saved separately for future reference
-        # Get BaseObjects and Template objects, applying transitions from template before returning YAML objects
+        # Get BaseObjects and Te    mplate objects, applying transitions from template before returning YAML objects
         # Convert field values using name formatting and complex input operations
         # BaseObjects and TemplateObjects stored in dictionary class attributes,
         # BuildPath stored as a list of objects and dictionary in class attributes. List is necessary for future lookups
