@@ -25,21 +25,18 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
     def teardown(self):
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Verify file location exists")
     def test_reject_bad_expansion_file_path(self):
         expansion_file_location = 'does/not/exist.yaml'
         with self.assertRaises(FileNotFoundError):
             ExpandObjects(template=mock_template, expansion_structure=expansion_file_location)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Reject non-yaml structure files")
     def test_reject_bad_expansion_file_format(self):
         expansion_file_location = os.path.abspath(__file__)
         with self.assertRaises(TypeError):
             ExpandObjects(template=mock_template, expansion_structure=expansion_file_location)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Accept preconfigured dictionaries")
     def test_expansion_dictionary_okay(self):
         expansion_dictionary = {'test': 'val'}
         expand_object = ExpandObjects(
@@ -48,14 +45,12 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
         self.assertEqual('val', expand_object.expansion_structure['test'])
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Reject other reference types")
     def test_bad_expansion_dictionary_rejected(self):
         expansion_dictionary = []
         with self.assertRaises(TypeError):
             ExpandObjects(template=mock_template, expansion_structure=expansion_dictionary)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Retrieve YAML object")
     def test_retrieve_structure(self):
         structure_hierarchy = ['Schedule', 'Compact', 'ALWAYS_VAL']
         eo = ExpandObjects(template=mock_template)
@@ -67,7 +62,6 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
         self.assertTrue(name_match)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Reject bad YAML object")
     def test_exception_with_bad_structure(self):
         structure_hierarchy = ['Schedule', 'Compact', 'Bad']
         with self.assertRaises(TypeError):
@@ -75,7 +69,6 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
             eo.get_structure(structure_hierarchy=structure_hierarchy)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Reject bad template object")
     def test_reject_bad_template(self):
         templates = {}
         with self.assertRaises(InvalidTemplateException):

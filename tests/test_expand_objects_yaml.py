@@ -74,7 +74,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
     def teardown(self):
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Get Option Tree")
     def test_get_option_tree_from_yaml(self):
         eo = ExpandObjects(
             template=mock_template,
@@ -98,7 +97,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertTrue(key_check)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Reject bad OptionTree request")
     def test_reject_bad_option_tree_request(self):
         eo = ExpandObjects(
             template=mock_template,
@@ -108,7 +106,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             eo.get_option_tree(structure_hierarchy=structure_hierarchy)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Fail on bad returned structure")
     def test_reject_bad_option_tree_structure(self):
         eo = ExpandObjects(
             template=mock_template,
@@ -132,7 +129,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             eo.get_option_tree(structure_hierarchy=structure_hierarchy)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Retrieve BaseObjects OptionTree leaf")
     def test_option_tree_leaf(self):
         eo = ExpandObjects(
             template=mock_template,
@@ -168,54 +164,42 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         transitioned_option_tree_leaf = eo._apply_transitions(option_tree_leaf)
-        print(transitioned_option_tree_leaf)
         self.assertEqual(
             'template_test_value',
-            transitioned_option_tree_leaf['ZoneHVAC:AirDistributionUnit']['template_name ATU']['object_test_field'])
+            transitioned_option_tree_leaf[0]['ZoneHVAC:AirDistributionUnit']['object_test_field'])
         return
 
-    def test_error_on_bad_object(self):
-        # make a bad template reference
-        # check missing 'name' field
-        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
-        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
-            {
-                'ZoneHVAC:AirDistributionUnit': {
-                    "bad_name": "{} ATU"
-                }
+    def test_yaml_list_to_dictionary_regular_object(self):
+        dict_1 = {
+            "Object:1": {
+                "name": "test_name",
+                "field_1": "val_1"
             }
-        ]
+        }
         eo = ExpandObjects(
             template=mock_template,
-            expansion_structure=bad_mock_option_tree)
-        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
-        option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
-        with self.assertRaises(PyExpandObjectsYamlStructureException):
-            eo._apply_transitions(option_tree_leaf)
-        # more than one object in a dictionary
-        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
-        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
-            {
-                'ZoneHVAC:AirDistributionUnit': {
-                    "name": "{} ATU"
+            expansion_structure=mock_option_tree)
+        output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
+        self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
+        return
+
+    def test_yaml_list_to_dictionary_super_object(self):
+        dict_1 = {
+            "Object:1": {
+                "Fields": {
+                    "name": "test_name",
+                    "field_1": "val_1"
                 },
-                'ZoneHVAC:AirDistributionUnit2': {
-                    "name": "{} ATU"
-                }
+                "Connectors": {}
             }
-        ]
+        }
         eo = ExpandObjects(
             template=mock_template,
-            expansion_structure=bad_mock_option_tree)
-        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
-        option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
-        with self.assertRaises(PyExpandObjectsYamlStructureException):
-            eo._apply_transitions(option_tree_leaf)
+            expansion_structure=mock_option_tree)
+        output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
+        self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Write warning on failed applying of transition fields")
     def test_warning_on_bad_apply_transitions(self):
         # make a bad template reference
         bad_mock_option_tree = mock_option_tree
@@ -235,7 +219,49 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertIn('Template field (template_bad_field) was', eo.stream.getvalue())
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Retrieve Objects OptionTree leaf without transition key")
+    def test_error_on_bad_object(self):
+        # make a bad template reference
+        # check missing 'name' field
+        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
+        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
+            {
+                'ZoneHVAC:AirDistributionUnit': {
+                    "bad_name": "{} ATU"
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=bad_mock_option_tree)
+        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
+        object_list = eo._apply_transitions(option_tree_leaf)
+        with self.assertRaises(PyExpandObjectsYamlStructureException):
+            eo._yaml_list_to_epjson_dictionaries(object_list)
+        # more than one object in a dictionary
+        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
+        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
+            {
+                'ZoneHVAC:AirDistributionUnit': {
+                    "name": "{} ATU"
+                },
+                'ZoneHVAC:AirDistributionUnit2': {
+                    "name": "{} ATU"
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=bad_mock_option_tree)
+        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
+        object_list = eo._apply_transitions(option_tree_leaf)
+        with self.assertRaises(PyExpandObjectsYamlStructureException):
+            eo._yaml_list_to_epjson_dictionaries(object_list)
+        return
+
     def test_retrieve_base_objects_from_option_tree_leaf(self):
         eo = ExpandObjects(
             template=mock_template,
@@ -248,10 +274,9 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         for key in template_objects.keys():
             if key not in ['ZoneHVAC:AirDistributionUnit', ]:
                 key_check = False
-        self.assertTrue(key_check)
+            self.assertTrue(key_check)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Retrieve TemplateObjects OptionTree leaf")
     def test_retrieve_template_objects_from_option_tree_leaf(self):
         eo = ExpandObjects(
             template=mock_template,

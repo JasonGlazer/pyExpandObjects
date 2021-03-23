@@ -203,7 +203,8 @@ class ExpandObjects(EPJSON):
             option_tree_leaf = self._get_option_tree_leaf(
                 option_tree=option_tree,
                 leaf_path=['BaseObjects', ])
-            return self._apply_transitions(option_tree_leaf=option_tree_leaf)
+            object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
+            return self._yaml_list_to_epjson_dictionaries(object_list)
         elif leaf_type == 'TemplateObjects':
             for template_field, template_tree in option_tree['TemplateObjects'].items():
                 (field_option, objects), = template_tree.items()
@@ -211,9 +212,10 @@ class ExpandObjects(EPJSON):
                     option_tree_leaf = self._get_option_tree_leaf(
                         option_tree=option_tree,
                         leaf_path=['TemplateObjects', template_field, getattr(self, template_field)])
-                    return self._apply_transitions(option_tree_leaf=option_tree_leaf)
+                    object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
+                    return self._yaml_list_to_epjson_dictionaries(object_list)
         elif leaf_type == "BuildPath":
-            print('TBD')
+            # todo_eo: this location is the final output of BuildPath steps which return a list of yaml objects
             return {}
         else:
             raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided: {}".format(leaf_type))
@@ -242,13 +244,13 @@ class ExpandObjects(EPJSON):
 
     def _apply_transitions(
             self,
-            option_tree_leaf: dict) -> dict:
+            option_tree_leaf: dict) -> list:
         """
         Set object field values in an OptionTree leaf, which consist of an 'Objects' and 'Transitions' key
         using a supplied Transitions dictionary.
 
         :param option_tree_leaf: YAML loaded option tree end node with two keys: objects and transitions
-        :return: dictionary of objects with transitions applied
+        :return: list of dictionary objects with transitions applied
         """
         option_tree_transitions = option_tree_leaf.pop('Transitions', None)
         if option_tree_transitions:
@@ -281,18 +283,33 @@ class ExpandObjects(EPJSON):
                                                         "to object ({}) but was not present in template inputs"
                                                         .format(template_field, object_type))
         # merge list of objects with transitions applied into a single epJSON dictionary and return
+        return option_tree_leaf['Objects']
+
+    def _yaml_list_to_epjson_dictionaries(self, yaml_list):
+        """
+        Convert input YAML dictionaries into epJSON formatted dictionaries.
+
+        YAML dictionaries can either be regular or 'super' objects which contain 'Fields' and 'Connectors'
+        yaml_list: list of yaml objects to be formatted.
+        :return: epJSON formatted dictionary
+        """
         output_dictionary = {}
-        for transitioned_object in option_tree_leaf['Objects']:
+        for transitioned_object in yaml_list:
             try:
                 (transitioned_object_type, transitioned_object_structure), = transitioned_object.items()
-                object_name = transitioned_object_structure.pop('name').format(self.template_name)
+                # get the dictionary nested in 'Fields' for super objects
+                if {"Connectors", "Fields"} == set(transitioned_object_structure.keys()):
+                    object_name = transitioned_object_structure['Fields'].pop('name').format(self.template_name)
+                    transitioned_object_structure = transitioned_object_structure['Fields']
+                else:
+                    object_name = transitioned_object_structure.pop('name').format(self.template_name)
                 output_dictionary = self.merge_epjson(
                     super_dictionary=output_dictionary,
                     object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}}
                 )
             except (TypeError, KeyError, ValueError):
                 raise PyExpandObjectsYamlStructureException(
-                    "Transitioned object is incorrectly formatted: {}".format(transitioned_object))
+                    "YAML object is incorrectly formatted: {}".format(transitioned_object))
         return output_dictionary
 
     def _resolve_complex_input(
@@ -374,7 +391,7 @@ class ExpandObjects(EPJSON):
         # systems - perform insert/remove/etc. operations
         # systems - connect nodes and convert field values using name formatting and complex input operations
         # systems - return list of objects created from BuildPath saved separately for future reference
-        # Get BaseObjects and Te    mplate objects, applying transitions from template before returning YAML objects
+        # Get BaseObjects and Template objects, applying transitions from template before returning YAML objects
         # Convert field values using name formatting and complex input operations
         # BaseObjects and TemplateObjects stored in dictionary class attributes,
         # BuildPath stored as a list of objects and dictionary in class attributes. List is necessary for future lookups

@@ -31,7 +31,6 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     def tearDown(self):
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Verify no input templates returns no class templates")
     def test_no_hvac_objects_returns_with_zero_templates(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -45,7 +44,6 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         self.assertEqual(0, len(self.hvac_template.templates))
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Verify non HVACTemplate objects are passed to base dictionary")
     def test_base_objects_are_stored(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -61,7 +59,6 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         self.assertEqual(2, len(self.hvac_template.base_objects))
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Verify input templates returns class templates")
     def test_one_hvac_object_one_template_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -80,8 +77,6 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             self.hvac_template.templates.keys())
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Verify different templates returns "
-                                    "correct class templates")
     def test_n_hvac_objects_n_templates_returns_true(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -134,7 +129,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             ["All Zones"]["heating_setpoint_schedule_name"])
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Verify thermostat class templates created")
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify bad templates are rejected")
     def test_thermostat_bad_templates_raise_error(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
@@ -537,7 +532,8 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             ["ChW Loop Chiller"]["leaving_chilled_water_lower_temperature_limit"])
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Validate Thermostat template processing")
+    @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Validate Thermostat template completes "
+                                    "from parent class (HVACTemplate)")
     def test_thermostat_processing(self):
         self.hvac_template.load_epjson({
             **minimum_objects_d,
