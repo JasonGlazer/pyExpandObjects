@@ -49,7 +49,7 @@ mock_option_tree = {
                                         "name": "{} HW Branch"
                                     }
                                 }
-                             ],
+                            ],
                             'Transitions': {
                                 "template_field": {
                                     "AirTerminal:.*": "object_test_field"
@@ -352,11 +352,11 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             },
             "Object:2": {
-              "name_1": {
-                  "field_1": {
-                      "Object:1": "field_1"
-                  }
-              }
+                "name_1": {
+                    "field_1": {
+                        "Object:1": "field_1"
+                    }
+                }
             }
         }
         eo = ExpandObjects(
