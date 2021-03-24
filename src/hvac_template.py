@@ -1,7 +1,6 @@
 import re
-import copy
 from epjson_handler import EPJSON
-from expand_objects import ExpandThermostat
+from expand_objects import ExpandThermostat, ExpandObjects
 
 from custom_exceptions import InvalidTemplateException
 
@@ -107,16 +106,15 @@ class HVACTemplate(EPJSON):
         """
         # zone template should be only one epJSON object
         # todo_eo: need to capture errors here.
-        (_, object_structure), = zone_template.items()
+        (template_type, object_structure), = zone_template.items()
         (_, object_fields), = object_structure.items()
         template_thermostat_name = object_fields.get('template_thermostat_name', None)
         if template_thermostat_name:
-            return {
-                'HVACTemplate:Thermostat': {
-                    template_thermostat_name:
-                        copy.deepcopy(self.templates_thermostats['HVACTemplate:Thermostat'][template_thermostat_name])
-                }
-            }
+            try:
+                return self.expanded_thermostats[template_thermostat_name]
+            except KeyError:
+                raise InvalidTemplateException("{} references invalid HVACTemplate:Thermostat: {}"
+                                               .format(template_type, template_thermostat_name))
         else:
             return None
 
@@ -125,19 +123,60 @@ class HVACTemplate(EPJSON):
         Create ZoneControl:Thermostat objects, which require a connection between
         HVACTemplate:Zone and HVACTemplate:Thermostat objects
 
-        :return: Updated class epJSON dictionary with ThermostatSetpoint objects added.
+        :return: Updated class epJSON dictionary with ThermostatSetpoint objects added.  Objects are also added
+            to the class self.epsjon dictionary.
         """
         thermostat_template = self.get_thermostat_template_from_zone_template(zone_template)
-        print(thermostat_template)
-        # todo_eo: continue here
-        # for each ExpandZone template
-        # Get HVACTemplate:Thermostat name from template input (class attribute - template_thermostat_name)
-        # Retrieve ExpandedThermostat object from expanded_thermostats [list(ExpandThermostat)]
-        # with same name in attributes (template_name)
-        # Get ThermostatSetpoint object from that object's epJSON attribute
-        # Make zone control thermostat based on returned objects attributes
-        # Store ZoneControl:Thermostat to HVACTemplate epJSON attribute
-        return
+        (_, zone_template_structure), = zone_template.items()
+        (_, zone_template_fields), = zone_template_structure.items()
+        try:
+            zone_name = zone_template_fields.get('zone_name')
+            (thermostat_type, thermostat_structure), = thermostat_template.epjson.items()
+            (thermostat_name, _), = thermostat_structure.items()
+            if thermostat_type == "ThermostatSetpoint:DualSetpoint":
+                # add always_val schedule to epjson
+                control_schedule = ExpandObjects().build_compact_schedule(
+                    structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                    insert_values=[4, ])
+                # todo_eo: one elif for each schedule type
+            # create zonecontrol object
+            (_, schedule_structure), = control_schedule.items()
+            (schedule_name, _), = schedule_structure.items()
+            zonecontrol_thermostat = {
+                "ZoneControl:Thermostat": {
+                    "{} Thermostat".format(zone_name): {
+                        "control_1_name": thermostat_name,
+                        "control_1_object_type": thermostat_type,
+                        "control_type_schedule_name": schedule_name,
+                        "zone_or_zonelist_name": "{}".format(zone_name)
+                    }
+                }
+            }
+            self.epjson = self.merge_epjson(
+                super_dictionary=self.epjson,
+                object_dictionary=dict(control_schedule, **zonecontrol_thermostat),
+                unique_name_override=True
+            )
+            return dict(control_schedule, **zonecontrol_thermostat)
+        except (ValueError, AttributeError, KeyError):
+            raise InvalidTemplateException("HVACTemplate failed to build ZoneControl:Thermostat from zone template "
+                                           "{}".format(zone_template))
+
+    def expand_templates(self, templates, expand_class):
+        """
+        Run ExpandThermostat on multiple templates
+        :param templates: dictionary of HVACTemplate:.* objects
+        :param expand_class: ExpandObjects child class to operate on template.
+        :return: dictionary of expanded objects with unique name as key
+        """
+        expanded_template_dictionary = {}
+        templates = self.unpack_epjson(templates)
+        for template in templates:
+            (_, template_structure), = template.items()
+            (template_name, _), = template_structure.items()
+            expanded_template = expand_class(template).run()
+            expanded_template_dictionary[template_name] = expanded_template
+        return expanded_template_dictionary
 
     def run(self, input_epjson):
         """
@@ -152,17 +191,10 @@ class HVACTemplate(EPJSON):
         self.epjson_process(epjson_ref=input_epjson)
         self.hvac_template_preprocess(epjson=self.input_epjson)
         self.logger.info('##### Processing Thermostats #####')
-        thermostats = self.unpack_epjson(self.templates_thermostats)
-        for thermostat in thermostats:
-            self.expanded_thermostats.append(
-                ExpandThermostat(thermostat).run()
-            )
+        self.expanded_thermostats = self.expand_templates(
+            templates=self.templates_thermostats,
+            expand_class=ExpandThermostat)
         self.logger.info('##### Processing Zones #####')
-        # zones = self.unpack_epjson(self.templates_zones)
-        # for zone in zones:
-        #     self.expanded_thermostats.append(
-        #         ExpandZone(zone).run()
-        #     )
         self.logger.info('##### Building Connections #####')
         # self.create_zonecontrol_thermostat()
         self.logger.info('##### Creating epJSON #####')
@@ -172,7 +204,7 @@ class HVACTemplate(EPJSON):
             object_dictionary=self.epjson
         )
         # merge each ExpandObjects child class created
-        epjson_objects = [i.epjson for i in self.expanded_thermostats]
+        epjson_objects = [j.epjson for i, j in self.expanded_thermostats.items()]
         for eo in epjson_objects:
             output_epjson = self.merge_epjson(
                 super_dictionary=output_epjson,

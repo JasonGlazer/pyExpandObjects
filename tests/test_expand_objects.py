@@ -3,7 +3,7 @@ import os
 import re
 
 from src.expand_objects import ExpandObjects
-from src.expand_objects import InvalidTemplateException
+from src.expand_objects import InvalidTemplateException, PyExpandObjectsTypeError
 from . import BaseTest
 
 mock_template = {
@@ -94,11 +94,11 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
         return
 
     def test_reject_bad_template(self):
-        templates = {}
+        templates = {"bad": "input"}
         with self.assertRaises(InvalidTemplateException):
             ExpandObjects(template=templates)
-        templates = []
-        with self.assertRaises(TypeError):
+        templates = ["bad_input"]
+        with self.assertRaises(PyExpandObjectsTypeError):
             ExpandObjects(template=templates)
         return
 

@@ -64,22 +64,25 @@ class VerifyTemplate:
         return self.template
 
     def __set__(self, obj, value):
-        if not isinstance(value, dict):
-            raise PyExpandObjectsTypeError('Template must be a dictionary: {}'.format(value))
-        try:
-            # template dictionary should have one template_ype, one key (unique name)
-            # and one object as a value (field/value dict)
-            # this assignment below will fail if that is not the case.
-            (template_type, template_structure), = value.items()
-            (_, object_structure), = template_structure.items()
-            # ensure object is dictionary
-            if not isinstance(object_structure, dict):
+        if value:
+            if not isinstance(value, dict):
+                raise PyExpandObjectsTypeError('Template must be a dictionary: {}'.format(value))
+            try:
+                # template dictionary should have one template_ype, one key (unique name)
+                # and one object as a value (field/value dict)
+                # this assignment below will fail if that is not the case.
+                (template_type, template_structure), = value.items()
+                (_, object_structure), = template_structure.items()
+                # ensure object is dictionary
+                if not isinstance(object_structure, dict):
+                    raise InvalidTemplateException(
+                        'An Invalid object {} was passed as an {} object'.format(value, self.template_type))
+                self.template = template_structure
+            except (ValueError, AttributeError):
                 raise InvalidTemplateException(
-                    'An Invalid object {} was passed as an {} object'.format(value, self.template_type))
-            self.template = template_structure
-        except ValueError:
-            raise InvalidTemplateException(
-                'An Invalid object {} failed verification'.format(value))
+                    'An Invalid object {} failed verification'.format(value))
+        else:
+            self.template = None
         return
 
 
@@ -101,22 +104,26 @@ class ExpandObjects(EPJSON):
 
     def __init__(
             self,
-            template,
+            template=None,
             expansion_structure=str(source_dir / 'resources' / 'template_expansion_structures.yaml')):
         super().__init__()
         self.expansion_structure = expansion_structure
         self.template = template
-        try:
-            (hvac_template_type, hvac_template_structure), = template.items()
-            (template_name, template_structure), = hvac_template_structure.items()
-        except ValueError:
-            raise InvalidTemplateException(
-                'An Invalid object {} failed verification'.format(template))
-        self.template_type = hvac_template_type
-        self.template_name = template_name
-        # apply template name and fields as class attributes
-        for template_field in template_structure.keys():
-            setattr(self, template_field, template_structure[template_field])
+        if self.template:
+            try:
+                (hvac_template_type, hvac_template_structure), = template.items()
+                (template_name, template_structure), = hvac_template_structure.items()
+            except ValueError:
+                raise InvalidTemplateException(
+                    'An Invalid object {} failed verification'.format(template))
+            self.template_type = hvac_template_type
+            self.template_name = template_name
+            # apply template name and fields as class attributes
+            for template_field in template_structure.keys():
+                setattr(self, template_field, template_structure[template_field])
+        else:
+            self.template_type = None
+            self.template_name = None
         self.epjson = {}
         return
 
