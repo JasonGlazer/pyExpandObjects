@@ -262,34 +262,17 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             eo._yaml_list_to_epjson_dictionaries(object_list)
         return
 
-    def test_retrieve_base_objects_from_option_tree_leaf(self):
+    def test_retrieve_objects_from_option_tree(self):
         eo = ExpandObjects(
             template=mock_template,
             expansion_structure=mock_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        template_objects = eo._get_option_tree_objects(
-            structure_hierarchy=structure_hierarchy,
-            leaf_type='BaseObjects')
+        template_objects = eo._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         key_check = True
         for key in template_objects.keys():
-            if key not in ['ZoneHVAC:AirDistributionUnit', ]:
+            if key not in ['ZoneHVAC:AirDistributionUnit', 'AirTerminal:SingleDuct:VAV:Reheat', 'Branch']:
                 key_check = False
             self.assertTrue(key_check)
-        return
-
-    def test_retrieve_template_objects_from_option_tree_leaf(self):
-        eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
-        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        template_objects = eo._get_option_tree_objects(
-            structure_hierarchy=structure_hierarchy,
-            leaf_type='TemplateObjects')
-        key_check = True
-        for key in template_objects.keys():
-            if key not in ['AirTerminal:SingleDuct:VAV:Reheat', 'Branch']:
-                key_check = False
-        self.assertTrue(key_check)
         return
 
     def test_complex_inputs_simple(self):
@@ -489,6 +472,28 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         for o in output:
             tmp_d[o['field']] = o['value']
         self.assertEqual('value_1', tmp_d['field_test'][0]['field_sub_test'])
+        return
+
+    def test_resolve_complex_inputs_object(self):
+        test_d = {
+            "Object:1": {
+                "name_1": {
+                    "field_1": "value_1"
+                }
+            },
+            "Object:2": {
+                "name_1": {
+                    "field_1": {
+                        "Object:1": "field_1"
+                    }
+                }
+            }
+        }
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        eo._resolve_objects(epjson=test_d)
+        self.assertEqual('value_1', test_d['Object:2']['name_1']['field_1'])
         return
 
     # todo_eo: build process to walk through Objects and TemplateObjects

@@ -566,3 +566,22 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 object_check = False
         self.assertTrue(object_check)
         return
+
+    def test_retrieve_thermostat_template_from_zone_field(self):
+        self.hvac_template.templates_thermostats = {
+            "HVACTemplate:Thermostat": {
+                "All Zones": {
+                    "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+                    "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+                }
+            }
+        }
+        thermostat_template = self.hvac_template.get_thermostat_template_from_zone_template(zone_template={
+            "HVACTemplate:Zone:VAV": {
+                "HVACTemplate:Zone:VAV 1": {
+                    "template_thermostat_name": "All Zones"
+                }
+            }
+        })
+        self.assertEqual('All Zones', list(thermostat_template['HVACTemplate:Thermostat'].keys())[0])
+        return

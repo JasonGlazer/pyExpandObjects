@@ -191,21 +191,27 @@ class ExpandObjects(EPJSON):
 
     def _get_option_tree_objects(
             self,
-            structure_hierarchy: list,
-            leaf_type: str) -> dict:
+            structure_hierarchy: list) -> dict:
         """
         Return objects from option tree leaf.
 
         :return: epJSON dictionary with unresolved complex inputs
         """
         option_tree = self.get_option_tree(structure_hierarchy=structure_hierarchy)
-        if leaf_type == 'BaseObjects':
+        options = option_tree.keys()
+        option_tree_dictionary = {}
+        if not set(list(options)).issubset({'BaseObjects', 'TemplateObjects', 'BuildPath'}):
+            raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided in YAML: {}"
+                                           .format(options))
+        if 'BaseObjects' in options:
             option_tree_leaf = self._get_option_tree_leaf(
                 option_tree=option_tree,
                 leaf_path=['BaseObjects', ])
             object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
-            return self._yaml_list_to_epjson_dictionaries(object_list)
-        elif leaf_type == 'TemplateObjects':
+            option_tree_dictionary = self.merge_epjson(
+                super_dictionary=option_tree_dictionary,
+                object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
+        if 'TemplateObjects' in options:
             for template_field, template_tree in option_tree['TemplateObjects'].items():
                 (field_option, objects), = template_tree.items()
                 if re.match(field_option, getattr(self, template_field)):
@@ -213,12 +219,13 @@ class ExpandObjects(EPJSON):
                         option_tree=option_tree,
                         leaf_path=['TemplateObjects', template_field, getattr(self, template_field)])
                     object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
-                    return self._yaml_list_to_epjson_dictionaries(object_list)
-        elif leaf_type == "BuildPath":
+                    option_tree_dictionary = self.merge_epjson(
+                        super_dictionary=option_tree_dictionary,
+                        object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
+        if "BuildPath" in options:
             # todo_eo: this location is the final output of BuildPath steps which return a list of yaml objects
-            return {}
-        else:
-            raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided: {}".format(leaf_type))
+            pass
+        return option_tree_dictionary
 
     def _get_option_tree_leaf(
             self,
@@ -380,22 +387,47 @@ class ExpandObjects(EPJSON):
                     .format(input_value, field_name))
         return
 
-    def create_objects(self):
+    def _resolve_objects(self, epjson, reference_epjson=None):
+        """
+        Resolve complex inputs in epJSON formatted dictionary
+
+        :param epjson: epJSON dictionary with complex inputs
+        :param reference_epjson: (optional) epJSON dictionary to be used as reference objects for complex lookups.  If
+            None, then the input epjson will be used
+        :return: epJSON dictionary with values replacing complex inputs
+        """
+        if not reference_epjson:
+            reference_epjson = copy.deepcopy(epjson)
+        for object_type, object_structure in epjson.items():
+            for object_name, object_fields in object_structure.items():
+                for field_name, field_value in object_fields.items():
+                    input_generator = self._resolve_complex_input(
+                        epjson=reference_epjson,
+                        field_name=field_name,
+                        input_value=field_value)
+                    for ig in input_generator:
+                        object_fields[ig['field']] = ig['value']
+        return epjson
+
+    def _create_objects(self):
         """
         Create a set of EnergyPlus objects for a given template
 
-        :return:
+        :return: epJSON dictionary and BuildPath (if applicable) as class attributes
         """
         # For systems, perform buildpath operations
+        # BuildPath stored as a list of objects and dictionary in class attributes. List is necessary for future lookups
         # systems - get BuildPath
         # systems - perform insert/remove/etc. operations
         # systems - connect nodes and convert field values using name formatting and complex input operations
         # systems - return list of objects created from BuildPath saved separately for future reference
         # Get BaseObjects and Template objects, applying transitions from template before returning YAML objects
+        structure_hierarchy = self.template_type.split(':')
+        epjson = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         # Convert field values using name formatting and complex input operations
-        # BaseObjects and TemplateObjects stored in dictionary class attributes,
-        # BuildPath stored as a list of objects and dictionary in class attributes. List is necessary for future lookups
-        # Perform connections
+        self.epjson = self._resolve_objects(epjson)
+        # store final values in self.epjson
+        # Perform connections, put functions in child classes
         return
 
     def build_compact_schedule(
@@ -542,4 +574,12 @@ class ExpandZone(ExpandObjects):
     def __init__(self, template):
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
+        return
+
+    def run(self):
+        """
+        Process zone template
+        :return: epJSON dictionary as class attribute
+        """
+        self._create_objects()
         return

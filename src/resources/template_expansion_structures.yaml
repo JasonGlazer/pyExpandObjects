@@ -97,18 +97,18 @@ AirTerminal:
     VAV:
       Reheat: &AirTerminalSingleDuctVAVReheat
         - AirTerminal:SingleDuct:VAV:Reheat:
-          name: '{} VAV Reheat'
-          <<: *AirTerminalSingleDuctFields
-          damper_air_outlet_node_name: '{} Damper Outlet'
-          damper_heating_action: Reverse
-          reheat_coil_object_type: Coil:Heating:Water
-          maximum_hot_water_or_steam_flow_rate: Autosize
-          reheat_coil_name: '{} Reheat Coil'
+            name: '{} VAV Reheat'
+            <<: *AirTerminalSingleDuctFields
+            damper_air_outlet_node_name: '{} Damper Outlet'
+            damper_heating_action: Reverse
+            reheat_coil_object_type: Coil:Heating:Water
+            maximum_hot_water_or_steam_flow_rate: Autosize
+            reheat_coil_name: '{} Reheat Coil'
         - Coil:Heating:Water:
-          <<: *CoilHeatingWaterFields
-          name: '{} Reheat Coil'
-          air_inlet_node_name: '{} Damper Outlet'
-          air_outlet_node_name: '{} Supply Inlet'
+            <<: *CoilHeatingWaterFields
+            name: '{} Reheat Coil'
+            air_inlet_node_name: '{} Damper Outlet'
+            air_outlet_node_name: '{} Supply Inlet'
 
 HVACTemplate:
   System:
@@ -116,37 +116,38 @@ HVACTemplate:
       BuildPath:
 
 OptionTree:
-  Zone:
-    VAV:
-      BaseObjects:
-        Objects:
-          - ZoneHVAC:AirDistributionUnit:
-            name: '{} ATU'
-      TemplateObjects:
-        reheat_coil_type:
-          HotWater:
-            Objects:
-              - *AirTerminalSingleDuctVAVReheat
-              - Branch:
-                  name: '{} HW Branch'
-            Transitions:
-              supply_air_maximum_flow_rate:
-                AirTerminal:.*: maximum_air_flow_rate
-              damper_heating_action:
-                AirTerminal:.*:VAV:Reheat: damper_heating_action
-              zone_minimum_air_flow_input_method:
-                AirTerminal:.*: zone_minimum_air_flow_input_method
-  System:
-    VAV:
-      BuildPath:
-        Objects:
-        Transitions:
-        InsertBuildPathObjects:
-          - template_field:
-              template_value:
-                Objects:
-                Transitions:
-        ReplaceBuildPathObjects:
-        RemoveBuildPathObjects:
-      BaseObjects:
-      TemplateObjects:
+  HVACTemplate:
+    Zone:
+      VAV:
+        BaseObjects:
+          Objects:
+            - ZoneHVAC:AirDistributionUnit:
+                name: '{} ATU'
+        TemplateObjects:
+          reheat_coil_type:
+            HotWater:
+              Objects:
+                - *AirTerminalSingleDuctVAVReheat
+                - Branch:
+                    name: '{} HW Branch'
+              Transitions:
+                supply_air_maximum_flow_rate:
+                  AirTerminal:.*: maximum_air_flow_rate
+                damper_heating_action:
+                  AirTerminal:.*:VAV:Reheat: damper_heating_action
+                zone_minimum_air_flow_input_method:
+                  AirTerminal:.*: zone_minimum_air_flow_input_method
+    System:
+      VAV:
+        BuildPath:
+          Objects:
+          Transitions:
+          InsertBuildPathObjects:
+            - template_field:
+                template_value:
+                  Objects:
+                  Transitions:
+          ReplaceBuildPathObjects:
+          RemoveBuildPathObjects:
+        BaseObjects:
+        TemplateObjects:
