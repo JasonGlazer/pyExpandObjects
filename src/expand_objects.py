@@ -96,6 +96,7 @@ class ExpandObjects(EPJSON):
         template_type: HVACTemplate object type
         template_name: HVACTemplate unique name
         epjson: dictionary of epSJON objects to write to file
+        unique_name: unique string used to modify to epJSON object names within the class
         HVACTemplate fields are stored as class attributes
     """
 
@@ -124,10 +125,11 @@ class ExpandObjects(EPJSON):
         else:
             self.template_type = None
             self.template_name = None
+        self.unique_name = None
         self.epjson = {}
         return
 
-    def flatten_list(
+    def _flatten_list(
             self,
             nested_list: list,
             flat_list: list = [],
@@ -144,12 +146,12 @@ class ExpandObjects(EPJSON):
             flat_list = []
         for i in nested_list:
             if isinstance(i, list):
-                self.flatten_list(i, flat_list, clear=False)
+                self._flatten_list(i, flat_list, clear=False)
             else:
                 flat_list.append(i)
         return flat_list
 
-    def get_structure(
+    def _get_structure(
             self,
             structure_hierarchy: list,
             structure=None) -> dict:
@@ -171,7 +173,7 @@ class ExpandObjects(EPJSON):
                 structure_hierarchy))
         return structure
 
-    def get_option_tree(
+    def _get_option_tree(
             self,
             structure_hierarchy: list) -> dict:
         """
@@ -187,7 +189,7 @@ class ExpandObjects(EPJSON):
         except TypeError:
             raise PyExpandObjectsTypeError(
                 "Call to YAML object was not a list of structure keys: {}".format(structure_hierarchy))
-        structure = self.get_structure(structure_hierarchy=structure_hierarchy)
+        structure = self._get_structure(structure_hierarchy=structure_hierarchy)
         # Check structure keys.  Return error if there is an unexpected value
         for key in structure:
             if key not in ['BuildPath', 'InsertObject', 'ReplaceObject', 'RemoveObject',
@@ -204,7 +206,7 @@ class ExpandObjects(EPJSON):
 
         :return: epJSON dictionary with unresolved complex inputs
         """
-        option_tree = self.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree = self._get_option_tree(structure_hierarchy=structure_hierarchy)
         options = option_tree.keys()
         option_tree_dictionary = {}
         if not set(list(options)).issubset({'BaseObjects', 'TemplateObjects', 'BuildPath'}):
@@ -245,10 +247,10 @@ class ExpandObjects(EPJSON):
         :param leaf_path: path to leaf node of option tree
         :return: Verified BuildPath and Transition dictionary as keys in an object
         """
-        option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
+        option_leaf = self._get_structure(structure_hierarchy=leaf_path, structure=option_tree)
         transitions = option_leaf.pop('Transitions', None)
         try:
-            objects = self.flatten_list(option_leaf['Objects'])
+            objects = self._flatten_list(option_leaf['Objects'])
         except KeyError:
             raise PyExpandObjectsTypeError("Invalid or missing Objects location: {}".format(option_tree))
         return {
@@ -441,7 +443,7 @@ class ExpandObjects(EPJSON):
         epjson = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         # Convert field values using name formatting and complex input operations
         self.epjson = self._resolve_objects(epjson)
-        return epjson
+        return self.epjson
 
     def build_compact_schedule(
             self,
@@ -456,7 +458,7 @@ class ExpandObjects(EPJSON):
         :param name: (optional) name of object.
         :return: epJSON object of compact schedule
         """
-        structure_object = self.get_structure(structure_hierarchy=structure_hierarchy)
+        structure_object = self._get_structure(structure_hierarchy=structure_hierarchy)
         if not isinstance(insert_values, list):
             insert_values = [insert_values, ]
         if not name:
@@ -501,12 +503,14 @@ class ExpandThermostat(ExpandObjects):
         super().__init__(template=template)
         try:
             self.unique_name = self.template_name
+            if not self.unique_name:
+                raise InvalidTemplateException("Thermostat name not provided in template: {}".format(template))
         except AttributeError:
             # todo_eo: need to test this exception
-            raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
+            raise InvalidTemplateException("Thermostat name not provided in template: {}".format(template))
         return
 
-    def create_and_set_schedules(self):
+    def _create_and_set_schedules(self):
         """
         Create, or use existing, schedules.  Assign schedule names to class variable
 
@@ -524,7 +528,7 @@ class ExpandThermostat(ExpandObjects):
                 setattr(self, '{}_setpoint_schedule_name'.format(thermostat_type), thermostat_schedule_name)
         return
 
-    def create_thermostat_setpoints(self):
+    def _create_thermostat_setpoints(self):
         """
         Create ThermostatSetpoint objects based on class setpoint_schedule_name attributes
         :return: Updated class epJSON dictionary with ThermostatSetpoint objects added.
@@ -570,8 +574,8 @@ class ExpandThermostat(ExpandObjects):
         Perform all template expansion operations and return the class to the parent calling function.
         :return: ExpandThermostat class with necessary attributes filled for output
         """
-        self.create_and_set_schedules()
-        self.create_thermostat_setpoints()
+        self._create_and_set_schedules()
+        self._create_thermostat_setpoints()
         return self
 
 
@@ -594,6 +598,8 @@ class ExpandZone(ExpandObjects):
         super().__init__(template=template)
         try:
             self.unique_name = self.zone_name
+            if not self.unique_name:
+                raise InvalidTemplateException("Zone name not provided in template: {}".format(template))
         except AttributeError:
             # todo_eo: need to test this exception
             raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))

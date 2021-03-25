@@ -78,7 +78,7 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
     def test_retrieve_structure(self):
         structure_hierarchy = ['Schedule', 'Compact', 'ALWAYS_VAL']
         eo = ExpandObjects(template=mock_template)
-        structure = eo.get_structure(structure_hierarchy=structure_hierarchy)
+        structure = eo._get_structure(structure_hierarchy=structure_hierarchy)
         name_match_rgx = re.compile(r'^HVACTemplate.*')
         name_match = False
         if re.match(name_match_rgx, structure['name']):
@@ -90,7 +90,7 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
         structure_hierarchy = ['Schedule', 'Compact', 'Bad']
         with self.assertRaises(TypeError):
             eo = ExpandObjects(template=mock_template)
-            eo.get_structure(structure_hierarchy=structure_hierarchy)
+            eo._get_structure(structure_hierarchy=structure_hierarchy)
         return
 
     def test_reject_bad_template(self):
@@ -102,7 +102,7 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
             ExpandObjects(template=templates)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Base:Create always value schedule")
+    @BaseTest._test_logger(doc_text="HVACTemplate:Create always value schedule")
     def test_make_compact_schedule_always_val(self):
         structure_hierarchy = ['Schedule', 'Compact', 'ALWAYS_VAL']
         eo = ExpandObjects(template=mock_template)

@@ -15,18 +15,15 @@ class EPJSON(Logger):
     """
     Handle epjson (and json) specific tasks
 
-    Inheritance:
-    Logger
-
     Attributes:
-    Validator: schema validator from jsonschema
-    schema_validator: validated schema
-    schema: loaded schema.  This can be a failed or unvalidated schema.
-        However, it requires a valid json object
-    schema_location: file path for schema
-    input_epjson: input epjson file
-    schema_is_valid: initialized as None.  False if failed, True if passed.
-    input_epjson_is_valid: initialized as None.  False if failed, True if passed.
+        Validator: schema validator from jsonschema
+        schema_validator: validated schema
+        schema: loaded schema.  This can be a failed or unvalidated schema.
+            However, it requires a valid json object
+        schema_location: file path for schema
+        input_epjson: input epjson file
+        schema_is_valid: initialized as None.  False if failed, True if passed.
+        input_epjson_is_valid: initialized as None.  False if failed, True if passed.
     """
 
     def __init__(self, no_schema=False):
@@ -79,7 +76,7 @@ class EPJSON(Logger):
     def summarize_epjson(epjson):
         """
         Retrieve file, simulate, and compare it to a created epJSON object
-        :param epjson:
+        :param epjson: epJSON formatted dictionary
         :return: dictionary of count summaries
         """
         output = {}
@@ -140,9 +137,9 @@ class EPJSON(Logger):
             with open(json_location) as f:
                 json_obj = json.load(f)
         except FileNotFoundError:
-            raise PyExpandObjectsFileNotFoundError("file does not exist: {}", json_location)
+            raise PyExpandObjectsFileNotFoundError("file does not exist: {}".format(json_location))
         except json.decoder.JSONDecodeError as e:
-            raise PyExpandObjectsTypeError("file is not a valid json: %s\n%s", json_location, str(e))
+            raise PyExpandObjectsTypeError("file is not a valid json: {}\n{}".format(json_location, str(e)))
         return json_obj
 
     def _validate_schema(self, schema):
@@ -248,7 +245,11 @@ class EPJSON(Logger):
         return
 
     def epjson_process(self, epjson_ref):
-        self.logger.info('##### epJSON Setup #####')
+        """
+        Default loading and verification of epJSON file
+        :param epjson_ref: epJSON in dictionary format or file location.
+        :return: initialized class attributes and input_epJSON object
+        """
         self.load_schema()
         self.load_epjson(epjson_ref=epjson_ref)
         return

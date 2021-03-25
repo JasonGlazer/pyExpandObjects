@@ -42,7 +42,7 @@ class HVACTemplate(EPJSON):
         self.epjson = {}
         return
 
-    def hvac_template_preprocess(self, epjson):
+    def _hvac_template_preprocess(self, epjson):
         """
         Organize epJSON and assign objects to specific class attributes
 
@@ -98,7 +98,7 @@ class HVACTemplate(EPJSON):
                     unique_name_override=False)
         return
 
-    def get_thermostat_template_from_zone_template(self, zone_template):
+    def _get_thermostat_template_from_zone_template(self, zone_template):
         """
         Retrieve thermostat template from zone template field
 
@@ -119,7 +119,7 @@ class HVACTemplate(EPJSON):
         else:
             return None
 
-    def create_zonecontrol_thermostat(self, zone_template):
+    def _create_zonecontrol_thermostat(self, zone_template):
         """
         Create ZoneControl:Thermostat objects, which require a connection between
         HVACTemplate:Zone and HVACTemplate:Thermostat objects
@@ -128,7 +128,7 @@ class HVACTemplate(EPJSON):
         :return: Updated class epJSON dictionary with ThermostatSetpoint objects added.  Objects are also added
             to the class self.epsjon dictionary.
         """
-        thermostat_template = self.get_thermostat_template_from_zone_template(zone_template)
+        thermostat_template = self._get_thermostat_template_from_zone_template(zone_template)
         (_, zone_template_structure), = zone_template.items()
         (_, zone_template_fields), = zone_template_structure.items()
         try:
@@ -174,7 +174,7 @@ class HVACTemplate(EPJSON):
             raise InvalidTemplateException("HVACTemplate failed to build ZoneControl:Thermostat from zone template "
                                            "{}".format(zone_template))
 
-    def expand_templates(self, templates, expand_class):
+    def _expand_templates(self, templates, expand_class):
         """
         Run ExpandThermostat on multiple templates
         :param templates: dictionary of HVACTemplate:.* objects
@@ -206,19 +206,19 @@ class HVACTemplate(EPJSON):
             else:
                 raise InvalidEpJSONException("No epJSON file loaded or provided to HVACTemplate processor")
         self.epjson_process(epjson_ref=input_epjson)
-        self.hvac_template_preprocess(epjson=self.input_epjson)
+        self._hvac_template_preprocess(epjson=self.input_epjson)
         self.logger.info('##### Processing Thermostats #####')
-        self.expanded_thermostats = self.expand_templates(
+        self.expanded_thermostats = self._expand_templates(
             templates=self.templates_thermostats,
             expand_class=ExpandThermostat)
         self.logger.info('##### Processing Zones #####')
-        self.expanded_zones = self.expand_templates(
+        self.expanded_zones = self._expand_templates(
             templates=self.templates_zones,
             expand_class=ExpandZone)
         self.logger.info('##### Building Connections #####')
         templates = self.unpack_epjson(self.templates_zones)
         for tz in templates:
-            self.create_zonecontrol_thermostat(zone_template=tz)
+            self._create_zonecontrol_thermostat(zone_template=tz)
         self.logger.info('##### Creating epJSON #####')
         # start by merging non-template and connector objects
         output_epjson = self.merge_epjson(

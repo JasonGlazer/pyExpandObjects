@@ -81,7 +81,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             template=mock_template,
             expansion_structure=mock_option_tree)
         structure_hierarcy = ['OptionTree', 'Zone', 'VAV']
-        output = eo.get_option_tree(structure_hierarchy=structure_hierarcy)
+        output = eo._get_option_tree(structure_hierarchy=structure_hierarcy)
         key_check = True
         try:
             output['BaseObjects']
@@ -90,7 +90,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertTrue(key_check)
         # test without OptionTree
         structure_hierarchy = ['Zone', 'VAV']
-        output = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        output = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         key_check = True
         try:
             output['BaseObjects']
@@ -105,7 +105,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=mock_option_tree)
         structure_hierarchy = 'BadString'
         with self.assertRaises(PyExpandObjectsTypeError):
-            eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+            eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         return
 
     def test_reject_bad_option_tree_structure(self):
@@ -128,7 +128,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         )
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         with self.assertRaises(PyExpandObjectsYamlStructureException):
-            eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+            eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         return
 
     def test_option_tree_leaf(self):
@@ -136,7 +136,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             template=mock_template,
             expansion_structure=mock_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         key_check = True
         for k in option_tree_leaf.keys():
@@ -153,7 +153,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             template=mock_template,
             expansion_structure=bad_mock_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         self.assertIsNone(option_tree_leaf['Transitions'])
         return
@@ -163,7 +163,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             template=mock_template,
             expansion_structure=mock_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         transitioned_option_tree_leaf = eo._apply_transitions(option_tree_leaf)
         self.assertEqual(
@@ -210,7 +210,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             template=mock_template,
             expansion_structure=bad_mock_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         eo._apply_transitions(option_tree_leaf)
         # Logger (Parent class of ExpandObjects) keeps logs in self.stream
@@ -232,7 +232,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             template=mock_template,
             expansion_structure=bad_mock_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         object_list = eo._apply_transitions(option_tree_leaf)
         with self.assertRaises(PyExpandObjectsYamlStructureException):
@@ -253,7 +253,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             template=mock_template,
             expansion_structure=bad_mock_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo.get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         object_list = eo._apply_transitions(option_tree_leaf)
         with self.assertRaises(PyExpandObjectsYamlStructureException):

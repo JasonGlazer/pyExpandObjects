@@ -302,22 +302,23 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         return
 
     def test_good_object_is_valid(self):
-        self.epjson_handler.load_schema()
-        self.epjson_handler.load_epjson({
-            **minimum_objects_d,
-            "Version": {
-                "Version 1": {
-                    "version_identifier": "9.4"
+        self.epjson_handler.epjson_process(
+            epjson_ref={
+                **minimum_objects_d,
+                "Version": {
+                    "Version 1": {
+                        "version_identifier": "9.4"
+                    }
                 }
             }
-        })
+        )
         self.assertTrue(self.epjson_handler.input_epjson_is_valid)
         return
 
     def test_good_file_is_verified(self):
-        self.epjson_handler.load_schema()
-        self.epjson_handler.load_epjson(
-            str(test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
+        self.epjson_handler.epjson_process(
+            epjson_ref=str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
+                           'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
         )
         self.assertTrue(self.epjson_handler.input_epjson_is_valid)
         return

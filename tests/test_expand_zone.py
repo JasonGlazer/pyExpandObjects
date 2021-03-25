@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 
 from src.expand_objects import ExpandZone
 from src.hvac_template import HVACTemplate
+from src.expand_objects import InvalidTemplateException
 from . import BaseTest
 
 mock_zone_template = {
@@ -46,6 +47,23 @@ class TestExpandZone(BaseTest, unittest.TestCase):
             ExpandZone()
         return
 
+    def test_zone_name_provided(self):
+        with self.assertRaises(InvalidTemplateException):
+            ExpandZone(template={})
+        return
+
+    def test_zone_name_not_null(self):
+        with self.assertRaises(InvalidTemplateException):
+            ExpandZone(template={
+                "HVACTemplate:Zone:VAV": {
+                    "HVACTemplate:Zone:VAV 1": {
+                        "zone_name": None
+                    }
+                }
+            }
+        )
+        return
+
     @BaseTest._test_logger(doc_text="HVACTemplate:Zone:Verify valid template object")
     def test_verify_good_template(self):
         output = ExpandZone(template=mock_zone_template)
@@ -54,8 +72,8 @@ class TestExpandZone(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Zone:Test all components")
     def test_processing(self):
-        self.hvac_template.get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template.get_thermostat_template_from_zone_template.return_value.epjson = {
+        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
+        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {
             "ThermostatSetpoint:DualSetpoint": {
                 "All Zones SP Control": {
                     "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
@@ -65,7 +83,7 @@ class TestExpandZone(BaseTest, unittest.TestCase):
         }
         eo = ExpandZone(template=mock_zone_template)
         zone_output = eo._create_objects()
-        zone_connection_output = self.hvac_template.create_zonecontrol_thermostat(zone_template=mock_zone_template)
+        zone_connection_output = self.hvac_template._create_zonecontrol_thermostat(zone_template=mock_zone_template)
         output = eo.merge_epjson(
             super_dictionary=zone_output,
             object_dictionary=zone_connection_output

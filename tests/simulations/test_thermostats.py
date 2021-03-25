@@ -47,8 +47,7 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         )
         # perform steps that would be run in main
         self.hvactemplate = HVACTemplate()
-        self.hvactemplate.load_schema()
-        self.hvactemplate.load_epjson(test_epjson)
+        self.hvactemplate.epjson_process(epjson_ref=test_epjson)
         output_epjson = self.hvactemplate.run()['epJSON']
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,

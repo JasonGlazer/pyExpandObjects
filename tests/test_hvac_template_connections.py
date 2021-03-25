@@ -34,7 +34,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_retrieve_thermostat_template_from_zone_field(self):
-        self.hvac_template.expanded_thermostats = self.hvac_template.expand_templates(
+        self.hvac_template.expanded_thermostats = self.hvac_template._expand_templates(
             templates={
                 "HVACTemplate:Thermostat": {
                     "All Zones": {
@@ -44,7 +44,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 }
             },
             expand_class=ExpandThermostat)
-        thermostat_template = self.hvac_template.get_thermostat_template_from_zone_template(zone_template={
+        thermostat_template = self.hvac_template._get_thermostat_template_from_zone_template(zone_template={
             "HVACTemplate:Zone:VAV": {
                 "HVACTemplate:Zone:VAV 1": {
                     "template_thermostat_name": "All Zones"
@@ -55,7 +55,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_return_none_thermostat_template_from_from_zone_when_field_missing(self):
-        self.hvac_template.expanded_thermostats = self.hvac_template.expand_templates(
+        self.hvac_template.expanded_thermostats = self.hvac_template._expand_templates(
             templates={
                 "HVACTemplate:Thermostat": {
                     "All Zones": {
@@ -65,7 +65,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 }
             },
             expand_class=ExpandThermostat)
-        thermostat_template = self.hvac_template.get_thermostat_template_from_zone_template(zone_template={
+        thermostat_template = self.hvac_template._get_thermostat_template_from_zone_template(zone_template={
             "HVACTemplate:Zone:VAV": {
                 "HVACTemplate:Zone:VAV 1": {
                     "field_1": "value_1"
@@ -76,7 +76,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_thermostat_template_from_zone_field_reject_bad_input(self):
-        self.hvac_template.expanded_thermostats = self.hvac_template.expand_templates(
+        self.hvac_template.expanded_thermostats = self.hvac_template._expand_templates(
             templates={
                 "HVACTemplate:Thermostat": {
                     "All Zones": {
@@ -87,7 +87,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             },
             expand_class=ExpandThermostat)
         with self.assertRaises(InvalidTemplateException):
-            self.hvac_template.get_thermostat_template_from_zone_template(zone_template={
+            self.hvac_template._get_thermostat_template_from_zone_template(zone_template={
                 "HVACTemplate:Zone:VAV": {
                     "HVACTemplate:Zone:VAV 1": {
                         "template_thermostat_name": "Bad Name"
@@ -97,8 +97,8 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_create_zonecontrol_thermostat_dualsetpoint(self):
-        self.hvac_template.get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template.get_thermostat_template_from_zone_template.return_value.epjson = {
+        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
+        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {
             "ThermostatSetpoint:DualSetpoint": {
                 "All Zones SP Control": {
                     "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
@@ -106,7 +106,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 }
             }
         }
-        self.hvac_template.create_zonecontrol_thermostat(zone_template={
+        self.hvac_template._create_zonecontrol_thermostat(zone_template={
             "HVACTemplate:Zone:VAV": {
                 "HVACTemplate:Zone:VAV 1": {
                     "zone_name": "TEST ZONE"
@@ -122,15 +122,15 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_create_zonecontrol_thermostat_single_heating(self):
-        self.hvac_template.get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template.get_thermostat_template_from_zone_template.return_value.epjson = {
+        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
+        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {
             "ThermostatSetpoint:SingleHeating": {
                 "All Zones SP Control": {
                     "setpoint_temperature_schedule_name": "Clg-SetP-Sch",
                 }
             }
         }
-        self.hvac_template.create_zonecontrol_thermostat(zone_template={
+        self.hvac_template._create_zonecontrol_thermostat(zone_template={
             "HVACTemplate:Zone:VAV": {
                 "HVACTemplate:Zone:VAV 1": {
                     "zone_name": "TEST ZONE"
@@ -146,15 +146,15 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_create_zonecontrol_thermostat_single_cooling(self):
-        self.hvac_template.get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template.get_thermostat_template_from_zone_template.return_value.epjson = {
+        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
+        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {
             "ThermostatSetpoint:SingleCooling": {
                 "All Zones SP Control": {
                     "setpoint_temperature_schedule_name": "Clg-SetP-Sch",
                 }
             }
         }
-        self.hvac_template.create_zonecontrol_thermostat(zone_template={
+        self.hvac_template._create_zonecontrol_thermostat(zone_template={
             "HVACTemplate:Zone:VAV": {
                 "HVACTemplate:Zone:VAV 1": {
                     "zone_name": "TEST ZONE"
@@ -170,8 +170,8 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_exception_zonecontrol_thermostat_bad_thermostat(self):
-        self.hvac_template.get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template.get_thermostat_template_from_zone_template.return_value.epjson = {
+        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
+        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {
             "ThermostatSetpoint:BadThermostat": {
                 "All Zones SP Control": {
                     "setpoint_temperature_schedule_name": "Clg-SetP-Sch",
@@ -179,7 +179,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             }
         }
         with self.assertRaises(InvalidTemplateException):
-            self.hvac_template.create_zonecontrol_thermostat(zone_template={
+            self.hvac_template._create_zonecontrol_thermostat(zone_template={
                 "HVACTemplate:Zone:VAV": {
                     "HVACTemplate:Zone:VAV 1": {
                         "zone_name": "TEST ZONE"
@@ -189,10 +189,10 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_exception_create_zonecontrol_thermostat_no_thermostat(self):
-        self.hvac_template.get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template.get_thermostat_template_from_zone_template.return_value.epjson = {}
+        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
+        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {}
         with self.assertRaises(InvalidTemplateException):
-            self.hvac_template.create_zonecontrol_thermostat(zone_template={
+            self.hvac_template._create_zonecontrol_thermostat(zone_template={
                 "HVACTemplate:Zone:VAV": {
                     "HVACTemplate:Zone:VAV 1": {
                         "zone_name": "TEST ZONE"

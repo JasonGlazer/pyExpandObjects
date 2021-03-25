@@ -88,7 +88,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.hvac_template_preprocess(self.hvac_template.input_epjson)
+        self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertEqual(2, len(self.hvac_template.base_objects))
         return
@@ -103,7 +103,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.hvac_template_preprocess(self.hvac_template.input_epjson)
+        self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertEqual(len(self.hvac_template.templates.keys()), 1)
         self.assertIn(
@@ -129,7 +129,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 "HVACTemplate:Zone:IdealLoadsAirSystem 2": {"zone_name": "Zone 2"}
             }
         })
-        self.hvac_template.hvac_template_preprocess(self.hvac_template.input_epjson)
+        self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Zone:IdealLoadsAirSystem'].keys()), 2)
@@ -155,7 +155,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.hvac_template_preprocess(self.hvac_template.input_epjson)
+        self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         template_check = True
         for template_type in self.hvac_template.templates_systems.keys():
@@ -184,7 +184,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             }
         })
         with self.assertRaises(InvalidTemplateException):
-            self.hvac_template.hvac_template_preprocess(self.hvac_template.input_epjson)
+            self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify zone class templates created")
@@ -254,7 +254,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.hvac_template_preprocess(self.hvac_template.input_epjson)
+        self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         template_check = True
         for template_type in self.hvac_template.templates_zones.keys():
@@ -372,7 +372,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.hvac_template_preprocess(self.hvac_template.input_epjson)
+        self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         template_check = True
         for template_type in self.hvac_template.templates_systems.keys():
@@ -465,7 +465,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.hvac_template_preprocess(self.hvac_template.input_epjson)
+        self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         template_check = True
         for template_type in self.hvac_template.templates_plant_loops.keys():
@@ -558,7 +558,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 }
             }
         })
-        self.hvac_template.hvac_template_preprocess(self.hvac_template.input_epjson)
+        self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         template_check = True
         for template_type in self.hvac_template.templates_plant_equipment.keys():
