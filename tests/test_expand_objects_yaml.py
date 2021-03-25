@@ -549,4 +549,3 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertNotIn('^', json_string)
         self.assertNotIn('*', json_string)
         return
-
