@@ -96,7 +96,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             })
         return
 
-    def test_create_zonecontrol_thermostat(self):
+    def test_create_zonecontrol_thermostat_dualsetpoint(self):
         self.hvac_template.get_thermostat_template_from_zone_template = MagicMock()
         self.hvac_template.get_thermostat_template_from_zone_template.return_value.epjson = {
             "ThermostatSetpoint:DualSetpoint": {
@@ -113,11 +113,79 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 }
             }
         })
-        key_check = True
-        for key in self.hvac_template.epjson.keys():
-            if key not in ['Schedule:Compact', 'ZoneControl:Thermostat']:
-                key_check = False
-        self.assertTrue(key_check)
+        self.assertEqual(
+            'ThermostatSetpoint:DualSetpoint',
+            self.hvac_template.epjson['ZoneControl:Thermostat']['TEST ZONE Thermostat']['control_1_object_type'])
+        self.assertEqual(
+            'HVACTemplate-Always4',
+            list(self.hvac_template.epjson['Schedule:Compact'].keys())[0])
+        return
+
+    def test_create_zonecontrol_thermostat_single_heating(self):
+        self.hvac_template.get_thermostat_template_from_zone_template = MagicMock()
+        self.hvac_template.get_thermostat_template_from_zone_template.return_value.epjson = {
+            "ThermostatSetpoint:SingleHeating": {
+                "All Zones SP Control": {
+                    "setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                }
+            }
+        }
+        self.hvac_template.create_zonecontrol_thermostat(zone_template={
+            "HVACTemplate:Zone:VAV": {
+                "HVACTemplate:Zone:VAV 1": {
+                    "zone_name": "TEST ZONE"
+                }
+            }
+        })
+        self.assertEqual(
+            'ThermostatSetpoint:SingleHeating',
+            self.hvac_template.epjson['ZoneControl:Thermostat']['TEST ZONE Thermostat']['control_1_object_type'])
+        self.assertEqual(
+            'HVACTemplate-Always1',
+            list(self.hvac_template.epjson['Schedule:Compact'].keys())[0])
+        return
+
+    def test_create_zonecontrol_thermostat_single_cooling(self):
+        self.hvac_template.get_thermostat_template_from_zone_template = MagicMock()
+        self.hvac_template.get_thermostat_template_from_zone_template.return_value.epjson = {
+            "ThermostatSetpoint:SingleCooling": {
+                "All Zones SP Control": {
+                    "setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                }
+            }
+        }
+        self.hvac_template.create_zonecontrol_thermostat(zone_template={
+            "HVACTemplate:Zone:VAV": {
+                "HVACTemplate:Zone:VAV 1": {
+                    "zone_name": "TEST ZONE"
+                }
+            }
+        })
+        self.assertEqual(
+            'ThermostatSetpoint:SingleCooling',
+            self.hvac_template.epjson['ZoneControl:Thermostat']['TEST ZONE Thermostat']['control_1_object_type'])
+        self.assertEqual(
+            'HVACTemplate-Always2',
+            list(self.hvac_template.epjson['Schedule:Compact'].keys())[0])
+        return
+
+    def test_exception_zonecontrol_thermostat_bad_thermostat(self):
+        self.hvac_template.get_thermostat_template_from_zone_template = MagicMock()
+        self.hvac_template.get_thermostat_template_from_zone_template.return_value.epjson = {
+            "ThermostatSetpoint:BadThermostat": {
+                "All Zones SP Control": {
+                    "setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                }
+            }
+        }
+        with self.assertRaises(InvalidTemplateException):
+            self.hvac_template.create_zonecontrol_thermostat(zone_template={
+                "HVACTemplate:Zone:VAV": {
+                    "HVACTemplate:Zone:VAV 1": {
+                        "zone_name": "TEST ZONE"
+                    }
+                }
+            })
         return
 
     def test_exception_create_zonecontrol_thermostat_no_thermostat(self):

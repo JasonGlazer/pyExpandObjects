@@ -313,10 +313,10 @@ class ExpandObjects(EPJSON):
                 (transitioned_object_type, transitioned_object_structure), = transitioned_object.items()
                 # get the dictionary nested in 'Fields' for super objects
                 if {"Connectors", "Fields"} == set(transitioned_object_structure.keys()):
-                    object_name = transitioned_object_structure['Fields'].pop('name').format(self.template_name)
+                    object_name = transitioned_object_structure['Fields'].pop('name').format(self.unique_name)
                     transitioned_object_structure = transitioned_object_structure['Fields']
                 else:
-                    object_name = transitioned_object_structure.pop('name').format(self.template_name)
+                    object_name = transitioned_object_structure.pop('name').format(self.unique_name)
                 output_dictionary = self.merge_epjson(
                     super_dictionary=output_dictionary,
                     object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}}
@@ -342,7 +342,7 @@ class ExpandObjects(EPJSON):
         if isinstance(input_value, numbers.Number):
             yield {"field": field_name, "value": input_value}
         elif isinstance(input_value, str):
-            yield {"field": field_name, "value": input_value.format(self.template_name)}
+            yield {"field": field_name, "value": input_value.format(self.unique_name)}
         elif isinstance(input_value, dict):
             # unpack the referenced object type and the lookup instructions
             (reference_object_type, lookup_instructions), = input_value.items()
@@ -371,9 +371,17 @@ class ExpandObjects(EPJSON):
                                 "Maximum Recursion limit exceeded when resolving {} for {}"
                                 .format(input_value, field_name))
                     else:
-                        yield {"field": field_name,
-                               "value": epjson[object_type]
-                               [object_name][lookup_instructions]}
+                        if isinstance(field_name, str):
+                            formatted_field_name = field_name.format(self.unique_name)
+                        else:
+                            formatted_field_name = field_name
+                        if isinstance(epjson[object_type][object_name][lookup_instructions], str):
+                            formatted_value = epjson[object_type][object_name][lookup_instructions]\
+                                .format(self.unique_name)
+                        else:
+                            formatted_value = epjson[object_type][object_name][lookup_instructions]
+                        yield {"field": formatted_field_name,
+                               "value": formatted_value}
         elif isinstance(input_value, list):
             try:
                 tmp_list = []
@@ -386,7 +394,7 @@ class ExpandObjects(EPJSON):
                             input_value=input_list_value)
                         for cg in complex_generator:
                             tmp_d[cg["field"]] = cg["value"]
-                        tmp_list.append(tmp_d)
+                    tmp_list.append(tmp_d)
                 yield {"field": field_name, "value": tmp_list}
             except RecursionError:
                 raise PyExpandObjectsYamlStructureException(
@@ -420,7 +428,7 @@ class ExpandObjects(EPJSON):
         """
         Create a set of EnergyPlus objects for a given template
 
-        :return: epJSON dictionary and BuildPath (if applicable) as class attributes
+        :return: epJSON dictionary.  epJSON dictionary and BuildPath (if applicable) are also added as class attributes
         """
         # For systems, perform buildpath operations
         # BuildPath stored as a list of objects and dictionary in class attributes. List is necessary for future lookups
@@ -433,9 +441,7 @@ class ExpandObjects(EPJSON):
         epjson = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         # Convert field values using name formatting and complex input operations
         self.epjson = self._resolve_objects(epjson)
-        # store final values in self.epjson
-        # Perform connections, put functions in child classes
-        return
+        return epjson
 
     def build_compact_schedule(
             self,
@@ -493,6 +499,11 @@ class ExpandThermostat(ExpandObjects):
         # todo_eo: pre-set template inputs with None?  Discuss advantages of pre-definition.
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
+        try:
+            self.unique_name = self.template_name
+        except AttributeError:
+            # todo_eo: need to test this exception
+            raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
         return
 
     def create_and_set_schedules(self):
@@ -522,7 +533,7 @@ class ExpandThermostat(ExpandObjects):
                 and getattr(self, 'cooling_setpoint_schedule_name', None):
             thermostat_setpoint_object = {
                 "ThermostatSetpoint:DualSetpoint": {
-                    '{} SP Control'.format(self.template_name): {
+                    '{} SP Control'.format(self.unique_name): {
                         'heating_setpoint_temperature_schedule_name': self.heating_setpoint_schedule_name,
                         'cooling_setpoint_temperature_schedule_name': self.cooling_setpoint_schedule_name
                     }
@@ -531,7 +542,7 @@ class ExpandThermostat(ExpandObjects):
         elif getattr(self, 'heating_setpoint_schedule_name', None):
             thermostat_setpoint_object = {
                 "ThermostatSetpoint:SingleHeating": {
-                    '{} SP Control'.format(self.template_name): {
+                    '{} SP Control'.format(self.unique_name): {
                         'setpoint_temperature_schedule_name': self.heating_setpoint_schedule_name
                     }
                 }
@@ -539,14 +550,14 @@ class ExpandThermostat(ExpandObjects):
         elif getattr(self, 'cooling_setpoint_schedule_name', None):
             thermostat_setpoint_object = {
                 "ThermostatSetpoint:SingleCooling": {
-                    '{} SP Control'.format(self.template_name): {
+                    '{} SP Control'.format(self.unique_name): {
                         'setpoint_temperature_schedule_name': self.cooling_setpoint_schedule_name
                     }
                 }
             }
         else:
             raise InvalidTemplateException(
-                'No setpoints or schedules provided to HVACTemplate:Thermostat object: {}'.format(self.template_name))
+                'No setpoints or schedules provided to HVACTemplate:Thermostat object: {}'.format(self.unique_name))
         self.epjson = self.merge_epjson(
             super_dictionary=self.epjson,
             object_dictionary=thermostat_setpoint_object,
@@ -581,6 +592,11 @@ class ExpandZone(ExpandObjects):
     def __init__(self, template):
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
+        try:
+            self.unique_name = self.zone_name
+        except AttributeError:
+            # todo_eo: need to test this exception
+            raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
         return
 
     def run(self):
@@ -589,4 +605,4 @@ class ExpandZone(ExpandObjects):
         :return: epJSON dictionary as class attribute
         """
         self._create_objects()
-        return
+        return self

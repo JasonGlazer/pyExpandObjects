@@ -1,7 +1,8 @@
 import unittest
+import unittest.mock
 
 from src.hvac_template import HVACTemplate
-from src.hvac_template import InvalidTemplateException
+from src.hvac_template import InvalidTemplateException, InvalidEpJSONException
 from . import BaseTest
 
 minimum_objects_d = {
@@ -13,6 +14,39 @@ minimum_objects_d = {
             "coordinate_system": "Relative",
             "starting_vertex_position": "UpperLeftCorner",
             "vertex_entry_direction": "Counterclockwise"
+        }
+    }
+}
+
+mock_thermostat_template = {
+    "HVACTemplate:Thermostat": {
+        "All Zones": {
+            "heating_setpoint_schedule_name": "Htg-SetP-Sch",
+            "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
+        }
+    }
+}
+
+mock_zone_template = {
+    "HVACTemplate:Zone:VAV": {
+        "HVACTemplate:Zone:VAV 1": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+            "outdoor_air_method": "Flow/Person",
+            "reheat_coil_type": "HotWater",
+            "supply_air_maximum_flow_rate": "Autosize",
+            "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "VAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
+            "zone_name": "SPACE1-1"
         }
     }
 }
@@ -99,6 +133,11 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         self.assertTrue(self.hvac_template.input_epjson_is_valid)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Thermostat'].keys()), 2)
         self.assertEqual(len(self.hvac_template.templates['HVACTemplate:Zone:IdealLoadsAirSystem'].keys()), 2)
+        return
+
+    def test_no_epjson_returns_error(self):
+        with self.assertRaises(InvalidEpJSONException):
+            self.hvac_template.run()
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify thermostat class templates created")
@@ -532,7 +571,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             ["ChW Loop Chiller"]["leaving_chilled_water_lower_temperature_limit"])
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Validate Thermostat template completes "
+    @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Verify Thermostat template completes "
                                     "from parent class (HVACTemplate)")
     def test_thermostat_processing(self):
         self.hvac_template.load_epjson({
@@ -548,7 +587,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 }
             }
         })
-        epjson = self.hvac_template.run(self.hvac_template.input_epjson)
+        epjson = self.hvac_template.run()
         name_check = True
         object_check = True
         outputs = self.hvac_template.unpack_epjson(epjson['epJSON'])
@@ -567,4 +606,29 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         self.assertTrue(object_check)
         return
 
-# todo_eo: need one elif statement for each scheduletype in zonecontrol_thermostat function.
+    @BaseTest._test_logger(doc_text="HVACTemplate:Zone:Verify Zone template completes "
+                                    "from parent class (HVACTemplate)")
+    def test_zone_processing(self):
+        self.hvac_template.load_epjson({
+            **minimum_objects_d,
+            **mock_thermostat_template,
+            **mock_zone_template
+        })
+        output = self.hvac_template.run()
+        expected_summary = {
+            'Building': 1,
+            'GlobalGeometryRules': 1,
+            'Schedule:Compact': 1,
+            'ZoneControl:Thermostat': 1,
+            'ThermostatSetpoint:DualSetpoint': 1,
+            'ZoneHVAC:AirDistributionUnit': 1,
+            'ZoneHVAC:EquipmentList': 1,
+            'ZoneHVAC:EquipmentConnections': 1,
+            'DesignSpecification:OutdoorAir': 1,
+            'DesignSpecification:ZoneAirDistribution': 1,
+            'Sizing:Zone': 1,
+            'AirTerminal:SingleDuct:VAV:Reheat': 1,
+            'Coil:Heating:Water': 1,
+            'Branch': 1}
+        self.assertDictEqual(expected_summary, self.hvac_template.summarize_epjson(output['epJSON']))
+        return

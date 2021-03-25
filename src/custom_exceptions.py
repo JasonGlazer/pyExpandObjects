@@ -18,6 +18,13 @@ class CustomException(Logger, Exception):
         return self.msg
 
 
+class InvalidEpJSONException(CustomException):
+    """
+    epJSON errors
+    """
+    pass
+
+
 class InvalidTemplateException(CustomException):
     """
     Incorrect template usage and references

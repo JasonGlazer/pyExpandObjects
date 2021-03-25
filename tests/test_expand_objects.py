@@ -116,9 +116,3 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
         set_value = schedule_fields['data'][-1]['field']
         self.assertEqual(3, set_value)
         return
-
-    # def test_create_objects_process(self):
-    #     eo = ExpandObjects(template=mock_zone_template)
-    #     eo.create_objects()
-    #     # todo_eo: build yaml dictionary for mock_zone_template
-    #     return

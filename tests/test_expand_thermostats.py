@@ -210,7 +210,8 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
         eo = ExpandThermostat(template=thermostat_template)
         eo.run()
         output = eo.summarize_epjson(eo.epjson)
-        self.assertEqual(1, output['ThermostatSetpoint:DualSetpoint'])
+        expected_summary = {'ThermostatSetpoint:DualSetpoint': 1}
+        self.assertDictEqual(expected_summary, output)
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Processing test")

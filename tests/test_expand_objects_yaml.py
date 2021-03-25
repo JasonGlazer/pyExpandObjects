@@ -1,7 +1,8 @@
 import unittest
 import copy
+import json
 
-from src.expand_objects import ExpandObjects
+from src.expand_objects import ExpandObjects, ExpandZone
 from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException
 from . import BaseTest
 
@@ -9,7 +10,8 @@ mock_template = {
     'HVACTemplate:Zone:VAV': {
         'template_name': {
             'template_field': 'template_test_value',
-            'reheat_coil_type': 'HotWater'
+            'reheat_coil_type': 'HotWater',
+            'zone_name': 'test zone'
         }
     }
 }
@@ -176,9 +178,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 "field_1": "val_1"
             }
         }
-        eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+        eo = ExpandZone(template=mock_template)
         output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
@@ -193,9 +193,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 "Connectors": {}
             }
         }
-        eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+        eo = ExpandZone(template=mock_template)
         output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
@@ -263,14 +261,21 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         return
 
     def test_retrieve_objects_from_option_tree(self):
-        eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
-        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        eo = ExpandZone(template=mock_template)
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'Zone', 'VAV']
         template_objects = eo._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         key_check = True
         for key in template_objects.keys():
-            if key not in ['ZoneHVAC:AirDistributionUnit', 'AirTerminal:SingleDuct:VAV:Reheat', 'Branch']:
+            if key not in [
+                    'ZoneHVAC:AirDistributionUnit',
+                    'ZoneHVAC:EquipmentList',
+                    'ZoneHVAC:EquipmentConnections',
+                    'DesignSpecification:OutdoorAir',
+                    'DesignSpecification:ZoneAirDistribution',
+                    'Sizing:Zone',
+                    'AirTerminal:SingleDuct:VAV:Reheat',
+                    'Coil:Heating:Water',
+                    'Branch']:
                 key_check = False
             self.assertTrue(key_check)
         return
@@ -283,16 +288,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+        eo = ExpandZone(template=mock_template)
         # string test
         output = eo._resolve_complex_input(
             epjson=test_d,
             field_name="field_1",
             input_value="{} test_val"
         )
-        self.assertEqual('template_name test_val', [i for i in output][0]["value"])
+        self.assertEqual('test zone test_val', [i for i in output][0]["value"])
         # number test
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -310,9 +313,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+        eo = ExpandZone(template=mock_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -367,9 +368,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+        eo = ExpandZone(template=mock_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -425,9 +424,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+        eo = ExpandZone(template=mock_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -457,9 +454,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+        eo = ExpandZone(template=mock_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -489,11 +484,69 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+        eo = ExpandZone(template=mock_template)
         eo._resolve_objects(epjson=test_d)
         self.assertEqual('value_1', test_d['Object:2']['name_1']['field_1'])
         return
 
-    # todo_eo: build process to walk through Objects and TemplateObjects
+    def test_complex_nested_test(self):
+        test_d = {
+            'AirTerminal:SingleDuct:VAV:Reheat': {
+                'SPACE1-1 VAV Reheat': {
+                    'air_inlet_node_name': '{} Zone Equip Inlet',
+                    'air_outlet_node_name': '{} Supply Inlet',
+                    'damper_air_outlet_node_name': '{} Damper Outlet',
+                    'damper_heating_action': 'Reverse',
+                    'maximum_air_flow_rate': 'Autosize',
+                    'maximum_hot_water_or_steam_flow_rate': 'Autosize',
+                    'reheat_coil_name': '{} Reheat Coil',
+                    'reheat_coil_object_type': 'Coil:Heating:Water',
+                    'zone_minimum_air_flow_input_method': 'Constant'}},
+            'Branch': {
+                'SPACE1-1 HW Reheat Branch': {
+                    'components': [
+                        {
+                            'component_inlet_node_name': {'Coil:Heating:Water': 'water_inlet_node_name'},
+                            'component_name': {'Coil:Heating:Water': 'key'},
+                            'component_object_type': {'Coil:Heating:Water': 'self'},
+                            'component_outlet_node_name': {'Coil:Heating:Water': 'water_outlet_node_name'}
+                        }
+                    ]
+                }
+            },
+            'Coil:Heating:Water': {
+                'SPACE1-1 Reheat Coil': {
+                    'air_inlet_node_name': '{} Damper Outlet',
+                    'air_outlet_node_name': '{} Supply Inlet',
+                    'maximum_water_flow_rate': 'Autosize',
+                    'performance_input_method': 'UFactorTimesAreaAndDesignWaterFlowRate',
+                    'rated_capacity': 'Autosize',
+                    'rated_inlet_air_temperature': 16.6,
+                    'rated_inlet_water_temperature': 82.2,
+                    'rated_outlet_air_temperature': 32.2,
+                    'rated_outlet_water_temperature': 71.1,
+                    'rated_ratio_for_air_and_water_convection': 0.5,
+                    'u_factor_times_area_value': 'Autosize',
+                    'water_inlet_node_name': '{} Heating Coil Hw Inlet',
+                    'water_outlet_node_name': '{} Heating Coil Hw Outlet'}},
+            'ZoneHVAC:AirDistributionUnit': {
+                'SPACE1-1 ATU': {
+                    'air_distribution_unit_outlet_node_name':
+                        {'^AirTerminal:.*': 'air_outlet_node_name'},
+                    'air_terminal_name':
+                        {'^AirTerminal:.*': 'key'},
+                    'air_terminal_object_type':
+                        {'^AirTerminal:.*': 'self'}
+                }
+            }
+        }
+        eo = ExpandZone(
+            template=mock_template)
+        eo._resolve_objects(epjson=test_d)
+        # Check that no string remains unformatted
+        json_string = json.dumps(test_d)
+        self.assertNotIn('{}', json_string)
+        self.assertNotIn('^', json_string)
+        self.assertNotIn('*', json_string)
+        return
+
