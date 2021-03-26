@@ -25,7 +25,7 @@ class BaseSimulationTest(object):
             test_data = f.read()
         base_raw_epjson = json.loads(test_data)
         epj = EPJSON()
-        epj.load_epjson(epjson_ref=base_raw_epjson)
+        epj.epjson_process(epjson_ref=base_raw_epjson)
         # Edit base epjson, make input epjson, write to test folder, and run
         purged_epjson = epj.purge_epjson(
             epjson=base_raw_epjson,

@@ -239,7 +239,10 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         eo._apply_transitions(option_tree_leaf)
         # Logger (Parent class of ExpandObjects) keeps logs in self.stream
-        self.assertIn('Template field (template_bad_field) was', eo.stream.getvalue())
+        self.assertIn(
+            'A template value was attempted to be applied to an object (ZoneHVAC:AirDistributionUnit)',
+            eo.stream.getvalue()
+        )
         return
 
     def test_error_on_bad_object(self):

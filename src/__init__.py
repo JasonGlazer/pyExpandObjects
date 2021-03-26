@@ -9,3 +9,5 @@ __author__ = "John Grando"
 # todo_eo: simulation - environ variables can be set to spit out just the variables, can be used for testing
 # todo_eo: should there be an option to make uncontrolled zones (no schedules or constant setpoints provided)
 # todo_eo: Add description of Mappings in documentation
+# todo_eo: cleanup error checking to look at message output with self.assertRaisesRegex()
+# todo_eo: cleanup setUP to only use minimal classes or mocks

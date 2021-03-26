@@ -215,28 +215,23 @@ class HVACTemplate(EPJSON):
         self.expanded_zones = self._expand_templates(
             templates=self.templates_zones,
             expand_class=ExpandZone)
-        self.logger.info('##### Building Connections #####')
+        self.logger.info('##### Building Thermostat-Zone Connections #####')
         templates = self.unpack_epjson(self.templates_zones)
         for tz in templates:
             self._create_zonecontrol_thermostat(zone_template=tz)
         self.logger.info('##### Creating epJSON #####')
-        # start by merging non-template and connector objects
-        output_epjson = self.merge_epjson(
-            super_dictionary=self.base_objects,
-            object_dictionary=self.epjson
-        )
-        # merge each ExpandObjects child class created
-        epjson_objects = [j.epjson for i, j in self.expanded_thermostats.items()]
-        for eo in epjson_objects:
+        # Merge each set of epJSON dictionaries
+        output_epjson = {}
+        merge_list = [
+            self.epjson,
+            self.base_objects,
+            *[j.epjson for i, j in self.expanded_thermostats.items()],
+            *[j.epjson for i, j in self.expanded_zones.items()]
+        ]
+        for merge_dictionary in merge_list:
             output_epjson = self.merge_epjson(
                 super_dictionary=output_epjson,
-                object_dictionary=eo
-            )
-        epjson_objects = [j.epjson for i, j in self.expanded_zones.items()]
-        for eo in epjson_objects:
-            output_epjson = self.merge_epjson(
-                super_dictionary=output_epjson,
-                object_dictionary=eo
+                object_dictionary=merge_dictionary
             )
         # Create output format
         output_epjson = {

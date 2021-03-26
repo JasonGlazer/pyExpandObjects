@@ -13,5 +13,6 @@ omit =
 [report]
 exclude_lines =
         pragma: no cover
+        pragma: loop bug
         if __name__ == .__main__.:
 

@@ -302,9 +302,10 @@ class ExpandObjects(EPJSON):
                                         tree_object[object_type][object_field] = \
                                             getattr(self, template_field)
                                 except AttributeError:
-                                    self.logger.warning("Template field ({}) was attempted to be applied "
-                                                        "to object ({}) but was not present in template inputs"
-                                                        .format(template_field, object_type))
+                                    self.logger.info("A template value was attempted to be applied "
+                                                     "to an object ({}) field ({}) but the template "
+                                                     "field ({}) was not present in template object."
+                                                     .format(object_type, object_field, template_field))
         if option_tree_mappings:
             for object_type_reference, mapping_structure in option_tree_mappings.items():
                 for mapping_field, mapping_dictionary in mapping_structure.items():

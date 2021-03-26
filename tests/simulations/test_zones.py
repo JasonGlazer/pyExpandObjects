@@ -59,7 +59,7 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
             file_name='base_input_epjson.epJSON')
         # drop objects that will be inserted
         epj = EPJSON()
-        epj.load_epjson(epjson_ref=base_formatted_epjson)
+        epj.epjson_process(epjson_ref=base_formatted_epjson)
         test_purged_epjson = epj.purge_epjson(
             epjson=epj.input_epjson,
             purge_dictionary={

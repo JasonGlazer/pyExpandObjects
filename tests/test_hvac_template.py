@@ -59,14 +59,14 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     def setUp(self):
         self.hvac_template = HVACTemplate()
         self.hvac_template.logger.setLevel('INFO')
-        self.hvac_template.load_schema()
+        self.hvac_template._load_schema()
         return
 
     def tearDown(self):
         return
 
     def test_no_hvac_objects_returns_with_zero_templates(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "Version": {
                 "Version 1": {
@@ -79,7 +79,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         return
 
     def test_base_objects_are_stored(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
                 "All Zones": {
@@ -94,7 +94,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         return
 
     def test_one_hvac_object_one_template_returns_true(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
                 "All Zones": {
@@ -112,7 +112,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         return
 
     def test_n_hvac_objects_n_templates_returns_true(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
                 "All Zones 1": {
@@ -142,7 +142,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify thermostat class templates created")
     def test_thermostat_templates_have_good_objects(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
                 "All Zones": {
@@ -170,7 +170,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify bad templates are rejected")
     def test_thermostat_bad_templates_raise_error(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostattttttttttttttt": {
                 "All Zones": {
@@ -189,7 +189,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify zone class templates created")
     def test_zone_templates_have_good_objects(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Zone:VAV": {
                 "HVACTemplate:Zone:VAV 1": {
@@ -269,7 +269,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify system class templates created")
     def test_system_templates_have_good_objects(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "HVACTemplate:System:VAV": {
                 "VAV Sys 1": {
@@ -387,7 +387,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify plant loop class templates created")
     def test_plant_loop_templates_have_good_objects(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Plant:HotWaterLoop": {
                 "HW Heating Loop": {
@@ -480,7 +480,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify plant equipment class templates created")
     def test_plant_equipment_templates_have_good_objects(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Plant:HotWaterLoop": {
                 "HW Heating Loop": {
@@ -574,7 +574,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Verify Thermostat template completes "
                                     "from parent class (HVACTemplate)")
     def test_thermostat_processing(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             "HVACTemplate:Thermostat": {
                 "All Zones": {
@@ -609,7 +609,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Zone:Verify Zone template completes "
                                     "from parent class (HVACTemplate)")
     def test_zone_processing(self):
-        self.hvac_template.load_epjson({
+        self.hvac_template._load_epjson({
             **minimum_objects_d,
             **mock_thermostat_template,
             **mock_zone_template
