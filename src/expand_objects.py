@@ -241,11 +241,11 @@ class ExpandObjects(EPJSON):
             option_tree: dict,
             leaf_path: list) -> dict:
         """
-        Return leaf from OptionTree that has no template options (e.g. alternative options)
+        Return leaf from OptionTree with alternative options formatted in dictionary
 
         :param option_tree: Yaml object holding HVACTemplate option tree
         :param leaf_path: path to leaf node of option tree
-        :return: Verified BuildPath and Transition dictionary as keys in an object
+        :return: Formatted dictionary with objects and alternative options to be applied.
         """
         option_leaf = self._get_structure(structure_hierarchy=leaf_path, structure=option_tree)
         transitions = option_leaf.pop('Transitions', None)
@@ -271,8 +271,8 @@ class ExpandObjects(EPJSON):
         Mappings maps values from templates to objects.  This is necessary when the template input is not a direct
         transition to an object value.
 
-        :param option_tree_leaf: YAML loaded option tree end node with two keys: objects and transitions
-        :return: list of dictionary objects with transitions applied
+        :param option_tree_leaf: YAML loaded option tree end node with three keys: objects, transitions, mappings
+        :return: list of dictionary objects with transitions and mappings applied
         """
         option_tree_transitions = option_tree_leaf.pop('Transitions', None)
         option_tree_mappings = option_tree_leaf.pop('Mappings', None)
