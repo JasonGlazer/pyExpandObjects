@@ -18,6 +18,13 @@ class CustomException(Logger, Exception):
         return self.msg
 
 
+class InvalidEpJSONException(CustomException):
+    """
+    epJSON errors
+    """
+    pass
+
+
 class InvalidTemplateException(CustomException):
     """
     Incorrect template usage and references
@@ -28,6 +35,13 @@ class InvalidTemplateException(CustomException):
 class UniqueNameException(CustomException):
     """
     Unintentional key-overriding in dictionary/JSON objects
+    """
+    pass
+
+
+class PyExpandObjectsYamlStructureException(CustomException):
+    """
+    Hierarchy and organizational YAML file exceptions
     """
     pass
 

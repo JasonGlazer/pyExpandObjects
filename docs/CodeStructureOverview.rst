@@ -296,14 +296,13 @@ The pyExpandObject classes are loosely structured to reflect the hierarchy of th
   * EPJSON
 
     * HVACTemplate
+    * ExpandObjects
 
-      * System
-      * Plant
-
-        * HotWater
-        * ChilledWater
-        * MixedWater
-      * Thermostat
+      * ExpandThermostat
+      * ExpandZone
+      * ExpandSystem
+      * ExpandPlantLoop
+      * ExpandPlantEquipment
 
 Logger
 ~~~~~~

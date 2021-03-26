@@ -17,6 +17,6 @@ An example script and files are provided for initial testing.  There are two com
 * -y: The yaml file location
 * -f: The epJSON file containing HVACTemplate Objects
 
-`python test/expand_examples/expand_vav_system.py -y expand_objects/resources/energyplus_objects_config.yaml -f test/expand_examples/expand_vav_system.epJSON`
+`python tests/expand_examples/expand_vav_system.py -y tests/expand_examples/energyplus_objects_config.yaml -f tests/expand_examples/expand_vav_system.epJSON`
 
 The program will output a file 'epjson_test.epJSON' to the same directory as the python file.

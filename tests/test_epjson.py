@@ -21,13 +21,15 @@ minimum_objects_d = {
     }
 }
 
+test_dir = Path(__file__).parent
+
 
 class TestEPJSONHandler(BaseTest, unittest.TestCase):
     def setUp(self):
         self.epjson_handler = EPJSON()
         self.epjson_handler_no_schema = EPJSON()
         self.epjson_handler.logger.setLevel('ERROR')
-        self.example_file_dir = Path(__file__).resolve().parent / 'resources'
+        return
 
     def test_merge_bad_objects(self):
         dict_1 = {
@@ -196,7 +198,8 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         })
         key_check = True
         for output in outputs:
-            (name, _), = output.items()
+            (object_type, object_structure), = output.items()
+            (name, _), = object_structure.items()
             if name not in ['SPACE1-1', 'SPACE2-1']:
                 key_check = False
         self.assertTrue(key_check)
@@ -291,27 +294,34 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
     def test_default_schema_is_valid(self):
         self.epjson_handler.load_schema()
         assert self.epjson_handler.schema_is_valid
+        return
 
     def test_blank_schema_is_not_valid(self):
         bad_return_value = self.epjson_handler._validate_schema({"properties": {"id": "asdf"}})
         self.assertFalse(bad_return_value)
+        return
 
     def test_good_object_is_valid(self):
-        self.epjson_handler.load_schema()
-        self.epjson_handler.load_epjson({
-            **minimum_objects_d,
-            "Version": {
-                "Version 1": {
-                    "version_identifier": "9.4"
+        self.epjson_handler.epjson_process(
+            epjson_ref={
+                **minimum_objects_d,
+                "Version": {
+                    "Version 1": {
+                        "version_identifier": "9.4"
+                    }
                 }
             }
-        })
+        )
         self.assertTrue(self.epjson_handler.input_epjson_is_valid)
+        return
 
     def test_good_file_is_verified(self):
-        self.epjson_handler.load_schema()
-        self.epjson_handler.load_epjson(str(self.example_file_dir / 'RefBldgMediumOfficeNew2004_Chicago_epJSON.epJSON'))
+        self.epjson_handler.epjson_process(
+            epjson_ref=str(
+                test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
+        )
         self.assertTrue(self.epjson_handler.input_epjson_is_valid)
+        return
 
     def test_no_schema_returns_json(self):
         self.epjson_handler_no_schema.load_epjson({

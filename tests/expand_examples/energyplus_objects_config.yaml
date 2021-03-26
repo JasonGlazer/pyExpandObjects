@@ -603,7 +603,7 @@ OptionTree:
     Zone:
       VAV:
         Base: *HVACTemplateZoneVAV
-#        RemoveElements:
+#        R emoveElements:
 #          reheat_coil_type:
 #            HotWaterLoop:
 #              ^Coil:Heating:.*:

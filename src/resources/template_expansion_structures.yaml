@@ -1,11 +1,272 @@
+# Reused objects
+Connectors: &Connectors
+  AirLoop: &ConnectorsAirLoop
+    Inlet: air_inlet_node_name
+    Outlet: air_outlet_node_name
+  WaterLoop: &ConnectorsWaterLoop
+    Inlet: water_inlet_node_name
+    Outlet: water_outlet_node_name
 
+# Schedule Objects
 Schedule:
   Compact:
     ALWAYS_VAL:
       name: 'HVACTemplate-Always{}'
-      schedule_type_limits_name: "Any Number"
+      schedule_type_limits_name: Any Number
       data:
         - field: Through 12/31
         - field: For AllDays
         - field: Until 24:00
         - field: '{:.1f}'
+
+# Base objects
+Coil:
+  Cooling:
+    Water:
+      Fields: &CoilCoolingFields
+        name: '{} Cooling Coil'
+        air_inlet_node_name: '{} Cooling Coil Inlet'
+        air_outlet_node_name: '{} Cooling Coil Outlet'
+        water_inlet_node_name: '{} Cooling Coil Chw Inlet'
+        water_outlet_node_name: '{} Cooling Coil Chw Outlet'
+        design_water_flow_rate: Autosize
+      Connectors: &CoilCoolingConnectors
+        AirLoop: *ConnectorsAirLoop
+        ChilledWaterLoop: *ConnectorsWaterLoop
+      DetailedGeometry:
+        Fields:
+          << : *CoilCoolingFields
+        Connectors:
+          << : *CoilCoolingConnectors
+  Heating:
+    Fields: &CoilHeatingFields
+      name: '{} Heating Coil'
+      air_inlet_node_name: '{} Heating Coil Inlet'
+      air_outlet_node_name: '{} Heating Coil Outlet'
+    Connectors:
+      AirLoop: *ConnectorsAirLoop
+    Water:
+      Fields: &CoilHeatingWaterFields
+        << : *CoilHeatingFields
+        water_inlet_node_name: '{} Heating Coil Hw Inlet'
+        water_outlet_node_name: '{} Heating Coil Hw Outlet'
+        rated_inlet_air_temperature: 16.6 # todo_eo error messages without these fields
+        rated_inlet_water_temperature: 82.2
+        rated_outlet_air_temperature: 32.2
+        rated_outlet_water_temperature: 71.1
+        rated_ratio_for_air_and_water_convection: 0.5
+        u_factor_times_area_value: Autosize
+        performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+        rated_capacity: Autosize
+        maximum_water_flow_rate: Autosize
+      Connectors:
+        AirLoop: *ConnectorsAirLoop
+        HotWaterLoop: *ConnectorsWaterLoop
+
+Fan:
+  Fields: &FanFields
+    motor_efficiency: 0.9
+    maximum_flow_rate: Autosize
+  Connectors: &FanConnectors
+    Air: *ConnectorsAirLoop
+  VariableVolume:
+    Base:
+      Fields:
+        name: '{} Supply Fan'
+        << : *FanFields
+        air_inlet_node_name: '{} Supply Fan Inlet'
+        air_outlet_node_name: '{} Supply Fan Outlet'
+        fan_power_coefficient_1: 0.35071223
+        fan_power_coefficient_2: 0.30850535
+        fan_power_coefficient_3: -0.54137364
+        fan_power_coefficient_4: 0.87198823
+        fan_power_coefficient_5: 0
+        fan_power_minimum_flow_fraction: 0.25
+        fan_power_minimum_flow_rate_input_method: "Fraction"
+        fan_total_efficiency: 0.7
+      Connectors:
+        << : *FanConnectors
+
+# Zone Equipment
+AirTerminal:
+  SingleDuct:
+    Fields: &AirTerminalSingleDuctFields
+      maximum_air_flow_rate: Autosize
+      air_inlet_node_name: '{} Zone Equip Inlet'
+      air_outlet_node_name: '{} Supply Inlet'
+    VAV:
+      Base:
+        - AirTerminal:SingleDuct:VAV:Reheat: &AirTerminalSingleDuctVAVReheat
+            name: '{} VAV Reheat'
+            <<: *AirTerminalSingleDuctFields
+            damper_air_outlet_node_name: '{} Damper Outlet'
+            damper_heating_action: Reverse
+            reheat_coil_name: '{} Reheat Coil'
+      HotWaterReheat: &AirTerminalSingleDuctVAVHotWaterReheat
+        - AirTerminal:SingleDuct:VAV:Reheat:
+            <<: *AirTerminalSingleDuctVAVReheat
+            reheat_coil_object_type: Coil:Heating:Water
+            maximum_hot_water_or_steam_flow_rate: Autosize
+        - Coil:Heating:Water:
+            <<: *CoilHeatingWaterFields
+            name: '{} Reheat Coil'
+            air_inlet_node_name: '{} Damper Outlet'
+            air_outlet_node_name: '{} Supply Inlet'
+        - Branch:
+            name: '{} Reheat Coil HW Branch'
+            components:
+              - component_object_type:
+                  Coil:Heating:Water: self
+                component_name:
+                  Coil:Heating:Water: key
+                component_inlet_node_name:
+                  Coil:Heating:Water: water_inlet_node_name
+                component_outlet_node_name:
+                  Coil:Heating:Water: water_outlet_node_name
+
+DesignSpecification:
+  OutdoorAir:
+    Base: &DesignSpecificationOutdoorAir
+      name: '{} SZ DSOA'
+      outdoor_air_method:
+      outdoor_air_flow_rate_per_person:
+      outdoor_air_flow_rate_per_zone_floor_area:
+      outdoor_air_flow_rate_per_zone:
+  ZoneAirDistribution:
+    Base: &DesignSpecificationZoneAirDistribution
+      name: '{} SZ DSZAD'
+      zone_air_distribution_effectiveness_in_cooling_mode: 1
+      zone_air_distribution_effectiveness_in_heating_mode: 1
+
+ZoneHVAC:
+  AirDistributionUnit:
+    Base: &ZoneHVACAirDistributionUnit
+      name: '{} ATU'
+  EquipmentList: &ZoneHVACEquipmentList
+    name: '{} Equipment'
+    load_distribution_scheme: SequentialLoad
+  EquipmentConnections:
+    Base: &ZoneHVACEquipmentConnections
+      name: "{} Equipment Connections"
+      zone_name:
+      zone_conditioning_equipment_list_name:
+        ZoneHVAC:EquipmentList: key
+      zone_air_inlet_node_or_nodelist_name:
+      zone_air_node_name: '{} Zone Air Node'
+      zone_return_air_node_or_nodelist_name: '{} Return Outlet'
+
+# General
+Sizing:
+  Zone:
+    Base: &SizingZone
+      name: '{} Sizing Zone'
+      cooling_design_air_flow_method: DesignDay
+      heating_design_air_flow_method: DesignDay
+      zone_cooling_design_supply_air_temperature: 12.8
+      zone_cooling_design_supply_air_temperature_difference: 11.11
+      zone_cooling_design_supply_air_humidity_ratio: 0.0085
+      zone_heating_design_supply_air_temperature: 50.0
+      zone_heating_design_supply_air_humidity_ratio: 0.008
+      design_specification_outdoor_air_object_name:
+        ^DesignSpecification:Outdoor.*: key
+
+HVACTemplate:
+  System:
+    VAV:
+      BuildPath:
+
+OptionTree:
+  HVACTemplate:
+    Zone:
+      VAV:
+        BaseObjects:
+          Objects:
+            - ZoneHVAC:AirDistributionUnit:
+                <<: *ZoneHVACAirDistributionUnit
+                air_distribution_unit_outlet_node_name:
+                  ^AirTerminal:.*: air_outlet_node_name
+                air_terminal_object_type:
+                  ^AirTerminal:.*: self
+                air_terminal_name:
+                  ^AirTerminal:.*: key
+            - ZoneHVAC:EquipmentList:
+                <<: *ZoneHVACEquipmentList
+                equipment:
+                  - zone_equipment_object_type:
+                      ^ZoneHVAC:Air.*: self
+                    zone_equipment_name:
+                      ^ZoneHVAC:Air.*: key
+                    zone_equipment_cooling_sequence: 1
+                    zone_equipment_heating_or_no_load_sequence: 1
+            - ZoneHVAC:EquipmentConnections:
+                <<: *ZoneHVACEquipmentConnections
+                zone_conditioning_equipment_list_name:
+                  ZoneHVAC:EquipmentList: key
+                zone_air_inlet_node_or_nodelist_name:
+                  ^AirTerminal:.*: air_outlet_node_name
+            - DesignSpecification:OutdoorAir:
+                <<: *DesignSpecificationOutdoorAir
+            - DesignSpecification:ZoneAirDistribution:
+                <<: *DesignSpecificationZoneAirDistribution
+            - Sizing:Zone:
+                <<: *SizingZone
+          Transitions:
+            zone_name:
+              ZoneHVAC:EquipmentConnections: zone_name
+              Sizing:Zone: zone_or_zonelist_name
+            outdoor_air_method:
+              DesignSpecification:OutdoorAir: outdoor_air_method
+            outdoor_air_flow_rate_per_person:
+              DesignSpecification:OutdoorAir: outdoor_air_flow_per_person
+            outdoor_air_flow_rate_per_zone_floor_area:
+              DesignSpecification:OutdoorAir: outdoor_air_flow_per_zone_floor_area
+            outdoor_air_flow_rate_per_zone:
+              DesignSpecification:OutdoorAir: outdoor_air_flow_per_zone
+            zone_cooling_design_supply_air_humidity_ratio:
+              Sizing:Zone: zone_cooling_design_supply_air_humidity_ratio
+            zone_cooling_design_supply_air_temperature:
+              Sizing:Zone: zone_cooling_design_supply_air_temperature
+            zone_cooling_design_supply_air_temperature_input_method:
+              Sizing:Zone: zone_cooling_design_supply_air_temperature_input_method
+            zone_heating_design_supply_air_temperature_input_method:
+              Sizing:Zone: zone_heating_design_supply_air_temperature_input_method
+            zone_heating_design_supply_air_temperature:
+              Sizing:Zone: zone_heating_design_supply_air_temperature
+            design_specification_outdoor_air_object_name_for_sizing:
+              Sizing:Zone: design_specification_outdoor_air_object_name
+            design_specification_zone_air_distribution_object_name:
+              Sizing:Zone: design_specification_zone_air_distribution_object_name
+            zone_heating_sizing_factor:
+              Sizing:Zone: zone_heating_sizing_factor
+            zone_cooling_sizing_factor:
+              Sizing:Zone: zone_cooling_sizing_factor
+          Mappings:
+            Sizing:Zone:
+              zone_cooling_design_supply_air_temperature_input_method:
+                SystemSupplyAirTemperature: SupplyAirTemperature
+        TemplateObjects:
+          reheat_coil_type:
+            HotWater:
+              Objects:
+                - *AirTerminalSingleDuctVAVHotWaterReheat
+              Transitions:
+                supply_air_maximum_flow_rate:
+                  AirTerminal:.*: maximum_air_flow_rate
+                damper_heating_action:
+                  AirTerminal:.*:VAV:Reheat: damper_heating_action
+                zone_minimum_air_flow_input_method:
+                  AirTerminal:.*: zone_minimum_air_flow_input_method
+    System:
+      VAV:
+        BuildPath:
+          Objects:
+          Transitions:
+          InsertBuildPathObjects:
+            - template_field:
+                template_value:
+                  Objects:
+                  Transitions:
+          ReplaceBuildPathObjects:
+          RemoveBuildPathObjects:
+        BaseObjects:
+        TemplateObjects:
