@@ -8,3 +8,4 @@ __author__ = "John Grando"
 # todo_eo: future - import pyExpandObjects.  Call function and then get back dictionary with valid epJSON to run
 # todo_eo: simulation - environ variables can be set to spit out just the variables, can be used for testing
 # todo_eo: should there be an option to make uncontrolled zones (no schedules or constant setpoints provided)
+# todo_eo: Add description of Mappings in documentation

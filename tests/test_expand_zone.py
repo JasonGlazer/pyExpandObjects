@@ -54,14 +54,15 @@ class TestExpandZone(BaseTest, unittest.TestCase):
 
     def test_zone_name_not_null(self):
         with self.assertRaises(InvalidTemplateException):
-            ExpandZone(template={
-                "HVACTemplate:Zone:VAV": {
-                    "HVACTemplate:Zone:VAV 1": {
-                        "zone_name": None
+            ExpandZone(
+                template={
+                    "HVACTemplate:Zone:VAV": {
+                        "HVACTemplate:Zone:VAV 1": {
+                            "zone_name": None
+                        }
                     }
                 }
-            }
-        )
+            )
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Zone:Verify valid template object")
@@ -88,6 +89,8 @@ class TestExpandZone(BaseTest, unittest.TestCase):
             super_dictionary=zone_output,
             object_dictionary=zone_connection_output
         )
+        from pprint import pprint
+        pprint(output, width=200)
         summarized_output = eo.summarize_epjson(output)
         expected_summary = {
             'ZoneHVAC:AirDistributionUnit': 1,

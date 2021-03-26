@@ -158,6 +158,9 @@ class BaseSimulationTest(object):
         eo = EPJSON()
         epjson_summary_1 = eo.summarize_epjson(epjson_1)
         epjson_summary_2 = eo.summarize_epjson(epjson_2)
+        # remove schedule compact
+        epjson_summary_1.pop('Schedule:Compact')
+        epjson_summary_2.pop('Schedule:Compact')
         msg = ''
         for k, v in epjson_summary_1.items():
             if k not in epjson_summary_2.keys():

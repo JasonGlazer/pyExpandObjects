@@ -113,7 +113,7 @@ AirTerminal:
             air_inlet_node_name: '{} Damper Outlet'
             air_outlet_node_name: '{} Supply Inlet'
         - Branch:
-            name: '{} HW Reheat Branch'
+            name: '{} Reheat Coil HW Branch'
             components:
               - component_object_type:
                   Coil:Heating:Water: self
@@ -145,13 +145,6 @@ ZoneHVAC:
   EquipmentList: &ZoneHVACEquipmentList
     name: '{} Equipment'
     load_distribution_scheme: SequentialLoad
-    equipment:
-      - zone_equipment_object_type:
-          ^ZoneHVAC:.*: self
-        zone_equipment_name:
-          ^ZoneHVAC:.*: key
-        zone_equipment_cooling_sequence: 1
-        zone_equipment_heating_or_no_load_sequence: 1
   EquipmentConnections:
     Base: &ZoneHVACEquipmentConnections
       name: "{} Equipment Connections"
@@ -176,18 +169,6 @@ Sizing:
       zone_heating_design_supply_air_humidity_ratio: 0.008
       design_specification_outdoor_air_object_name:
         ^DesignSpecification:Outdoor.*: key
-    Transitions: &SizingZoneTransitions
-      Sizing:Zone:
-        zone_name: zone_or_zonelist_name
-        zone_cooling_design_supply_air_humidity_ratio: zone_cooling_design_supply_air_humidity_ratio
-        zone_cooling_design_supply_air_temperature: zone_cooling_design_supply_air_temperature
-        zone_cooling_design_supply_air_temperature_input_method: zone_cooling_design_supply_air_temperature_input_method
-        zone_heating_design_supply_air_temperature_input_method: zone_heating_design_supply_air_temperature_input_method
-        zone_heating_design_supply_air_temperature: zone_heating_design_supply_air_temperature
-        design_specification_outdoor_air_object_name_for_sizing: design_specification_outdoor_air_object_name
-        design_specification_zone_air_distribution_object_name: design_specification_zone_air_distribution_object_name
-        zone_heating_sizing_factor: zone_heating_sizing_factor
-        zone_cooling_sizing_factor: zone_cooling_sizing_factor
 
 HVACTemplate:
   System:
@@ -210,6 +191,13 @@ OptionTree:
                   ^AirTerminal:.*: key
             - ZoneHVAC:EquipmentList:
                 <<: *ZoneHVACEquipmentList
+                equipment:
+                  - zone_equipment_object_type:
+                      ^ZoneHVAC:Air.*: self
+                    zone_equipment_name:
+                      ^ZoneHVAC:Air.*: key
+                    zone_equipment_cooling_sequence: 1
+                    zone_equipment_heating_or_no_load_sequence: 1
             - ZoneHVAC:EquipmentConnections:
                 <<: *ZoneHVACEquipmentConnections
                 zone_conditioning_equipment_list_name:
@@ -225,6 +213,7 @@ OptionTree:
           Transitions:
             zone_name:
               ZoneHVAC:EquipmentConnections: zone_name
+              Sizing:Zone: zone_or_zonelist_name
             outdoor_air_method:
               DesignSpecification:OutdoorAir: outdoor_air_method
             outdoor_air_flow_rate_per_person:
@@ -233,7 +222,28 @@ OptionTree:
               DesignSpecification:OutdoorAir: outdoor_air_flow_per_zone_floor_area
             outdoor_air_flow_rate_per_zone:
               DesignSpecification:OutdoorAir: outdoor_air_flow_per_zone
-            <<: *SizingZoneTransitions
+            zone_cooling_design_supply_air_humidity_ratio:
+              Sizing:Zone: zone_cooling_design_supply_air_humidity_ratio
+            zone_cooling_design_supply_air_temperature:
+              Sizing:Zone: zone_cooling_design_supply_air_temperature
+            zone_cooling_design_supply_air_temperature_input_method:
+              Sizing:Zone: zone_cooling_design_supply_air_temperature_input_method
+            zone_heating_design_supply_air_temperature_input_method:
+              Sizing:Zone: zone_heating_design_supply_air_temperature_input_method
+            zone_heating_design_supply_air_temperature:
+              Sizing:Zone: zone_heating_design_supply_air_temperature
+            design_specification_outdoor_air_object_name_for_sizing:
+              Sizing:Zone: design_specification_outdoor_air_object_name
+            design_specification_zone_air_distribution_object_name:
+              Sizing:Zone: design_specification_zone_air_distribution_object_name
+            zone_heating_sizing_factor:
+              Sizing:Zone: zone_heating_sizing_factor
+            zone_cooling_sizing_factor:
+              Sizing:Zone: zone_cooling_sizing_factor
+          Mappings:
+            Sizing:Zone:
+              zone_cooling_design_supply_air_temperature_input_method:
+                SystemSupplyAirTemperature: SupplyAirTemperature
         TemplateObjects:
           reheat_coil_type:
             HotWater:

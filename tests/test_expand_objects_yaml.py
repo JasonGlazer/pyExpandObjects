@@ -10,6 +10,7 @@ mock_template = {
     'HVACTemplate:Zone:VAV': {
         'template_name': {
             'template_field': 'template_test_value',
+            'template_field2': 'test_pre_mapped_value',
             'reheat_coil_type': 'HotWater',
             'zone_name': 'test zone'
         }
@@ -24,13 +25,24 @@ mock_option_tree = {
                     "Objects": [
                         {
                             'ZoneHVAC:AirDistributionUnit': {
-                                "name": "{} ATU"
+                                "name": "{} ATU",
+                                "field_name": "field_value"
                             }
                         }
                     ],
                     'Transitions': {
                         "template_field": {
                             "ZoneHVAC:AirDistributionUnit": "object_test_field"
+                        },
+                        "template_field2": {
+                            "ZoneHVAC:AirDistributionUnit": "object_test_field2"
+                        }
+                    },
+                    'Mappings': {
+                        'ZoneHVAC:AirDistributionUnit': {
+                            "object_test_field2": {
+                                "test_pre_mapped_value": "test_mapped_value"
+                            }
                         }
                     }
                 },
@@ -140,7 +152,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         key_check = True
         for k in option_tree_leaf.keys():
-            if k not in ['Objects', 'Transitions']:
+            if k not in ['Objects', 'Transitions', 'Mappings']:
                 key_check = False
         self.assertTrue(key_check)
         return
@@ -169,6 +181,19 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual(
             'template_test_value',
             transitioned_option_tree_leaf[0]['ZoneHVAC:AirDistributionUnit']['object_test_field'])
+        return
+
+    def test_apply_transitions_and_map(self):
+        eo = ExpandObjects(
+            template=mock_template,
+            expansion_structure=mock_option_tree)
+        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
+        transitioned_option_tree_leaf = eo._apply_transitions(option_tree_leaf)
+        self.assertEqual(
+            'test_mapped_value',
+            transitioned_option_tree_leaf[0]['ZoneHVAC:AirDistributionUnit']['object_test_field2'])
         return
 
     def test_yaml_list_to_dictionary_regular_object(self):
@@ -543,7 +568,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandZone(
             template=mock_template)
         eo._resolve_objects(epjson=test_d)
-        # Check that no string remains unformatted
+        # Check that no string remains unformatted.  The * and ^ are the common regex special characters.
         json_string = json.dumps(test_d)
         self.assertNotIn('{}', json_string)
         self.assertNotIn('^', json_string)

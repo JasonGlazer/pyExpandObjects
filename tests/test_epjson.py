@@ -317,8 +317,8 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
 
     def test_good_file_is_verified(self):
         self.epjson_handler.epjson_process(
-            epjson_ref=str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
-                           'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
+            epjson_ref=str(
+                test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
         )
         self.assertTrue(self.epjson_handler.input_epjson_is_valid)
         return
