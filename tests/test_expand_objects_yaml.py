@@ -675,9 +675,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=mock_system_option_tree)
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        option_tree_leaf = eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
+        eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
         return
 
 # todo_eo: template field no matches
 # todo_eo: test different types of actions
-# todo_eo:

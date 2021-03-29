@@ -512,6 +512,9 @@ class ExpandObjects(EPJSON):
                                     leaf_path=[])
                                 object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
                                 print(object_list)
+                                print(build_path_leaf)
+                                print(object_reference)
+                                print(location)
                             except KeyError:
                                 raise PyExpandObjectsYamlError(
                                     "Build Path Action is missing required instructions for template field. "
