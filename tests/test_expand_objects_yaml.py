@@ -6,7 +6,7 @@ from src.expand_objects import ExpandObjects, ExpandZone
 from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException
 from . import BaseTest
 
-mock_template = {
+mock_zone_template = {
     'HVACTemplate:Zone:VAV': {
         'template_name': {
             'template_field': 'template_test_value',
@@ -17,7 +17,7 @@ mock_template = {
     }
 }
 
-mock_option_tree = {
+mock_zone_option_tree = {
     'OptionTree': {
         'Zone': {
             'VAV': {
@@ -77,6 +77,97 @@ mock_option_tree = {
     }
 }
 
+mock_system_template = {
+    'HVACTemplate:System:VAV': {
+        'template_name': {
+            'template_field': 'template_test_value',
+            'cooling_coil_type': 'ChilledWater'
+        }
+    }
+}
+
+mock_system_option_tree = {
+    'OptionTree': {
+        'System': {
+            'VAV': {
+                'BuildPath': {
+                    'BaseObjects': {
+                        'Objects': [
+                            {
+                                'OutdoorAir:Mixer': {
+                                    'Fields': {
+                                        'name': '{} OA Mixing Box',
+                                        'mixed_air_node_name': '{} Mixed Air Outlet',
+                                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                                        'relief_air_stream_node_name': '{} Relief Air Outlet',
+                                        'return_air_stream_node_name': '{} Air Loop Inlet'
+                                    },
+                                    'Connectors': {
+                                        'AirLoop': {
+                                            'Inlet': 'outdoor_air_stream_node_name',
+                                            'Outlet': 'mixed_air_node_name'
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                'Fan:VariableVolume': {
+                                    'Fields': {
+                                        'name': '{} Supply Fan',
+                                        'air_inlet_node_name': '{} Supply Fan Inlet',
+                                        'air_outlet_node_name': '{} Supply Fan Outlet'
+                                    },
+                                    'Connectors': {
+                                        'AirLoop': {
+                                            'Inlet': 'air_inlet_node_name',
+                                            'Outlet': 'air_outlet_node_name'
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        'Transitions': {
+                            "template_field": {
+                                "Fan:.*": "object_test_field"
+                            }
+                        }
+                    },
+                    'Actions': [
+                        {
+                            'cooling_coil_type': {
+                                'ChilledWater': {
+                                    'ObjectReference': 'OutdoorAir:Mixer',
+                                    'Location': 'After',
+                                    'ActionType': 'Insert',
+                                    'Objects': [
+                                        {
+                                            'Coil:Cooling:Water': {
+                                                'Fields': {
+                                                    'name': '{} Cooling Coil',
+                                                    'air_inlet_node_name': '{} Cooling Coil Inlet',
+                                                    'air_outlet_node_name': '{} Cooling Coil Outlet',
+                                                    'water_inlet_node_name': '{} Cooling Coil Chw Inlet',
+                                                    'water_outlet_node_name': '{} Cooling Coil Chw Outlet'
+                                                },
+                                                'Connectors': {
+                                                    'AirLoop': {
+                                                        'Inlet': 'air_inlet_node_name',
+                                                        'Outlet': 'air_outlet_node_name'
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+
 
 class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
     """
@@ -90,8 +181,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_get_option_tree_from_yaml(self):
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         structure_hierarcy = ['OptionTree', 'Zone', 'VAV']
         output = eo._get_option_tree(structure_hierarchy=structure_hierarcy)
         key_check = True
@@ -113,8 +204,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_reject_bad_option_tree_request(self):
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         structure_hierarchy = 'BadString'
         with self.assertRaises(PyExpandObjectsTypeError):
             eo._get_option_tree(structure_hierarchy=structure_hierarchy)
@@ -122,7 +213,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_reject_bad_option_tree_structure(self):
         eo = ExpandObjects(
-            template=mock_template,
+            template=mock_zone_template,
             expansion_structure={
                 'OptionTree': {
                     'Zone': {
@@ -145,8 +236,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_option_tree_leaf(self):
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -159,11 +250,11 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_option_tree_leaf_without_transitions(self):
         # remove Transitions for this test
-        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
-        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects'].pop('Transitions')
+        bad_mock_zone_option_tree = copy.deepcopy(mock_zone_option_tree)
+        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects'].pop('Transitions')
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=bad_mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=bad_mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -172,8 +263,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_apply_transitions(self):
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -185,8 +276,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_apply_transitions_and_map(self):
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -203,7 +294,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 "field_1": "val_1"
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
@@ -218,22 +309,22 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 "Connectors": {}
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
 
     def test_warning_on_bad_apply_transitions(self):
         # make a bad template reference
-        bad_mock_option_tree = mock_option_tree
-        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Transitions'] = {
+        bad_mock_zone_option_tree = mock_zone_option_tree
+        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Transitions'] = {
             "template_bad_field": {
                 "ZoneHVAC:AirDistributionUnit": "object_test_field"
             }
         }
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=bad_mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=bad_mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -248,8 +339,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
     def test_error_on_bad_object(self):
         # make a bad template reference
         # check missing 'name' field
-        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
-        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
+        bad_mock_zone_option_tree = copy.deepcopy(mock_zone_option_tree)
+        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
             {
                 'ZoneHVAC:AirDistributionUnit': {
                     "bad_name": "{} ATU"
@@ -257,8 +348,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         ]
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=bad_mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=bad_mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -266,8 +357,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         with self.assertRaises(PyExpandObjectsYamlStructureException):
             eo._yaml_list_to_epjson_dictionaries(object_list)
         # more than one object in a dictionary
-        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
-        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
+        bad_mock_zone_option_tree = copy.deepcopy(mock_zone_option_tree)
+        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
             {
                 'ZoneHVAC:AirDistributionUnit': {
                     "name": "{} ATU"
@@ -278,8 +369,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         ]
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=bad_mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=bad_mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -289,7 +380,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         return
 
     def test_retrieve_objects_from_option_tree(self):
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         structure_hierarchy = ['OptionTree', 'HVACTemplate', 'Zone', 'VAV']
         template_objects = eo._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         key_check = True
@@ -316,7 +407,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         # string test
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -341,7 +432,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -396,7 +487,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -429,8 +520,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         with self.assertRaises(PyExpandObjectsYamlStructureException):
             output = eo._resolve_complex_input(
                 epjson=test_d,
@@ -452,7 +543,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -482,7 +573,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -512,7 +603,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         eo._resolve_objects(epjson=test_d)
         self.assertEqual('value_1', test_d['Object:2']['name_1']['field_1'])
         return
@@ -569,7 +660,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandZone(
-            template=mock_template)
+            template=mock_zone_template)
         eo._resolve_objects(epjson=test_d)
         # Check that no string remains unformatted.  The * and ^ are the common regex special characters.
         json_string = json.dumps(test_d)
@@ -577,3 +668,16 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertNotIn('^', json_string)
         self.assertNotIn('*', json_string)
         return
+
+    def test_insert_action_on_build_path(self):
+        eo = ExpandObjects(
+            template=mock_system_template,
+            expansion_structure=mock_system_option_tree)
+        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+        option_tree_leaf = eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
+        return
+
+# todo_eo: template field no matches
+# todo_eo: test different types of actions
+# todo_eo:

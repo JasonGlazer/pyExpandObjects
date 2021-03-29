@@ -233,7 +233,7 @@ class ExpandObjects(EPJSON):
                         object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
         if "BuildPath" in options:
             # todo_eo: this location is the final output of BuildPath steps which return a list of yaml objects
-            pass
+            object_list = self._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -466,18 +466,59 @@ class ExpandObjects(EPJSON):
 
         :return: epJSON dictionary.  epJSON dictionary and BuildPath (if applicable) are also added as class attributes
         """
-        # For systems, perform buildpath operations
-        # BuildPath stored as a list of objects and dictionary in class attributes. List is necessary for future lookups
-        # systems - get BuildPath
-        # systems - perform insert/remove/etc. operations
-        # systems - connect nodes and convert field values using name formatting and complex input operations
-        # systems - return list of objects created from BuildPath saved separately for future reference
         # Get BaseObjects and Template objects, applying transitions from template before returning YAML objects
         structure_hierarchy = self.template_type.split(':')
         epjson = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         # Convert field values using name formatting and complex input operations
         self.epjson = self._resolve_objects(epjson)
         return self.epjson
+
+    def _create_object_list_from_build_path(self, option_tree):
+        """
+        Create a connected group of objects from the BuildPath branch in the OptionTree.  A build path is a list of
+        'super objects' which have an extra layer of structure.  These keys are 'Fields' and 'Connectors'.  The Fields
+        are regular EnergyPlus field name-value pairs.  The connectors are structured dictionaries that provide
+        information on how one object should connect the previous/next object in the build path list.
+
+        :return: object list to be processed downstream.  build_path list is saved as a separate attribute for further
+            reference.
+        """
+        # BuildPath stored as a list of objects and dictionary in class attributes. List is necessary for future lookups
+        # get BuildPath
+        # perform insert/remove/etc. operations
+        # connect nodes by renaming.
+        # Return list of objects so that it can be a dictionary with keys 'objects', 'transitions', 'mappings' and can
+        # be processed normally from there.
+        actions = option_tree.pop('Actions', None)
+        build_path_leaf = self._get_option_tree_leaf(
+            option_tree=option_tree,
+            leaf_path=['BaseObjects', ])
+        # todo_eo: Make this a sub function just to process actions
+        if actions:
+            for action in actions:
+                for template_field, action_structure in action.items():
+                    for template_value, action_instructions in action_structure.items():
+                        if getattr(self, template_field, None) and \
+                                re.match(template_value, getattr(self, template_field)):
+                            try:
+                                object_reference = action_instructions.pop('ObjectReference')
+                                action_type = action_instructions.pop('ActionType')
+                                if action_type.lower() == 'insert':
+                                    location = action_instructions.pop('Location')
+                                else:
+                                    location = None
+                                option_tree_leaf = self._get_option_tree_leaf(
+                                    option_tree=action_instructions,
+                                    leaf_path=[])
+                                object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
+                                print(object_list)
+                            except KeyError:
+                                raise PyExpandObjectsYamlError(
+                                    "Build Path Action is missing required instructions for template field. "
+                                    "Template field: {}, Template value: {}, Action: {}".format(
+                                        template_field, template_value, action_structure))
+        # set build path object list as class attribute
+        return
 
     def build_compact_schedule(
             self,
@@ -535,13 +576,7 @@ class ExpandThermostat(ExpandObjects):
         # todo_eo: pre-set template inputs with None?  Discuss advantages of pre-definition.
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
-        try:
-            self.unique_name = self.template_name
-            if not self.unique_name:
-                raise InvalidTemplateException("Thermostat name not provided in template: {}".format(template))
-        except AttributeError:
-            # todo_eo: need to test this exception
-            raise InvalidTemplateException("Thermostat name not provided in template: {}".format(template))
+        self.unique_name = self.template_name
         return
 
     def _create_and_set_schedules(self):
@@ -613,16 +648,6 @@ class ExpandThermostat(ExpandObjects):
         return self
 
 
-class ExpandSystem(ExpandObjects):
-    """
-    System expansion operations
-    """
-    def __init__(self, template):
-        # fill/create class attributes values with template inputs
-        super().__init__(template=template)
-        return
-
-
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
@@ -635,7 +660,6 @@ class ExpandZone(ExpandObjects):
             if not self.unique_name:
                 raise InvalidTemplateException("Zone name not provided in template: {}".format(template))
         except AttributeError:
-            # todo_eo: need to test this exception
             raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
         return
 
@@ -646,3 +670,13 @@ class ExpandZone(ExpandObjects):
         """
         self._create_objects()
         return self
+
+
+class ExpandSystem(ExpandObjects):
+    """
+    System expansion operations
+    """
+    def __init__(self, template):
+        super().__init__(template=template)
+        self.unique_name = self.template_name
+        return
