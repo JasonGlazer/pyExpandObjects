@@ -303,8 +303,9 @@ class ExpandObjects(EPJSON):
                                             getattr(self, template_field)
                                 except AttributeError:
                                     self.logger.info("A template value was attempted to be applied "
-                                                     "to an object ({}) field ({}) but the template "
-                                                     "field ({}) was not present in template object."
+                                                     "to an object field but the template "
+                                                     "field was not present in template object. "
+                                                     "object: {}, object fieled: {}, template field: {}"
                                                      .format(object_type, object_field, template_field))
         if option_tree_mappings:
             for object_type_reference, mapping_structure in option_tree_mappings.items():
@@ -325,13 +326,14 @@ class ExpandObjects(EPJSON):
                                     if object_field == mapping_field:
                                         try:
                                             if 'Fields' in tree_object[object_type].keys():
-                                                tree_object[object_type]['Fields'][object_field] = mapping_dictionary[value]
+                                                tree_object[object_type]['Fields'][object_field] = \
+                                                    mapping_dictionary[value]
                                             else:
                                                 tree_object[object_type][object_field] = mapping_dictionary[value]
                                         except AttributeError:
-                                            self.logger.warning("Template field ({}) was attempted to be "
-                                                                "mapped to object ({}) but was not present "
-                                                                "in template inputs"
+                                            self.logger.warning("Template field was attempted to be "
+                                                                "mapped to object but was not present "
+                                                                "in template inputs. mapping field: {}, object type: {}"
                                                                 .format(mapping_field, object_type))
         return option_tree_leaf['Objects']
 
@@ -473,6 +475,99 @@ class ExpandObjects(EPJSON):
         self.epjson = self._resolve_objects(epjson)
         return self.epjson
 
+    def _apply_build_path_action(self, build_path, action_instructions):
+        """
+        Mutate a build path list based on a set of action instructions
+
+        :param build_path: Input build path list
+        :param action_instructions: Formatted instructions to apply an action.  Valid actions are 'Insert', 'Remove',
+            and 'Replace' (case insensitive).
+        :return: mutated dictionary with action applied.
+        """
+        # pop the instruction keys for use in the function.
+        occurrence = action_instructions.pop('Occurrence', 1)
+        # Format check inputs for occurrence
+        if not isinstance(occurrence, int) or (
+                isinstance(occurrence, int) and
+                occurrence < 0):
+            raise PyExpandObjectsYamlStructureException('Occurrence must be a non-negative integer'
+                                           .format(action_instructions))
+        try:
+            # Format check inputs for action_type and location
+            action_type = action_instructions.pop('ActionType').lower()
+            if action_type not in ('insert', 'remove', 'replace'):
+                raise PyExpandObjectsYamlStructureException('Invalid action type requested: {}'
+                                                            .format(action_instructions))
+            # check 'Location' format and ensure it is the right type and value.
+            # if location is an integer then object_reference is not needed because the action will be
+            # performed on that index and no object lookup will be required.
+            if isinstance(action_instructions['Location'], str) and \
+                    action_instructions['Location'].lower() in ('before', 'after'):
+                location = action_instructions.pop('Location').lower()
+                object_reference = action_instructions.pop('ObjectReference')
+            elif isinstance(action_instructions['Location'], int):
+                location = action_instructions.pop('Location')
+                object_reference = None
+            else:
+                raise PyExpandObjectsYamlStructureException('Insert reference value is not "Before", "After" or an '
+                                                            'integer'.format(action_instructions))
+        except KeyError:
+            raise PyExpandObjectsYamlStructureException(
+                "Build Path Action is missing required instructions {}. ".format(action_instructions))
+        # Get the option tree leaf for an action.
+        # Remove does not require this step since it just removes objects from the original build path
+        if action_type != 'remove':
+            option_tree_leaf = self._get_option_tree_leaf(
+                option_tree=action_instructions,
+                leaf_path=[])
+            # Apply transitions to the leaf to create an object list.
+            object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
+        else:
+            object_list = None
+        # Create new build path dictionary since the input dictionary will be mutated
+        output_build_path = copy.deepcopy(build_path)
+        # if the location is an integer, just perform the action on that index, otherwise,
+        # iterate over super objects keeping count of the index
+        if isinstance(location, int):
+            if action_type == 'insert':
+                output_build_path.insert(location, object_list)
+            elif action_type == 'remove':
+                output_build_path.pop(location)
+            elif action_type == 'replace':
+                output_build_path[location] = object_list
+        else:
+            # Iterate over the objects finding the appropriate location for the action.
+            # keep a count of number of times object has been matched.
+            # This is for the 'Occurrence' key to perform an action on the nth occurrence of a match.
+            match_count = 0
+            for idx, super_object in enumerate(build_path):
+                # if there is a match to the object type, and the occurrence is correct, then perform the action
+                for super_object_type, super_object_structure in super_object.items():
+                    if object_reference and re.match(object_reference, super_object_type):
+                        match_count += 1
+                        if match_count == occurrence:
+                            if action_type == 'insert' and isinstance(location, str):
+                                # The location variable is now either 'before' or 'after',
+                                # so mutate the variable to be an integer value for offset
+                                location = 0 if location == 'before' else 1
+                                output_build_path.insert(idx + location, object_list)
+                            elif action_type == 'remove':
+                                output_build_path.pop(idx)
+                            elif action_type == 'replace':
+                                output_build_path[idx] = object_list
+                            else:
+                                raise PyExpandObjectsYamlStructureException(
+                                    "Action could not be performed on build path for an "
+                                    "unknown reason: build path {}, action: {}".format(build_path, action_instructions))
+            # check if the number of matches actually met the occurrence threshold
+            if not match_count >= occurrence:
+                raise PyExpandObjectsYamlStructureException(
+                    "The number of occurrences in a build path was never reached for "
+                    "an action. build path: {}, action: {}".format(build_path, action_instructions))
+        # flatten build path list before output
+        output_build_path = self._flatten_list(output_build_path)
+        return output_build_path
+
     def _create_object_list_from_build_path(self, option_tree):
         """
         Create a connected group of objects from the BuildPath branch in the OptionTree.  A build path is a list of
@@ -483,45 +578,25 @@ class ExpandObjects(EPJSON):
         :return: object list to be processed downstream.  build_path list is saved as a separate attribute for further
             reference.
         """
-        # BuildPath stored as a list of objects and dictionary in class attributes. List is necessary for future lookups
-        # get BuildPath
-        # perform insert/remove/etc. operations
+        # todo_eo: remaining tasks for sub-functions
         # connect nodes by renaming.
-        # Return list of objects so that it can be a dictionary with keys 'objects', 'transitions', 'mappings' and can
-        # be processed normally from there.
+        # Return list of objects so that it can be merged in epJSON format.
         actions = option_tree.pop('Actions', None)
         build_path_leaf = self._get_option_tree_leaf(
             option_tree=option_tree,
             leaf_path=['BaseObjects', ])
-        # todo_eo: Make this a sub function just to process actions
+        build_path = self._apply_transitions(build_path_leaf)
+        # todo_eo: exceptions and testing need to be done
         if actions:
             for action in actions:
                 for template_field, action_structure in action.items():
                     for template_value, action_instructions in action_structure.items():
                         if getattr(self, template_field, None) and \
                                 re.match(template_value, getattr(self, template_field)):
-                            try:
-                                object_reference = action_instructions.pop('ObjectReference')
-                                action_type = action_instructions.pop('ActionType')
-                                if action_type.lower() == 'insert':
-                                    location = action_instructions.pop('Location')
-                                else:
-                                    location = None
-                                option_tree_leaf = self._get_option_tree_leaf(
-                                    option_tree=action_instructions,
-                                    leaf_path=[])
-                                object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
-                                print(object_list)
-                                print(build_path_leaf)
-                                print(object_reference)
-                                print(location)
-                            except KeyError:
-                                raise PyExpandObjectsYamlError(
-                                    "Build Path Action is missing required instructions for template field. "
-                                    "Template field: {}, Template value: {}, Action: {}".format(
-                                        template_field, template_value, action_structure))
-        # set build path object list as class attribute
-        return
+                            build_path = self._apply_build_path_action(
+                                build_path=build_path,
+                                action_instructions=action_instructions)
+        return build_path
 
     def build_compact_schedule(
             self,
