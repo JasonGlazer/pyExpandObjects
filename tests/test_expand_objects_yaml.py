@@ -203,6 +203,7 @@ mock_build_path = [
     }
 ]
 
+
 class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
     """
     General handling and processing of YAML instructions
@@ -770,6 +771,33 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual('test_object_type', list(build_path[1].keys())[0])
         return
 
+    def test_build_path_action_remove_by_object_reference(self):
+        build_path = mock_build_path
+        action_instruction = {
+            'ObjectReference': 'OutdoorAir:Mixer',
+            'ActionType': 'Remove'
+        }
+        eo = ExpandObjects()
+        build_path = eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        self.assertEqual('Fan:VariableVolume', list(build_path[0].keys())[0])
+        return
+
+    def test_build_path_action_replace_by_object_reference(self):
+        build_path = mock_build_path
+        action_instruction = {
+            'ObjectReference': 'OutdoorAir:Mixer',
+            'ActionType': 'Replace',
+            'Objects': [
+                {
+                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        build_path = eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        self.assertEqual('test_object_type', list(build_path[0].keys())[0])
+        return
+
     def test_reject_build_path_action_with_bad_occurrence(self):
         build_path = mock_build_path
         # Note ObjectReference is not needed
@@ -855,11 +883,65 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
         return
 
-# def test_insert_action_on_build_path(self):
-#     eo = ExpandObjects(
-#         template=mock_system_template,
-#         expansion_structure=mock_system_option_tree)
-#     structure_hierarchy = ['OptionTree', 'System', 'VAV']
-#     option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-#     eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
-#     return
+    def test_reject_buidl_path_action_missing_keys(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'ObjectReference': 'OutdoorAir:Mixer',
+            'Location': 'Before',
+            'Occurrence': 10,
+            'Objects': [
+                {
+                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        with self.assertRaisesRegex(
+                PyExpandObjectsYamlStructureException, 'Build Path Action is missing required instructions'):
+            eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        return
+
+    def test_insert_on_build_path_from_option_tree(self):
+        test_system_option_tree = copy.deepcopy(mock_system_option_tree)
+        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 1,
+                        'Occurrence': 1,
+                        'ActionType': 'Insert',
+                        'Objects': [
+                            {
+                                "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 2,
+                        'Occurrence': 1,
+                        'ActionType': 'Insert',
+                        'Objects': [
+                            {
+                                "test_object_type_2": {'test_object_name_2': {'test_field_2': 'test_value_2'}}
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_system_template,
+            expansion_structure=test_system_option_tree)
+        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+        build_path = eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
+        self.assertEqual('test_object_type', list(build_path[1].keys())[0])
+        self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
+        return
+
+# todo_eo: try other actions and mixed actions.

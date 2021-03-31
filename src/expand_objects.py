@@ -487,11 +487,9 @@ class ExpandObjects(EPJSON):
         # pop the instruction keys for use in the function.
         occurrence = action_instructions.pop('Occurrence', 1)
         # Format check inputs for occurrence
-        if not isinstance(occurrence, int) or (
-                isinstance(occurrence, int) and
-                occurrence < 0):
-            raise PyExpandObjectsYamlStructureException('Occurrence must be a non-negative integer'
-                                           .format(action_instructions))
+        if not isinstance(occurrence, int) or (isinstance(occurrence, int) and occurrence < 0):
+            raise PyExpandObjectsYamlStructureException('Occurrence must be a non-negative integer: {}'
+                                                        .format(occurrence))
         try:
             # Format check inputs for action_type and location
             action_type = action_instructions.pop('ActionType').lower()
@@ -501,7 +499,10 @@ class ExpandObjects(EPJSON):
             # check 'Location' format and ensure it is the right type and value.
             # if location is an integer then object_reference is not needed because the action will be
             # performed on that index and no object lookup will be required.
-            if isinstance(action_instructions['Location'], str) and \
+            if not action_instructions.get('Location') and (action_type == 'remove' or action_type == 'replace'):
+                location = None
+                object_reference = action_instructions.pop('ObjectReference')
+            elif isinstance(action_instructions['Location'], str) and \
                     action_instructions['Location'].lower() in ('before', 'after'):
                 location = action_instructions.pop('Location').lower()
                 object_reference = action_instructions.pop('ObjectReference')
@@ -510,7 +511,7 @@ class ExpandObjects(EPJSON):
                 object_reference = None
             else:
                 raise PyExpandObjectsYamlStructureException('Insert reference value is not "Before", "After" or an '
-                                                            'integer'.format(action_instructions))
+                                                            'integer: {}'.format(action_instructions))
         except KeyError:
             raise PyExpandObjectsYamlStructureException(
                 "Build Path Action is missing required instructions {}. ".format(action_instructions))
