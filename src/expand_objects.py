@@ -232,8 +232,10 @@ class ExpandObjects(EPJSON):
                         super_dictionary=option_tree_dictionary,
                         object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
         if "BuildPath" in options:
-            # todo_eo: this location is the final output of BuildPath steps which return a list of yaml objects
             object_list = self._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
+            option_tree_dictionary = self.merge_epjson(
+                super_dictionary=option_tree_dictionary,
+                object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -499,7 +501,7 @@ class ExpandObjects(EPJSON):
             # check 'Location' format and ensure it is the right type and value.
             # if location is an integer then object_reference is not needed because the action will be
             # performed on that index and no object lookup will be required.
-            if not action_instructions.get('Location') and (action_type == 'remove' or action_type == 'replace'):
+            if action_instructions.get('Location') is None and (action_type == 'remove' or action_type == 'replace'):
                 location = None
                 object_reference = action_instructions.pop('ObjectReference')
             elif isinstance(action_instructions['Location'], str) and \

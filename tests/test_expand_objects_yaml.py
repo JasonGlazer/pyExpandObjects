@@ -883,7 +883,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
         return
 
-    def test_reject_buidl_path_action_missing_keys(self):
+    def test_reject_build_path_action_missing_keys(self):
         build_path = mock_build_path
         # Note ObjectReference is not needed
         action_instruction = {
@@ -964,7 +964,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             {
                 'template_field': {
                     'template_test_value': {
-                        'Location': 1,
+                        'Location': 2,
                         'Occurrence': 1,
                         'ActionType': 'Replace',
                         'Objects': [
@@ -982,10 +982,32 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         build_path = eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
-        self.assertEqual('test_object_type_2', list(build_path[1].keys())[0])
+        self.assertEqual('test_object_type', list(build_path[1].keys())[0])
+        self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
         return
 
     def test_remove_on_build_path_from_option_tree(self):
+        test_system_option_tree = copy.deepcopy(mock_system_option_tree)
+        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 0,
+                        'ActionType': 'Remove',
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_system_template,
+            expansion_structure=test_system_option_tree)
+        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+        build_path = eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
+        self.assertEqual('Fan:VariableVolume', list(build_path[0].keys())[0])
+        return
+
+    def test_complex_actions_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
         test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
             {
@@ -1005,8 +1027,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             {
                 'template_field': {
                     'template_test_value': {
-                        'Location': 1,
-                        'ActionType': 'Remove'
+                        'Location': 0,
+                        'ActionType': 'Remove',
                     }
                 }
             }
@@ -1017,7 +1039,5 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         build_path = eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
-        # self.assertEqual(1, len(build_path.keys()))
+        self.assertEqual(1, len(build_path))
         return
-
-# todo_eo: try other actions and mixed actions.
