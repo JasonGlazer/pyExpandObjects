@@ -184,7 +184,7 @@ class HVACTemplate(EPJSON):
         :return: dictionary of expanded objects with unique name as key
         """
         expanded_template_dictionary = {}
-        templates = self.unpack_epjson(templates)
+        templates = self.epjson_genexp(templates)
         for template in templates:
             (_, template_structure), = template.items()
             (template_name, _), = template_structure.items()
@@ -222,7 +222,7 @@ class HVACTemplate(EPJSON):
         #     templates=self.templates_systems,
         #     expand_class=ExpandSystem)
         self.logger.info('##### Building Zone-Thermostat Connections #####')
-        templates = self.unpack_epjson(self.templates_zones)
+        templates = self.epjson_genexp(self.templates_zones)
         for tz in templates:
             self._create_zonecontrol_thermostat(zone_template=tz)
         self.logger.info('##### Building System-Zone Connections #####')

@@ -71,7 +71,8 @@ class EPJSON(Logger):
     @staticmethod
     def summarize_epjson(epjson):
         """
-        Retrieve file, simulate, and compare it to a created epJSON object
+        Provide summary of epJSON dictionary for comparisons and metrics.
+
         :param epjson: epJSON formatted dictionary
         :return: dictionary of count summaries
         """
@@ -108,7 +109,7 @@ class EPJSON(Logger):
         return tmp_d
 
     @staticmethod
-    def unpack_epjson(epjson):
+    def epjson_genexp(epjson):
         """
         Create generator of epJSON objects
 

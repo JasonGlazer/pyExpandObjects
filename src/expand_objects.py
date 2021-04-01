@@ -232,10 +232,12 @@ class ExpandObjects(EPJSON):
                         super_dictionary=option_tree_dictionary,
                         object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
         if "BuildPath" in options:
-            object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
+            object_list, epjson_objects = self._process_build_path(option_tree=option_tree['BuildPath'])
             option_tree_dictionary = self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
-                object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
+                object_dictionary=dict(
+                    **self._yaml_list_to_epjson_dictionaries(object_list),
+                    **epjson_objects))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -602,14 +604,13 @@ class ExpandObjects(EPJSON):
                                                             .format(super_object_structure, connectors))
         return object_list
 
-    def _make_branch_and_branchlist_from_build_path(self, build_path, loop_type='AirLoop'):
+    def _create_branch_and_branchlist_from_build_path(self, build_path, loop_type='AirLoop'):
         """
         Create a branch object in epJSON format from a build path
 
         :param build_path: list of EnergyPlus super objects
         :return: epJSON formatted branch of connected objects
         """
-        # todo_eo: pick up from here on system build out
         components = []
         for super_object in copy.deepcopy(build_path):
             component = {}
@@ -632,13 +633,17 @@ class ExpandObjects(EPJSON):
                                                             "Object: {}, connectors: {}"
                                                             .format(super_object_structure, connectors))
         branch = {
-            "{} Main Branch".format(self.unique_name): {
-                "components": components
+            "Branch": {
+                "{} Main Branch".format(self.unique_name): {
+                    "components": components
+                }
             }
         }
         branchlist = {
-            "{} Branches".format(self.unique_name): {
-                "branches": [{"branch_name": "{} Main Branch".format(self.unique_name)}]
+            "Branchlist": {
+                "{} Branches".format(self.unique_name): {
+                    "branches": [{"branch_name": "{} Main Branch".format(self.unique_name)}]
+                }
             }
         }
         return branch, branchlist
@@ -651,7 +656,8 @@ class ExpandObjects(EPJSON):
         information on how one object should connect the previous/next object in the build path list.  A branch of
         connected objects is also produced.
 
-        :return: object list to be processed downstream.  A branch of connected objects is also produced.
+        :return: list of EnergyPlus super objects.  Additional EnergyPlus objects (Branch, Branchlist) that require
+            the build path for their creation.
         """
         actions = option_tree.pop('Actions', None)
         build_path_leaf = self._get_option_tree_leaf(
@@ -671,11 +677,9 @@ class ExpandObjects(EPJSON):
                 except (AttributeError, KeyError):
                     raise PyExpandObjectsYamlStructureException("Action is incorrectly formatted: {}".format(action))
         object_list = self._convert_build_path_to_object_list(build_path)
-        branch, branchlist = self._make_branch_and_branchlist_from_build_path(build_path=build_path)
-        print(branch)
-        print(branchlist)
-        # todo_eo: if branch and branchlist are epJSON objects, they should be added to class epJSON
-        return object_list
+        branch, branchlist = self._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        epjson_objects = dict(**branch, **branchlist)
+        return object_list, epjson_objects
 
     def build_compact_schedule(
             self,

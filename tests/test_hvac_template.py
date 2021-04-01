@@ -1,5 +1,4 @@
 import unittest
-import unittest.mock
 
 from src.hvac_template import HVACTemplate
 from src.hvac_template import InvalidTemplateException, InvalidEpJSONException
@@ -265,6 +264,16 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             "HotWater",
             self.hvac_template.templates_zones['HVACTemplate:Zone:VAV']
             ["HVACTemplate:Zone:VAV 1"]["reheat_coil_type"])
+        return
+
+    def test_reject_bad_template(self):
+        with self.assertRaisesRegex(InvalidTemplateException, 'Zone template is not correctly'):
+            self.hvac_template._get_thermostat_template_from_zone_template(zone_template={
+                "HVACTemplate:Zone:VAV": {
+                    "HVACTemplate:Zone:VAV 1": {},
+                    "Bad Inserted Key": {}
+                }
+            })
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify system class templates created")
@@ -590,7 +599,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         epjson = self.hvac_template.run()
         name_check = True
         object_check = True
-        outputs = self.hvac_template.unpack_epjson(epjson['epJSON'])
+        outputs = self.hvac_template.epjson_genexp(epjson['epJSON'])
         if len([i for i in outputs]) == 0:
             name_check = False
             object_check = False
@@ -632,3 +641,5 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             'Branch': 1}
         self.assertDictEqual(expected_summary, self.hvac_template.summarize_epjson(output['epJSON']))
         return
+
+    # todo_eo: wrap all dictionary unpacking (_, _), = dict.items() with exceptions and test

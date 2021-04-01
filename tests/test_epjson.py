@@ -204,7 +204,7 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         return
 
     def test_unpack_epjson(self):
-        outputs = self.epjson_handler.unpack_epjson({
+        outputs = self.epjson_handler.epjson_genexp({
             "Zone": {
                 "SPACE1-1": {
                     "ceiling_height": 2.438400269,
