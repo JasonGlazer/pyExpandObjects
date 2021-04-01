@@ -1011,7 +1011,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                                         'test_field_4': 'test_value_4'
                                     },
                                     "Connectors": {'AirLoop': {"Inlet": 'test_field_2', "Outlet": "test_field_4"}}
-                                       }
+                                }
                             }
                         ]
                     }

@@ -1,6 +1,6 @@
 import re
 from epjson_handler import EPJSON
-from expand_objects import ExpandObjects, ExpandZone, ExpandThermostat, ExpandSystem
+from expand_objects import ExpandObjects, ExpandZone, ExpandThermostat
 
 from custom_exceptions import InvalidTemplateException, InvalidEpJSONException
 
