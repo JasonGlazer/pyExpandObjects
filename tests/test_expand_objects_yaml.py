@@ -713,7 +713,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'ActionType': 'Insert',
             'Objects': [
                 {
-                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
                 }
             ]
         }
@@ -730,7 +737,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'ActionType': 'Replace',
             'Objects': [
                 {
-                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
                 }
             ]
         }
@@ -762,7 +776,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'ActionType': 'Insert',
             'Objects': [
                 {
-                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
                 }
             ]
         }
@@ -789,7 +810,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'ActionType': 'Replace',
             'Objects': [
                 {
-                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
                 }
             ]
         }
@@ -807,7 +835,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'ActionType': 'Insert',
             'Objects': [
                 {
-                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
                 }
             ]
         }
@@ -820,7 +855,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'ActionType': 'Insert',
             'Objects': [
                 {
-                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
                 }
             ]
         }
@@ -837,7 +879,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'ActionType': 'bad',
             'Objects': [
                 {
-                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
                 }
             ]
         }
@@ -855,7 +904,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'ActionType': 'Insert',
             'Objects': [
                 {
-                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
                 }
             ]
         }
@@ -874,7 +930,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'ActionType': 'Insert',
             'Objects': [
                 {
-                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
                 }
             ]
         }
@@ -892,7 +955,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'Occurrence': 10,
             'Objects': [
                 {
-                    "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
                 }
             ]
         }
@@ -915,10 +985,9 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                             {
                                 "test_object_type": {
                                     "Fields": {
-                                        'test_object_name': {
-                                            'test_field': 'test_value',
-                                            'test_field_3': 'test_value_3'
-                                        }
+                                        'name': 'test_object_name',
+                                        'test_field': 'test_value',
+                                        'test_field_3': 'test_value_3'
                                     },
                                     "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
                                 }
@@ -937,10 +1006,9 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                             {
                                 "test_object_type_2": {
                                     "Fields": {
-                                        'test_object_name_2': {
-                                            'test_field_2': 'test_value_2',
-                                            'test_field_4': 'test_value_4'
-                                        }
+                                        'name': 'test_object_name_2',
+                                        'test_field_2': 'test_value_2',
+                                        'test_field_4': 'test_value_4'
                                     },
                                     "Connectors": {'AirLoop': {"Inlet": 'test_field_2', "Outlet": "test_field_4"}}
                                        }
@@ -973,10 +1041,9 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                             {
                                 "test_object_type": {
                                     "Fields": {
-                                        'test_object_name': {
-                                            'test_field': 'test_value',
-                                            'test_field_3': 'test_value_3'
-                                        }
+                                        'name': 'test_object_name',
+                                        'test_field': 'test_value',
+                                        'test_field_3': 'test_value_3'
                                     },
                                     "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
                                 }
@@ -994,13 +1061,12 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                         'Objects': [
                             {
                                 "test_object_type_2": {
-                                        "Fields": {
-                                            'test_object_name_2': {
-                                                'test_field_2': 'test_value_2',
-                                                'test_field_4': 'test_value_4'
-                                            }
-                                        },
-                                        "Connectors": {'AirLoop': {"Inlet": 'test_field_2', "Outlet": "test_field_4"}}
+                                    "Fields": {
+                                        'name': 'test_object_name_2',
+                                        'test_field_2': 'test_value_2',
+                                        'test_field_4': 'test_value_4'
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field_2', "Outlet": "test_field_4"}}
                                 }
                             }
                         ]
@@ -1050,7 +1116,14 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                         'ActionType': 'Replace',
                         'Objects': [
                             {
-                                "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                                "test_object_type": {
+                                    "Fields": {
+                                        'name': 'test_object_name',
+                                        'test_field': 'test_value',
+                                        'test_field_3': 'test_value_3'
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                                }
                             }
                         ]
                     }
@@ -1109,3 +1182,5 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         output = eo._convert_build_path_to_object_list(build_path=build_path)
         self.assertEqual("value_2", output[1]["Object:2"]["field_3"])
         return
+
+# todo_eo: test _make_branch_from_build_path() and make sure nodes can be resolved (is that necessary?)

@@ -29,7 +29,7 @@ class ExpansionStructureLocation:
                     raise PyExpandObjectsTypeError('File extension does not match yaml type: {}'.format(value))
                 else:
                     with open(value, 'r') as f:
-                        # todo_eo: discuss safety issue if loader.
+                        # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
                         # With FullLoader there would be more functionality but might not be necessary.
                         parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
             else:
@@ -473,8 +473,11 @@ class ExpandObjects(EPJSON):
         # Get BaseObjects and Template objects, applying transitions from template before returning YAML objects
         structure_hierarchy = self.template_type.split(':')
         epjson = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
-        # Convert field values using name formatting and complex input operations
-        self.epjson = self._resolve_objects(epjson)
+        # Convert field values using name formatting and complex input operations using _resolve_objects
+        # Always use merge_epjson to class epJSON in case objects have been stored during processing
+        self.epjson = self.merge_epjson(
+            super_dictionary=self.epjson,
+            object_dictionary=self._resolve_objects(epjson))
         return self.epjson
 
     def _apply_build_path_action(self, build_path, action_instructions):
@@ -580,7 +583,7 @@ class ExpandObjects(EPJSON):
         :return:
         """
         object_list = []
-        for idx, super_object in enumerate(build_path):
+        for idx, super_object in enumerate(copy.deepcopy(build_path)):
             (super_object_type, super_object_structure), = super_object.items()
             try:
                 connectors = super_object_structure.pop('Connectors')
@@ -599,16 +602,46 @@ class ExpandObjects(EPJSON):
                                                             .format(super_object_structure, connectors))
         return object_list
 
-    @staticmethod
-    def _make_branch_from_build_path(build_path):
+    def _make_branch_and_branchlist_from_build_path(self, build_path, loop_type='AirLoop'):
         """
         Create a branch object in epJSON format from a build path
 
         :param build_path: list of EnergyPlus super objects
         :return: epJSON formatted branch of connected objects
         """
-
-        return
+        # todo_eo: pick up from here on system build out
+        components = []
+        for super_object in copy.deepcopy(build_path):
+            component = {}
+            (super_object_type, super_object_structure), = super_object.items()
+            try:
+                connectors = super_object_structure.pop('Connectors')
+            except KeyError:
+                raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
+                                                            .format(super_object))
+            try:
+                component['component_inlet_node_name'] = \
+                    super_object_structure['Fields'][connectors[loop_type]['Inlet']]
+                component['component_outlet_node_name'] = \
+                    super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                component['component_object_type'] = super_object_type
+                component['component_object_name'] = super_object_structure['Fields']['name']
+                components.append(component)
+            except (AttributeError, KeyError):
+                raise PyExpandObjectsYamlStructureException("Field/Connector mismatch or name not in Fields. "
+                                                            "Object: {}, connectors: {}"
+                                                            .format(super_object_structure, connectors))
+        branch = {
+            "{} Main Branch".format(self.unique_name): {
+                "components": components
+            }
+        }
+        branchlist = {
+            "{} Branches".format(self.unique_name): {
+                "branches": [{"branch_name": "{} Main Branch".format(self.unique_name)}]
+            }
+        }
+        return branch, branchlist
 
     def _process_build_path(self, option_tree):
         """
@@ -638,7 +671,10 @@ class ExpandObjects(EPJSON):
                 except (AttributeError, KeyError):
                     raise PyExpandObjectsYamlStructureException("Action is incorrectly formatted: {}".format(action))
         object_list = self._convert_build_path_to_object_list(build_path)
-        branch = self._make_branch_from_build_path(build_path=build_path)
+        branch, branchlist = self._make_branch_and_branchlist_from_build_path(build_path=build_path)
+        print(branch)
+        print(branchlist)
+        # todo_eo: if branch and branchlist are epJSON objects, they should be added to class epJSON
         return object_list
 
     def build_compact_schedule(
