@@ -236,5 +236,5 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
             'HVACTemplate-Always12')
         return
 
-    # todo_eo: Should there be a test to esnure empty template isn't provided or verify that an empty template does
+    # todo_eo: Should there be a test to ensure empty template isn't provided or verify that an empty template does
     # nothing and is just passed?

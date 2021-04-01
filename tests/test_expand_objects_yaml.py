@@ -913,7 +913,15 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                         'ActionType': 'Insert',
                         'Objects': [
                             {
-                                "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                                "test_object_type": {
+                                    "Fields": {
+                                        'test_object_name': {
+                                            'test_field': 'test_value',
+                                            'test_field_3': 'test_value_3'
+                                        }
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                                }
                             }
                         ]
                     }
@@ -927,7 +935,15 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                         'ActionType': 'Insert',
                         'Objects': [
                             {
-                                "test_object_type_2": {'test_object_name_2': {'test_field_2': 'test_value_2'}}
+                                "test_object_type_2": {
+                                    "Fields": {
+                                        'test_object_name_2': {
+                                            'test_field_2': 'test_value_2',
+                                            'test_field_4': 'test_value_4'
+                                        }
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field_2', "Outlet": "test_field_4"}}
+                                       }
                             }
                         ]
                     }
@@ -939,7 +955,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=test_system_option_tree)
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path = eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('test_object_type', list(build_path[1].keys())[0])
         self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
         return
@@ -955,7 +971,15 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                         'ActionType': 'Insert',
                         'Objects': [
                             {
-                                "test_object_type": {'test_object_name': {'test_field': 'test_value'}}
+                                "test_object_type": {
+                                    "Fields": {
+                                        'test_object_name': {
+                                            'test_field': 'test_value',
+                                            'test_field_3': 'test_value_3'
+                                        }
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                                }
                             }
                         ]
                     }
@@ -969,7 +993,15 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                         'ActionType': 'Replace',
                         'Objects': [
                             {
-                                "test_object_type_2": {'test_object_name_2': {'test_field_2': 'test_value_2'}}
+                                "test_object_type_2": {
+                                        "Fields": {
+                                            'test_object_name_2': {
+                                                'test_field_2': 'test_value_2',
+                                                'test_field_4': 'test_value_4'
+                                            }
+                                        },
+                                        "Connectors": {'AirLoop': {"Inlet": 'test_field_2', "Outlet": "test_field_4"}}
+                                }
                             }
                         ]
                     }
@@ -981,7 +1013,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=test_system_option_tree)
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path = eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('test_object_type', list(build_path[1].keys())[0])
         self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
         return
@@ -1003,7 +1035,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=test_system_option_tree)
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path = eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('Fan:VariableVolume', list(build_path[0].keys())[0])
         return
 
@@ -1038,6 +1070,42 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=test_system_option_tree)
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path = eo._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual(1, len(build_path))
+        return
+
+    def test_convert_build_path(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_1",
+                            "Outlet": "field_2"
+                        }
+                    }
+                }
+            },
+            {
+                "Object:2": {
+                    "Fields": {
+                        "field_3": "value_3",
+                        "field_4": "value_4"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_3",
+                            "Outlet": "field_4"
+                        }
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects()
+        output = eo._convert_build_path_to_object_list(build_path=build_path)
+        self.assertEqual("value_2", output[1]["Object:2"]["field_3"])
         return

@@ -232,7 +232,7 @@ class ExpandObjects(EPJSON):
                         super_dictionary=option_tree_dictionary,
                         object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
         if "BuildPath" in options:
-            object_list = self._create_object_list_from_build_path(option_tree=option_tree['BuildPath'])
+            object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
             option_tree_dictionary = self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
                 object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
@@ -571,35 +571,75 @@ class ExpandObjects(EPJSON):
         output_build_path = self._flatten_list(output_build_path)
         return output_build_path
 
-    def _create_object_list_from_build_path(self, option_tree):
+    @staticmethod
+    def _convert_build_path_to_object_list(build_path, loop_type='AirLoop'):
+        """
+        Connect nodes in build path and convert to list of epJSON formatted objects
+
+        :param build_path: build path of EnergyPlus super objects
+        :return:
+        """
+        object_list = []
+        for idx, super_object in enumerate(build_path):
+            (super_object_type, super_object_structure), = super_object.items()
+            try:
+                connectors = super_object_structure.pop('Connectors')
+            except KeyError:
+                raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
+                                                            .format(super_object))
+            try:
+                if idx == 0:
+                    out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                else:
+                    super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
+                    out_node = connectors[loop_type]['Outlet']
+                object_list.append({super_object_type: super_object_structure['Fields']})
+            except (AttributeError, KeyError):
+                raise PyExpandObjectsYamlStructureException("Field/Connector mismatch. Object: {}, connectors: {}"
+                                                            .format(super_object_structure, connectors))
+        return object_list
+
+    @staticmethod
+    def _make_branch_from_build_path(build_path):
+        """
+        Create a branch object in epJSON format from a build path
+
+        :param build_path: list of EnergyPlus super objects
+        :return: epJSON formatted branch of connected objects
+        """
+
+        return
+
+    def _process_build_path(self, option_tree):
         """
         Create a connected group of objects from the BuildPath branch in the OptionTree.  A build path is a list of
         'super objects' which have an extra layer of structure.  These keys are 'Fields' and 'Connectors'.  The Fields
         are regular EnergyPlus field name-value pairs.  The connectors are structured dictionaries that provide
-        information on how one object should connect the previous/next object in the build path list.
+        information on how one object should connect the previous/next object in the build path list.  A branch of
+        connected objects is also produced.
 
-        :return: object list to be processed downstream.  build_path list is saved as a separate attribute for further
-            reference.
+        :return: object list to be processed downstream.  A branch of connected objects is also produced.
         """
-        # todo_eo: remaining tasks for sub-functions
-        # connect nodes by renaming.
-        # Return list of objects so that it can be merged in epJSON format.
         actions = option_tree.pop('Actions', None)
         build_path_leaf = self._get_option_tree_leaf(
             option_tree=option_tree,
             leaf_path=['BaseObjects', ])
         build_path = self._apply_transitions(build_path_leaf)
-        # todo_eo: exceptions and testing need to be done
         if actions:
             for action in actions:
-                for template_field, action_structure in action.items():
-                    for template_value, action_instructions in action_structure.items():
-                        if getattr(self, template_field, None) and \
-                                re.match(template_value, getattr(self, template_field)):
-                            build_path = self._apply_build_path_action(
-                                build_path=build_path,
-                                action_instructions=action_instructions)
-        return build_path
+                try:
+                    for template_field, action_structure in action.items():
+                        for template_value, action_instructions in action_structure.items():
+                            if getattr(self, template_field, None) and \
+                                    re.match(template_value, getattr(self, template_field)):
+                                build_path = self._apply_build_path_action(
+                                    build_path=build_path,
+                                    action_instructions=action_instructions)
+                except (AttributeError, KeyError):
+                    raise PyExpandObjectsYamlStructureException("Action is incorrectly formatted: {}".format(action))
+        object_list = self._convert_build_path_to_object_list(build_path)
+        branch = self._make_branch_from_build_path(build_path=build_path)
+        return object_list
 
     def build_compact_schedule(
             self,
@@ -761,3 +801,11 @@ class ExpandSystem(ExpandObjects):
         super().__init__(template=template)
         self.unique_name = self.template_name
         return
+
+    def run(self):
+        """
+        Process system template
+        :return: epJSON dictionary as class attribute
+        """
+        self._create_objects()
+        return self
