@@ -200,3 +200,6 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 }
             })
         return
+
+    # todo_eo: system objects to create: AirLoopHVAC:SupplyPlenum, AirLoopHVAC:SupplyPlenum/ZoneSplitter,
+    #  AirLoopHVACRturnPlenum/ZoneMixer

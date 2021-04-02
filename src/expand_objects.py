@@ -480,7 +480,7 @@ class ExpandObjects(EPJSON):
         self.epjson = self.merge_epjson(
             super_dictionary=self.epjson,
             object_dictionary=self._resolve_objects(epjson))
-        return self.epjson
+        return self._resolve_objects(epjson)
 
     def _apply_build_path_action(self, build_path, action_instructions):
         """
@@ -657,7 +657,7 @@ class ExpandObjects(EPJSON):
         connected objects is also produced.
 
         :return: list of EnergyPlus super objects.  Additional EnergyPlus objects (Branch, Branchlist) that require
-            the build path for their creation.
+            the build path for their creation.  The final build path is also saved as a class attribute
         """
         actions = option_tree.pop('Actions', None)
         build_path_leaf = self._get_option_tree_leaf(
@@ -676,6 +676,8 @@ class ExpandObjects(EPJSON):
                                     action_instructions=action_instructions)
                 except (AttributeError, KeyError):
                     raise PyExpandObjectsYamlStructureException("Action is incorrectly formatted: {}".format(action))
+        # Save build path to class attribute for later reference.
+        self.build_path = build_path
         object_list = self._convert_build_path_to_object_list(build_path)
         branch, branchlist = self._create_branch_and_branchlist_from_build_path(build_path=build_path)
         epjson_objects = dict(**branch, **branchlist)
@@ -840,7 +842,42 @@ class ExpandSystem(ExpandObjects):
     def __init__(self, template):
         super().__init__(template=template)
         self.unique_name = self.template_name
+        self.build_path = None
         return
+
+    def _create_controller_list_from_epjson(self, epjson=None):
+        """
+        Create AirLoopHVAC:ControllerList objects from system build path
+
+        :return: object list of YAML formatted AirLoopHVAC:ControllerList objects
+        """
+        # if epjson not provided, use the class attribute:
+        object_list = []
+        if not epjson:
+            epjson = self.epjson
+        for controller_type in ['Controller:WaterCoil', 'Controller:OutdoorAir']:
+            controller_objects = epjson.get(controller_type)
+            if controller_objects:
+                airloop_hvac_controllerlist_object = \
+                    self._get_structure(structure_hierarchy=['AirLoopHVAC', 'ControllerList',
+                                                             controller_type.split(':')[1]])
+                object_count = 1
+                try:
+                    for object_name, object_structure in controller_objects.items():
+                        airloop_hvac_controllerlist_object['controller_{}_name'.format(object_count)] = \
+                            object_name
+                        airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_count)] = \
+                            controller_type
+                        object_count += 1
+                except AttributeError:
+                    raise PyExpandObjectsTypeError("Controller Object not properly formatted: {}"
+                                                   .format(controller_objects))
+                object_list.append({'AirLoopHVAC:ControllerList': airloop_hvac_controllerlist_object})
+        controller_epjson = self._yaml_list_to_epjson_dictionaries(object_list)
+        self.epjson = self.merge_epjson(
+            super_dictionary=self.epjson,
+            object_dictionary=self._resolve_objects(epjson=controller_epjson))
+        return self._resolve_objects(epjson=controller_epjson)
 
     def run(self):
         """
@@ -848,4 +885,5 @@ class ExpandSystem(ExpandObjects):
         :return: epJSON dictionary as class attribute
         """
         self._create_objects()
+        self._create_controller_list_from_epjson()
         return self

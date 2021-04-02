@@ -137,6 +137,26 @@ AirTerminal:
                 component_outlet_node_name:
                   Coil:Heating:Water: water_outlet_node_name
 
+# System equipment
+AirLoopHVAC:
+  ControllerList:
+    WaterCoil:
+      name: '{} Controllers'
+    OutdoorAir:
+      name: '{} OA Controllers'
+  OutdoorAirSystem:
+    Base:
+      name: '{} OA System'
+      controller_list_name: '{} OA Controllers'
+      outdoor_air_equipment_list_name:
+        ^AirLoopHVAC:OutdoorAirSystem:EquipmentList: self
+      availability_manager: '{} Availability Managers'
+      supply_side_inlet_node_name:
+        ^Controller:OutdoorAir: return_air_node_name
+    EquipmentList:
+      Base:
+        name: '{} OA System Equipment'
+
 DesignSpecification:
   OutdoorAir:
     Base: &DesignSpecificationOutdoorAir
