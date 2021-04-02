@@ -39,6 +39,7 @@ class HVACTemplate(EPJSON):
         self.templates_thermostats = {}
         self.expanded_thermostats = {}
         self.expanded_zones = {}
+        self.expanded_systems = {}
         self.epjson = {}
         return
 
@@ -105,11 +106,12 @@ class HVACTemplate(EPJSON):
         :param zone_template: HVACTemplate:Zone:.* object
         :return: HVACTemplate:Thermostat object
         """
-        # zone template should be only one epJSON object
-        # todo_eo: need to capture errors here.
-        (template_type, object_structure), = zone_template.items()
-        (_, object_fields), = object_structure.items()
-        template_thermostat_name = object_fields.get('template_thermostat_name', None)
+        try:
+            (template_type, object_structure), = zone_template.items()
+            (_, object_fields), = object_structure.items()
+            template_thermostat_name = object_fields.get('template_thermostat_name', None)
+        except ValueError:
+            raise InvalidTemplateException("Zone template is not correctly formatted: {}".format(zone_template))
         if template_thermostat_name:
             try:
                 return self.expanded_thermostats[template_thermostat_name]
@@ -182,7 +184,7 @@ class HVACTemplate(EPJSON):
         :return: dictionary of expanded objects with unique name as key
         """
         expanded_template_dictionary = {}
-        templates = self.unpack_epjson(templates)
+        templates = self.epjson_genexp(templates)
         for template in templates:
             (_, template_structure), = template.items()
             (template_name, _), = template_structure.items()
@@ -215,28 +217,30 @@ class HVACTemplate(EPJSON):
         self.expanded_zones = self._expand_templates(
             templates=self.templates_zones,
             expand_class=ExpandZone)
-        self.logger.info('##### Building Connections #####')
-        templates = self.unpack_epjson(self.templates_zones)
+        # self.logger.info('##### Processing Systems #####')
+        # self.expanded_systems = self._expand_templates(
+        #     templates=self.templates_systems,
+        #     expand_class=ExpandSystem)
+        self.logger.info('##### Building Zone-Thermostat Connections #####')
+        templates = self.epjson_genexp(self.templates_zones)
         for tz in templates:
             self._create_zonecontrol_thermostat(zone_template=tz)
+        self.logger.info('##### Building System-Zone Connections #####')
+        # _create_system_airloop_connections
         self.logger.info('##### Creating epJSON #####')
-        # start by merging non-template and connector objects
-        output_epjson = self.merge_epjson(
-            super_dictionary=self.base_objects,
-            object_dictionary=self.epjson
-        )
-        # merge each ExpandObjects child class created
-        epjson_objects = [j.epjson for i, j in self.expanded_thermostats.items()]
-        for eo in epjson_objects:
+        # Merge each set of epJSON dictionaries
+        output_epjson = {}
+        merge_list = [
+            self.epjson,
+            self.base_objects,
+            *[j.epjson for i, j in self.expanded_thermostats.items()],
+            *[j.epjson for i, j in self.expanded_zones.items()],
+            # *[j.epjson for i, j in self.expanded_systems.items()]
+        ]
+        for merge_dictionary in merge_list:
             output_epjson = self.merge_epjson(
                 super_dictionary=output_epjson,
-                object_dictionary=eo
-            )
-        epjson_objects = [j.epjson for i, j in self.expanded_zones.items()]
-        for eo in epjson_objects:
-            output_epjson = self.merge_epjson(
-                super_dictionary=output_epjson,
-                object_dictionary=eo
+                object_dictionary=merge_dictionary
             )
         # Create output format
         output_epjson = {

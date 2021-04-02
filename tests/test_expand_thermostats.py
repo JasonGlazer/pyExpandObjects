@@ -18,11 +18,6 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
             ExpandThermostat()
         return
 
-    def test_thermostat_template_name_provided(self):
-        with self.assertRaises(InvalidTemplateException):
-            ExpandThermostat(template={})
-        return
-
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Verify valid template object")
     def test_verify_good_template(self):
         template = {
@@ -240,3 +235,6 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
             ['heating_setpoint_temperature_schedule_name'],
             'HVACTemplate-Always12')
         return
+
+    # todo_eo: Should there be a test to ensure empty template isn't provided or verify that an empty template does
+    # nothing and is just passed?

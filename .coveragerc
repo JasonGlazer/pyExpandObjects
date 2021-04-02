@@ -13,5 +13,7 @@ omit =
 [report]
 exclude_lines =
         pragma: no cover
+        # This line is used where 'raise' was tested but not reported as covered.
+        pragma: loop bug
         if __name__ == .__main__.:
 

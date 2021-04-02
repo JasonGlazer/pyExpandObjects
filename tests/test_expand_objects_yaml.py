@@ -1,12 +1,13 @@
 import unittest
+from unittest.mock import MagicMock
 import copy
 import json
 
-from src.expand_objects import ExpandObjects, ExpandZone
-from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException
+from src.expand_objects import ExpandObjects, ExpandZone, ExpandSystem
+from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException, PyExpandObjectsYamlError
 from . import BaseTest
 
-mock_template = {
+mock_zone_template = {
     'HVACTemplate:Zone:VAV': {
         'template_name': {
             'template_field': 'template_test_value',
@@ -17,7 +18,7 @@ mock_template = {
     }
 }
 
-mock_option_tree = {
+mock_zone_option_tree = {
     'OptionTree': {
         'Zone': {
             'VAV': {
@@ -77,6 +78,132 @@ mock_option_tree = {
     }
 }
 
+mock_system_template = {
+    'HVACTemplate:System:VAV': {
+        'template_name': {
+            'template_field': 'template_test_value',
+            'cooling_coil_type': 'ChilledWater'
+        }
+    }
+}
+
+mock_system_option_tree = {
+    'OptionTree': {
+        'System': {
+            'VAV': {
+                'BuildPath': {
+                    'BaseObjects': {
+                        'Objects': [
+                            {
+                                'OutdoorAir:Mixer': {
+                                    'Fields': {
+                                        'name': '{} OA Mixing Box',
+                                        'mixed_air_node_name': '{} Mixed Air Outlet',
+                                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                                        'relief_air_stream_node_name': '{} Relief Air Outlet',
+                                        'return_air_stream_node_name': '{} Air Loop Inlet'
+                                    },
+                                    'Connectors': {
+                                        'AirLoop': {
+                                            'Inlet': 'outdoor_air_stream_node_name',
+                                            'Outlet': 'mixed_air_node_name'
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                'Fan:VariableVolume': {
+                                    'Fields': {
+                                        'name': '{} Supply Fan',
+                                        'air_inlet_node_name': '{} Supply Fan Inlet',
+                                        'air_outlet_node_name': '{} Supply Fan Outlet'
+                                    },
+                                    'Connectors': {
+                                        'AirLoop': {
+                                            'Inlet': 'air_inlet_node_name',
+                                            'Outlet': 'air_outlet_node_name'
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        'Transitions': {
+                            "template_field": {
+                                "Fan:.*": "object_test_field"
+                            }
+                        }
+                    },
+                    'Actions': [
+                        {
+                            'cooling_coil_type': {
+                                'ChilledWater': {
+                                    'ObjectReference': 'OutdoorAir:Mixer',
+                                    'Location': 'After',
+                                    'ActionType': 'Insert',
+                                    'Objects': [
+                                        {
+                                            'Coil:Cooling:Water': {
+                                                'Fields': {
+                                                    'name': '{} Cooling Coil',
+                                                    'air_inlet_node_name': '{} Cooling Coil Inlet',
+                                                    'air_outlet_node_name': '{} Cooling Coil Outlet',
+                                                    'water_inlet_node_name': '{} Cooling Coil Chw Inlet',
+                                                    'water_outlet_node_name': '{} Cooling Coil Chw Outlet'
+                                                },
+                                                'Connectors': {
+                                                    'AirLoop': {
+                                                        'Inlet': 'air_inlet_node_name',
+                                                        'Outlet': 'air_outlet_node_name'
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+
+mock_build_path = [
+    {
+        'OutdoorAir:Mixer': {
+            'Fields': {
+                'name': '{} OA Mixing Box',
+                'mixed_air_node_name': '{} Mixed Air Outlet',
+                'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                'relief_air_stream_node_name': '{} Relief Air Outlet',
+                'return_air_stream_node_name': '{} Air Loop Inlet'
+            },
+            'Connectors': {
+                'AirLoop': {
+                    'Inlet': 'outdoor_air_stream_node_name',
+                    'Outlet': 'mixed_air_node_name'
+                }
+            }
+        }
+    },
+    {
+        'Fan:VariableVolume': {
+            'Fields': {
+                'name': '{} Supply Fan',
+                'air_inlet_node_name': '{} Supply Fan Inlet',
+                'air_outlet_node_name': '{} Supply Fan Outlet'
+            },
+            'Connectors': {
+                'AirLoop': {
+                    'Inlet': 'air_inlet_node_name',
+                    'Outlet': 'air_outlet_node_name'
+                }
+            }
+        }
+    }
+]
+
 
 class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
     """
@@ -90,8 +217,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_get_option_tree_from_yaml(self):
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         structure_hierarcy = ['OptionTree', 'Zone', 'VAV']
         output = eo._get_option_tree(structure_hierarchy=structure_hierarcy)
         key_check = True
@@ -111,10 +238,25 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertTrue(key_check)
         return
 
+    def test_reject_bad_yaml(self):
+        bad_yaml_string = "bad brackets: ]["
+        with self.assertRaisesRegex(PyExpandObjectsYamlError, 'Problem loading'):
+            ExpandObjects(
+                template=mock_zone_template,
+                expansion_structure=bad_yaml_string)
+        return
+
+    def test_reject_bad_structure_format(self):
+        with self.assertRaisesRegex(PyExpandObjectsTypeError, '.*is not a file path or dictionary.*'):
+            ExpandObjects(
+                template=mock_zone_template,
+                expansion_structure=[])
+        return
+
     def test_reject_bad_option_tree_request(self):
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         structure_hierarchy = 'BadString'
         with self.assertRaises(PyExpandObjectsTypeError):
             eo._get_option_tree(structure_hierarchy=structure_hierarchy)
@@ -122,7 +264,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_reject_bad_option_tree_structure(self):
         eo = ExpandObjects(
-            template=mock_template,
+            template=mock_zone_template,
             expansion_structure={
                 'OptionTree': {
                     'Zone': {
@@ -145,8 +287,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_option_tree_leaf(self):
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -159,11 +301,11 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_option_tree_leaf_without_transitions(self):
         # remove Transitions for this test
-        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
-        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects'].pop('Transitions')
+        bad_mock_zone_option_tree = copy.deepcopy(mock_zone_option_tree)
+        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects'].pop('Transitions')
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=bad_mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=bad_mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -172,8 +314,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_apply_transitions(self):
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -185,8 +327,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_apply_transitions_and_map(self):
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -203,7 +345,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 "field_1": "val_1"
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
@@ -218,35 +360,38 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 "Connectors": {}
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
 
     def test_warning_on_bad_apply_transitions(self):
         # make a bad template reference
-        bad_mock_option_tree = mock_option_tree
-        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Transitions'] = {
+        bad_mock_zone_option_tree = mock_zone_option_tree
+        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Transitions'] = {
             "template_bad_field": {
                 "ZoneHVAC:AirDistributionUnit": "object_test_field"
             }
         }
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=bad_mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=bad_mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         eo._apply_transitions(option_tree_leaf)
         # Logger (Parent class of ExpandObjects) keeps logs in self.stream
-        self.assertIn('Template field (template_bad_field) was', eo.stream.getvalue())
+        self.assertIn(
+            'A template value was attempted to be applied',
+            eo.stream.getvalue()
+        )
         return
 
     def test_error_on_bad_object(self):
         # make a bad template reference
         # check missing 'name' field
-        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
-        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
+        bad_mock_zone_option_tree = copy.deepcopy(mock_zone_option_tree)
+        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
             {
                 'ZoneHVAC:AirDistributionUnit': {
                     "bad_name": "{} ATU"
@@ -254,8 +399,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         ]
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=bad_mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=bad_mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -263,8 +408,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         with self.assertRaises(PyExpandObjectsYamlStructureException):
             eo._yaml_list_to_epjson_dictionaries(object_list)
         # more than one object in a dictionary
-        bad_mock_option_tree = copy.deepcopy(mock_option_tree)
-        bad_mock_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
+        bad_mock_zone_option_tree = copy.deepcopy(mock_zone_option_tree)
+        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
             {
                 'ZoneHVAC:AirDistributionUnit': {
                     "name": "{} ATU"
@@ -275,8 +420,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         ]
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=bad_mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=bad_mock_zone_option_tree)
         structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -286,23 +431,21 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         return
 
     def test_retrieve_objects_from_option_tree(self):
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         structure_hierarchy = ['OptionTree', 'HVACTemplate', 'Zone', 'VAV']
         template_objects = eo._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
-        key_check = True
-        for key in template_objects.keys():
-            if key not in [
-                    'ZoneHVAC:AirDistributionUnit',
-                    'ZoneHVAC:EquipmentList',
-                    'ZoneHVAC:EquipmentConnections',
-                    'DesignSpecification:OutdoorAir',
-                    'DesignSpecification:ZoneAirDistribution',
-                    'Sizing:Zone',
-                    'AirTerminal:SingleDuct:VAV:Reheat',
-                    'Coil:Heating:Water',
-                    'Branch']:
-                key_check = False
-            self.assertTrue(key_check)
+        self.assertEqual(
+            eo.summarize_epjson(template_objects),
+            {'AirTerminal:SingleDuct:VAV:Reheat': 1,
+             'Branch': 1,
+             'Coil:Heating:Water': 1,
+             'DesignSpecification:OutdoorAir': 1,
+             'DesignSpecification:ZoneAirDistribution': 1,
+             'Sizing:Zone': 1,
+             'ZoneHVAC:AirDistributionUnit': 1,
+             'ZoneHVAC:EquipmentConnections': 1,
+             'ZoneHVAC:EquipmentList': 1}
+        )
         return
 
     def test_complex_inputs_simple(self):
@@ -313,7 +456,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         # string test
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -338,7 +481,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -393,7 +536,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -426,8 +569,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandObjects(
-            template=mock_template,
-            expansion_structure=mock_option_tree)
+            template=mock_zone_template,
+            expansion_structure=mock_zone_option_tree)
         with self.assertRaises(PyExpandObjectsYamlStructureException):
             output = eo._resolve_complex_input(
                 epjson=test_d,
@@ -449,7 +592,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -479,7 +622,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         # field value check
         output = eo._resolve_complex_input(
             epjson=test_d,
@@ -509,7 +652,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         }
-        eo = ExpandZone(template=mock_template)
+        eo = ExpandZone(template=mock_zone_template)
         eo._resolve_objects(epjson=test_d)
         self.assertEqual('value_1', test_d['Object:2']['name_1']['field_1'])
         return
@@ -566,11 +709,649 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandZone(
-            template=mock_template)
+            template=mock_zone_template)
         eo._resolve_objects(epjson=test_d)
         # Check that no string remains unformatted.  The * and ^ are the common regex special characters.
         json_string = json.dumps(test_d)
         self.assertNotIn('{}', json_string)
         self.assertNotIn('^', json_string)
         self.assertNotIn('*', json_string)
+        return
+
+    def test_build_path_action_insert_by_location(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'Location': 1,
+            'Occurrence': 1,
+            'ActionType': 'Insert',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        build_path = eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        self.assertEqual('test_object_type', list(build_path[1].keys())[0])
+        return
+
+    def test_build_path_action_replace_by_location(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'Location': 1,
+            'ActionType': 'Replace',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        build_path = eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        self.assertEqual('test_object_type', list(build_path[1].keys())[0])
+        self.assertEqual(2, len(build_path))
+        return
+
+    def test_build_path_action_remove_by_location(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'Location': 1,
+            'ActionType': 'Remove'
+        }
+        eo = ExpandObjects()
+        build_path = eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        self.assertEqual('OutdoorAir:Mixer', list(build_path[0].keys())[0])
+        self.assertEqual(1, len(build_path))
+        return
+
+    def test_build_path_action_insert_by_object_reference(self):
+        build_path = mock_build_path
+        action_instruction = {
+            'ObjectReference': 'OutdoorAir:Mixer',
+            'Location': 'After',
+            'Occurrence': 1,
+            'ActionType': 'Insert',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        build_path = eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        self.assertEqual('test_object_type', list(build_path[1].keys())[0])
+        return
+
+    def test_build_path_action_remove_by_object_reference(self):
+        build_path = mock_build_path
+        action_instruction = {
+            'ObjectReference': 'OutdoorAir:Mixer',
+            'ActionType': 'Remove'
+        }
+        eo = ExpandObjects()
+        build_path = eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        self.assertEqual('Fan:VariableVolume', list(build_path[0].keys())[0])
+        return
+
+    def test_build_path_action_replace_by_object_reference(self):
+        build_path = mock_build_path
+        action_instruction = {
+            'ObjectReference': 'OutdoorAir:Mixer',
+            'ActionType': 'Replace',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        build_path = eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        self.assertEqual('test_object_type', list(build_path[0].keys())[0])
+        return
+
+    def test_reject_build_path_action_with_bad_occurrence(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'Location': 1,
+            'Occurrence': 'bad',
+            'ActionType': 'Insert',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'must be a non-negative integer'):
+            eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        action_instruction = {
+            'Location': 1,
+            'Occurrence': -1,
+            'ActionType': 'Insert',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                }
+            ]
+        }
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'must be a non-negative integer'):
+            eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        return
+
+    def test_reject_build_path_action_with_bad_action(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'Location': 1,
+            'Occurrence': 0,
+            'ActionType': 'bad',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Invalid action type'):
+            eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        return
+
+    def test_reject_build_path_action_with_bad_location_text(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'Location': 'bad',
+            'Occurrence': 0,
+            'ActionType': 'Insert',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Insert reference value is not'):
+            eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        return
+
+    def test_reject_build_path_action_with_occurrence_too_high(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'ObjectReference': 'OutdoorAir:Mixer',
+            'Location': 'Before',
+            'Occurrence': 10,
+            'ActionType': 'Insert',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'The number of occurrences'):
+            eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        return
+
+    def test_reject_build_path_action_missing_keys(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'ObjectReference': 'OutdoorAir:Mixer',
+            'Location': 'Before',
+            'Occurrence': 10,
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        with self.assertRaisesRegex(
+                PyExpandObjectsYamlStructureException, 'Build Path Action is missing required instructions'):
+            eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        return
+
+    def test_insert_on_build_path_from_option_tree(self):
+        test_system_option_tree = copy.deepcopy(mock_system_option_tree)
+        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 1,
+                        'Occurrence': 1,
+                        'ActionType': 'Insert',
+                        'Objects': [
+                            {
+                                "test_object_type": {
+                                    "Fields": {
+                                        'name': 'test_object_name',
+                                        'test_field': 'test_value',
+                                        'test_field_3': 'test_value_3'
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 2,
+                        'Occurrence': 1,
+                        'ActionType': 'Insert',
+                        'Objects': [
+                            {
+                                "test_object_type_2": {
+                                    "Fields": {
+                                        'name': 'test_object_name_2',
+                                        'test_field_2': 'test_value_2',
+                                        'test_field_4': 'test_value_4'
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field_2', "Outlet": "test_field_4"}}
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_system_template,
+            expansion_structure=test_system_option_tree)
+        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        self.assertEqual('test_object_type', list(build_path[1].keys())[0])
+        self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
+        return
+
+    def test_replace_on_build_path_from_option_tree(self):
+        test_system_option_tree = copy.deepcopy(mock_system_option_tree)
+        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 1,
+                        'Occurrence': 1,
+                        'ActionType': 'Insert',
+                        'Objects': [
+                            {
+                                "test_object_type": {
+                                    "Fields": {
+                                        'name': 'test_object_name',
+                                        'test_field': 'test_value',
+                                        'test_field_3': 'test_value_3'
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 2,
+                        'Occurrence': 1,
+                        'ActionType': 'Replace',
+                        'Objects': [
+                            {
+                                "test_object_type_2": {
+                                    "Fields": {
+                                        'name': 'test_object_name_2',
+                                        'test_field_2': 'test_value_2',
+                                        'test_field_4': 'test_value_4'
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field_2', "Outlet": "test_field_4"}}
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_system_template,
+            expansion_structure=test_system_option_tree)
+        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        self.assertEqual('test_object_type', list(build_path[1].keys())[0])
+        self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
+        return
+
+    def test_remove_on_build_path_from_option_tree(self):
+        test_system_option_tree = copy.deepcopy(mock_system_option_tree)
+        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 0,
+                        'ActionType': 'Remove',
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_system_template,
+            expansion_structure=test_system_option_tree)
+        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        self.assertEqual('Fan:VariableVolume', list(build_path[0].keys())[0])
+        return
+
+    def test_complex_actions_on_build_path_from_option_tree(self):
+        test_system_option_tree = copy.deepcopy(mock_system_option_tree)
+        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 0,
+                        'Occurrence': 1,
+                        'ActionType': 'Replace',
+                        'Objects': [
+                            {
+                                "test_object_type": {
+                                    "Fields": {
+                                        'name': 'test_object_name',
+                                        'test_field': 'test_value',
+                                        'test_field_3': 'test_value_3'
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 0,
+                        'ActionType': 'Remove',
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_system_template,
+            expansion_structure=test_system_option_tree)
+        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        self.assertEqual(1, len(build_path))
+        return
+
+    def test_convert_build_path(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_1",
+                            "Outlet": "field_2"
+                        }
+                    }
+                }
+            },
+            {
+                "Object:2": {
+                    "Fields": {
+                        "field_3": "value_3",
+                        "field_4": "value_4"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_3",
+                            "Outlet": "field_4"
+                        }
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects()
+        output = eo._convert_build_path_to_object_list(build_path=build_path)
+        self.assertEqual("value_2", output[1]["Object:2"]["field_3"])
+        return
+
+    def test_branch_from_build_path(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "name": "object_1_name",
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_1",
+                            "Outlet": "field_2"
+                        }
+                    }
+                }
+            },
+            {
+                "Object:2": {
+                    "Fields": {
+                        "name": "object_2_name",
+                        "field_3": "value_3",
+                        "field_4": "value_4"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_3",
+                            "Outlet": "field_4"
+                        }
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects()
+        eo.unique_name = 'TEST SYSTEM'
+        branch, _ = eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        self.assertEqual(
+            'value_3',
+            branch['Branch']['{} Main Branch'.format(eo.unique_name)]['components'][1]['component_inlet_node_name'])
+        return
+
+    def test_branchlist_from_build_path(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "name": "object_1_name",
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_1",
+                            "Outlet": "field_2"
+                        }
+                    }
+                }
+            },
+            {
+                "Object:2": {
+                    "Fields": {
+                        "name": "object_2_name",
+                        "field_3": "value_3",
+                        "field_4": "value_4"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_3",
+                            "Outlet": "field_4"
+                        }
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects()
+        eo.unique_name = 'TEST SYSTEM'
+        _, branchlist = eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        self.assertEqual(
+            '{} Main Branch'.format(eo.unique_name),
+            branchlist['Branchlist']['{} Branches'.format(eo.unique_name)]['branches'][0]['branch_name'])
+        return
+
+    def test_reject_create_branch_and_branchlist_from_build_path_no_connectors(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "name": "object_1_name",
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "bad_field",
+                            "Outlet": "field_2"
+                        }
+                    }
+                }
+            },
+        ]
+        eo = ExpandObjects()
+        eo.unique_name = 'TEST SYSTEM'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Field/Connector mismatch"):
+            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        return
+
+    def test_reject_create_branch_and_branchlist_from_build_path_mismatch_connectors(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "name": "object_1_name",
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                }
+            },
+        ]
+        eo = ExpandObjects()
+        eo.unique_name = 'TEST SYSTEM'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Super object is missing Connectors"):
+            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        return
+
+    def test_retrieve_build_path_objects_from_option_tree(self):
+        eo = ExpandSystem(template=mock_system_template)
+        test_system_option_tree = copy.deepcopy(mock_system_option_tree)
+        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+            {
+                'template_field': {
+                    'template_test_value': {
+                        'Location': 1,
+                        'Occurrence': 1,
+                        'ActionType': 'Insert',
+                        'Objects': [
+                            {
+                                "test_object_type": {
+                                    "Fields": {
+                                        'name': 'test_object_name',
+                                        'test_field': 'test_value',
+                                        'test_field_3': 'test_value_3'
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+        ]
+        eo._get_option_tree = MagicMock()
+        eo._get_option_tree.return_value = test_system_option_tree['OptionTree']['System']['VAV']
+        output = eo._get_option_tree_objects(structure_hierarchy=['not', 'important'])
+        self.assertEqual(
+            eo.summarize_epjson(output),
+            {'OutdoorAir:Mixer': 1, 'test_object_type': 1, 'Fan:VariableVolume': 1, 'Branch': 1, 'Branchlist': 1}
+        )
         return

@@ -27,7 +27,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
     def setUp(self):
         self.hvac_template = HVACTemplate()
         self.hvac_template.logger.setLevel('INFO')
-        self.hvac_template.load_schema()
+        self.hvac_template._load_schema()
         return
 
     def tearDown(self):

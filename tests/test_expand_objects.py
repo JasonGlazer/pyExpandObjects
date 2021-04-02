@@ -95,11 +95,23 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
 
     def test_reject_bad_template(self):
         templates = {"bad": "input"}
-        with self.assertRaises(InvalidTemplateException):
+        with self.assertRaisesRegex(InvalidTemplateException, 'An invalid object'):
             ExpandObjects(template=templates)
         templates = ["bad_input"]
-        with self.assertRaises(PyExpandObjectsTypeError):
+        with self.assertRaisesRegex(PyExpandObjectsTypeError, 'Template must be a dictionary'):
             ExpandObjects(template=templates)
+        return
+
+    def test_reject_bad_template_format(self):
+        bad_template = {
+            'HVACTemplate:Zone:VAV': {
+                'template_name': []
+            }
+        }
+        with self.assertRaisesRegex(InvalidTemplateException, 'An invalid object'):
+            ExpandObjects(
+                template=bad_template,
+                expansion_structure={})
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Create always value schedule")

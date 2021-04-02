@@ -35,7 +35,7 @@ class TestExpandZone(BaseTest, unittest.TestCase):
     def setUp(self):
         self.hvac_template = HVACTemplate()
         self.hvac_template.logger.setLevel('INFO')
-        self.hvac_template.load_schema()
+        self.hvac_template._load_schema()
         return
 
     def teardown(self):
@@ -89,8 +89,6 @@ class TestExpandZone(BaseTest, unittest.TestCase):
             super_dictionary=zone_output,
             object_dictionary=zone_connection_output
         )
-        from pprint import pprint
-        pprint(output, width=200)
         summarized_output = eo.summarize_epjson(output)
         expected_summary = {
             'ZoneHVAC:AirDistributionUnit': 1,

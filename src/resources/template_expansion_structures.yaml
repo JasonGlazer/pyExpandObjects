@@ -68,10 +68,10 @@ Fan:
     motor_efficiency: 0.9
     maximum_flow_rate: Autosize
   Connectors: &FanConnectors
-    Air: *ConnectorsAirLoop
+    AirLoop: *ConnectorsAirLoop
   VariableVolume:
     Base:
-      Fields:
+      Fields: &FanVariableVolumeFields
         name: '{} Supply Fan'
         << : *FanFields
         air_inlet_node_name: '{} Supply Fan Inlet'
@@ -84,8 +84,21 @@ Fan:
         fan_power_minimum_flow_fraction: 0.25
         fan_power_minimum_flow_rate_input_method: "Fraction"
         fan_total_efficiency: 0.7
-      Connectors:
+      Connectors: &FanVariableVolumeConnectors
         << : *FanConnectors
+
+OutdoorAir:
+  Mixer:
+    Fields: &OutdoorAirMixerFields
+      name: '{} OA Mixing Box'
+      mixed_air_node_name: '{} Mixed Air Outlet'
+      outdoor_air_stream_node_name: '{} Outside Air Inlet' #will be overridden
+      relief_air_stream_node_name: '{} Relief Air Outlet'
+      return_air_stream_node_name: '{} Air Loop Inlet'
+    Connectors: &OutdoorAirMixersConnectors
+      AirLoop:
+        Inlet: outdoor_air_stream_node_name
+        Outlet: mixed_air_node_name
 
 # Zone Equipment
 AirTerminal:
@@ -169,11 +182,6 @@ Sizing:
       zone_heating_design_supply_air_humidity_ratio: 0.008
       design_specification_outdoor_air_object_name:
         ^DesignSpecification:Outdoor.*: key
-
-HVACTemplate:
-  System:
-    VAV:
-      BuildPath:
 
 OptionTree:
   HVACTemplate:
@@ -259,14 +267,23 @@ OptionTree:
     System:
       VAV:
         BuildPath:
-          Objects:
-          Transitions:
-          InsertBuildPathObjects:
+          BaseObjects:
+            Objects:
+              - OutdoorAir:Mixer:
+                  Fields: *OutdoorAirMixerFields
+                  Connectors: *OutdoorAirMixersConnectors
+              - Fan:VariableVolume:
+                  Fields: *FanVariableVolumeFields
+                  Connectors: *FanVariableVolumeConnectors
+            Transitions:
+          Actions:
             - template_field:
                 template_value:
+                  ObjectReference:
+                  Location:
+                  Occurrence:
+                  ActionType:
                   Objects:
                   Transitions:
-          ReplaceBuildPathObjects:
-          RemoveBuildPathObjects:
         BaseObjects:
         TemplateObjects:

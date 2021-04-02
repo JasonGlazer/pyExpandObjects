@@ -21,8 +21,6 @@ class TestMain(BaseTest, unittest.TestCase):
                 )
             )
         except Exception as e:
-            print(e)
-            print('test')
             self.assertEqual(e, e)
             exception_raised = True
         self.assertFalse(exception_raised)

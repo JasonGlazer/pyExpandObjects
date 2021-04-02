@@ -29,7 +29,7 @@ class ExpansionStructureLocation:
                     raise PyExpandObjectsTypeError('File extension does not match yaml type: {}'.format(value))
                 else:
                     with open(value, 'r') as f:
-                        # todo_eo: discuss safety issue if loader.
+                        # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
                         # With FullLoader there would be more functionality but might not be necessary.
                         parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
             else:
@@ -42,13 +42,13 @@ class ExpansionStructureLocation:
                 except yaml.YAMLError as exc:
                     if hasattr(exc, 'problem_mark'):
                         mark = exc.problem_mark
-                        raise PyExpandObjectsYamlError("problem loading yaml at ({}, {})".format(
+                        raise PyExpandObjectsYamlError("Problem loading yaml at ({}, {})".format(
                             mark.line + 1, mark.column + 1))
-                    else:
+                    else:  # pragma: no cover
                         raise PyExpandObjectsYamlError()
         else:
             raise PyExpandObjectsTypeError(
-                'template expansion structure reference is not a file path or dictionary: {}'.format(value))
+                'Template expansion structure reference is not a file path or dictionary: {}'.format(value))
         self.expansion_structure = parsed_value
         return
 
@@ -76,11 +76,11 @@ class VerifyTemplate:
                 # ensure object is dictionary
                 if not isinstance(object_structure, dict):
                     raise InvalidTemplateException(
-                        'An Invalid object {} was passed as an {} object'.format(value, self.template_type))
+                        'An invalid object {} was passed as an {} object'.format(value, self.template_type))
                 self.template = template_structure
             except (ValueError, AttributeError):
                 raise InvalidTemplateException(
-                    'An Invalid object {} failed verification'.format(value))
+                    'An invalid object {} failed verification'.format(value))
         else:
             self.template = None
         return
@@ -232,8 +232,12 @@ class ExpandObjects(EPJSON):
                         super_dictionary=option_tree_dictionary,
                         object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
         if "BuildPath" in options:
-            # todo_eo: this location is the final output of BuildPath steps which return a list of yaml objects
-            pass
+            object_list, epjson_objects = self._process_build_path(option_tree=option_tree['BuildPath'])
+            option_tree_dictionary = self.merge_epjson(
+                super_dictionary=option_tree_dictionary,
+                object_dictionary=dict(
+                    **self._yaml_list_to_epjson_dictionaries(object_list),
+                    **epjson_objects))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -241,11 +245,11 @@ class ExpandObjects(EPJSON):
             option_tree: dict,
             leaf_path: list) -> dict:
         """
-        Return leaf from OptionTree that has no template options (e.g. alternative options)
+        Return leaf from OptionTree with alternative options formatted in dictionary
 
         :param option_tree: Yaml object holding HVACTemplate option tree
         :param leaf_path: path to leaf node of option tree
-        :return: Verified BuildPath and Transition dictionary as keys in an object
+        :return: Formatted dictionary with objects and alternative options to be applied.
         """
         option_leaf = self._get_structure(structure_hierarchy=leaf_path, structure=option_tree)
         transitions = option_leaf.pop('Transitions', None)
@@ -271,8 +275,8 @@ class ExpandObjects(EPJSON):
         Mappings maps values from templates to objects.  This is necessary when the template input is not a direct
         transition to an object value.
 
-        :param option_tree_leaf: YAML loaded option tree end node with two keys: objects and transitions
-        :return: list of dictionary objects with transitions applied
+        :param option_tree_leaf: YAML loaded option tree end node with three keys: objects, transitions, mappings
+        :return: list of dictionary objects with transitions and mappings applied
         """
         option_tree_transitions = option_tree_leaf.pop('Transitions', None)
         option_tree_mappings = option_tree_leaf.pop('Mappings', None)
@@ -302,9 +306,11 @@ class ExpandObjects(EPJSON):
                                         tree_object[object_type][object_field] = \
                                             getattr(self, template_field)
                                 except AttributeError:
-                                    self.logger.warning("Template field ({}) was attempted to be applied "
-                                                        "to object ({}) but was not present in template inputs"
-                                                        .format(template_field, object_type))
+                                    self.logger.info("A template value was attempted to be applied "
+                                                     "to an object field but the template "
+                                                     "field was not present in template object. "
+                                                     "object: {}, object fieled: {}, template field: {}"
+                                                     .format(object_type, object_field, template_field))
         if option_tree_mappings:
             for object_type_reference, mapping_structure in option_tree_mappings.items():
                 for mapping_field, mapping_dictionary in mapping_structure.items():
@@ -324,13 +330,14 @@ class ExpandObjects(EPJSON):
                                     if object_field == mapping_field:
                                         try:
                                             if 'Fields' in tree_object[object_type].keys():
-                                                tree_object[object_type]['Fields'][object_field] = mapping_dictionary[value]
+                                                tree_object[object_type]['Fields'][object_field] = \
+                                                    mapping_dictionary[value]
                                             else:
                                                 tree_object[object_type][object_field] = mapping_dictionary[value]
                                         except AttributeError:
-                                            self.logger.warning("Template field ({}) was attempted to be "
-                                                                "mapped to object ({}) but was not present "
-                                                                "in template inputs"
+                                            self.logger.warning("Template field was attempted to be "
+                                                                "mapped to object but was not present "
+                                                                "in template inputs. mapping field: {}, object type: {}"
                                                                 .format(mapping_field, object_type))
         return option_tree_leaf['Objects']
 
@@ -465,18 +472,214 @@ class ExpandObjects(EPJSON):
 
         :return: epJSON dictionary.  epJSON dictionary and BuildPath (if applicable) are also added as class attributes
         """
-        # For systems, perform buildpath operations
-        # BuildPath stored as a list of objects and dictionary in class attributes. List is necessary for future lookups
-        # systems - get BuildPath
-        # systems - perform insert/remove/etc. operations
-        # systems - connect nodes and convert field values using name formatting and complex input operations
-        # systems - return list of objects created from BuildPath saved separately for future reference
         # Get BaseObjects and Template objects, applying transitions from template before returning YAML objects
         structure_hierarchy = self.template_type.split(':')
         epjson = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
-        # Convert field values using name formatting and complex input operations
-        self.epjson = self._resolve_objects(epjson)
+        # Convert field values using name formatting and complex input operations using _resolve_objects
+        # Always use merge_epjson to class epJSON in case objects have been stored during processing
+        self.epjson = self.merge_epjson(
+            super_dictionary=self.epjson,
+            object_dictionary=self._resolve_objects(epjson))
         return self.epjson
+
+    def _apply_build_path_action(self, build_path, action_instructions):
+        """
+        Mutate a build path list based on a set of action instructions
+
+        :param build_path: Input build path list
+        :param action_instructions: Formatted instructions to apply an action.  Valid actions are 'Insert', 'Remove',
+            and 'Replace' (case insensitive).
+        :return: mutated dictionary with action applied.
+        """
+        # pop the instruction keys for use in the function.
+        occurrence = action_instructions.pop('Occurrence', 1)
+        # Format check inputs for occurrence
+        if not isinstance(occurrence, int) or (isinstance(occurrence, int) and occurrence < 0):
+            raise PyExpandObjectsYamlStructureException('Occurrence must be a non-negative integer: {}'
+                                                        .format(occurrence))
+        try:
+            # Format check inputs for action_type and location
+            action_type = action_instructions.pop('ActionType').lower()
+            if action_type not in ('insert', 'remove', 'replace'):
+                raise PyExpandObjectsYamlStructureException('Invalid action type requested: {}'
+                                                            .format(action_instructions))
+            # check 'Location' format and ensure it is the right type and value.
+            # if location is an integer then object_reference is not needed because the action will be
+            # performed on that index and no object lookup will be required.
+            if action_instructions.get('Location') is None and (action_type == 'remove' or action_type == 'replace'):
+                location = None
+                object_reference = action_instructions.pop('ObjectReference')
+            elif isinstance(action_instructions['Location'], str) and \
+                    action_instructions['Location'].lower() in ('before', 'after'):
+                location = action_instructions.pop('Location').lower()
+                object_reference = action_instructions.pop('ObjectReference')
+            elif isinstance(action_instructions['Location'], int):
+                location = action_instructions.pop('Location')
+                object_reference = None
+            else:
+                raise PyExpandObjectsYamlStructureException('Insert reference value is not "Before", "After" or an '
+                                                            'integer: {}'.format(action_instructions))
+        except KeyError:
+            raise PyExpandObjectsYamlStructureException(
+                "Build Path Action is missing required instructions {}. ".format(action_instructions))
+        # Get the option tree leaf for an action.
+        # Remove does not require this step since it just removes objects from the original build path
+        if action_type != 'remove':
+            option_tree_leaf = self._get_option_tree_leaf(
+                option_tree=action_instructions,
+                leaf_path=[])
+            # Apply transitions to the leaf to create an object list.
+            object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
+        else:
+            object_list = None
+        # Create new build path dictionary since the input dictionary will be mutated
+        output_build_path = copy.deepcopy(build_path)
+        # if the location is an integer, just perform the action on that index, otherwise,
+        # iterate over super objects keeping count of the index
+        if isinstance(location, int):
+            if action_type == 'insert':
+                output_build_path.insert(location, object_list)
+            elif action_type == 'remove':
+                output_build_path.pop(location)
+            elif action_type == 'replace':
+                output_build_path[location] = object_list
+        else:
+            # Iterate over the objects finding the appropriate location for the action.
+            # keep a count of number of times object has been matched.
+            # This is for the 'Occurrence' key to perform an action on the nth occurrence of a match.
+            match_count = 0
+            for idx, super_object in enumerate(build_path):
+                # if there is a match to the object type, and the occurrence is correct, then perform the action
+                for super_object_type, super_object_structure in super_object.items():
+                    if object_reference and re.match(object_reference, super_object_type):
+                        match_count += 1
+                        if match_count == occurrence:
+                            if action_type == 'insert' and isinstance(location, str):
+                                # The location variable is now either 'before' or 'after',
+                                # so mutate the variable to be an integer value for offset
+                                location = 0 if location == 'before' else 1
+                                output_build_path.insert(idx + location, object_list)
+                            elif action_type == 'remove':
+                                output_build_path.pop(idx)
+                            elif action_type == 'replace':
+                                output_build_path[idx] = object_list
+                            else:
+                                raise PyExpandObjectsYamlStructureException(
+                                    "Action could not be performed on build path for an "
+                                    "unknown reason: build path {}, action: {}".format(build_path, action_instructions))
+            # check if the number of matches actually met the occurrence threshold
+            if not match_count >= occurrence:
+                raise PyExpandObjectsYamlStructureException(
+                    "The number of occurrences in a build path was never reached for "
+                    "an action. build path: {}, action: {}".format(build_path, action_instructions))
+        # flatten build path list before output
+        output_build_path = self._flatten_list(output_build_path)
+        return output_build_path
+
+    @staticmethod
+    def _convert_build_path_to_object_list(build_path, loop_type='AirLoop'):
+        """
+        Connect nodes in build path and convert to list of epJSON formatted objects
+
+        :param build_path: build path of EnergyPlus super objects
+        :return:
+        """
+        object_list = []
+        for idx, super_object in enumerate(copy.deepcopy(build_path)):
+            (super_object_type, super_object_structure), = super_object.items()
+            try:
+                connectors = super_object_structure.pop('Connectors')
+            except KeyError:
+                raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
+                                                            .format(super_object))
+            try:
+                if idx == 0:
+                    out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                else:
+                    super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
+                    out_node = connectors[loop_type]['Outlet']
+                object_list.append({super_object_type: super_object_structure['Fields']})
+            except (AttributeError, KeyError):
+                raise PyExpandObjectsYamlStructureException("Field/Connector mismatch. Object: {}, connectors: {}"
+                                                            .format(super_object_structure, connectors))
+        return object_list
+
+    def _create_branch_and_branchlist_from_build_path(self, build_path, loop_type='AirLoop'):
+        """
+        Create a branch object in epJSON format from a build path
+
+        :param build_path: list of EnergyPlus super objects
+        :return: epJSON formatted branch of connected objects
+        """
+        components = []
+        for super_object in copy.deepcopy(build_path):
+            component = {}
+            (super_object_type, super_object_structure), = super_object.items()
+            try:
+                connectors = super_object_structure.pop('Connectors')
+            except KeyError:
+                raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
+                                                            .format(super_object))
+            try:
+                component['component_inlet_node_name'] = \
+                    super_object_structure['Fields'][connectors[loop_type]['Inlet']]
+                component['component_outlet_node_name'] = \
+                    super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                component['component_object_type'] = super_object_type
+                component['component_object_name'] = super_object_structure['Fields']['name']
+                components.append(component)
+            except (AttributeError, KeyError):
+                raise PyExpandObjectsYamlStructureException("Field/Connector mismatch or name not in Fields. "
+                                                            "Object: {}, connectors: {}"
+                                                            .format(super_object_structure, connectors))
+        branch = {
+            "Branch": {
+                "{} Main Branch".format(self.unique_name): {
+                    "components": components
+                }
+            }
+        }
+        branchlist = {
+            "Branchlist": {
+                "{} Branches".format(self.unique_name): {
+                    "branches": [{"branch_name": "{} Main Branch".format(self.unique_name)}]
+                }
+            }
+        }
+        return branch, branchlist
+
+    def _process_build_path(self, option_tree):
+        """
+        Create a connected group of objects from the BuildPath branch in the OptionTree.  A build path is a list of
+        'super objects' which have an extra layer of structure.  These keys are 'Fields' and 'Connectors'.  The Fields
+        are regular EnergyPlus field name-value pairs.  The connectors are structured dictionaries that provide
+        information on how one object should connect the previous/next object in the build path list.  A branch of
+        connected objects is also produced.
+
+        :return: list of EnergyPlus super objects.  Additional EnergyPlus objects (Branch, Branchlist) that require
+            the build path for their creation.
+        """
+        actions = option_tree.pop('Actions', None)
+        build_path_leaf = self._get_option_tree_leaf(
+            option_tree=option_tree,
+            leaf_path=['BaseObjects', ])
+        build_path = self._apply_transitions(build_path_leaf)
+        if actions:
+            for action in actions:
+                try:
+                    for template_field, action_structure in action.items():
+                        for template_value, action_instructions in action_structure.items():
+                            if getattr(self, template_field, None) and \
+                                    re.match(template_value, getattr(self, template_field)):
+                                build_path = self._apply_build_path_action(
+                                    build_path=build_path,
+                                    action_instructions=action_instructions)
+                except (AttributeError, KeyError):
+                    raise PyExpandObjectsYamlStructureException("Action is incorrectly formatted: {}".format(action))
+        object_list = self._convert_build_path_to_object_list(build_path)
+        branch, branchlist = self._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        epjson_objects = dict(**branch, **branchlist)
+        return object_list, epjson_objects
 
     def build_compact_schedule(
             self,
@@ -534,13 +737,7 @@ class ExpandThermostat(ExpandObjects):
         # todo_eo: pre-set template inputs with None?  Discuss advantages of pre-definition.
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
-        try:
-            self.unique_name = self.template_name
-            if not self.unique_name:
-                raise InvalidTemplateException("Thermostat name not provided in template: {}".format(template))
-        except AttributeError:
-            # todo_eo: need to test this exception
-            raise InvalidTemplateException("Thermostat name not provided in template: {}".format(template))
+        self.unique_name = self.template_name
         return
 
     def _create_and_set_schedules(self):
@@ -612,16 +809,6 @@ class ExpandThermostat(ExpandObjects):
         return self
 
 
-class ExpandSystem(ExpandObjects):
-    """
-    System expansion operations
-    """
-    def __init__(self, template):
-        # fill/create class attributes values with template inputs
-        super().__init__(template=template)
-        return
-
-
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
@@ -634,13 +821,30 @@ class ExpandZone(ExpandObjects):
             if not self.unique_name:
                 raise InvalidTemplateException("Zone name not provided in template: {}".format(template))
         except AttributeError:
-            # todo_eo: need to test this exception
             raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
         return
 
     def run(self):
         """
         Process zone template
+        :return: epJSON dictionary as class attribute
+        """
+        self._create_objects()
+        return self
+
+
+class ExpandSystem(ExpandObjects):
+    """
+    System expansion operations
+    """
+    def __init__(self, template):
+        super().__init__(template=template)
+        self.unique_name = self.template_name
+        return
+
+    def run(self):
+        """
+        Process system template
         :return: epJSON dictionary as class attribute
         """
         self._create_objects()
