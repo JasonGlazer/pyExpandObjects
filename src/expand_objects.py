@@ -847,7 +847,9 @@ class ExpandSystem(ExpandObjects):
 
     def _create_controller_list_from_epjson(self, epjson=None):
         """
-        Create AirLoopHVAC:ControllerList objects from system build path
+        Create AirLoopHVAC:ControllerList objects from system build path.
+        These objects are separated from the OptionTree build operations because they will vary based on the
+        system-level epJSON objects; therefore, they must be built afterwards.
 
         :return: object list of YAML formatted AirLoopHVAC:ControllerList objects
         """
