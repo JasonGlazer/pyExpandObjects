@@ -42,13 +42,13 @@ class ExpansionStructureLocation:
                 except yaml.YAMLError as exc:
                     if hasattr(exc, 'problem_mark'):
                         mark = exc.problem_mark
-                        raise PyExpandObjectsYamlError("problem loading yaml at ({}, {})".format(
+                        raise PyExpandObjectsYamlError("Problem loading yaml at ({}, {})".format(
                             mark.line + 1, mark.column + 1))
-                    else:
+                    else:  # pragma: no cover
                         raise PyExpandObjectsYamlError()
         else:
             raise PyExpandObjectsTypeError(
-                'template expansion structure reference is not a file path or dictionary: {}'.format(value))
+                'Template expansion structure reference is not a file path or dictionary: {}'.format(value))
         self.expansion_structure = parsed_value
         return
 
@@ -76,11 +76,11 @@ class VerifyTemplate:
                 # ensure object is dictionary
                 if not isinstance(object_structure, dict):
                     raise InvalidTemplateException(
-                        'An Invalid object {} was passed as an {} object'.format(value, self.template_type))
+                        'An invalid object {} was passed as an {} object'.format(value, self.template_type))
                 self.template = template_structure
             except (ValueError, AttributeError):
                 raise InvalidTemplateException(
-                    'An Invalid object {} failed verification'.format(value))
+                    'An invalid object {} failed verification'.format(value))
         else:
             self.template = None
         return

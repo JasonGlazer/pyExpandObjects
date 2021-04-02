@@ -4,7 +4,7 @@ import copy
 import json
 
 from src.expand_objects import ExpandObjects, ExpandZone, ExpandSystem
-from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException
+from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException, PyExpandObjectsYamlError
 from . import BaseTest
 
 mock_zone_template = {
@@ -236,6 +236,21 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         except KeyError:
             key_check = False
         self.assertTrue(key_check)
+        return
+
+    def test_reject_bad_yaml(self):
+        bad_yaml_string = "bad brackets: ]["
+        with self.assertRaisesRegex(PyExpandObjectsYamlError, 'Problem loading'):
+            ExpandObjects(
+                template=mock_zone_template,
+                expansion_structure=bad_yaml_string)
+        return
+
+    def test_reject_bad_structure_format(self):
+        with self.assertRaisesRegex(PyExpandObjectsTypeError, '.*is not a file path or dictionary.*'):
+            ExpandObjects(
+                template=mock_zone_template,
+                expansion_structure=[])
         return
 
     def test_reject_bad_option_tree_request(self):
@@ -1264,7 +1279,47 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             branchlist['Branchlist']['{} Branches'.format(eo.unique_name)]['branches'][0]['branch_name'])
         return
 
-    # todo_eo: test errrors for _make_branch_from_build_path() and make sure nodes can be resolved (is that necessary?)
+    def test_reject_create_branch_and_branchlist_from_build_path_no_connectors(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "name": "object_1_name",
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "bad_field",
+                            "Outlet": "field_2"
+                        }
+                    }
+                }
+            },
+        ]
+        eo = ExpandObjects()
+        eo.unique_name = 'TEST SYSTEM'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Field/Connector mismatch"):
+            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        return
+
+    def test_reject_create_branch_and_branchlist_from_build_path_mismatch_connectors(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "name": "object_1_name",
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                }
+            },
+        ]
+        eo = ExpandObjects()
+        eo.unique_name = 'TEST SYSTEM'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Super object is missing Connectors"):
+            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        return
 
     def test_retrieve_build_path_objects_from_option_tree(self):
         eo = ExpandSystem(template=mock_system_template)
