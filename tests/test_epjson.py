@@ -83,12 +83,12 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 }
             }
         }
-        dict_3 = self.epjson_handler.merge_epjson(
+        self.epjson_handler.merge_epjson(
             super_dictionary=dict_1,
             object_dictionary=dict_2,
         )
-        self.assertIn('SPACE1-1', dict_3['Zone'].keys())
-        self.assertIn('SPACE2-1', dict_3['Zone'].keys())
+        self.assertIn('SPACE1-1', dict_1['Zone'].keys())
+        self.assertIn('SPACE2-1', dict_1['Zone'].keys())
         return
 
     def test_merge_two_objects(self):
@@ -120,14 +120,14 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 }
             }
         }
-        dict_3 = self.epjson_handler.merge_epjson(
+        self.epjson_handler.merge_epjson(
             super_dictionary=dict_1,
             object_dictionary=dict_2,
         )
-        self.assertIn('Zone', dict_3.keys())
-        self.assertGreater(len(dict_3['Zone']['SPACE1-1'].keys()), 0)
-        self.assertIn('ZoneInfiltration:DesignFlowRate', dict_3.keys())
-        self.assertGreater(len(dict_3['ZoneInfiltration:DesignFlowRate']['SPACE1-1 Infil 1'].keys()), 0)
+        self.assertIn('Zone', dict_1.keys())
+        self.assertGreater(len(dict_1['Zone']['SPACE1-1'].keys()), 0)
+        self.assertIn('ZoneInfiltration:DesignFlowRate', dict_1.keys())
+        self.assertGreater(len(dict_1['ZoneInfiltration:DesignFlowRate']['SPACE1-1 Infil 1'].keys()), 0)
         return
 
     def test_merge_duplicate_name(self):
@@ -195,12 +195,12 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 }
             }
         }
-        output = self.epjson_handler.merge_epjson(
+        self.epjson_handler.merge_epjson(
             super_dictionary=dict_1,
             object_dictionary=dict_2,
             unique_name_override=False,
             unique_name_fail=False)
-        self.assertEqual(1, len(output["Zone"].keys()))
+        self.assertEqual(1, len(dict_1["Zone"].keys()))
         return
 
     def test_unpack_epjson(self):
@@ -376,4 +376,5 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 json_location='bad/file/path.epJSON'
             )
         return
+
     # todo_eo: need to provide path for user provided schema location

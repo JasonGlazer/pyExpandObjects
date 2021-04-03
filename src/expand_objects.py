@@ -6,7 +6,8 @@ import numbers
 import typing
 
 from custom_exceptions import PyExpandObjectsTypeError, InvalidTemplateException, \
-    PyExpandObjectsYamlError, PyExpandObjectsFileNotFoundError, PyExpandObjectsYamlStructureException
+    PyExpandObjectsYamlError, PyExpandObjectsFileNotFoundError, PyExpandObjectsYamlStructureException, \
+    PyExpandObjectsException
 from epjson_handler import EPJSON
 
 source_dir = Path(__file__).parent
@@ -30,7 +31,7 @@ class ExpansionStructureLocation:
                 else:
                     with open(value, 'r') as f:
                         # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
-                        # With FullLoader there would be more functionality but might not be necessary.
+                        #   With FullLoader there would be more functionality but might not be necessary.
                         parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
             else:
                 try:
@@ -76,7 +77,7 @@ class VerifyTemplate:
                 # ensure object is dictionary
                 if not isinstance(object_structure, dict):
                     raise InvalidTemplateException(
-                        'An invalid object {} was passed as an {} object'.format(value, self.template_type))
+                        'An invalid object {} was passed as an {} object'.format(value, getattr(self, 'template_type')))
                 self.template = template_structure
             except (ValueError, AttributeError):
                 raise InvalidTemplateException(
@@ -202,7 +203,7 @@ class ExpandObjects(EPJSON):
             self,
             structure_hierarchy: list) -> dict:
         """
-        Return objects from option tree leaf.
+        Return objects from option tree leaves.
 
         :return: epJSON dictionary with unresolved complex inputs
         """
@@ -217,7 +218,7 @@ class ExpandObjects(EPJSON):
                 option_tree=option_tree,
                 leaf_path=['BaseObjects', ])
             object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
-            option_tree_dictionary = self.merge_epjson(
+            self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
                 object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
         if 'TemplateObjects' in options:
@@ -228,12 +229,12 @@ class ExpandObjects(EPJSON):
                         option_tree=option_tree,
                         leaf_path=['TemplateObjects', template_field, getattr(self, template_field)])
                     object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
-                    option_tree_dictionary = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=option_tree_dictionary,
                         object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
         if "BuildPath" in options:
             object_list, epjson_objects = self._process_build_path(option_tree=option_tree['BuildPath'])
-            option_tree_dictionary = self.merge_epjson(
+            self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
                 object_dictionary=dict(
                     **self._yaml_list_to_epjson_dictionaries(object_list),
@@ -341,9 +342,9 @@ class ExpandObjects(EPJSON):
                                                                 .format(mapping_field, object_type))
         return option_tree_leaf['Objects']
 
-    def _yaml_list_to_epjson_dictionaries(self, yaml_list):
+    def _yaml_list_to_epjson_dictionaries(self, yaml_list: list) -> dict:
         """
-        Convert input YAML dictionaries into epJSON formatted dictionaries.
+        Convert list of input YAML dictionaries into epJSON formatted dictionaries.
 
         YAML dictionaries can either be regular or 'super' objects which contain 'Fields' and 'Connectors'
         yaml_list: list of yaml objects to be formatted.
@@ -359,7 +360,7 @@ class ExpandObjects(EPJSON):
                     transitioned_object_structure = transitioned_object_structure['Fields']
                 else:
                     object_name = transitioned_object_structure.pop('name').format(self.unique_name)
-                output_dictionary = self.merge_epjson(
+                self.merge_epjson(
                     super_dictionary=output_dictionary,
                     object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}}
                 )
@@ -466,21 +467,24 @@ class ExpandObjects(EPJSON):
                         object_fields[ig['field']] = ig['value']
         return epjson
 
-    def _create_objects(self):
+    def _create_objects(self, epjson=None):
         """
         Create a set of EnergyPlus objects for a given template
 
-        :return: epJSON dictionary.  epJSON dictionary and BuildPath (if applicable) are also added as class attributes
+        :return: epJSON dictionary of newly created objects.  The input epJSON dictionary is also modified to include
+            the newly created objects
         """
+        # if epJSON dictionary not passed, use the class attribute
+        epjson = epjson or self.epjson
         # Get BaseObjects and Template objects, applying transitions from template before returning YAML objects
         structure_hierarchy = self.template_type.split(':')
-        epjson = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
+        epjson_from_option_tree = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         # Convert field values using name formatting and complex input operations using _resolve_objects
         # Always use merge_epjson to class epJSON in case objects have been stored during processing
-        self.epjson = self.merge_epjson(
-            super_dictionary=self.epjson,
-            object_dictionary=self._resolve_objects(epjson))
-        return self._resolve_objects(epjson)
+        self.merge_epjson(
+            super_dictionary=epjson,
+            object_dictionary=self._resolve_objects(epjson_from_option_tree))
+        return self._resolve_objects(epjson_from_option_tree)
 
     def _apply_build_path_action(self, build_path, action_instructions):
         """
@@ -689,7 +693,8 @@ class ExpandObjects(EPJSON):
             insert_values: list,
             name: str = None) -> dict:
         """
-        Build a compact schedule from inputs.  Save epjJSON object to class dictionary and return to calling function.
+        Build a Schedule:Compact schedule from inputs.  Save epjJSON object to class dictionary and return
+        to calling function.
 
         :param structure_hierarchy: list indicating YAML structure hierarchy
         :param insert_values: list of values to insert into object
@@ -722,7 +727,7 @@ class ExpandObjects(EPJSON):
             }
         }
         # add objects to class epjson dictionary
-        self.epjson = self.merge_epjson(
+        self.merge_epjson(
             super_dictionary=self.epjson,
             object_dictionary=schedule_object,
             unique_name_override=True
@@ -770,8 +775,8 @@ class ExpandThermostat(ExpandObjects):
             thermostat_setpoint_object = {
                 "ThermostatSetpoint:DualSetpoint": {
                     '{} SP Control'.format(self.unique_name): {
-                        'heating_setpoint_temperature_schedule_name': self.heating_setpoint_schedule_name,
-                        'cooling_setpoint_temperature_schedule_name': self.cooling_setpoint_schedule_name
+                        'heating_setpoint_temperature_schedule_name': getattr(self, 'heating_setpoint_schedule_name'),
+                        'cooling_setpoint_temperature_schedule_name': getattr(self, 'cooling_setpoint_schedule_name')
                     }
                 }
             }
@@ -779,7 +784,7 @@ class ExpandThermostat(ExpandObjects):
             thermostat_setpoint_object = {
                 "ThermostatSetpoint:SingleHeating": {
                     '{} SP Control'.format(self.unique_name): {
-                        'setpoint_temperature_schedule_name': self.heating_setpoint_schedule_name
+                        'setpoint_temperature_schedule_name': getattr(self, 'heating_setpoint_schedule_name')
                     }
                 }
             }
@@ -787,14 +792,15 @@ class ExpandThermostat(ExpandObjects):
             thermostat_setpoint_object = {
                 "ThermostatSetpoint:SingleCooling": {
                     '{} SP Control'.format(self.unique_name): {
-                        'setpoint_temperature_schedule_name': self.cooling_setpoint_schedule_name
+                        'setpoint_temperature_schedule_name': getattr(self, 'cooling_setpoint_schedule_name')
                     }
                 }
             }
         else:
+            # todo_eo: should the final else case make a floating thermostat or this error?
             raise InvalidTemplateException(
                 'No setpoints or schedules provided to HVACTemplate:Thermostat object: {}'.format(self.unique_name))
-        self.epjson = self.merge_epjson(
+        self.merge_epjson(
             super_dictionary=self.epjson,
             object_dictionary=thermostat_setpoint_object,
             unique_name_override=False
@@ -819,7 +825,7 @@ class ExpandZone(ExpandObjects):
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
         try:
-            self.unique_name = self.zone_name
+            self.unique_name = getattr(self, 'zone_name')
             if not self.unique_name:
                 raise InvalidTemplateException("Zone name not provided in template: {}".format(template))
         except AttributeError:
@@ -845,18 +851,20 @@ class ExpandSystem(ExpandObjects):
         self.build_path = None
         return
 
-    def _create_controller_list_from_epjson(self, epjson=None):
+    def _create_controller_list_from_epjson(self, epjson: dict = None) -> dict:
         """
-        Create AirLoopHVAC:ControllerList objects from system build path.
-        These objects are separated from the OptionTree build operations because they will vary based on the
-        system-level epJSON objects; therefore, they must be built afterwards.
+        Create AirLoopHVAC:ControllerList objects from epJSON dictionary
+        These list objects are separated from the OptionTree build operations because they will vary based on the
+        presence of Controller:WaterCoil and Controller:OutdoorAir objects in the epJSON dictionary.
+        Therefore, the list objects must be built afterwards in order to retrieve the referenced Controller:.* objects.
 
-        :return: object list of YAML formatted AirLoopHVAC:ControllerList objects
+        :param epjson: system epJSON formatted dictionary
+        :return: object list of YAML formatted AirLoopHVAC:ControllerList objects.  The epJSON formatted list objects
+            are also stored back to the input epJSON object.
         """
         # if epjson not provided, use the class attribute:
         object_list = []
-        if not epjson:
-            epjson = self.epjson
+        epjson = epjson or self.epjson
         for controller_type in ['Controller:WaterCoil', 'Controller:OutdoorAir']:
             controller_objects = epjson.get(controller_type)
             if controller_objects:
@@ -876,10 +884,51 @@ class ExpandSystem(ExpandObjects):
                                                    .format(controller_objects))
                 object_list.append({'AirLoopHVAC:ControllerList': airloop_hvac_controllerlist_object})
         controller_epjson = self._yaml_list_to_epjson_dictionaries(object_list)
-        self.epjson = self.merge_epjson(
-            super_dictionary=self.epjson,
+        self.merge_epjson(
+            super_dictionary=epjson,
             object_dictionary=self._resolve_objects(epjson=controller_epjson))
         return self._resolve_objects(epjson=controller_epjson)
+
+    def _create_outdoor_air_equipment_list_from_build_path(self, build_path: list = None, epjson: dict = None) -> dict:
+        """
+        Create AirLoopHVAC:OutdoorAirSystem:EquipmentList objects from system build path
+        This object is separated from the OptionTree build operations because it varies based on the final build path.
+        Therefore, this object must be built afterwards in order to retrieve the referenced outdoor air equipment
+        objects.
+
+        :param build_path: system build path
+        :param epjson: epJSON dictionary
+        :return: object list of YAML formatted AirLoopHVAC:OutdoorAirSystem:EquipmentList objects.  The epJSON
+            formatted list objects are also stored back to the input epJSON object.
+        """
+        # if build_path and/or epjson are not passed to function, get the class attributes
+        epjson = epjson or self.epjson
+        build_path = build_path or getattr(self, 'build_path', None)
+        if not build_path:
+            raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+        # set dictionary and loop variables
+        stop_loop = False
+        object_count = 1
+        oa_equipment_list_dictionary = self._get_structure(
+            structure_hierarchy=['AirLoopHVAC', 'OutdoorAirSystem', 'EquipmentList', 'Base'])
+        # iterate over build path returning every object up to the OutdoorAir:Mixer
+        for super_object in build_path:
+            for super_object_type, super_object_constructor in super_object.items():
+                if stop_loop:
+                    break
+                oa_equipment_list_dictionary['component_{}_object_type'.format(object_count)] = \
+                    super_object_type
+                oa_equipment_list_dictionary['component_{}_name'.format(object_count)] = \
+                    super_object_constructor['Fields']['name']
+                if super_object_type == 'OutdoorAir:Mixer':
+                    stop_loop = True
+                object_count += 1
+        outdoor_air_equipment_list_object = self._yaml_list_to_epjson_dictionaries([
+            {'AirLoopHVAC:OutdoorAirSystem:EquipmentList': oa_equipment_list_dictionary}, ])
+        self.merge_epjson(
+            super_dictionary=epjson,
+            object_dictionary=self._resolve_objects(epjson=outdoor_air_equipment_list_object))
+        return self._resolve_objects(epjson=outdoor_air_equipment_list_object)
 
     def run(self):
         """
@@ -888,4 +937,5 @@ class ExpandSystem(ExpandObjects):
         """
         self._create_objects()
         self._create_controller_list_from_epjson()
+        self._create_outdoor_air_equipment_list_from_build_path()
         return self

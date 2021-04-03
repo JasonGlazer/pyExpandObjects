@@ -1,6 +1,8 @@
 import unittest
+import copy
 
 from src.expand_objects import ExpandSystem
+from src.expand_objects import PyExpandObjectsException
 from . import BaseTest
 
 mock_template = template = {
@@ -107,7 +109,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
 
     def test_create_water_controller_list_from_epjson(self):
         es = ExpandSystem(template=mock_template)
-        controllerlist = es._create_controller_list_from_epjson(epjson={
+        es.epjson = {
             'Controller:WaterCoil': {
                 'test cooling water coil': {
                     'sensor_node_name': {
@@ -126,7 +128,10 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
                     }
                 }
             }
-        })
+        }
+        controllerlist = es._create_controller_list_from_epjson()
+        from pprint import pprint
+        pprint(es.epjson, width=200)
         self.assertEqual('AirLoopHVAC:ControllerList', list(controllerlist.keys())[0])
         self.assertEqual(
             'test cooling water coil',
@@ -136,7 +141,38 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             controllerlist['AirLoopHVAC:ControllerList']['VAV Sys 1 Controllers']['controller_2_name'])
         return
 
-    # todo_eo: system objects to create: Controller:WaterCoil, Controller:OutdoorAir,
-    #  AirLoopHVAC:OutdoorAirSystem:EquipmentList, SupplyPath, ReturnPath
+    def test_create_outdoor_air_equipment_list_from_epjson(self):
+        es = ExpandSystem(template=mock_template)
+        temp_mock_build_path = copy.deepcopy(mock_build_path)
+        temp_mock_build_path.insert(0, {
+            'TestObject': {
+                'Fields': {
+                    'name': 'Test Name',
+                },
+                'Connectors': {}
+            }
+        })
+        es.build_path = temp_mock_build_path
+        oa_equipment_list_object = es._create_outdoor_air_equipment_list_from_build_path()
+        self.assertEqual('AirLoopHVAC:OutdoorAirSystem:EquipmentList', list(oa_equipment_list_object.keys())[0])
+        self.assertEqual(
+            'Test Name',
+            oa_equipment_list_object['AirLoopHVAC:OutdoorAirSystem:EquipmentList']
+            ['VAV Sys 1 OA System Equipment']['component_1_name'])
+        self.assertEqual(
+            'VAV Sys 1 OA Mixing Box',
+            oa_equipment_list_object['AirLoopHVAC:OutdoorAirSystem:EquipmentList']
+            ['VAV Sys 1 OA System Equipment']['component_2_name'])
+        return
 
-    # todo_eo: system objects need to have objects resolved, or _resolve_objects needs to be called later.
+    def test_reject_create_outdoor_air_equipment_list_from_epjson_without_build_path(self):
+        es = ExpandSystem(template=mock_template)
+        with self.assertRaisesRegex(PyExpandObjectsException, 'Build path was not provided nor was it available'):
+            es._create_outdoor_air_equipment_list_from_build_path()
+        return
+
+    # todo_eo: _create_branch_and_branchlist_from_build_path(build_path=build_path) needs to be moved to ExpandSystem
+    #  like other system level functions.
+    # todo_eo: branch in _create_branch_and_branchlist_from_build_path() needs first component to be
+    #  AirLoopHVAC:OutdoorAirSystem instead of individual components
+    # todo_eo: system objects to create: AirLoopHVAC:OutdoorAirSystem, SupplyPath, ReturnPath

@@ -54,7 +54,7 @@ class HVACTemplate(EPJSON):
         for object_type, object_structure in epjson.items():
             if re.match('^HVACTemplate:*', object_type):
                 if re.match('^HVACTemplate:Thermostat$', object_type):
-                    self.templates_thermostats = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=self.templates_thermostats,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
@@ -62,7 +62,7 @@ class HVACTemplate(EPJSON):
                               'IdealLoadsAirSystem|BaseboardHeat|FanCoil|PTAC|PTHP|WaterToAirHeatPump|'
                               'VRF|Unitary|VAV|VAV:FanPowered|VAVHeatAndCool|ConstantVolumn|DualDuct)$',
                               object_type):
-                    self.templates_zones = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=self.templates_zones,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
@@ -70,17 +70,17 @@ class HVACTemplate(EPJSON):
                               'VRF|Unitary|UnitaryHeatPump:AirToAir|UnitarySystem|VAV|PackagedVAV|'
                               'ConstantVolume|DualDuct|DedicatedOutdoorAir'
                               ')$', object_type):
-                    self.templates_systems = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=self.templates_systems,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
                 elif re.match('^HVACTemplate:Plant:(ChilledWater|HotWater|MixedWater)Loop$', object_type):
-                    self.templates_plant_loops = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=self.templates_plant_loops,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
                 elif re.match('^HVACTemplate:Plant:(Chiller|Tower|Boiler)(ObjectReference)*$', object_type):
-                    self.templates_plant_equipment = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=self.templates_plant_equipment,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
@@ -88,12 +88,12 @@ class HVACTemplate(EPJSON):
                     raise InvalidTemplateException(
                         'Template object type {} was not recognized'.format(object_type))
                 # store original templates into dictionary
-                self.templates = self.merge_epjson(
+                self.merge_epjson(
                     super_dictionary=self.templates,
                     object_dictionary={object_type: object_structure},
                     unique_name_override=False)
             else:
-                self.base_objects = self.merge_epjson(
+                self.merge_epjson(
                     super_dictionary=self.base_objects,
                     object_dictionary={object_type: object_structure},
                     unique_name_override=False)
@@ -166,7 +166,7 @@ class HVACTemplate(EPJSON):
                     }
                 }
             }
-            self.epjson = self.merge_epjson(
+            self.merge_epjson(
                 super_dictionary=self.epjson,
                 object_dictionary=dict(control_schedule, **zonecontrol_thermostat),
                 unique_name_override=True
@@ -229,7 +229,6 @@ class HVACTemplate(EPJSON):
         # _create_system_airloop_connections
         self.logger.info('##### Creating epJSON #####')
         # Merge each set of epJSON dictionaries
-        output_epjson = {}
         merge_list = [
             self.epjson,
             self.base_objects,
@@ -237,8 +236,9 @@ class HVACTemplate(EPJSON):
             *[j.epjson for i, j in self.expanded_zones.items()],
             # *[j.epjson for i, j in self.expanded_systems.items()]
         ]
+        output_epjson = {}
         for merge_dictionary in merge_list:
-            output_epjson = self.merge_epjson(
+            self.merge_epjson(
                 super_dictionary=output_epjson,
                 object_dictionary=merge_dictionary
             )

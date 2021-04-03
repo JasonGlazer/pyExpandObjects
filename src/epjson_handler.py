@@ -37,7 +37,7 @@ class EPJSON(Logger):
             super_dictionary: dict,
             object_dictionary: dict,
             unique_name_override: bool = True,
-            unique_name_fail: bool = True) -> dict:
+            unique_name_fail: bool = True):
         """
         Merge a high level formatted dictionary with a sub-dictionary, both in epJSON format
 
@@ -45,28 +45,35 @@ class EPJSON(Logger):
         :param object_dictionary: dictionary to merge into base object
         :param unique_name_override: allow a duplicate unique name to overwrite an existing object
         :param unique_name_fail: if override is set to False, choose whether to skip object or fail
-        :return: merged output of the two input dictionaries
+        :return: merged output of the two input dictionaries.  Note, the super_dictionary is modified in this operation.
+            A copy operation was not performed intentionally.  If the user wants the original super_dictionary
+            to remain unchanged then a copy.deepcopy() should be performed before running the function.
         """
-        for object_type, object_structure in object_dictionary.items():
-            if not super_dictionary.get(object_type):
-                super_dictionary[object_type] = {}
-            if isinstance(object_structure, dict):
-                for object_name, object_fields in object_structure.items():
-                    if not unique_name_override and object_name in super_dictionary[object_type].keys():
-                        if unique_name_fail:
-                            raise UniqueNameException("Unique name {} already exists in object {}".format(
-                                object_name,
-                                object_type
-                            ))
-                        else:  # pragma: loop bug
-                            # if two unique names are present and the user has opted to not fail on this condition
-                            # and not override the existing object, then skip it.
-                            continue
-                    super_dictionary[object_type][object_name] = object_fields
-            else:
-                raise PyExpandObjectsTypeError(
-                    'An Invalid object {} failed to merge'.format(object_structure))
-        return super_dictionary
+        if object_dictionary:
+            for object_type, object_structure in object_dictionary.items():
+                if not super_dictionary.get(object_type):
+                    super_dictionary[object_type] = {}
+                if isinstance(object_structure, dict):
+                    for object_name, object_fields in object_structure.items():
+                        if not unique_name_override and object_name in super_dictionary[object_type].keys():
+                            # todo_eo: Prevent the exception if the object is a Schedule:Compact with the name
+                            #  HVACTemplate-Always... or other pre-set that (based on the name) would be
+                            #  identical.  This flexibility will allow for these common objects to be created
+                            #  without checking and not needing to change the unique_name_fail flag for other objects.
+                            if unique_name_fail:
+                                raise UniqueNameException("Unique name {} already exists in object {}".format(
+                                    object_name,
+                                    object_type
+                                ))
+                            else:  # pragma: loop bug
+                                # if two unique names are present and the user has opted to not fail on this condition
+                                # and not override the existing object, then skip it.
+                                continue
+                        super_dictionary[object_type][object_name] = object_fields
+                else:
+                    raise PyExpandObjectsTypeError(
+                        'An Invalid object {} failed to merge'.format(object_structure))
+        return
 
     @staticmethod
     def summarize_epjson(epjson):
@@ -92,7 +99,7 @@ class EPJSON(Logger):
         :param epjson: input epJSON
         :param purge_dictionary: key-value pair of object_type and list of regular expressions to remove items
             (.* removes all objects)
-        :return: epJSON
+        :return: epJSON with items referenced in purge_dictionary removed.
         """
         tmp_d = copy.deepcopy(epjson)
         if purge_dictionary:
@@ -111,11 +118,12 @@ class EPJSON(Logger):
     @staticmethod
     def epjson_genexp(epjson):
         """
-        Create generator of epJSON objects
+        Create generator of epJSON objects in epJSON format.
+
+        {object_type: {object_name: object_fields}, {...}} -> {object_type: {object_name: object_fields}}, {...}
 
         :param epjson: epJSON object
-        :return: generator which returns one unqiue object in epJSON format for each object in an object_type
-            {object_type: {object_name: object_fields}, {...}} -> {object_type: {object_name: object_fields}}, {...}
+        :return: generator which returns one unqiue object in epJSON format for each object in an object_type.
         """
         for object_type, epjson_objects in epjson.items():
             for object_name, object_structure in epjson_objects.items():

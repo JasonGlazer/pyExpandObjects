@@ -39,6 +39,13 @@ class UniqueNameException(CustomException):
     pass
 
 
+class PyExpandObjectsException(CustomException):
+    """
+    General ExpandObjects errors
+    """
+    pass
+
+
 class PyExpandObjectsYamlStructureException(CustomException):
     """
     Hierarchy and organizational YAML file exceptions

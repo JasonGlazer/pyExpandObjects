@@ -85,11 +85,11 @@ class TestExpandZone(BaseTest, unittest.TestCase):
         eo = ExpandZone(template=mock_zone_template)
         zone_output = eo._create_objects()
         zone_connection_output = self.hvac_template._create_zonecontrol_thermostat(zone_template=mock_zone_template)
-        output = eo.merge_epjson(
+        eo.merge_epjson(
             super_dictionary=zone_output,
             object_dictionary=zone_connection_output
         )
-        summarized_output = eo.summarize_epjson(output)
+        summarized_output = eo.summarize_epjson(zone_output)
         expected_summary = {
             'ZoneHVAC:AirDistributionUnit': 1,
             'ZoneHVAC:EquipmentList': 1,
