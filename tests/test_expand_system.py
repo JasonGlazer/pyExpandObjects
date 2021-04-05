@@ -2,7 +2,8 @@ import unittest
 import copy
 
 from src.expand_objects import ExpandSystem
-from src.expand_objects import PyExpandObjectsException
+from src.expand_objects import PyExpandObjectsException, PyExpandObjectsYamlStructureException, \
+    PyExpandObjectsTypeError
 from . import BaseTest
 
 mock_template = template = {
@@ -130,8 +131,6 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             }
         }
         controllerlist = es._create_controller_list_from_epjson()
-        from pprint import pprint
-        pprint(es.epjson, width=200)
         self.assertEqual('AirLoopHVAC:ControllerList', list(controllerlist.keys())[0])
         self.assertEqual(
             'test cooling water coil',
@@ -171,8 +170,261 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             es._create_outdoor_air_equipment_list_from_build_path()
         return
 
-    # todo_eo: _create_branch_and_branchlist_from_build_path(build_path=build_path) needs to be moved to ExpandSystem
-    #  like other system level functions.
+    def test_branchlist_from_build_path(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "name": "object_1_name",
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_1",
+                            "Outlet": "field_2"
+                        }
+                    }
+                }
+            },
+            {
+                "Object:2": {
+                    "Fields": {
+                        "name": "object_2_name",
+                        "field_3": "value_3",
+                        "field_4": "value_4"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_3",
+                            "Outlet": "field_4"
+                        }
+                    }
+                }
+            }
+        ]
+        eo = ExpandSystem(template=mock_template)
+        eo.unique_name = 'TEST SYSTEM'
+        output = eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        self.assertEqual(
+            '{} Main Branch'.format(eo.unique_name),
+            output['Branchlist']['{} Branches'.format(eo.unique_name)]['branches'][0]['branch_name'])
+        return
+
+    def test_reject_create_branch_and_branchlist_from_build_path_no_connectors(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "name": "object_1_name",
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "bad_field",
+                            "Outlet": "field_2"
+                        }
+                    }
+                }
+            },
+        ]
+        eo = ExpandSystem(template=template)
+        eo.unique_name = 'TEST SYSTEM'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Field/Connector mismatch"):
+            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        return
+
+    def test_reject_create_branch_and_branchlist_from_build_path_mismatch_connectors(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "name": "object_1_name",
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                }
+            },
+        ]
+        eo = ExpandSystem(template=mock_template)
+        eo.unique_name = 'TEST SYSTEM'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Super object is missing Connectors"):
+            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        return
+
+    def test_create_availability_manager_assignment_list(self):
+        es = ExpandSystem(template=mock_template)
+        es.epjson = {
+            "AvailabilityManager:NightCycle": {
+                "VAV Sys 1 Availability": {
+                    "applicability_schedule_name": "HVACTemplate-Always 1",
+                    "control_type": "CycleOnAny",
+                    "cycling_run_time": 3600,
+                    "cycling_run_time_control_type": "FixedRunTime",
+                    "fan_schedule_name": "FanAvailSched",
+                    "thermostat_tolerance": 0.2
+                }
+            }
+        }
+        availability_manager_assignment_list_object = es._create_availability_manager_assignment_list()
+        self.assertEqual(
+            'AvailabilityManagerAssignmentList',
+            list(availability_manager_assignment_list_object.keys())[0])
+        self.assertEqual(
+            'VAV Sys 1 Availability',
+            availability_manager_assignment_list_object['AvailabilityManagerAssignmentList']
+            ['VAV Sys 1 Availability Managers']['availability_manager_name'])
+        return
+
+    def test_reject_create_availability_manager_assignment_list_bad_object(self):
+        es = ExpandSystem(template=mock_template)
+        es.epjson = {
+            "AvailabilityManager:NightCycle": ['bad', 'format']
+        }
+        with self.assertRaisesRegex(PyExpandObjectsTypeError, 'AvailabilityManager object not properly'):
+            es._create_availability_manager_assignment_list()
+        return
+
+    def test_airloophvac_outdoor_air_system(self):
+        es = ExpandSystem(template=mock_template)
+        es.epjson = {
+            "AirLoopHVAC:ControllerList": {
+                "VAV Sys 1 Controllers": {
+                    "controller_1_name": "VAV Sys 1 Cooling Coil Controller",
+                    "controller_1_object_type": "Controller:WaterCoil",
+                    "controller_2_name": "VAV Sys 1 Heating Coil Controller",
+                    "controller_2_object_type": "Controller:WaterCoil"
+                },
+                "VAV Sys 1 OA System Controllers": {
+                    "controller_1_name": "VAV Sys 1 OA Controller",
+                    "controller_1_object_type": "Controller:OutdoorAir"
+                }
+            },
+            "AirLoopHVAC:OutdoorAirSystem:EquipmentList": {
+                "VAV Sys 1 OA System Equipment": {
+                    "component_1_name": "VAV Sys 1 OA Mixing Box",
+                    "component_1_object_type": "OutdoorAir:Mixer"
+                }
+            },
+            "AvailabilityManagerAssignmentList": {
+                "VAV Sys 1 Availability Managers": {
+                    "managers": [
+                        {
+                            "availability_manager_name": "VAV Sys 1 Availability",
+                            "availability_manager_object_type": "AvailabilityManager:NightCycle"
+                        }
+                    ]
+                }
+            }
+        }
+        oa_system_object = es._create_outdoor_air_system()
+        self.assertEqual('AirLoopHVAC:OutdoorAirSystem', list(oa_system_object.keys())[0])
+        self.assertEqual(
+            'VAV Sys 1 OA System Controllers',
+            oa_system_object['AirLoopHVAC:OutdoorAirSystem']['VAV Sys 1 OA System']['controller_list_name'])
+        return
+
+    def test_reject_outdoor_air_system_no_oa_controllerlist(self):
+        es = ExpandSystem(template=mock_template)
+        test_epjson = {
+            "AirLoopHVAC:ControllerList": {
+                "VAV Sys 1 Controllers": {
+                    "controller_1_name": "VAV Sys 1 Cooling Coil Controller",
+                    "controller_1_object_type": "Controller:WaterCoil",
+                    "controller_2_name": "VAV Sys 1 Heating Coil Controller",
+                    "controller_2_object_type": "Controller:WaterCoil"
+                },
+                "VAV Sys 1 OA System Controllers": {
+                    "controller_1_name": "VAV Sys 1 OA Controller",
+                    "controller_1_object_type": "Controller:OutdoorAir"
+                }
+            },
+            "AirLoopHVAC:OutdoorAirSystem:EquipmentList": {
+                "VAV Sys 1 OA System Equipment": {
+                    "component_1_name": "VAV Sys 1 OA Mixing Box",
+                    "component_1_object_type": "OutdoorAir:Mixer"
+                }
+            },
+            "AvailabilityManagerAssignmentList": {
+                "VAV Sys 1 Availability Managers": {
+                    "managers": [
+                        {
+                            "availability_manager_name": "VAV Sys 1 Availability",
+                            "availability_manager_object_type": "AvailabilityManager:NightCycle"
+                        }
+                    ]
+                }
+            }
+        }
+        no_oa_controller_epjson = copy.deepcopy(test_epjson)
+        no_oa_controller_epjson["AirLoopHVAC:ControllerList"].pop("VAV Sys 1 OA System Controllers")
+        es.epjson = no_oa_controller_epjson
+        with self.assertRaisesRegex(PyExpandObjectsException, 'No outdoor air AirLoopHVAC:ControllerList'):
+            es._create_outdoor_air_system()
+        no_oa_system_epjson = copy.deepcopy(test_epjson)
+        no_oa_system_epjson.pop('AirLoopHVAC:OutdoorAirSystem:EquipmentList')
+        es.epjson = no_oa_system_epjson
+        with self.assertRaisesRegex(
+                PyExpandObjectsException,
+                'Only one AirLoopHVAC:OutdoorAirSystem:EquipmentList'):
+            es._create_outdoor_air_system()
+        no_avail_epjson = copy.deepcopy(test_epjson)
+        no_avail_epjson.pop('AvailabilityManagerAssignmentList')
+        es.epjson = no_avail_epjson
+        with self.assertRaisesRegex(
+                PyExpandObjectsException,
+                'Only one AvailabilityManagerAssignmentList'):
+            es._create_outdoor_air_system()
+        return
+
+    def test_branch_from_build_path(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "name": "object_1_name",
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_1",
+                            "Outlet": "field_2"
+                        }
+                    }
+                }
+            },
+            {
+                "Object:2": {
+                    "Fields": {
+                        "name": "object_2_name",
+                        "field_3": "value_3",
+                        "field_4": "value_4"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_3",
+                            "Outlet": "field_4"
+                        }
+                    }
+                }
+            }
+        ]
+        es = ExpandSystem(template={})
+        es.unique_name = 'TEST SYSTEM'
+        output = es._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        self.assertEqual(
+            'value_3',
+            output['Branch']['{} Main Branch'.format(es.unique_name)]['components'][1]['component_inlet_node_name'])
+        return
+
+    def test_reject_create_branch_and_branchlist_from_build_path_no_build_path(self):
+        es = ExpandSystem(template={})
+        with self.assertRaisesRegex(PyExpandObjectsException, 'Build path was not provided'):
+            es._create_branch_and_branchlist_from_build_path(build_path=[])
+        return
+
     # todo_eo: branch in _create_branch_and_branchlist_from_build_path() needs first component to be
     #  AirLoopHVAC:OutdoorAirSystem instead of individual components
     # todo_eo: system objects to create: AirLoopHVAC:OutdoorAirSystem, SupplyPath, ReturnPath

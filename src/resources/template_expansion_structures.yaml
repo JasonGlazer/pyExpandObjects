@@ -157,6 +157,10 @@ AirLoopHVAC:
       Base:
         name: '{} OA System Equipment'
 
+AvailabilityManagerAssignmentList:
+  Base:
+    name: '{} Availability Managers'
+
 DesignSpecification:
   OutdoorAir:
     Base: &DesignSpecificationOutdoorAir

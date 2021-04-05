@@ -4,7 +4,8 @@ import copy
 import json
 
 from src.expand_objects import ExpandObjects, ExpandZone, ExpandSystem
-from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException, PyExpandObjectsYamlError
+from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException, \
+    PyExpandObjectsYamlError
 from . import BaseTest
 
 mock_zone_template = {
@@ -1037,7 +1038,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=test_system_option_tree)
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('test_object_type', list(build_path[1].keys())[0])
         self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
         return
@@ -1093,7 +1094,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=test_system_option_tree)
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('test_object_type', list(build_path[1].keys())[0])
         self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
         return
@@ -1115,7 +1116,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=test_system_option_tree)
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('Fan:VariableVolume', list(build_path[0].keys())[0])
         return
 
@@ -1157,7 +1158,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             expansion_structure=test_system_option_tree)
         structure_hierarchy = ['OptionTree', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual(1, len(build_path))
         return
 
@@ -1197,130 +1198,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual("value_2", output[1]["Object:2"]["field_3"])
         return
 
-    def test_branch_from_build_path(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_1",
-                            "Outlet": "field_2"
-                        }
-                    }
-                }
-            },
-            {
-                "Object:2": {
-                    "Fields": {
-                        "name": "object_2_name",
-                        "field_3": "value_3",
-                        "field_4": "value_4"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_3",
-                            "Outlet": "field_4"
-                        }
-                    }
-                }
-            }
-        ]
-        eo = ExpandObjects()
-        eo.unique_name = 'TEST SYSTEM'
-        branch, _ = eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        self.assertEqual(
-            'value_3',
-            branch['Branch']['{} Main Branch'.format(eo.unique_name)]['components'][1]['component_inlet_node_name'])
-        return
-
-    def test_branchlist_from_build_path(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_1",
-                            "Outlet": "field_2"
-                        }
-                    }
-                }
-            },
-            {
-                "Object:2": {
-                    "Fields": {
-                        "name": "object_2_name",
-                        "field_3": "value_3",
-                        "field_4": "value_4"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_3",
-                            "Outlet": "field_4"
-                        }
-                    }
-                }
-            }
-        ]
-        eo = ExpandObjects()
-        eo.unique_name = 'TEST SYSTEM'
-        _, branchlist = eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        self.assertEqual(
-            '{} Main Branch'.format(eo.unique_name),
-            branchlist['Branchlist']['{} Branches'.format(eo.unique_name)]['branches'][0]['branch_name'])
-        return
-
-    def test_reject_create_branch_and_branchlist_from_build_path_no_connectors(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "bad_field",
-                            "Outlet": "field_2"
-                        }
-                    }
-                }
-            },
-        ]
-        eo = ExpandObjects()
-        eo.unique_name = 'TEST SYSTEM'
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Field/Connector mismatch"):
-            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        return
-
-    def test_reject_create_branch_and_branchlist_from_build_path_mismatch_connectors(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                }
-            },
-        ]
-        eo = ExpandObjects()
-        eo.unique_name = 'TEST SYSTEM'
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Super object is missing Connectors"):
-            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        return
-
     def test_retrieve_build_path_objects_from_option_tree(self):
         eo = ExpandSystem(template=mock_system_template)
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
@@ -1352,6 +1229,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         output = eo._get_option_tree_objects(structure_hierarchy=['not', 'important'])
         self.assertEqual(
             eo.summarize_epjson(output),
-            {'OutdoorAir:Mixer': 1, 'test_object_type': 1, 'Fan:VariableVolume': 1, 'Branch': 1, 'Branchlist': 1}
+            {'OutdoorAir:Mixer': 1, 'test_object_type': 1, 'Fan:VariableVolume': 1}
         )
         return

@@ -233,12 +233,10 @@ class ExpandObjects(EPJSON):
                         super_dictionary=option_tree_dictionary,
                         object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
         if "BuildPath" in options:
-            object_list, epjson_objects = self._process_build_path(option_tree=option_tree['BuildPath'])
+            object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
             self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
-                object_dictionary=dict(
-                    **self._yaml_list_to_epjson_dictionaries(object_list),
-                    **epjson_objects))
+                object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -608,50 +606,6 @@ class ExpandObjects(EPJSON):
                                                             .format(super_object_structure, connectors))
         return object_list
 
-    def _create_branch_and_branchlist_from_build_path(self, build_path, loop_type='AirLoop'):
-        """
-        Create a branch object in epJSON format from a build path
-
-        :param build_path: list of EnergyPlus super objects
-        :return: epJSON formatted branch of connected objects
-        """
-        components = []
-        for super_object in copy.deepcopy(build_path):
-            component = {}
-            (super_object_type, super_object_structure), = super_object.items()
-            try:
-                connectors = super_object_structure.pop('Connectors')
-            except KeyError:
-                raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
-                                                            .format(super_object))
-            try:
-                component['component_inlet_node_name'] = \
-                    super_object_structure['Fields'][connectors[loop_type]['Inlet']]
-                component['component_outlet_node_name'] = \
-                    super_object_structure['Fields'][connectors[loop_type]['Outlet']]
-                component['component_object_type'] = super_object_type
-                component['component_object_name'] = super_object_structure['Fields']['name']
-                components.append(component)
-            except (AttributeError, KeyError):
-                raise PyExpandObjectsYamlStructureException("Field/Connector mismatch or name not in Fields. "
-                                                            "Object: {}, connectors: {}"
-                                                            .format(super_object_structure, connectors))
-        branch = {
-            "Branch": {
-                "{} Main Branch".format(self.unique_name): {
-                    "components": components
-                }
-            }
-        }
-        branchlist = {
-            "Branchlist": {
-                "{} Branches".format(self.unique_name): {
-                    "branches": [{"branch_name": "{} Main Branch".format(self.unique_name)}]
-                }
-            }
-        }
-        return branch, branchlist
-
     def _process_build_path(self, option_tree):
         """
         Create a connected group of objects from the BuildPath branch in the OptionTree.  A build path is a list of
@@ -683,9 +637,7 @@ class ExpandObjects(EPJSON):
         # Save build path to class attribute for later reference.
         self.build_path = build_path
         object_list = self._convert_build_path_to_object_list(build_path)
-        branch, branchlist = self._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        epjson_objects = dict(**branch, **branchlist)
-        return object_list, epjson_objects
+        return object_list
 
     def build_compact_schedule(
             self,
@@ -859,8 +811,8 @@ class ExpandSystem(ExpandObjects):
         Therefore, the list objects must be built afterwards in order to retrieve the referenced Controller:.* objects.
 
         :param epjson: system epJSON formatted dictionary
-        :return: object list of YAML formatted AirLoopHVAC:ControllerList objects.  The epJSON formatted list objects
-            are also stored back to the input epJSON object.
+        :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
+            input epJSON object.
         """
         # if epjson not provided, use the class attribute:
         object_list = []
@@ -880,7 +832,7 @@ class ExpandSystem(ExpandObjects):
                             controller_type
                         object_count += 1
                 except AttributeError:
-                    raise PyExpandObjectsTypeError("Controller Object not properly formatted: {}"
+                    raise PyExpandObjectsTypeError("Controller object not properly formatted: {}"
                                                    .format(controller_objects))
                 object_list.append({'AirLoopHVAC:ControllerList': airloop_hvac_controllerlist_object})
         controller_epjson = self._yaml_list_to_epjson_dictionaries(object_list)
@@ -889,7 +841,8 @@ class ExpandSystem(ExpandObjects):
             object_dictionary=self._resolve_objects(epjson=controller_epjson))
         return self._resolve_objects(epjson=controller_epjson)
 
-    def _create_outdoor_air_equipment_list_from_build_path(self, build_path: list = None, epjson: dict = None) -> dict:
+    def _create_outdoor_air_equipment_list_from_build_path(
+            self, build_path: list = None, epjson: dict = None) -> dict:
         """
         Create AirLoopHVAC:OutdoorAirSystem:EquipmentList objects from system build path
         This object is separated from the OptionTree build operations because it varies based on the final build path.
@@ -898,8 +851,8 @@ class ExpandSystem(ExpandObjects):
 
         :param build_path: system build path
         :param epjson: epJSON dictionary
-        :return: object list of YAML formatted AirLoopHVAC:OutdoorAirSystem:EquipmentList objects.  The epJSON
-            formatted list objects are also stored back to the input epJSON object.
+        :return: epJSON formatted AirLoopHVAC:OutdoorAirSystem:EquipmentList objects.  These objects are also stored
+            back to the input epJSON object.
         """
         # if build_path and/or epjson are not passed to function, get the class attributes
         epjson = epjson or self.epjson
@@ -930,12 +883,160 @@ class ExpandSystem(ExpandObjects):
             object_dictionary=self._resolve_objects(epjson=outdoor_air_equipment_list_object))
         return self._resolve_objects(epjson=outdoor_air_equipment_list_object)
 
+    def _create_availability_manager_assignment_list(self, epjson: dict = None) -> dict:
+        """
+        Create AvailabilityManagerAssignmentList object from epJSON dictionary
+        This list object is separated from the OptionTree build operations because it will vary based on the
+        presence of AvailabilityManager:.* objects in the epJSON dictionary.
+        Therefore, the list objects must be built afterwards in order to retrieve the referenced objects.
+
+        :param epjson: system epJSON formatted dictionary
+        :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
+            input epJSON object.
+        """
+        # if build_path and/or epjson are not passed to function, get the class attributes
+        epjson = epjson or self.epjson
+        availability_managers = {i: j for i, j in epjson.items() if re.match(r'^AvailabilityManager:.*', i)}
+        # loop over availability managers and add them to the list.
+        availability_manager_list_object = \
+            self._get_structure(structure_hierarchy=['AvailabilityManagerAssignmentList', 'Base'])
+        try:
+            for object_type, object_structure in availability_managers.items():
+                for object_name, object_fields in object_structure.items():
+                    availability_manager_list_object['availability_manager_name'] = \
+                        object_name
+                    availability_manager_list_object['availability_manager_object_type'] = \
+                        object_type
+        except AttributeError:
+            raise PyExpandObjectsTypeError("AvailabilityManager object not properly formatted: {}"
+                                           .format(availability_managers))
+        availability_manager_assignment_list_object = self._yaml_list_to_epjson_dictionaries([
+            {'AvailabilityManagerAssignmentList': availability_manager_list_object}, ])
+        self.merge_epjson(
+            super_dictionary=epjson,
+            object_dictionary=self._resolve_objects(epjson=availability_manager_assignment_list_object))
+        return self._resolve_objects(epjson=availability_manager_assignment_list_object)
+
+    def _create_outdoor_air_system(self, epjson: dict = None) -> dict:
+        """
+        Create AirLoopHVAC:OutdoorAirsystem object from epJSON dictionary
+        This list object is separated from the OptionTree build operations because it must seek out the correct
+        ControllerList containing the OutdoorAir:Mixer object.
+
+        :param epjson: system epJSON formatted dictionary
+        :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
+            input epJSON object.
+        """
+        epjson = epjson or self.epjson
+        # find oa controllerlist by looking for the Controller:OutdoorAir
+        oa_controller_list_name = None
+        controller_list_objects = epjson.get('AirLoopHVAC:ControllerList')
+        if controller_list_objects:
+            for object_name, object_structure in controller_list_objects.items():
+                for field, value in object_structure.items():
+                    if re.match(r'controller_\d+_object_type', field) and value == 'Controller:OutdoorAir':
+                        oa_controller_list_name = object_name
+                        break
+        if not oa_controller_list_name:
+            raise PyExpandObjectsException("No outdoor air AirLoopHVAC:ControllerList present in the {} system "
+                                           "build process".format(self.unique_name))
+        # get outdoor air system equipment list
+        try:
+            oa_system_equipment_list_object = epjson.get('AirLoopHVAC:OutdoorAirSystem:EquipmentList')
+            (oa_system_equipment_name, _), = oa_system_equipment_list_object.items()
+        except (ValueError, AttributeError):
+            raise PyExpandObjectsException('Only one AirLoopHVAC:OutdoorAirSystem:EquipmentList object is allowed '
+                                           'in {} template build process'.format(self.unique_name))
+        # get availability manager list
+        try:
+            availability_manager_list_object = epjson.get('AvailabilityManagerAssignmentList')
+            (availability_manager_name, _), = availability_manager_list_object.items()
+        except (ValueError, AttributeError):
+            raise PyExpandObjectsException('Only one AvailabilityManagerAssignmentList object is allowed in '
+                                           '{} template build process'.format(self.unique_name))
+        outdoor_air_system_yaml_object = {
+            'name': '{} OA System',
+            'availability_manager_list_name': availability_manager_name,
+            'controller_list_name': oa_controller_list_name,
+            'outdoor_air_equipment_list_name': oa_system_equipment_name
+        }
+        outdoor_air_system_list_object = self._yaml_list_to_epjson_dictionaries([
+            {'AirLoopHVAC:OutdoorAirSystem': outdoor_air_system_yaml_object}, ])
+        self.merge_epjson(
+            super_dictionary=epjson,
+            object_dictionary=self._resolve_objects(epjson=outdoor_air_system_list_object))
+        return self._resolve_objects(epjson=outdoor_air_system_list_object)
+
+    def _create_branch_and_branchlist_from_build_path(
+            self,
+            build_path: list = None,
+            loop_type: str = 'AirLoop',
+            epjson: dict = None):
+        """
+        Create Branch and BranchList objects from system build path
+        These objects are separated from the OptionTree build operations because they vary based on the final build
+        path.  Also, the Branch object must reference an AirLoopHVAC:OutdoorAirSystem object that is also built after
+        the OptionTree build operations.
+
+        :param build_path: system build path
+        :param loop_type: string descriptor of the loop type, AirLoop by default
+        :param epjson: epJSON dictionary
+        :return: epJSON formatted Branch and BranchList objects.  These objects are also stored back to the
+            input epJSON object.
+        """
+        # if build_path and/or epjson are not passed to function, get the class attributes
+        epjson = epjson or self.epjson
+        build_path = build_path or getattr(self, 'build_path', None)
+        if not build_path:
+            raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+        components = []
+        for super_object in copy.deepcopy(build_path):
+            component = {}
+            (super_object_type, super_object_structure), = super_object.items()
+            try:
+                connectors = super_object_structure.pop('Connectors')
+            except KeyError:
+                raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
+                                                            .format(super_object))
+            try:
+                component['component_inlet_node_name'] = \
+                    super_object_structure['Fields'][connectors[loop_type]['Inlet']]
+                component['component_outlet_node_name'] = \
+                    super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                component['component_object_type'] = super_object_type
+                component['component_object_name'] = super_object_structure['Fields']['name']
+                components.append(component)
+            except (AttributeError, KeyError):
+                raise PyExpandObjectsYamlStructureException("Field/Connector mismatch or name not in Fields. "
+                                                            "Object: {}, connectors: {}"
+                                                            .format(super_object_structure, connectors))
+        branch = {
+            "Branch": {
+                'name': '{} Main Branch'.format(self.unique_name),
+                'components': components
+            }
+        }
+        branchlist = {
+            "Branchlist": {
+                'name': '{} Branches'.format(self.unique_name),
+                'branches': [{"branch_name": "{} Main Branch".format(self.unique_name)}]
+            }
+        }
+        branch_and_branchlist_objects = self._yaml_list_to_epjson_dictionaries([branch, branchlist])
+        self.merge_epjson(
+            super_dictionary=epjson,
+            object_dictionary=self._resolve_objects(epjson=branch_and_branchlist_objects))
+        return self._resolve_objects(epjson=branch_and_branchlist_objects)
+
     def run(self):
         """
         Process system template
         :return: epJSON dictionary as class attribute
         """
         self._create_objects()
-        self._create_controller_list_from_epjson()
         self._create_outdoor_air_equipment_list_from_build_path()
+        self._create_availability_manager_assignment_list()
+        self._create_controller_list_from_epjson()
+        self._create_outdoor_air_system()
+        self._create_branch_and_branchlist_from_build_path()
         return self
