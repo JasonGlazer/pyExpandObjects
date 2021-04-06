@@ -196,8 +196,37 @@ class HVACTemplate(EPJSON):
         """
         Create objects connecting system supply air to zone objects.  An AirLoopHVAC:SupplyPath object is created with
         either an AirLoopHVAC:SupplyPlenum or an AirLoopHVAC:ZoneSplitter object.
-        :return:
+
+        :param system_template: HVACTemplate:System:.* object
+        :param expanded_zones: list of ExpandZone objects
+        :return: system supply air connection objects.  AirLoopHVAC:SupplyPath object and either
+            AirLoopHVAC:SupplyPlenum or AirLoopHVAC:ZoneSplitter object
         """
+        # get the zone field_name that will identify the system template name
+        if re.match(r'HVACTemplate:System:ConstantVolume', system_template.template_type):
+            zone_system_template_field_name = 'template_constant_volume_system_name'
+        elif re.match(r'HVACTemplate:System:DedicatedOutdoorAir', system_template.template_type):
+            zone_system_template_field_name = 'dedicated_outdoor_air_system_name'
+        elif re.match(r'HVACTemplate:System:DualDuct', system_template.template_type):
+            zone_system_template_field_name = 'template_dual_duct_system_name'
+        elif re.match(r'HVACTemplate:System:Unitary.*', system_template.template_type):
+            zone_system_template_field_name = 'template_unitary_system_name'
+        elif re.match(r'HVACTemplate:System:.*VAV$', system_template.template_type):
+            zone_system_template_field_name = 'template_vav_system_name'
+        elif re.match(r'HVACTemplate:System:VRF', system_template.template_type):
+            zone_system_template_field_name = 'template_vrf_system_name'
+        else:
+            raise InvalidTemplateException("Invalid System type passed to supply path creation function: {}"
+                                           .format(system_template))
+        # zone_splitters = []
+        # zone_mixers = []
+        # iterate over expanded zones and if the system reference field exists, and is for the referenced system,
+        # append them in the splitter and mixer lists
+        for ez in expanded_zones:
+            if getattr(ez, zone_system_template_field_name, None) == system_template.template_name:
+                print(getattr(ez, zone_system_template_field_name))
+                # create sub_function to scan epjson for objects like AirTerminal:.* to get the air inlet node name
+                # e.g. Equip Inlet
         return
 
     def run(self, input_epjson=None):

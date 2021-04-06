@@ -6,7 +6,7 @@ from src.expand_objects import PyExpandObjectsException, PyExpandObjectsYamlStru
     PyExpandObjectsTypeError
 from . import BaseTest
 
-mock_template = template = {
+mock_template = {
     "HVACTemplate:System:VAV": {
         "VAV Sys 1": {
             "cooling_coil_design_setpoint": 12.8,

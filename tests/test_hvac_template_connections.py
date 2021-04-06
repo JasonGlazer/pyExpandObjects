@@ -1,9 +1,10 @@
+import copy
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock
 
 from src.hvac_template import HVACTemplate
 from src.hvac_template import InvalidTemplateException
-from src.expand_objects import ExpandThermostat
+from src.expand_objects import ExpandThermostat, ExpandSystem, ExpandObjects
 from . import BaseTest
 
 minimum_objects_d = {
@@ -15,6 +16,18 @@ minimum_objects_d = {
             "coordinate_system": "Relative",
             "starting_vertex_position": "UpperLeftCorner",
             "vertex_entry_direction": "Counterclockwise"
+        }
+    }
+}
+
+mock_zone_epjson = {
+    "ZoneHVAC:EquipmentConnections": {
+        "ZoneHVAC:EquipmentConnections 1": {
+            "zone_air_inlet_node_or_nodelist_name": "{} Supply Inlet",
+            "zone_air_node_name": "{} Zone Air Node",
+            "zone_conditioning_equipment_list_name": "{} Equipment",
+            "zone_name": "{}",
+            "zone_return_air_node_or_nodelist_name": "{} Return Outlet"
         }
     }
 }
@@ -199,6 +212,27 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                     }
                 }
             })
+        return
+
+    def test_supply_path_objects(self):
+        eo = ExpandObjects()
+        es = ExpandSystem(template={
+            "HVACTemplate:System:VAV": {
+                "VAV Sys 1": {
+                }
+            }
+        })
+        ez_l = []
+        for unique_name in ['SPACE1-1', 'SPACE2-1']:
+            eo.unique_name = unique_name
+            mock_epjson = eo._resolve_objects(epjson=copy.deepcopy(mock_zone_epjson))
+            ez = MagicMock()
+            ez_epjson = PropertyMock(return_value=mock_epjson)
+            type(ez).epjson = ez_epjson
+            type(ez).template_vav_system_name = 'VAV Sys 1'
+            type(ez).zone_name = unique_name
+            ez_l.append(ez)
+        self.hvac_template._create_supply_path_objects(system_template=es, expanded_zones=ez_l)
         return
 
     # todo_eo: system objects to create: AirLoopHVAC:SupplyPlenum, AirLoopHVAC:SupplyPlenum/ZoneSplitter,
