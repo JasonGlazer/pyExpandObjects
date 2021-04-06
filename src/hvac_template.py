@@ -99,6 +99,22 @@ class HVACTemplate(EPJSON):
                     unique_name_override=False)
         return
 
+    def _expand_templates(self, templates, expand_class):
+        """
+        Run Expand operations on multiple templates
+        :param templates: dictionary of HVACTemplate:.* objects
+        :param expand_class: ExpandObjects child class to operate on template.
+        :return: dictionary of expanded objects with unique name as key
+        """
+        expanded_template_dictionary = {}
+        templates = self.epjson_genexp(templates)
+        for template in templates:
+            (_, template_structure), = template.items()
+            (template_name, _), = template_structure.items()
+            expanded_template = expand_class(template).run()
+            expanded_template_dictionary[template_name] = expanded_template
+        return expanded_template_dictionary
+
     def _get_thermostat_template_from_zone_template(self, zone_template):
         """
         Retrieve thermostat template from zone template field
@@ -176,21 +192,13 @@ class HVACTemplate(EPJSON):
             raise InvalidTemplateException("HVACTemplate failed to build ZoneControl:Thermostat from zone template "
                                            "{}".format(zone_template))
 
-    def _expand_templates(self, templates, expand_class):
+    def _create_supply_path_objects(self, system_template, expanded_zones):
         """
-        Run ExpandThermostat on multiple templates
-        :param templates: dictionary of HVACTemplate:.* objects
-        :param expand_class: ExpandObjects child class to operate on template.
-        :return: dictionary of expanded objects with unique name as key
+        Create objects connecting system supply air to zone objects.  An AirLoopHVAC:SupplyPath object is created with
+        either an AirLoopHVAC:SupplyPlenum or an AirLoopHVAC:ZoneSplitter object.
+        :return:
         """
-        expanded_template_dictionary = {}
-        templates = self.epjson_genexp(templates)
-        for template in templates:
-            (_, template_structure), = template.items()
-            (template_name, _), = template_structure.items()
-            expanded_template = expand_class(template).run()
-            expanded_template_dictionary[template_name] = expanded_template
-        return expanded_template_dictionary
+        return
 
     def run(self, input_epjson=None):
         """

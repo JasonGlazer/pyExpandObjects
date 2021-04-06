@@ -170,89 +170,6 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             es._create_outdoor_air_equipment_list_from_build_path()
         return
 
-    def test_branchlist_from_build_path(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_1",
-                            "Outlet": "field_2"
-                        }
-                    }
-                }
-            },
-            {
-                "Object:2": {
-                    "Fields": {
-                        "name": "object_2_name",
-                        "field_3": "value_3",
-                        "field_4": "value_4"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_3",
-                            "Outlet": "field_4"
-                        }
-                    }
-                }
-            }
-        ]
-        eo = ExpandSystem(template=mock_template)
-        eo.unique_name = 'TEST SYSTEM'
-        output = eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        self.assertEqual(
-            '{} Main Branch'.format(eo.unique_name),
-            output['Branchlist']['{} Branches'.format(eo.unique_name)]['branches'][0]['branch_name'])
-        return
-
-    def test_reject_create_branch_and_branchlist_from_build_path_no_connectors(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "bad_field",
-                            "Outlet": "field_2"
-                        }
-                    }
-                }
-            },
-        ]
-        eo = ExpandSystem(template=template)
-        eo.unique_name = 'TEST SYSTEM'
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Field/Connector mismatch"):
-            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        return
-
-    def test_reject_create_branch_and_branchlist_from_build_path_mismatch_connectors(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                }
-            },
-        ]
-        eo = ExpandSystem(template=mock_template)
-        eo.unique_name = 'TEST SYSTEM'
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Super object is missing Connectors"):
-            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        return
-
     def test_create_availability_manager_assignment_list(self):
         es = ExpandSystem(template=mock_template)
         es.epjson = {
@@ -378,45 +295,61 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             es._create_outdoor_air_system()
         return
 
-    def test_branch_from_build_path(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_1",
-                            "Outlet": "field_2"
-                        }
-                    }
-                }
-            },
-            {
-                "Object:2": {
-                    "Fields": {
-                        "name": "object_2_name",
-                        "field_3": "value_3",
-                        "field_4": "value_4"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_3",
-                            "Outlet": "field_4"
-                        }
-                    }
+    def test_modify_build_path_for_outside_air_system(self):
+        es = ExpandSystem(template={})
+        es.build_path = mock_build_path
+        self.unique_name = 'TEST SYSTEM'
+        es.epjson = {
+            "AirLoopHVAC:OutdoorAirSystem": {
+                "TEST SYSTEM OA System": {
+                    "availability_manager_list_name": "TEST SYSTEM Availability Managers",
+                    "controller_list_name": "TEST SYSTEM OA System Controllers",
+                    "outdoor_air_equipment_list_name": "TEST SYSTEM OA System Equipment"
                 }
             }
-        ]
+        }
+        modified_build_path = es._modify_build_path_for_outside_air_system()
+        self.assertEqual('AirLoopHVAC:OutdoorAirSystem', list(modified_build_path[0].keys())[0])
+        self.assertEqual(
+            mock_build_path[0]['OutdoorAir:Mixer']['Fields']['return_air_stream_node_name'],
+            modified_build_path[0]['AirLoopHVAC:OutdoorAirSystem']['Fields']['inlet_node_name']
+        )
+        return
+
+    def test_branch_from_build_path(self):
         es = ExpandSystem(template={})
         es.unique_name = 'TEST SYSTEM'
-        output = es._create_branch_and_branchlist_from_build_path(build_path=build_path)
+        es.epjson = {
+            "AirLoopHVAC:OutdoorAirSystem": {
+                "TEST SYSTEM OA System": {
+                    "availability_manager_list_name": "TEST SYSTEM Availability Managers",
+                    "controller_list_name": "TEST SYSTEM OA System Controllers",
+                    "outdoor_air_equipment_list_name": "TEST SYSTEM OA System Equipment"
+                }
+            }
+        }
+        output = es._create_branch_and_branchlist_from_build_path(build_path=copy.deepcopy(mock_build_path))
         self.assertEqual(
-            'value_3',
-            output['Branch']['{} Main Branch'.format(es.unique_name)]['components'][1]['component_inlet_node_name'])
+            mock_build_path[0]['OutdoorAir:Mixer']['Fields']['return_air_stream_node_name'].format(es.unique_name),
+            output['Branch']['{} Main Branch'.format(es.unique_name)]['components'][0]['component_inlet_node_name'])
+        return
+
+    def test_branchlist_from_build_path(self):
+        es = ExpandSystem(template={})
+        es.unique_name = 'TEST SYSTEM'
+        es.epjson = {
+            "AirLoopHVAC:OutdoorAirSystem": {
+                "TEST SYSTEM OA System": {
+                    "availability_manager_list_name": "TEST SYSTEM Availability Managers",
+                    "controller_list_name": "TEST SYSTEM OA System Controllers",
+                    "outdoor_air_equipment_list_name": "TEST SYSTEM OA System Equipment"
+                }
+            }
+        }
+        output = es._create_branch_and_branchlist_from_build_path(build_path=copy.deepcopy(mock_build_path))
+        self.assertEqual(
+            '{} Main Branch'.format(es.unique_name),
+            output['Branchlist']['{} Branches'.format(es.unique_name)]['branches'][0]['branch_name'])
         return
 
     def test_reject_create_branch_and_branchlist_from_build_path_no_build_path(self):
@@ -425,6 +358,40 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             es._create_branch_and_branchlist_from_build_path(build_path=[])
         return
 
-    # todo_eo: branch in _create_branch_and_branchlist_from_build_path() needs first component to be
-    #  AirLoopHVAC:OutdoorAirSystem instead of individual components
-    # todo_eo: system objects to create: AirLoopHVAC:OutdoorAirSystem, SupplyPath, ReturnPath
+    def test_reject_create_branch_and_branchlist_from_build_path_mismatch_connectors(self):
+        temp_mock_build_path = copy.deepcopy(mock_build_path)
+        temp_mock_build_path[1]['Fan:VariableVolume']['Connectors']['AirLoop']['Inlet'] = 'bad_connector_name'
+        es = ExpandSystem(template=mock_template)
+        es.unique_name = 'TEST SYSTEM'
+        es.epjson = {
+            "AirLoopHVAC:OutdoorAirSystem": {
+                "TEST SYSTEM OA System": {
+                    "availability_manager_list_name": "TEST SYSTEM Availability Managers",
+                    "controller_list_name": "TEST SYSTEM OA System Controllers",
+                    "outdoor_air_equipment_list_name": "TEST SYSTEM OA System Equipment"
+                }
+            }
+        }
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Field/Connector mismatch"):
+            es._create_branch_and_branchlist_from_build_path(build_path=temp_mock_build_path)
+        return
+
+    def test_reject_create_branch_and_branchlist_from_build_path_no_connectors(self):
+        temp_mock_build_path = copy.deepcopy(mock_build_path)
+        temp_mock_build_path[1]['Fan:VariableVolume'].pop('Connectors')
+        es = ExpandSystem(template=mock_template)
+        es.unique_name = 'TEST SYSTEM'
+        es.epjson = {
+            "AirLoopHVAC:OutdoorAirSystem": {
+                "TEST SYSTEM OA System": {
+                    "availability_manager_list_name": "TEST SYSTEM Availability Managers",
+                    "controller_list_name": "TEST SYSTEM OA System Controllers",
+                    "outdoor_air_equipment_list_name": "TEST SYSTEM OA System Equipment"
+                }
+            }
+        }
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Super object is missing Connectors"):
+            es._create_branch_and_branchlist_from_build_path(build_path=temp_mock_build_path)
+        return
+
+    # todo_eo: system objects to create: SupplyPath/Plenum, ReturnPathPlenum

@@ -967,6 +967,63 @@ class ExpandSystem(ExpandObjects):
             object_dictionary=self._resolve_objects(epjson=outdoor_air_system_list_object))
         return self._resolve_objects(epjson=outdoor_air_system_list_object)
 
+    def _modify_build_path_for_outside_air_system(
+            self, loop_type: str = 'AirLoop', epjson: dict = None, build_path: list = None) -> list:
+        """
+        Modify input build path to use AirLoopHVAC:OutdoorAirSystem as the first component, rather than outside air
+        system components
+
+        :param build_path: list of EnergyPlus Super objects
+        :return: build path
+        """
+        # if build_path is not passed to function, get the class attributes
+        epjson = epjson or self.epjson
+        build_path = build_path or getattr(self, 'build_path', None)
+        if not build_path:
+            raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+        # The first object in the branch must be the AirLoopHVAC:OutdoorAirSystem that must be present in the epjson
+        # from previous steps.
+        outdoor_air_system = epjson.get('AirLoopHVAC:OutdoorAirSystem')
+        if not outdoor_air_system:
+            raise PyExpandObjectsException("No AirLoopHVAC:OutdoorAirSystem detected in {} build process"
+                                           .format(self.unique_name))
+        # iterate backwards over build_path and insert each object until the OutdoorAir:Mixer is hit.
+        # Do first append with OutdoorAirSystem object
+        parsed_build_path = []
+        for super_object in copy.deepcopy(build_path)[::-1]:
+            (super_object_type, super_object_structure), = super_object.items()
+            if not super_object_type == 'OutdoorAir:Mixer':
+                parsed_build_path.insert(0, super_object)
+            else:
+                # insert AirLoopHVAC:OutdoorAirSystem at the beginning.
+                (outdoor_air_system_name, _), = outdoor_air_system.items()
+                try:
+                    parsed_build_path.insert(0, {
+                        'AirLoopHVAC:OutdoorAirSystem': {
+                            'Fields': {
+                                'name': outdoor_air_system_name,
+                                'inlet_node_name': super_object_structure['Fields']['return_air_stream_node_name'],
+                                'outlet_node_name': super_object_structure['Fields']['mixed_air_node_name']
+                            },
+                            'Connectors': {
+                                loop_type: {
+                                    'Inlet': 'inlet_node_name',
+                                    'Outlet': 'outlet_node_name'
+                                }
+                            }
+                        }
+                    })
+                    break
+                except (AttributeError, KeyError, ValueError):
+                    raise PyExpandObjectsYamlStructureException("Error inserting AirLoopHVAC:OutdoorairSystem into "
+                                                                "build path for system {}: {}"
+                                                                .format(self.unique_name, build_path))
+        # check that the outdoor air system was applied to the build path
+        if 'AirLoopHVAC:OutdoorAirSystem' not in [list(i.keys())[0] for i in parsed_build_path]:
+            raise PyExpandObjectsException("AirLoopHVAC:OutdoorAirSystem failed to bea applied in {} build path {}"
+                                           .format(self.unique_name, build_path))
+        return parsed_build_path
+
     def _create_branch_and_branchlist_from_build_path(
             self,
             build_path: list = None,
@@ -989,6 +1046,9 @@ class ExpandSystem(ExpandObjects):
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
             raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+        build_path = self._modify_build_path_for_outside_air_system(
+            epjson=epjson,
+            build_path=copy.deepcopy(build_path))
         components = []
         for super_object in copy.deepcopy(build_path):
             component = {}
