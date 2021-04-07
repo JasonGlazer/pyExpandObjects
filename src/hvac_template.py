@@ -1,5 +1,4 @@
 import re
-import copy
 from epjson_handler import EPJSON
 from expand_objects import ExpandObjects, ExpandZone, ExpandThermostat
 
