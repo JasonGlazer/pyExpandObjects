@@ -347,7 +347,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandZone(template=mock_zone_template)
-        output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
+        output = eo.yaml_list_to_epjson_dictionaries([dict_1, ])
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
 
@@ -362,7 +362,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandZone(template=mock_zone_template)
-        output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
+        output = eo.yaml_list_to_epjson_dictionaries([dict_1, ])
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
 
@@ -407,7 +407,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         object_list = eo._apply_transitions(option_tree_leaf)
         with self.assertRaises(PyExpandObjectsYamlStructureException):
-            eo._yaml_list_to_epjson_dictionaries(object_list)
+            eo.yaml_list_to_epjson_dictionaries(object_list)
         # more than one object in a dictionary
         bad_mock_zone_option_tree = copy.deepcopy(mock_zone_option_tree)
         bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
@@ -428,7 +428,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         object_list = eo._apply_transitions(option_tree_leaf)
         with self.assertRaises(PyExpandObjectsYamlStructureException):
-            eo._yaml_list_to_epjson_dictionaries(object_list)
+            eo.yaml_list_to_epjson_dictionaries(object_list)
         return
 
     def test_retrieve_objects_from_option_tree(self):
@@ -654,7 +654,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandZone(template=mock_zone_template)
-        eo._resolve_objects(epjson=test_d)
+        eo.resolve_objects(epjson=test_d)
         self.assertEqual('value_1', test_d['Object:2']['name_1']['field_1'])
         return
 
@@ -711,7 +711,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         }
         eo = ExpandZone(
             template=mock_zone_template)
-        eo._resolve_objects(epjson=test_d)
+        eo.resolve_objects(epjson=test_d)
         # Check that no string remains unformatted.  The * and ^ are the common regex special characters.
         json_string = json.dumps(test_d)
         self.assertNotIn('{}', json_string)

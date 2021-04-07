@@ -78,7 +78,7 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
     def test_retrieve_structure(self):
         structure_hierarchy = ['Schedule', 'Compact', 'ALWAYS_VAL']
         eo = ExpandObjects(template=mock_template)
-        structure = eo._get_structure(structure_hierarchy=structure_hierarchy)
+        structure = eo.get_structure(structure_hierarchy=structure_hierarchy)
         name_match_rgx = re.compile(r'^HVACTemplate.*')
         name_match = False
         if re.match(name_match_rgx, structure['name']):
@@ -90,7 +90,7 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
         structure_hierarchy = ['Schedule', 'Compact', 'Bad']
         with self.assertRaises(TypeError):
             eo = ExpandObjects(template=mock_template)
-            eo._get_structure(structure_hierarchy=structure_hierarchy)
+            eo.get_structure(structure_hierarchy=structure_hierarchy)
         return
 
     def test_reject_bad_template(self):

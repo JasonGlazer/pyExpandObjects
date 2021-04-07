@@ -4,7 +4,7 @@ import jsonschema
 import copy
 from pathlib import Path
 from custom_exceptions import PyExpandObjectsFileNotFoundError, PyExpandObjectsSchemaError, \
-    PyExpandObjectsTypeError, UniqueNameException
+    PyExpandObjectsTypeError, UniqueNameException, InvalidEpJSONException
 from logger import Logger
 
 this_script_path = Path(__file__).resolve()
@@ -148,6 +148,32 @@ class EPJSON(Logger):
             raise PyExpandObjectsFileNotFoundError("file does not exist: {}".format(json_location))
         except json.decoder.JSONDecodeError as e:
             raise PyExpandObjectsTypeError("file is not a valid json: {}\n{}".format(json_location, str(e)))
+
+    def get_epjson_objects(
+            self, epjson: dict,
+            object_type_regexp: str = '.*',
+            object_name_regexp: str = '.*') -> dict:
+        """
+        Get objects from epJSON dictionary after filtering by object type and name.
+
+        :param epjson: epJSON formatted Dictionary to scan
+        :param object_type_regexp: regular expression to match with object type
+        :param object_name_regexp: regular expression to match with object_name
+        :return: epJSON ditionary of matched objects.
+        """
+        matched_epjson = {}
+        try:
+            for object_type, objects_structure in epjson.items():
+                if re.match(object_type_regexp, object_type, re.IGNORECASE):
+                    for object_name, object_structure in objects_structure.items():
+                        if re.match(object_name_regexp, object_name, re.IGNORECASE):
+                            self.merge_epjson(
+                                super_dictionary=matched_epjson,
+                                object_dictionary={object_type: {object_name: object_structure}}
+                            )
+            return matched_epjson
+        except (ValueError, AttributeError, KeyError):
+            raise InvalidEpJSONException('Invalid epJSON formatted object: {}'.format(epjson))
 
     def _validate_schema(self, schema):
         """

@@ -5,7 +5,7 @@ from . import BaseTest
 from src.epjson_handler import EPJSON
 # must import exceptions directly from test code
 from src.epjson_handler import UniqueNameException, PyExpandObjectsTypeError, \
-    PyExpandObjectsFileNotFoundError, PyExpandObjectsSchemaError
+    PyExpandObjectsFileNotFoundError, PyExpandObjectsSchemaError, InvalidEpJSONException
 
 
 minimum_objects_d = {
@@ -375,6 +375,88 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
             self.epjson_handler._get_json_file(
                 json_location='bad/file/path.epJSON'
             )
+        return
+
+    def test_get_epjson_objects_object_type(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                },
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            "ThermostatSetpoint:DualSetpoint": {
+                "All Zones Dual SP Control": {
+                    "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                    "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+                }
+            }
+        }
+        output = self.epjson_handler.get_epjson_objects(epjson=dict_1, object_type_regexp='^Z.*')
+        self.assertEqual({'Zone': 2}, self.epjson_handler.summarize_epjson(output))
+        return
+
+    def test_get_epjson_object_name_reference(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                },
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            "ThermostatSetpoint:DualSetpoint": {
+                "All Zones Dual SP Control": {
+                    "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                    "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+                }
+            }
+        }
+        output = self.epjson_handler.get_epjson_objects(
+            epjson=dict_1,
+            object_type_regexp='^Z.*',
+            object_name_regexp='^Space2.*')
+        self.assertEqual({'Zone': 1}, self.epjson_handler.summarize_epjson(output))
+        return
+
+    def test_reject_get_epjson_object_bad_input(self):
+        dict_1 = []
+        with self.assertRaisesRegex(InvalidEpJSONException, 'Invalid epJSON'):
+            self.epjson_handler.get_epjson_objects(
+                epjson=dict_1,
+                object_type_regexp='^Z.*',
+                object_name_regexp='^Space2.*')
         return
 
     # todo_eo: need to provide path for user provided schema location

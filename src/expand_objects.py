@@ -152,7 +152,7 @@ class ExpandObjects(EPJSON):
                 flat_list.append(i)
         return flat_list
 
-    def _get_structure(
+    def get_structure(
             self,
             structure_hierarchy: list,
             structure=None) -> dict:
@@ -190,7 +190,7 @@ class ExpandObjects(EPJSON):
         except TypeError:
             raise PyExpandObjectsTypeError(
                 "Call to YAML object was not a list of structure keys: {}".format(structure_hierarchy))
-        structure = self._get_structure(structure_hierarchy=structure_hierarchy)
+        structure = self.get_structure(structure_hierarchy=structure_hierarchy)
         # Check structure keys.  Return error if there is an unexpected value
         for key in structure:
             if key not in ['BuildPath', 'InsertObject', 'ReplaceObject', 'RemoveObject',
@@ -220,7 +220,7 @@ class ExpandObjects(EPJSON):
             object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
             self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
-                object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
+                object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
         if 'TemplateObjects' in options:
             for template_field, template_tree in option_tree['TemplateObjects'].items():
                 (field_option, objects), = template_tree.items()
@@ -231,12 +231,12 @@ class ExpandObjects(EPJSON):
                     object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
                     self.merge_epjson(
                         super_dictionary=option_tree_dictionary,
-                        object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
+                        object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
         if "BuildPath" in options:
             object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
             self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
-                object_dictionary=self._yaml_list_to_epjson_dictionaries(object_list))
+                object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -250,7 +250,7 @@ class ExpandObjects(EPJSON):
         :param leaf_path: path to leaf node of option tree
         :return: Formatted dictionary with objects and alternative options to be applied.
         """
-        option_leaf = self._get_structure(structure_hierarchy=leaf_path, structure=option_tree)
+        option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
         transitions = option_leaf.pop('Transitions', None)
         mappings = option_leaf.pop('Mappings', None)
         try:
@@ -340,7 +340,7 @@ class ExpandObjects(EPJSON):
                                                                 .format(mapping_field, object_type))
         return option_tree_leaf['Objects']
 
-    def _yaml_list_to_epjson_dictionaries(self, yaml_list: list) -> dict:
+    def yaml_list_to_epjson_dictionaries(self, yaml_list: list) -> dict:
         """
         Convert list of input YAML dictionaries into epJSON formatted dictionaries.
 
@@ -443,7 +443,7 @@ class ExpandObjects(EPJSON):
                     .format(input_value, field_name))
         return
 
-    def _resolve_objects(self, epjson, reference_epjson=None):
+    def resolve_objects(self, epjson, reference_epjson=None):
         """
         Resolve complex inputs in epJSON formatted dictionary
 
@@ -481,8 +481,8 @@ class ExpandObjects(EPJSON):
         # Always use merge_epjson to class epJSON in case objects have been stored during processing
         self.merge_epjson(
             super_dictionary=epjson,
-            object_dictionary=self._resolve_objects(epjson_from_option_tree))
-        return self._resolve_objects(epjson_from_option_tree)
+            object_dictionary=self.resolve_objects(epjson_from_option_tree))
+        return self.resolve_objects(epjson_from_option_tree)
 
     def _apply_build_path_action(self, build_path, action_instructions):
         """
@@ -653,7 +653,7 @@ class ExpandObjects(EPJSON):
         :param name: (optional) name of object.
         :return: epJSON object of compact schedule
         """
-        structure_object = self._get_structure(structure_hierarchy=structure_hierarchy)
+        structure_object = self.get_structure(structure_hierarchy=structure_hierarchy)
         if not isinstance(insert_values, list):
             insert_values = [insert_values, ]
         if not name:
@@ -821,8 +821,8 @@ class ExpandSystem(ExpandObjects):
             controller_objects = epjson.get(controller_type)
             if controller_objects:
                 airloop_hvac_controllerlist_object = \
-                    self._get_structure(structure_hierarchy=['AirLoopHVAC', 'ControllerList',
-                                                             controller_type.split(':')[1]])
+                    self.get_structure(structure_hierarchy=['AirLoopHVAC', 'ControllerList',
+                                                            controller_type.split(':')[1]])
                 object_count = 1
                 try:
                     for object_name, object_structure in controller_objects.items():
@@ -835,11 +835,11 @@ class ExpandSystem(ExpandObjects):
                     raise PyExpandObjectsTypeError("Controller object not properly formatted: {}"
                                                    .format(controller_objects))
                 object_list.append({'AirLoopHVAC:ControllerList': airloop_hvac_controllerlist_object})
-        controller_epjson = self._yaml_list_to_epjson_dictionaries(object_list)
+        controller_epjson = self.yaml_list_to_epjson_dictionaries(object_list)
         self.merge_epjson(
             super_dictionary=epjson,
-            object_dictionary=self._resolve_objects(epjson=controller_epjson))
-        return self._resolve_objects(epjson=controller_epjson)
+            object_dictionary=self.resolve_objects(epjson=controller_epjson))
+        return self.resolve_objects(epjson=controller_epjson)
 
     def _create_outdoor_air_equipment_list_from_build_path(
             self, build_path: list = None, epjson: dict = None) -> dict:
@@ -862,7 +862,7 @@ class ExpandSystem(ExpandObjects):
         # set dictionary and loop variables
         stop_loop = False
         object_count = 1
-        oa_equipment_list_dictionary = self._get_structure(
+        oa_equipment_list_dictionary = self.get_structure(
             structure_hierarchy=['AirLoopHVAC', 'OutdoorAirSystem', 'EquipmentList', 'Base'])
         # iterate over build path returning every object up to the OutdoorAir:Mixer
         for super_object in build_path:
@@ -876,12 +876,12 @@ class ExpandSystem(ExpandObjects):
                 if super_object_type == 'OutdoorAir:Mixer':
                     stop_loop = True
                 object_count += 1
-        outdoor_air_equipment_list_object = self._yaml_list_to_epjson_dictionaries([
+        outdoor_air_equipment_list_object = self.yaml_list_to_epjson_dictionaries([
             {'AirLoopHVAC:OutdoorAirSystem:EquipmentList': oa_equipment_list_dictionary}, ])
         self.merge_epjson(
             super_dictionary=epjson,
-            object_dictionary=self._resolve_objects(epjson=outdoor_air_equipment_list_object))
-        return self._resolve_objects(epjson=outdoor_air_equipment_list_object)
+            object_dictionary=self.resolve_objects(epjson=outdoor_air_equipment_list_object))
+        return self.resolve_objects(epjson=outdoor_air_equipment_list_object)
 
     def _create_availability_manager_assignment_list(self, epjson: dict = None) -> dict:
         """
@@ -899,7 +899,7 @@ class ExpandSystem(ExpandObjects):
         availability_managers = {i: j for i, j in epjson.items() if re.match(r'^AvailabilityManager:.*', i)}
         # loop over availability managers and add them to the list.
         availability_manager_list_object = \
-            self._get_structure(structure_hierarchy=['AvailabilityManagerAssignmentList', 'Base'])
+            self.get_structure(structure_hierarchy=['AvailabilityManagerAssignmentList', 'Base'])
         try:
             for object_type, object_structure in availability_managers.items():
                 for object_name, object_fields in object_structure.items():
@@ -910,12 +910,12 @@ class ExpandSystem(ExpandObjects):
         except AttributeError:
             raise PyExpandObjectsTypeError("AvailabilityManager object not properly formatted: {}"
                                            .format(availability_managers))
-        availability_manager_assignment_list_object = self._yaml_list_to_epjson_dictionaries([
+        availability_manager_assignment_list_object = self.yaml_list_to_epjson_dictionaries([
             {'AvailabilityManagerAssignmentList': availability_manager_list_object}, ])
         self.merge_epjson(
             super_dictionary=epjson,
-            object_dictionary=self._resolve_objects(epjson=availability_manager_assignment_list_object))
-        return self._resolve_objects(epjson=availability_manager_assignment_list_object)
+            object_dictionary=self.resolve_objects(epjson=availability_manager_assignment_list_object))
+        return self.resolve_objects(epjson=availability_manager_assignment_list_object)
 
     def _create_outdoor_air_system(self, epjson: dict = None) -> dict:
         """
@@ -960,12 +960,12 @@ class ExpandSystem(ExpandObjects):
             'controller_list_name': oa_controller_list_name,
             'outdoor_air_equipment_list_name': oa_system_equipment_name
         }
-        outdoor_air_system_list_object = self._yaml_list_to_epjson_dictionaries([
+        outdoor_air_system_list_object = self.yaml_list_to_epjson_dictionaries([
             {'AirLoopHVAC:OutdoorAirSystem': outdoor_air_system_yaml_object}, ])
         self.merge_epjson(
             super_dictionary=epjson,
-            object_dictionary=self._resolve_objects(epjson=outdoor_air_system_list_object))
-        return self._resolve_objects(epjson=outdoor_air_system_list_object)
+            object_dictionary=self.resolve_objects(epjson=outdoor_air_system_list_object))
+        return self.resolve_objects(epjson=outdoor_air_system_list_object)
 
     def _modify_build_path_for_outside_air_system(
             self, loop_type: str = 'AirLoop', epjson: dict = None, build_path: list = None) -> list:
@@ -1082,11 +1082,11 @@ class ExpandSystem(ExpandObjects):
                 'branches': [{"branch_name": "{} Main Branch".format(self.unique_name)}]
             }
         }
-        branch_and_branchlist_objects = self._yaml_list_to_epjson_dictionaries([branch, branchlist])
+        branch_and_branchlist_objects = self.yaml_list_to_epjson_dictionaries([branch, branchlist])
         self.merge_epjson(
             super_dictionary=epjson,
-            object_dictionary=self._resolve_objects(epjson=branch_and_branchlist_objects))
-        return self._resolve_objects(epjson=branch_and_branchlist_objects)
+            object_dictionary=self.resolve_objects(epjson=branch_and_branchlist_objects))
+        return self.resolve_objects(epjson=branch_and_branchlist_objects)
 
     def run(self):
         """

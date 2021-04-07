@@ -156,6 +156,42 @@ AirLoopHVAC:
     EquipmentList:
       Base:
         name: '{} OA System Equipment'
+  ReturnPath:
+    Base:
+      name: '{} Return Path'
+      return_air_path_outlet_node_name:
+        ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): outlet_node_name
+      components:
+        - component_object_type:
+            ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): self
+          component_name:
+            ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): key
+  ReturnPlenum:
+    Base:
+      name: '{} Return Plenum'
+      outlet_node_name: '{} Return Air Outlet'
+  SupplyPath:
+    Base:
+      name: '{} Supply Path'
+      supply_air_path_inlet_node_name:
+        ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): inlet_node_name
+      components:
+        - component_object_type:
+            ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): self
+          component_name:
+            ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): key
+  SupplyPlenum:
+    Base:
+      name: '{} Supply Plenum'
+      inlet_node_name: '{} Supply Path Inlet'
+  ZoneMixer:
+    Base:
+      name: '{} Zone Mixer'
+      outlet_node_name: '{} Return Air Outlet'
+  ZoneSplitter:
+    Base:
+      name: '{} Zone Splitter'
+      inlet_node_name: '{} Supply Path Inlet'
 
 AvailabilityManagerAssignmentList:
   Base:
