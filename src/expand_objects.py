@@ -213,6 +213,11 @@ class ExpandObjects(EPJSON):
         if not set(list(options)).issubset({'BaseObjects', 'TemplateObjects', 'BuildPath'}):
             raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided in YAML: {}"
                                            .format(options))
+        if "BuildPath" in options:
+            object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
+            self.merge_epjson(
+                super_dictionary=option_tree_dictionary,
+                object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
         if 'BaseObjects' in options:
             option_tree_leaf = self._get_option_tree_leaf(
                 option_tree=option_tree,
@@ -232,11 +237,6 @@ class ExpandObjects(EPJSON):
                     self.merge_epjson(
                         super_dictionary=option_tree_dictionary,
                         object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
-        if "BuildPath" in options:
-            object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
-            self.merge_epjson(
-                super_dictionary=option_tree_dictionary,
-                object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -367,11 +367,46 @@ class ExpandObjects(EPJSON):
                     "YAML object is incorrectly formatted: {}".format(transitioned_object))
         return output_dictionary
 
+    @staticmethod
+    def _resolve_complex_input_from_build_path(
+            build_path: list,
+            lookup_instructions: dict,
+            connector_path: str = 'AirLoop'):
+        """
+        Resolve a complex input using a build path and location based instructions.
+
+        :param build_path: list of EnergyPlus super objects forming a build path
+        :param lookup_instructions: instructions idenifying the node location to return
+        :return: Resolved field value
+        """
+        try:
+            location = lookup_instructions.pop('Location')
+            connector_path = connector_path or lookup_instructions.pop('ConnectorPath', None)
+            value_location = lookup_instructions.pop('ValueLocation')
+        except KeyError:
+            raise PyExpandObjectsYamlStructureException("Build path location reference is invalid: build path {}")
+        try:
+            super_object = build_path[location]
+            (super_object_type, super_object_structure), = super_object.items()
+        except (IndexError, ValueError):
+            raise PyExpandObjectsYamlStructureException("Invalid build path or super object: {}".format(build_path))
+        if value_location.lower() == 'self':
+            return super_object_type
+        elif value_location.lower() == 'key':
+            return super_object_structure['Fields']['name']
+        elif value_location in ('Inlet', 'Outlet'):
+            reference_node = super_object_structure['Connectors'][connector_path][value_location]
+            return super_object_structure['Fields'][reference_node]
+        else:
+            raise PyExpandObjectsYamlStructureException("Invalid complex input for build path lookup: {}"
+                                                        .format(value_location))
+
     def _resolve_complex_input(
             self,
-            epjson: dict,
             field_name: str,
-            input_value: typing.Union[str, int, float, dict, list]) -> \
+            input_value: typing.Union[str, int, float, dict, list],
+            epjson: dict = None,
+            build_path: list = None) -> \
             typing.Generator[str, typing.Dict[str, str], None]:
         """
         Resolve a complex input into a field value
@@ -380,6 +415,9 @@ class ExpandObjects(EPJSON):
         :param input_value: field value input
         :return: resolved field value
         """
+        # Try class attributes if variables not defined in function
+        epjson = epjson or self.epjson
+        build_path = build_path or getattr(self, 'build_path', None)
         if isinstance(input_value, numbers.Number):
             yield {"field": field_name, "value": input_value}
         elif isinstance(input_value, str):
@@ -387,42 +425,69 @@ class ExpandObjects(EPJSON):
         elif isinstance(input_value, dict):
             # unpack the referenced object type and the lookup instructions
             (reference_object_type, lookup_instructions), = input_value.items()
-            # try to match the reference object with EnergyPlus objects in the super_dictionary
-            for object_type in epjson.keys():
-                if re.match(reference_object_type, object_type):
-                    # retrieve value
-                    # if 'self' is used as the reference node, return the energyplus object type
-                    # if 'key' is used as the reference node, return the unique object name
-                    # After those checks, the lookup_instructions is the field name of the object.
-                    (object_name, _), = epjson[object_type].items()
-                    if lookup_instructions.lower() == 'self':
-                        yield {"field": field_name, "value": object_type}
-                    elif lookup_instructions.lower() == 'key':
-                        yield {"field": field_name, "value": object_name}
-                    elif isinstance(epjson[object_type][object_name][lookup_instructions], dict):
-                        try:
-                            complex_generator = self._resolve_complex_input(
-                                epjson=epjson,
-                                field_name=field_name,
-                                input_value=epjson[object_type][object_name][lookup_instructions])
-                            for cg in complex_generator:
-                                yield cg
-                        except RecursionError:
-                            raise PyExpandObjectsYamlStructureException(
-                                "Maximum Recursion limit exceeded when resolving {} for {}"
-                                .format(input_value, field_name))
-                    else:
-                        if isinstance(field_name, str):
-                            formatted_field_name = field_name.format(self.unique_name)
+            # if the key is 'BuildPath' then insert by build path location
+            if reference_object_type.lower() == 'buildpathreference':
+                if not build_path:
+                    raise PyExpandObjectsYamlStructureException("BuildPath complex input was specified with no build"
+                                                                " path available: field {}, input {}"
+                                                                .format(field_name, input_value))
+                try:
+                    # Get the referenced node value
+                    extracted_value = self._resolve_complex_input_from_build_path(
+                        build_path=build_path,
+                        lookup_instructions=lookup_instructions)
+                    # Resolve the extracted value with this function.
+                    try:
+                        complex_generator = self._resolve_complex_input(
+                            epjson=epjson,
+                            field_name=field_name,
+                            input_value=extracted_value)
+                        for cg in complex_generator:
+                            yield cg
+                    except RecursionError:
+                        raise PyExpandObjectsYamlStructureException(
+                            "Maximum Recursion limit exceeded when resolving {} for {}"
+                            .format(input_value, field_name))
+                except (KeyError, PyExpandObjectsYamlStructureException):
+                    raise PyExpandObjectsYamlStructureException("Object field not be resolved: field {}, "
+                                                                "template name {}".format(field_name, self.unique_name))
+            else:
+                # try to match the reference object with EnergyPlus objects in the super_dictionary
+                for object_type in epjson.keys():
+                    if re.match(reference_object_type, object_type):
+                        # retrieve value
+                        # if 'self' is used as the reference node, return the energyplus object type
+                        # if 'key' is used as the reference node, return the unique object name
+                        # After those checks, the lookup_instructions is the field name of the object.
+                        (object_name, _), = epjson[object_type].items()
+                        if lookup_instructions.lower() == 'self':
+                            yield {"field": field_name, "value": object_type}
+                        elif lookup_instructions.lower() == 'key':
+                            yield {"field": field_name, "value": object_name}
+                        elif isinstance(epjson[object_type][object_name][lookup_instructions], dict):
+                            try:
+                                complex_generator = self._resolve_complex_input(
+                                    epjson=epjson,
+                                    field_name=field_name,
+                                    input_value=epjson[object_type][object_name][lookup_instructions])
+                                for cg in complex_generator:
+                                    yield cg
+                            except RecursionError:
+                                raise PyExpandObjectsYamlStructureException(
+                                    "Maximum Recursion limit exceeded when resolving {} for {}"
+                                    .format(input_value, field_name))
                         else:
-                            formatted_field_name = field_name
-                        if isinstance(epjson[object_type][object_name][lookup_instructions], str):
-                            formatted_value = epjson[object_type][object_name][lookup_instructions]\
-                                .format(self.unique_name)
-                        else:
-                            formatted_value = epjson[object_type][object_name][lookup_instructions]
-                        yield {"field": formatted_field_name,
-                               "value": formatted_value}
+                            if isinstance(field_name, str):
+                                formatted_field_name = field_name.format(self.unique_name)
+                            else:
+                                formatted_field_name = field_name
+                            if isinstance(epjson[object_type][object_name][lookup_instructions], str):
+                                formatted_value = epjson[object_type][object_name][lookup_instructions]\
+                                    .format(self.unique_name)
+                            else:
+                                formatted_value = epjson[object_type][object_name][lookup_instructions]
+                            yield {"field": formatted_field_name,
+                                   "value": formatted_value}
         elif isinstance(input_value, list):
             try:
                 tmp_list = []

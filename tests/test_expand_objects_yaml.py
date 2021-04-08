@@ -90,80 +90,82 @@ mock_system_template = {
 
 mock_system_option_tree = {
     'OptionTree': {
-        'System': {
-            'VAV': {
-                'BuildPath': {
-                    'BaseObjects': {
-                        'Objects': [
-                            {
-                                'OutdoorAir:Mixer': {
-                                    'Fields': {
-                                        'name': '{} OA Mixing Box',
-                                        'mixed_air_node_name': '{} Mixed Air Outlet',
-                                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
-                                        'relief_air_stream_node_name': '{} Relief Air Outlet',
-                                        'return_air_stream_node_name': '{} Air Loop Inlet'
-                                    },
-                                    'Connectors': {
-                                        'AirLoop': {
-                                            'Inlet': 'outdoor_air_stream_node_name',
-                                            'Outlet': 'mixed_air_node_name'
+        'HVACTemplate': {
+            'System': {
+                'VAV': {
+                    'BuildPath': {
+                        'BaseObjects': {
+                            'Objects': [
+                                {
+                                    'OutdoorAir:Mixer': {
+                                        'Fields': {
+                                            'name': '{} OA Mixing Box',
+                                            'mixed_air_node_name': '{} Mixed Air Outlet',
+                                            'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                                            'relief_air_stream_node_name': '{} Relief Air Outlet',
+                                            'return_air_stream_node_name': '{} Air Loop Inlet'
+                                        },
+                                        'Connectors': {
+                                            'AirLoop': {
+                                                'Inlet': 'outdoor_air_stream_node_name',
+                                                'Outlet': 'mixed_air_node_name'
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    'Fan:VariableVolume': {
+                                        'Fields': {
+                                            'name': '{} Supply Fan',
+                                            'air_inlet_node_name': '{} Supply Fan Inlet',
+                                            'air_outlet_node_name': '{} Supply Fan Outlet'
+                                        },
+                                        'Connectors': {
+                                            'AirLoop': {
+                                                'Inlet': 'air_inlet_node_name',
+                                                'Outlet': 'air_outlet_node_name'
+                                            }
                                         }
                                     }
                                 }
-                            },
-                            {
-                                'Fan:VariableVolume': {
-                                    'Fields': {
-                                        'name': '{} Supply Fan',
-                                        'air_inlet_node_name': '{} Supply Fan Inlet',
-                                        'air_outlet_node_name': '{} Supply Fan Outlet'
-                                    },
-                                    'Connectors': {
-                                        'AirLoop': {
-                                            'Inlet': 'air_inlet_node_name',
-                                            'Outlet': 'air_outlet_node_name'
-                                        }
-                                    }
+                            ],
+                            'Transitions': {
+                                "template_field": {
+                                    "Fan:.*": "object_test_field"
                                 }
                             }
-                        ],
-                        'Transitions': {
-                            "template_field": {
-                                "Fan:.*": "object_test_field"
-                            }
-                        }
-                    },
-                    'Actions': [
-                        {
-                            'cooling_coil_type': {
-                                'ChilledWater': {
-                                    'ObjectReference': 'OutdoorAir:Mixer',
-                                    'Location': 'After',
-                                    'ActionType': 'Insert',
-                                    'Objects': [
-                                        {
-                                            'Coil:Cooling:Water': {
-                                                'Fields': {
-                                                    'name': '{} Cooling Coil',
-                                                    'air_inlet_node_name': '{} Cooling Coil Inlet',
-                                                    'air_outlet_node_name': '{} Cooling Coil Outlet',
-                                                    'water_inlet_node_name': '{} Cooling Coil Chw Inlet',
-                                                    'water_outlet_node_name': '{} Cooling Coil Chw Outlet'
-                                                },
-                                                'Connectors': {
-                                                    'AirLoop': {
-                                                        'Inlet': 'air_inlet_node_name',
-                                                        'Outlet': 'air_outlet_node_name'
+                        },
+                        'Actions': [
+                            {
+                                'cooling_coil_type': {
+                                    'ChilledWater': {
+                                        'ObjectReference': 'OutdoorAir:Mixer',
+                                        'Location': 'After',
+                                        'ActionType': 'Insert',
+                                        'Objects': [
+                                            {
+                                                'Coil:Cooling:Water': {
+                                                    'Fields': {
+                                                        'name': '{} Cooling Coil',
+                                                        'air_inlet_node_name': '{} Cooling Coil Inlet',
+                                                        'air_outlet_node_name': '{} Cooling Coil Outlet',
+                                                        'water_inlet_node_name': '{} Cooling Coil Chw Inlet',
+                                                        'water_outlet_node_name': '{} Cooling Coil Chw Outlet'
+                                                    },
+                                                    'Connectors': {
+                                                        'AirLoop': {
+                                                            'Inlet': 'air_inlet_node_name',
+                                                            'Outlet': 'air_outlet_node_name'
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
-                                    ]
+                                        ]
+                                    }
                                 }
                             }
-                        }
-                    ]
+                        ]
+                    }
                 }
             }
         }
@@ -472,6 +474,40 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             input_value=3
         )
         self.assertEqual(3, [i for i in output][0]["value"])
+        return
+
+    def test_complex_inputs_build_path(self):
+        es = ExpandSystem(template=mock_system_template)
+        # string test
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": 1,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_complex_inputs_build_path_class_attribute(self):
+        es = ExpandSystem(template=mock_system_template)
+        es.expansion_structure = mock_system_option_tree
+        es._create_objects()
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
         return
 
     def test_complex_inputs_dictionary(self):
@@ -989,7 +1025,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_insert_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
-        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
             {
                 'template_field': {
                     'template_test_value': {
@@ -1036,7 +1072,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandObjects(
             template=mock_system_template,
             expansion_structure=test_system_option_tree)
-        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('test_object_type', list(build_path[1].keys())[0])
@@ -1045,7 +1081,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_replace_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
-        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
             {
                 'template_field': {
                     'template_test_value': {
@@ -1092,7 +1128,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandObjects(
             template=mock_system_template,
             expansion_structure=test_system_option_tree)
-        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('test_object_type', list(build_path[1].keys())[0])
@@ -1101,7 +1137,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_remove_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
-        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
             {
                 'template_field': {
                     'template_test_value': {
@@ -1114,7 +1150,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandObjects(
             template=mock_system_template,
             expansion_structure=test_system_option_tree)
-        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('Fan:VariableVolume', list(build_path[0].keys())[0])
@@ -1122,7 +1158,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_complex_actions_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
-        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
             {
                 'template_field': {
                     'template_test_value': {
@@ -1156,7 +1192,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandObjects(
             template=mock_system_template,
             expansion_structure=test_system_option_tree)
-        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual(1, len(build_path))
@@ -1201,7 +1237,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
     def test_retrieve_build_path_objects_from_option_tree(self):
         eo = ExpandSystem(template=mock_system_template)
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
-        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
             {
                 'template_field': {
                     'template_test_value': {
@@ -1225,7 +1261,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             },
         ]
         eo._get_option_tree = MagicMock()
-        eo._get_option_tree.return_value = test_system_option_tree['OptionTree']['System']['VAV']
+        eo._get_option_tree.return_value = test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']
         output = eo._get_option_tree_objects(structure_hierarchy=['not', 'important'])
         self.assertEqual(
             eo.summarize_epjson(output),
