@@ -1232,3 +1232,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             {'OutdoorAir:Mixer': 1, 'test_object_type': 1, 'Fan:VariableVolume': 1}
         )
         return
+
+    # todo_eo: function needs to be created which handles Schedule:Compact yaml object to use build_compact_schedule()
+    # todo_eo: edit complex inputs to take build path location as option.  Use cooling SetpointManager:Scheduled
+    #  as example (setpoint_node_or_nodelist_name should be last node).

@@ -203,6 +203,52 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         self.assertEqual(1, len(dict_1["Zone"].keys()))
         return
 
+    def test_merge_duplicate_name_skip_schedule_compact_always(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            'Schedule:Compact': {
+                "HVACTemplate-AlwaysTEST": {
+                    'field_1': 'val_1'
+                }
+            }
+        }
+        dict_2 = {
+            "Zone": {
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            'Schedule:Compact': {
+                "HVACTemplate-AlwaysTEST": {
+                    'field_2': 'val_2'
+                }
+            }
+        }
+        self.epjson_handler.merge_epjson(
+            super_dictionary=dict_1,
+            object_dictionary=dict_2,
+            unique_name_override=False)
+        self.assertEqual('val_1', dict_1['Schedule:Compact']['HVACTemplate-AlwaysTEST']['field_1'])
+        return
+
     def test_unpack_epjson(self):
         outputs = self.epjson_handler.epjson_genexp({
             "Zone": {

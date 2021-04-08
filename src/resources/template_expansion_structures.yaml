@@ -346,4 +346,12 @@ OptionTree:
                   Objects:
                   Transitions:
         BaseObjects:
+          SetpointManager:Scheduled:
+            name: '{} Cooling Supply Air Temp Manager'
+            control_variable: Temperature
+            schedule_name: HVACTemplate-Always12.8
+            setpoint_node_or_nodelist_name:
+              ^Fan:.*: air_outlet_node_name
+          Schedule:Compact:
+            name: HVACTempalte-Always12.8
         TemplateObjects:

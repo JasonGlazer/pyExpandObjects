@@ -56,11 +56,14 @@ class EPJSON(Logger):
                 if isinstance(object_structure, dict):
                     for object_name, object_fields in object_structure.items():
                         if not unique_name_override and object_name in super_dictionary[object_type].keys():
-                            # todo_eo: Prevent the exception if the object is a Schedule:Compact with the name
-                            #  HVACTemplate-Always... or other pre-set that (based on the name) would be
-                            #  identical.  This flexibility will allow for these common objects to be created
-                            #  without checking and not needing to change the unique_name_fail flag for other objects.
-                            if unique_name_fail:
+                            # Raise exception if the object name already exists in the target dictionary.  One exception
+                            # to this rule is to ignore Schedule:Compact objects with template names.  This is allowed
+                            # to make it easier to specify schedules while building objects without needing to turn
+                            # off the unique name check entirely.
+                            if unique_name_fail and not (
+                                    re.match(r'HVACTemplate-Always', object_name, re.IGNORECASE)
+                                    and object_type.lower() == 'schedule:compact'
+                            ):
                                 raise UniqueNameException("Unique name {} already exists in object {}".format(
                                     object_name,
                                     object_type
