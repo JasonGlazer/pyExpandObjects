@@ -100,9 +100,11 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'OutdoorAir:Mixer': '.*',
                 'OutdoorAir:NodeList': '.*',
                 'SetpointManager:MixedAir': '.*',
-                'SetpointManager:Scheduled': '.*'
+                'SetpointManager:Scheduled': '.*',
+                'Schedule:Compact': '^HVACTemplate-Always'
             }
         )
-        print(test_purged_epjson)
-        print(base_input_file_path)
+        from pprint import pprint
+        pprint(base_input_file_path, width=200)
+        pprint(test_purged_epjson, width=200)
         return

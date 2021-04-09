@@ -1414,3 +1414,59 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             12.8,
             output['Schedule:Compact']['HVACTemplate-Always12.8']['data'][-1]['field'])
         return
+
+    def test_complex_inputs_create_schedule_from_transition(self):
+        es = ExpandSystem(template= {
+            'HVACTemplate:System:VAV': {
+                'template_name': {
+                    'template_field': 'template_test_value',
+                    'cooling_coil_design_setpoint': 12.8
+                }
+            }
+        })
+        es.expansion_structure = {
+            'Schedule': {
+                'Compact': {
+                    'ALWAYS_VAL': {
+                        'name': 'HVACTemplate-Always{}',
+                        'schedule_type_limits_name': 'Any Number',
+                        'data': [
+                            {'field': 'Through 12/31'},
+                            {'field': 'For AllDays'},
+                            {'field': 'Until 24:00'},
+                            {'field': '{:.1f}'}
+                        ]
+                    }
+                }
+            },
+            'OptionTree': {
+                'HVACTemplate': {
+                    'System': {
+                        'VAV': {
+                            'BaseObjects': {
+                                'Objects': [
+                                    {
+                                        'SetpointManager:Scheduled': {
+                                            'name': '{} Cooling Supply Air Temp Manager',
+                                            'control_variable': 'Temperature'
+                                        }
+                                    }
+                                ],
+                                'Transitions': {
+                                    'cooling_coil_design_setpoint': {
+                                        'SetpointManager:Scheduled': {
+                                            'schedule_name': 'HVACTemplate-Always{}'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        es._create_objects()
+        self.assertEqual(
+            12.8,
+            es.epjson['Schedule:Compact']['HVACTemplate-Always12.8']['data'][-1]['field'])
+        return

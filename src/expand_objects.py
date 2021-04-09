@@ -293,23 +293,40 @@ class ExpandObjects(EPJSON):
                     for tree_object in tree_objects:
                         for object_type, _ in tree_object.items():
                             if re.match(object_type_reference, object_type):
-                                # On a match, apply the field.  If the object is a 'super' object used in a
-                                # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
-                                # into the base level of the object.  The template field was loaded as a class
-                                # attribute on initialization.
+                                # if the object_field is a dictionary, then the value is a formatted string to
+                                # apply with the template_field.  Otherwise, just try to get the value from the
+                                # template field, which is stored as a class attribute.
                                 try:
-                                    if 'Fields' in tree_object[object_type].keys():
-                                        tree_object[object_type]['Fields'][object_field] = \
-                                            getattr(self, template_field)
+                                    if isinstance(object_field, dict):
+                                        (object_field, object_val), = object_field.items()
+                                        object_value = object_val.format(getattr(self, template_field))
                                     else:
-                                        tree_object[object_type][object_field] = \
-                                            getattr(self, template_field)
+                                        object_value = getattr(self, template_field)
                                 except AttributeError:
+                                    object_value = None
                                     self.logger.info("A template value was attempted to be applied "
                                                      "to an object field but the template "
                                                      "field was not present in template object. "
                                                      "object: {}, object fieled: {}, template field: {}"
                                                      .format(object_type, object_field, template_field))
+                                if object_value:
+                                    # if a simple schedule is indicated by name, create it here.  The schedule
+                                    # is stored to the class epjson attribute.
+                                    always_val_rgx = re.search(r'^HVACTemplate-Always([\d\.]+)', str(object_value))
+                                    if always_val_rgx:
+                                        always_val = always_val_rgx.group(1)
+                                        self.build_compact_schedule(
+                                            structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                                            insert_values=[always_val, ]
+                                        )
+                                    # On a match, apply the field.  If the object is a 'super' object used in a
+                                    # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
+                                    # into the base level of the object.  The template field was loaded as a class
+                                    # attribute on initialization.
+                                    if 'Fields' in tree_object[object_type].keys():
+                                        tree_object[object_type]['Fields'][object_field] = object_value
+                                    else:
+                                        tree_object[object_type][object_field] = object_value
         if option_tree_mappings:
             for object_type_reference, mapping_structure in option_tree_mappings.items():
                 for mapping_field, mapping_dictionary in mapping_structure.items():
@@ -742,7 +759,7 @@ class ExpandObjects(EPJSON):
         # for each element in the schedule, convert to numeric if value replacement occurs
         if insert_values:
             formatted_data_lines = [
-                {j: float(k.format(*insert_values))}
+                {j: float(k.format(float(*insert_values)))}
                 if re.match(r'.*{.*f}', k, re.IGNORECASE) else {j: k}
                 for i in structure_object['data'] for j, k in i.items()]
         else:
