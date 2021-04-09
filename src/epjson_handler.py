@@ -61,8 +61,10 @@ class EPJSON(Logger):
                             # to make it easier to specify schedules while building objects without needing to turn
                             # off the unique name check entirely.
                             if unique_name_fail and not (
-                                    re.match(r'HVACTemplate-Always', object_name, re.IGNORECASE)
-                                    and object_type.lower() == 'schedule:compact'
+                                    re.match(
+                                        r'HVACTemplate-Always',
+                                        object_name,
+                                        re.IGNORECASE) and object_type.lower() == 'schedule:compact'
                             ):
                                 raise UniqueNameException("Unique name {} already exists in object {}".format(
                                     object_name,

@@ -1315,7 +1315,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         )
         with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'BuildPath complex input was specified'):
-           self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+            self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
         return
 
     def test_reject_complex_inputs_build_path_missing_inputs(self):
@@ -1386,7 +1386,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'Schedule:Compact': {
                 "HVACTemplate-Always12.8": {
                     'structure': 'Schedule:Compact:ALWAYS_VAL',
-                    'insert_values': [12.8,]
+                    'insert_values': [12.8, ]
                 }
             }
         })
