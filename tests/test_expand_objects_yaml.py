@@ -4,7 +4,8 @@ import copy
 import json
 
 from src.expand_objects import ExpandObjects, ExpandZone, ExpandSystem
-from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException, PyExpandObjectsYamlError
+from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException, \
+    PyExpandObjectsYamlError
 from . import BaseTest
 
 mock_zone_template = {
@@ -89,80 +90,82 @@ mock_system_template = {
 
 mock_system_option_tree = {
     'OptionTree': {
-        'System': {
-            'VAV': {
-                'BuildPath': {
-                    'BaseObjects': {
-                        'Objects': [
-                            {
-                                'OutdoorAir:Mixer': {
-                                    'Fields': {
-                                        'name': '{} OA Mixing Box',
-                                        'mixed_air_node_name': '{} Mixed Air Outlet',
-                                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
-                                        'relief_air_stream_node_name': '{} Relief Air Outlet',
-                                        'return_air_stream_node_name': '{} Air Loop Inlet'
-                                    },
-                                    'Connectors': {
-                                        'AirLoop': {
-                                            'Inlet': 'outdoor_air_stream_node_name',
-                                            'Outlet': 'mixed_air_node_name'
+        'HVACTemplate': {
+            'System': {
+                'VAV': {
+                    'BuildPath': {
+                        'BaseObjects': {
+                            'Objects': [
+                                {
+                                    'OutdoorAir:Mixer': {
+                                        'Fields': {
+                                            'name': '{} OA Mixing Box',
+                                            'mixed_air_node_name': '{} Mixed Air Outlet',
+                                            'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                                            'relief_air_stream_node_name': '{} Relief Air Outlet',
+                                            'return_air_stream_node_name': '{} Air Loop Inlet'
+                                        },
+                                        'Connectors': {
+                                            'AirLoop': {
+                                                'Inlet': 'outdoor_air_stream_node_name',
+                                                'Outlet': 'mixed_air_node_name'
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    'Fan:VariableVolume': {
+                                        'Fields': {
+                                            'name': '{} Supply Fan',
+                                            'air_inlet_node_name': '{} Supply Fan Inlet',
+                                            'air_outlet_node_name': '{} Supply Fan Outlet'
+                                        },
+                                        'Connectors': {
+                                            'AirLoop': {
+                                                'Inlet': 'air_inlet_node_name',
+                                                'Outlet': 'air_outlet_node_name'
+                                            }
                                         }
                                     }
                                 }
-                            },
-                            {
-                                'Fan:VariableVolume': {
-                                    'Fields': {
-                                        'name': '{} Supply Fan',
-                                        'air_inlet_node_name': '{} Supply Fan Inlet',
-                                        'air_outlet_node_name': '{} Supply Fan Outlet'
-                                    },
-                                    'Connectors': {
-                                        'AirLoop': {
-                                            'Inlet': 'air_inlet_node_name',
-                                            'Outlet': 'air_outlet_node_name'
-                                        }
-                                    }
+                            ],
+                            'Transitions': {
+                                "template_field": {
+                                    "Fan:.*": "object_test_field"
                                 }
                             }
-                        ],
-                        'Transitions': {
-                            "template_field": {
-                                "Fan:.*": "object_test_field"
-                            }
-                        }
-                    },
-                    'Actions': [
-                        {
-                            'cooling_coil_type': {
-                                'ChilledWater': {
-                                    'ObjectReference': 'OutdoorAir:Mixer',
-                                    'Location': 'After',
-                                    'ActionType': 'Insert',
-                                    'Objects': [
-                                        {
-                                            'Coil:Cooling:Water': {
-                                                'Fields': {
-                                                    'name': '{} Cooling Coil',
-                                                    'air_inlet_node_name': '{} Cooling Coil Inlet',
-                                                    'air_outlet_node_name': '{} Cooling Coil Outlet',
-                                                    'water_inlet_node_name': '{} Cooling Coil Chw Inlet',
-                                                    'water_outlet_node_name': '{} Cooling Coil Chw Outlet'
-                                                },
-                                                'Connectors': {
-                                                    'AirLoop': {
-                                                        'Inlet': 'air_inlet_node_name',
-                                                        'Outlet': 'air_outlet_node_name'
+                        },
+                        'Actions': [
+                            {
+                                'cooling_coil_type': {
+                                    'ChilledWater': {
+                                        'ObjectReference': 'OutdoorAir:Mixer',
+                                        'Location': 'After',
+                                        'ActionType': 'Insert',
+                                        'Objects': [
+                                            {
+                                                'Coil:Cooling:Water': {
+                                                    'Fields': {
+                                                        'name': '{} Cooling Coil',
+                                                        'air_inlet_node_name': '{} Cooling Coil Inlet',
+                                                        'air_outlet_node_name': '{} Cooling Coil Outlet',
+                                                        'water_inlet_node_name': '{} Cooling Coil Chw Inlet',
+                                                        'water_outlet_node_name': '{} Cooling Coil Chw Outlet'
+                                                    },
+                                                    'Connectors': {
+                                                        'AirLoop': {
+                                                            'Inlet': 'air_inlet_node_name',
+                                                            'Outlet': 'air_outlet_node_name'
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
-                                    ]
+                                        ]
+                                    }
                                 }
                             }
-                        }
-                    ]
+                        ]
+                    }
                 }
             }
         }
@@ -346,7 +349,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandZone(template=mock_zone_template)
-        output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
+        output = eo.yaml_list_to_epjson_dictionaries([dict_1, ])
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
 
@@ -361,7 +364,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandZone(template=mock_zone_template)
-        output = eo._yaml_list_to_epjson_dictionaries([dict_1, ])
+        output = eo.yaml_list_to_epjson_dictionaries([dict_1, ])
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
 
@@ -406,7 +409,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         object_list = eo._apply_transitions(option_tree_leaf)
         with self.assertRaises(PyExpandObjectsYamlStructureException):
-            eo._yaml_list_to_epjson_dictionaries(object_list)
+            eo.yaml_list_to_epjson_dictionaries(object_list)
         # more than one object in a dictionary
         bad_mock_zone_option_tree = copy.deepcopy(mock_zone_option_tree)
         bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Objects'] = [
@@ -427,7 +430,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         object_list = eo._apply_transitions(option_tree_leaf)
         with self.assertRaises(PyExpandObjectsYamlStructureException):
-            eo._yaml_list_to_epjson_dictionaries(object_list)
+            eo.yaml_list_to_epjson_dictionaries(object_list)
         return
 
     def test_retrieve_objects_from_option_tree(self):
@@ -457,7 +460,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandZone(template=mock_zone_template)
-        # string test
         output = eo._resolve_complex_input(
             epjson=test_d,
             field_name="field_1",
@@ -653,7 +655,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandZone(template=mock_zone_template)
-        eo._resolve_objects(epjson=test_d)
+        eo.resolve_objects(epjson=test_d)
         self.assertEqual('value_1', test_d['Object:2']['name_1']['field_1'])
         return
 
@@ -710,7 +712,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         }
         eo = ExpandZone(
             template=mock_zone_template)
-        eo._resolve_objects(epjson=test_d)
+        eo.resolve_objects(epjson=test_d)
         # Check that no string remains unformatted.  The * and ^ are the common regex special characters.
         json_string = json.dumps(test_d)
         self.assertNotIn('{}', json_string)
@@ -988,7 +990,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_insert_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
-        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
             {
                 'template_field': {
                     'template_test_value': {
@@ -1035,16 +1037,16 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandObjects(
             template=mock_system_template,
             expansion_structure=test_system_option_tree)
-        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('test_object_type', list(build_path[1].keys())[0])
         self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
         return
 
     def test_replace_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
-        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
             {
                 'template_field': {
                     'template_test_value': {
@@ -1091,16 +1093,16 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandObjects(
             template=mock_system_template,
             expansion_structure=test_system_option_tree)
-        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('test_object_type', list(build_path[1].keys())[0])
         self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
         return
 
     def test_remove_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
-        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
             {
                 'template_field': {
                     'template_test_value': {
@@ -1113,15 +1115,15 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandObjects(
             template=mock_system_template,
             expansion_structure=test_system_option_tree)
-        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual('Fan:VariableVolume', list(build_path[0].keys())[0])
         return
 
     def test_complex_actions_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
-        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
             {
                 'template_field': {
                     'template_test_value': {
@@ -1155,9 +1157,9 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandObjects(
             template=mock_system_template,
             expansion_structure=test_system_option_tree)
-        structure_hierarchy = ['OptionTree', 'System', 'VAV']
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'System', 'VAV']
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        build_path, _ = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
         self.assertEqual(1, len(build_path))
         return
 
@@ -1197,134 +1199,10 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual("value_2", output[1]["Object:2"]["field_3"])
         return
 
-    def test_branch_from_build_path(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_1",
-                            "Outlet": "field_2"
-                        }
-                    }
-                }
-            },
-            {
-                "Object:2": {
-                    "Fields": {
-                        "name": "object_2_name",
-                        "field_3": "value_3",
-                        "field_4": "value_4"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_3",
-                            "Outlet": "field_4"
-                        }
-                    }
-                }
-            }
-        ]
-        eo = ExpandObjects()
-        eo.unique_name = 'TEST SYSTEM'
-        branch, _ = eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        self.assertEqual(
-            'value_3',
-            branch['Branch']['{} Main Branch'.format(eo.unique_name)]['components'][1]['component_inlet_node_name'])
-        return
-
-    def test_branchlist_from_build_path(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_1",
-                            "Outlet": "field_2"
-                        }
-                    }
-                }
-            },
-            {
-                "Object:2": {
-                    "Fields": {
-                        "name": "object_2_name",
-                        "field_3": "value_3",
-                        "field_4": "value_4"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "field_3",
-                            "Outlet": "field_4"
-                        }
-                    }
-                }
-            }
-        ]
-        eo = ExpandObjects()
-        eo.unique_name = 'TEST SYSTEM'
-        _, branchlist = eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        self.assertEqual(
-            '{} Main Branch'.format(eo.unique_name),
-            branchlist['Branchlist']['{} Branches'.format(eo.unique_name)]['branches'][0]['branch_name'])
-        return
-
-    def test_reject_create_branch_and_branchlist_from_build_path_no_connectors(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                    "Connectors": {
-                        "AirLoop": {
-                            "Inlet": "bad_field",
-                            "Outlet": "field_2"
-                        }
-                    }
-                }
-            },
-        ]
-        eo = ExpandObjects()
-        eo.unique_name = 'TEST SYSTEM'
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Field/Connector mismatch"):
-            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        return
-
-    def test_reject_create_branch_and_branchlist_from_build_path_mismatch_connectors(self):
-        build_path = [
-            {
-                "Object:1": {
-                    "Fields": {
-                        "name": "object_1_name",
-                        "field_1": "value_1",
-                        "field_2": "value_2"
-                    },
-                }
-            },
-        ]
-        eo = ExpandObjects()
-        eo.unique_name = 'TEST SYSTEM'
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Super object is missing Connectors"):
-            eo._create_branch_and_branchlist_from_build_path(build_path=build_path)
-        return
-
     def test_retrieve_build_path_objects_from_option_tree(self):
         eo = ExpandSystem(template=mock_system_template)
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
-        test_system_option_tree['OptionTree']['System']['VAV']['BuildPath']['Actions'] = [
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
             {
                 'template_field': {
                     'template_test_value': {
@@ -1348,10 +1226,171 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             },
         ]
         eo._get_option_tree = MagicMock()
-        eo._get_option_tree.return_value = test_system_option_tree['OptionTree']['System']['VAV']
+        eo._get_option_tree.return_value = test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']
         output = eo._get_option_tree_objects(structure_hierarchy=['not', 'important'])
         self.assertEqual(
             eo.summarize_epjson(output),
-            {'OutdoorAir:Mixer': 1, 'test_object_type': 1, 'Fan:VariableVolume': 1, 'Branch': 1, 'Branchlist': 1}
+            {'OutdoorAir:Mixer': 1, 'test_object_type': 1, 'Fan:VariableVolume': 1}
         )
+        return
+
+    def test_complex_inputs_build_path(self):
+        es = ExpandSystem(template=mock_system_template)
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": 1,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_complex_inputs_build_path_class_attribute(self):
+        es = ExpandSystem(template=mock_system_template)
+        es.expansion_structure = mock_system_option_tree
+        es._create_objects()
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_complex_inputs_build_path_class_attribute_get_object(self):
+        es = ExpandSystem(template=mock_system_template)
+        es.expansion_structure = mock_system_option_tree
+        es._create_objects()
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1,
+                    "ValueLocation": "self"
+                }
+            }
+        )
+        self.assertEqual('Fan:VariableVolume', [i for i in output][0]['value'])
+        return
+
+    def test_complex_inputs_build_path_class_attribute_get_name(self):
+        es = ExpandSystem(template=mock_system_template)
+        es.expansion_structure = mock_system_option_tree
+        es._create_objects()
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1,
+                    "ValueLocation": "key"
+                }
+            }
+        )
+        self.assertEqual('template_name Supply Fan', [i for i in output][0]['value'])
+        return
+
+    def test_reject_complex_inputs_build_path_reference_no_build_path(self):
+        es = ExpandSystem(template=mock_system_template)
+        es.build_path = {}
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'BuildPath complex input was specified'):
+            self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_reject_complex_inputs_build_path_missing_inputs(self):
+        es = ExpandSystem(template=mock_system_template)
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Object field could not be'):
+            self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1
+                }
+            }
+        )
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Object field could not be'):
+            self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_reject_complex_inputs_build_path_bad_location(self):
+        es = ExpandSystem(template=mock_system_template)
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "ValueLocation": "Outlet",
+                    "Location": 10
+                }
+            }
+        )
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Object field could not be'):
+            self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_reject_complex_inputs_build_path_bad_value(self):
+        es = ExpandSystem(template=mock_system_template)
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "ValueLocation": "Bad_value",
+                    "Location": -1
+                }
+            }
+        )
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Object field could not be'):
+            self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_complex_inputs_compact_schedule(self):
+        eo = ExpandObjects()
+        output = eo.resolve_objects(epjson={
+            'Schedule:Compact': {
+                "HVACTemplate-Always12.8": {
+                    'structure': 'Schedule:Compact:ALWAYS_VAL',
+                    'insert_values': [12.8, ]
+                }
+            }
+        })
+        self.assertEqual(
+            12.8,
+            output['Schedule:Compact']['HVACTemplate-Always12.8']['data'][-1]['field'])
         return

@@ -237,4 +237,4 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
         return
 
     # todo_eo: Should there be a test to ensure empty template isn't provided or verify that an empty template does
-    # nothing and is just passed?
+    #   nothing and is just passed?

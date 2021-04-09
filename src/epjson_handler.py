@@ -4,7 +4,7 @@ import jsonschema
 import copy
 from pathlib import Path
 from custom_exceptions import PyExpandObjectsFileNotFoundError, PyExpandObjectsSchemaError, \
-    PyExpandObjectsTypeError, UniqueNameException
+    PyExpandObjectsTypeError, UniqueNameException, InvalidEpJSONException
 from logger import Logger
 
 this_script_path = Path(__file__).resolve()
@@ -37,7 +37,7 @@ class EPJSON(Logger):
             super_dictionary: dict,
             object_dictionary: dict,
             unique_name_override: bool = True,
-            unique_name_fail: bool = True) -> dict:
+            unique_name_fail: bool = True):
         """
         Merge a high level formatted dictionary with a sub-dictionary, both in epJSON format
 
@@ -45,28 +45,40 @@ class EPJSON(Logger):
         :param object_dictionary: dictionary to merge into base object
         :param unique_name_override: allow a duplicate unique name to overwrite an existing object
         :param unique_name_fail: if override is set to False, choose whether to skip object or fail
-        :return: merged output of the two input dictionaries
+        :return: merged output of the two input dictionaries.  Note, the super_dictionary is modified in this operation.
+            A copy operation was not performed intentionally.  If the user wants the original super_dictionary
+            to remain unchanged then a copy.deepcopy() should be performed before running the function.
         """
-        for object_type, object_structure in object_dictionary.items():
-            if not super_dictionary.get(object_type):
-                super_dictionary[object_type] = {}
-            if isinstance(object_structure, dict):
-                for object_name, object_fields in object_structure.items():
-                    if not unique_name_override and object_name in super_dictionary[object_type].keys():
-                        if unique_name_fail:
-                            raise UniqueNameException("Unique name {} already exists in object {}".format(
-                                object_name,
-                                object_type
-                            ))
-                        else:  # pragma: loop bug
-                            # if two unique names are present and the user has opted to not fail on this condition
-                            # and not override the existing object, then skip it.
-                            continue
-                    super_dictionary[object_type][object_name] = object_fields
-            else:
-                raise PyExpandObjectsTypeError(
-                    'An Invalid object {} failed to merge'.format(object_structure))
-        return super_dictionary
+        if object_dictionary:
+            for object_type, object_structure in object_dictionary.items():
+                if not super_dictionary.get(object_type):
+                    super_dictionary[object_type] = {}
+                if isinstance(object_structure, dict):
+                    for object_name, object_fields in object_structure.items():
+                        if not unique_name_override and object_name in super_dictionary[object_type].keys():
+                            # Raise exception if the object name already exists in the target dictionary.  One exception
+                            # to this rule is to ignore Schedule:Compact objects with template names.  This is allowed
+                            # to make it easier to specify schedules while building objects without needing to turn
+                            # off the unique name check entirely.
+                            if unique_name_fail and not (
+                                    re.match(
+                                        r'HVACTemplate-Always',
+                                        object_name,
+                                        re.IGNORECASE) and object_type.lower() == 'schedule:compact'
+                            ):
+                                raise UniqueNameException("Unique name {} already exists in object {}".format(
+                                    object_name,
+                                    object_type
+                                ))
+                            else:  # pragma: loop bug
+                                # if two unique names are present and the user has opted to not fail on this condition
+                                # and not override the existing object, then skip it.
+                                continue
+                        super_dictionary[object_type][object_name] = object_fields
+                else:
+                    raise PyExpandObjectsTypeError(
+                        'An Invalid object {} failed to merge'.format(object_structure))
+        return
 
     @staticmethod
     def summarize_epjson(epjson):
@@ -92,7 +104,7 @@ class EPJSON(Logger):
         :param epjson: input epJSON
         :param purge_dictionary: key-value pair of object_type and list of regular expressions to remove items
             (.* removes all objects)
-        :return: epJSON
+        :return: epJSON with items referenced in purge_dictionary removed.
         """
         tmp_d = copy.deepcopy(epjson)
         if purge_dictionary:
@@ -111,11 +123,12 @@ class EPJSON(Logger):
     @staticmethod
     def epjson_genexp(epjson):
         """
-        Create generator of epJSON objects
+        Create generator of epJSON objects in epJSON format.
+
+        {object_type: {object_name: object_fields}, {...}} -> {object_type: {object_name: object_fields}}, {...}
 
         :param epjson: epJSON object
-        :return: generator which returns one unqiue object in epJSON format for each object in an object_type
-            {object_type: {object_name: object_fields}, {...}} -> {object_type: {object_name: object_fields}}, {...}
+        :return: generator which returns one unqiue object in epJSON format for each object in an object_type.
         """
         for object_type, epjson_objects in epjson.items():
             for object_name, object_structure in epjson_objects.items():
@@ -140,6 +153,32 @@ class EPJSON(Logger):
             raise PyExpandObjectsFileNotFoundError("file does not exist: {}".format(json_location))
         except json.decoder.JSONDecodeError as e:
             raise PyExpandObjectsTypeError("file is not a valid json: {}\n{}".format(json_location, str(e)))
+
+    def get_epjson_objects(
+            self, epjson: dict,
+            object_type_regexp: str = '.*',
+            object_name_regexp: str = '.*') -> dict:
+        """
+        Get objects from epJSON dictionary after filtering by object type and name.
+
+        :param epjson: epJSON formatted Dictionary to scan
+        :param object_type_regexp: regular expression to match with object type
+        :param object_name_regexp: regular expression to match with object_name
+        :return: epJSON ditionary of matched objects.
+        """
+        matched_epjson = {}
+        try:
+            for object_type, objects_structure in epjson.items():
+                if re.match(object_type_regexp, object_type, re.IGNORECASE):
+                    for object_name, object_structure in objects_structure.items():
+                        if re.match(object_name_regexp, object_name, re.IGNORECASE):
+                            self.merge_epjson(
+                                super_dictionary=matched_epjson,
+                                object_dictionary={object_type: {object_name: object_structure}}
+                            )
+            return matched_epjson
+        except (ValueError, AttributeError, KeyError):
+            raise InvalidEpJSONException('Invalid epJSON formatted object: {}'.format(epjson))
 
     def _validate_schema(self, schema):
         """

@@ -1,4 +1,5 @@
 import unittest
+import copy
 from pathlib import Path
 
 from tests import BaseTest
@@ -41,8 +42,9 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 }
             }
         }
-        test_epjson = epj.merge_epjson(
-            super_dictionary=test_purged_epjson,
+        test_epjson = copy.deepcopy(test_purged_epjson)
+        epj.merge_epjson(
+            super_dictionary=test_epjson,
             object_dictionary=test_thermostat_template
         )
         # perform steps that would be run in main

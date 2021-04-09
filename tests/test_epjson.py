@@ -5,7 +5,7 @@ from . import BaseTest
 from src.epjson_handler import EPJSON
 # must import exceptions directly from test code
 from src.epjson_handler import UniqueNameException, PyExpandObjectsTypeError, \
-    PyExpandObjectsFileNotFoundError, PyExpandObjectsSchemaError
+    PyExpandObjectsFileNotFoundError, PyExpandObjectsSchemaError, InvalidEpJSONException
 
 
 minimum_objects_d = {
@@ -83,12 +83,12 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 }
             }
         }
-        dict_3 = self.epjson_handler.merge_epjson(
+        self.epjson_handler.merge_epjson(
             super_dictionary=dict_1,
             object_dictionary=dict_2,
         )
-        self.assertIn('SPACE1-1', dict_3['Zone'].keys())
-        self.assertIn('SPACE2-1', dict_3['Zone'].keys())
+        self.assertIn('SPACE1-1', dict_1['Zone'].keys())
+        self.assertIn('SPACE2-1', dict_1['Zone'].keys())
         return
 
     def test_merge_two_objects(self):
@@ -120,14 +120,14 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 }
             }
         }
-        dict_3 = self.epjson_handler.merge_epjson(
+        self.epjson_handler.merge_epjson(
             super_dictionary=dict_1,
             object_dictionary=dict_2,
         )
-        self.assertIn('Zone', dict_3.keys())
-        self.assertGreater(len(dict_3['Zone']['SPACE1-1'].keys()), 0)
-        self.assertIn('ZoneInfiltration:DesignFlowRate', dict_3.keys())
-        self.assertGreater(len(dict_3['ZoneInfiltration:DesignFlowRate']['SPACE1-1 Infil 1'].keys()), 0)
+        self.assertIn('Zone', dict_1.keys())
+        self.assertGreater(len(dict_1['Zone']['SPACE1-1'].keys()), 0)
+        self.assertIn('ZoneInfiltration:DesignFlowRate', dict_1.keys())
+        self.assertGreater(len(dict_1['ZoneInfiltration:DesignFlowRate']['SPACE1-1 Infil 1'].keys()), 0)
         return
 
     def test_merge_duplicate_name(self):
@@ -195,12 +195,58 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 }
             }
         }
-        output = self.epjson_handler.merge_epjson(
+        self.epjson_handler.merge_epjson(
             super_dictionary=dict_1,
             object_dictionary=dict_2,
             unique_name_override=False,
             unique_name_fail=False)
-        self.assertEqual(1, len(output["Zone"].keys()))
+        self.assertEqual(1, len(dict_1["Zone"].keys()))
+        return
+
+    def test_merge_duplicate_name_skip_schedule_compact_always(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            'Schedule:Compact': {
+                "HVACTemplate-AlwaysTEST": {
+                    'field_1': 'val_1'
+                }
+            }
+        }
+        dict_2 = {
+            "Zone": {
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            'Schedule:Compact': {
+                "HVACTemplate-AlwaysTEST": {
+                    'field_2': 'val_2'
+                }
+            }
+        }
+        self.epjson_handler.merge_epjson(
+            super_dictionary=dict_1,
+            object_dictionary=dict_2,
+            unique_name_override=False)
+        self.assertEqual('val_1', dict_1['Schedule:Compact']['HVACTemplate-AlwaysTEST']['field_1'])
         return
 
     def test_unpack_epjson(self):
@@ -376,4 +422,87 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 json_location='bad/file/path.epJSON'
             )
         return
+
+    def test_get_epjson_objects_object_type(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                },
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            "ThermostatSetpoint:DualSetpoint": {
+                "All Zones Dual SP Control": {
+                    "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                    "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+                }
+            }
+        }
+        output = self.epjson_handler.get_epjson_objects(epjson=dict_1, object_type_regexp='^Z.*')
+        self.assertEqual({'Zone': 2}, self.epjson_handler.summarize_epjson(output))
+        return
+
+    def test_get_epjson_object_name_reference(self):
+        dict_1 = {
+            "Zone": {
+                "SPACE1-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                },
+                "SPACE2-1": {
+                    "ceiling_height": 2.438400269,
+                    "direction_of_relative_north": 0,
+                    "multiplier": 1,
+                    "type": 1,
+                    "volume": 103.311355591,
+                    "x_origin": 0,
+                    "y_origin": 0,
+                    "z_origin": 0
+                }
+            },
+            "ThermostatSetpoint:DualSetpoint": {
+                "All Zones Dual SP Control": {
+                    "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                    "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+                }
+            }
+        }
+        output = self.epjson_handler.get_epjson_objects(
+            epjson=dict_1,
+            object_type_regexp='^Z.*',
+            object_name_regexp='^Space2.*')
+        self.assertEqual({'Zone': 1}, self.epjson_handler.summarize_epjson(output))
+        return
+
+    def test_reject_get_epjson_object_bad_input(self):
+        dict_1 = []
+        with self.assertRaisesRegex(InvalidEpJSONException, 'Invalid epJSON'):
+            self.epjson_handler.get_epjson_objects(
+                epjson=dict_1,
+                object_type_regexp='^Z.*',
+                object_name_regexp='^Space2.*')
+        return
+
     # todo_eo: need to provide path for user provided schema location

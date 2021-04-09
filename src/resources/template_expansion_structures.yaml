@@ -10,7 +10,7 @@ Connectors: &Connectors
 # Schedule Objects
 Schedule:
   Compact:
-    ALWAYS_VAL:
+    ALWAYS_VAL: &ScheduleCompactAlwaysVal
       name: 'HVACTemplate-Always{}'
       schedule_type_limits_name: Any Number
       data:
@@ -136,6 +136,66 @@ AirTerminal:
                   Coil:Heating:Water: water_inlet_node_name
                 component_outlet_node_name:
                   Coil:Heating:Water: water_outlet_node_name
+
+# System equipment
+AirLoopHVAC:
+  ControllerList:
+    WaterCoil:
+      name: '{} Controllers'
+    OutdoorAir:
+      name: '{} OA Controllers'
+  OutdoorAirSystem:
+    Base:
+      name: '{} OA System'
+      controller_list_name: '{} OA Controllers'
+      outdoor_air_equipment_list_name:
+        ^AirLoopHVAC:OutdoorAirSystem:EquipmentList: self
+      availability_manager: '{} Availability Managers'
+      supply_side_inlet_node_name:
+        ^Controller:OutdoorAir: return_air_node_name
+    EquipmentList:
+      Base:
+        name: '{} OA System Equipment'
+  ReturnPath:
+    Base:
+      name: '{} Return Path'
+      return_air_path_outlet_node_name:
+        ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): outlet_node_name
+      components:
+        - component_object_type:
+            ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): self
+          component_name:
+            ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): key
+  ReturnPlenum:
+    Base:
+      name: '{} Return Plenum'
+      outlet_node_name: '{} Return Air Outlet'
+  SupplyPath:
+    Base:
+      name: '{} Supply Path'
+      supply_air_path_inlet_node_name:
+        ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): inlet_node_name
+      components:
+        - component_object_type:
+            ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): self
+          component_name:
+            ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): key
+  SupplyPlenum:
+    Base:
+      name: '{} Supply Plenum'
+      inlet_node_name: '{} Supply Path Inlet'
+  ZoneMixer:
+    Base:
+      name: '{} Zone Mixer'
+      outlet_node_name: '{} Return Air Outlet'
+  ZoneSplitter:
+    Base:
+      name: '{} Zone Splitter'
+      inlet_node_name: '{} Supply Path Inlet'
+
+AvailabilityManagerAssignmentList:
+  Base:
+    name: '{} Availability Managers'
 
 DesignSpecification:
   OutdoorAir:
@@ -286,4 +346,15 @@ OptionTree:
                   Objects:
                   Transitions:
         BaseObjects:
+          SetpointManager:Scheduled:
+            name: '{} Cooling Supply Air Temp Manager'
+            control_variable: Temperature
+            schedule_name: HVACTemplate-Always12.8
+            setpoint_node_or_nodelist_name:
+              ^Fan:.*: air_outlet_node_name
+          Schedule:Compact:
+            name: HVACTempalte-Always12.8
+            structure: Schedule:Compact:ALWAYS_VAL
+            insert_values:
+              - 12.8
         TemplateObjects:

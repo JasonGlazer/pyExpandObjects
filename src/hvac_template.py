@@ -54,7 +54,7 @@ class HVACTemplate(EPJSON):
         for object_type, object_structure in epjson.items():
             if re.match('^HVACTemplate:*', object_type):
                 if re.match('^HVACTemplate:Thermostat$', object_type):
-                    self.templates_thermostats = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=self.templates_thermostats,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
@@ -62,7 +62,7 @@ class HVACTemplate(EPJSON):
                               'IdealLoadsAirSystem|BaseboardHeat|FanCoil|PTAC|PTHP|WaterToAirHeatPump|'
                               'VRF|Unitary|VAV|VAV:FanPowered|VAVHeatAndCool|ConstantVolumn|DualDuct)$',
                               object_type):
-                    self.templates_zones = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=self.templates_zones,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
@@ -70,17 +70,17 @@ class HVACTemplate(EPJSON):
                               'VRF|Unitary|UnitaryHeatPump:AirToAir|UnitarySystem|VAV|PackagedVAV|'
                               'ConstantVolume|DualDuct|DedicatedOutdoorAir'
                               ')$', object_type):
-                    self.templates_systems = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=self.templates_systems,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
                 elif re.match('^HVACTemplate:Plant:(ChilledWater|HotWater|MixedWater)Loop$', object_type):
-                    self.templates_plant_loops = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=self.templates_plant_loops,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
                 elif re.match('^HVACTemplate:Plant:(Chiller|Tower|Boiler)(ObjectReference)*$', object_type):
-                    self.templates_plant_equipment = self.merge_epjson(
+                    self.merge_epjson(
                         super_dictionary=self.templates_plant_equipment,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
@@ -88,16 +88,32 @@ class HVACTemplate(EPJSON):
                     raise InvalidTemplateException(
                         'Template object type {} was not recognized'.format(object_type))
                 # store original templates into dictionary
-                self.templates = self.merge_epjson(
+                self.merge_epjson(
                     super_dictionary=self.templates,
                     object_dictionary={object_type: object_structure},
                     unique_name_override=False)
             else:
-                self.base_objects = self.merge_epjson(
+                self.merge_epjson(
                     super_dictionary=self.base_objects,
                     object_dictionary={object_type: object_structure},
                     unique_name_override=False)
         return
+
+    def _expand_templates(self, templates, expand_class):
+        """
+        Run Expand operations on multiple templates
+        :param templates: dictionary of HVACTemplate:.* objects
+        :param expand_class: ExpandObjects child class to operate on template.
+        :return: dictionary of expanded objects with unique name as key
+        """
+        expanded_template_dictionary = {}
+        templates = self.epjson_genexp(templates)
+        for template in templates:
+            (_, template_structure), = template.items()
+            (template_name, _), = template_structure.items()
+            expanded_template = expand_class(template).run()
+            expanded_template_dictionary[template_name] = expanded_template
+        return expanded_template_dictionary
 
     def _get_thermostat_template_from_zone_template(self, zone_template):
         """
@@ -166,7 +182,7 @@ class HVACTemplate(EPJSON):
                     }
                 }
             }
-            self.epjson = self.merge_epjson(
+            self.merge_epjson(
                 super_dictionary=self.epjson,
                 object_dictionary=dict(control_schedule, **zonecontrol_thermostat),
                 unique_name_override=True
@@ -176,21 +192,123 @@ class HVACTemplate(EPJSON):
             raise InvalidTemplateException("HVACTemplate failed to build ZoneControl:Thermostat from zone template "
                                            "{}".format(zone_template))
 
-    def _expand_templates(self, templates, expand_class):
+    @staticmethod
+    def _get_zone_template_field_from_system_type(template_type):
         """
-        Run ExpandThermostat on multiple templates
-        :param templates: dictionary of HVACTemplate:.* objects
-        :param expand_class: ExpandObjects child class to operate on template.
-        :return: dictionary of expanded objects with unique name as key
+        Retrieve the corresponding zone field name for a system template type
+        :param template_type: HVACTemplate object type
+        :return: zone field name
         """
-        expanded_template_dictionary = {}
-        templates = self.epjson_genexp(templates)
-        for template in templates:
-            (_, template_structure), = template.items()
-            (template_name, _), = template_structure.items()
-            expanded_template = expand_class(template).run()
-            expanded_template_dictionary[template_name] = expanded_template
-        return expanded_template_dictionary
+        # get the zone field_name that will identify the system template name
+        if re.match(r'HVACTemplate:System:ConstantVolume', template_type):
+            zone_system_template_field_name = 'template_constant_volume_system_name'
+        elif re.match(r'HVACTemplate:System:DedicatedOutdoorAir', template_type):
+            zone_system_template_field_name = 'dedicated_outdoor_air_system_name'
+        elif re.match(r'HVACTemplate:System:DualDuct', template_type):
+            zone_system_template_field_name = 'template_dual_duct_system_name'
+        elif re.match(r'HVACTemplate:System:Unitary.*', template_type):
+            zone_system_template_field_name = 'template_unitary_system_name'
+        elif re.match(r'HVACTemplate:System:.*VAV$', template_type):
+            zone_system_template_field_name = 'template_vav_system_name'
+        elif re.match(r'HVACTemplate:System:VRF', template_type):
+            zone_system_template_field_name = 'template_vrf_system_name'
+        else:
+            raise InvalidTemplateException("Invalid system type passed to supply path creation function: {}"
+                                           .format(template_type))
+        return zone_system_template_field_name
+
+    def _create_system_path_connection_objects(self, system_template, expanded_zones):
+        """
+        Create objects connecting system supply air to zone objects.  An AirLoopHVAC:SupplyPath object is created with
+        either an AirLoopHVAC:SupplyPlenum or an AirLoopHVAC:ZoneSplitter object.  The same is true for
+        AirLoopHVAC:ReturnPath and AirLoopHVAC:ReturnPlenum/AirLoopHVAC:ZoneMixer.
+
+        :param system_template: HVACTemplate:System:.* object
+        :param expanded_zones: list of ExpandZone objects
+        :return: system supply air connection objects.  AirLoopHVAC:SupplyPath object and either
+            AirLoopHVAC:SupplyPlenum or AirLoopHVAC:ZoneSplitter object as well ass AirLoopHVAC:ReturnPath and either
+            AirLoopHVAC:ReturnPlenum or AirLoopHVAC:ZoneMixer.
+        """
+        zone_system_template_field_name = \
+            self._get_zone_template_field_from_system_type(template_type=system_template.template_type)
+        zone_splitters = []
+        zone_mixers = []
+        # iterate over expanded zones and if the system reference field exists, and is for the referenced system,
+        # append them in the splitter and mixer lists
+        for ez in expanded_zones:
+            if getattr(ez, zone_system_template_field_name, None) == system_template.template_name:
+                # todo_eo: Only AirTerminal has been used for this test when all zone equipment objects should be
+                #  included.
+                zone_equipment = self.get_epjson_objects(
+                    epjson=ez.epjson,
+                    object_type_regexp=r'^AirTerminal:.*'
+                )
+                try:
+                    (zone_equipment_type, zone_equipment_structure), = zone_equipment.items()
+                    (zone_equipment_name, zone_equipment_fields), = zone_equipment_structure.items()
+                    outlet_node_name = zone_equipment_fields['air_inlet_node_name']
+                except (KeyError, AttributeError, ValueError):
+                    raise InvalidTemplateException('Search for zone equipment from Supply Path creation failed for '
+                                                   'outlet node.  system {}, zone {}, zone equipment {}'
+                                                   .format(system_template.template_name, ez.unique_name,
+                                                           zone_equipment))
+                try:
+                    (zone_equipment_connection_name, zone_equipment_connection_fields), = \
+                        ez.epjson['ZoneHVAC:EquipmentConnections'].items()
+                    inlet_node_name = zone_equipment_connection_fields['zone_return_air_node_or_nodelist_name']
+                except (KeyError, AttributeError, ValueError):
+                    raise InvalidTemplateException('Search for ZoneHVAC:EquipmentConnections object from Supply '
+                                                   'Path creation failed for inlet node.  system {}, zone {}'
+                                                   .format(system_template.template_name, ez.unique_name))
+                zone_splitters.append(
+                    {
+                        "outlet_node_name": outlet_node_name
+                    }
+                )
+                zone_mixers.append(
+                    {
+                        "inlet_node_name": inlet_node_name
+                    }
+                )
+        # create plenums or spliters/mixers, depending on template inputs
+        # create ExpandObjects class object to use some yaml and epjson functions
+        eo = ExpandObjects()
+        eo.unique_name = getattr(system_template, 'template_name')
+        supply_plenum_name = getattr(system_template, 'supply_plenum_name', None)
+        if supply_plenum_name:
+            supply_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'SupplyPlenum', 'Base'])
+            supply_object['zone_name'] = supply_plenum_name
+            # todo_eo: this is not actually setting the node name, which probably isn't referenced otherwise.  ensure
+            #  this assignment does not cause issues.
+            supply_object['zone_node_name'] = '{} Zone Air Node'.format(supply_plenum_name)
+            supply_object['nodes'] = zone_splitters
+            supply_object = {'AirLoopHVAC:SupplyPlenum': supply_object}
+        else:
+            supply_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ZoneSplitter', 'Base'])
+            supply_object['nodes'] = zone_splitters
+            supply_object = {'AirLoopHVAC:ZoneSplitter': supply_object}
+        return_plenum_name = getattr(system_template, 'return_plenum_name', None)
+        if return_plenum_name:
+            return_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ReturnPlenum', 'Base'])
+            return_object['zone_name'] = return_plenum_name
+            # todo_eo: this is not actually setting the node name, which probably isn't referenced otherwise.  ensure
+            #  this assignment does not cause issues.
+            return_object['zone_node_name'] = '{} Zone Air Node'.format(return_plenum_name)
+            return_object['nodes'] = zone_mixers
+            return_object = {'AirLoopHVAC:ReturnPlenum': return_object}
+        else:
+            return_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ZoneMixer', 'Base'])
+            return_object['nodes'] = zone_mixers
+            return_object = {'AirLoopHVAC:ZoneMixer': return_object}
+        # Add Path objects
+        supply_path_object = {'AirLoopHVAC:SupplyPath':
+                              eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'SupplyPath', 'Base'])}
+        return_path_object = {'AirLoopHVAC:ReturnPath':
+                              eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ReturnPath', 'Base'])}
+        path_dictionary = eo.yaml_list_to_epjson_dictionaries(
+            yaml_list=[supply_object, return_object, supply_path_object, return_path_object])
+        resolved_path_dictionary = eo.resolve_objects(epjson=path_dictionary)
+        return resolved_path_dictionary
 
     def run(self, input_epjson=None):
         """
@@ -226,10 +344,9 @@ class HVACTemplate(EPJSON):
         for tz in templates:
             self._create_zonecontrol_thermostat(zone_template=tz)
         self.logger.info('##### Building System-Zone Connections #####')
-        # _create_system_airloop_connections
+        # _create_system_path_connection_objects
         self.logger.info('##### Creating epJSON #####')
         # Merge each set of epJSON dictionaries
-        output_epjson = {}
         merge_list = [
             self.epjson,
             self.base_objects,
@@ -237,8 +354,9 @@ class HVACTemplate(EPJSON):
             *[j.epjson for i, j in self.expanded_zones.items()],
             # *[j.epjson for i, j in self.expanded_systems.items()]
         ]
+        output_epjson = {}
         for merge_dictionary in merge_list:
-            output_epjson = self.merge_epjson(
+            self.merge_epjson(
                 super_dictionary=output_epjson,
                 object_dictionary=merge_dictionary
             )

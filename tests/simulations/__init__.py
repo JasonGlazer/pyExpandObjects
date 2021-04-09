@@ -1,4 +1,5 @@
 import json
+import copy
 from pathlib import Path
 import subprocess
 import csv
@@ -33,8 +34,9 @@ class BaseSimulationTest(object):
                 'Output:Table:SummaryReports': '.*',
                 'OutputControl:Table:Style': '.*'
             })
-        formatted_epjson = epj.merge_epjson(
-            super_dictionary=purged_epjson,
+        formatted_epjson = copy.deepcopy(purged_epjson)
+        epj.merge_epjson(
+            super_dictionary=formatted_epjson,
             object_dictionary={
                 "Output:Table:SummaryReports": {
                     "report 1": {

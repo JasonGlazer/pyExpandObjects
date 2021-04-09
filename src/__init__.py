@@ -9,3 +9,6 @@ __author__ = "John Grando"
 # todo_eo: Add description of Mappings in documentation
 # todo_eo: cleanup error checking to look at message output with self.assertRaisesRegex()
 # todo_eo: cleanup setUP to only use minimal classes or mocks
+# todo_eo: It might make sense to load the YAML objects as classes.  Use _get_structure() as entry point.
+# todo_eo: rewrite error outputs to indicate which template (system name, zone name, etc.) the errors are happneing in.
+#  Use self.unique_name for the identifier.
