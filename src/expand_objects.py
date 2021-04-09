@@ -449,7 +449,7 @@ class ExpandObjects(EPJSON):
                             "Maximum Recursion limit exceeded when resolving {} for {}"
                             .format(input_value, field_name))
                 except (KeyError, PyExpandObjectsYamlStructureException):
-                    raise PyExpandObjectsYamlStructureException("Object field not be resolved: field {}, "
+                    raise PyExpandObjectsYamlStructureException("Object field could not be resolved: field {}, "
                                                                 "template name {}".format(field_name, self.unique_name))
             else:
                 # try to match the reference object with EnergyPlus objects in the super_dictionary
@@ -521,13 +521,28 @@ class ExpandObjects(EPJSON):
             reference_epjson = copy.deepcopy(epjson)
         for object_type, object_structure in epjson.items():
             for object_name, object_fields in object_structure.items():
-                for field_name, field_value in object_fields.items():
-                    input_generator = self._resolve_complex_input(
-                        epjson=reference_epjson,
-                        field_name=field_name,
-                        input_value=field_value)
-                    for ig in input_generator:
-                        object_fields[ig['field']] = ig['value']
+                if object_type == 'Schedule:Compact':
+                    try:
+                        structure = object_fields.pop('structure')
+                        insert_values = object_fields.pop('insert_values')
+                        schedule_dictionary = self.build_compact_schedule(
+                            structure_hierarchy=structure.split(':'),
+                            insert_values=insert_values)
+                        self.merge_epjson(
+                            super_dictionary=epjson,
+                            object_dictionary=schedule_dictionary,
+                            unique_name_override=True)
+                    except ValueError:
+                        raise PyExpandObjectsYamlStructureException("Schedule:Compact has invalid inputs for object. "
+                                                                    "{}".format(object_type))
+                else:
+                    for field_name, field_value in object_fields.items():
+                        input_generator = self._resolve_complex_input(
+                            epjson=reference_epjson,
+                            field_name=field_name,
+                            input_value=field_value)
+                        for ig in input_generator:
+                            object_fields[ig['field']] = ig['value']
         return epjson
 
     def _create_objects(self, epjson=None):

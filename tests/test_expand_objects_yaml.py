@@ -460,7 +460,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         eo = ExpandZone(template=mock_zone_template)
-        # string test
         output = eo._resolve_complex_input(
             epjson=test_d,
             field_name="field_1",
@@ -474,40 +473,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             input_value=3
         )
         self.assertEqual(3, [i for i in output][0]["value"])
-        return
-
-    def test_complex_inputs_build_path(self):
-        es = ExpandSystem(template=mock_system_template)
-        # string test
-        output = es._resolve_complex_input(
-            epjson={},
-            build_path=mock_build_path,
-            field_name="field_1",
-            input_value={
-                "BuildPathReference": {
-                    "Location": 1,
-                    "ValueLocation": "Outlet"
-                }
-            }
-        )
-        self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
-        return
-
-    def test_complex_inputs_build_path_class_attribute(self):
-        es = ExpandSystem(template=mock_system_template)
-        es.expansion_structure = mock_system_option_tree
-        es._create_objects()
-        output = es._resolve_complex_input(
-            epjson={},
-            field_name="field_1",
-            input_value={
-                "BuildPathReference": {
-                    "Location": -1,
-                    "ValueLocation": "Outlet"
-                }
-            }
-        )
-        self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
         return
 
     def test_complex_inputs_dictionary(self):
@@ -1269,6 +1234,163 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         )
         return
 
-    # todo_eo: function needs to be created which handles Schedule:Compact yaml object to use build_compact_schedule()
-    # todo_eo: edit complex inputs to take build path location as option.  Use cooling SetpointManager:Scheduled
-    #  as example (setpoint_node_or_nodelist_name should be last node).
+    def test_complex_inputs_build_path(self):
+        es = ExpandSystem(template=mock_system_template)
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": 1,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_complex_inputs_build_path_class_attribute(self):
+        es = ExpandSystem(template=mock_system_template)
+        es.expansion_structure = mock_system_option_tree
+        es._create_objects()
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_complex_inputs_build_path_class_attribute_get_object(self):
+        es = ExpandSystem(template=mock_system_template)
+        es.expansion_structure = mock_system_option_tree
+        es._create_objects()
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1,
+                    "ValueLocation": "self"
+                }
+            }
+        )
+        self.assertEqual('Fan:VariableVolume', [i for i in output][0]['value'])
+        return
+
+    def test_complex_inputs_build_path_class_attribute_get_name(self):
+        es = ExpandSystem(template=mock_system_template)
+        es.expansion_structure = mock_system_option_tree
+        es._create_objects()
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1,
+                    "ValueLocation": "key"
+                }
+            }
+        )
+        self.assertEqual('template_name Supply Fan', [i for i in output][0]['value'])
+        return
+
+    def test_reject_complex_inputs_build_path_reference_no_build_path(self):
+        es = ExpandSystem(template=mock_system_template)
+        es.build_path = {}
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'BuildPath complex input was specified'):
+           self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_reject_complex_inputs_build_path_missing_inputs(self):
+        es = ExpandSystem(template=mock_system_template)
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Object field could not be'):
+            self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": -1
+                }
+            }
+        )
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Object field could not be'):
+            self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_reject_complex_inputs_build_path_bad_location(self):
+        es = ExpandSystem(template=mock_system_template)
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "ValueLocation": "Outlet",
+                    "Location": 10
+                }
+            }
+        )
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Object field could not be'):
+            self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_reject_complex_inputs_build_path_bad_value(self):
+        es = ExpandSystem(template=mock_system_template)
+        output = es._resolve_complex_input(
+            epjson={},
+            build_path=mock_build_path,
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "ValueLocation": "Bad_value",
+                    "Location": -1
+                }
+            }
+        )
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Object field could not be'):
+            self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_complex_inputs_compact_schedule(self):
+        eo = ExpandObjects()
+        output = eo.resolve_objects(epjson={
+            'Schedule:Compact': {
+                "HVACTemplate-Always12.8": {
+                    'structure': 'Schedule:Compact:ALWAYS_VAL',
+                    'insert_values': [12.8,]
+                }
+            }
+        })
+        self.assertEqual(
+            12.8,
+            output['Schedule:Compact']['HVACTemplate-Always12.8']['data'][-1]['field'])
+        return

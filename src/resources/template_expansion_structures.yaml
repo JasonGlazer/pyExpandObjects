@@ -10,7 +10,7 @@ Connectors: &Connectors
 # Schedule Objects
 Schedule:
   Compact:
-    ALWAYS_VAL:
+    ALWAYS_VAL: &ScheduleCompactAlwaysVal
       name: 'HVACTemplate-Always{}'
       schedule_type_limits_name: Any Number
       data:
@@ -354,4 +354,7 @@ OptionTree:
               ^Fan:.*: air_outlet_node_name
           Schedule:Compact:
             name: HVACTempalte-Always12.8
+            structure: Schedule:Compact:ALWAYS_VAL
+            insert_values:
+              - 12.8
         TemplateObjects:
