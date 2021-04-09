@@ -1394,3 +1394,23 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             12.8,
             output['Schedule:Compact']['HVACTemplate-Always12.8']['data'][-1]['field'])
         return
+
+    def test_complex_inputs_compact_schedule_full(self):
+        eo = ExpandObjects()
+        output = eo.resolve_objects(epjson={
+            'Schedule:Compact': {
+                "HVACTemplate-Always12.8": {
+                    'schedule_type_limits_name': 'Any Number',
+                    'data': [
+                        {'field': 'Through 12/31'},
+                        {'field': 'For AllDays'},
+                        {'field': 'Until 24:00'},
+                        {'field': 12.8}
+                    ]
+                }
+            }
+        })
+        self.assertEqual(
+            12.8,
+            output['Schedule:Compact']['HVACTemplate-Always12.8']['data'][-1]['field'])
+        return
