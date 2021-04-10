@@ -1,3 +1,11 @@
+# Global names used to connect objects
+GlobalNames:
+  System:
+    SupplyPathInlet: &SystemSupplyPathInletName
+      '{} Supply Path Inlet'
+    MixedAirNodelistName: &SystemMixedAirNodelistName
+      '{} Mixed Air Nodes'
+
 # Reused objects
 Connectors: &Connectors
   AirLoop: &ConnectorsAirLoop
@@ -183,7 +191,7 @@ AirLoopHVAC:
   SupplyPlenum:
     Base:
       name: '{} Supply Plenum'
-      inlet_node_name: '{} Supply Path Inlet'
+      inlet_node_name: *SystemSupplyPathInletName
   ZoneMixer:
     Base:
       name: '{} Zone Mixer'
@@ -191,11 +199,38 @@ AirLoopHVAC:
   ZoneSplitter:
     Base:
       name: '{} Zone Splitter'
-      inlet_node_name: '{} Supply Path Inlet'
+      inlet_node_name: *SystemSupplyPathInletName
 
 AvailabilityManagerAssignmentList:
   Base:
     name: '{} Availability Managers'
+
+AvailabilityManager:
+  NightCycle:
+    Base: &AvailabilityManagerNightCycle
+      name: '{} Availability'
+      thermostat_tolerance: 0.2
+      cycling_run_time_control_type: FixedRunTime
+      cycling_run_time: 3600
+
+
+Controller:
+  OutdoorAir:
+    Base: &ControllerOutdoorAir
+      name: '{} OA Controller'
+      relief_air_outlet_node_name:
+        OutdoorAir:M.*: relief_air_stream_node_name
+      return_air_node_name:
+        OutdoorAir:Mixer: return_air_stream_node_name
+      mixed_air_node_name:
+        OutdoorAir:Mixer: mixed_air_node_name
+      actuator_node_name:
+        BuildPathReference:
+          Location: 0
+          ValueLocation: Inlet
+      economizer_control_action_type: ModulateFlow
+      maximum_outdoor_air_flow_rate: Autosize
+      minimum_outdoor_air_flow_rate: Autosize
 
 DesignSpecification:
   OutdoorAir:
@@ -210,6 +245,20 @@ DesignSpecification:
       name: '{} SZ DSZAD'
       zone_air_distribution_effectiveness_in_cooling_mode: 1
       zone_air_distribution_effectiveness_in_heating_mode: 1
+
+SetpointManagers:
+  MixedAir:
+    Cooling:
+      SetpointManager:MixedAir: &SetpointManagerMixedAirCooling
+        name: '{} Cooling Coil Air Temp Manager'
+        control_variable: Temperature
+        reference_setpoint_node_name:
+          Fan:.*: air_outlet_node_name
+        fan_inlet_node_name:
+          Fan:.*: air_inlet_node_name
+        fan_outlet_node_name:
+          Fan:.*: air_outlet_node_name
+        setpoint_node_or_nodelist_name: *SystemMixedAirNodelistName
 
 ZoneHVAC:
   AirDistributionUnit:
@@ -351,30 +400,69 @@ OptionTree:
                   Connectors: *FanVariableVolumeConnectors
             Transitions:
           Actions:
-            - template_field:
-                template_value:
-                  ObjectReference:
-                  Location:
-                  Occurrence:
-                  ActionType:
+            - cooling_coil_type:
+                ChilledWater:
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
                   Objects:
+                    - Coil:Cooling:Water:
+                        Fields: *CoilCoolingFields
+                        Connectors: *CoilCoolingConnectors
                   Transitions:
         BaseObjects:
           Objects:
+            - AvailabilityManager:NightCycle:
+                <<: *AvailabilityManagerNightCycle
+                applicability_schedule_name: HVACTemplate-Always1
+            - Schedule:Compact:
+                name: HVACTemplate-Always1
+                structure: Schedule:Compact:ALWAYS_VAL
+                insert_values:
+                  - 1
+            - OutdoorAir:NodeList:
+                name: '{} Outdoor Air NodeList'
+                nodes:
+                  - node_or_nodelist_name:
+                      BuildPathReference:
+                        Location: 0
+                        ValueLocation: Inlet
+            - Controller:OutdoorAir:
+                <<: *ControllerOutdoorAir
             - SetpointManager:Scheduled:
                 name: '{} Cooling Supply Air Temp Manager'
                 control_variable: Temperature
                 setpoint_node_or_nodelist_name:
-                  ^Fan:.*: air_outlet_node_name
-#           Use this for referencing set things like Always 1, otherwise use the built-in schedule creator
-#            - Schedule:Compact:
-#                name: HVACTempalte-Always12.8
-#                structure: Schedule:Compact:ALWAYS_VAL
-#                insert_values:
-#                  - 12.8
+                  BuildPathReference:
+                    Location: -1
+                    ValueLocation: Outlet
+            - SetpointManager:Scheduled:
+                name: '{} Heating Supply Air Temp Manager'
+                control_variable: Temperature
+                setpoint_node_or_nodelist_name: *SystemSupplyPathInletName
+            - SetpointManager:MixedAir:
+                <<: *SetpointManagerMixedAirCooling
+            - NodeList:
+                name: *SystemMixedAirNodelistName
+                nodes:
+                  - node_name:
+                      ^Coil:Cooling:.*: air_outlet_node_name
+                  - node_name:
+                      ^OutdoorAir:Mixer: mixed_air_node_name
             - Sizing:System: *SizingSystem
           Transitions:
             cooling_coil_design_setpoint:
               SetpointManager:Scheduled:
                 schedule_name: 'HVACTemplate-Always{}'
+            economizer_lockout:
+              Controller:OutdoorAir: lockout_type
+            economizer_type:
+              Controller:OutdoorAir: economizer_control_type
+            heating_coil_design_setpoint:
+              SetpointManager:Scheduled:
+                schedule_name: 'HVACTemplate-Always{}'
+            night_cycle_control:
+              AvailabilityManager:NightCycle: control_type
+            system_availability_schedule_name:
+              AvailabilityManager:NightCycle: fan_schedule_name
         TemplateObjects:

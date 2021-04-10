@@ -1,9 +1,11 @@
 import unittest
+import copy
 from pathlib import Path
 
 from tests import BaseTest
 from tests.simulations import BaseSimulationTest
 from src.epjson_handler import EPJSON
+from src.hvac_template import HVACTemplate
 
 mock_template = {
     "HVACTemplate:System:VAV": {
@@ -91,11 +93,11 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'Branch': ['VAV Sys 1 Cooling Coil ChW Branch', 'VAV Sys 1 Heating Coil HW Branch',
                            'VAV Sys 1 Main Branch'],
                 'BranchList': ['VAV Sys 1 Branches'],
-                'Cooling:Coil:Water': '^VAV Sys 1.*',
-                'Heating:Coil:Water': '^VAV Sys 1.*',
+                'Coil:Cooling:Water': '^VAV Sys 1.*',
+                'Coil:Heating:Water': '^VAV Sys 1.*',
                 'Controller:OutdoorAir': '.*',
                 'Controller:WaterCoil': '.*',
-                'Fan:VariableVolum': '.*',
+                'Fan:VariableVolume': '.*',
                 'NodeList': 'VAV Sys 1 Mixed Air Nodes',
                 'OutdoorAir:Mixer': '.*',
                 'OutdoorAir:NodeList': '.*',
@@ -104,7 +106,15 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'Schedule:Compact': '^HVACTemplate-Always'
             }
         )
+        test_epjson = copy.deepcopy(test_purged_epjson)
+        epj.merge_epjson(
+            super_dictionary=test_epjson,
+            object_dictionary=mock_template
+        )
+        # perform steps that would be run in main
+        self.hvactemplate = HVACTemplate()
+        self.hvactemplate.epjson_process(epjson_ref=test_epjson)
+        output_epjson = self.hvactemplate.run()['epJSON']
         from pprint import pprint
-        pprint(base_input_file_path, width=200)
-        pprint(test_purged_epjson, width=200)
+        pprint(output_epjson, width=200)
         return

@@ -226,17 +226,21 @@ class ExpandObjects(EPJSON):
             self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
                 object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
-        if 'TemplateObjects' in options:
-            for template_field, template_tree in option_tree['TemplateObjects'].items():
-                (field_option, objects), = template_tree.items()
-                if re.match(field_option, getattr(self, template_field)):
-                    option_tree_leaf = self._get_option_tree_leaf(
-                        option_tree=option_tree,
-                        leaf_path=['TemplateObjects', template_field, getattr(self, template_field)])
-                    object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
-                    self.merge_epjson(
-                        super_dictionary=option_tree_dictionary,
-                        object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
+        if 'TemplateObjects' in options and option_tree['TemplateObjects']:
+            try:
+                for template_field, template_tree in option_tree['TemplateObjects'].items():
+                    (field_option, objects), = template_tree.items()
+                    if re.match(field_option, getattr(self, template_field)):
+                        option_tree_leaf = self._get_option_tree_leaf(
+                            option_tree=option_tree,
+                            leaf_path=['TemplateObjects', template_field, getattr(self, template_field)])
+                        object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
+                        self.merge_epjson(
+                            super_dictionary=option_tree_dictionary,
+                            object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
+            except (AttributeError, KeyError):
+                raise PyExpandObjectsYamlStructureException('TemplateObjects section for system type {} is invalid in '
+                                                            'yaml file.'.format(self.template_type))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -534,10 +538,12 @@ class ExpandObjects(EPJSON):
             None, then the input epjson will be used
         :return: epJSON dictionary with values replacing complex inputs
         """
+        schedule_dictionary = None
         if not reference_epjson:
             reference_epjson = copy.deepcopy(epjson)
         for object_type, object_structure in epjson.items():
             for object_name, object_fields in object_structure.items():
+                # If a Schedule:Compact object is specified, handle it with special functions
                 if object_type == 'Schedule:Compact' and \
                         object_fields.get('structure') and object_fields.get('insert_values'):
                     structure = object_fields.pop('structure')
@@ -545,10 +551,6 @@ class ExpandObjects(EPJSON):
                     schedule_dictionary = self.build_compact_schedule(
                         structure_hierarchy=structure.split(':'),
                         insert_values=insert_values)
-                    self.merge_epjson(
-                        super_dictionary=epjson,
-                        object_dictionary=schedule_dictionary,
-                        unique_name_override=True)
                 else:
                     for field_name, field_value in object_fields.items():
                         input_generator = self._resolve_complex_input(
@@ -557,6 +559,12 @@ class ExpandObjects(EPJSON):
                             input_value=field_value)
                         for ig in input_generator:
                             object_fields[ig['field']] = ig['value']
+        # if a schedule dictionary was created, add it to the class epjson
+        if schedule_dictionary:
+            self.merge_epjson(
+                super_dictionary=epjson,
+                object_dictionary=schedule_dictionary,
+                unique_name_override=True)
         return epjson
 
     def _create_objects(self, epjson=None):
@@ -1033,7 +1041,8 @@ class ExpandSystem(ExpandObjects):
                         break
         if not oa_controller_list_name:
             raise PyExpandObjectsException("No outdoor air AirLoopHVAC:ControllerList present in the {} system "
-                                           "build process".format(self.unique_name))
+                                           "build process, possibly because no Controller:OutdooAir object present "
+                                           "in template creation process either.".format(self.unique_name))
         # get outdoor air system equipment list
         try:
             oa_system_equipment_list_object = epjson.get('AirLoopHVAC:OutdoorAirSystem:EquipmentList')

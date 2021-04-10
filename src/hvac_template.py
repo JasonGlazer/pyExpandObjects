@@ -1,6 +1,6 @@
 import re
 from epjson_handler import EPJSON
-from expand_objects import ExpandObjects, ExpandZone, ExpandThermostat
+from expand_objects import ExpandObjects, ExpandThermostat, ExpandZone, ExpandSystem
 
 from custom_exceptions import InvalidTemplateException, InvalidEpJSONException
 
@@ -217,26 +217,26 @@ class HVACTemplate(EPJSON):
                                            .format(template_type))
         return zone_system_template_field_name
 
-    def _create_system_path_connection_objects(self, system_template, expanded_zones):
+    def _create_system_path_connection_objects(self, system_class_object, expanded_zones):
         """
         Create objects connecting system supply air to zone objects.  An AirLoopHVAC:SupplyPath object is created with
         either an AirLoopHVAC:SupplyPlenum or an AirLoopHVAC:ZoneSplitter object.  The same is true for
         AirLoopHVAC:ReturnPath and AirLoopHVAC:ReturnPlenum/AirLoopHVAC:ZoneMixer.
 
-        :param system_template: HVACTemplate:System:.* object
+        :param system_class_object: Expanded HVACTemplate:System:.* class object
         :param expanded_zones: list of ExpandZone objects
         :return: system supply air connection objects.  AirLoopHVAC:SupplyPath object and either
             AirLoopHVAC:SupplyPlenum or AirLoopHVAC:ZoneSplitter object as well ass AirLoopHVAC:ReturnPath and either
             AirLoopHVAC:ReturnPlenum or AirLoopHVAC:ZoneMixer.
         """
         zone_system_template_field_name = \
-            self._get_zone_template_field_from_system_type(template_type=system_template.template_type)
+            self._get_zone_template_field_from_system_type(template_type=system_class_object.template_type)
         zone_splitters = []
         zone_mixers = []
         # iterate over expanded zones and if the system reference field exists, and is for the referenced system,
         # append them in the splitter and mixer lists
         for ez in expanded_zones:
-            if getattr(ez, zone_system_template_field_name, None) == system_template.template_name:
+            if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
                 # todo_eo: Only AirTerminal has been used for this test when all zone equipment objects should be
                 #  included.
                 zone_equipment = self.get_epjson_objects(
@@ -250,7 +250,7 @@ class HVACTemplate(EPJSON):
                 except (KeyError, AttributeError, ValueError):
                     raise InvalidTemplateException('Search for zone equipment from Supply Path creation failed for '
                                                    'outlet node.  system {}, zone {}, zone equipment {}'
-                                                   .format(system_template.template_name, ez.unique_name,
+                                                   .format(system_class_object.template_name, ez.unique_name,
                                                            zone_equipment))
                 try:
                     (zone_equipment_connection_name, zone_equipment_connection_fields), = \
@@ -259,7 +259,7 @@ class HVACTemplate(EPJSON):
                 except (KeyError, AttributeError, ValueError):
                     raise InvalidTemplateException('Search for ZoneHVAC:EquipmentConnections object from Supply '
                                                    'Path creation failed for inlet node.  system {}, zone {}'
-                                                   .format(system_template.template_name, ez.unique_name))
+                                                   .format(system_class_object.template_name, ez.unique_name))
                 zone_splitters.append(
                     {
                         "outlet_node_name": outlet_node_name
@@ -273,8 +273,8 @@ class HVACTemplate(EPJSON):
         # create plenums or spliters/mixers, depending on template inputs
         # create ExpandObjects class object to use some yaml and epjson functions
         eo = ExpandObjects()
-        eo.unique_name = getattr(system_template, 'template_name')
-        supply_plenum_name = getattr(system_template, 'supply_plenum_name', None)
+        eo.unique_name = getattr(system_class_object, 'template_name')
+        supply_plenum_name = getattr(system_class_object, 'supply_plenum_name', None)
         if supply_plenum_name:
             supply_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'SupplyPlenum', 'Base'])
             supply_object['zone_name'] = supply_plenum_name
@@ -287,7 +287,7 @@ class HVACTemplate(EPJSON):
             supply_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ZoneSplitter', 'Base'])
             supply_object['nodes'] = zone_splitters
             supply_object = {'AirLoopHVAC:ZoneSplitter': supply_object}
-        return_plenum_name = getattr(system_template, 'return_plenum_name', None)
+        return_plenum_name = getattr(system_class_object, 'return_plenum_name', None)
         if return_plenum_name:
             return_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ReturnPlenum', 'Base'])
             return_object['zone_name'] = return_plenum_name
@@ -308,6 +308,11 @@ class HVACTemplate(EPJSON):
         path_dictionary = eo.yaml_list_to_epjson_dictionaries(
             yaml_list=[supply_object, return_object, supply_path_object, return_path_object])
         resolved_path_dictionary = eo.resolve_objects(epjson=path_dictionary)
+        # save output to class epsjon
+        self.merge_epjson(
+            super_dictionary=self.epjson,
+            object_dictionary=resolved_path_dictionary
+        )
         return resolved_path_dictionary
 
     def run(self, input_epjson=None):
@@ -335,16 +340,21 @@ class HVACTemplate(EPJSON):
         self.expanded_zones = self._expand_templates(
             templates=self.templates_zones,
             expand_class=ExpandZone)
-        # self.logger.info('##### Processing Systems #####')
-        # self.expanded_systems = self._expand_templates(
-        #     templates=self.templates_systems,
-        #     expand_class=ExpandSystem)
+        self.logger.info('##### Processing Systems #####')
+        self.expanded_systems = self._expand_templates(
+            templates=self.templates_systems,
+            expand_class=ExpandSystem)
         self.logger.info('##### Building Zone-Thermostat Connections #####')
         templates = self.epjson_genexp(self.templates_zones)
         for tz in templates:
             self._create_zonecontrol_thermostat(zone_template=tz)
         self.logger.info('##### Building System-Zone Connections #####')
-        # _create_system_path_connection_objects
+        # todo_eo: Should zone connections be handled the same as the system?  I.e. should the class object be used
+        #  as a function input, or the template?
+        for _, system_class_object in self.expanded_systems.items():
+            self._create_system_path_connection_objects(
+                system_class_object=system_class_object,
+                expanded_zones=self.expanded_zones)
         self.logger.info('##### Creating epJSON #####')
         # Merge each set of epJSON dictionaries
         merge_list = [
@@ -352,7 +362,7 @@ class HVACTemplate(EPJSON):
             self.base_objects,
             *[j.epjson for i, j in self.expanded_thermostats.items()],
             *[j.epjson for i, j in self.expanded_zones.items()],
-            # *[j.epjson for i, j in self.expanded_systems.items()]
+            *[j.epjson for i, j in self.expanded_systems.items()]
         ]
         output_epjson = {}
         for merge_dictionary in merge_list:

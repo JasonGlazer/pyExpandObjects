@@ -266,7 +266,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             ez_l.append(ez)
-        output = self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+        output = self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         self.assertEqual(
             {'AirLoopHVAC:ZoneSplitter': 1, 'AirLoopHVAC:ZoneMixer': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
@@ -294,7 +294,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             ez_l.append(ez)
-        output = self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+        output = self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         self.assertEqual(
             {'AirLoopHVAC:SupplyPlenum': 1, 'AirLoopHVAC:ZoneMixer': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
@@ -322,7 +322,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             ez_l.append(ez)
-        output = self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+        output = self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         self.assertEqual(
             {'AirLoopHVAC:ZoneSplitter': 1, 'AirLoopHVAC:ReturnPlenum': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
@@ -351,7 +351,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             ez_l.append(ez)
-        output = self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+        output = self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         self.assertEqual(
             {'AirLoopHVAC:SupplyPlenum': 1, 'AirLoopHVAC:ReturnPlenum': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
@@ -382,7 +382,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).unique_name = unique_name
             ez_l.append(ez)
         with self.assertRaisesRegex(InvalidTemplateException, 'Search for zone equipment'):
-            self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+            self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         return
 
     def test_reject_system_path_objects_no_zone_connection_equipment(self):
@@ -408,5 +408,5 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).unique_name = unique_name
             ez_l.append(ez)
         with self.assertRaisesRegex(InvalidTemplateException, 'Search for ZoneHVAC:EquipmentConnections'):
-            self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+            self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         return

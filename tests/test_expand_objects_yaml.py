@@ -1416,7 +1416,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         return
 
     def test_complex_inputs_create_schedule_from_transition(self):
-        es = ExpandSystem(template= {
+        es = ExpandSystem(template={
             'HVACTemplate:System:VAV': {
                 'template_name': {
                     'template_field': 'template_test_value',
