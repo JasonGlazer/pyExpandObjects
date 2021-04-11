@@ -753,7 +753,10 @@ class ExpandObjects(EPJSON):
                 try:
                     for template_field, action_structure in action.items():
                         for template_value, action_instructions in action_structure.items():
-                            if getattr(self, template_field, None) and \
+                            # check if the template value matches a class template field.
+                            # If the template value is 'None' in the yaml, then perform the operation if the class
+                            # attribute is missing or None.
+                            if (template_value == 'None' and not getattr(self, template_field, None)) or \
                                     re.match(template_value, getattr(self, template_field)):
                                 build_path = self._apply_build_path_action(
                                     build_path=build_path,

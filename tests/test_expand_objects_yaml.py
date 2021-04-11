@@ -1106,6 +1106,40 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
         return
 
+    def test_insert_on_build_path_from_option_tree_with_none_value(self):
+        test_system_option_tree = copy.deepcopy(mock_system_option_tree)
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
+            {
+                'non_present_template_field': {
+                    'None': {
+                        'Location': 1,
+                        'Occurrence': 1,
+                        'ActionType': 'Insert',
+                        'Objects': [
+                            {
+                                "test_object_type": {
+                                    "Fields": {
+                                        'name': 'test_object_name',
+                                        'test_field': 'test_value',
+                                        'test_field_3': 'test_value_3'
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_system_template,
+            expansion_structure=test_system_option_tree)
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'System', 'VAV']
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        self.assertEqual('test_object_type', list(build_path[1].keys())[0])
+        return
+
     def test_replace_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
         test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
