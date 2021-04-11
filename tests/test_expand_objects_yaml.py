@@ -265,6 +265,41 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         return
 
+    def test_template_object_with_none_option_creates_object(self):
+        eo = ExpandObjects(
+            template=mock_zone_template,
+            expansion_structure={
+                'OptionTree': {
+                    'HVACTemplate': {
+                        'Zone': {
+                            'VAV': {
+                                'BaseObjects': {
+                                    'Objects': {}
+                                },
+                                'TemplateObjects': {
+                                    'SomeNonPresentField': {
+                                        'None': {
+                                            'Objects': [
+                                                {
+                                                    'Object:1': {
+                                                        'name': 'object_name',
+                                                        'template_test_field': 'template_test_value'
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        eo._create_objects()
+        self.assertEqual('template_test_value', eo.epjson['Object:1']['object_name']['template_test_field'])
+        return
+
     def test_reject_bad_option_tree_structure(self):
         eo = ExpandObjects(
             template=mock_zone_template,
@@ -272,12 +307,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 'OptionTree': {
                     'Zone': {
                         'VAV': {
-                            'BadKey': {},
-                            'InsertObject': {},
-                            'ReplaceObject': {},
-                            'RemoveObject': {},
-                            'Objects': {},
-                            'TemplateObjects': {}
+                            'BadKey': {}
                         }
                     }
                 }
@@ -718,6 +748,38 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertNotIn('{}', json_string)
         self.assertNotIn('^', json_string)
         self.assertNotIn('*', json_string)
+        return
+
+    def test_build_path_action_non_super_object_processed_and_saved_to_epjson(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'Location': 1,
+            'Occurrence': 1,
+            'ActionType': 'Insert',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                },
+                {
+                    'non_super_object': {
+                        'name': 'test_non_super_object',
+                        'test_non_super_field': 'test_non_super_val'
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        self.assertEqual(
+            'test_non_super_val', eo.epjson['non_super_object']['test_non_super_object']['test_non_super_field'])
         return
 
     def test_build_path_action_insert_by_location(self):
@@ -1227,7 +1289,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         ]
         eo._get_option_tree = MagicMock()
         eo._get_option_tree.return_value = test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']
-        output = eo._get_option_tree_objects(structure_hierarchy=['not', 'important'])
+        output = eo._get_option_tree_objects(structure_hierarchy=['not', 'important', 'because', 'mocked'])
         self.assertEqual(
             eo.summarize_epjson(output),
             {'OutdoorAir:Mixer': 1, 'test_object_type': 1, 'Fan:VariableVolume': 1}

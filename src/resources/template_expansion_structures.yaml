@@ -30,28 +30,30 @@ Schedule:
 # Base objects
 Coil:
   Cooling:
+    Fields: &CoilCoolingFields
+      name: '{} Cooling Coil'
+      air_inlet_node_name: '{} Cooling Coil Inlet'
+      air_outlet_node_name: '{} Cooling Coil Outlet'
     Water:
-      Fields: &CoilCoolingFields
-        name: '{} Cooling Coil'
-        air_inlet_node_name: '{} Cooling Coil Inlet'
-        air_outlet_node_name: '{} Cooling Coil Outlet'
+      Fields: &CoilCoolingWaterFields
+        <<: *CoilCoolingFields
         water_inlet_node_name: '{} Cooling Coil Chw Inlet'
         water_outlet_node_name: '{} Cooling Coil Chw Outlet'
         design_water_flow_rate: Autosize
-      Connectors: &CoilCoolingConnectors
+      Connectors: &CoilCoolingWaterConnectors
         AirLoop: *ConnectorsAirLoop
         ChilledWaterLoop: *ConnectorsWaterLoop
       DetailedGeometry:
         Fields:
-          << : *CoilCoolingFields
+          << : *CoilCoolingWaterFields
         Connectors:
-          << : *CoilCoolingConnectors
+          << : *CoilCoolingWaterConnectors
   Heating:
     Fields: &CoilHeatingFields
       name: '{} Heating Coil'
       air_inlet_node_name: '{} Heating Coil Inlet'
       air_outlet_node_name: '{} Heating Coil Outlet'
-    Connectors:
+    Connectors: &CoilHeatingConnectors
       AirLoop: *ConnectorsAirLoop
     Water:
       Fields: &CoilHeatingWaterFields
@@ -67,7 +69,7 @@ Coil:
         performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
         rated_capacity: Autosize
         maximum_water_flow_rate: Autosize
-      Connectors:
+      Connectors: &CoilHeatingWaterConnectors
         AirLoop: *ConnectorsAirLoop
         HotWaterLoop: *ConnectorsWaterLoop
 
@@ -149,18 +151,14 @@ AirTerminal:
 AirLoopHVAC:
   ControllerList:
     WaterCoil:
-      name: '{} Controllers'
+      Base:
+        name: '{} Controllers'
     OutdoorAir:
-      name: '{} OA Controllers'
+      Base:
+        name: '{} OA Controllers'
   OutdoorAirSystem:
     Base:
       name: '{} OA System'
-      controller_list_name: '{} OA Controllers'
-      outdoor_air_equipment_list_name:
-        ^AirLoopHVAC:OutdoorAirSystem:EquipmentList: self
-      availability_manager: '{} Availability Managers'
-      supply_side_inlet_node_name:
-        ^Controller:OutdoorAir: return_air_node_name
     EquipmentList:
       Base:
         name: '{} OA System Equipment'
@@ -231,6 +229,18 @@ Controller:
       economizer_control_action_type: ModulateFlow
       maximum_outdoor_air_flow_rate: Autosize
       minimum_outdoor_air_flow_rate: Autosize
+  WaterCoil:
+    Base: &ControllerWaterCoil
+      name: '{} Coil Controller'
+      control_variable: Temperature
+      actuator_variable: Flow
+      maximum_actuated_flow: Autosize
+      minimum_actuated_flow: 0
+      controller_convergence_tolerance: Autosize
+      sensor_node_name:
+        ^Coil:(Cooling|Heating):Water.*: air_outlet_node_name
+      actuator_node_name:
+        ^Coil:(Cooling|Heating):Water.*: water_inlet_node_name
 
 DesignSpecification:
   OutdoorAir:
@@ -248,18 +258,25 @@ DesignSpecification:
 
 SetpointManagers:
   MixedAir:
+    Base:
+      control_variable: Temperature
+      fan_inlet_node_name:
+        Fan:.*: air_inlet_node_name
+      fan_outlet_node_name:
+        Fan:.*: air_outlet_node_name
     Cooling:
-      SetpointManager:MixedAir: &SetpointManagerMixedAirCooling
+      Base: &SetpointManagerMixedAirCooling
         name: '{} Cooling Coil Air Temp Manager'
-        control_variable: Temperature
         reference_setpoint_node_name:
           Fan:.*: air_outlet_node_name
-        fan_inlet_node_name:
-          Fan:.*: air_inlet_node_name
-        fan_outlet_node_name:
-          Fan:.*: air_outlet_node_name
         setpoint_node_or_nodelist_name: *SystemMixedAirNodelistName
-
+    Heating:
+      Base: &SetpointManagerMixedAirHeating
+        name: '{} Heating Coil Air Temp Manager'
+        control_variable: Temperature
+        reference_setpoint_node_name: *SystemSupplyPathInletName
+        setpoint_node_or_nodelist_name:
+          Fan:.*: air_inlet_node_name
 ZoneHVAC:
   AirDistributionUnit:
     Base: &ZoneHVACAirDistributionUnit
@@ -407,9 +424,48 @@ OptionTree:
                   ActionType: Insert
                   Objects:
                     - Coil:Cooling:Water:
-                        Fields: *CoilCoolingFields
-                        Connectors: *CoilCoolingConnectors
+                        Fields: *CoilCoolingWaterFields
+                        Connectors: *CoilCoolingWaterConnectors
+                    - Controller:WaterCoil:
+                        <<: *ControllerWaterCoil
+                        name: '{} Cooling Coil Controller'
+                        action: Reverse
+                    - Branch:
+                        name: '{} Cooling Coil Chw Branch'
+                        components:
+                          - component_inlet_node_name:
+                              Coil:Cooling:Water: water_inlet_node_name
+                            component_name:
+                              Coil:Cooling:Water: key
+                            component_object_type:
+                              Coil:Cooling:Water: self
+                            component_outlet_node_name:
+                              Coil:Cooling:Water: water_outlet_node_name
                   Transitions:
+            - heating_coil_type:
+                HotWater:
+                  ObjectReference: Fan:.*
+                  Location: Before
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Water:
+                        Fields: *CoilHeatingWaterFields
+                        Connectors: *CoilHeatingWaterConnectors
+                    - Controller:WaterCoil:
+                        <<: *ControllerWaterCoil
+                        name: '{} Heating Coil Controller'
+                        action: Normal
+                    - Branch:
+                        name: '{} Heating Coil Hw Branch'
+                        components:
+                          - component_inlet_node_name:
+                              Coil:Heating:Water: water_inlet_node_name
+                            component_name:
+                              Coil:Heating:Water: key
+                            component_object_type:
+                              Coil:Heating:Water: self
+                            component_outlet_node_name:
+                              Coil:Heating:Water: water_outlet_node_name
         BaseObjects:
           Objects:
             - AvailabilityManager:NightCycle:
@@ -442,6 +498,8 @@ OptionTree:
                 setpoint_node_or_nodelist_name: *SystemSupplyPathInletName
             - SetpointManager:MixedAir:
                 <<: *SetpointManagerMixedAirCooling
+            - SetpointManager:MixedAir:
+                <<: *SetpointManagerMixedAirHeating
             - NodeList:
                 name: *SystemMixedAirNodelistName
                 nodes:
