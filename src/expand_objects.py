@@ -436,11 +436,11 @@ class ExpandObjects(EPJSON):
         if isinstance(input_value, numbers.Number):
             yield {"field": field_name, "value": input_value}
         elif isinstance(input_value, str):
-            # get class field value if present within the brackets
+            # get class field if present within the brackets
             formatted_value = None
             template_field_rgx = re.search(r'.*{(\w+)}.*', input_value)
             if template_field_rgx:
-                # if class field value present, reformat the string to call the class value
+                # if class field present, reformat the string to call the class attribute
                 template_attribute = '0.{}'.format(template_field_rgx.group(1))
                 formatted_string_rgx = re.sub(r'{(\w+)}', '{' + template_attribute + '}', input_value)
                 # If the class attribute does not exist, yield None
@@ -449,7 +449,7 @@ class ExpandObjects(EPJSON):
                 except AttributeError:
                     yield {'field': field_name, 'value': None}
             else:
-                # if no class attribute was specified, just use the unique name.
+                # if no class attribute was specified {i.e. {}), just use the unique name.
                 formatted_value = input_value.format(getattr(self, 'unique_name'))
             if formatted_value:
                 # if a simple schedule is indicated by name, create it here.  The schedule
