@@ -101,9 +101,10 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'NodeList': 'VAV Sys 1 Mixed Air Nodes',
                 'OutdoorAir:Mixer': '.*',
                 'OutdoorAir:NodeList': '.*',
+                'Schedule:Compact': r'^HVACTemplate-Always\w+',
                 'SetpointManager:MixedAir': '.*',
-                'SetpointManager:Scheduled': '.*',
-                'Schedule:Compact': r'^HVACTemplate-Always\w+'
+                'SetpointManager:Scheduled': 'VAV Sys 1.*',
+                'Sizing:System': '.*'
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)

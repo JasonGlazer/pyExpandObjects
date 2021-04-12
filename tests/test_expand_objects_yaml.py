@@ -505,6 +505,66 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual(3, [i for i in output][0]["value"])
         return
 
+    def test_complex_inputs_class_attribute_reference_string(self):
+        eo = ExpandZone(template=mock_zone_template)
+        eo.test_val = "test_string"
+        output = eo._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value="{test_val}"
+        )
+        self.assertEqual('test_string', [o for o in output][0]['value'])
+        return
+
+    def test_reject_complex_inputs_class_attribute_reference_bad_string(self):
+        eo = ExpandZone(template=mock_zone_template)
+        eo.bad_test_val = "test_string"
+        output = eo._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value="{test_val}"
+        )
+        self.assertIsNone([o for o in output][0]['value'])
+        return
+
+    def test_skip_none_resolve_objects_attribute_reference_bad_string(self):
+        eo = ExpandZone(template=mock_zone_template)
+        eo.test_val = "test_string"
+        output = eo.resolve_objects(epjson={
+            "Object:1":
+                {
+                    "object_1_name": {
+                        "field_1": '{bad_test_val}',
+                        "field_2": '{test_val}'
+                    }
+                }
+        })
+        self.assertEqual(1, len(output['Object:1']['object_1_name'].keys()))
+        self.assertEqual('test_string', output['Object:1']['object_1_name']['field_2'])
+        return
+
+    def test_complex_inputs_class_attribute_reference_float(self):
+        eo = ExpandZone(template=mock_zone_template)
+        eo.test_val = "1.0"
+        output = eo._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value="{test_val}"
+        )
+        self.assertTrue(isinstance([o for o in output][0]['value'], float))
+        return
+
+    def test_complex_inputs_class_attribute_reference_int(self):
+        eo = ExpandZone(template=mock_zone_template)
+        eo.test_val = "1"
+        output = eo._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value="{test_val}"
+        )
+        self.assertTrue(isinstance([o for o in output][0]['value'], int))
+        return
+
     def test_complex_inputs_dictionary(self):
         test_d = {
             "Object:1": {

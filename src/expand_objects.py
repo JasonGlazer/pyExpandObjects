@@ -437,25 +437,38 @@ class ExpandObjects(EPJSON):
             yield {"field": field_name, "value": input_value}
         elif isinstance(input_value, str):
             # get class field value if present within the brackets
+            formatted_value = None
             template_field_rgx = re.search(r'.*{(\w+)}.*', input_value)
             if template_field_rgx:
                 # if class field value present, reformat the string to call the class value
                 template_attribute = '0.{}'.format(template_field_rgx.group(1))
                 formatted_string_rgx = re.sub(r'{(\w+)}', '{' + template_attribute + '}', input_value)
-                formatted_value = formatted_string_rgx.format(self)
+                # If the class attribute does not exist, yield None
+                try:
+                    formatted_value = formatted_string_rgx.format(self)
+                except AttributeError:
+                    yield {'field': field_name, 'value': None}
             else:
                 # if no class attribute was specified, just use the unique name.
                 formatted_value = input_value.format(getattr(self, 'unique_name'))
-            # if a simple schedule is indicated by name, create it here.  The schedule
-            # is stored to the class epjson attribute.
-            always_val_rgx = re.search(r'^HVACTemplate-Always([\d\.]+)', str(formatted_value))
-            if always_val_rgx:
-                always_val = always_val_rgx.group(1)
-                self.build_compact_schedule(
-                    structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
-                    insert_values=[always_val, ]
-                )
-            yield {"field": field_name, "value": formatted_value}
+            if formatted_value:
+                # if a simple schedule is indicated by name, create it here.  The schedule
+                # is stored to the class epjson attribute.
+                always_val_rgx = re.search(r'^HVACTemplate-Always([\d\.]+)', str(formatted_value))
+                if always_val_rgx:
+                    always_val = always_val_rgx.group(1)
+                    self.build_compact_schedule(
+                        structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                        insert_values=[always_val, ]
+                    )
+                # Try to convert formatted value to correct type
+                num_rgx = re.match(r'^[\d\.]+$', formatted_value)
+                if num_rgx:
+                    if '.' in formatted_value:
+                        formatted_value = float(formatted_value)
+                    else:
+                        formatted_value = int(formatted_value)
+                yield {"field": field_name, "value": formatted_value}
         elif isinstance(input_value, dict):
             # unpack the referenced object type and the lookup instructions
             (reference_object_type, lookup_instructions), = input_value.items()
@@ -565,13 +578,17 @@ class ExpandObjects(EPJSON):
                         structure_hierarchy=structure.split(':'),
                         insert_values=insert_values)
                 else:
-                    for field_name, field_value in object_fields.items():
+                    for field_name, field_value in copy.deepcopy(object_fields).items():
                         input_generator = self._resolve_complex_input(
                             epjson=reference_epjson,
                             field_name=field_name,
                             input_value=field_value)
                         for ig in input_generator:
-                            object_fields[ig['field']] = ig['value']
+                            # if None was returned as the value, pop the key out of the dictionary and skip it.
+                            if ig['value']:
+                                object_fields[ig['field']] = ig['value']
+                            else:
+                                object_fields.pop(ig['field'])
         # if a schedule dictionary was created, add it to the class epjson
         if schedule_dictionary:
             self.merge_epjson(

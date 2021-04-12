@@ -450,6 +450,8 @@ OptionTree:
             Transitions:
               supply_fan_delta_pressure:
                 Fan:.*: pressure_rise
+              system_availability_schedule_name:
+                Fan:.*: availability_schedule_name
           Actions:
             - cooling_coil_type:
                 ChilledWater:
@@ -519,6 +521,8 @@ OptionTree:
                         ValueLocation: Inlet
             - Controller:OutdoorAir:
                 <<: *ControllerOutdoorAir
+                economizer_minimum_limit_dry_bulb_temperature: '{economizer_lower_temperature_limit}'
+                economizer_maximum_limit_dry_bulb_temperature: '{economizer_upper_temperature_limit}'
             - SetpointManager:Scheduled:
                 name: '{} Cooling Supply Air Temp Manager'
                 control_variable: Temperature
