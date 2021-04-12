@@ -1,6 +1,14 @@
 # Global names used to connect objects
 GlobalNames:
   System:
+    AirLoopInlet: &AirLoopInlet
+      '{} Air Loop Inlet'
+    AvailabilityManagerAssignmentList: &AvailabilityManagerAssignmentList
+      '{} Availability Managers'
+    BranchList: &BranchList
+      '{} Branches'
+    ReturnOutlet: &ReturnAirOutlet
+      '{} Return Air Outlet'
     SupplyPathInlet: &SystemSupplyPathInletName
       '{} Supply Path Inlet'
     MixedAirNodelistName: &SystemMixedAirNodelistName
@@ -104,7 +112,7 @@ OutdoorAir:
       mixed_air_node_name: '{} Mixed Air Outlet'
       outdoor_air_stream_node_name: '{} Outside Air Inlet' #will be overridden
       relief_air_stream_node_name: '{} Relief Air Outlet'
-      return_air_stream_node_name: '{} Air Loop Inlet'
+      return_air_stream_node_name: *AirLoopInlet
     Connectors: &OutdoorAirMixersConnectors
       AirLoop:
         Inlet: outdoor_air_stream_node_name
@@ -149,10 +157,26 @@ AirTerminal:
 
 # System equipment
 AirLoopHVAC:
+  WaterControllers:
+    Base: &AirLoopHVACWaterControllers
+      '{} Controllers'
+  Base: &AirLoopHVAC
+    name: '{}'
+    availability_manager_list_name: *AvailabilityManagerAssignmentList
+    branch_list_name: *BranchList
+    controller_list_name: *AirLoopHVACWaterControllers
+    demand_side_inlet_node_names: *SystemSupplyPathInletName
+    demand_side_outlet_node_name: *ReturnAirOutlet
+    design_supply_air_flow_rate: "Autosize"
+    supply_side_inlet_node_name: *AirLoopInlet
+    supply_side_outlet_node_names:
+      BuildPathReference:
+        Location: -1
+        ValueLocation: Outlet
   ControllerList:
     WaterCoil:
       Base:
-        name: '{} Controllers'
+        name: *AirLoopHVACWaterControllers
     OutdoorAir:
       Base:
         name: '{} OA Controllers'
@@ -175,7 +199,7 @@ AirLoopHVAC:
   ReturnPlenum:
     Base:
       name: '{} Return Plenum'
-      outlet_node_name: '{} Return Air Outlet'
+      outlet_node_name: *ReturnAirOutlet
   SupplyPath:
     Base:
       name: '{} Supply Path'
@@ -193,7 +217,7 @@ AirLoopHVAC:
   ZoneMixer:
     Base:
       name: '{} Zone Mixer'
-      outlet_node_name: '{} Return Air Outlet'
+      outlet_node_name: *ReturnAirOutlet
   ZoneSplitter:
     Base:
       name: '{} Zone Splitter'
@@ -201,7 +225,7 @@ AirLoopHVAC:
 
 AvailabilityManagerAssignmentList:
   Base:
-    name: '{} Availability Managers'
+    name: *AvailabilityManagerAssignmentList
 
 AvailabilityManager:
   NightCycle:
@@ -211,6 +235,12 @@ AvailabilityManager:
       cycling_run_time_control_type: FixedRunTime
       cycling_run_time: 3600
 
+Branch:
+  Base:
+    name: '{} Main Branch'
+BranchList:
+  Base:
+    name: '{} Branches'
 
 Controller:
   OutdoorAir:
@@ -258,7 +288,7 @@ DesignSpecification:
 
 SetpointManagers:
   MixedAir:
-    Base:
+    Base: &SetpointManagerMixedAir
       control_variable: Temperature
       fan_inlet_node_name:
         Fan:.*: air_inlet_node_name
@@ -266,12 +296,14 @@ SetpointManagers:
         Fan:.*: air_outlet_node_name
     Cooling:
       Base: &SetpointManagerMixedAirCooling
+        <<: *SetpointManagerMixedAir
         name: '{} Cooling Coil Air Temp Manager'
         reference_setpoint_node_name:
           Fan:.*: air_outlet_node_name
         setpoint_node_or_nodelist_name: *SystemMixedAirNodelistName
     Heating:
       Base: &SetpointManagerMixedAirHeating
+        <<: *SetpointManagerMixedAir
         name: '{} Heating Coil Air Temp Manager'
         control_variable: Temperature
         reference_setpoint_node_name: *SystemSupplyPathInletName
@@ -292,7 +324,7 @@ ZoneHVAC:
         ZoneHVAC:EquipmentList: key
       zone_air_inlet_node_or_nodelist_name:
       zone_air_node_name: '{} Zone Air Node'
-      zone_return_air_node_or_nodelist_name: '{} Return Outlet'
+      zone_return_air_node_or_nodelist_name: *ReturnAirOutlet
 
 # General
 Sizing:
@@ -416,6 +448,8 @@ OptionTree:
                   Fields: *FanVariableVolumeFields
                   Connectors: *FanVariableVolumeConnectors
             Transitions:
+              supply_fan_delta_pressure:
+                Fan:.*: pressure_rise
           Actions:
             - cooling_coil_type:
                 ChilledWater:
@@ -492,10 +526,12 @@ OptionTree:
                   BuildPathReference:
                     Location: -1
                     ValueLocation: Outlet
+                schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint}'
             - SetpointManager:Scheduled:
                 name: '{} Heating Supply Air Temp Manager'
                 control_variable: Temperature
                 setpoint_node_or_nodelist_name: *SystemSupplyPathInletName
+                schedule_name: 'HVACTemplate-Always{heating_coil_design_setpoint}'
             - SetpointManager:MixedAir:
                 <<: *SetpointManagerMixedAirCooling
             - SetpointManager:MixedAir:
@@ -508,17 +544,12 @@ OptionTree:
                   - node_name:
                       ^OutdoorAir:Mixer: mixed_air_node_name
             - Sizing:System: *SizingSystem
+            - AirLoopHVAC: *AirLoopHVAC
           Transitions:
-            cooling_coil_design_setpoint:
-              SetpointManager:Scheduled:
-                schedule_name: 'HVACTemplate-Always{}'
             economizer_lockout:
               Controller:OutdoorAir: lockout_type
             economizer_type:
               Controller:OutdoorAir: economizer_control_type
-            heating_coil_design_setpoint:
-              SetpointManager:Scheduled:
-                schedule_name: 'HVACTemplate-Always{}'
             night_cycle_control:
               AvailabilityManager:NightCycle: control_type
             system_availability_schedule_name:

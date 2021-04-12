@@ -317,15 +317,6 @@ class ExpandObjects(EPJSON):
                                                      "object: {}, object fieled: {}, template field: {}"
                                                      .format(object_type, object_field, template_field))
                                 if object_value:
-                                    # if a simple schedule is indicated by name, create it here.  The schedule
-                                    # is stored to the class epjson attribute.
-                                    always_val_rgx = re.search(r'^HVACTemplate-Always([\d\.]+)', str(object_value))
-                                    if always_val_rgx:
-                                        always_val = always_val_rgx.group(1)
-                                        self.build_compact_schedule(
-                                            structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
-                                            insert_values=[always_val, ]
-                                        )
                                     # On a match, apply the field.  If the object is a 'super' object used in a
                                     # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
                                     # into the base level of the object.  The template field was loaded as a class
@@ -445,7 +436,26 @@ class ExpandObjects(EPJSON):
         if isinstance(input_value, numbers.Number):
             yield {"field": field_name, "value": input_value}
         elif isinstance(input_value, str):
-            yield {"field": field_name, "value": input_value.format(self.unique_name)}
+            # get class field value if present within the brackets
+            template_field_rgx = re.search(r'.*{(\w+)}.*', input_value)
+            if template_field_rgx:
+                # if class field value present, reformat the string to call the class value
+                template_attribute = '0.{}'.format(template_field_rgx.group(1))
+                formatted_string_rgx = re.sub(r'{(\w+)}', '{' + template_attribute + '}', input_value)
+                formatted_value = formatted_string_rgx.format(self)
+            else:
+                # if no class attribute was specified, just use the unique name.
+                formatted_value = input_value.format(getattr(self, 'unique_name'))
+            # if a simple schedule is indicated by name, create it here.  The schedule
+            # is stored to the class epjson attribute.
+            always_val_rgx = re.search(r'^HVACTemplate-Always([\d\.]+)', str(formatted_value))
+            if always_val_rgx:
+                always_val = always_val_rgx.group(1)
+                self.build_compact_schedule(
+                    structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                    insert_values=[always_val, ]
+                )
+            yield {"field": field_name, "value": formatted_value}
         elif isinstance(input_value, dict):
             # unpack the referenced object type and the lookup instructions
             (reference_object_type, lookup_instructions), = input_value.items()
@@ -704,20 +714,20 @@ class ExpandObjects(EPJSON):
         output_build_path = self._flatten_list(output_build_path)
         return output_build_path
 
-    @staticmethod
-    def _convert_build_path_to_object_list(build_path, loop_type='AirLoop'):
+    def _connect_and_convert_build_path_to_object_list(self, build_path, loop_type='AirLoop'):
         """
         Connect nodes in build path and convert to list of epJSON formatted objects
 
         :param build_path: build path of EnergyPlus super objects
-        :return:
+        :return: object list of modified super objects.  The build path is also saved as a class attribute for
+            future reference
         """
         object_list = []
+        formatted_build_path = []
         for idx, super_object in enumerate(copy.deepcopy(build_path)):
             (super_object_type, super_object_structure), = super_object.items()
-            try:
-                connectors = super_object_structure.pop('Connectors')
-            except KeyError:
+            connectors = super_object_structure.get('Connectors')
+            if not connectors:
                 raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
                                                             .format(super_object))
             try:
@@ -725,11 +735,14 @@ class ExpandObjects(EPJSON):
                     out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
                 else:
                     super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
-                    out_node = connectors[loop_type]['Outlet']
+                    out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
                 object_list.append({super_object_type: super_object_structure['Fields']})
+                formatted_build_path.append({super_object_type: super_object_structure})
             except (AttributeError, KeyError):
                 raise PyExpandObjectsYamlStructureException("Field/Connector mismatch. Object: {}, connectors: {}"
                                                             .format(super_object_structure, connectors))
+        # Save build path to class attribute for later reference.
+        self.build_path = formatted_build_path
         return object_list
 
     def _process_build_path(self, option_tree):
@@ -741,7 +754,7 @@ class ExpandObjects(EPJSON):
         connected objects is also produced.
 
         :return: list of EnergyPlus super objects.  Additional EnergyPlus objects (Branch, Branchlist) that require
-            the build path for their creation.  The final build path is also saved as a class attribute
+            the build path for their creation.
         """
         actions = option_tree.pop('Actions', None)
         build_path_leaf = self._get_option_tree_leaf(
@@ -763,9 +776,7 @@ class ExpandObjects(EPJSON):
                                     action_instructions=action_instructions)
                 except (AttributeError, KeyError):
                     raise PyExpandObjectsYamlStructureException("Action is incorrectly formatted: {}".format(action))
-        # Save build path to class attribute for later reference.
-        self.build_path = build_path
-        object_list = self._convert_build_path_to_object_list(build_path)
+        object_list = self._connect_and_convert_build_path_to_object_list(build_path)
         return object_list
 
     def build_compact_schedule(
@@ -1193,23 +1204,21 @@ class ExpandSystem(ExpandObjects):
                 component['component_outlet_node_name'] = \
                     super_object_structure['Fields'][connectors[loop_type]['Outlet']]
                 component['component_object_type'] = super_object_type
-                component['component_object_name'] = super_object_structure['Fields']['name']
+                component['component_name'] = super_object_structure['Fields']['name']
                 components.append(component)
             except (AttributeError, KeyError):
                 raise PyExpandObjectsYamlStructureException("Field/Connector mismatch or name not in Fields. "
                                                             "Object: {}, connectors: {}"
                                                             .format(super_object_structure, connectors))
+        branch_fields = self.get_structure(structure_hierarchy=['Branch', 'Base'])
+        branch_fields['components'] = components
         branch = {
-            "Branch": {
-                'name': '{} Main Branch'.format(self.unique_name),
-                'components': components
-            }
+            "Branch": branch_fields
         }
+        branchlist_fields = self.get_structure(structure_hierarchy=['BranchList', 'Base'])
+        branchlist_fields['branches'] = [{"branch_name": "{} Main Branch".format(self.unique_name)}]
         branchlist = {
-            "Branchlist": {
-                'name': '{} Branches'.format(self.unique_name),
-                'branches': [{"branch_name": "{} Main Branch".format(self.unique_name)}]
-            }
+            "BranchList": branchlist_fields
         }
         branch_and_branchlist_objects = self.yaml_list_to_epjson_dictionaries([branch, branchlist])
         self.merge_epjson(

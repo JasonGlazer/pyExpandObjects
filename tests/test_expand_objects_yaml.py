@@ -689,6 +689,19 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual('value_1', test_d['Object:2']['name_1']['field_1'])
         return
 
+    def test_resolve_complex_inputs_object_with_template_reference(self):
+        test_d = {
+            "Object:1": {
+                "name_1": {
+                    "field_1": 'test {template_field}'
+                }
+            }
+        }
+        eo = ExpandZone(template=mock_zone_template)
+        eo.resolve_objects(epjson=test_d)
+        self.assertEqual('test template_test_value', test_d['Object:1']['name_1']['field_1'])
+        return
+
     def test_complex_nested_test(self):
         test_d = {
             'AirTerminal:SingleDuct:VAV:Reheat': {
@@ -780,6 +793,17 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
         self.assertEqual(
             'test_non_super_val', eo.epjson['non_super_object']['test_non_super_object']['test_non_super_field'])
+        return
+
+    def test_build_path_connections(self):
+        # Note ObjectReference is not needed
+        eo = ExpandSystem(template=mock_system_template)
+        object_list = eo._process_build_path(
+            option_tree=mock_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath'])
+        self.assertEqual(
+            '{} Cooling Coil Outlet',
+            object_list[-1]['Fan:VariableVolume']['air_inlet_node_name']
+        )
         return
 
     def test_build_path_action_insert_by_location(self):
@@ -1291,7 +1315,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         ]
         eo = ExpandObjects()
-        output = eo._convert_build_path_to_object_list(build_path=build_path)
+        output = eo._connect_and_convert_build_path_to_object_list(build_path=build_path)
         self.assertEqual("value_2", output[1]["Object:2"]["field_3"])
         return
 
