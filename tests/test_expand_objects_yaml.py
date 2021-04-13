@@ -42,8 +42,10 @@ mock_zone_option_tree = {
                     },
                     'Mappings': {
                         'ZoneHVAC:AirDistributionUnit': {
-                            "object_test_field2": {
-                                "test_pre_mapped_value": "test_mapped_value"
+                            "template_field2": {
+                                "test_pre_mapped_value": {
+                                    "test_map_field": "test_mapped_value"
+                                }
                             }
                         }
                     }
@@ -332,6 +334,38 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertTrue(key_check)
         return
 
+    def test_option_tree_leaf_multiple_mappings(self):
+        eo = ExpandObjects()
+        eo.supply_fan_part_load_power_coefficients = 'InletVaneDampers'
+        option_tree = {
+            'BaseObjects': {
+                'Objects': [
+                    {
+                        'Fan:VariableVolume': {
+                            'name': 'test_name'
+                        }
+                    }
+                ],
+                'Mappings': {
+                    'Fan:.*': {
+                        'supply_fan_part_load_power_coefficients': {
+                            'InletVaneDampers': {
+                                'fan_power_coefficient_1': 0.35071223,
+                                'fan_power_coefficient_2': 0.30850535,
+                                'fan_power_coefficient_3': -0.54137364,
+                                'fan_power_coefficient_4': 0.87198823,
+                                'fan_power_coefficient_5': 0
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
+        object_list = eo._apply_transitions(option_tree_leaf=option_tree_leaf)
+        self.assertEqual(0.35071223, object_list[0]['Fan:VariableVolume']['fan_power_coefficient_1'])
+        return
+
     def test_option_tree_leaf_without_transitions(self):
         # remove Transitions for this test
         bad_mock_zone_option_tree = copy.deepcopy(mock_zone_option_tree)
@@ -368,7 +402,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         transitioned_option_tree_leaf = eo._apply_transitions(option_tree_leaf)
         self.assertEqual(
             'test_mapped_value',
-            transitioned_option_tree_leaf[0]['ZoneHVAC:AirDistributionUnit']['object_test_field2'])
+            transitioned_option_tree_leaf[0]['ZoneHVAC:AirDistributionUnit']['test_map_field'])
         return
 
     def test_yaml_list_to_dictionary_regular_object(self):
@@ -821,6 +855,18 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertNotIn('{}', json_string)
         self.assertNotIn('^', json_string)
         self.assertNotIn('*', json_string)
+        return
+
+    def test_field_with_zero_value_processing(self):
+        eo = ExpandObjects()
+        output = eo.yaml_list_to_epjson_dictionaries([{
+            'Object:1': {
+                'name': 'test_name',
+                'field': 0
+            }
+        }])
+        output = eo.resolve_objects(epjson=output)
+        self.assertEqual(0, output['Object:1']['test_name']['field'])
         return
 
     def test_build_path_action_non_super_object_processed_and_saved_to_epjson(self):

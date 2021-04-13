@@ -236,7 +236,6 @@ class ExpandObjects(EPJSON):
                         option_tree_leaf = self._get_option_tree_leaf(
                             option_tree=option_tree,
                             leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])
-                        print(option_tree_leaf)
                         object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
                         self.merge_epjson(
                             super_dictionary=option_tree_dictionary,
@@ -328,10 +327,10 @@ class ExpandObjects(EPJSON):
         if option_tree_mappings:
             for object_type_reference, mapping_structure in option_tree_mappings.items():
                 for mapping_field, mapping_dictionary in mapping_structure.items():
-                    # for each mapping instruction, iterate over the objects and apply if the
-                    # mapping_field is used in the field values
-                    # The mapping is stored as a mapping_dictionary with the original value as the key
-                    # and the final value as the value.
+                    # for each mapping instruction, match the key (object_reference).
+                    # Then retrieve the template_field value from the class attribute.
+                    # If it exists, and is one of the values in the mapping dictionaries, then apply the sub-dictionary
+                    # to the object.
                     # Ensure there is only one object_key and it is 'Objects'
                     (object_key, tree_objects), = option_tree_leaf.items()
                     if not object_key == 'Objects':
@@ -340,19 +339,19 @@ class ExpandObjects(EPJSON):
                     for tree_object in tree_objects:
                         for object_type, object_fields in tree_object.items():
                             if re.match(object_type_reference, object_type):
-                                for object_field, value in object_fields.items():
-                                    if object_field == mapping_field:
-                                        try:
-                                            if 'Fields' in tree_object[object_type].keys():
-                                                tree_object[object_type]['Fields'][object_field] = \
-                                                    mapping_dictionary[value]
-                                            else:
-                                                tree_object[object_type][object_field] = mapping_dictionary[value]
-                                        except AttributeError:
-                                            self.logger.warning("Template field was attempted to be "
-                                                                "mapped to object but was not present "
-                                                                "in template inputs. mapping field: {}, object type: {}"
-                                                                .format(mapping_field, object_type))
+                                for map_option, sub_dictionary in mapping_dictionary.items():
+                                    if hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
+                                        for field, val in sub_dictionary.items():
+                                            try:
+                                                if 'Fields' in tree_object[object_type].keys():
+                                                    tree_object[object_type]['Fields'][field] = val
+                                                else:
+                                                    tree_object[object_type][field] = val
+                                            except AttributeError:
+                                                self.logger.warning("Template field was attempted to be "
+                                                                    "mapped to object but was not present "
+                                                                    "in template inputs. mapping field: {}, "
+                                                                    "object type: {}".format(field, object_type))
         return option_tree_leaf['Objects']
 
     def yaml_list_to_epjson_dictionaries(self, yaml_list: list) -> dict:
@@ -585,7 +584,9 @@ class ExpandObjects(EPJSON):
                             input_value=field_value)
                         for ig in input_generator:
                             # if None was returned as the value, pop the key out of the dictionary and skip it.
-                            if ig['value']:
+                            # use the zero comparison to specifically pass that number.  The is not None clause is
+                            # not used here as this is more strict.
+                            if str(ig['value']) == '0' or ig['value']:
                                 object_fields[ig['field']] = ig['value']
                             else:
                                 object_fields.pop(ig['field'])
@@ -693,6 +694,9 @@ class ExpandObjects(EPJSON):
         # iterate over super objects keeping count of the index
         if isinstance(location, int):
             if action_type == 'insert':
+                # if location is negative, then get the positive list index by subtraction
+                if location < 0:
+                    location = len(build_path) + location + 1
                 output_build_path.insert(location, object_list)
             elif action_type == 'remove':
                 output_build_path.pop(location)
