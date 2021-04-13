@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, PropertyMock
 
 from src.hvac_template import HVACTemplate
 from src.hvac_template import InvalidTemplateException
-from src.expand_objects import ExpandObjects, ExpandSystem, ExpandZone, ExpandThermostat
+from src.expand_objects import ExpandObjects, ExpandSystem, ExpandZone
 from . import BaseTest
 
 minimum_objects_d = {
