@@ -586,6 +586,11 @@ class ExpandObjects(EPJSON):
                             # if None was returned as the value, pop the key out of the dictionary and skip it.
                             # use the zero comparison to specifically pass that number.  The is not None clause is
                             # not used here as this is more strict.
+                            if isinstance(ig['value'], dict):
+                                raise PyExpandObjectsYamlStructureException('commplex input was not processed for '
+                                                                            'object {}. Complex input: {}, output value'
+                                                                            ' {}'.format(object_name, field_name,
+                                                                                         field_value))
                             if str(ig['value']) == '0' or ig['value']:
                                 object_fields[ig['field']] = ig['value']
                             else:
