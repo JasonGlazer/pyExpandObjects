@@ -231,7 +231,7 @@ class ExpandObjects(EPJSON):
                 for template_field, template_tree in option_tree['TemplateObjects'].items():
                     (field_option, objects), = template_tree.items()
                     # check if field option is 'None' and if object doesn't exist in the class, or if the fields match
-                    if (field_option == 'None' and not getattr(self, template_field, None)) or \
+                    if (field_option == 'None' and not hasattr(self, template_field)) or \
                             re.match(field_option, getattr(self, template_field)):
                         option_tree_leaf = self._get_option_tree_leaf(
                             option_tree=option_tree,
@@ -259,6 +259,7 @@ class ExpandObjects(EPJSON):
         option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
         transitions = option_leaf.pop('Transitions', None)
         mappings = option_leaf.pop('Mappings', None)
+        # flatten object list in case it was nested due to yaml formatting
         try:
             objects = self._flatten_list(option_leaf['Objects'])
         except KeyError:
@@ -285,23 +286,27 @@ class ExpandObjects(EPJSON):
         """
         option_tree_transitions = option_tree_leaf.pop('Transitions', None)
         option_tree_mappings = option_tree_leaf.pop('Mappings', None)
+        # for each transition instruction, iterate over the objects and apply if the object_type matches the reference
         if option_tree_transitions:
             # iterate over the transitions instructions
+            # Note, this method may be deprecated due to the more direct option of specifying the class attribute
+            # directly in the yaml text field (e.g. field_name: {class_variable}).  However, this code has not been
+            # removed in case it proves useful during development.
             for template_field, transition_structure in option_tree_transitions.items():
                 for object_type_reference, object_field in transition_structure.items():
-                    # for each transition instruction, iterate over the objects and apply if the
-                    # object_type matches
                     # Ensure there is only one object_key and it is 'Objects'
                     (object_key, tree_objects), = option_tree_leaf.items()
                     if not object_key == 'Objects':
                         raise PyExpandObjectsYamlError(
                             "Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
+                    # iterate over each object from 'Objects' dictionary
                     for tree_object in tree_objects:
                         for object_type, _ in tree_object.items():
+                            # if the object reference matches the object, apply the transition
                             if re.match(object_type_reference, object_type):
                                 # if the object_field is a dictionary, then the value is a formatted string to
                                 # apply with the template_field.  Otherwise, just try to get the value from the
-                                # template field, which is stored as a class attribute.
+                                # template field, which is stored as a class attribute (on class initialization).
                                 try:
                                     if isinstance(object_field, dict):
                                         (object_field, object_val), = object_field.items()
@@ -316,33 +321,37 @@ class ExpandObjects(EPJSON):
                                                      "object: {}, object fieled: {}, template field: {}"
                                                      .format(object_type, object_field, template_field))
                                 if object_value:
-                                    # On a match, apply the field.  If the object is a 'super' object used in a
+                                    # On a match and valid value, apply the field.
+                                    # If the object is a 'super' object used in a
                                     # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
-                                    # into the base level of the object.  The template field was loaded as a class
-                                    # attribute on initialization.
+                                    # into the top level of the object.
                                     if 'Fields' in tree_object[object_type].keys():
                                         tree_object[object_type]['Fields'][object_field] = object_value
                                     else:
                                         tree_object[object_type][object_field] = object_value
+        # for each mapping instruction, iterate over the objects and apply if the object_type matches the reference
         if option_tree_mappings:
+            # iterate over mapping instructions
             for object_type_reference, mapping_structure in option_tree_mappings.items():
                 for mapping_field, mapping_dictionary in mapping_structure.items():
-                    # for each mapping instruction, match the key (object_reference).
-                    # Then retrieve the template_field value from the class attribute.
-                    # If it exists, and is one of the values in the mapping dictionaries, then apply the sub-dictionary
-                    # to the object.
                     # Ensure there is only one object_key and it is 'Objects'
                     (object_key, tree_objects), = option_tree_leaf.items()
                     if not object_key == 'Objects':
                         raise PyExpandObjectsYamlError(
                             "Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
+                    # iterate over each object from 'Objects' dictionary
                     for tree_object in tree_objects:
                         for object_type, object_fields in tree_object.items():
+                            # if the object reference in the mapping dictionary matches the object, apply the map
                             if re.match(object_type_reference, object_type):
                                 for map_option, sub_dictionary in mapping_dictionary.items():
                                     if hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
                                         for field, val in sub_dictionary.items():
                                             try:
+                                                # On a match and valid value, apply the field.
+                                                # If the object is a 'super' object used in a
+                                                # BuildPath, then insert it in the 'Fields' dictionary.
+                                                # Otherwise, insert it into the top level of the object.
                                                 if 'Fields' in tree_object[object_type].keys():
                                                     tree_object[object_type]['Fields'][field] = val
                                                 else:
@@ -356,7 +365,7 @@ class ExpandObjects(EPJSON):
 
     def yaml_list_to_epjson_dictionaries(self, yaml_list: list) -> dict:
         """
-        Convert list of input YAML dictionaries into epJSON formatted dictionaries.
+        Convert list of YAML dictionaries into epJSON formatted dictionaries.
 
         YAML dictionaries can either be regular or 'super' objects which contain 'Fields' and 'Connectors'
         yaml_list: list of yaml objects to be formatted.
@@ -385,20 +394,24 @@ class ExpandObjects(EPJSON):
     def _resolve_complex_input_from_build_path(
             build_path: list,
             lookup_instructions: dict,
-            connector_path: str = 'AirLoop'):
+            connector_path: str = 'AirLoop') -> str:
         """
         Resolve a complex input using a build path and location based instructions.
 
         :param build_path: list of EnergyPlus super objects forming a build path
-        :param lookup_instructions: instructions idenifying the node location to return
+        :param lookup_instructions: instructions identifying the node location to return
         :return: Resolved field value
         """
+        # keep a copy for output
+        backup_copy = copy.deepcopy(lookup_instructions)
+        # retrieve the necessary instructions from the instructions
         try:
             location = lookup_instructions.pop('Location')
             connector_path = connector_path or lookup_instructions.pop('ConnectorPath', None)
             value_location = lookup_instructions.pop('ValueLocation')
         except KeyError:
-            raise PyExpandObjectsYamlStructureException("Build path location reference is invalid: build path {}")
+            raise PyExpandObjectsYamlStructureException("Build path location reference is invalid: build path {}"
+                                                        .format(backup_copy))
         try:
             super_object = build_path[location]
             (super_object_type, super_object_structure), = super_object.items()
@@ -412,8 +425,8 @@ class ExpandObjects(EPJSON):
             reference_node = super_object_structure['Connectors'][connector_path][value_location]
             return super_object_structure['Fields'][reference_node]
         else:
-            raise PyExpandObjectsYamlStructureException("Invalid complex input for build path lookup: {}"
-                                                        .format(value_location))
+            raise PyExpandObjectsYamlStructureException("Invalid complex input for build path lookup: lookup, {}, "
+                                                        "value_location {}".format(backup_copy, value_location))
 
     def _resolve_complex_input(
             self,
@@ -435,17 +448,19 @@ class ExpandObjects(EPJSON):
         if isinstance(input_value, numbers.Number):
             yield {"field": field_name, "value": input_value}
         elif isinstance(input_value, str):
-            # get class field if present within the brackets
+            # if a string is present within the formatting brackets, it is intended to be the template field (which is
+            # a class attribute).
+            # Extract the attribute reference and attempt to apply it.
             formatted_value = None
             template_field_rgx = re.search(r'.*{(\w+)}.*', input_value)
             if template_field_rgx:
-                # if class field present, reformat the string to call the class attribute
+                # if class field present, reformat the string to call the class attribute and apply.
                 template_attribute = '0.{}'.format(template_field_rgx.group(1))
                 formatted_string_rgx = re.sub(r'{(\w+)}', '{' + template_attribute + '}', input_value)
-                # If the class attribute does not exist, yield None
                 try:
                     formatted_value = formatted_string_rgx.format(self)
                 except AttributeError:
+                    # If the class attribute does not exist, yield None as flag to handle in parent process.
                     yield {'field': field_name, 'value': None}
             else:
                 # if no class attribute was specified {i.e. {}), just use the unique name.
@@ -470,8 +485,13 @@ class ExpandObjects(EPJSON):
                 yield {"field": field_name, "value": formatted_value}
         elif isinstance(input_value, dict):
             # unpack the referenced object type and the lookup instructions
-            (reference_object_type, lookup_instructions), = input_value.items()
-            # if the key is 'BuildPath' then insert by build path location
+            try:
+                (reference_object_type, lookup_instructions), = input_value.items()
+            except ValueError:
+                raise PyExpandObjectsYamlStructureException('Complex input reference is invalid: {}'
+                                                            .format(input_value))
+            # If the input_value is instructing to use a 'BuildPathReference' then insert the object by build
+            # path location
             if reference_object_type.lower() == 'buildpathreference':
                 if not build_path:
                     raise PyExpandObjectsYamlStructureException("BuildPath complex input was specified with no build"
@@ -495,16 +515,19 @@ class ExpandObjects(EPJSON):
                             "Maximum Recursion limit exceeded when resolving {} for {}"
                             .format(input_value, field_name))
                 except (KeyError, PyExpandObjectsYamlStructureException):
-                    raise PyExpandObjectsYamlStructureException("Object field could not be resolved: field {}, "
-                                                                "template name {}".format(field_name, self.unique_name))
+                    raise PyExpandObjectsYamlStructureException("Object field could not be resolved: input {}, "
+                                                                "field {}, template name {}"
+                                                                .format(input_value, field_name, self.unique_name))
             else:
-                # try to match the reference object with EnergyPlus objects in the super_dictionary
+                # If the input_value is an object type reference then try to match it with the EnergyPlus objects in
+                # the super dictionary.
                 for object_type in epjson.keys():
                     if re.match(reference_object_type, object_type):
-                        # retrieve value
                         # if 'self' is used as the reference node, return the energyplus object type
                         # if 'key' is used as the reference node, return the unique object name
-                        # After those checks, the lookup_instructions is the field name of the object.
+                        # if the reference node is a dictionary, then it is a nested complex input and the function
+                        #  is reapplied recursively
+                        # For anything else, process the reference node and return a value.
                         (object_name, _), = epjson[object_type].items()
                         if lookup_instructions.lower() == 'self':
                             yield {"field": field_name, "value": object_type}
@@ -523,6 +546,7 @@ class ExpandObjects(EPJSON):
                                     "Maximum Recursion limit exceeded when resolving {} for {}"
                                     .format(input_value, field_name))
                         else:
+                            # attempt to format both the field and value to be returned.
                             if isinstance(field_name, str):
                                 formatted_field_name = field_name.format(self.unique_name)
                             else:
@@ -535,6 +559,7 @@ class ExpandObjects(EPJSON):
                             yield {"field": formatted_field_name,
                                    "value": formatted_value}
         elif isinstance(input_value, list):
+            # When the input is a list, iterate and apply this function recursively to each object.
             try:
                 tmp_list = []
                 for input_list_item in input_value:
@@ -568,7 +593,8 @@ class ExpandObjects(EPJSON):
             reference_epjson = copy.deepcopy(epjson)
         for object_type, object_structure in epjson.items():
             for object_name, object_fields in object_structure.items():
-                # If a Schedule:Compact object is specified, handle it with special functions
+                # If a Schedule:Compact object is specified, and has special formatting, build it here.  The object
+                # is saved to the class epjson attribute.
                 if object_type == 'Schedule:Compact' and \
                         object_fields.get('structure') and object_fields.get('insert_values'):
                     structure = object_fields.pop('structure')
@@ -584,7 +610,7 @@ class ExpandObjects(EPJSON):
                             input_value=field_value)
                         for ig in input_generator:
                             # if None was returned as the value, pop the key out of the dictionary and skip it.
-                            # use the zero comparison to specifically pass that number.  The is not None clause is
+                            # use the zero comparison to specifically pass that number.  The 'is not None' clause is
                             # not used here as this is more strict.
                             if isinstance(ig['value'], dict):
                                 raise PyExpandObjectsYamlStructureException('commplex input was not processed for '
@@ -612,11 +638,11 @@ class ExpandObjects(EPJSON):
         """
         # if epJSON dictionary not passed, use the class attribute
         epjson = epjson or self.epjson
-        # Get BaseObjects and Template objects, applying transitions from template before returning YAML objects
+        # Get the yaml structure from the template type
         structure_hierarchy = self.template_type.split(':')
         epjson_from_option_tree = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
-        # Convert field values using name formatting and complex input operations using _resolve_objects
-        # Always use merge_epjson to class epJSON in case objects have been stored during processing
+        # Always use merge_epjson to store objects in self.epjson in case objects have already been stored to
+        # that dictionary during processing
         self.merge_epjson(
             super_dictionary=epjson,
             object_dictionary=self.resolve_objects(epjson_from_option_tree))
@@ -631,12 +657,14 @@ class ExpandObjects(EPJSON):
             and 'Replace' (case insensitive).
         :return: mutated dictionary with action applied.
         """
-        # pop the instruction keys for use in the function.
+        # get the indicated occurrence that the regex will match.  First match is default.
         occurrence = action_instructions.pop('Occurrence', 1)
         # Format check inputs for occurrence
         if not isinstance(occurrence, int) or (isinstance(occurrence, int) and occurrence < 0):
             raise PyExpandObjectsYamlStructureException('Occurrence must be a non-negative integer: {}'
                                                         .format(occurrence))
+        # backup copy for output
+        backup_copy = copy.deepcopy(action_instructions)
         try:
             # Format check inputs for action_type and location
             action_type = action_instructions.pop('ActionType').lower()
@@ -658,10 +686,10 @@ class ExpandObjects(EPJSON):
                 object_reference = None
             else:
                 raise PyExpandObjectsYamlStructureException('Insert reference value is not "Before", "After" or an '
-                                                            'integer: {}'.format(action_instructions))
+                                                            'integer: {}'.format(backup_copy))
         except KeyError:
             raise PyExpandObjectsYamlStructureException(
-                "Build Path Action is missing required instructions {}. ".format(action_instructions))
+                "Build Path Action is missing required instructions {}. ".format(backup_copy))
         # Get the option tree leaf for an action.
         # Remove does not require this step since it just removes objects from the original build path
         if action_type != 'remove':
@@ -673,9 +701,9 @@ class ExpandObjects(EPJSON):
         else:
             object_list = None
         # Look over each object in the object_list.  If it is not a super object, then process it and save to
-        # class epjson object.  Use the current object_list as the reference epJSON to resolve the objects.
-        # If a larger scope of reference for the epJSON is needed, the object should be placed in BaseObjects or
-        # TemplateObjects sections of the yaml file.
+        #   class epjson object.  Use the current object_list as the reference epJSON to resolve the objects.
+        #   If a larger scope of reference for the epJSON is needed, the object should be placed in BaseObjects or
+        #   TemplateObjects sections of the yaml file.
         if object_list:
             # make a temporary object list since non-super objects will be removed from the list
             tmp_object_list = []
@@ -695,8 +723,8 @@ class ExpandObjects(EPJSON):
             object_list = tmp_object_list
         # Create new build path dictionary since the input dictionary will be mutated
         output_build_path = copy.deepcopy(build_path)
-        # if the location is an integer, just perform the action on that index, otherwise,
-        # iterate over super objects keeping count of the index
+        # if the location is an integer, just perform the action on that index, otherwise, iterate over super objects
+        #   keeping count of the index
         if isinstance(location, int):
             if action_type == 'insert':
                 # if location is negative, then get the positive list index by subtraction
@@ -709,8 +737,8 @@ class ExpandObjects(EPJSON):
                 output_build_path[location] = object_list
         else:
             # Iterate over the objects finding the appropriate location for the action.
-            # keep a count of number of times object has been matched.
-            # This is for the 'Occurrence' key to perform an action on the nth occurrence of a match.
+            # Keep a count of number of times object has been matched.  This is for the 'Occurrence' key to
+            #   perform an action on the nth occurrence of a match.
             match_count = 0
             for idx, super_object in enumerate(build_path):
                 # if there is a match to the object type, and the occurrence is correct, then perform the action
@@ -720,7 +748,7 @@ class ExpandObjects(EPJSON):
                         if match_count == occurrence:
                             if action_type == 'insert' and isinstance(location, str):
                                 # The location variable is now either 'before' or 'after',
-                                # so mutate the variable to be an integer value for offset
+                                #   so mutate the variable to be an integer value for offset
                                 location = 0 if location == 'before' else 1
                                 output_build_path.insert(idx + location, object_list)
                             elif action_type == 'remove':
@@ -757,9 +785,12 @@ class ExpandObjects(EPJSON):
                 raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
                                                             .format(super_object))
             try:
+                # The first object only sets the outlet node variable and remains unchanged
                 if idx == 0:
                     out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
                 else:
+                    # After the first object, the inlet node name is changed to the previous object's outlet node
+                    # name.  Then the outlet node variable is reset.
                     super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
                     out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
                 object_list.append({super_object_type: super_object_structure['Fields']})
@@ -782,26 +813,30 @@ class ExpandObjects(EPJSON):
         :return: list of EnergyPlus super objects.  Additional EnergyPlus objects (Branch, Branchlist) that require
             the build path for their creation.
         """
-        actions = option_tree.pop('Actions', None)
+        # Get the base objects from the build path dictionary and apply transitions to obtain a list of dictionary
+        #  objects that have been formatted.
         build_path_leaf = self._get_option_tree_leaf(
             option_tree=option_tree,
             leaf_path=['BaseObjects', ])
         build_path = self._apply_transitions(build_path_leaf)
+        # Get the list actions to perform on a build bath, based on template inputs, and process them in order
+        actions = option_tree.pop('Actions', None)
         if actions:
             for action in actions:
                 try:
                     for template_field, action_structure in action.items():
                         for template_value, action_instructions in action_structure.items():
-                            # check if the template value matches a class template field.
+                            # check if the option tree template value matches a class template field.
                             # If the template value is 'None' in the yaml, then perform the operation if the class
                             # attribute is missing or None.
-                            if (template_value == 'None' and not getattr(self, template_field, None)) or \
+                            if (template_value == 'None' and not hasattr(self, template_field)) or \
                                     re.match(template_value, getattr(self, template_field)):
                                 build_path = self._apply_build_path_action(
                                     build_path=build_path,
                                     action_instructions=action_instructions)
                 except (AttributeError, KeyError):
                     raise PyExpandObjectsYamlStructureException("Action is incorrectly formatted: {}".format(action))
+        # Format the created build path
         object_list = self._connect_and_convert_build_path_to_object_list(build_path)
         return object_list
 
@@ -887,8 +922,8 @@ class ExpandThermostat(ExpandObjects):
         Create ThermostatSetpoint objects based on class setpoint_schedule_name attributes
         :return: Updated class epJSON dictionary with ThermostatSetpoint objects added.
         """
-        if getattr(self, 'heating_setpoint_schedule_name', None) \
-                and getattr(self, 'cooling_setpoint_schedule_name', None):
+        if hasattr(self, 'heating_setpoint_schedule_name') \
+                and hasattr(self, 'cooling_setpoint_schedule_name'):
             thermostat_setpoint_object = {
                 "ThermostatSetpoint:DualSetpoint": {
                     '{} SP Control'.format(self.unique_name): {
@@ -897,7 +932,7 @@ class ExpandThermostat(ExpandObjects):
                     }
                 }
             }
-        elif getattr(self, 'heating_setpoint_schedule_name', None):
+        elif hasattr(self, 'heating_setpoint_schedule_name'):
             thermostat_setpoint_object = {
                 "ThermostatSetpoint:SingleHeating": {
                     '{} SP Control'.format(self.unique_name): {
@@ -905,7 +940,7 @@ class ExpandThermostat(ExpandObjects):
                     }
                 }
             }
-        elif getattr(self, 'cooling_setpoint_schedule_name', None):
+        elif hasattr(self, 'cooling_setpoint_schedule_name'):
             thermostat_setpoint_object = {
                 "ThermostatSetpoint:SingleCooling": {
                     '{} SP Control'.format(self.unique_name): {
@@ -952,7 +987,7 @@ class ExpandZone(ExpandObjects):
     def run(self):
         """
         Process zone template
-        :return: epJSON dictionary as class attribute
+        :return: ExpandZone class
         """
         self._create_objects()
         return self
@@ -980,8 +1015,8 @@ class ExpandSystem(ExpandObjects):
             input epJSON object.
         """
         # if epjson not provided, use the class attribute:
-        object_list = []
         epjson = epjson or self.epjson
+        object_list = []
         for controller_type in ['Controller:WaterCoil', 'Controller:OutdoorAir']:
             controller_objects = epjson.get(controller_type)
             if controller_objects:
@@ -1135,8 +1170,8 @@ class ExpandSystem(ExpandObjects):
     def _modify_build_path_for_outside_air_system(
             self, loop_type: str = 'AirLoop', epjson: dict = None, build_path: list = None) -> list:
         """
-        Modify input build path to use AirLoopHVAC:OutdoorAirSystem as the first component, rather than outside air
-        system components
+        Modify input build path to use AirLoopHVAC:OutdoorAirSystem as the first component, rather than individual
+        outside air system components
 
         :param build_path: list of EnergyPlus Super objects
         :return: build path
@@ -1241,7 +1276,6 @@ class ExpandSystem(ExpandObjects):
             "Branch": branch_fields
         }
         branchlist_fields = self.get_structure(structure_hierarchy=['BranchList', 'Base'])
-        branchlist_fields['branches'] = [{"branch_name": "{} Main Branch".format(self.unique_name)}]
         branchlist = {
             "BranchList": branchlist_fields
         }

@@ -111,11 +111,16 @@ class EPJSON(Logger):
             for object_type, object_structure in epjson.items():
                 if object_type in purge_dictionary.keys():
                     for object_name, object_fields in object_structure.items():
+                        # if the purge_dictionary value is a string, then it is a single regex to be processed, so
+                        #  convert it to a list and continue
                         if isinstance(purge_dictionary[object_type], str):
                             purge_dictionary[object_type] = [purge_dictionary[object_type], ]
+                        # iterate over the list of regex strings in purge_dictionary value and pop the object if there
+                        # is a match.
                         for rgx_match in purge_dictionary[object_type]:
                             if re.match(rgx_match, object_name):
                                 tmp_d[object_type].pop(object_name)
+                            # if the object_type is now empty, delete it as well.
                             if not tmp_d[object_type].keys():
                                 tmp_d.pop(object_type)
         return tmp_d
@@ -123,12 +128,12 @@ class EPJSON(Logger):
     @staticmethod
     def epjson_genexp(epjson):
         """
-        Create generator of epJSON objects in epJSON format.
+        Create generator of individual epJSON objects in epJSON format from a dictionary of objects in epJSON format.
 
         {object_type: {object_name: object_fields}, {...}} -> {object_type: {object_name: object_fields}}, {...}
 
         :param epjson: epJSON object
-        :return: generator which returns one unqiue object in epJSON format for each object in an object_type.
+        :return: generator which returns one unique object in epJSON format for each object in an object_type.
         """
         for object_type, epjson_objects in epjson.items():
             for object_name, object_structure in epjson_objects.items():
@@ -246,6 +251,7 @@ class EPJSON(Logger):
         try:
             file_validation = self.schema.is_valid(input_epjson)
             if not file_validation:
+                # if the schema validation fails for the epJSON object, write out specific errors that occurred.
                 self.logger.error("Input file does not meet schema format")
                 for err in self.schema.iter_errors(input_epjson):
                     self.logger.error(err.message)

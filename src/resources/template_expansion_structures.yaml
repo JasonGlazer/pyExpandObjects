@@ -251,6 +251,8 @@ Branch:
 BranchList:
   Base:
     name: '{} Branches'
+    branches:
+      - branch_name: '{} Main Branch'
 
 Controller:
   OutdoorAir:
