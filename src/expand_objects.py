@@ -859,7 +859,6 @@ class ExpandThermostat(ExpandObjects):
     """
 
     def __init__(self, template):
-        # todo_eo: pre-set template inputs with None?  Discuss advantages of pre-definition.
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
         self.unique_name = self.template_name

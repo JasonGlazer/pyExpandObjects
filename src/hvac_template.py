@@ -277,10 +277,6 @@ class HVACTemplate(EPJSON):
         supply_plenum_name = getattr(system_class_object, 'supply_plenum_name', None)
         if supply_plenum_name:
             supply_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'SupplyPlenum', 'Base'])
-            supply_object['zone_name'] = supply_plenum_name
-            # todo_eo: this is not actually setting the node name, which probably isn't referenced otherwise.  ensure
-            #  this assignment does not cause issues.
-            supply_object['zone_node_name'] = '{} Zone Air Node'.format(supply_plenum_name)
             supply_object['nodes'] = zone_splitters
             supply_object = {'AirLoopHVAC:SupplyPlenum': supply_object}
         else:
@@ -290,10 +286,6 @@ class HVACTemplate(EPJSON):
         return_plenum_name = getattr(system_class_object, 'return_plenum_name', None)
         if return_plenum_name:
             return_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ReturnPlenum', 'Base'])
-            return_object['zone_name'] = return_plenum_name
-            # todo_eo: this is not actually setting the node name, which probably isn't referenced otherwise.  ensure
-            #  this assignment does not cause issues.
-            return_object['zone_node_name'] = '{} Zone Air Node'.format(return_plenum_name)
             return_object['nodes'] = zone_mixers
             return_object = {'AirLoopHVAC:ReturnPlenum': return_object}
         else:

@@ -206,6 +206,8 @@ AirLoopHVAC:
     Base:
       name: '{} Return Plenum'
       outlet_node_name: *ReturnAirOutlet
+      zone_name: '{return_plenum_name}'
+      zone_node_name: '{return_plenum_name} Zone Air Node'
   SupplyPath:
     Base:
       name: '{} Supply Path'
@@ -220,6 +222,8 @@ AirLoopHVAC:
     Base:
       name: '{} Supply Plenum'
       inlet_node_name: *SystemSupplyPathInletName
+      zone_name: '{supply_plenum_name}'
+      zone_node_name: '{supply_plenum_name} Zone Air Node'
   ZoneMixer:
     Base:
       name: '{} Zone Mixer'
