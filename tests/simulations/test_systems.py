@@ -7,7 +7,7 @@ from tests.simulations import BaseSimulationTest
 from src.epjson_handler import EPJSON
 from src.hvac_template import HVACTemplate
 
-mock_template = {
+mock_system_template = {
     "HVACTemplate:System:VAV": {
         "VAV Sys 1": {
             "cooling_coil_design_setpoint": 12.8,
@@ -75,8 +75,6 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         # drop objects that will be inserted
         epj = EPJSON()
         epj.epjson_process(epjson_ref=base_formatted_epjson)
-        # todo_eo: add objects to yaml file.  There may be issues with VAV Sys 1 Cooling Coil ChW Branch as the
-        #  unique name is picked up in the plant loop template expansion.  also for Heating coil
         test_purged_epjson = epj.purge_epjson(
             epjson=epj.input_epjson,
             purge_dictionary={
@@ -110,7 +108,7 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         test_epjson = copy.deepcopy(test_purged_epjson)
         epj.merge_epjson(
             super_dictionary=test_epjson,
-            object_dictionary=mock_template
+            object_dictionary=mock_system_template
         )
         # perform steps that would be run in main
         self.hvactemplate = HVACTemplate()
@@ -191,5 +189,4 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
             # trigger failure
             self.assertEqual('', comparison_results, comparison_results)
         return
-
     # todo_eo: do system-zone connection test as well

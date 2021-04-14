@@ -1,7 +1,9 @@
 import unittest
 from pathlib import Path
+import os
 import re
 from argparse import Namespace
+import tempfile
 
 from . import BaseTest
 from src.main import main
@@ -75,4 +77,24 @@ class TestMain(BaseTest, unittest.TestCase):
         if msg_rgx:
             msg_status = True
         self.assertTrue(msg_status)
+        return
+
+    def test_write_output(self):
+        with tempfile.TemporaryDirectory() as output_directory:
+            main(
+                Namespace(
+                    no_schema=True,
+                    file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooled.epJSON'),
+                    output_directory=output_directory
+                )
+            )
+            self.assertGreater(
+                os.stat(os.path.join(output_directory, 'HVACTemplate-5ZoneVAVWaterCooled_expanded.epJSON')).st_size,
+                1000)
+            self.assertGreater(
+                os.stat(os.path.join(output_directory, 'HVACTemplate-5ZoneVAVWaterCooled_hvac_templates.epJSON')).st_size,
+                1000)
+            self.assertGreater(
+                os.stat(os.path.join(output_directory, 'HVACTemplate-5ZoneVAVWaterCooled_base.epJSON')).st_size,
+                1000)
         return

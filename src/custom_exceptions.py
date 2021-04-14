@@ -18,6 +18,13 @@ class CustomException(Logger, Exception):
         return self.msg
 
 
+class InvalidInputException(CustomException):
+    """
+    command line input errors
+    """
+    pass
+
+
 class InvalidEpJSONException(CustomException):
     """
     epJSON errors
