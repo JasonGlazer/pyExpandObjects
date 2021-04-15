@@ -55,14 +55,15 @@ class BaseSimulationTest(object):
         return formatted_epjson
 
     @staticmethod
-    def write_file_for_testing(epjson, file_name):
+    def write_file_for_testing(epjson, file_name, sub_directory=('simulation', 'test')):
         """
         write file to simulation testing sudirectory
         :param epjson: epJSON dictionary
+        :param sub_directory: project subdirectory
         :param file_name: file name to write
         :return: file_path for written epJSON
         """
-        input_file_path = str(test_dir / '..' / 'simulation' / 'test' / file_name)
+        input_file_path = test_dir.joinpath('..', *sub_directory, file_name)
         with open(input_file_path, 'w') as f:
             json.dump(epjson, f, indent=4, sort_keys=True)
         return input_file_path
@@ -71,7 +72,8 @@ class BaseSimulationTest(object):
     def perform_comparison(epjson_files):
         """
         Simulate and compare epJSON files
-        :return: dictionary of status check lists
+        :param epjson_files: input epJSON files to compare
+        :return: dictionary of status outputs
         """
         total_energy_outputs = []
         warning_outputs = []

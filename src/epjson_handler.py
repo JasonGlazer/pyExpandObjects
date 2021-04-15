@@ -1,3 +1,4 @@
+import pathlib
 import re
 import json
 import jsonschema
@@ -148,7 +149,7 @@ class EPJSON(Logger):
         :param json_location: file location for json object
         :return: loaded json object
         """
-        if not isinstance(json_location, str):
+        if not isinstance(json_location, (str, pathlib.PosixPath)):
             raise PyExpandObjectsFileNotFoundError("JSON file location input is not a string: {}".format(json_location))
         try:
             with open(json_location) as f:
