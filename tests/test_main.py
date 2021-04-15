@@ -35,8 +35,8 @@ class TestMain(BaseTest, unittest.TestCase):
                 output = main(
                     Namespace(
                         no_schema=True,
-                        file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
-                                 'HVACTemplate-5ZoneVAVWaterCooled.epJSON'),
+                        file=str(
+                            test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooled.epJSON'),
                         output_directory=output_directory
                     )
                 )
@@ -55,8 +55,8 @@ class TestMain(BaseTest, unittest.TestCase):
                 output = main(
                     Namespace(
                         no_schema=True,
-                        file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
-                                 'HVACTemplate-5ZoneVAVWaterCooled.epJSON'),
+                        file=str(
+                            test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooled.epJSON'),
                         output_directory=output_directory
                     )
                 )
