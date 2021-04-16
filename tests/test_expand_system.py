@@ -349,7 +349,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         output = es._create_branch_and_branchlist_from_build_path(build_path=copy.deepcopy(mock_build_path))
         self.assertEqual(
             '{} Main Branch'.format(es.unique_name),
-            output['Branchlist']['{} Branches'.format(es.unique_name)]['branches'][0]['branch_name'])
+            output['BranchList']['{} Branches'.format(es.unique_name)]['branches'][0]['branch_name'])
         return
 
     def test_reject_create_branch_and_branchlist_from_build_path_no_build_path(self):
@@ -393,5 +393,3 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Super object is missing Connectors"):
             es._create_branch_and_branchlist_from_build_path(build_path=temp_mock_build_path)
         return
-
-    # todo_eo: system objects to create: SupplyPath/Plenum, ReturnPathPlenum

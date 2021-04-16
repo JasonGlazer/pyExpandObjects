@@ -266,16 +266,6 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             ["HVACTemplate:Zone:VAV 1"]["reheat_coil_type"])
         return
 
-    def test_reject_bad_template(self):
-        with self.assertRaisesRegex(InvalidTemplateException, 'Zone template is not correctly'):
-            self.hvac_template._get_thermostat_template_from_zone_template(zone_template={
-                "HVACTemplate:Zone:VAV": {
-                    "HVACTemplate:Zone:VAV 1": {},
-                    "Bad Inserted Key": {}
-                }
-            })
-        return
-
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify system class templates created")
     def test_system_templates_have_good_objects(self):
         self.hvac_template._load_epjson({

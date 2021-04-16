@@ -1,11 +1,13 @@
 import unittest
+import copy
 from pathlib import Path
 
 from tests import BaseTest
 from tests.simulations import BaseSimulationTest
 from src.epjson_handler import EPJSON
+from src.hvac_template import HVACTemplate
 
-mock_template = {
+mock_system_template = {
     "HVACTemplate:System:VAV": {
         "VAV Sys 1": {
             "cooling_coil_design_setpoint": 12.8,
@@ -62,7 +64,7 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
     def teardown(self):
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Zone:VAV w/ HW Reheat Simulation test")
+    @BaseTest._test_logger(doc_text="HVACTemplate:System:VAV w/o zone connections")
     def test_simulation(self):
         base_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                              'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
@@ -73,8 +75,6 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         # drop objects that will be inserted
         epj = EPJSON()
         epj.epjson_process(epjson_ref=base_formatted_epjson)
-        # todo_eo: add objects to yaml file.  There may be issues with VAV Sys 1 Cooling Coil ChW Branch as the
-        #  unique name is picked up in the plant loop template expansion.  also for Heating coil
         test_purged_epjson = epj.purge_epjson(
             epjson=epj.input_epjson,
             purge_dictionary={
@@ -91,18 +91,102 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'Branch': ['VAV Sys 1 Cooling Coil ChW Branch', 'VAV Sys 1 Heating Coil HW Branch',
                            'VAV Sys 1 Main Branch'],
                 'BranchList': ['VAV Sys 1 Branches'],
-                'Cooling:Coil:Water': '^VAV Sys 1.*',
-                'Heating:Coil:Water': '^VAV Sys 1.*',
+                'Coil:Cooling:Water': '^VAV Sys 1.*',
+                'Coil:Heating:Water': '^VAV Sys 1.*',
                 'Controller:OutdoorAir': '.*',
                 'Controller:WaterCoil': '.*',
-                'Fan:VariableVolum': '.*',
+                'Fan:VariableVolume': '.*',
                 'NodeList': 'VAV Sys 1 Mixed Air Nodes',
                 'OutdoorAir:Mixer': '.*',
                 'OutdoorAir:NodeList': '.*',
+                'Schedule:Compact': r'^HVACTemplate-Always\w+',
                 'SetpointManager:MixedAir': '.*',
-                'SetpointManager:Scheduled': '.*'
+                'SetpointManager:Scheduled': 'VAV Sys 1.*',
+                'Sizing:System': '.*'
             }
         )
-        print(test_purged_epjson)
-        print(base_input_file_path)
+        test_epjson = copy.deepcopy(test_purged_epjson)
+        epj.merge_epjson(
+            super_dictionary=test_epjson,
+            object_dictionary=mock_system_template
+        )
+        # perform steps that would be run in main
+        self.hvactemplate = HVACTemplate()
+        self.hvactemplate.epjson_process(epjson_ref=test_epjson)
+        output_epjson = self.hvactemplate.run()['epJSON']
+        # Insert zone connections since only system template tested
+        zone_splitter = {
+            "AirLoopHVAC:ZoneSplitter": {
+                "VAV Sys 1 Zone Splitter": {
+                    "inlet_node_name": "VAV Sys 1 Supply Path Inlet",
+                    "nodes": [
+                        {
+                            "outlet_node_name": "SPACE1-1 Zone Equip Inlet"
+                        },
+                        {
+                            "outlet_node_name": "SPACE2-1 Zone Equip Inlet"
+                        },
+                        {
+                            "outlet_node_name": "SPACE3-1 Zone Equip Inlet"
+                        },
+                        {
+                            "outlet_node_name": "SPACE4-1 Zone Equip Inlet"
+                        },
+                        {
+                            "outlet_node_name": "SPACE5-1 Zone Equip Inlet"
+                        }
+                    ]
+                }
+            }
+        }
+        return_plenum = {
+            "AirLoopHVAC:ReturnPlenum": {
+                "VAV Sys 1 Return Plenum": {
+                    "nodes": [
+                        {
+                            "inlet_node_name": "SPACE1-1 Return Outlet"
+                        },
+                        {
+                            "inlet_node_name": "SPACE2-1 Return Outlet"
+                        },
+                        {
+                            "inlet_node_name": "SPACE3-1 Return Outlet"
+                        },
+                        {
+                            "inlet_node_name": "SPACE4-1 Return Outlet"
+                        },
+                        {
+                            "inlet_node_name": "SPACE5-1 Return Outlet"
+                        }
+                    ],
+                    "outlet_node_name": "VAV Sys 1 Return Air Outlet",
+                    "zone_name": "PLENUM-1",
+                    "zone_node_name": "PLENUM-1 Zone Air Node"
+                }
+            }
+        }
+        self.hvactemplate.merge_epjson(
+            super_dictionary=output_epjson,
+            object_dictionary=dict(**zone_splitter, **return_plenum)
+        )
+        test_input_file_path = self.write_file_for_testing(
+            epjson=output_epjson,
+            file_name='test_input_epjson.epJSON')
+        # check outputs
+        status_checks = self.perform_comparison([base_input_file_path, test_input_file_path])
+        for energy_val in status_checks['total_energy_outputs']:
+            self.assertAlmostEqual(energy_val / max(status_checks['total_energy_outputs']), 1, 2)
+        for warning in status_checks['warning_outputs']:
+            self.assertEqual(warning, max(status_checks['warning_outputs']))
+        for error in status_checks['error_outputs']:
+            self.assertEqual(error, max(status_checks['error_outputs']))
+            self.assertGreaterEqual(error, 0)
+        for status in status_checks['finished_statuses']:
+            self.assertEqual(1, status)
+        # compare epJSONs
+        comparison_results = self.compare_epjsons(base_formatted_epjson, output_epjson)
+        if comparison_results:
+            # trigger failure
+            self.assertEqual('', comparison_results, comparison_results)
         return
+    # todo_eo: do system-zone connection test as well

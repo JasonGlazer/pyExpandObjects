@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, PropertyMock
 
 from src.hvac_template import HVACTemplate
 from src.hvac_template import InvalidTemplateException
-from src.expand_objects import ExpandThermostat, ExpandSystem, ExpandObjects
+from src.expand_objects import ExpandObjects, ExpandSystem, ExpandZone
 from . import BaseTest
 
 minimum_objects_d = {
@@ -52,86 +52,28 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
     def tearDown(self):
         return
 
-    def test_retrieve_thermostat_template_from_zone_field(self):
-        self.hvac_template.expanded_thermostats = self.hvac_template._expand_templates(
-            templates={
-                "HVACTemplate:Thermostat": {
-                    "All Zones": {
-                        "heating_setpoint_schedule_name": "Htg-SetP-Sch",
-                        "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
-                    }
-                }
-            },
-            expand_class=ExpandThermostat)
-        thermostat_template = self.hvac_template._get_thermostat_template_from_zone_template(zone_template={
-            "HVACTemplate:Zone:VAV": {
-                "HVACTemplate:Zone:VAV 1": {
-                    "template_thermostat_name": "All Zones"
-                }
-            }
-        })
-        self.assertEqual('All Zones', thermostat_template.template_name)
-        return
-
-    def test_return_none_thermostat_template_from_from_zone_when_field_missing(self):
-        self.hvac_template.expanded_thermostats = self.hvac_template._expand_templates(
-            templates={
-                "HVACTemplate:Thermostat": {
-                    "All Zones": {
-                        "heating_setpoint_schedule_name": "Htg-SetP-Sch",
-                        "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
-                    }
-                }
-            },
-            expand_class=ExpandThermostat)
-        thermostat_template = self.hvac_template._get_thermostat_template_from_zone_template(zone_template={
-            "HVACTemplate:Zone:VAV": {
-                "HVACTemplate:Zone:VAV 1": {
-                    "field_1": "value_1"
-                }
-            }
-        })
-        self.assertIsNone(thermostat_template)
-        return
-
-    def test_thermostat_template_from_zone_field_reject_bad_input(self):
-        self.hvac_template.expanded_thermostats = self.hvac_template._expand_templates(
-            templates={
-                "HVACTemplate:Thermostat": {
-                    "All Zones": {
-                        "heating_setpoint_schedule_name": "Htg-SetP-Sch",
-                        "cooling_setpoint_schedule_name": "Clg-SetP-Sch"
-                    }
-                }
-            },
-            expand_class=ExpandThermostat)
-        with self.assertRaises(InvalidTemplateException):
-            self.hvac_template._get_thermostat_template_from_zone_template(zone_template={
-                "HVACTemplate:Zone:VAV": {
-                    "HVACTemplate:Zone:VAV 1": {
-                        "template_thermostat_name": "Bad Name"
-                    }
-                }
-            })
-        return
-
     def test_create_zonecontrol_thermostat_dualsetpoint(self):
-        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {
+        et = MagicMock()
+        et_epjson = PropertyMock(return_value={
             "ThermostatSetpoint:DualSetpoint": {
-                "All Zones SP Control": {
+                "All Zones": {
                     "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
                     "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
-                }
-            }
-        }
-        self.hvac_template._create_zonecontrol_thermostat(zone_template={
-            "HVACTemplate:Zone:VAV": {
-                "HVACTemplate:Zone:VAV 1": {
-                    "zone_name": "TEST ZONE"
+
                 }
             }
         })
+        type(et).epjson = et_epjson
+        self.hvac_template.expanded_thermostats = {'All Zones': et}
+        ez = ExpandZone(template={
+            "HVACTemplate:Zone:VAV": {
+                "HVACTemplate:Zone:VAV 1": {
+                    "zone_name": "TEST ZONE",
+                    'template_thermostat_name': 'All Zones'
+                }
+            }
+        })
+        self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
         self.assertEqual(
             'ThermostatSetpoint:DualSetpoint',
             self.hvac_template.epjson['ZoneControl:Thermostat']['TEST ZONE Thermostat']['control_1_object_type'])
@@ -141,21 +83,25 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_create_zonecontrol_thermostat_single_heating(self):
-        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {
+        et = MagicMock()
+        et_epjson = PropertyMock(return_value={
             "ThermostatSetpoint:SingleHeating": {
-                "All Zones SP Control": {
+                "All Zones": {
                     "setpoint_temperature_schedule_name": "Clg-SetP-Sch",
                 }
             }
-        }
-        self.hvac_template._create_zonecontrol_thermostat(zone_template={
+        })
+        type(et).epjson = et_epjson
+        self.hvac_template.expanded_thermostats = {'All Zones': et}
+        ez = ExpandZone(template={
             "HVACTemplate:Zone:VAV": {
                 "HVACTemplate:Zone:VAV 1": {
-                    "zone_name": "TEST ZONE"
+                    "zone_name": "TEST ZONE",
+                    'template_thermostat_name': 'All Zones'
                 }
             }
         })
+        self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
         self.assertEqual(
             'ThermostatSetpoint:SingleHeating',
             self.hvac_template.epjson['ZoneControl:Thermostat']['TEST ZONE Thermostat']['control_1_object_type'])
@@ -165,21 +111,25 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_create_zonecontrol_thermostat_single_cooling(self):
-        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {
+        et = MagicMock()
+        et_epjson = PropertyMock(return_value={
             "ThermostatSetpoint:SingleCooling": {
-                "All Zones SP Control": {
+                "All Zones": {
                     "setpoint_temperature_schedule_name": "Clg-SetP-Sch",
                 }
             }
-        }
-        self.hvac_template._create_zonecontrol_thermostat(zone_template={
+        })
+        type(et).epjson = et_epjson
+        self.hvac_template.expanded_thermostats = {'All Zones': et}
+        ez = ExpandZone(template={
             "HVACTemplate:Zone:VAV": {
                 "HVACTemplate:Zone:VAV 1": {
-                    "zone_name": "TEST ZONE"
+                    "zone_name": "TEST ZONE",
+                    'template_thermostat_name': 'All Zones'
                 }
             }
         })
+        self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
         self.assertEqual(
             'ThermostatSetpoint:SingleCooling',
             self.hvac_template.epjson['ZoneControl:Thermostat']['TEST ZONE Thermostat']['control_1_object_type'])
@@ -189,35 +139,39 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         return
 
     def test_exception_zonecontrol_thermostat_bad_thermostat(self):
-        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {
+        et = MagicMock()
+        et_epjson = PropertyMock(return_value={
             "ThermostatSetpoint:BadThermostat": {
                 "All Zones SP Control": {
                     "setpoint_temperature_schedule_name": "Clg-SetP-Sch",
                 }
             }
-        }
-        with self.assertRaises(InvalidTemplateException):
-            self.hvac_template._create_zonecontrol_thermostat(zone_template={
-                "HVACTemplate:Zone:VAV": {
-                    "HVACTemplate:Zone:VAV 1": {
-                        "zone_name": "TEST ZONE"
-                    }
+        })
+        type(et).epjson = et_epjson
+        self.hvac_template.expanded_thermostats = {'All Zones': et}
+        ez = ExpandZone(template={
+            "HVACTemplate:Zone:VAV": {
+                "HVACTemplate:Zone:VAV 1": {
+                    "zone_name": "TEST ZONE",
+                    'template_thermostat_name': 'All Zones'
                 }
-            })
+            }
+        })
+        with self.assertRaises(InvalidTemplateException):
+            self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
         return
 
     def test_exception_create_zonecontrol_thermostat_no_thermostat(self):
-        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {}
-        with self.assertRaises(InvalidTemplateException):
-            self.hvac_template._create_zonecontrol_thermostat(zone_template={
-                "HVACTemplate:Zone:VAV": {
-                    "HVACTemplate:Zone:VAV 1": {
-                        "zone_name": "TEST ZONE"
-                    }
+        ez = ExpandZone(template={
+            "HVACTemplate:Zone:VAV": {
+                "HVACTemplate:Zone:VAV 1": {
+                    "zone_name": "TEST ZONE",
+                    'template_thermostat_name': 'All Zones'
                 }
-            })
+            }
+        })
+        with self.assertRaises(InvalidTemplateException):
+            self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
         return
 
     def test_zone_field_name_from_system_template_type(self):
@@ -266,7 +220,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             ez_l.append(ez)
-        output = self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+        output = self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         self.assertEqual(
             {'AirLoopHVAC:ZoneSplitter': 1, 'AirLoopHVAC:ZoneMixer': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
@@ -294,7 +248,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             ez_l.append(ez)
-        output = self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+        output = self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         self.assertEqual(
             {'AirLoopHVAC:SupplyPlenum': 1, 'AirLoopHVAC:ZoneMixer': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
@@ -322,7 +276,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             ez_l.append(ez)
-        output = self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+        output = self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         self.assertEqual(
             {'AirLoopHVAC:ZoneSplitter': 1, 'AirLoopHVAC:ReturnPlenum': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
@@ -351,7 +305,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             ez_l.append(ez)
-        output = self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+        output = self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         self.assertEqual(
             {'AirLoopHVAC:SupplyPlenum': 1, 'AirLoopHVAC:ReturnPlenum': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
@@ -382,7 +336,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).unique_name = unique_name
             ez_l.append(ez)
         with self.assertRaisesRegex(InvalidTemplateException, 'Search for zone equipment'):
-            self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+            self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         return
 
     def test_reject_system_path_objects_no_zone_connection_equipment(self):
@@ -408,5 +362,5 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).unique_name = unique_name
             ez_l.append(ez)
         with self.assertRaisesRegex(InvalidTemplateException, 'Search for ZoneHVAC:EquipmentConnections'):
-            self.hvac_template._create_system_path_connection_objects(system_template=es, expanded_zones=ez_l)
+            self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
         return

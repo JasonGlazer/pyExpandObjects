@@ -42,8 +42,10 @@ mock_zone_option_tree = {
                     },
                     'Mappings': {
                         'ZoneHVAC:AirDistributionUnit': {
-                            "object_test_field2": {
-                                "test_pre_mapped_value": "test_mapped_value"
+                            "template_field2": {
+                                "test_pre_mapped_value": {
+                                    "test_map_field": "test_mapped_value"
+                                }
                             }
                         }
                     }
@@ -265,6 +267,41 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         return
 
+    def test_template_object_with_none_option_creates_object(self):
+        eo = ExpandObjects(
+            template=mock_zone_template,
+            expansion_structure={
+                'OptionTree': {
+                    'HVACTemplate': {
+                        'Zone': {
+                            'VAV': {
+                                'BaseObjects': {
+                                    'Objects': {}
+                                },
+                                'TemplateObjects': {
+                                    'SomeNonPresentField': {
+                                        'None': {
+                                            'Objects': [
+                                                {
+                                                    'Object:1': {
+                                                        'name': 'object_name',
+                                                        'template_test_field': 'template_test_value'
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        eo._create_objects()
+        self.assertEqual('template_test_value', eo.epjson['Object:1']['object_name']['template_test_field'])
+        return
+
     def test_reject_bad_option_tree_structure(self):
         eo = ExpandObjects(
             template=mock_zone_template,
@@ -272,12 +309,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 'OptionTree': {
                     'Zone': {
                         'VAV': {
-                            'BadKey': {},
-                            'InsertObject': {},
-                            'ReplaceObject': {},
-                            'RemoveObject': {},
-                            'Objects': {},
-                            'TemplateObjects': {}
+                            'BadKey': {}
                         }
                     }
                 }
@@ -300,6 +332,38 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             if k not in ['Objects', 'Transitions', 'Mappings']:
                 key_check = False
         self.assertTrue(key_check)
+        return
+
+    def test_option_tree_leaf_multiple_mappings(self):
+        eo = ExpandObjects()
+        eo.supply_fan_part_load_power_coefficients = 'InletVaneDampers'
+        option_tree = {
+            'BaseObjects': {
+                'Objects': [
+                    {
+                        'Fan:VariableVolume': {
+                            'name': 'test_name'
+                        }
+                    }
+                ],
+                'Mappings': {
+                    'Fan:.*': {
+                        'supply_fan_part_load_power_coefficients': {
+                            'InletVaneDampers': {
+                                'fan_power_coefficient_1': 0.35071223,
+                                'fan_power_coefficient_2': 0.30850535,
+                                'fan_power_coefficient_3': -0.54137364,
+                                'fan_power_coefficient_4': 0.87198823,
+                                'fan_power_coefficient_5': 0
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
+        object_list = eo._apply_transitions(option_tree_leaf=option_tree_leaf)
+        self.assertEqual(0.35071223, object_list[0]['Fan:VariableVolume']['fan_power_coefficient_1'])
         return
 
     def test_option_tree_leaf_without_transitions(self):
@@ -338,7 +402,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         transitioned_option_tree_leaf = eo._apply_transitions(option_tree_leaf)
         self.assertEqual(
             'test_mapped_value',
-            transitioned_option_tree_leaf[0]['ZoneHVAC:AirDistributionUnit']['object_test_field2'])
+            transitioned_option_tree_leaf[0]['ZoneHVAC:AirDistributionUnit']['test_map_field'])
         return
 
     def test_yaml_list_to_dictionary_regular_object(self):
@@ -473,6 +537,66 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             input_value=3
         )
         self.assertEqual(3, [i for i in output][0]["value"])
+        return
+
+    def test_complex_inputs_class_attribute_reference_string(self):
+        eo = ExpandZone(template=mock_zone_template)
+        eo.test_val = "test_string"
+        output = eo._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value="{test_val}"
+        )
+        self.assertEqual('test_string', [o for o in output][0]['value'])
+        return
+
+    def test_reject_complex_inputs_class_attribute_reference_bad_string(self):
+        eo = ExpandZone(template=mock_zone_template)
+        eo.bad_test_val = "test_string"
+        output = eo._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value="{test_val}"
+        )
+        self.assertIsNone([o for o in output][0]['value'])
+        return
+
+    def test_skip_none_resolve_objects_attribute_reference_bad_string(self):
+        eo = ExpandZone(template=mock_zone_template)
+        eo.test_val = "test_string"
+        output = eo.resolve_objects(epjson={
+            "Object:1":
+                {
+                    "object_1_name": {
+                        "field_1": '{bad_test_val}',
+                        "field_2": '{test_val}'
+                    }
+                }
+        })
+        self.assertEqual(1, len(output['Object:1']['object_1_name'].keys()))
+        self.assertEqual('test_string', output['Object:1']['object_1_name']['field_2'])
+        return
+
+    def test_complex_inputs_class_attribute_reference_float(self):
+        eo = ExpandZone(template=mock_zone_template)
+        eo.test_val = "1.0"
+        output = eo._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value="{test_val}"
+        )
+        self.assertTrue(isinstance([o for o in output][0]['value'], float))
+        return
+
+    def test_complex_inputs_class_attribute_reference_int(self):
+        eo = ExpandZone(template=mock_zone_template)
+        eo.test_val = "1"
+        output = eo._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value="{test_val}"
+        )
+        self.assertTrue(isinstance([o for o in output][0]['value'], int))
         return
 
     def test_complex_inputs_dictionary(self):
@@ -659,6 +783,19 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual('value_1', test_d['Object:2']['name_1']['field_1'])
         return
 
+    def test_resolve_complex_inputs_object_with_template_reference(self):
+        test_d = {
+            "Object:1": {
+                "name_1": {
+                    "field_1": 'test {template_field}'
+                }
+            }
+        }
+        eo = ExpandZone(template=mock_zone_template)
+        eo.resolve_objects(epjson=test_d)
+        self.assertEqual('test template_test_value', test_d['Object:1']['name_1']['field_1'])
+        return
+
     def test_complex_nested_test(self):
         test_d = {
             'AirTerminal:SingleDuct:VAV:Reheat': {
@@ -718,6 +855,61 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertNotIn('{}', json_string)
         self.assertNotIn('^', json_string)
         self.assertNotIn('*', json_string)
+        return
+
+    def test_field_with_zero_value_processing(self):
+        eo = ExpandObjects()
+        output = eo.yaml_list_to_epjson_dictionaries([{
+            'Object:1': {
+                'name': 'test_name',
+                'field': 0
+            }
+        }])
+        output = eo.resolve_objects(epjson=output)
+        self.assertEqual(0, output['Object:1']['test_name']['field'])
+        return
+
+    def test_build_path_action_non_super_object_processed_and_saved_to_epjson(self):
+        build_path = mock_build_path
+        # Note ObjectReference is not needed
+        action_instruction = {
+            'Location': 1,
+            'Occurrence': 1,
+            'ActionType': 'Insert',
+            'Objects': [
+                {
+                    "test_object_type": {
+                        "Fields": {
+                            'name': 'test_object_name',
+                            'test_field': 'test_value',
+                            'test_field_3': 'test_value_3'
+                        },
+                        "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                    }
+                },
+                {
+                    'non_super_object': {
+                        'name': 'test_non_super_object',
+                        'test_non_super_field': 'test_non_super_val'
+                    }
+                }
+            ]
+        }
+        eo = ExpandObjects()
+        eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
+        self.assertEqual(
+            'test_non_super_val', eo.epjson['non_super_object']['test_non_super_object']['test_non_super_field'])
+        return
+
+    def test_build_path_connections(self):
+        # Note ObjectReference is not needed
+        eo = ExpandSystem(template=mock_system_template)
+        object_list = eo._process_build_path(
+            option_tree=mock_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath'])
+        self.assertEqual(
+            '{} Cooling Coil Outlet',
+            object_list[-1]['Fan:VariableVolume']['air_inlet_node_name']
+        )
         return
 
     def test_build_path_action_insert_by_location(self):
@@ -1044,6 +1236,40 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual('test_object_type_2', list(build_path[2].keys())[0])
         return
 
+    def test_insert_on_build_path_from_option_tree_with_none_value(self):
+        test_system_option_tree = copy.deepcopy(mock_system_option_tree)
+        test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
+            {
+                'non_present_template_field': {
+                    'None': {
+                        'Location': 1,
+                        'Occurrence': 1,
+                        'ActionType': 'Insert',
+                        'Objects': [
+                            {
+                                "test_object_type": {
+                                    "Fields": {
+                                        'name': 'test_object_name',
+                                        'test_field': 'test_value',
+                                        'test_field_3': 'test_value_3'
+                                    },
+                                    "Connectors": {'AirLoop': {"Inlet": 'test_field', "Outlet": "test_field_3"}}
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects(
+            template=mock_system_template,
+            expansion_structure=test_system_option_tree)
+        structure_hierarchy = ['OptionTree', 'HVACTemplate', 'System', 'VAV']
+        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+        build_path = eo._process_build_path(option_tree=option_tree['BuildPath'])
+        self.assertEqual('test_object_type', list(build_path[1].keys())[0])
+        return
+
     def test_replace_on_build_path_from_option_tree(self):
         test_system_option_tree = copy.deepcopy(mock_system_option_tree)
         test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']['BuildPath']['Actions'] = [
@@ -1195,7 +1421,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         ]
         eo = ExpandObjects()
-        output = eo._convert_build_path_to_object_list(build_path=build_path)
+        output = eo._connect_and_convert_build_path_to_object_list(build_path=build_path)
         self.assertEqual("value_2", output[1]["Object:2"]["field_3"])
         return
 
@@ -1227,7 +1453,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         ]
         eo._get_option_tree = MagicMock()
         eo._get_option_tree.return_value = test_system_option_tree['OptionTree']['HVACTemplate']['System']['VAV']
-        output = eo._get_option_tree_objects(structure_hierarchy=['not', 'important'])
+        output = eo._get_option_tree_objects(structure_hierarchy=['not', 'important', 'because', 'mocked'])
         self.assertEqual(
             eo.summarize_epjson(output),
             {'OutdoorAir:Mixer': 1, 'test_object_type': 1, 'Fan:VariableVolume': 1}
@@ -1393,4 +1619,80 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual(
             12.8,
             output['Schedule:Compact']['HVACTemplate-Always12.8']['data'][-1]['field'])
+        return
+
+    def test_complex_inputs_compact_schedule_full(self):
+        eo = ExpandObjects()
+        output = eo.resolve_objects(epjson={
+            'Schedule:Compact': {
+                "HVACTemplate-Always12.8": {
+                    'schedule_type_limits_name': 'Any Number',
+                    'data': [
+                        {'field': 'Through 12/31'},
+                        {'field': 'For AllDays'},
+                        {'field': 'Until 24:00'},
+                        {'field': 12.8}
+                    ]
+                }
+            }
+        })
+        self.assertEqual(
+            12.8,
+            output['Schedule:Compact']['HVACTemplate-Always12.8']['data'][-1]['field'])
+        return
+
+    def test_complex_inputs_create_schedule_from_transition(self):
+        es = ExpandSystem(template={
+            'HVACTemplate:System:VAV': {
+                'template_name': {
+                    'template_field': 'template_test_value',
+                    'cooling_coil_design_setpoint': 12.8
+                }
+            }
+        })
+        es.expansion_structure = {
+            'Schedule': {
+                'Compact': {
+                    'ALWAYS_VAL': {
+                        'name': 'HVACTemplate-Always{}',
+                        'schedule_type_limits_name': 'Any Number',
+                        'data': [
+                            {'field': 'Through 12/31'},
+                            {'field': 'For AllDays'},
+                            {'field': 'Until 24:00'},
+                            {'field': '{:.1f}'}
+                        ]
+                    }
+                }
+            },
+            'OptionTree': {
+                'HVACTemplate': {
+                    'System': {
+                        'VAV': {
+                            'BaseObjects': {
+                                'Objects': [
+                                    {
+                                        'SetpointManager:Scheduled': {
+                                            'name': '{} Cooling Supply Air Temp Manager',
+                                            'control_variable': 'Temperature'
+                                        }
+                                    }
+                                ],
+                                'Transitions': {
+                                    'cooling_coil_design_setpoint': {
+                                        'SetpointManager:Scheduled': {
+                                            'schedule_name': 'HVACTemplate-Always{}'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        es._create_objects()
+        self.assertEqual(
+            12.8,
+            es.epjson['Schedule:Compact']['HVACTemplate-Always12.8']['data'][-1]['field'])
         return

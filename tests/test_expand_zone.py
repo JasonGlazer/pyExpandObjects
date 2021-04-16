@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock
 
 from src.expand_objects import ExpandZone
 from src.hvac_template import HVACTemplate
@@ -73,23 +73,26 @@ class TestExpandZone(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Zone:Test all components")
     def test_processing(self):
-        self.hvac_template._get_thermostat_template_from_zone_template = MagicMock()
-        self.hvac_template._get_thermostat_template_from_zone_template.return_value.epjson = {
+        et = MagicMock()
+        et_epjson = PropertyMock(return_value={
             "ThermostatSetpoint:DualSetpoint": {
-                "All Zones SP Control": {
+                "All Zones": {
                     "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
                     "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+
                 }
             }
-        }
-        eo = ExpandZone(template=mock_zone_template)
-        zone_output = eo._create_objects()
-        zone_connection_output = self.hvac_template._create_zonecontrol_thermostat(zone_template=mock_zone_template)
-        eo.merge_epjson(
+        })
+        type(et).epjson = et_epjson
+        self.hvac_template.expanded_thermostats = {'All Zones': et}
+        ez = ExpandZone(template=mock_zone_template)
+        zone_output = ez._create_objects()
+        zone_connection_output = self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
+        ez.merge_epjson(
             super_dictionary=zone_output,
             object_dictionary=zone_connection_output
         )
-        summarized_output = eo.summarize_epjson(zone_output)
+        summarized_output = ez.summarize_epjson(zone_output)
         expected_summary = {
             'ZoneHVAC:AirDistributionUnit': 1,
             'ZoneHVAC:EquipmentList': 1,
