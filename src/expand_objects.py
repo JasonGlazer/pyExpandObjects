@@ -18,7 +18,7 @@ class ExpansionStructureLocation:
     Verify expansion structure file location or object
     """
     def __get__(self, obj, owner):
-        return self.expansion_structure
+        return obj._expansion_structure
 
     def __set__(self, obj, value):
         if isinstance(value, dict):
@@ -50,7 +50,7 @@ class ExpansionStructureLocation:
         else:
             raise PyExpandObjectsTypeError(
                 'Template expansion structure reference is not a file path or dictionary: {}'.format(value))
-        self.expansion_structure = parsed_value
+        obj._expansion_structure = parsed_value
         return
 
 
@@ -62,7 +62,8 @@ class VerifyTemplate:
         super().__init__()
 
     def __get__(self, obj, owner):
-        return self.template
+        template = obj._template
+        return template
 
     def __set__(self, obj, value):
         if value:
@@ -78,12 +79,12 @@ class VerifyTemplate:
                 if not isinstance(object_structure, dict):
                     raise InvalidTemplateException(
                         'An invalid object {} was passed as an {} object'.format(value, getattr(self, 'template_type')))
-                self.template = template_structure
+                obj._template = template_structure
             except (ValueError, AttributeError):
                 raise InvalidTemplateException(
                     'An invalid object {} failed verification'.format(value))
         else:
-            self.template = None
+            obj._template = None
         return
 
 
@@ -962,7 +963,7 @@ class ExpandThermostat(ExpandObjects):
     def run(self):
         """
         Perform all template expansion operations and return the class to the parent calling function.
-        :return: ExpandThermostat class with necessary attributes filled for output
+        :return: Class object with epJSON dictionary as class attribute
         """
         self._create_and_set_schedules()
         self._create_thermostat_setpoints()
@@ -987,7 +988,7 @@ class ExpandZone(ExpandObjects):
     def run(self):
         """
         Process zone template
-        :return: ExpandZone class
+        :return: Class object with epJSON dictionary as class attribute
         """
         self._create_objects()
         return self
@@ -1288,7 +1289,7 @@ class ExpandSystem(ExpandObjects):
     def run(self):
         """
         Process system template
-        :return: epJSON dictionary as class attribute
+        :return: class object with epJSON dictionary as class attribute
         """
         self._create_objects()
         self._create_outdoor_air_equipment_list_from_build_path()
@@ -1297,25 +1298,6 @@ class ExpandSystem(ExpandObjects):
         self._create_outdoor_air_system()
         self._create_branch_and_branchlist_from_build_path()
         return self
-
-
-class ExpandPlantEquipment(ExpandObjects):
-    """
-    Plant Equipment operations
-    """
-    def __init__(self, template):
-        super().__init__(template=template)
-        self.unique_name = self.template_name
-        self.build_path = None
-        return
-
-    def run(self):
-        """
-        Process plant loop template
-        :return: epJSON dictionary as class attribute
-        """
-        self._create_objects()
-        return
 
 
 class ExpandPlantLoop(ExpandObjects):
@@ -1331,8 +1313,66 @@ class ExpandPlantLoop(ExpandObjects):
     def run(self):
         """
         Process plant loop template
-        :return: epJSON dictionary as class attribute
+        :return: class object with epJSON dictionary as class attribute
         """
-        # self._add_condenser_water_template()
         self._create_objects()
+        return self
+
+
+class RetrievePlantEquipmentLoop:
+    """
+    Get and set the a priority list of plant loops for the equipment to serve.
+    """
+    def __get__(self, obj, owner):
+        return obj._plant_loop_type
+
+    def __set__(self, obj, value):
+        """
+        Set priority list of plant loops to attach the equipment.  Apply defaults if no input is given.
+        """
+        # set value and check at the end for error output
+        obj._plant_loop_type = None
+        # create hash of object references and default loop types
+        default_loops = {
+            '^HVACTemplate:Plant:Tower.*': ['ChilledWaterLoop', 'MixedWaterLoop'],
+            '^HVACTemplate:Plant:Chiller.*': ['ChilledWaterLoop', ],
+            '^HVACTemplate:Plant:Boiler.*': ['HotWaterLoop', 'MixedWaterLoop'],
+        }
+        # try/except not needed here because the template has already been validated from super class init
+        (_, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        if template_fields.get('template_plant_loop_type'):
+            obj._plant_loop_type = [''.join([template_fields['template_plant_loop_type'], 'Loop']), ]
+        else:
+            (template_type, _), = value.items()
+            for object_reference, default_list in default_loops.items():
+                default_rgx = re.match(object_reference, template_type)
+                if default_rgx:
+                    obj._plant_loop_type = default_loops[object_reference]
+        # verify the field was set to a value
+        if not obj._plant_loop_type:
+            raise InvalidTemplateException("Plant equipment loop was not set and no default could be determined "
+                                           "{}".format(value))
         return
+
+
+class ExpandPlantEquipment(ExpandObjects):
+    """
+    Plant Equipment operations
+    """
+
+    plant_loop_type = RetrievePlantEquipmentLoop()
+
+    def __init__(self, template):
+        super().__init__(template=template)
+        self.unique_name = self.template_name
+        self.plant_loop_type = template
+        return
+
+    def run(self):
+        """
+        Process plant loop template
+        :return: class object with epJSON dictionary as class attribute
+        """
+        self._create_objects()
+        return self

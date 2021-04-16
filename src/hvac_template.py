@@ -298,7 +298,8 @@ class HVACTemplate(EPJSON):
 
     def _create_loop_from_plant_equipment(self, plant_equipment_class_object, plant_loop_class_objects):
         """
-        Create plant loop templates from ExpandPlantEquipment object attributes
+        Create plant loop templates from ExpandPlantEquipment object attributes.  These outputs will be used as inputs
+        to the intialize a new ExpandPlantLoop class.
 
         :param plant_equipment_class_object: ExpandPlantEquipment object
         :param plant_loop_class_objects: ExpandPlantLoop objects
@@ -306,7 +307,7 @@ class HVACTemplate(EPJSON):
         """
         # create dictionary to store plant loops
         plant_loop_dictionary = {}
-        # get each loop type specified in the plant loop class objects
+        # get each loop type specified in the existing plant loop class objects
         plant_loops = [getattr(pl, 'template_type').lower() for pl in plant_loop_class_objects.values()]
         # create condenser water loop for water cooled condensers
         if getattr(plant_equipment_class_object, 'template_type', None).lower() == 'hvactemplate:plant:chiller' \
@@ -316,7 +317,9 @@ class HVACTemplate(EPJSON):
                 super_dictionary=plant_loop_dictionary,
                 object_dictionary={
                     'HVACTemplate:Plant:CondenserWaterLoop': {
-                        'Condenser Water Loop': {}
+                        'Condenser Water Loop': {
+                            'template_plant_loop_type': 'CondenserWaterLoop'
+                        }
                     }
                 })
             # append plant loop to list to prevent another one being added.
@@ -360,6 +363,13 @@ class HVACTemplate(EPJSON):
             self._create_system_path_connection_objects(
                 system_class_object=system_class_object,
                 expanded_zones=self.expanded_zones)
+        self.logger.info('##### Processing Plant Loops #####')
+        self.logger.info('##### Processing Plant Equipment #####')
+        self.logger.info('##### Building Plant-Plant Equipment Connections #####')
+        # todo_eo: ExpandPlantEquipment class has plant_loop_type attribute which is a priority list of loops to
+        #  attach the equipment.  Use that for the connections.
+        self.logger.info('##### Building Plant-Demand equipment Connections #####')
+        # get water loop branches from class objects
         self.logger.info('##### Creating epJSON #####')
         # Merge each set of epJSON dictionaries
         merge_list = [
