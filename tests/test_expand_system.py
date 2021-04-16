@@ -105,7 +105,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:System:Verify valid template object")
     def test_verify_good_template(self):
         output = ExpandSystem(template=mock_template)
-        self.assertEqual('VAV Sys 1', list(output.template.keys())[0])
+        self.assertEqual('VAV Sys 1', output.template_name)
         return
 
     def test_create_water_controller_list_from_epjson(self):

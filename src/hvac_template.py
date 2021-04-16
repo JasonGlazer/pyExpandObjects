@@ -40,6 +40,8 @@ class HVACTemplate(EPJSON):
         self.expanded_thermostats = {}
         self.expanded_zones = {}
         self.expanded_systems = {}
+        self.expanded_plant_equipment = {}
+        self.expanded_plant_loops = {}
         self.epjson = {}
         return
 
@@ -293,6 +295,33 @@ class HVACTemplate(EPJSON):
             object_dictionary=resolved_path_dictionary
         )
         return resolved_path_dictionary
+
+    def _create_loop_from_plant_equipment(self, plant_equipment_class_object, plant_loop_class_objects):
+        """
+        Create plant loop templates from ExpandPlantEquipment object attributes
+
+        :param plant_equipment_class_object: ExpandPlantEquipment object
+        :param plant_loop_class_objects: ExpandPlantLoop objects
+        :return: Dictionary of HVAC:Template:Plant template objects to create an ExpandPlantLoop object
+        """
+        # create dictionary to store plant loops
+        plant_loop_dictionary = {}
+        # get each loop type specified in the plant loop class objects
+        plant_loops = [getattr(pl, 'template_type').lower() for pl in plant_loop_class_objects.values()]
+        # create condenser water loop for water cooled condensers
+        if getattr(plant_equipment_class_object, 'template_type', None).lower() == 'hvactemplate:plant:chiller' \
+                and getattr(plant_equipment_class_object, 'condenser_type', None).lower() == 'watercooled' \
+                and 'hvactemplate:plant:condenserwaterloop' not in plant_loops:
+            self.merge_epjson(
+                super_dictionary=plant_loop_dictionary,
+                object_dictionary={
+                    'HVACTemplate:Plant:CondenserWaterLoop': {
+                        'Condenser Water Loop': {}
+                    }
+                })
+            # append plant loop to list to prevent another one being added.
+            plant_loops.append('hvactemplate:plant:condenserwaterloop')
+        return plant_loop_dictionary
 
     def run(self, input_epjson=None):
         """

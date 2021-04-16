@@ -622,3 +622,8 @@ OptionTree:
             system_availability_schedule_name:
               AvailabilityManager:NightCycle: fan_schedule_name
         TemplateObjects:
+    Plant:
+      ChilledWaterLoop:
+      CondenserWaterLoop:
+      HotWaterLoop:
+      MixedWaterLoop:

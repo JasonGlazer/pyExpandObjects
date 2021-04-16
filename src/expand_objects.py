@@ -1297,3 +1297,42 @@ class ExpandSystem(ExpandObjects):
         self._create_outdoor_air_system()
         self._create_branch_and_branchlist_from_build_path()
         return self
+
+
+class ExpandPlantEquipment(ExpandObjects):
+    """
+    Plant Equipment operations
+    """
+    def __init__(self, template):
+        super().__init__(template=template)
+        self.unique_name = self.template_name
+        self.build_path = None
+        return
+
+    def run(self):
+        """
+        Process plant loop template
+        :return: epJSON dictionary as class attribute
+        """
+        self._create_objects()
+        return
+
+
+class ExpandPlantLoop(ExpandObjects):
+    """
+    Plant loop expansion operations
+    """
+    def __init__(self, template):
+        super().__init__(template=template)
+        self.unique_name = self.template_name
+        self.build_path = None
+        return
+
+    def run(self):
+        """
+        Process plant loop template
+        :return: epJSON dictionary as class attribute
+        """
+        # self._add_condenser_water_template()
+        self._create_objects()
+        return

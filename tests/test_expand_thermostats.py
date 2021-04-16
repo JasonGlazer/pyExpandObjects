@@ -29,7 +29,7 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
             }
         }
         output = ExpandThermostat(template=template)
-        self.assertEqual('All Zones', list(output.template.keys())[0])
+        self.assertEqual('All Zones', output.template_name)
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Thermostat:Create schedule from constant setpoint")

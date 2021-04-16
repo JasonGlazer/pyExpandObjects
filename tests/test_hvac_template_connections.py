@@ -357,10 +357,36 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             ez = MagicMock()
             ez_epjson = PropertyMock(return_value=mock_epjson)
             type(ez).epjson = ez_epjson
-            type(ez).template_vav_system_name = 'VAV Sys 1'
-            type(ez).zone_name = unique_name
-            type(ez).unique_name = unique_name
+            ez.template_vav_system_name = 'VAV Sys 1'
+            ez.zone_name = unique_name
+            ez.unique_name = unique_name
             ez_l.append(ez)
         with self.assertRaisesRegex(InvalidTemplateException, 'Search for ZoneHVAC:EquipmentConnections'):
             self.hvac_template._create_system_path_connection_objects(system_class_object=es, expanded_zones=ez_l)
+        return
+
+    def test_plant_equipment_creates_loop(self):
+        ep = MagicMock()
+        ep.template_type = 'HVACTemplate:Plant:HotWaterLoop'
+        expanded_plant_loops = {'Test Hot Water': ep}
+        epe = MagicMock()
+        epe.template_type = 'HVACTemplate:Plant:Chiller'
+        epe.condenser_type = 'WaterCooled'
+        output = self.hvac_template._create_loop_from_plant_equipment(
+            plant_equipment_class_object=epe,
+            plant_loop_class_objects=expanded_plant_loops)
+        self.assertEqual('HVACTemplate:Plant:CondenserWaterLoop', list(output.keys())[0])
+        return
+
+    def test_plant_equipment_doesnt_create_loop_if_existing(self):
+        ep = MagicMock()
+        ep.template_type = 'HVACTemplate:Plant:CondenserWaterLoop'
+        expanded_plant_loops = {'Test Hot Water': ep}
+        epe = MagicMock()
+        epe.template_type = 'HVACTemplate:Plant:Chiller'
+        epe.condenser_type = 'WaterCooled'
+        output = self.hvac_template._create_loop_from_plant_equipment(
+            plant_equipment_class_object=epe,
+            plant_loop_class_objects=expanded_plant_loops)
+        self.assertEqual(0, len(output.keys()))
         return

@@ -68,7 +68,7 @@ class TestExpandZone(BaseTest, unittest.TestCase):
     @BaseTest._test_logger(doc_text="HVACTemplate:Zone:Verify valid template object")
     def test_verify_good_template(self):
         output = ExpandZone(template=mock_zone_template)
-        self.assertEqual('HVACTemplate:Zone:VAV 1', list(output.template.keys())[0])
+        self.assertEqual('HVACTemplate:Zone:VAV 1', output.template_name)
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Zone:Test all components")
