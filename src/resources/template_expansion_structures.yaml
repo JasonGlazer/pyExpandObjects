@@ -103,8 +103,10 @@ Fan:
         << : *FanFields
         air_inlet_node_name: '{} Supply Fan Inlet'
         air_outlet_node_name: '{} Supply Fan Outlet'
+        availability_schedule_name: 'HVACTemplate-Always1'
         fan_power_minimum_flow_rate_input_method: 'Fraction'
         fan_total_efficiency: 0.7
+        pressure_rise: '{supply_fan_delta_pressure}'
       Connectors: &FanVariableVolumeConnectors
         << : *FanConnectors
 
@@ -144,6 +146,7 @@ AirTerminal:
             reheat_coil_object_type: Coil:Heating:Water
             maximum_hot_water_or_steam_flow_rate: Autosize
             minimum_hot_water_or_steam_flow_rate: 0
+            zone_minimum_air_flow_input_method: '{zone_minimum_air_flow_input_method}'
         - Coil:Heating:Water:
             <<: *CoilHeatingWaterFields
             name: '{} Reheat Coil'
@@ -244,6 +247,7 @@ AvailabilityManager:
       thermostat_tolerance: 0.2
       cycling_run_time_control_type: FixedRunTime
       cycling_run_time: 3600
+      fan_schedule_name: 'HVACTemplate-Always1'
 
 Branch:
   Base:
@@ -358,10 +362,12 @@ Sizing:
       heating_maximum_air_flow_fraction: 0
       zone_cooling_design_supply_air_temperature: 12.8
       zone_cooling_design_supply_air_temperature_difference: 11.11
-      zone_cooling_design_supply_air_humidity_ratio: 0.0085
+      zone_cooling_design_supply_air_humidity_ratio: 0.008
       zone_heating_design_supply_air_temperature: 50.0
       zone_heating_design_supply_air_humidity_ratio: 0.008
       zone_or_zonelist_name: '{zone_name}'
+      zone_cooling_sizing_factor: '{zone_cooling_sizing_factor}'
+      zone_heating_sizing_factor: '{zone_heating_sizing_factor}'
   System:
     Base: &SizingSystem
       name: '{} Sizing System'
@@ -430,8 +436,6 @@ OptionTree:
               Sizing:Zone: zone_cooling_design_supply_air_humidity_ratio
             zone_cooling_design_supply_air_temperature:
               Sizing:Zone: zone_cooling_design_supply_air_temperature
-            zone_cooling_design_supply_air_temperature_input_method:
-              Sizing:Zone: zone_cooling_design_supply_air_temperature_input_method
             zone_heating_design_supply_air_temperature_input_method:
               Sizing:Zone: zone_heating_design_supply_air_temperature_input_method
             zone_heating_design_supply_air_temperature:
@@ -440,10 +444,6 @@ OptionTree:
               Sizing:Zone: design_specification_outdoor_air_object_name
             design_specification_zone_air_distribution_object_name:
               Sizing:Zone: design_specification_zone_air_distribution_object_name
-            zone_heating_sizing_factor:
-              Sizing:Zone: zone_heating_sizing_factor
-            zone_cooling_sizing_factor:
-              Sizing:Zone: zone_cooling_sizing_factor
           Mappings:
             Sizing:Zone:
               zone_cooling_design_supply_air_temperature_input_method:
@@ -458,9 +458,7 @@ OptionTree:
                 supply_air_maximum_flow_rate:
                   AirTerminal:.*: maximum_air_flow_rate
                 damper_heating_action:
-                  AirTerminal:.*:VAV:Reheat: damper_heating_action
-                zone_minimum_air_flow_input_method:
-                  AirTerminal:.*: zone_minimum_air_flow_input_method
+                  AirTerminal:.*: damper_heating_action
     System:
       VAV:
         BuildPath:
@@ -518,7 +516,6 @@ OptionTree:
                               Coil:Cooling:Water: self
                             component_outlet_node_name:
                               Coil:Cooling:Water: water_outlet_node_name
-                  Transitions:
             - supply_fan_placement:
                 (DrawThrough|None):
                   Location: -1
@@ -528,8 +525,6 @@ OptionTree:
                         Fields: *FanVariableVolumeFields
                         Connectors: *FanVariableVolumeConnectors
                   Transitions:
-                    supply_fan_delta_pressure:
-                      Fan:.*: pressure_rise
                     system_availability_schedule_name:
                       Fan:.*: availability_schedule_name
                   Mappings:

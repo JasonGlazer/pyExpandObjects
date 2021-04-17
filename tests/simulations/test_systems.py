@@ -189,4 +189,5 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
             # trigger failure
             self.assertEqual('', comparison_results, comparison_results)
         return
+
     # todo_eo: do system-zone connection test as well

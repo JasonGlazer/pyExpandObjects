@@ -2,7 +2,6 @@ import unittest
 import copy
 from pathlib import Path
 from argparse import Namespace
-import subprocess
 
 from tests import BaseTest
 from tests.simulations import BaseSimulationTest
@@ -46,6 +45,10 @@ test_dir = Path(__file__).parent.parent
 
 
 class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
+    """
+    Simulation testing which writes epJSON objects to non-temporary files.
+    """
+
     def setUp(self):
         return
 
@@ -58,8 +61,6 @@ class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
         file_run_list = []
         # set subdirectory
         sub_directory = ['tests', 'output_files']
-        # todo_eo: setup file to have specific hvac template files.  Original file will succeed
-        #  by processing the file via ExpandObjects before running simulation.
         original_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                                  'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
         original_formatted_epjson = self.setup_file(original_file_path)
@@ -87,14 +88,15 @@ class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)
+        # merge in HVACTemplate objects
         epj.merge_epjson(
             super_dictionary=test_epjson,
             object_dictionary=dict(**mock_zone_template, **mock_thermostat_template))
         prepared_file_path = self.write_file_for_testing(
             epjson=original_formatted_epjson,
             sub_directory=sub_directory,
-            file_name='HVACTemplate-5ZoneVAVWaterCooledPrepared.epJSON')
-        # test each sim
+            file_name='HVACTemplate-5ZoneVAVWaterCooledZoneTestPrepared.epJSON')
+        # test the file prepped with new templates
         output_directory = test_dir.joinpath('output_files')
         output = main(
             Namespace(

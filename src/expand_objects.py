@@ -278,7 +278,11 @@ class ExpandObjects(EPJSON):
         Set object field values in an OptionTree leaf, which consist of a 'Objects', 'Transitions', and 'Mappings' keys
         using a supplied Transitions dictionary.
 
-        Transitions translates template input values to fields in Objects
+        Transitions translates template input values to fields in Objects.  A more direct method of transitioning
+        template inputs to object values can be done using field name formatting (e.g. field_name: {template_field})
+        in the yaml file.  This method of application is used to override default values if template
+        inputs are provided.
+
         Mappings maps values from templates to objects.  This is necessary when the template input is not a direct
         transition to an object value.
 
