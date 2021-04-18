@@ -1311,7 +1311,6 @@ class ExpandPlantLoop(ExpandObjects):
     def __init__(self, template):
         super().__init__(template=template)
         self.unique_name = self.template_name
-        self.build_path = None
         return
 
     def run(self):

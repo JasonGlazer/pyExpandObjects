@@ -80,15 +80,16 @@ def main(args=None):
             if output.get('epJSON'):
                 with open(os.path.join(output_directory, expanded_file_name), 'w') as expanded_file:
                     json.dump(output['epJSON'], expanded_file, indent=4, sort_keys=True)
-                    output_file_dictionary['expanded'] = str(expanded_file_name)
+                    output_file_dictionary['expanded'] = os.path.join(output_directory, str(expanded_file_name))
             if output.get('epJSON_hvac_templates'):
                 with open(os.path.join(output_directory, hvac_templates_file_name), 'w') as hvac_template_file:
                     json.dump(output['epJSON_hvac_templates'], hvac_template_file, indent=4, sort_keys=True)
-                    output_file_dictionary['hvac_templates'] = str(hvac_templates_file_name)
+                    output_file_dictionary['hvac_templates'] = \
+                        os.path.join(output_directory, str(hvac_templates_file_name))
             if output.get('epJSON_base'):
                 with open(os.path.join(output_directory, base_file_name), 'w') as base_file:
                     json.dump(output['epJSON_base'], base_file, indent=4, sort_keys=True)
-                    output_file_dictionary['base'] = str(base_file_name)
+                    output_file_dictionary['base'] = os.path.join(output_directory, str(base_file_name))
             hvt.logger.info('Output files written: {}'.format(output_file_dictionary))
             output['output_files'] = output_file_dictionary
         else:

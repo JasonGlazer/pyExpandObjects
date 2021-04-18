@@ -121,9 +121,9 @@ class EPJSON(Logger):
                         for rgx_match in purge_dictionary[object_type]:
                             if re.match(rgx_match, object_name):
                                 tmp_d[object_type].pop(object_name)
-                            # if the object_type is now empty, delete it as well.
-                            if not tmp_d[object_type].keys():
-                                tmp_d.pop(object_type)
+                # if the object_type is now empty, delete it as well.
+                if not tmp_d[object_type].keys():
+                    tmp_d.pop(object_type)
         return tmp_d
 
     @staticmethod

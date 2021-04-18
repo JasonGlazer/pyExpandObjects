@@ -15,7 +15,7 @@ mock_plant_equipment_template = {
     }
 }
 
-mock_plant_loop_template = {
+mock_chw_plant_loop_template = {
     "HVACTemplate:Plant:ChilledWaterLoop": {
         "Chilled Water Loop": {
             "chilled_water_design_setpoint": 7.22,
@@ -56,6 +56,21 @@ class TestExpandPlantLoopObjects(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:PlantLoop:Verify valid template object")
     def test_verify_good_template(self):
-        output = ExpandPlantLoop(template=mock_plant_loop_template)
+        output = ExpandPlantLoop(template=mock_chw_plant_loop_template)
         self.assertEqual('Chilled Water Loop', output.template_name)
+        return
+
+    def test_verify_chilled_water_object(self):
+        ep = ExpandPlantLoop(template=mock_chw_plant_loop_template)
+        output = ep.run()
+        summarized_output = {
+            'AvailabilityManager:LowTemperatureTurnOff': 1,
+            'AvailabilityManagerAssignmentList': 1,
+            'Branch': 6,
+            'OutdoorAir:Node': 1,
+            'Pipe:Adiabatic': 5,
+            'Pump:ConstantSpeed': 1,
+            'Sizing:Plant': 1
+        }
+        self.assertEqual(summarized_output, ep.summarize_epjson(output.epjson))
         return

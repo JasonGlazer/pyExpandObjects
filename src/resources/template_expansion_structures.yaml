@@ -397,6 +397,99 @@ Sizing:
       type_of_load_to_size_on: Sensible
       type_of_zone_sum_to_use: '{sizing_option}'
       zone_maximum_outdoor_air_fraction: 1.0
+  Base: &SizingPlant
+    name: '{} Sizing Plant'
+    plant_or_condenser_loop_name: '{} PlantLoop'
+
+# Groupings
+Groupings:
+  PlantLoop:
+    Base: &GroupingsPlantLoopBase
+      - Pipe:Adiabatic:
+          name: '{} Supply Bypass Pipe'
+          inlet_node_name: '{} Supply Bypass Inlet'
+          outlet_node_name: '{} Supply Bypass Outlet'
+      - Branch:
+          name: '{} Supply Bypass Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Supply Bypass Pipe'
+              component_inlet_node_name: '{} Supply Bypass Inlet'
+              component_outlet_node_name: '{} Supply Bypass Outlet'
+      - Pipe:Adiabatic:
+          name: '{} Supply Outlet Pipe'
+          inlet_node_name: '{} Supply Outlet Pipe Inlet'
+          outlet_node_name: '{} Supply Outlet'
+      - Branch:
+          name: '{} Supply Outlet Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Supply Outlet Pipe'
+              component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
+              component_outlet_node_name: '{} Supply Outlet'
+      - Pipe:Adiabatic:
+          name: '{} Demand Bypass Pipe'
+          inlet_node_name: '{} Demand Bypass Inlet'
+          outlet_node_name: '{} Demand Bypass Outlet'
+      - Branch:
+          name: '{} Demand Bypass Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Demand Bypass Pipe'
+              component_inlet_node_name: '{} Demand Bypass Inlet'
+              component_outlet_node_name: '{} Demand Bypass Outlet'
+      - Pipe:Adiabatic:
+          name: '{} Demand Outlet Pipe'
+          inlet_node_name: '{} Demand Outlet Pipe Inlet'
+          outlet_node_name: '{} Demand Outlet'
+      - Branch:
+          name: '{} Demand Outlet Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Demand Outlet Pipe'
+              component_inlet_node_name: '{} Demand Outlet Pipe Inlet'
+              component_outlet_node_name: '{} Demand Outlet'
+      - AvailabilityManager:LowTemperatureTurnOff:
+          name: '{} Availability Low Temp TurnOff'
+          sensor_node_name: '{} Outside Air Sensor'
+          Transitions:
+            chilled_water_design_setpoint: temperature
+      - AvailabilityManagerAssignmentList: # this should be built in function
+          name: '{} Availability List'
+          managers:
+            - availability_manager_name:
+                AvailabilityManager:LowTemperatureTurnOff: key
+              availability_manager_object_type:
+                AvailabilityManager:LowTemperatureTurnOff: self
+      - OutdoorAir:Node:
+          name: '{} Outside Air Sensor'
+    ConstantPrimaryNoSecondary: &GroupingsPlantLoopConstantPrimaryNoSecondary
+      - Pump:ConstantSpeed:
+          name: '{} Supply Pump'
+          inlet_node_name: '{} Supply Inlet'
+          outlet_node_name: '{} Supply Inlet Pump Outlet'
+          design_flow_rate: Autosize
+          design_power_consumption: Autosize
+          pump_control_type: Intermittent
+          design_pump_head: '{primary_chilled_water_pump_rated_head}'
+      - Branch:
+          name: '{} Supply Inlet Branch'
+          components:
+            - component_object_type: Pump:ConstantSpeed
+              component_name: '{} Supply Pump'
+              component_inlet_node_name: '{} Supply Inlet'
+              component_outlet_node_name: '{} Supply Inlet Pump Outlet'
+      - Pipe:Adiabatic:
+          name: '{} Demand Inlet Pipe'
+          inlet_node_name: '{} Demand Inlet'
+          outlet_node_name: '{} Demand Inlet Pipe Outlet'
+      - Branch:
+          name: '{} Demand Inlet Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Demand Inlet Pipe'
+              component_inlet_node_name: '{} Demand Inlet'
+              component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
 
 OptionTree:
   HVACTemplate:
@@ -619,6 +712,19 @@ OptionTree:
         TemplateObjects:
     Plant:
       ChilledWaterLoop:
+        BaseObjects:
+          Objects:
+            - *GroupingsPlantLoopBase
+            - Sizing:Plant:
+                <<: *SizingPlant
+                loop_type: Cooling
+                loop_design_temperature_difference: 6.67
+                design_loop_exit_temperature: '{chilled_water_design_setpoint}'
+        TemplateObjects:
+          chilled_water_pump_configuration:
+            ConstantPrimaryNoSecondary:
+              Objects:
+                - *GroupingsPlantLoopConstantPrimaryNoSecondary
       CondenserWaterLoop:
       HotWaterLoop:
       MixedWaterLoop:

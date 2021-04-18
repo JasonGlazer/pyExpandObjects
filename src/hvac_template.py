@@ -131,10 +131,11 @@ class HVACTemplate(EPJSON):
         try:
             thermostat_template_name = getattr(zone_class_object, 'template_thermostat_name')
             thermostat_object = self.expanded_thermostats[thermostat_template_name]
-        except (AttributeError, KeyError):
-            raise InvalidTemplateException('Zone template does not reference a thermostat class object: {}'
-                                           .format(zone_class_object.unique_name))
-        except ValueError:
+        except AttributeError:
+            self.logger.warning('Zone template does not reference a thermostat class object: {}'
+                                .format(zone_class_object.unique_name))
+            return
+        except (ValueError, KeyError):
             raise InvalidTemplateException('Zone template is improperly formatted: {}'
                                            .format(zone_class_object.unique_name))
         # Evaluate the thermostat type in the thermostat object and format the output object accordingly
@@ -224,7 +225,7 @@ class HVACTemplate(EPJSON):
         zone_mixers = []
         # iterate over expanded zones and if the system reference field exists, and is for the referenced system,
         # append them in the splitter and mixer lists
-        for ez in expanded_zones:
+        for _, ez in expanded_zones.items():
             if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
                 # todo_eo: Only AirTerminal has been used for this test when all zone equipment objects should be
                 #  included.
@@ -265,6 +266,8 @@ class HVACTemplate(EPJSON):
         eo.unique_name = getattr(system_class_object, 'template_name')
         supply_plenum_name = getattr(system_class_object, 'supply_plenum_name', None)
         if supply_plenum_name:
+            # set return plenum name attribute for transition and mapping processing
+            eo.supply_plenum_name = supply_plenum_name
             supply_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'SupplyPlenum', 'Base'])
             supply_object['nodes'] = zone_splitters
             supply_object = {'AirLoopHVAC:SupplyPlenum': supply_object}
@@ -274,6 +277,8 @@ class HVACTemplate(EPJSON):
             supply_object = {'AirLoopHVAC:ZoneSplitter': supply_object}
         return_plenum_name = getattr(system_class_object, 'return_plenum_name', None)
         if return_plenum_name:
+            # set return plenum name attribute for transition and mapping processing
+            eo.return_plenum_name = return_plenum_name
             return_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ReturnPlenum', 'Base'])
             return_object['nodes'] = zone_mixers
             return_object = {'AirLoopHVAC:ReturnPlenum': return_object}

@@ -133,3 +133,25 @@ class TestMain(BaseTest, unittest.TestCase):
                     os.stat(os.path.join(output_directory, output['output_files']['base'])).st_size,
                     100)
         return
+
+    def test_write_output_no_directory_specified(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Thermostat": {
+                        "All Zones Dual": {
+                            "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
+                            "heating_setpoint_schedule_name": "Htg-SetP-Sch"
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name
+                )
+            )
+            self.assertTrue(output['output_files']['expanded'].startswith('/tmp/'))
+        return
