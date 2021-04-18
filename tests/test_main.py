@@ -153,5 +153,5 @@ class TestMain(BaseTest, unittest.TestCase):
                     file=temp_file.name
                 )
             )
-            self.assertTrue(output['output_files']['expanded'].startswith('/tmp/'))
+            self.assertTrue(output['output_files']['expanded'].startswith(os.path.dirname(temp_file.name)))
         return
