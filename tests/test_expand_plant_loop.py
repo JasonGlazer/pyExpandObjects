@@ -60,7 +60,7 @@ class TestExpandPlantLoopObjects(BaseTest, unittest.TestCase):
         self.assertEqual('Chilled Water Loop', output.template_name)
         return
 
-    def test_verify_chilled_water_object(self):
+    def test_verify_chilled_water_objects(self):
         ep = ExpandPlantLoop(template=mock_chw_plant_loop_template)
         output = ep.run()
         summarized_output = {

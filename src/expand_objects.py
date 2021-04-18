@@ -258,18 +258,22 @@ class ExpandObjects(EPJSON):
         :return: Formatted dictionary with objects and alternative options to be applied.
         """
         option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
-        transitions = option_leaf.pop('Transitions', None)
-        mappings = option_leaf.pop('Mappings', None)
-        # flatten object list in case it was nested due to yaml formatting
-        try:
-            objects = self._flatten_list(option_leaf['Objects'])
-        except KeyError:
-            raise PyExpandObjectsTypeError("Invalid or missing Objects location: {}".format(option_tree))
-        return {
-            'Objects': objects,
-            'Transitions': transitions,
-            'Mappings': mappings
-        }
+        if option_leaf:
+            transitions = option_leaf.pop('Transitions', None)
+            mappings = option_leaf.pop('Mappings', None)
+            # flatten object list in case it was nested due to yaml formatting
+            try:
+                objects = self._flatten_list(option_leaf['Objects'])
+            except KeyError:
+                raise PyExpandObjectsTypeError("Invalid or missing Objects location: {}".format(option_tree))
+            return {
+                'Objects': objects,
+                'Transitions': transitions,
+                'Mappings': mappings
+            }
+        else:
+            # If no objects found, return blank dictionary
+            return {}
 
     def _apply_transitions(
             self,
@@ -289,6 +293,10 @@ class ExpandObjects(EPJSON):
         :param option_tree_leaf: YAML loaded option tree end node with three keys: objects, transitions, mappings
         :return: list of dictionary objects with transitions and mappings applied
         """
+        # if a dictionary without an objects key is provided, then return a blank dictionary because no transitions
+        #   or mappings will be performed either.
+        if not option_tree_leaf.get('Objects'):
+            return {}
         option_tree_transitions = option_tree_leaf.pop('Transitions', None)
         option_tree_mappings = option_tree_leaf.pop('Mappings', None)
         # for each transition instruction, iterate over the objects and apply if the object_type matches the reference

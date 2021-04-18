@@ -52,6 +52,20 @@ class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
         self.assertEqual(['TestLoop', ], output.plant_loop_type)
         return
 
+    def test_water_cooled_chiller_equipment_objects_created(self):
+        tmp_mock = copy.deepcopy(mock_plant_equipment_template)
+        epe = ExpandPlantEquipment(template=tmp_mock)
+        output = epe.run()
+        self.assertEqual(
+            {
+                'Branch': 2,
+                'Chiller:Electric:EIR': 1,
+                'Curve:Biquadratic': 2,
+                'Curve:Quadratic': 1
+            },
+            epe.summarize_epjson(output.epjson))
+        return
+
     def test_reject_plant_loop_type_with_no_default_options(self):
         tmp_mock = {
             "HVACTemplate:Plant:BadEquipment": {
