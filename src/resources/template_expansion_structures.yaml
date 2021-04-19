@@ -59,6 +59,17 @@ Objects:
           cycling_run_time_control_type: FixedRunTime
           cycling_run_time: 3600
           fan_schedule_name: 'HVACTemplate-Always1'
+  Boiler:
+    HotWater:
+      Base: &BoilerHotWaterSuperObject
+        Fields:
+          name: '{} Boiler'
+          boiler_water_inlet_node_name: '{} HW Inlet'
+          boiler_water_outlet_node_name: '{} HW Outlet'
+          boiler_flow_mode: ConstantFlow
+          fuel_type: '{fuel_type}'
+          nominal_thermal_efficiency: '{efficiency}'
+          nominal_capacity: '{capacity}'
   Chiller:
     Electric:
       EIR:
@@ -79,13 +90,6 @@ Objects:
             reference_chilled_water_flow_rate: Autosize
             reference_condenser_fluid_flow_rate: Autosize
             sizing_factor: '{sizing_factor}'
-          Connectors:
-            ChilledWaterLoop:
-              Inlet: chilled_water_inlet_node_name
-              Outlet: chilled_water_outlet_node_name
-            CondenserWAterLoop:
-              Inlet: condenser_inlet_node_name
-              Outlet: condenser_outlet_node_name
   Coil:
     Cooling:
       Fields: &CoilCoolingFields
@@ -396,51 +400,85 @@ AutoCreated:
 # Groupings
 Groupings:
   PlantEquipment:
-    Chiller:
-      EIR: &GroupingsPlantEquipmentChillerEIR
-        - Chiller:Electric:EIR: *ChillerElectricEIRSuperObject
-        - Branch:
-            name: '{} ChW Branch'
+    Boiler:
+      CommonObjects:
+        - Branch: &BoilerBranch
+            name: '{} Boiler Branch'
             components:
               - component_object_type:
-                  Chiller.*: self
+                  Boiler.*: self
                 component_name:
-                  Chiller.*: key
+                  Boiler.*: key
                 component_inlet_node_name:
-                  Chiller.*: chilled_water_inlet_node_name
+                  Boiler.*: boiler_water_inlet_node_name
                 component_outlet_node_name:
-                  Chiller.*: chilled_water_outlet_node_name
-        - Curve:Quadratic:
-            name: Chiller RecipEIRFPLR
-            coefficient1_constant: 0.088065
-            coefficient2_x: 1.137742
-            coefficient3_x_2: -0.225806
-            maximum_value_of_x: 1
-            minimum_value_of_x: 0
-        - Curve:Biquadratic:
-            name: Chiller RecipCapFT
-            coefficient1_constant: 0.507883
-            coefficient2_x: 0.145228
-            coefficient3_x_2: -0.00625644
-            coefficient4_y: -0.0011178
-            coefficient5_y_2: -0.0001296
-            coefficient6_x_y: -0.00028188
-            maximum_value_of_x: 10
-            maximum_value_of_y: 35
-            minimum_value_of_x: 5
-            minimum_value_of_y: 24
-        - Curve:Biquadratic:
-            name: Chiller RecipEIRFT
-            coefficient1_constant: 1.03076
-            coefficient2_x: -0.103536
-            coefficient3_x_2: 0.00710208
-            coefficient4_y: 0.0093186
-            coefficient5_y_2: 0.00031752
-            coefficient6_x_y: -0.00104328
-            maximum_value_of_x: 10
-            maximum_value_of_y: 35
-            minimum_value_of_x: 5
-            minimum_value_of_y: 24
+                  Boiler.*: boiler_water_outlet_node_name
+      HotWater:
+        BaseObjects: &GroupingsPlantEquipmentBoilerHotWaterBaseObjects
+          - Boiler:HotWater: *BoilerHotWaterSuperObject
+          - Curve:Quadratic:
+              name: Main Boiler Efficiency Curve
+              coefficient1_constant: 0.97
+              coefficient2_x: 0.0633
+              coefficient3_x_2: -0.0333
+              maximum_value_of_x: 1.0
+              minimum_value_of_x: 0.0
+        TemplateObjects: &GroupingsPlantEquipmentBoilerHotWaterTemplateObjects
+          template_plant_loop_type:
+            (None|HotWater):
+              - Branch:
+                  <<: *BoilerBranch
+                  name: '{} Boiler HW Branch'
+            MixedWater:
+              - Branch:
+                  <<: *BoilerBranch
+                  name: '{} Boiler MW Branch'
+    Chiller:
+      EIR:
+        BaseObjects: &GroupingsPlantEquipmentChillerEIRBaseObjects
+          - Chiller:Electric:EIR: *ChillerElectricEIRSuperObject
+          - Branch:
+              name: '{} ChW Branch'
+              components:
+                - component_object_type:
+                    Chiller.*: self
+                  component_name:
+                    Chiller.*: key
+                  component_inlet_node_name:
+                    Chiller.*: chilled_water_inlet_node_name
+                  component_outlet_node_name:
+                    Chiller.*: chilled_water_outlet_node_name
+          - Curve:Quadratic:
+              name: Chiller RecipEIRFPLR
+              coefficient1_constant: 0.088065
+              coefficient2_x: 1.137742
+              coefficient3_x_2: -0.225806
+              maximum_value_of_x: 1
+              minimum_value_of_x: 0
+          - Curve:Biquadratic:
+              name: Chiller RecipCapFT
+              coefficient1_constant: 0.507883
+              coefficient2_x: 0.145228
+              coefficient3_x_2: -0.00625644
+              coefficient4_y: -0.0011178
+              coefficient5_y_2: -0.0001296
+              coefficient6_x_y: -0.00028188
+              maximum_value_of_x: 10
+              maximum_value_of_y: 35
+              minimum_value_of_x: 5
+              minimum_value_of_y: 24
+          - Curve:Biquadratic:
+              name: Chiller RecipEIRFT
+              coefficient1_constant: 1.03076
+              coefficient2_x: -0.103536
+              coefficient3_x_2: 0.00710208
+              coefficient4_y: 0.0093186
+              coefficient5_y_2: 0.00031752
+              coefficient6_x_y: -0.00104328
+              maximum_value_of_x: 10
+              maximum_value_of_y: 35
+              minimum_value_of_x: 5
+              minimum_value_of_y: 24
   PlantLoop:
     Base: &GroupingsPlantLoopBase
       - Pipe:Adiabatic:
@@ -492,7 +530,7 @@ Groupings:
           sensor_node_name: '{} Outside Air Sensor'
           Transitions:
             chilled_water_design_setpoint: temperature
-      - AvailabilityManagerAssignmentList: # this should be built in function
+      - AvailabilityManagerAssignmentList:
           name: '{} Availability List'
           managers:
             - availability_manager_name:
@@ -789,6 +827,12 @@ OptionTree:
               AvailabilityManager:NightCycle: fan_schedule_name
         TemplateObjects:
     Plant:
+      Boiler:
+        BaseObjects:
+          Objects:
+            - *GroupingsPlantEquipmentBoilerHotWaterBaseObjects
+        TemplateObjects:
+          <<: *GroupingsPlantEquipmentBoilerHotWaterTemplateObjects
       ChilledWaterLoop:
         BaseObjects:
           Objects:
@@ -809,7 +853,7 @@ OptionTree:
           chiller_type:
             ElectricReciprocatingChiller:
               Objects:
-                - *GroupingsPlantEquipmentChillerEIR
+                - *GroupingsPlantEquipmentChillerEIRBaseObjects
           condenser_type:
             WaterCooled:
               Objects:

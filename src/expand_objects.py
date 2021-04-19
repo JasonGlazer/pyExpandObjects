@@ -230,17 +230,20 @@ class ExpandObjects(EPJSON):
         if 'TemplateObjects' in options and option_tree['TemplateObjects']:
             try:
                 for template_field, template_tree in option_tree['TemplateObjects'].items():
-                    (field_option, objects), = template_tree.items()
-                    # check if field option is 'None' and if object doesn't exist in the class, or if the fields match
-                    if (field_option == 'None' and not hasattr(self, template_field)) or \
-                            re.match(field_option, getattr(self, template_field)):
-                        option_tree_leaf = self._get_option_tree_leaf(
-                            option_tree=option_tree,
-                            leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])
-                        object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
-                        self.merge_epjson(
-                            super_dictionary=option_tree_dictionary,
-                            object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
+                    for field_option, objects in template_tree.items():
+                        # check if field option is 'None' and if object doesn't exist in the class, or if
+                        #   the fields match
+                        if (field_option == 'None' and not hasattr(self, template_field)) or \
+                                re.match(field_option, getattr(self, template_field)):
+                            option_tree_leaf = self._get_option_tree_leaf(
+                                option_tree=option_tree,
+                                leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])
+                            object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
+                            self.merge_epjson(
+                                super_dictionary=option_tree_dictionary,
+                                object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
+                            # Only one field option should be applied, so break after it is successful
+                            break
             except (AttributeError, KeyError):
                 raise PyExpandObjectsYamlStructureException('TemplateObjects section for system type {} is invalid in '
                                                             'yaml file.'.format(self.template_type))
@@ -389,7 +392,7 @@ class ExpandObjects(EPJSON):
             try:
                 (transitioned_object_type, transitioned_object_structure), = copy.deepcopy(transitioned_object).items()
                 # get the dictionary nested in 'Fields' for super objects
-                if {"Connectors", "Fields"} == set(transitioned_object_structure.keys()):
+                if transitioned_object_structure.get('Fields'):
                     object_name = transitioned_object_structure['Fields'].pop('name').format(self.unique_name)
                     transitioned_object_structure = transitioned_object_structure['Fields']
                 else:
@@ -1335,35 +1338,39 @@ class RetrievePlantEquipmentLoop:
     Get and set the a priority list of plant loops for the equipment to serve.
     """
     def __get__(self, obj, owner):
-        return obj._plant_loop_type
+        return obj._template_plant_loop_type
 
     def __set__(self, obj, value):
         """
         Set priority list of plant loops to attach the equipment.  Apply defaults if no input is given.
         """
         # set value and check at the end for error output
-        obj._plant_loop_type = None
+        obj._template_plant_loop_type = None
         # create hash of object references and default loop types
         default_loops = {
             '^HVACTemplate:Plant:Tower.*': ['ChilledWaterLoop', 'MixedWaterLoop'],
             '^HVACTemplate:Plant:Chiller.*': ['ChilledWaterLoop', ],
             '^HVACTemplate:Plant:Boiler.*': ['HotWaterLoop', 'MixedWaterLoop'],
         }
-        # try/except not needed here because the template has already been validated from super class init
-        (_, template_structure), = value.items()
-        (_, template_fields), = template_structure.items()
-        if template_fields.get('template_plant_loop_type'):
-            obj._plant_loop_type = [''.join([template_fields['template_plant_loop_type'], 'Loop']), ]
+        # If a string is passed, then convert to a list and use it as the only entry
+        if isinstance(value, str):
+            obj._template_plant_loop_type = [value, ]
         else:
-            (template_type, _), = value.items()
-            for object_reference, default_list in default_loops.items():
-                default_rgx = re.match(object_reference, template_type)
-                if default_rgx:
-                    obj._plant_loop_type = default_loops[object_reference]
-        # verify the field was set to a value
-        if not obj._plant_loop_type:
-            raise InvalidTemplateException("Plant equipment loop was not set and no default could be determined "
-                                           "{}".format(value))
+            # try/except not needed here because the template has already been validated from super class init
+            (_, template_structure), = value.items()
+            (_, template_fields), = template_structure.items()
+            if template_fields.get('template_plant_loop_type'):
+                obj._template_plant_loop_type = [''.join([template_fields['template_plant_loop_type'], 'Loop']), ]
+            else:
+                (template_type, _), = value.items()
+                for object_reference, default_list in default_loops.items():
+                    default_rgx = re.match(object_reference, template_type)
+                    if default_rgx:
+                        obj._template_plant_loop_type = default_loops[object_reference]
+            # verify the field was set to a value
+            if not obj._template_plant_loop_type:
+                raise InvalidTemplateException("Plant equipment loop was not set and no default could be determined "
+                                               "{}".format(value))
         return
 
 
@@ -1372,12 +1379,12 @@ class ExpandPlantEquipment(ExpandObjects):
     Plant Equipment operations
     """
 
-    plant_loop_type = RetrievePlantEquipmentLoop()
+    template_plant_loop_type = RetrievePlantEquipmentLoop()
 
     def __init__(self, template):
         super().__init__(template=template)
         self.unique_name = self.template_name
-        self.plant_loop_type = template
+        self.template_plant_loop_type = template
         return
 
     def run(self):

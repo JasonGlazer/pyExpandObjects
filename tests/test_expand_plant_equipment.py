@@ -18,7 +18,7 @@ mock_plant_equipment_template = {
 }
 
 
-class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
+class TestExpandPlantEquipment(BaseTest, unittest.TestCase):
     """
     General processing of ExpandPlantEquipmentLoop operations
     """
@@ -42,28 +42,14 @@ class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
 
     def test_verify_plant_loop_type_is_set_default(self):
         output = ExpandPlantEquipment(template=mock_plant_equipment_template)
-        self.assertEqual(['ChilledWaterLoop', ], output.plant_loop_type)
+        self.assertEqual(['ChilledWaterLoop', ], output.template_plant_loop_type)
         return
 
     def test_verify_plant_loop_type_is_set_from_template(self):
         tmp_mock = copy.deepcopy(mock_plant_equipment_template)
         tmp_mock['HVACTemplate:Plant:Chiller']['Main Chiller']['template_plant_loop_type'] = 'Test'
         output = ExpandPlantEquipment(template=tmp_mock)
-        self.assertEqual(['TestLoop', ], output.plant_loop_type)
-        return
-
-    def test_water_cooled_chiller_equipment_objects_created(self):
-        tmp_mock = copy.deepcopy(mock_plant_equipment_template)
-        epe = ExpandPlantEquipment(template=tmp_mock)
-        output = epe.run()
-        self.assertEqual(
-            {
-                'Branch': 2,
-                'Chiller:Electric:EIR': 1,
-                'Curve:Biquadratic': 2,
-                'Curve:Quadratic': 1
-            },
-            epe.summarize_epjson(output.epjson))
+        self.assertEqual(['TestLoop', ], output.template_plant_loop_type)
         return
 
     def test_reject_plant_loop_type_with_no_default_options(self):
