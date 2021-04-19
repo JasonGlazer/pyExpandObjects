@@ -146,15 +146,15 @@ class HVACTemplate(EPJSON):
             # create control schedule based on thermostat type
             if thermostat_type == "ThermostatSetpoint:SingleHeating":
                 control_schedule = ExpandObjects().build_compact_schedule(
-                    structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                    structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=[1, ])
             elif thermostat_type == "ThermostatSetpoint:SingleCooling":
                 control_schedule = ExpandObjects().build_compact_schedule(
-                    structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                    structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=[2, ])
             elif thermostat_type == "ThermostatSetpoint:DualSetpoint":
                 control_schedule = ExpandObjects().build_compact_schedule(
-                    structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                    structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=[4, ])
             else:
                 raise InvalidTemplateException("Invalid thermostat type set in ExpandThermostat {}"
@@ -268,29 +268,35 @@ class HVACTemplate(EPJSON):
         if supply_plenum_name:
             # set return plenum name attribute for transition and mapping processing
             eo.supply_plenum_name = supply_plenum_name
-            supply_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'SupplyPlenum', 'Base'])
+            supply_object = eo.get_structure(structure_hierarchy=[
+                'AutoCreated', 'System', 'AirLoopHVAC', 'SupplyPlenum', 'Base'])
             supply_object['nodes'] = zone_splitters
             supply_object = {'AirLoopHVAC:SupplyPlenum': supply_object}
         else:
-            supply_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ZoneSplitter', 'Base'])
+            supply_object = eo.get_structure(structure_hierarchy=[
+                'AutoCreated', 'System', 'AirLoopHVAC', 'ZoneSplitter', 'Base'])
             supply_object['nodes'] = zone_splitters
             supply_object = {'AirLoopHVAC:ZoneSplitter': supply_object}
         return_plenum_name = getattr(system_class_object, 'return_plenum_name', None)
         if return_plenum_name:
             # set return plenum name attribute for transition and mapping processing
             eo.return_plenum_name = return_plenum_name
-            return_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ReturnPlenum', 'Base'])
+            return_object = eo.get_structure(structure_hierarchy=[
+                'AutoCreated', 'System', 'AirLoopHVAC', 'ReturnPlenum', 'Base'])
             return_object['nodes'] = zone_mixers
             return_object = {'AirLoopHVAC:ReturnPlenum': return_object}
         else:
-            return_object = eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ZoneMixer', 'Base'])
+            return_object = eo.get_structure(structure_hierarchy=[
+                'AutoCreated', 'System', 'AirLoopHVAC', 'ZoneMixer', 'Base'])
             return_object['nodes'] = zone_mixers
             return_object = {'AirLoopHVAC:ZoneMixer': return_object}
         # Add Path objects
         supply_path_object = {'AirLoopHVAC:SupplyPath':
-                              eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'SupplyPath', 'Base'])}
+                              eo.get_structure(structure_hierarchy=[
+                                  'AutoCreated', 'System', 'AirLoopHVAC', 'SupplyPath', 'Base'])}
         return_path_object = {'AirLoopHVAC:ReturnPath':
-                              eo.get_structure(structure_hierarchy=['AirLoopHVAC', 'ReturnPath', 'Base'])}
+                              eo.get_structure(structure_hierarchy=[
+                                  'AutoCreated', 'System', 'AirLoopHVAC', 'ReturnPath', 'Base'])}
         path_dictionary = eo.yaml_list_to_epjson_dictionaries(
             yaml_list=[supply_object, return_object, supply_path_object, return_path_object])
         resolved_path_dictionary = eo.resolve_objects(epjson=path_dictionary)

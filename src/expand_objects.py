@@ -485,7 +485,7 @@ class ExpandObjects(EPJSON):
                 if always_val_rgx:
                     always_val = always_val_rgx.group(1)
                     self.build_compact_schedule(
-                        structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                        structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                         insert_values=[always_val, ]
                     )
                 # Try to convert formatted value to correct type
@@ -922,7 +922,7 @@ class ExpandThermostat(ExpandObjects):
             if not getattr(self, '{}_setpoint_schedule_name'.format(thermostat_type), None) \
                     and getattr(self, 'constant_{}_setpoint'.format(thermostat_type), None):
                 thermostat_schedule = self.build_compact_schedule(
-                    structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                    structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=getattr(self, 'constant_{}_setpoint'.format(thermostat_type)),
                 )
                 (thermostat_schedule_type, thermostat_schedule_structure), = thermostat_schedule.items()
@@ -1034,7 +1034,7 @@ class ExpandSystem(ExpandObjects):
             controller_objects = epjson.get(controller_type)
             if controller_objects:
                 airloop_hvac_controllerlist_object = \
-                    self.get_structure(structure_hierarchy=['AirLoopHVAC', 'ControllerList',
+                    self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'ControllerList',
                                                             controller_type.split(':')[1], 'Base'])
                 object_count = 1
                 try:
@@ -1076,7 +1076,7 @@ class ExpandSystem(ExpandObjects):
         stop_loop = False
         object_count = 1
         oa_equipment_list_dictionary = self.get_structure(
-            structure_hierarchy=['AirLoopHVAC', 'OutdoorAirSystem', 'EquipmentList', 'Base'])
+            structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'OutdoorAirSystem', 'EquipmentList', 'Base'])
         # iterate over build path returning every object up to the OutdoorAir:Mixer
         for super_object in build_path:
             for super_object_type, super_object_constructor in super_object.items():
@@ -1112,7 +1112,7 @@ class ExpandSystem(ExpandObjects):
         availability_managers = {i: j for i, j in epjson.items() if re.match(r'^AvailabilityManager:.*', i)}
         # loop over availability managers and add them to the list.
         availability_manager_list_object = \
-            self.get_structure(structure_hierarchy=['AvailabilityManagerAssignmentList', 'Base'])
+            self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AvailabilityManagerAssignmentList', 'Base'])
         try:
             for object_type, object_structure in availability_managers.items():
                 for object_name, object_fields in object_structure.items():
@@ -1169,7 +1169,7 @@ class ExpandSystem(ExpandObjects):
             raise PyExpandObjectsException('Only one AvailabilityManagerAssignmentList object is allowed in '
                                            '{} template build process'.format(self.unique_name))
         outdoor_air_system_yaml_object = \
-            self.get_structure(structure_hierarchy=['AirLoopHVAC', 'OutdoorAirSystem', 'Base'])
+            self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'OutdoorAirSystem', 'Base'])
         outdoor_air_system_yaml_object['availability_manager_list_name'] = availability_manager_name
         outdoor_air_system_yaml_object['controller_list_name'] = oa_controller_list_name
         outdoor_air_system_yaml_object['outdoor_air_equipment_list_name'] = oa_system_equipment_name
@@ -1283,12 +1283,12 @@ class ExpandSystem(ExpandObjects):
                 raise PyExpandObjectsYamlStructureException("Field/Connector mismatch or name not in Fields. "
                                                             "Object: {}, connectors: {}"
                                                             .format(super_object_structure, connectors))
-        branch_fields = self.get_structure(structure_hierarchy=['Branch', 'Base'])
+        branch_fields = self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'Branch', 'Base'])
         branch_fields['components'] = components
         branch = {
             "Branch": branch_fields
         }
-        branchlist_fields = self.get_structure(structure_hierarchy=['BranchList', 'Base'])
+        branchlist_fields = self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'BranchList', 'Base'])
         branchlist = {
             "BranchList": branchlist_fields
         }
