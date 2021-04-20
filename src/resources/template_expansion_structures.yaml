@@ -425,14 +425,16 @@ Groupings:
               minimum_value_of_x: 0.0
         TemplateObjects: &GroupingsPlantEquipmentBoilerHotWaterTemplateObjects
           template_plant_loop_type:
-            (None|HotWater):
-              - Branch:
-                  <<: *BoilerBranch
-                  name: '{} Boiler HW Branch'
-            MixedWater:
-              - Branch:
-                  <<: *BoilerBranch
-                  name: '{} Boiler MW Branch'
+            (None|HotWaterLoop):
+              Objects:
+                - Branch:
+                    <<: *BoilerBranch
+                    name: '{} Boiler HW Branch'
+            MixedWaterLoop:
+              Objects:
+                - Branch:
+                    <<: *BoilerBranch
+                    name: '{} Boiler MW Branch'
     Chiller:
       EIR:
         BaseObjects: &GroupingsPlantEquipmentChillerEIRBaseObjects

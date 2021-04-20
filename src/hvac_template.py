@@ -40,8 +40,8 @@ class HVACTemplate(EPJSON):
         self.expanded_thermostats = {}
         self.expanded_zones = {}
         self.expanded_systems = {}
-        self.expanded_plant_equipment = {}
         self.expanded_plant_loops = {}
+        self.expanded_plant_equipment = {}
         self.epjson = {}
         return
 

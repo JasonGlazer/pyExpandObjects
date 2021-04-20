@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import MagicMock, PropertyMock
 
 from src.expand_objects import ExpandPlantEquipment
 from . import BaseTest
@@ -15,17 +16,23 @@ class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
         return
 
     def test_water_cooled_chiller_equipment_objects_created(self):
-        epe = ExpandPlantEquipment(template={
-            "HVACTemplate:Plant:Chiller": {
-                "Main Chiller": {
-                    "capacity": "Autosize",
-                    "chiller_type": "ElectricReciprocatingChiller",
-                    "condenser_type": "WaterCooled",
-                    "nominal_cop": 3.2,
-                    "priority": "1"
+        epl = MagicMock()
+        template_type = PropertyMock(return_value='HVACTemplate:Plant:ChilledWaterLoop')
+        type(epl).template_type = template_type
+        expanded_plant_loops = [epl, ]
+        epe = ExpandPlantEquipment(
+            template={
+                "HVACTemplate:Plant:Chiller": {
+                    "Main Chiller": {
+                        "capacity": "Autosize",
+                        "chiller_type": "ElectricReciprocatingChiller",
+                        "condenser_type": "WaterCooled",
+                        "nominal_cop": 3.2,
+                        "priority": "1"
+                    }
                 }
-            }
-        })
+            },
+            expanded_plant_loops=expanded_plant_loops)
         output = epe.run()
         self.assertEqual(
             {
@@ -38,20 +45,26 @@ class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
         return
 
     def test_hot_water_boiler_objects_created(self):
-        # epe = ExpandPlantEquipment(template={
-        #     "HVACTemplate:Plant:Boiler": {
-        #         "Main Boiler": {
-        #             "boiler_type": "HotWaterBoiler",
-        #             "capacity": "Autosize",
-        #             "efficiency": 0.8,
-        #             "fuel_type": "NaturalGas",
-        #             "priority": "1"
-        #         }
-        #     }
-        # })
-        # todo_eo: Need to figure out how to handle template_plant_loop_type list structure to format
-        # print(epe.template_plant_loop_type)
-        # output = epe.run()
-        # from pprint import pprint
-        # pprint(output.epjson, width=200)
+        epl = MagicMock()
+        template_type = PropertyMock(return_value='HVACTemplate:Plant:HotWaterLoop')
+        type(epl).template_type = template_type
+        expanded_plant_loops = [epl, ]
+        epe = ExpandPlantEquipment(
+            template={
+                "HVACTemplate:Plant:Boiler": {
+                    "Main Boiler": {
+                        "boiler_type": "HotWaterBoiler",
+                        "capacity": "Autosize",
+                        "efficiency": 0.8,
+                        "fuel_type": "NaturalGas",
+                        "priority": "1"
+                    }
+                }
+            },
+            expanded_plant_loops=expanded_plant_loops)
+        output = epe.run()
+        self.assertEqual(
+            {'Boiler:HotWater': 1, 'Branch': 1, 'Curve:Quadratic': 1},
+            epe.summarize_epjson(output.epjson)
+        )
         return

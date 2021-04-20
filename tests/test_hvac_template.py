@@ -633,3 +633,4 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         return
 
     # todo_eo: wrap all dictionary unpacking (_, _), = dict.items() with exceptions and test
+    # todo_eo: make check that no loops are empty

@@ -158,7 +158,9 @@ class ExpandObjects(EPJSON):
             structure_hierarchy: list,
             structure=None) -> dict:
         """
-        Retrieve structure from YAML loaded object
+        Retrieve structure from YAML loaded object.  When retrieving TemplateObjects, the last item in the hierarchy
+        will be matched via regex instead of a direct key call for TemplateObjects.  This is done to allow for
+        multiple template options in a single mapping.
 
         :param structure_hierarchy: list representing structure hierarchy
         :param structure: YAML loaded dictionary, default is loaded yaml loaded object
@@ -168,8 +170,16 @@ class ExpandObjects(EPJSON):
             structure = copy.deepcopy(structure or self.expansion_structure)
             if not isinstance(structure_hierarchy, list):
                 raise PyExpandObjectsTypeError("Input must be a list of structure keys: {}".format(structure_hierarchy))
-            for key in structure_hierarchy:
-                structure = structure[key]
+            # iterate over structure hierarchy list. For each item, call the key to the YAML object.  When looking up
+            #   TemplateObjects, For the last item get the YAML object's keys and try a regex match.
+            for idx, key in enumerate(structure_hierarchy):
+                if structure_hierarchy[0] != 'TemplateObjects' or not idx == len(structure_hierarchy)-1:
+                    structure = structure[key]
+                else:
+                    structure_key_list = list(structure.keys())
+                    for skl in structure_key_list:
+                        if re.match(skl, key):
+                            structure = structure[skl]
         except KeyError:
             raise PyExpandObjectsTypeError('YAML structure does not exist for hierarchy: {}'.format(
                 structure_hierarchy))
@@ -1352,25 +1362,40 @@ class RetrievePlantEquipmentLoop:
             '^HVACTemplate:Plant:Chiller.*': ['ChilledWaterLoop', ],
             '^HVACTemplate:Plant:Boiler.*': ['HotWaterLoop', 'MixedWaterLoop'],
         }
-        # If a string is passed, then convert to a list and use it as the only entry
+        # If a string is passed, then use it as the entry
         if isinstance(value, str):
-            obj._template_plant_loop_type = [value, ]
+            obj._template_plant_loop_type = value if value.endswith('Loop') else ''.join([value, 'Loop'])
         else:
+            # extract the template plant loop type
             # try/except not needed here because the template has already been validated from super class init
-            (_, template_structure), = value.items()
+            (_, template_structure), = value['template'].items()
             (_, template_fields), = template_structure.items()
+            template_plant_loop_type_list = []
             if template_fields.get('template_plant_loop_type'):
-                obj._template_plant_loop_type = [''.join([template_fields['template_plant_loop_type'], 'Loop']), ]
+                template_plant_loop_type_list = [''.join([template_fields['template_plant_loop_type'], 'Loop']), ]
             else:
-                (template_type, _), = value.items()
+                # if loop reference was not made, set default based on template type
+                (template_type, _), = value['template'].items()
                 for object_reference, default_list in default_loops.items():
                     default_rgx = re.match(object_reference, template_type)
                     if default_rgx:
-                        obj._template_plant_loop_type = default_loops[object_reference]
+                        template_plant_loop_type_list = default_loops[object_reference]
+                        break
+            # Check the loop type priority list against the expanded loops and return the first match.
+            plant_loops = [i.template_type.split(":")[-1] for i in value.get('expanded_plant_loops', [])]
+            # Check that plant_loops has only unique entries and that it isn't empty
+            if not plant_loops or len(list(set(plant_loops))) != len(list(plant_loops)):
+                raise InvalidTemplateException("An invalid number of plant loops were created, either None or there"
+                                               " are duplicates present: {}".format(plant_loops))
+            for pl in template_plant_loop_type_list:
+                if pl in plant_loops:
+                    obj._template_plant_loop_type = pl
+                    break
             # verify the field was set to a value
             if not obj._template_plant_loop_type:
-                raise InvalidTemplateException("Plant equipment loop was not set and no default could be determined "
-                                               "{}".format(value))
+                raise InvalidTemplateException("Plant equipment loop type did not have a corresponding loop to "
+                                               "reference.  Priority list {}, Plant loops {}"
+                                               .format(template_plant_loop_type_list, plant_loops))
         return
 
 
@@ -1381,10 +1406,11 @@ class ExpandPlantEquipment(ExpandObjects):
 
     template_plant_loop_type = RetrievePlantEquipmentLoop()
 
-    def __init__(self, template):
+    def __init__(self, template, expanded_plant_loops=None):
         super().__init__(template=template)
         self.unique_name = self.template_name
-        self.template_plant_loop_type = template
+        plant_loops = {'expanded_plant_loops': expanded_plant_loops} if expanded_plant_loops else {}
+        self.template_plant_loop_type = {'template': template, **plant_loops}
         return
 
     def run(self):

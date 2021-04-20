@@ -1,5 +1,6 @@
 import copy
 import unittest
+from unittest.mock import MagicMock, PropertyMock
 
 from src.expand_objects import ExpandPlantEquipment
 from src.expand_objects import InvalidTemplateException
@@ -36,23 +37,48 @@ class TestExpandPlantEquipment(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:PlantEquipment:Verify valid template object")
     def test_verify_good_template(self):
-        output = ExpandPlantEquipment(template=mock_plant_equipment_template)
+        epl = MagicMock()
+        template_type = PropertyMock(return_value='HVACTemplate:Plant:ChilledWaterLoop')
+        type(epl).template_type = template_type
+        expanded_plant_loops = [epl, ]
+        output = ExpandPlantEquipment(template=mock_plant_equipment_template, expanded_plant_loops=expanded_plant_loops)
         self.assertEqual('Main Chiller', output.template_name)
         return
 
     def test_verify_plant_loop_type_is_set_default(self):
-        output = ExpandPlantEquipment(template=mock_plant_equipment_template)
-        self.assertEqual(['ChilledWaterLoop', ], output.template_plant_loop_type)
+        epl = MagicMock()
+        template_type = PropertyMock(return_value='HVACTemplate:Plant:ChilledWaterLoop')
+        type(epl).template_type = template_type
+        expanded_plant_loops = [epl, ]
+        output = ExpandPlantEquipment(template=mock_plant_equipment_template, expanded_plant_loops=expanded_plant_loops)
+        self.assertEqual('ChilledWaterLoop', output.template_plant_loop_type)
+        return
+
+    def test_verify_first_plant_loop_type_is_set(self):
+        expanded_plant_loops = []
+        for loop_type in ['Hot', 'Mixed']:
+            epl = MagicMock()
+            template_type = PropertyMock(return_value='HVACTemplate:Plant:{}WaterLoop'.format(loop_type))
+            type(epl).template_type = template_type
+            expanded_plant_loops.append(epl)
+        output = ExpandPlantEquipment(
+            template={'HVACTemplate:Plant:Boiler': {'Main Boiler': {}}},
+            expanded_plant_loops=expanded_plant_loops)
+        self.assertEqual('HotWaterLoop', output.template_plant_loop_type)
         return
 
     def test_verify_plant_loop_type_is_set_from_template(self):
         tmp_mock = copy.deepcopy(mock_plant_equipment_template)
         tmp_mock['HVACTemplate:Plant:Chiller']['Main Chiller']['template_plant_loop_type'] = 'Test'
-        output = ExpandPlantEquipment(template=tmp_mock)
-        self.assertEqual(['TestLoop', ], output.template_plant_loop_type)
+        epl = MagicMock()
+        template_type = PropertyMock(return_value='TestLoop')
+        type(epl).template_type = template_type
+        expanded_plant_loops = [epl, ]
+        output = ExpandPlantEquipment(template=tmp_mock, expanded_plant_loops=expanded_plant_loops)
+        self.assertEqual('TestLoop', output.template_plant_loop_type)
         return
 
-    def test_reject_plant_loop_type_with_no_default_options(self):
+    def test_reject_plant_loop_type_with_no_loops(self):
         tmp_mock = {
             "HVACTemplate:Plant:BadEquipment": {
                 "Bad Name": {
@@ -60,6 +86,16 @@ class TestExpandPlantEquipment(BaseTest, unittest.TestCase):
                 }
             }
         }
-        with self.assertRaisesRegex(InvalidTemplateException, 'Plant equipment loop was not set and'):
+        with self.assertRaisesRegex(InvalidTemplateException, 'An invalid number of plant loops'):
             ExpandPlantEquipment(template=tmp_mock)
+        return
+
+    def test_reject_plant_loop_type_with_mismatch_loops(self):
+        tmp_mock = copy.deepcopy(mock_plant_equipment_template)
+        epl = MagicMock()
+        template_type = PropertyMock(return_value='TestLoop')
+        type(epl).template_type = template_type
+        expanded_plant_loops = [epl, ]
+        with self.assertRaisesRegex(InvalidTemplateException, 'Plant equipment loop type did not'):
+            ExpandPlantEquipment(template=tmp_mock, expanded_plant_loops=expanded_plant_loops)
         return
