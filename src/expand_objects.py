@@ -173,7 +173,7 @@ class ExpandObjects(EPJSON):
             # iterate over structure hierarchy list. For each item, call the key to the YAML object.  When looking up
             #   TemplateObjects, For the last item get the YAML object's keys and try a regex match.
             for idx, key in enumerate(structure_hierarchy):
-                if structure_hierarchy[0] != 'TemplateObjects' or not idx == len(structure_hierarchy)-1:
+                if structure_hierarchy[0] != 'TemplateObjects' or not idx == len(structure_hierarchy) - 1:
                     structure = structure[key]
                 else:
                     structure_key_list = list(structure.keys())
