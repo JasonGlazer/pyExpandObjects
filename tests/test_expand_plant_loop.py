@@ -3,18 +3,6 @@ import unittest
 from src.expand_objects import ExpandPlantLoop
 from . import BaseTest
 
-mock_plant_equipment_template = {
-    "HVACTemplate:Plant:Chiller": {
-        "Main Chiller": {
-            "capacity": "Autosize",
-            "chiller_type": "ElectricReciprocatingChiller",
-            "condenser_type": "WaterCooled",
-            "nominal_cop": 3.2,
-            "priority": "1"
-        }
-    }
-}
-
 mock_chw_plant_loop_template = {
     "HVACTemplate:Plant:ChilledWaterLoop": {
         "Chilled Water Loop": {
@@ -58,19 +46,4 @@ class TestExpandPlantLoopObjects(BaseTest, unittest.TestCase):
     def test_verify_good_template(self):
         output = ExpandPlantLoop(template=mock_chw_plant_loop_template)
         self.assertEqual('Chilled Water Loop', output.template_name)
-        return
-
-    def test_verify_chilled_water_objects(self):
-        ep = ExpandPlantLoop(template=mock_chw_plant_loop_template)
-        output = ep.run()
-        summarized_output = {
-            'AvailabilityManager:LowTemperatureTurnOff': 1,
-            'AvailabilityManagerAssignmentList': 1,
-            'Branch': 6,
-            'OutdoorAir:Node': 1,
-            'Pipe:Adiabatic': 5,
-            'Pump:ConstantSpeed': 1,
-            'Sizing:Plant': 1
-        }
-        self.assertEqual(summarized_output, ep.summarize_epjson(output.epjson))
         return

@@ -1,6 +1,6 @@
 import re
 from epjson_handler import EPJSON
-from expand_objects import ExpandObjects, ExpandThermostat, ExpandZone, ExpandSystem
+from expand_objects import ExpandObjects, ExpandThermostat, ExpandZone, ExpandSystem, ExpandPlantLoop
 
 from custom_exceptions import InvalidTemplateException, InvalidEpJSONException
 
@@ -375,6 +375,9 @@ class HVACTemplate(EPJSON):
                 system_class_object=system_class_object,
                 expanded_zones=self.expanded_zones)
         self.logger.info('##### Processing Plant Loops #####')
+        self.expanded_plant_loops = self._expand_templates(
+            templates=self.templates_plant_loops,
+            expand_class=ExpandPlantLoop)
         self.logger.info('##### Processing Plant Equipment #####')
         self.logger.info('##### Building Plant-Plant Equipment Connections #####')
         # todo_eo: ExpandPlantEquipment class has plant_loop_type attribute which is a priority list of loops to
@@ -388,7 +391,8 @@ class HVACTemplate(EPJSON):
             self.base_objects,
             *[j.epjson for i, j in self.expanded_thermostats.items()],
             *[j.epjson for i, j in self.expanded_zones.items()],
-            *[j.epjson for i, j in self.expanded_systems.items()]
+            *[j.epjson for i, j in self.expanded_systems.items()],
+            *[j.epjson for i, j in self.expanded_plant_loops.items()]
         ]
         output_epjson = {}
         for merge_dictionary in merge_list:

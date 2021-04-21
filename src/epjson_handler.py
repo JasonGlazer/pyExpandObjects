@@ -234,6 +234,26 @@ class EPJSON(Logger):
             self.logger.info('Schema loaded')
         return
 
+    def validate_epjson(self, epjson):
+        """
+        Validate json object as epJSON.  Return object if valid
+
+        :param epjson: epJSON object
+        :return: validated epJSON object
+        """
+        try:
+            file_validation = self.schema.is_valid(epjson)
+            if not file_validation:
+                # if the schema validation fails for the epJSON object, write out specific errors that occurred.
+                self.logger.error("epJSON object does not meet schema format")
+                for err in self.schema.iter_errors(epjson):
+                    self.logger.error(err.message)
+                raise PyExpandObjectsSchemaError("Schema Format is invalid")
+            else:
+                return epjson
+        except Exception as e:
+            raise PyExpandObjectsSchemaError("epJSON validation failed: {}".format(str(e)))
+
     def _validate_epjson(self, input_epjson):
         """
         Validate json file based on loaded schema.  I schema validation is off, then will return True for any

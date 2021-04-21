@@ -20,6 +20,9 @@ CommonObjects:
     AirLoop: &ConnectorsAirLoop
       Inlet: air_inlet_node_name
       Outlet: air_outlet_node_name
+    General: &ConnectorsGeneralLoop
+      Inlet: inlet_node_name
+      Outler: outlet_node_name
     WaterLoop: &ConnectorsWaterLoop
       Inlet: water_inlet_node_name
       Outlet: water_outlet_node_name
@@ -60,6 +63,18 @@ Objects:
           cycling_run_time: 3600
           fan_schedule_name: 'HVACTemplate-Always1'
   Boiler:
+    CommonObjects:
+      - Branch: &BoilerBranch
+          name: '{} Boiler Branch'
+          components:
+            - component_object_type:
+                Boiler.*: self
+              component_name:
+                Boiler.*: key
+              component_inlet_node_name:
+                Boiler.*: boiler_water_inlet_node_name
+              component_outlet_node_name:
+                Boiler.*: boiler_water_outlet_node_name
     HotWater:
       Base: &BoilerHotWaterSuperObject
         Fields:
@@ -224,6 +239,37 @@ Objects:
           AirLoop:
             Inlet: outdoor_air_stream_node_name
             Outlet: mixed_air_node_name
+  Pump:
+    CommonObjects:
+      - Branch: &PumpBranchVariableSpeedSupplyInlet
+          name: '{} Supply Inlet Branch'
+          components:
+            - component_object_type: Pump:VariableSpeed
+              component_name: '{} Supply Pump'
+              component_inlet_node_name: '{} Supply Inlet'
+              component_outlet_node_name: '{} Supply Inlet Pump Outlet'
+      - Branch: &PumpBranchConstantSpeedSupplyInlet
+          name: '{} Supply Inlet Branch'
+          components:
+            - component_object_type: Pump:ConstantSpeed
+              component_name: '{} Supply Pump'
+              component_inlet_node_name: '{} Supply Inlet'
+              component_outlet_node_name: '{} Supply Inlet Pump Outlet'
+    Base:
+      Fields: &PumpFields
+        name: '{} Supply Pump'
+        inlet_node_name: '{} Supply Inlet'
+        outlet_node_name: '{} Supply Inlet Pump Outlet'
+        design_flow_rate: Autosize
+        design_power_consumption: Autosize
+        design_maximum_flow_rate: Autosize
+        design_pump_head: '{hot_water_pump_rated_head}'
+      ConstantSpeed:
+        Fields: &PumpConstantSpeed
+          <<: *PumpFields
+      VariableSpeed:
+        Fields: &PumpVariableSpeed
+          <<: *PumpFields
   SetpointManagers:
     MixedAir:
       Base:
@@ -401,18 +447,6 @@ AutoCreated:
 Groupings:
   PlantEquipment:
     Boiler:
-      CommonObjects:
-        - Branch: &BoilerBranch
-            name: '{} Boiler Branch'
-            components:
-              - component_object_type:
-                  Boiler.*: self
-                component_name:
-                  Boiler.*: key
-                component_inlet_node_name:
-                  Boiler.*: boiler_water_inlet_node_name
-                component_outlet_node_name:
-                  Boiler.*: boiler_water_outlet_node_name
       HotWater:
         BaseObjects: &GroupingsPlantEquipmentBoilerHotWaterBaseObjects
           - Boiler:HotWater: *BoilerHotWaterSuperObject
@@ -527,20 +561,6 @@ Groupings:
               component_name: '{} Demand Outlet Pipe'
               component_inlet_node_name: '{} Demand Outlet Pipe Inlet'
               component_outlet_node_name: '{} Demand Outlet'
-      - AvailabilityManager:LowTemperatureTurnOff:
-          name: '{} Availability Low Temp TurnOff'
-          sensor_node_name: '{} Outside Air Sensor'
-          Transitions:
-            chilled_water_design_setpoint: temperature
-      - AvailabilityManagerAssignmentList:
-          name: '{} Availability List'
-          managers:
-            - availability_manager_name:
-                AvailabilityManager:LowTemperatureTurnOff: key
-              availability_manager_object_type:
-                AvailabilityManager:LowTemperatureTurnOff: self
-      - OutdoorAir:Node:
-          name: '{} Outside Air Sensor'
     ConstantPrimaryNoSecondary: &GroupingsPlantLoopConstantPrimaryNoSecondary
       - Pump:ConstantSpeed:
           name: '{} Supply Pump'
@@ -557,6 +577,37 @@ Groupings:
               component_name: '{} Supply Pump'
               component_inlet_node_name: '{} Supply Inlet'
               component_outlet_node_name: '{} Supply Inlet Pump Outlet'
+      - Pipe:Adiabatic:
+          name: '{} Demand Inlet Pipe'
+          inlet_node_name: '{} Demand Inlet'
+          outlet_node_name: '{} Demand Inlet Pipe Outlet'
+      - Branch:
+          name: '{} Demand Inlet Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Demand Inlet Pipe'
+              component_inlet_node_name: '{} Demand Inlet'
+              component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
+    ChilledWater: &GroupingsPlantLoopChilledWater
+      - AvailabilityManager:LowTemperatureTurnOff:
+          name: '{} Availability Low Temp TurnOff'
+          sensor_node_name: '{} Outside Air Sensor'
+          temperature: '{chilled_water_design_setpoint}'
+      - AvailabilityManagerAssignmentList:
+          name: '{} Availability List'
+          managers:
+            - availability_manager_name:
+                AvailabilityManager:LowTemperatureTurnOff: key
+              availability_manager_object_type:
+                AvailabilityManager:LowTemperatureTurnOff: self
+      - SetpointManager:Scheduled:
+          name: '{} Temp Manager'
+          control_variable: Temperature
+          schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
+          setpoint_node_or_nodelist_name: '{} Supply Setpoint Nodes'
+      - OutdoorAir:Node:
+          name: '{} Outside Air Sensor'
+    NoSecondary: &GroupingsPlantNoSecondary
       - Pipe:Adiabatic:
           name: '{} Demand Inlet Pipe'
           inlet_node_name: '{} Demand Inlet'
@@ -839,6 +890,7 @@ OptionTree:
         BaseObjects:
           Objects:
             - *GroupingsPlantLoopBase
+            - *GroupingsPlantLoopChilledWater
             - Sizing:Plant:
                 <<: *SizingPlant
                 loop_type: Cooling
@@ -872,4 +924,23 @@ OptionTree:
                           Chiller.*: condenser_outlet_node_name
       CondenserWaterLoop:
       HotWaterLoop:
+        BaseObjects:
+          Objects:
+            - *GroupingsPlantLoopBase
+            - *GroupingsPlantNoSecondary
+            - Sizing:Plant:
+                <<: *SizingPlant
+                loop_type: Heating
+                loop_design_temperature_difference: 11
+                design_loop_exit_temperature: '{hot_water_design_setpoint}'
+        TemplateObjects:
+          hot_water_pump_configuration:
+            (None|ConstantFlow):
+              Objects:
+                - Pump:ConstantSpeed: *PumpVariableSpeed
+                - Branch: *PumpBranchVariableSpeedSupplyInlet
+            VariableFlow:
+              Objects:
+                - Pump:VariableSpeed: *PumpConstantSpeed
+                - Branch: *PumpBranchConstantSpeedSupplyInlet
       MixedWaterLoop:

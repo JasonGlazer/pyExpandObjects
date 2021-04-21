@@ -36,7 +36,7 @@ def build_parser():  # pragma: no cover
 
 
 def main(args=None):
-    if not hasattr(args, 'no_schema'):
+    if hasattr(args, 'no_schema'):
         no_schema = True
     else:
         no_schema = False
@@ -78,6 +78,9 @@ def main(args=None):
             # write output and keep list of written files
             output_file_dictionary = {}
             if output.get('epJSON'):
+                # verify expanded epJSON is valid if schema validation is turned on.
+                if not no_schema:
+                    hvt.validate_epjson(epjson=output['epJSON'])
                 with open(os.path.join(output_directory, expanded_file_name), 'w') as expanded_file:
                     json.dump(output['epJSON'], expanded_file, indent=4, sort_keys=True)
                     output_file_dictionary['expanded'] = os.path.join(output_directory, str(expanded_file_name))
