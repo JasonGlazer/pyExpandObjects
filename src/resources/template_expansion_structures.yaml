@@ -263,7 +263,7 @@ Objects:
         design_flow_rate: Autosize
         design_power_consumption: Autosize
         design_maximum_flow_rate: Autosize
-        design_pump_head: '{hot_water_pump_rated_head}'
+        pump_control_type: Intermittent
       ConstantSpeed:
         Fields: &PumpConstantSpeed
           <<: *PumpFields
@@ -563,20 +563,25 @@ Groupings:
               component_outlet_node_name: '{} Demand Outlet'
     ConstantPrimaryNoSecondary: &GroupingsPlantLoopConstantPrimaryNoSecondary
       - Pump:ConstantSpeed:
-          name: '{} Supply Pump'
-          inlet_node_name: '{} Supply Inlet'
-          outlet_node_name: '{} Supply Inlet Pump Outlet'
-          design_flow_rate: Autosize
-          design_power_consumption: Autosize
-          pump_control_type: Intermittent
+          <<: *PumpConstantSpeed
           design_pump_head: '{primary_chilled_water_pump_rated_head}'
+      - Branch: *PumpBranchConstantSpeedSupplyInlet
+      - Pipe:Adiabatic:
+          name: '{} Demand Inlet Pipe'
+          inlet_node_name: '{} Demand Inlet'
+          outlet_node_name: '{} Demand Inlet Pipe Outlet'
       - Branch:
-          name: '{} Supply Inlet Branch'
+          name: '{} Demand Inlet Branch'
           components:
-            - component_object_type: Pump:ConstantSpeed
-              component_name: '{} Supply Pump'
-              component_inlet_node_name: '{} Supply Inlet'
-              component_outlet_node_name: '{} Supply Inlet Pump Outlet'
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Demand Inlet Pipe'
+              component_inlet_node_name: '{} Demand Inlet'
+              component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
+    VariablePrimaryNoSecondary: &GroupingsPlantLoopVariablePrimaryNoSecondary
+      - Pump:VariableSpeed:
+          <<: *PumpVariableSpeed
+          design_pump_head: '{primary_chilled_water_pump_rated_head}'
+      - Branch: *PumpBranchVariableSpeedSupplyInlet
       - Pipe:Adiabatic:
           name: '{} Demand Inlet Pipe'
           inlet_node_name: '{} Demand Inlet'
@@ -901,6 +906,9 @@ OptionTree:
             ConstantPrimaryNoSecondary:
               Objects:
                 - *GroupingsPlantLoopConstantPrimaryNoSecondary
+            VariablePrimaryNoSecondary:
+              Objects:
+                - *GroupingsPlantLoopVariablePrimaryNoSecondary
       Chiller:
         BaseObjects:
         TemplateObjects:
