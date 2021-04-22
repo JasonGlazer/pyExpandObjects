@@ -75,18 +75,30 @@ class TestExpandPlantLoopObjects(BaseTest, unittest.TestCase):
         ep = ExpandPlantLoop(template=mock_hw_plant_loop_template)
         output = ep.run()
         self.assertEqual(
-            {'Branch': 6, 'Pipe:Adiabatic': 5, 'Pump:ConstantSpeed': 1, 'Sizing:Plant': 1},
+            {
+                'Branch': 6,
+                'Pipe:Adiabatic': 5,
+                'Pump:ConstantSpeed': 1,
+                'SetpointManager:OutdoorAirReset': 1,
+                'Sizing:Plant': 1
+            },
             ep.summarize_epjson(output.epjson)
         )
         return
 
-    def test_verify_chilled_water_constant_primary_objects(self):
+    def test_verify_hot_water_variable_primary_objects(self):
         tmp_mock = copy.deepcopy(mock_hw_plant_loop_template)
         tmp_mock['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop']['hot_water_pump_configuration'] = 'VariableFlow'
         ep = ExpandPlantLoop(template=tmp_mock)
         output = ep.run()
         self.assertEqual(
-            {'Branch': 6, 'Pipe:Adiabatic': 5, 'Pump:VariableSpeed': 1, 'Sizing:Plant': 1},
+            {
+                'Branch': 6,
+                'Pipe:Adiabatic': 5,
+                'Pump:VariableSpeed': 1,
+                'SetpointManager:OutdoorAirReset': 1,
+                'Sizing:Plant': 1
+            },
             ep.summarize_epjson(output.epjson)
         )
         return

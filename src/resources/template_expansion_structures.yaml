@@ -1,4 +1,7 @@
 GlobalNames:
+  Plant:
+    SupplySetpointNodes: &SupplySetpointNodes
+      '{} Supply Setpoint Nodes'
   System:
     AirLoopInlet: &AirLoopInlet
       '{} Air Loop Inlet'
@@ -262,7 +265,6 @@ Objects:
         outlet_node_name: '{} Supply Inlet Pump Outlet'
         design_flow_rate: Autosize
         design_power_consumption: Autosize
-        design_maximum_flow_rate: Autosize
         pump_control_type: Intermittent
       ConstantSpeed:
         Fields: &PumpConstantSpeed
@@ -270,7 +272,7 @@ Objects:
       VariableSpeed:
         Fields: &PumpVariableSpeed
           <<: *PumpFields
-  SetpointManagers:
+  SetpointManager:
     MixedAir:
       Base:
         Fields: &SetpointManagerMixedAir
@@ -298,6 +300,16 @@ Objects:
             reference_setpoint_node_name: *SystemSupplyPathInletName
             setpoint_node_or_nodelist_name:
               Coil:Heating:.*: air_outlet_node_name
+    OutdoorAirReset:
+      Base:
+        Fields: &SetpointManagerOutdoorAirReset
+          name: '{} Temp Manager'
+          control_variable: Temperature
+          setpoint_node_or_nodelist_name: *SupplySetpointNodes
+    Scheduled:
+      Base:
+        Fields: &SetpointManagerScheduled
+          <<: *SetpointManagerOutdoorAirReset
   Sizing:
     Zone:
       Base:
@@ -561,27 +573,7 @@ Groupings:
               component_name: '{} Demand Outlet Pipe'
               component_inlet_node_name: '{} Demand Outlet Pipe Inlet'
               component_outlet_node_name: '{} Demand Outlet'
-    ConstantPrimaryNoSecondary: &GroupingsPlantLoopConstantPrimaryNoSecondary
-      - Pump:ConstantSpeed:
-          <<: *PumpConstantSpeed
-          design_pump_head: '{primary_chilled_water_pump_rated_head}'
-      - Branch: *PumpBranchConstantSpeedSupplyInlet
-      - Pipe:Adiabatic:
-          name: '{} Demand Inlet Pipe'
-          inlet_node_name: '{} Demand Inlet'
-          outlet_node_name: '{} Demand Inlet Pipe Outlet'
-      - Branch:
-          name: '{} Demand Inlet Branch'
-          components:
-            - component_object_type: Pipe:Adiabatic
-              component_name: '{} Demand Inlet Pipe'
-              component_inlet_node_name: '{} Demand Inlet'
-              component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
-    VariablePrimaryNoSecondary: &GroupingsPlantLoopVariablePrimaryNoSecondary
-      - Pump:VariableSpeed:
-          <<: *PumpVariableSpeed
-          design_pump_head: '{primary_chilled_water_pump_rated_head}'
-      - Branch: *PumpBranchVariableSpeedSupplyInlet
+    PrimaryNoSecondary: &GroupingsPlantLoopPrimaryNoSecondary
       - Pipe:Adiabatic:
           name: '{} Demand Inlet Pipe'
           inlet_node_name: '{} Demand Inlet'
@@ -606,10 +598,8 @@ Groupings:
               availability_manager_object_type:
                 AvailabilityManager:LowTemperatureTurnOff: self
       - SetpointManager:Scheduled:
-          name: '{} Temp Manager'
-          control_variable: Temperature
+          <<: *SetpointManagerScheduled
           schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
-          setpoint_node_or_nodelist_name: '{} Supply Setpoint Nodes'
       - OutdoorAir:Node:
           name: '{} Outside Air Sensor'
     NoSecondary: &GroupingsPlantNoSecondary
@@ -849,16 +839,16 @@ OptionTree:
                 economizer_minimum_limit_dry_bulb_temperature: '{economizer_lower_temperature_limit}'
                 economizer_maximum_limit_dry_bulb_temperature: '{economizer_upper_temperature_limit}'
             - SetpointManager:Scheduled:
+                <<: *SetpointManagerScheduled
                 name: '{} Cooling Supply Air Temp Manager'
-                control_variable: Temperature
                 setpoint_node_or_nodelist_name:
                   BuildPathReference:
                     Location: -1
                     ValueLocation: Outlet
                 schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint}'
             - SetpointManager:Scheduled:
+                <<: *SetpointManagerScheduled
                 name: '{} Heating Supply Air Temp Manager'
-                control_variable: Temperature
                 setpoint_node_or_nodelist_name: *SystemSupplyPathInletName
                 schedule_name: 'HVACTemplate-Always{heating_coil_design_setpoint}'
             - SetpointManager:MixedAir:
@@ -905,10 +895,18 @@ OptionTree:
           chilled_water_pump_configuration:
             ConstantPrimaryNoSecondary:
               Objects:
-                - *GroupingsPlantLoopConstantPrimaryNoSecondary
+                - *GroupingsPlantLoopPrimaryNoSecondary
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                - Branch: *PumpBranchConstantSpeedSupplyInlet
             VariablePrimaryNoSecondary:
               Objects:
-                - *GroupingsPlantLoopVariablePrimaryNoSecondary
+                - *GroupingsPlantLoopPrimaryNoSecondary
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                - Branch: *PumpBranchVariableSpeedSupplyInlet
       Chiller:
         BaseObjects:
         TemplateObjects:
@@ -945,10 +943,23 @@ OptionTree:
           hot_water_pump_configuration:
             (None|ConstantFlow):
               Objects:
-                - Pump:ConstantSpeed: *PumpVariableSpeed
-                - Branch: *PumpBranchVariableSpeedSupplyInlet
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                - Branch: *PumpBranchConstantSpeedSupplyInlet
             VariableFlow:
               Objects:
-                - Pump:VariableSpeed: *PumpConstantSpeed
-                - Branch: *PumpBranchConstantSpeedSupplyInlet
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                - Branch: *PumpBranchVariableSpeedSupplyInlet
+          hot_water_setpoint_reset_type:
+            OutdoorAirTemperatureReset:
+              Objects:
+                - SetpointManager:OutdoorAirReset:
+                    <<: *SetpointManagerOutdoorAirReset
+                    outdoor_high_temperature: '{hot_water_reset_outdoor_dry_bulb_high}'
+                    outdoor_low_temperature: '{hot_water_reset_outdoor_dry_bulb_low}'
+                    setpoint_at_outdoor_high_temperature: '{hot_water_setpoint_at_outdoor_dry_bulb_high}'
+                    setpoint_at_outdoor_low_temperature: '{hot_water_setpoint_at_outdoor_dry_bulb_low}'
       MixedWaterLoop:

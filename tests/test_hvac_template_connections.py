@@ -402,3 +402,8 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             plant_loop_class_objects=expanded_plant_loops)
         self.assertEqual(0, len(output.keys()))
         return
+
+    # todo_eo: WaterCooled chiller should also run the loop expansion and add it to expanded_plant_loops.  This needs to
+    #  happen because the loops run before the equipment.  The function should also check that a Condenser loop doesn't
+    #  already exist in case multiple chillers are created.
+    # todo_eo: make check to ensure loops aren't empty

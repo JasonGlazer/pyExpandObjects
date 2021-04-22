@@ -123,7 +123,19 @@ class ExpandObjects(EPJSON):
             self.template_name = template_name
             # apply template name and fields as class attributes
             for template_field in template_structure.keys():
-                setattr(self, template_field, template_structure[template_field])
+                # If the value can be a numeric, then format it, otherwise save as a string.
+                template_string_value = str(template_structure[template_field])
+                num_rgx = re.match(r'^[-\d\.]+$', template_string_value)
+                if num_rgx:
+                    try:
+                        if '.' in template_string_value:
+                            setattr(self, template_field, float(template_structure[template_field]))
+                        else:
+                            setattr(self, template_field, int(template_structure[template_field]))
+                    except ValueError:
+                        setattr(self, template_field, template_structure[template_field])
+                else:
+                    setattr(self, template_field, template_structure[template_field])
         else:
             self.template_type = None
             self.template_name = None
@@ -502,7 +514,7 @@ class ExpandObjects(EPJSON):
                         insert_values=[always_val, ]
                     )
                 # Try to convert formatted value to correct type
-                num_rgx = re.match(r'^[\d\.]+$', formatted_value)
+                num_rgx = re.match(r'^[-\d\.]+$', formatted_value)
                 if num_rgx:
                     if '.' in formatted_value:
                         formatted_value = float(formatted_value)
