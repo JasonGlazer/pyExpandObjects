@@ -1394,7 +1394,7 @@ class RetrievePlantEquipmentLoop:
                         template_plant_loop_type_list = default_loops[object_reference]
                         break
             # Check the loop type priority list against the expanded loops and return the first match.
-            plant_loops = [i.template_type.split(":")[-1] for i in value.get('expanded_plant_loops', [])]
+            plant_loops = [i.template_type.split(":")[-1] for i in value.get('plant_loop_class_objects', {}).values()]
             # Check that plant_loops has only unique entries and that it isn't empty
             if not plant_loops or len(list(set(plant_loops))) != len(list(plant_loops)):
                 raise InvalidTemplateException("An invalid number of plant loops were created, either None or there"
@@ -1418,10 +1418,16 @@ class ExpandPlantEquipment(ExpandObjects):
 
     template_plant_loop_type = RetrievePlantEquipmentLoop()
 
-    def __init__(self, template, expanded_plant_loops=None):
+    def __init__(self, template, plant_loop_class_objects=None):
+        """
+        Initialize class
+
+        :param template: HVACTemplate:Plant:(Chiller|Tower|Boiler) objects
+        :param plant_loop_class_objects: dictionary of ExpandPlantLoop objects
+        """
         super().__init__(template=template)
         self.unique_name = self.template_name
-        plant_loops = {'expanded_plant_loops': expanded_plant_loops} if expanded_plant_loops else {}
+        plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}
         return
 

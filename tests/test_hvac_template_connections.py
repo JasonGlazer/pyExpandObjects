@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, PropertyMock
 
 from src.hvac_template import HVACTemplate
 from src.hvac_template import InvalidTemplateException
-from src.expand_objects import ExpandObjects, ExpandSystem, ExpandZone
+from src.expand_objects import ExpandObjects, ExpandSystem, ExpandZone, ExpandPlantLoop
 from . import BaseTest
 
 minimum_objects_d = {
@@ -377,33 +377,102 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 expanded_zones=expanded_zones)
         return
 
-    def test_plant_equipment_creates_loop(self):
+    def test_plant_equipment_creates_loop_template(self):
         ep = MagicMock()
         ep.template_type = 'HVACTemplate:Plant:HotWaterLoop'
         expanded_plant_loops = {'Test Hot Water': ep}
         epe = MagicMock()
         epe.template_type = 'HVACTemplate:Plant:Chiller'
         epe.condenser_type = 'WaterCooled'
-        output = self.hvac_template._create_loop_from_plant_equipment(
+        output = self.hvac_template._create_loop_template_from_plant_equipment(
             plant_equipment_class_object=epe,
             plant_loop_class_objects=expanded_plant_loops)
         self.assertEqual('HVACTemplate:Plant:CondenserWaterLoop', list(output.keys())[0])
         return
 
-    def test_plant_equipment_doesnt_create_loop_if_existing(self):
+    def test_plant_equipment_doesnt_create_loop_template_if_existing(self):
         ep = MagicMock()
         ep.template_type = 'HVACTemplate:Plant:CondenserWaterLoop'
         expanded_plant_loops = {'Test Hot Water': ep}
         epe = MagicMock()
         epe.template_type = 'HVACTemplate:Plant:Chiller'
         epe.condenser_type = 'WaterCooled'
-        output = self.hvac_template._create_loop_from_plant_equipment(
+        output = self.hvac_template._create_loop_template_from_plant_equipment(
             plant_equipment_class_object=epe,
             plant_loop_class_objects=expanded_plant_loops)
         self.assertEqual(0, len(output.keys()))
         return
 
-    # todo_eo: WaterCooled chiller should also run the loop expansion and add it to expanded_plant_loops.  This needs to
-    #  happen because the loops run before the equipment.  The function should also check that a Condenser loop doesn't
-    #  already exist in case multiple chillers are created.
+    def test_condenser_water_plant_loop_object_created_from_chiller_wo_attributes_transitioned(self):
+        eph = MagicMock()
+        eph.template_type = 'HVACTemplate:Plant:HotWaterLoop'
+        epc = MagicMock()
+        epc.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
+        del epc.primary_chilled_water_pump_rated_head
+        expanded_plant_loops = {'Test Hot Water': eph, 'Test Chilled Water': epc}
+        epe = MagicMock()
+        epe.template_type = 'HVACTemplate:Plant:Chiller'
+        epe.condenser_type = 'WaterCooled'
+        expanded_plant_equipment = {'Test Equipment Name': epe}
+        for _, expanded_pe in expanded_plant_equipment.items():
+            plant_loop_template = self.hvac_template._create_loop_template_from_plant_equipment(
+                plant_equipment_class_object=expanded_pe,
+                plant_loop_class_objects=expanded_plant_loops)
+            if plant_loop_template:
+                self.hvac_template.merge_epjson(
+                    super_dictionary=self.hvac_template.epjson,
+                    object_dictionary=plant_loop_template
+                )
+                additional_plant_loops = self.hvac_template._expand_templates(
+                    templates=plant_loop_template,
+                    expand_class=ExpandPlantLoop
+                )
+                for k, v in additional_plant_loops.items():
+                    if k not in expanded_plant_loops.keys():
+                        expanded_plant_loops[k] = v
+        eo = ExpandObjects()
+        self.assertEqual(
+            {'Branch': 5, 'Pipe:Adiabatic': 5, 'Pump:VariableSpeed': 1},
+            eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
+        return
+
+    def test_condenser_water_plant_loop_object_created_from_chiller_with_attributes_transitioned(self):
+        eph = MagicMock()
+        eph.template_type = 'HVACTemplate:Plant:HotWaterLoop'
+        epc = MagicMock()
+        epc.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
+        epc.primary_chilled_water_pump_rated_head = 2000
+        expanded_plant_loops = {'Test Hot Water': eph, 'Test Chilled Water': epc}
+        epe = MagicMock()
+        epe.template_type = 'HVACTemplate:Plant:Chiller'
+        epe.condenser_type = 'WaterCooled'
+        expanded_plant_equipment = {'Test Equipment Name': epe}
+        for _, expanded_pe in expanded_plant_equipment.items():
+            plant_loop_template = self.hvac_template._create_loop_template_from_plant_equipment(
+                plant_equipment_class_object=expanded_pe,
+                plant_loop_class_objects=expanded_plant_loops)
+            if plant_loop_template:
+                self.hvac_template.merge_epjson(
+                    super_dictionary=self.hvac_template.epjson,
+                    object_dictionary=plant_loop_template
+                )
+                additional_plant_loops = self.hvac_template._expand_templates(
+                    templates=plant_loop_template,
+                    expand_class=ExpandPlantLoop
+                )
+                for k, v in additional_plant_loops.items():
+                    if k not in expanded_plant_loops.keys():
+                        expanded_plant_loops[k] = v
+        eo = ExpandObjects()
+        self.assertEqual(
+            {'Branch': 5, 'Pipe:Adiabatic': 5, 'Pump:VariableSpeed': 1},
+            eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
+        self.assertEqual(
+            2000,
+            expanded_plant_loops['Condenser Water Loop'].epjson
+            ['Pump:VariableSpeed']['Condenser Water Loop Supply Pump']['design_pump_head']
+        )
+        return
+
+    # todo_eo: Test that multiple water cooled chillers do not break hvactemplate
     # todo_eo: make check to ensure loops aren't empty

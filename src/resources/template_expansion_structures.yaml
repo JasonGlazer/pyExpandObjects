@@ -929,6 +929,13 @@ OptionTree:
                         component_outlet_node_name:
                           Chiller.*: condenser_outlet_node_name
       CondenserWaterLoop:
+        BaseObjects:
+          Objects:
+            - *GroupingsPlantLoopBase
+            - *GroupingsPlantNoSecondary
+            - Pump:VariableSpeed:
+                <<: *PumpVariableSpeed
+                design_pump_head: '{condenser_water_pump_rated_head}' # template attribute set in hvac_template
       HotWaterLoop:
         BaseObjects:
           Objects:

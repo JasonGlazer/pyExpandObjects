@@ -19,7 +19,7 @@ class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
         epl = MagicMock()
         template_type = PropertyMock(return_value='HVACTemplate:Plant:ChilledWaterLoop')
         type(epl).template_type = template_type
-        expanded_plant_loops = [epl, ]
+        expanded_plant_loops = {'Test Loop': epl}
         epe = ExpandPlantEquipment(
             template={
                 "HVACTemplate:Plant:Chiller": {
@@ -32,7 +32,7 @@ class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
                     }
                 }
             },
-            expanded_plant_loops=expanded_plant_loops)
+            plant_loop_class_objects=expanded_plant_loops)
         output = epe.run()
         self.assertEqual(
             {
@@ -48,7 +48,7 @@ class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
         epl = MagicMock()
         template_type = PropertyMock(return_value='HVACTemplate:Plant:HotWaterLoop')
         type(epl).template_type = template_type
-        expanded_plant_loops = [epl, ]
+        expanded_plant_loops = {'Test Loop': epl}
         epe = ExpandPlantEquipment(
             template={
                 "HVACTemplate:Plant:Boiler": {
@@ -61,7 +61,7 @@ class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
                     }
                 }
             },
-            expanded_plant_loops=expanded_plant_loops)
+            plant_loop_class_objects=expanded_plant_loops)
         output = epe.run()
         self.assertEqual(
             {'Boiler:HotWater': 1, 'Branch': 1, 'Curve:Quadratic': 1},

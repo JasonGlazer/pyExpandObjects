@@ -40,8 +40,10 @@ class TestExpandPlantEquipment(BaseTest, unittest.TestCase):
         epl = MagicMock()
         template_type = PropertyMock(return_value='HVACTemplate:Plant:ChilledWaterLoop')
         type(epl).template_type = template_type
-        expanded_plant_loops = [epl, ]
-        output = ExpandPlantEquipment(template=mock_plant_equipment_template, expanded_plant_loops=expanded_plant_loops)
+        expanded_plant_loops = {'Test Loop': epl}
+        output = ExpandPlantEquipment(
+            template=mock_plant_equipment_template,
+            plant_loop_class_objects=expanded_plant_loops)
         self.assertEqual('Main Chiller', output.template_name)
         return
 
@@ -49,21 +51,23 @@ class TestExpandPlantEquipment(BaseTest, unittest.TestCase):
         epl = MagicMock()
         template_type = PropertyMock(return_value='HVACTemplate:Plant:ChilledWaterLoop')
         type(epl).template_type = template_type
-        expanded_plant_loops = [epl, ]
-        output = ExpandPlantEquipment(template=mock_plant_equipment_template, expanded_plant_loops=expanded_plant_loops)
+        expanded_plant_loops = {'Test Loop': epl}
+        output = ExpandPlantEquipment(
+            template=mock_plant_equipment_template,
+            plant_loop_class_objects=expanded_plant_loops)
         self.assertEqual('ChilledWaterLoop', output.template_plant_loop_type)
         return
 
     def test_verify_first_plant_loop_type_is_set(self):
-        expanded_plant_loops = []
+        expanded_plant_loops = {}
         for loop_type in ['Hot', 'Mixed']:
             epl = MagicMock()
             template_type = PropertyMock(return_value='HVACTemplate:Plant:{}WaterLoop'.format(loop_type))
             type(epl).template_type = template_type
-            expanded_plant_loops.append(epl)
+            expanded_plant_loops['{} Loop'.format(loop_type)] = epl
         output = ExpandPlantEquipment(
             template={'HVACTemplate:Plant:Boiler': {'Main Boiler': {}}},
-            expanded_plant_loops=expanded_plant_loops)
+            plant_loop_class_objects=expanded_plant_loops)
         self.assertEqual('HotWaterLoop', output.template_plant_loop_type)
         return
 
@@ -73,8 +77,10 @@ class TestExpandPlantEquipment(BaseTest, unittest.TestCase):
         epl = MagicMock()
         template_type = PropertyMock(return_value='TestLoop')
         type(epl).template_type = template_type
-        expanded_plant_loops = [epl, ]
-        output = ExpandPlantEquipment(template=tmp_mock, expanded_plant_loops=expanded_plant_loops)
+        expanded_plant_loops = {'Test Loop': epl}
+        output = ExpandPlantEquipment(
+            template=tmp_mock,
+            plant_loop_class_objects=expanded_plant_loops)
         self.assertEqual('TestLoop', output.template_plant_loop_type)
         return
 
@@ -95,7 +101,9 @@ class TestExpandPlantEquipment(BaseTest, unittest.TestCase):
         epl = MagicMock()
         template_type = PropertyMock(return_value='TestLoop')
         type(epl).template_type = template_type
-        expanded_plant_loops = [epl, ]
+        expanded_plant_loops = {'Test Loop': epl}
         with self.assertRaisesRegex(InvalidTemplateException, 'Plant equipment loop type did not'):
-            ExpandPlantEquipment(template=tmp_mock, expanded_plant_loops=expanded_plant_loops)
+            ExpandPlantEquipment(
+                template=tmp_mock,
+                plant_loop_class_objects=expanded_plant_loops)
         return

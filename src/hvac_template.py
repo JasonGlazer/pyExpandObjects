@@ -1,7 +1,7 @@
 import re
 from epjson_handler import EPJSON
-from expand_objects import ExpandObjects, ExpandThermostat, ExpandZone, ExpandSystem, ExpandPlantLoop
-
+from expand_objects import ExpandObjects, ExpandThermostat, ExpandZone, ExpandSystem, ExpandPlantLoop, \
+    ExpandPlantEquipment
 from custom_exceptions import InvalidTemplateException, InvalidEpJSONException
 
 
@@ -102,7 +102,7 @@ class HVACTemplate(EPJSON):
                     unique_name_override=False)
         return
 
-    def _expand_templates(self, templates, expand_class):
+    def _expand_templates(self, templates, expand_class, **kwargs):
         """
         Run Expand operations on multiple templates
         :param templates: dictionary of HVACTemplate:.* objects
@@ -114,7 +114,7 @@ class HVACTemplate(EPJSON):
         for template in templates:
             (_, template_structure), = template.items()
             (template_name, _), = template_structure.items()
-            expanded_template = expand_class(template).run()
+            expanded_template = expand_class(template=template, **kwargs).run()
             expanded_template_dictionary[template_name] = expanded_template
         return expanded_template_dictionary
 
@@ -307,10 +307,11 @@ class HVACTemplate(EPJSON):
         )
         return resolved_path_dictionary
 
-    def _create_loop_from_plant_equipment(self, plant_equipment_class_object, plant_loop_class_objects):
+    def _create_loop_template_from_plant_equipment(self, plant_equipment_class_object, plant_loop_class_objects):
         """
         Create plant loop templates from ExpandPlantEquipment object attributes.  These outputs will be used as inputs
-        to the intialize a new ExpandPlantLoop class.
+        to the initialize a new ExpandPlantLoop class.  This process must be performed because ExpandPlantLoop must be
+        run before ExpandPlantEquipment.  However, certain equipment inputs can cause for new loops to be created.
 
         :param plant_equipment_class_object: ExpandPlantEquipment object
         :param plant_loop_class_objects: ExpandPlantLoop objects
@@ -324,13 +325,27 @@ class HVACTemplate(EPJSON):
         if getattr(plant_equipment_class_object, 'template_type', None).lower() == 'hvactemplate:plant:chiller' \
                 and getattr(plant_equipment_class_object, 'condenser_type', None).lower() == 'watercooled' \
                 and 'hvactemplate:plant:condenserwaterloop' not in plant_loops:
+            # try to get the chilled water loop attributes to transition to condneser water
+            chw_loop = [
+                pl for pl
+                in plant_loop_class_objects.values()
+                if getattr(pl, 'template_type').lower() == 'hvactemplate:plant:chilledwaterloop']
+            cndw_attributes = {}
+            if chw_loop:
+                for cndw_attribute, chw_attribute in zip(
+                        ['condenser_water_pump_rated_head'],
+                        ['primary_chilled_water_pump_rated_head']):
+                    try:
+                        cndw_attributes[cndw_attribute] = getattr(chw_loop[0], chw_attribute)
+                    except AttributeError:
+                        self.logger.info('Chilled water attribute {} not set by user, using default for '
+                                         'condenser water'.format(chw_attribute))
+            cndw_attributes['template_plant_loop_type'] = 'CondenserWaterLoop'
             self.merge_epjson(
                 super_dictionary=plant_loop_dictionary,
                 object_dictionary={
                     'HVACTemplate:Plant:CondenserWaterLoop': {
-                        'Condenser Water Loop': {
-                            'template_plant_loop_type': 'CondenserWaterLoop'
-                        }
+                        'Condenser Water Loop': cndw_attributes
                     }
                 })
             # append plant loop to list to prevent another one being added.
@@ -379,9 +394,39 @@ class HVACTemplate(EPJSON):
             templates=self.templates_plant_loops,
             expand_class=ExpandPlantLoop)
         self.logger.info('##### Processing Plant Equipment #####')
+        self.expanded_plant_equipment = self._expand_templates(
+            templates=self.templates_plant_equipment,
+            expand_class=ExpandPlantEquipment,
+            plant_loop_class_objects=self.expanded_plant_loops)
+        # Pass through expanded plant equipment objects to create additional plant loops if necessary
+        for epl_name, epl in self.expanded_plant_equipment.items():
+            plant_loop_template = self._create_loop_template_from_plant_equipment(
+                plant_equipment_class_object=epl,
+                plant_loop_class_objects=self.expanded_plant_loops)
+            # If a plant loop was created, reprocess it here.
+            if plant_loop_template:
+                # add new plant loop to the templates
+                for tmpl in [self.templates, self.templates_plant_loops]:
+                    self.merge_epjson(
+                        super_dictionary=tmpl,
+                        object_dictionary=plant_loop_template
+                    )
+                # Expand new plant loop and add to the class objects
+                additional_plant_loops = self._expand_templates(
+                    templates=plant_loop_template,
+                    expand_class=ExpandPlantLoop
+                )
+                try:
+                    for expanded_name, expanded_object in additional_plant_loops.items():
+                        if expanded_name not in self.expanded_plant_loops.keys():
+                            self.expanded_plant_loops[expanded_name] = expanded_object
+                except (AttributeError, ValueError):
+                    InvalidTemplateException('A Plant loop was specified to be created from a plant equipment object '
+                                             '{}, but the process failed to attach the create objects'
+                                             .format(epl_name))
         self.logger.info('##### Building Plant-Plant Equipment Connections #####')
-        # todo_eo: ExpandPlantEquipment class has plant_loop_type attribute which is a priority list of loops to
-        #  attach the equipment.  Use that for the connections.
+        # todo_eo: ExpandPlantEquipment class has template_plant_loop_type attribute which indicates which loop to
+        #  attache to.  Use that for the connections.
         self.logger.info('##### Building Plant-Demand equipment Connections #####')
         # get water loop branches from class objects
         self.logger.info('##### Creating epJSON #####')
