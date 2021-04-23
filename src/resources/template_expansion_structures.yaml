@@ -9,7 +9,7 @@ GlobalNames:
       '{} Availability Managers'
     BranchList: &BranchList
       '{} Branches'
-    ReturnOutlet: &ReturnAirOutlet
+    ReturnAirOutlet: &ReturnAirOutlet
       '{} Return Air Outlet'
     SupplyPathInlet: &SystemSupplyPathInletName
       '{} Supply Path Inlet'
@@ -17,6 +17,9 @@ GlobalNames:
       '{} Mixed Air Nodes'
     WaterControllers: &AirLoopHVACWaterControllers
       '{} Controllers'
+  Zone:
+    ReturnOutlet: &ReturnOutlet
+      '{} Return Outlet'
 
 CommonObjects:
   Connectors:
@@ -385,7 +388,7 @@ Objects:
           zone_conditioning_equipment_list_name:
             ZoneHVAC:EquipmentList: key
           zone_air_node_name: '{} Zone Air Node'
-          zone_return_air_node_or_nodelist_name: *ReturnAirOutlet
+          zone_return_air_node_or_nodelist_name: *ReturnOutlet
 
 AutoCreated:
   System:

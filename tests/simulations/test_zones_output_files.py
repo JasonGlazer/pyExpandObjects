@@ -93,7 +93,7 @@ class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
             super_dictionary=test_epjson,
             object_dictionary=dict(**mock_zone_template, **mock_thermostat_template))
         prepared_file_path = self.write_file_for_testing(
-            epjson=original_formatted_epjson,
+            epjson=test_epjson,
             sub_directory=sub_directory,
             file_name='HVACTemplate-5ZoneVAVWaterCooledZoneTestPrepared.epJSON')
         # test the file prepped with new templates
@@ -101,9 +101,7 @@ class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
         output = main(
             Namespace(
                 file=prepared_file_path,
-                output_directory=output_directory
-            )
-        )
+                output_directory=output_directory))
         file_run_list.append(output_directory.joinpath(output['output_files']['expanded']))
         # check outputs
         status_checks = self.perform_comparison(file_run_list)

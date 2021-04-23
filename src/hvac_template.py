@@ -180,7 +180,7 @@ class HVACTemplate(EPJSON):
             return dict(control_schedule, **zonecontrol_thermostat)
         except (ValueError, AttributeError, KeyError):
             raise InvalidTemplateException("HVACTemplate failed to build ZoneControl:Thermostat from zone template "
-                                           "{}".format(zone_class_object.unique_name))
+                                           "{}".format(zone_class_object.unique_name))  # pragma: no cover - catchall
 
     @staticmethod
     def _get_zone_template_field_from_system_type(template_type):
@@ -352,6 +352,44 @@ class HVACTemplate(EPJSON):
             plant_loops.append('hvactemplate:plant:condenserwaterloop')
         return plant_loop_dictionary
 
+    def _create_additional_plant_loops_from_equipment(
+            self,
+            plant_equipment_class_objects,
+            plant_loop_class_objects):
+        """
+        Create additional HVACTemplate:Plant:.*Loops based on HVACTemplate:Plant:(Chiller|Tower|Boiler) inputs
+
+        :param plant_equipment_class_objects: ExpandPlantEquipment objects
+        :param plant_loop_class_objects: ExpandPlantLoop objects
+        :return: Additional plant loop templates and objects added to the class attributes
+        """
+        for epl_name, epl in plant_equipment_class_objects.items():
+            plant_loop_template = self._create_loop_template_from_plant_equipment(
+                plant_equipment_class_object=epl,
+                plant_loop_class_objects=plant_loop_class_objects)
+            # If a plant loop was created, reprocess it here.
+            if plant_loop_template:
+                # add new plant loop to the templates
+                for tmpl in [self.templates, self.templates_plant_loops]:
+                    self.merge_epjson(
+                        super_dictionary=tmpl,
+                        object_dictionary=plant_loop_template
+                    )
+                # Expand new plant loop and add to the class objects
+                additional_plant_loops = self._expand_templates(
+                    templates=plant_loop_template,
+                    expand_class=ExpandPlantLoop
+                )
+                try:
+                    for expanded_name, expanded_object in additional_plant_loops.items():
+                        if expanded_name not in plant_loop_class_objects.keys():
+                            plant_loop_class_objects[expanded_name] = expanded_object
+                except (AttributeError, ValueError):
+                    InvalidTemplateException('A Plant loop was specified to be created from a plant equipment object '
+                                             '{}, but the process failed to attach the create objects'
+                                             .format(epl_name))
+        return
+
     def run(self, input_epjson=None):
         """
         Execute HVAC Template process workflow
@@ -399,34 +437,14 @@ class HVACTemplate(EPJSON):
             expand_class=ExpandPlantEquipment,
             plant_loop_class_objects=self.expanded_plant_loops)
         # Pass through expanded plant equipment objects to create additional plant loops if necessary
-        for epl_name, epl in self.expanded_plant_equipment.items():
-            plant_loop_template = self._create_loop_template_from_plant_equipment(
-                plant_equipment_class_object=epl,
-                plant_loop_class_objects=self.expanded_plant_loops)
-            # If a plant loop was created, reprocess it here.
-            if plant_loop_template:
-                # add new plant loop to the templates
-                for tmpl in [self.templates, self.templates_plant_loops]:
-                    self.merge_epjson(
-                        super_dictionary=tmpl,
-                        object_dictionary=plant_loop_template
-                    )
-                # Expand new plant loop and add to the class objects
-                additional_plant_loops = self._expand_templates(
-                    templates=plant_loop_template,
-                    expand_class=ExpandPlantLoop
-                )
-                try:
-                    for expanded_name, expanded_object in additional_plant_loops.items():
-                        if expanded_name not in self.expanded_plant_loops.keys():
-                            self.expanded_plant_loops[expanded_name] = expanded_object
-                except (AttributeError, ValueError):
-                    InvalidTemplateException('A Plant loop was specified to be created from a plant equipment object '
-                                             '{}, but the process failed to attach the create objects'
-                                             .format(epl_name))
+        self._create_additional_plant_loops_from_equipment(
+            plant_equipment_class_objects=self.expanded_plant_equipment,
+            plant_loop_class_objects=self.expanded_plant_loops
+        )
         self.logger.info('##### Building Plant-Plant Equipment Connections #####')
+
         # todo_eo: ExpandPlantEquipment class has template_plant_loop_type attribute which indicates which loop to
-        #  attache to.  Use that for the connections.
+        #  attach to.  Use that for the connections.
         self.logger.info('##### Building Plant-Demand equipment Connections #####')
         # get water loop branches from class objects
         self.logger.info('##### Creating epJSON #####')

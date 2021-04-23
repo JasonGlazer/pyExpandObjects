@@ -49,7 +49,7 @@ def main(args=None):
     elif isinstance(args.file, pathlib.PosixPath):
         file_suffix_check = args.file.suffix == '.epJSON'
     else:
-        raise InvalidInputException('Invalid input file reference')
+        raise InvalidInputException('Invalid input file reference')  # pragma: no cover - unlikely to be hit
     if file_suffix_check:
         if os.path.exists(args.file):
             hvt.logger.info('Proceessing %s', args.file)
@@ -74,7 +74,7 @@ def main(args=None):
             base_file_name = input_file_name.replace('.epJSON', '_base.epJSON')
             # check that file names are not the same as the original
             if input_file_name in [expanded_file_name, hvac_templates_file_name, base_file_name]:
-                raise InvalidInputException('file could not be renamed')
+                raise InvalidInputException('file could not be renamed')  # pragma: no cover - unlikely to be hit
             # write output and keep list of written files
             output_file_dictionary = {}
             if output.get('epJSON'):
