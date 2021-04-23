@@ -18,7 +18,7 @@ class ExpansionStructureLocation:
     Verify expansion structure file location or object
     """
     def __get__(self, obj, owner):
-        return self.expansion_structure
+        return obj._expansion_structure
 
     def __set__(self, obj, value):
         if isinstance(value, dict):
@@ -50,7 +50,7 @@ class ExpansionStructureLocation:
         else:
             raise PyExpandObjectsTypeError(
                 'Template expansion structure reference is not a file path or dictionary: {}'.format(value))
-        self.expansion_structure = parsed_value
+        obj._expansion_structure = parsed_value
         return
 
 
@@ -62,7 +62,8 @@ class VerifyTemplate:
         super().__init__()
 
     def __get__(self, obj, owner):
-        return self.template
+        template = obj._template
+        return template
 
     def __set__(self, obj, value):
         if value:
@@ -78,12 +79,12 @@ class VerifyTemplate:
                 if not isinstance(object_structure, dict):
                     raise InvalidTemplateException(
                         'An invalid object {} was passed as an {} object'.format(value, getattr(self, 'template_type')))
-                self.template = template_structure
+                obj._template = template_structure
             except (ValueError, AttributeError):
                 raise InvalidTemplateException(
                     'An invalid object {} failed verification'.format(value))
         else:
-            self.template = None
+            obj._template = None
         return
 
 
@@ -122,7 +123,19 @@ class ExpandObjects(EPJSON):
             self.template_name = template_name
             # apply template name and fields as class attributes
             for template_field in template_structure.keys():
-                setattr(self, template_field, template_structure[template_field])
+                # If the value can be a numeric, then format it, otherwise save as a string.
+                template_string_value = str(template_structure[template_field])
+                num_rgx = re.match(r'^[-\d\.]+$', template_string_value)
+                if num_rgx:
+                    try:
+                        if '.' in template_string_value:
+                            setattr(self, template_field, float(template_structure[template_field]))
+                        else:
+                            setattr(self, template_field, int(template_structure[template_field]))
+                    except ValueError:
+                        setattr(self, template_field, template_structure[template_field])
+                else:
+                    setattr(self, template_field, template_structure[template_field])
         else:
             self.template_type = None
             self.template_name = None
@@ -157,7 +170,9 @@ class ExpandObjects(EPJSON):
             structure_hierarchy: list,
             structure=None) -> dict:
         """
-        Retrieve structure from YAML loaded object
+        Retrieve structure from YAML loaded object.  When retrieving TemplateObjects, the last item in the hierarchy
+        will be matched via regex instead of a direct key call for TemplateObjects.  This is done to allow for
+        multiple template options in a single mapping.
 
         :param structure_hierarchy: list representing structure hierarchy
         :param structure: YAML loaded dictionary, default is loaded yaml loaded object
@@ -167,8 +182,16 @@ class ExpandObjects(EPJSON):
             structure = copy.deepcopy(structure or self.expansion_structure)
             if not isinstance(structure_hierarchy, list):
                 raise PyExpandObjectsTypeError("Input must be a list of structure keys: {}".format(structure_hierarchy))
-            for key in structure_hierarchy:
-                structure = structure[key]
+            # iterate over structure hierarchy list. For each item, call the key to the YAML object.  When looking up
+            #   TemplateObjects, For the last item get the YAML object's keys and try a regex match.
+            for idx, key in enumerate(structure_hierarchy):
+                if structure_hierarchy[0] != 'TemplateObjects' or not idx == len(structure_hierarchy) - 1:
+                    structure = structure[key]
+                else:
+                    structure_key_list = list(structure.keys())
+                    for skl in structure_key_list:
+                        if re.match(skl, key):
+                            structure = structure[skl]
         except KeyError:
             raise PyExpandObjectsTypeError('YAML structure does not exist for hierarchy: {}'.format(
                 structure_hierarchy))
@@ -229,17 +252,20 @@ class ExpandObjects(EPJSON):
         if 'TemplateObjects' in options and option_tree['TemplateObjects']:
             try:
                 for template_field, template_tree in option_tree['TemplateObjects'].items():
-                    (field_option, objects), = template_tree.items()
-                    # check if field option is 'None' and if object doesn't exist in the class, or if the fields match
-                    if (field_option == 'None' and not hasattr(self, template_field)) or \
-                            re.match(field_option, getattr(self, template_field)):
-                        option_tree_leaf = self._get_option_tree_leaf(
-                            option_tree=option_tree,
-                            leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])
-                        object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
-                        self.merge_epjson(
-                            super_dictionary=option_tree_dictionary,
-                            object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
+                    for field_option, objects in template_tree.items():
+                        # check if field option is 'None' and if object doesn't exist in the class, or if
+                        #   the fields match
+                        if (field_option == 'None' and not hasattr(self, template_field)) or \
+                                re.match(field_option, getattr(self, template_field)):
+                            option_tree_leaf = self._get_option_tree_leaf(
+                                option_tree=option_tree,
+                                leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])
+                            object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
+                            self.merge_epjson(
+                                super_dictionary=option_tree_dictionary,
+                                object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
+                            # Only one field option should be applied, so break after it is successful
+                            break
             except (AttributeError, KeyError):
                 raise PyExpandObjectsYamlStructureException('TemplateObjects section for system type {} is invalid in '
                                                             'yaml file.'.format(self.template_type))
@@ -257,18 +283,22 @@ class ExpandObjects(EPJSON):
         :return: Formatted dictionary with objects and alternative options to be applied.
         """
         option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
-        transitions = option_leaf.pop('Transitions', None)
-        mappings = option_leaf.pop('Mappings', None)
-        # flatten object list in case it was nested due to yaml formatting
-        try:
-            objects = self._flatten_list(option_leaf['Objects'])
-        except KeyError:
-            raise PyExpandObjectsTypeError("Invalid or missing Objects location: {}".format(option_tree))
-        return {
-            'Objects': objects,
-            'Transitions': transitions,
-            'Mappings': mappings
-        }
+        if option_leaf:
+            transitions = option_leaf.pop('Transitions', None)
+            mappings = option_leaf.pop('Mappings', None)
+            # flatten object list in case it was nested due to yaml formatting
+            try:
+                objects = self._flatten_list(option_leaf['Objects'])
+            except KeyError:
+                raise PyExpandObjectsTypeError("Invalid or missing Objects location: {}".format(option_tree))
+            return {
+                'Objects': objects,
+                'Transitions': transitions,
+                'Mappings': mappings
+            }
+        else:
+            # If no objects found, return blank dictionary
+            return {}
 
     def _apply_transitions(
             self,
@@ -277,13 +307,21 @@ class ExpandObjects(EPJSON):
         Set object field values in an OptionTree leaf, which consist of a 'Objects', 'Transitions', and 'Mappings' keys
         using a supplied Transitions dictionary.
 
-        Transitions translates template input values to fields in Objects
+        Transitions translates template input values to fields in Objects.  A more direct method of transitioning
+        template inputs to object values can be done using field name formatting (e.g. field_name: {template_field})
+        in the yaml file.  This method of application is used to override default values if template
+        inputs are provided.
+
         Mappings maps values from templates to objects.  This is necessary when the template input is not a direct
         transition to an object value.
 
         :param option_tree_leaf: YAML loaded option tree end node with three keys: objects, transitions, mappings
         :return: list of dictionary objects with transitions and mappings applied
         """
+        # if a dictionary without an objects key is provided, then return a blank dictionary because no transitions
+        #   or mappings will be performed either.
+        if not option_tree_leaf.get('Objects'):
+            return {}
         option_tree_transitions = option_tree_leaf.pop('Transitions', None)
         option_tree_mappings = option_tree_leaf.pop('Mappings', None)
         # for each transition instruction, iterate over the objects and apply if the object_type matches the reference
@@ -376,7 +414,7 @@ class ExpandObjects(EPJSON):
             try:
                 (transitioned_object_type, transitioned_object_structure), = copy.deepcopy(transitioned_object).items()
                 # get the dictionary nested in 'Fields' for super objects
-                if {"Connectors", "Fields"} == set(transitioned_object_structure.keys()):
+                if transitioned_object_structure.get('Fields'):
                     object_name = transitioned_object_structure['Fields'].pop('name').format(self.unique_name)
                     transitioned_object_structure = transitioned_object_structure['Fields']
                 else:
@@ -472,11 +510,11 @@ class ExpandObjects(EPJSON):
                 if always_val_rgx:
                     always_val = always_val_rgx.group(1)
                     self.build_compact_schedule(
-                        structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                        structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                         insert_values=[always_val, ]
                     )
                 # Try to convert formatted value to correct type
-                num_rgx = re.match(r'^[\d\.]+$', formatted_value)
+                num_rgx = re.match(r'^[-\d\.]+$', formatted_value)
                 if num_rgx:
                     if '.' in formatted_value:
                         formatted_value = float(formatted_value)
@@ -909,7 +947,7 @@ class ExpandThermostat(ExpandObjects):
             if not getattr(self, '{}_setpoint_schedule_name'.format(thermostat_type), None) \
                     and getattr(self, 'constant_{}_setpoint'.format(thermostat_type), None):
                 thermostat_schedule = self.build_compact_schedule(
-                    structure_hierarchy=['Schedule', 'Compact', 'ALWAYS_VAL'],
+                    structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=getattr(self, 'constant_{}_setpoint'.format(thermostat_type)),
                 )
                 (thermostat_schedule_type, thermostat_schedule_structure), = thermostat_schedule.items()
@@ -962,7 +1000,7 @@ class ExpandThermostat(ExpandObjects):
     def run(self):
         """
         Perform all template expansion operations and return the class to the parent calling function.
-        :return: ExpandThermostat class with necessary attributes filled for output
+        :return: Class object with epJSON dictionary as class attribute
         """
         self._create_and_set_schedules()
         self._create_thermostat_setpoints()
@@ -987,7 +1025,7 @@ class ExpandZone(ExpandObjects):
     def run(self):
         """
         Process zone template
-        :return: ExpandZone class
+        :return: Class object with epJSON dictionary as class attribute
         """
         self._create_objects()
         return self
@@ -1021,7 +1059,7 @@ class ExpandSystem(ExpandObjects):
             controller_objects = epjson.get(controller_type)
             if controller_objects:
                 airloop_hvac_controllerlist_object = \
-                    self.get_structure(structure_hierarchy=['AirLoopHVAC', 'ControllerList',
+                    self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'ControllerList',
                                                             controller_type.split(':')[1], 'Base'])
                 object_count = 1
                 try:
@@ -1063,7 +1101,7 @@ class ExpandSystem(ExpandObjects):
         stop_loop = False
         object_count = 1
         oa_equipment_list_dictionary = self.get_structure(
-            structure_hierarchy=['AirLoopHVAC', 'OutdoorAirSystem', 'EquipmentList', 'Base'])
+            structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'OutdoorAirSystem', 'EquipmentList', 'Base'])
         # iterate over build path returning every object up to the OutdoorAir:Mixer
         for super_object in build_path:
             for super_object_type, super_object_constructor in super_object.items():
@@ -1099,7 +1137,7 @@ class ExpandSystem(ExpandObjects):
         availability_managers = {i: j for i, j in epjson.items() if re.match(r'^AvailabilityManager:.*', i)}
         # loop over availability managers and add them to the list.
         availability_manager_list_object = \
-            self.get_structure(structure_hierarchy=['AvailabilityManagerAssignmentList', 'Base'])
+            self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AvailabilityManagerAssignmentList', 'Base'])
         try:
             for object_type, object_structure in availability_managers.items():
                 for object_name, object_fields in object_structure.items():
@@ -1156,7 +1194,7 @@ class ExpandSystem(ExpandObjects):
             raise PyExpandObjectsException('Only one AvailabilityManagerAssignmentList object is allowed in '
                                            '{} template build process'.format(self.unique_name))
         outdoor_air_system_yaml_object = \
-            self.get_structure(structure_hierarchy=['AirLoopHVAC', 'OutdoorAirSystem', 'Base'])
+            self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'OutdoorAirSystem', 'Base'])
         outdoor_air_system_yaml_object['availability_manager_list_name'] = availability_manager_name
         outdoor_air_system_yaml_object['controller_list_name'] = oa_controller_list_name
         outdoor_air_system_yaml_object['outdoor_air_equipment_list_name'] = oa_system_equipment_name
@@ -1270,12 +1308,12 @@ class ExpandSystem(ExpandObjects):
                 raise PyExpandObjectsYamlStructureException("Field/Connector mismatch or name not in Fields. "
                                                             "Object: {}, connectors: {}"
                                                             .format(super_object_structure, connectors))
-        branch_fields = self.get_structure(structure_hierarchy=['Branch', 'Base'])
+        branch_fields = self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'Branch', 'Base'])
         branch_fields['components'] = components
         branch = {
             "Branch": branch_fields
         }
-        branchlist_fields = self.get_structure(structure_hierarchy=['BranchList', 'Base'])
+        branchlist_fields = self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'BranchList', 'Base'])
         branchlist = {
             "BranchList": branchlist_fields
         }
@@ -1288,7 +1326,7 @@ class ExpandSystem(ExpandObjects):
     def run(self):
         """
         Process system template
-        :return: epJSON dictionary as class attribute
+        :return: class object with epJSON dictionary as class attribute
         """
         self._create_objects()
         self._create_outdoor_air_equipment_list_from_build_path()
@@ -1299,25 +1337,6 @@ class ExpandSystem(ExpandObjects):
         return self
 
 
-class ExpandPlantEquipment(ExpandObjects):
-    """
-    Plant Equipment operations
-    """
-    def __init__(self, template):
-        super().__init__(template=template)
-        self.unique_name = self.template_name
-        self.build_path = None
-        return
-
-    def run(self):
-        """
-        Process plant loop template
-        :return: epJSON dictionary as class attribute
-        """
-        self._create_objects()
-        return
-
-
 class ExpandPlantLoop(ExpandObjects):
     """
     Plant loop expansion operations
@@ -1325,14 +1344,97 @@ class ExpandPlantLoop(ExpandObjects):
     def __init__(self, template):
         super().__init__(template=template)
         self.unique_name = self.template_name
-        self.build_path = None
         return
 
     def run(self):
         """
         Process plant loop template
-        :return: epJSON dictionary as class attribute
+        :return: class object with epJSON dictionary as class attribute
         """
-        # self._add_condenser_water_template()
         self._create_objects()
+        return self
+
+
+class RetrievePlantEquipmentLoop:
+    """
+    Get and set the a priority list of plant loops for the equipment to serve.
+    """
+    def __get__(self, obj, owner):
+        return obj._template_plant_loop_type
+
+    def __set__(self, obj, value):
+        """
+        Set priority list of plant loops to attach the equipment.  Apply defaults if no input is given.
+        """
+        # set value and check at the end for error output
+        obj._template_plant_loop_type = None
+        # create hash of object references and default loop types
+        default_loops = {
+            '^HVACTemplate:Plant:Tower.*': ['ChilledWaterLoop', 'MixedWaterLoop'],
+            '^HVACTemplate:Plant:Chiller.*': ['ChilledWaterLoop', ],
+            '^HVACTemplate:Plant:Boiler.*': ['HotWaterLoop', 'MixedWaterLoop'],
+        }
+        # If a string is passed, then use it as the entry
+        if isinstance(value, str):
+            obj._template_plant_loop_type = value if value.endswith('Loop') else ''.join([value, 'Loop'])
+        else:
+            # extract the template plant loop type
+            # try/except not needed here because the template has already been validated from super class init
+            (_, template_structure), = value['template'].items()
+            (_, template_fields), = template_structure.items()
+            template_plant_loop_type_list = []
+            if template_fields.get('template_plant_loop_type'):
+                template_plant_loop_type_list = [''.join([template_fields['template_plant_loop_type'], 'Loop']), ]
+            else:
+                # if loop reference was not made, set default based on template type
+                (template_type, _), = value['template'].items()
+                for object_reference, default_list in default_loops.items():
+                    default_rgx = re.match(object_reference, template_type)
+                    if default_rgx:
+                        template_plant_loop_type_list = default_loops[object_reference]
+                        break
+            # Check the loop type priority list against the expanded loops and return the first match.
+            plant_loops = [i.template_type.split(":")[-1] for i in value.get('plant_loop_class_objects', {}).values()]
+            # Check that plant_loops has only unique entries and that it isn't empty
+            if not plant_loops or len(list(set(plant_loops))) != len(list(plant_loops)):
+                raise InvalidTemplateException("An invalid number of plant loops were created, either None or there"
+                                               " are duplicates present: {}".format(plant_loops))
+            for pl in template_plant_loop_type_list:
+                if pl in plant_loops:
+                    obj._template_plant_loop_type = pl
+                    break
+            # verify the field was set to a value
+            if not obj._template_plant_loop_type:
+                raise InvalidTemplateException("Plant equipment loop type did not have a corresponding loop to "
+                                               "reference.  Priority list {}, Plant loops {}"
+                                               .format(template_plant_loop_type_list, plant_loops))
         return
+
+
+class ExpandPlantEquipment(ExpandObjects):
+    """
+    Plant Equipment operations
+    """
+
+    template_plant_loop_type = RetrievePlantEquipmentLoop()
+
+    def __init__(self, template, plant_loop_class_objects=None):
+        """
+        Initialize class
+
+        :param template: HVACTemplate:Plant:(Chiller|Tower|Boiler) objects
+        :param plant_loop_class_objects: dictionary of ExpandPlantLoop objects
+        """
+        super().__init__(template=template)
+        self.unique_name = self.template_name
+        plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
+        self.template_plant_loop_type = {'template': template, **plant_loops}
+        return
+
+    def run(self):
+        """
+        Process plant loop template
+        :return: class object with epJSON dictionary as class attribute
+        """
+        self._create_objects()
+        return self

@@ -2,7 +2,7 @@ __version__ = "0.0"
 __author__ = "John Grando"
 
 # todo_eo: build yaml handling and verification for basic object structure, like compact_schedule
-# todo_eo: rewrite epJSON to use descriptors
+# todo_eo: rewrite epjson_handler to use descriptors
 # todo_eo: future - import pyExpandObjects.  Call function and then get back dictionary with valid epJSON to run
 # todo_eo: simulation - environ variables can be set to spit out just the variables, can be used for testing
 # todo_eo: should there be an option to make uncontrolled zones (no schedules or constant setpoints provided)

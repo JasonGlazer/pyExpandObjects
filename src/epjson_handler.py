@@ -107,6 +107,7 @@ class EPJSON(Logger):
             (.* removes all objects)
         :return: epJSON with items referenced in purge_dictionary removed.
         """
+        # todo_eo: edit this function to also return the popped items in a separate dictionary
         tmp_d = copy.deepcopy(epjson)
         if purge_dictionary:
             for object_type, object_structure in epjson.items():
@@ -121,9 +122,9 @@ class EPJSON(Logger):
                         for rgx_match in purge_dictionary[object_type]:
                             if re.match(rgx_match, object_name):
                                 tmp_d[object_type].pop(object_name)
-                            # if the object_type is now empty, delete it as well.
-                            if not tmp_d[object_type].keys():
-                                tmp_d.pop(object_type)
+                # if the object_type is now empty, delete it as well.
+                if not tmp_d[object_type].keys():
+                    tmp_d.pop(object_type)
         return tmp_d
 
     @staticmethod
@@ -233,6 +234,26 @@ class EPJSON(Logger):
             self._validate_schema(schema)
             self.logger.info('Schema loaded')
         return
+
+    def validate_epjson(self, epjson):
+        """
+        Validate json object as epJSON.  Return object if valid
+
+        :param epjson: epJSON object
+        :return: validated epJSON object
+        """
+        try:
+            file_validation = self.schema.is_valid(epjson)
+            if not file_validation:
+                # if the schema validation fails for the epJSON object, write out specific errors that occurred.
+                self.logger.error("epJSON object does not meet schema format")
+                for err in self.schema.iter_errors(epjson):
+                    self.logger.error(err.message)
+                raise PyExpandObjectsSchemaError("Schema Format is invalid")
+            else:
+                return epjson
+        except Exception as e:
+            raise PyExpandObjectsSchemaError("epJSON validation failed: {}".format(str(e)))
 
     def _validate_epjson(self, input_epjson):
         """

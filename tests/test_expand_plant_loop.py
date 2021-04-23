@@ -3,19 +3,7 @@ import unittest
 from src.expand_objects import ExpandPlantLoop
 from . import BaseTest
 
-mock_plant_equipment_template = {
-    "HVACTemplate:Plant:Chiller": {
-        "Main Chiller": {
-            "capacity": "Autosize",
-            "chiller_type": "ElectricReciprocatingChiller",
-            "condenser_type": "WaterCooled",
-            "nominal_cop": 3.2,
-            "priority": "1"
-        }
-    }
-}
-
-mock_plant_loop_template = {
+mock_chw_plant_loop_template = {
     "HVACTemplate:Plant:ChilledWaterLoop": {
         "Chilled Water Loop": {
             "chilled_water_design_setpoint": 7.22,
@@ -38,7 +26,7 @@ mock_plant_loop_template = {
 }
 
 
-class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
+class TestExpandPlantLoopObjects(BaseTest, unittest.TestCase):
     """
     General processing of ExpandPlantLoop operations
     """
@@ -48,14 +36,14 @@ class TestExpandPlantEquipmentObjects(BaseTest, unittest.TestCase):
     def teardown(self):
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:System:Input Template Required")
+    @BaseTest._test_logger(doc_text="HVACTemplate:PlantLoop:Input Template Required")
     def test_check_templates_are_required(self):
         with self.assertRaises(TypeError):
             ExpandPlantLoop()
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:System:Verify valid template object")
+    @BaseTest._test_logger(doc_text="HVACTemplate:PlantLoop:Verify valid template object")
     def test_verify_good_template(self):
-        output = ExpandPlantLoop(template=mock_plant_loop_template)
+        output = ExpandPlantLoop(template=mock_chw_plant_loop_template)
         self.assertEqual('Chilled Water Loop', output.template_name)
         return

@@ -1,5 +1,7 @@
-# Global names used to connect objects
 GlobalNames:
+  Plant:
+    SupplySetpointNodes: &SupplySetpointNodes
+      '{} Supply Setpoint Nodes'
   System:
     AirLoopInlet: &AirLoopInlet
       '{} Air Loop Inlet'
@@ -7,390 +9,654 @@ GlobalNames:
       '{} Availability Managers'
     BranchList: &BranchList
       '{} Branches'
-    ReturnOutlet: &ReturnAirOutlet
+    ReturnAirOutlet: &ReturnAirOutlet
       '{} Return Air Outlet'
     SupplyPathInlet: &SystemSupplyPathInletName
       '{} Supply Path Inlet'
     MixedAirNodelistName: &SystemMixedAirNodelistName
       '{} Mixed Air Nodes'
-
-# Reused objects
-Connectors: &Connectors
-  AirLoop: &ConnectorsAirLoop
-    Inlet: air_inlet_node_name
-    Outlet: air_outlet_node_name
-  WaterLoop: &ConnectorsWaterLoop
-    Inlet: water_inlet_node_name
-    Outlet: water_outlet_node_name
-
-# Schedule Objects
-Schedule:
-  Compact:
-    ALWAYS_VAL: &ScheduleCompactAlwaysVal
-      name: 'HVACTemplate-Always{}'
-      schedule_type_limits_name: Any Number
-      data:
-        - field: Through 12/31
-        - field: For AllDays
-        - field: Until 24:00
-        - field: '{:.1f}'
-
-# Base objects
-Coil:
-  Cooling:
-    Fields: &CoilCoolingFields
-      name: '{} Cooling Coil'
-      air_inlet_node_name: '{} Cooling Coil Inlet'
-      air_outlet_node_name: '{} Cooling Coil Outlet'
-    Water:
-      Fields: &CoilCoolingWaterFields
-        <<: *CoilCoolingFields
-        design_air_flow_rate: Autosize
-        design_inlet_air_humidity_ratio: Autosize
-        design_inlet_air_temperature: Autosize
-        design_inlet_water_temperature: Autosize
-        design_outlet_air_humidity_ratio: Autosize
-        design_outlet_air_temperature: Autosize
-        design_water_flow_rate: Autosize
-        heat_exchanger_configuration: CrossFlow
-        type_of_analysis: DetailedAnalysis
-        water_inlet_node_name: '{} Cooling Coil Chw Inlet'
-        water_outlet_node_name: '{} Cooling Coil Chw Outlet'
-      Connectors: &CoilCoolingWaterConnectors
-        AirLoop: *ConnectorsAirLoop
-        ChilledWaterLoop: *ConnectorsWaterLoop
-      DetailedGeometry:
-        Fields:
-          << : *CoilCoolingWaterFields
-        Connectors:
-          << : *CoilCoolingWaterConnectors
-  Heating:
-    Fields: &CoilHeatingFields
-      name: '{} Heating Coil'
-      air_inlet_node_name: '{} Heating Coil Inlet'
-      air_outlet_node_name: '{} Heating Coil Outlet'
-    Connectors: &CoilHeatingConnectors
-      AirLoop: *ConnectorsAirLoop
-    Water:
-      Fields: &CoilHeatingWaterFields
-        << : *CoilHeatingFields
-        water_inlet_node_name: '{} Heating Coil Hw Inlet'
-        water_outlet_node_name: '{} Heating Coil Hw Outlet'
-        rated_inlet_air_temperature: 16.6 # todo_eo error messages without these fields
-        rated_inlet_water_temperature: 82.2
-        rated_outlet_air_temperature: 32.2
-        rated_outlet_water_temperature: 71.1
-        rated_ratio_for_air_and_water_convection: 0.5
-        u_factor_times_area_value: Autosize
-        performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
-        rated_capacity: Autosize
-        maximum_water_flow_rate: Autosize
-      Connectors: &CoilHeatingWaterConnectors
-        AirLoop: *ConnectorsAirLoop
-        HotWaterLoop: *ConnectorsWaterLoop
-
-Fan:
-  Fields: &FanFields
-    motor_efficiency: 0.9
-    motor_in_airstream_fraction: '{supply_fan_motor_in_air_stream_fraction}'
-    maximum_flow_rate: Autosize
-  Connectors: &FanConnectors
-    AirLoop: *ConnectorsAirLoop
-  VariableVolume:
-    Base:
-      Fields: &FanVariableVolumeFields
-        name: '{} Supply Fan'
-        << : *FanFields
-        air_inlet_node_name: '{} Supply Fan Inlet'
-        air_outlet_node_name: '{} Supply Fan Outlet'
-        fan_power_minimum_flow_rate_input_method: 'Fraction'
-        fan_total_efficiency: 0.7
-      Connectors: &FanVariableVolumeConnectors
-        << : *FanConnectors
-
-OutdoorAir:
-  Mixer:
-    Fields: &OutdoorAirMixerFields
-      name: '{} OA Mixing Box'
-      mixed_air_node_name: '{} Mixed Air Outlet'
-      outdoor_air_stream_node_name: '{} Outside Air Inlet' #will be overridden
-      relief_air_stream_node_name: '{} Relief Air Outlet'
-      return_air_stream_node_name: *AirLoopInlet
-    Connectors: &OutdoorAirMixersConnectors
-      AirLoop:
-        Inlet: outdoor_air_stream_node_name
-        Outlet: mixed_air_node_name
-
-# Zone Equipment
-AirTerminal:
-  SingleDuct:
-    Fields: &AirTerminalSingleDuctFields
-      air_inlet_node_name: '{} Zone Equip Inlet'
-      air_outlet_node_name: '{} Supply Inlet'
-      constant_minimum_air_flow_fraction: '{constant_minimum_air_flow_fraction}'
-      maximum_air_flow_rate: Autosize
-    VAV:
-      Base:
-        - AirTerminal:SingleDuct:VAV:Reheat: &AirTerminalSingleDuctVAVReheat
-            name: '{} VAV Reheat'
-            <<: *AirTerminalSingleDuctFields
-            damper_air_outlet_node_name: '{} Damper Outlet'
-            damper_heating_action: Reverse
-            reheat_coil_name: '{} Reheat Coil'
-      HotWaterReheat: &AirTerminalSingleDuctVAVHotWaterReheat
-        - AirTerminal:SingleDuct:VAV:Reheat:
-            <<: *AirTerminalSingleDuctVAVReheat
-            convergence_tolerance: 0.001
-            reheat_coil_object_type: Coil:Heating:Water
-            maximum_hot_water_or_steam_flow_rate: Autosize
-            minimum_hot_water_or_steam_flow_rate: 0
-        - Coil:Heating:Water:
-            <<: *CoilHeatingWaterFields
-            name: '{} Reheat Coil'
-            air_inlet_node_name: '{} Damper Outlet'
-            air_outlet_node_name: '{} Supply Inlet'
-        - Branch:
-            name: '{} Reheat Coil HW Branch'
-            components:
-              - component_object_type:
-                  Coil:Heating:Water: self
-                component_name:
-                  Coil:Heating:Water: key
-                component_inlet_node_name:
-                  Coil:Heating:Water: water_inlet_node_name
-                component_outlet_node_name:
-                  Coil:Heating:Water: water_outlet_node_name
-
-# System equipment
-AirLoopHVAC:
-  WaterControllers:
-    Base: &AirLoopHVACWaterControllers
+    WaterControllers: &AirLoopHVACWaterControllers
       '{} Controllers'
-  Base: &AirLoopHVAC
-    name: '{}'
-    availability_manager_list_name: *AvailabilityManagerAssignmentList
-    branch_list_name: *BranchList
-    controller_list_name: *AirLoopHVACWaterControllers
-    demand_side_inlet_node_names: *SystemSupplyPathInletName
-    demand_side_outlet_node_name: *ReturnAirOutlet
-    design_supply_air_flow_rate: Autosize
-    supply_side_inlet_node_name: *AirLoopInlet
-    supply_side_outlet_node_names:
-      BuildPathReference:
-        Location: -1
-        ValueLocation: Outlet
-  ControllerList:
-    WaterCoil:
-      Base:
-        name: *AirLoopHVACWaterControllers
-    OutdoorAir:
-      Base:
-        name: '{} OA Controllers'
-  OutdoorAirSystem:
-    Base:
-      name: '{} OA System'
-    EquipmentList:
-      Base:
-        name: '{} OA System Equipment'
-  ReturnPath:
-    Base:
-      name: '{} Return Path'
-      return_air_path_outlet_node_name:
-        ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): outlet_node_name
-      components:
-        - component_object_type:
-            ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): self
-          component_name:
-            ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): key
-  ReturnPlenum:
-    Base:
-      name: '{} Return Plenum'
-      outlet_node_name: *ReturnAirOutlet
-      zone_name: '{return_plenum_name}'
-      zone_node_name: '{return_plenum_name} Zone Air Node'
-  SupplyPath:
-    Base:
-      name: '{} Supply Path'
-      supply_air_path_inlet_node_name:
-        ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): inlet_node_name
-      components:
-        - component_object_type:
-            ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): self
-          component_name:
-            ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): key
-  SupplyPlenum:
-    Base:
-      name: '{} Supply Plenum'
-      inlet_node_name: *SystemSupplyPathInletName
-      zone_name: '{supply_plenum_name}'
-      zone_node_name: '{supply_plenum_name} Zone Air Node'
-  ZoneMixer:
-    Base:
-      name: '{} Zone Mixer'
-      outlet_node_name: *ReturnAirOutlet
-  ZoneSplitter:
-    Base:
-      name: '{} Zone Splitter'
-      inlet_node_name: *SystemSupplyPathInletName
+  Zone:
+    ReturnOutlet: &ReturnOutlet
+      '{} Return Outlet'
 
-AvailabilityManagerAssignmentList:
-  Base:
-    name: *AvailabilityManagerAssignmentList
+CommonObjects:
+  Connectors:
+    AirLoop: &ConnectorsAirLoop
+      Inlet: air_inlet_node_name
+      Outlet: air_outlet_node_name
+    General: &ConnectorsGeneralLoop
+      Inlet: inlet_node_name
+      Outler: outlet_node_name
+    WaterLoop: &ConnectorsWaterLoop
+      Inlet: water_inlet_node_name
+      Outlet: water_outlet_node_name
+  Schedule:
+    Compact:
+      ALWAYS_VAL:
+        name: 'HVACTemplate-Always{}'
+        schedule_type_limits_name: Any Number
+        data:
+          - field: Through 12/31
+          - field: For AllDays
+          - field: Until 24:00
+          - field: '{:.1f}'
 
-AvailabilityManager:
-  NightCycle:
-    Base: &AvailabilityManagerNightCycle
-      name: '{} Availability'
-      thermostat_tolerance: 0.2
-      cycling_run_time_control_type: FixedRunTime
-      cycling_run_time: 3600
-
-Branch:
-  Base:
-    name: '{} Main Branch'
-BranchList:
-  Base:
-    name: '{} Branches'
-    branches:
-      - branch_name: '{} Main Branch'
-
-Controller:
-  OutdoorAir:
-    Base: &ControllerOutdoorAir
-      name: '{} OA Controller'
-      actuator_node_name:
-        BuildPathReference:
-          Location: 0
-          ValueLocation: Inlet
-      economizer_control_action_type: ModulateFlow
-      maximum_outdoor_air_flow_rate: Autosize
-      minimum_limit_type: '{minimum_outdoor_air_control_type}'
-      minimum_outdoor_air_flow_rate: Autosize
-      minimum_outdoor_air_schedule_name: '{minimum_outdoor_air_schedule_name}'
-      mixed_air_node_name:
-        OutdoorAir:Mixer: mixed_air_node_name
-      relief_air_outlet_node_name:
-        OutdoorAir:M.*: relief_air_stream_node_name
-      return_air_node_name:
-        OutdoorAir:Mixer: return_air_stream_node_name
-  WaterCoil:
-    Base: &ControllerWaterCoil
-      name: '{} Coil Controller'
-      control_variable: Temperature
-      actuator_variable: Flow
-      maximum_actuated_flow: Autosize
-      minimum_actuated_flow: 0
-      controller_convergence_tolerance: Autosize
-      sensor_node_name:
-        ^Coil:(Cooling|Heating):Water.*: air_outlet_node_name
-      actuator_node_name:
-        ^Coil:(Cooling|Heating):Water.*: water_inlet_node_name
-
-DesignSpecification:
-  OutdoorAir:
-    Base: &DesignSpecificationOutdoorAir
-      name: '{} SZ DSOA'
-      outdoor_air_method: '{outdoor_air_method}'
-      outdoor_air_flow_per_person: '{outdoor_air_flow_rate_per_person}'
-      outdoor_air_flow_per_zone_floor_area: '{outdoor_air_flow_rate_per_zone_floor_area}'
-      outdoor_air_flow_per_zone: '{outdoor_air_flow_rate_per_zone}'
-  ZoneAirDistribution:
-    Base: &DesignSpecificationZoneAirDistribution
-      name: '{} SZ DSZAD'
-      zone_air_distribution_effectiveness_in_cooling_mode: 1
-      zone_air_distribution_effectiveness_in_heating_mode: 1
-
-SetpointManagers:
-  MixedAir:
-    Base: &SetpointManagerMixedAir
-      control_variable: Temperature
-      fan_inlet_node_name:
-        Fan:.*: air_inlet_node_name
-      fan_outlet_node_name:
-        Fan:.*: air_outlet_node_name
-    Cooling:
-      Base: &SetpointManagerMixedAirCooling
-        <<: *SetpointManagerMixedAir
-        name: '{} Cooling Coil Air Temp Manager'
-        reference_setpoint_node_name:
+Objects:
+  AirLoopHVAC:
+    Base:
+      Fields: &AirLoopHVAC
+        name: '{}'
+        availability_manager_list_name: *AvailabilityManagerAssignmentList
+        branch_list_name: *BranchList
+        controller_list_name: *AirLoopHVACWaterControllers
+        demand_side_inlet_node_names: *SystemSupplyPathInletName
+        demand_side_outlet_node_name: *ReturnAirOutlet
+        design_supply_air_flow_rate: Autosize
+        supply_side_inlet_node_name: *AirLoopInlet
+        supply_side_outlet_node_names:
           BuildPathReference:
             Location: -1
             ValueLocation: Outlet
-        setpoint_node_or_nodelist_name: *SystemMixedAirNodelistName
+  AvailabilityManager:
+    NightCycle:
+      Base:
+        Fields: &AvailabilityManagerNightCycle
+          name: '{} Availability'
+          thermostat_tolerance: 0.2
+          cycling_run_time_control_type: FixedRunTime
+          cycling_run_time: 3600
+          fan_schedule_name: 'HVACTemplate-Always1'
+  Boiler:
+    CommonObjects:
+      - Branch: &BoilerBranch
+          name: '{} Boiler Branch'
+          components:
+            - component_object_type:
+                Boiler.*: self
+              component_name:
+                Boiler.*: key
+              component_inlet_node_name:
+                Boiler.*: boiler_water_inlet_node_name
+              component_outlet_node_name:
+                Boiler.*: boiler_water_outlet_node_name
+    HotWater:
+      Base: &BoilerHotWaterSuperObject
+        Fields:
+          name: '{} Boiler'
+          boiler_water_inlet_node_name: '{} HW Inlet'
+          boiler_water_outlet_node_name: '{} HW Outlet'
+          boiler_flow_mode: ConstantFlow
+          fuel_type: '{fuel_type}'
+          nominal_thermal_efficiency: '{efficiency}'
+          nominal_capacity: '{capacity}'
+  Chiller:
+    Electric:
+      EIR:
+        Base: &ChillerElectricEIRSuperObject
+          Fields:
+            name: '{}'
+            chilled_water_inlet_node_name: '{} Chiller ChW Inlet'
+            chilled_water_outlet_node_name: '{} Chiller ChW Outlet'
+            condenser_inlet_node_name: '{} Chiller Cnd Inlet'
+            condenser_outlet_node_name: '{} Chiller Cnd Outlet'
+            chiller_flow_mode: ConstantFlow
+            condenser_type: '{condenser_type}'
+            cooling_capacity_function_of_temperature_curve_name: 'Chiller RecipCapFT'
+            electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name: 'Chiller RecipEIRFPLR'
+            electric_input_to_cooling_output_ratio_function_of_temperature_curve_name: 'Chiller RecipEIRFT'
+            reference_capacity: '{capacity}'
+            reference_cop: '{nominal_cop}'
+            reference_chilled_water_flow_rate: Autosize
+            reference_condenser_fluid_flow_rate: Autosize
+            sizing_factor: '{sizing_factor}'
+  Coil:
+    Cooling:
+      Fields: &CoilCoolingFields
+        name: '{} Cooling Coil'
+        air_inlet_node_name: '{} Cooling Coil Inlet'
+        air_outlet_node_name: '{} Cooling Coil Outlet'
+      Water:
+        Fields: &CoilCoolingWaterFields
+          <<: *CoilCoolingFields
+          design_air_flow_rate: Autosize
+          design_inlet_air_humidity_ratio: Autosize
+          design_inlet_air_temperature: Autosize
+          design_inlet_water_temperature: Autosize
+          design_outlet_air_humidity_ratio: Autosize
+          design_outlet_air_temperature: Autosize
+          design_water_flow_rate: Autosize
+          heat_exchanger_configuration: CrossFlow
+          type_of_analysis: DetailedAnalysis
+          water_inlet_node_name: '{} Cooling Coil Chw Inlet'
+          water_outlet_node_name: '{} Cooling Coil Chw Outlet'
+        Connectors: &CoilCoolingWaterConnectors
+          AirLoop: *ConnectorsAirLoop
+          ChilledWaterLoop: *ConnectorsWaterLoop
+        DetailedGeometry:
+          Fields:
+            << : *CoilCoolingWaterFields
+          Connectors:
+            << : *CoilCoolingWaterConnectors
     Heating:
-      Base: &SetpointManagerMixedAirHeating
-        <<: *SetpointManagerMixedAir
-        name: '{} Heating Coil Air Temp Manager'
-        control_variable: Temperature
-        reference_setpoint_node_name: *SystemSupplyPathInletName
-        setpoint_node_or_nodelist_name:
-          Coil:Heating:.*: air_outlet_node_name
-ZoneHVAC:
-  AirDistributionUnit:
-    Base: &ZoneHVACAirDistributionUnit
-      name: '{} ATU'
-  EquipmentList: &ZoneHVACEquipmentList
-    name: '{} Equipment'
-    load_distribution_scheme: SequentialLoad
-  EquipmentConnections:
-    Base: &ZoneHVACEquipmentConnections
-      name: '{} Equipment Connections'
-      zone_name: '{zone_name}'
-      zone_conditioning_equipment_list_name:
-        ZoneHVAC:EquipmentList: key
-      zone_air_node_name: '{} Zone Air Node'
-      zone_return_air_node_or_nodelist_name: *ReturnAirOutlet
+      Fields: &CoilHeatingFields
+        name: '{} Heating Coil'
+        air_inlet_node_name: '{} Heating Coil Inlet'
+        air_outlet_node_name: '{} Heating Coil Outlet'
+      Connectors:
+        AirLoop: *ConnectorsAirLoop
+      Water:
+        Fields: &CoilHeatingWaterFields
+          << : *CoilHeatingFields
+          water_inlet_node_name: '{} Heating Coil Hw Inlet'
+          water_outlet_node_name: '{} Heating Coil Hw Outlet'
+          rated_inlet_air_temperature: 16.6
+          rated_inlet_water_temperature: 82.2
+          rated_outlet_air_temperature: 32.2
+          rated_outlet_water_temperature: 71.1
+          rated_ratio_for_air_and_water_convection: 0.5
+          u_factor_times_area_value: Autosize
+          performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+          rated_capacity: Autosize
+          maximum_water_flow_rate: Autosize
+        Connectors: &CoilHeatingWaterConnectors
+          AirLoop: *ConnectorsAirLoop
+          HotWaterLoop: *ConnectorsWaterLoop
+  Controller:
+    OutdoorAir:
+      Base:
+        Fields: &ControllerOutdoorAir
+          name: '{} OA Controller'
+          actuator_node_name:
+            BuildPathReference:
+              Location: 0
+              ValueLocation: Inlet
+          economizer_control_action_type: ModulateFlow
+          maximum_outdoor_air_flow_rate: Autosize
+          minimum_limit_type: '{minimum_outdoor_air_control_type}'
+          minimum_outdoor_air_flow_rate: Autosize
+          minimum_outdoor_air_schedule_name: '{minimum_outdoor_air_schedule_name}'
+          mixed_air_node_name:
+            OutdoorAir:Mixer: mixed_air_node_name
+          relief_air_outlet_node_name:
+            OutdoorAir:M.*: relief_air_stream_node_name
+          return_air_node_name:
+            OutdoorAir:Mixer: return_air_stream_node_name
+    WaterCoil:
+      Base:
+        Fields: &ControllerWaterCoil
+          name: '{} Coil Controller'
+          control_variable: Temperature
+          actuator_variable: Flow
+          maximum_actuated_flow: Autosize
+          minimum_actuated_flow: 0
+          controller_convergence_tolerance: Autosize
+          sensor_node_name:
+            ^Coil:(Cooling|Heating):Water.*: air_outlet_node_name
+          actuator_node_name:
+            ^Coil:(Cooling|Heating):Water.*: water_inlet_node_name
+  DesignSpecification:
+    OutdoorAir:
+      Base:
+        Fields: &DesignSpecificationOutdoorAir
+          name: '{} SZ DSOA'
+          outdoor_air_method: '{outdoor_air_method}'
+          outdoor_air_flow_per_person: '{outdoor_air_flow_rate_per_person}'
+          outdoor_air_flow_per_zone_floor_area: '{outdoor_air_flow_rate_per_zone_floor_area}'
+          outdoor_air_flow_per_zone: '{outdoor_air_flow_rate_per_zone}'
+    ZoneAirDistribution:
+      Base:
+        Fields: &DesignSpecificationZoneAirDistribution
+          name: '{} SZ DSZAD'
+          zone_air_distribution_effectiveness_in_cooling_mode: 1
+          zone_air_distribution_effectiveness_in_heating_mode: 1
+  Fan:
+    Base:
+      Fields: &FanFields
+        motor_efficiency: 0.9
+        motor_in_airstream_fraction: '{supply_fan_motor_in_air_stream_fraction}'
+        maximum_flow_rate: Autosize
+      Connectors: &FanConnectors
+        AirLoop: *ConnectorsAirLoop
+    VariableVolume:
+      Base:
+        Fields: &FanVariableVolumeFields
+          name: '{} Supply Fan'
+          << : *FanFields
+          air_inlet_node_name: '{} Supply Fan Inlet'
+          air_outlet_node_name: '{} Supply Fan Outlet'
+          availability_schedule_name: 'HVACTemplate-Always1'
+          fan_power_minimum_flow_rate_input_method: 'Fraction'
+          fan_total_efficiency: 0.7
+          pressure_rise: '{supply_fan_delta_pressure}'
+        Connectors: &FanVariableVolumeConnectors
+          << : *FanConnectors
+  OutdoorAir:
+    Base:
+      Mixer:
+        Fields: &OutdoorAirMixerFields
+          name: '{} OA Mixing Box'
+          mixed_air_node_name: '{} Mixed Air Outlet'
+          outdoor_air_stream_node_name: '{} Outside Air Inlet' #will be overridden
+          relief_air_stream_node_name: '{} Relief Air Outlet'
+          return_air_stream_node_name: *AirLoopInlet
+        Connectors: &OutdoorAirMixersConnectors
+          AirLoop:
+            Inlet: outdoor_air_stream_node_name
+            Outlet: mixed_air_node_name
+  Pump:
+    CommonObjects:
+      - Branch: &PumpBranchVariableSpeedSupplyInlet
+          name: '{} Supply Inlet Branch'
+          components:
+            - component_object_type: Pump:VariableSpeed
+              component_name: '{} Supply Pump'
+              component_inlet_node_name: '{} Supply Inlet'
+              component_outlet_node_name: '{} Supply Inlet Pump Outlet'
+      - Branch: &PumpBranchConstantSpeedSupplyInlet
+          name: '{} Supply Inlet Branch'
+          components:
+            - component_object_type: Pump:ConstantSpeed
+              component_name: '{} Supply Pump'
+              component_inlet_node_name: '{} Supply Inlet'
+              component_outlet_node_name: '{} Supply Inlet Pump Outlet'
+    Base:
+      Fields: &PumpFields
+        name: '{} Supply Pump'
+        inlet_node_name: '{} Supply Inlet'
+        outlet_node_name: '{} Supply Inlet Pump Outlet'
+        design_flow_rate: Autosize
+        design_power_consumption: Autosize
+        pump_control_type: Intermittent
+      ConstantSpeed:
+        Fields: &PumpConstantSpeed
+          <<: *PumpFields
+      VariableSpeed:
+        Fields: &PumpVariableSpeed
+          <<: *PumpFields
+  SetpointManager:
+    MixedAir:
+      Base:
+        Fields: &SetpointManagerMixedAir
+          control_variable: Temperature
+          fan_inlet_node_name:
+            Fan:.*: air_inlet_node_name
+          fan_outlet_node_name:
+            Fan:.*: air_outlet_node_name
+      Cooling:
+        Base:
+          Fields: &SetpointManagerMixedAirCooling
+            <<: *SetpointManagerMixedAir
+            name: '{} Cooling Coil Air Temp Manager'
+            reference_setpoint_node_name:
+              BuildPathReference:
+                Location: -1
+                ValueLocation: Outlet
+            setpoint_node_or_nodelist_name: *SystemMixedAirNodelistName
+      Heating:
+        Base:
+          Fields: &SetpointManagerMixedAirHeating
+            <<: *SetpointManagerMixedAir
+            name: '{} Heating Coil Air Temp Manager'
+            control_variable: Temperature
+            reference_setpoint_node_name: *SystemSupplyPathInletName
+            setpoint_node_or_nodelist_name:
+              Coil:Heating:.*: air_outlet_node_name
+    OutdoorAirReset:
+      Base:
+        Fields: &SetpointManagerOutdoorAirReset
+          name: '{} Temp Manager'
+          control_variable: Temperature
+          setpoint_node_or_nodelist_name: *SupplySetpointNodes
+    Scheduled:
+      Base:
+        Fields: &SetpointManagerScheduled
+          <<: *SetpointManagerOutdoorAirReset
+  Sizing:
+    Zone:
+      Base:
+        Fields: &SizingZone
+          name: '{} Sizing Zone'
+          cooling_design_air_flow_method: DesignDay
+          cooling_design_air_flow_rate: 0
+          cooling_minimum_air_flow_fraction: 0
+          design_specification_outdoor_air_object_name:
+            ^DesignSpecification:Outdoor.*: key
+          design_specification_zone_air_distribution_object_name:
+            ^DesignSpecification:ZoneAirDistribution.*: key
+          heating_design_air_flow_method: DesignDay
+          heating_design_air_flow_rate: 0
+          heating_maximum_air_flow_fraction: 0
+          zone_cooling_design_supply_air_temperature: 12.8
+          zone_cooling_design_supply_air_temperature_difference: 11.11
+          zone_cooling_design_supply_air_humidity_ratio: 0.008
+          zone_heating_design_supply_air_temperature: 50.0
+          zone_heating_design_supply_air_humidity_ratio: 0.008
+          zone_or_zonelist_name: '{zone_name}'
+          zone_cooling_sizing_factor: '{zone_cooling_sizing_factor}'
+          zone_heating_sizing_factor: '{zone_heating_sizing_factor}'
+    System:
+      Base:
+        Fields: &SizingSystem
+          name: '{} Sizing System'
+          100_outdoor_air_in_cooling: No
+          100_outdoor_air_in_heating: NO
+          airloop_name: '{}'
+          central_cooling_capacity_control_method: OnOff
+          central_cooling_design_supply_air_humidity_ratio: 0.008
+          central_cooling_design_supply_air_temperature: 12.8
+          cooling_design_capacity: Autosize
+          cooling_design_capacity_method: CoolingDesignCapacity
+          cooling_supply_air_flow_rate: 0
+          cooling_supply_air_flow_rate_method: DesignDay
+          design_outdoor_air_flow_rate: '{maximum_outdoor_air_flow_rate}'
+          heating_design_capacity: Autosize
+          heating_supply_air_flow_rate: 0
+          heating_supply_air_flow_rate_method: DesignDay
+          central_heating_design_supply_air_temperature: 10.0
+          central_heating_design_supply_air_humidity_ratio: 0.008
+          central_heating_maximum_system_air_flow_ratio: 0.3
+          preheat_design_temperature: 5.0
+          preheat_design_humidity_ratio: 0.008
+          precool_design_temperature: 11
+          precool_design_humidity_ratio: 0.008
+          heating_design_capacity_method: HeatingDesignCapacity
+          system_outdoor_air_method: ZoneSum
+          type_of_load_to_size_on: Sensible
+          type_of_zone_sum_to_use: '{sizing_option}'
+          zone_maximum_outdoor_air_fraction: 1.0
+    Base:
+      Fields: &SizingPlant
+        name: '{} Sizing Plant'
+        plant_or_condenser_loop_name: '{} PlantLoop'
+  ZoneHVAC:
+    AirDistributionUnit:
+      Base:
+        Fields: &ZoneHVACAirDistributionUnit
+          name: '{} ATU'
+    EquipmentList:
+      Base:
+        Fields: &ZoneHVACEquipmentList
+          name: '{} Equipment'
+          load_distribution_scheme: SequentialLoad
+    EquipmentConnections:
+      Base:
+        Fields: &ZoneHVACEquipmentConnections
+          name: '{} Equipment Connections'
+          zone_name: '{zone_name}'
+          zone_conditioning_equipment_list_name:
+            ZoneHVAC:EquipmentList: key
+          zone_air_node_name: '{} Zone Air Node'
+          zone_return_air_node_or_nodelist_name: *ReturnOutlet
 
-# General
-Sizing:
-  Zone:
-    Base: &SizingZone
-      name: '{} Sizing Zone'
-      cooling_design_air_flow_method: DesignDay
-      cooling_design_air_flow_rate: 0
-      cooling_minimum_air_flow_fraction: 0
-      design_specification_outdoor_air_object_name:
-        ^DesignSpecification:Outdoor.*: key
-      design_specification_zone_air_distribution_object_name:
-        ^DesignSpecification:ZoneAirDistribution.*: key
-      heating_design_air_flow_method: DesignDay
-      heating_design_air_flow_rate: 0
-      heating_maximum_air_flow_fraction: 0
-      zone_cooling_design_supply_air_temperature: 12.8
-      zone_cooling_design_supply_air_temperature_difference: 11.11
-      zone_cooling_design_supply_air_humidity_ratio: 0.0085
-      zone_heating_design_supply_air_temperature: 50.0
-      zone_heating_design_supply_air_humidity_ratio: 0.008
-      zone_or_zonelist_name: '{zone_name}'
+AutoCreated:
   System:
-    Base: &SizingSystem
-      name: '{} Sizing System'
-      100_outdoor_air_in_cooling: No
-      100_outdoor_air_in_heating: NO
-      airloop_name: '{}'
-      central_cooling_capacity_control_method: OnOff
-      central_cooling_design_supply_air_humidity_ratio: 0.008
-      central_cooling_design_supply_air_temperature: 12.8
-      cooling_design_capacity: Autosize
-      cooling_design_capacity_method: CoolingDesignCapacity
-      cooling_supply_air_flow_rate: 0
-      cooling_supply_air_flow_rate_method: DesignDay
-      design_outdoor_air_flow_rate: '{maximum_outdoor_air_flow_rate}'
-      heating_design_capacity: Autosize
-      heating_supply_air_flow_rate: 0
-      heating_supply_air_flow_rate_method: DesignDay
-      central_heating_design_supply_air_temperature: 10.0
-      central_heating_design_supply_air_humidity_ratio: 0.008
-      central_heating_maximum_system_air_flow_ratio: 0.3
-      preheat_design_temperature: 5.0
-      preheat_design_humidity_ratio: 0.008
-      precool_design_temperature: 11
-      precool_design_humidity_ratio: 0.008
-      heating_design_capacity_method: HeatingDesignCapacity
-      system_outdoor_air_method: ZoneSum
-      type_of_load_to_size_on: Sensible
-      type_of_zone_sum_to_use: '{sizing_option}'
-      zone_maximum_outdoor_air_fraction: 1.0
+    AirLoopHVAC:
+      ControllerList:
+        WaterCoil:
+          Base:
+            name: *AirLoopHVACWaterControllers
+        OutdoorAir:
+          Base:
+            name: '{} OA Controllers'
+      OutdoorAirSystem:
+        Base:
+          name: '{} OA System'
+        EquipmentList:
+          Base:
+            name: '{} OA System Equipment'
+      ReturnPath:
+        Base:
+          name: '{} Return Path'
+          return_air_path_outlet_node_name:
+            ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): outlet_node_name
+          components:
+            - component_object_type:
+                ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): self
+              component_name:
+                ^AirLoopHVAC:(ZoneMixer|ReturnPlenum): key
+      ReturnPlenum:
+        Base:
+          name: '{} Return Plenum'
+          outlet_node_name: *ReturnAirOutlet
+          zone_name: '{return_plenum_name}'
+          zone_node_name: '{return_plenum_name} Zone Air Node'
+      SupplyPath:
+        Base:
+          name: '{} Supply Path'
+          supply_air_path_inlet_node_name:
+            ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): inlet_node_name
+          components:
+            - component_object_type:
+                ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): self
+              component_name:
+                ^AirLoopHVAC:(ZoneSplitter|SupplyPlenum): key
+      SupplyPlenum:
+        Base:
+          name: '{} Supply Plenum'
+          inlet_node_name: *SystemSupplyPathInletName
+          zone_name: '{supply_plenum_name}'
+          zone_node_name: '{supply_plenum_name} Zone Air Node'
+      ZoneMixer:
+        Base:
+          name: '{} Zone Mixer'
+          outlet_node_name: *ReturnAirOutlet
+      ZoneSplitter:
+        Base:
+          name: '{} Zone Splitter'
+          inlet_node_name: *SystemSupplyPathInletName
+    AvailabilityManagerAssignmentList:
+      Base:
+        name: *AvailabilityManagerAssignmentList
+    Branch:
+      Base:
+        name: '{} Main Branch'
+    BranchList:
+      Base:
+        name: '{} Branches'
+        branches:
+          - branch_name: '{} Main Branch'
+
+# Groupings
+Groupings:
+  PlantEquipment:
+    Boiler:
+      HotWater:
+        BaseObjects: &GroupingsPlantEquipmentBoilerHotWaterBaseObjects
+          - Boiler:HotWater: *BoilerHotWaterSuperObject
+          - Curve:Quadratic:
+              name: Main Boiler Efficiency Curve
+              coefficient1_constant: 0.97
+              coefficient2_x: 0.0633
+              coefficient3_x_2: -0.0333
+              maximum_value_of_x: 1.0
+              minimum_value_of_x: 0.0
+        TemplateObjects: &GroupingsPlantEquipmentBoilerHotWaterTemplateObjects
+          template_plant_loop_type:
+            (None|HotWaterLoop):
+              Objects:
+                - Branch:
+                    <<: *BoilerBranch
+                    name: '{} Boiler HW Branch'
+            MixedWaterLoop:
+              Objects:
+                - Branch:
+                    <<: *BoilerBranch
+                    name: '{} Boiler MW Branch'
+    Chiller:
+      EIR:
+        BaseObjects: &GroupingsPlantEquipmentChillerEIRBaseObjects
+          - Chiller:Electric:EIR: *ChillerElectricEIRSuperObject
+          - Branch:
+              name: '{} ChW Branch'
+              components:
+                - component_object_type:
+                    Chiller.*: self
+                  component_name:
+                    Chiller.*: key
+                  component_inlet_node_name:
+                    Chiller.*: chilled_water_inlet_node_name
+                  component_outlet_node_name:
+                    Chiller.*: chilled_water_outlet_node_name
+          - Curve:Quadratic:
+              name: Chiller RecipEIRFPLR
+              coefficient1_constant: 0.088065
+              coefficient2_x: 1.137742
+              coefficient3_x_2: -0.225806
+              maximum_value_of_x: 1
+              minimum_value_of_x: 0
+          - Curve:Biquadratic:
+              name: Chiller RecipCapFT
+              coefficient1_constant: 0.507883
+              coefficient2_x: 0.145228
+              coefficient3_x_2: -0.00625644
+              coefficient4_y: -0.0011178
+              coefficient5_y_2: -0.0001296
+              coefficient6_x_y: -0.00028188
+              maximum_value_of_x: 10
+              maximum_value_of_y: 35
+              minimum_value_of_x: 5
+              minimum_value_of_y: 24
+          - Curve:Biquadratic:
+              name: Chiller RecipEIRFT
+              coefficient1_constant: 1.03076
+              coefficient2_x: -0.103536
+              coefficient3_x_2: 0.00710208
+              coefficient4_y: 0.0093186
+              coefficient5_y_2: 0.00031752
+              coefficient6_x_y: -0.00104328
+              maximum_value_of_x: 10
+              maximum_value_of_y: 35
+              minimum_value_of_x: 5
+              minimum_value_of_y: 24
+  PlantLoop:
+    Base: &GroupingsPlantLoopBase
+      - Pipe:Adiabatic:
+          name: '{} Supply Bypass Pipe'
+          inlet_node_name: '{} Supply Bypass Inlet'
+          outlet_node_name: '{} Supply Bypass Outlet'
+      - Branch:
+          name: '{} Supply Bypass Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Supply Bypass Pipe'
+              component_inlet_node_name: '{} Supply Bypass Inlet'
+              component_outlet_node_name: '{} Supply Bypass Outlet'
+      - Pipe:Adiabatic:
+          name: '{} Supply Outlet Pipe'
+          inlet_node_name: '{} Supply Outlet Pipe Inlet'
+          outlet_node_name: '{} Supply Outlet'
+      - Branch:
+          name: '{} Supply Outlet Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Supply Outlet Pipe'
+              component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
+              component_outlet_node_name: '{} Supply Outlet'
+      - Pipe:Adiabatic:
+          name: '{} Demand Bypass Pipe'
+          inlet_node_name: '{} Demand Bypass Inlet'
+          outlet_node_name: '{} Demand Bypass Outlet'
+      - Branch:
+          name: '{} Demand Bypass Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Demand Bypass Pipe'
+              component_inlet_node_name: '{} Demand Bypass Inlet'
+              component_outlet_node_name: '{} Demand Bypass Outlet'
+      - Pipe:Adiabatic:
+          name: '{} Demand Outlet Pipe'
+          inlet_node_name: '{} Demand Outlet Pipe Inlet'
+          outlet_node_name: '{} Demand Outlet'
+      - Branch:
+          name: '{} Demand Outlet Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Demand Outlet Pipe'
+              component_inlet_node_name: '{} Demand Outlet Pipe Inlet'
+              component_outlet_node_name: '{} Demand Outlet'
+    PrimaryNoSecondary: &GroupingsPlantLoopPrimaryNoSecondary
+      - Pipe:Adiabatic:
+          name: '{} Demand Inlet Pipe'
+          inlet_node_name: '{} Demand Inlet'
+          outlet_node_name: '{} Demand Inlet Pipe Outlet'
+      - Branch:
+          name: '{} Demand Inlet Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Demand Inlet Pipe'
+              component_inlet_node_name: '{} Demand Inlet'
+              component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
+    ChilledWater: &GroupingsPlantLoopChilledWater
+      - AvailabilityManager:LowTemperatureTurnOff:
+          name: '{} Availability Low Temp TurnOff'
+          sensor_node_name: '{} Outside Air Sensor'
+          temperature: '{chilled_water_design_setpoint}'
+      - AvailabilityManagerAssignmentList:
+          name: '{} Availability List'
+          managers:
+            - availability_manager_name:
+                AvailabilityManager:LowTemperatureTurnOff: key
+              availability_manager_object_type:
+                AvailabilityManager:LowTemperatureTurnOff: self
+      - SetpointManager:Scheduled:
+          <<: *SetpointManagerScheduled
+          schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
+      - OutdoorAir:Node:
+          name: '{} Outside Air Sensor'
+    NoSecondary: &GroupingsPlantNoSecondary
+      - Pipe:Adiabatic:
+          name: '{} Demand Inlet Pipe'
+          inlet_node_name: '{} Demand Inlet'
+          outlet_node_name: '{} Demand Inlet Pipe Outlet'
+      - Branch:
+          name: '{} Demand Inlet Branch'
+          components:
+            - component_object_type: Pipe:Adiabatic
+              component_name: '{} Demand Inlet Pipe'
+              component_inlet_node_name: '{} Demand Inlet'
+              component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
+  Zone:
+    AirTerminal:
+      SingleDuct:
+        Fields: &AirTerminalSingleDuctFields
+          air_inlet_node_name: '{} Zone Equip Inlet'
+          air_outlet_node_name: '{} Supply Inlet'
+          constant_minimum_air_flow_fraction: '{constant_minimum_air_flow_fraction}'
+          maximum_air_flow_rate: Autosize
+        VAV:
+          Base:
+            - AirTerminal:SingleDuct:VAV:Reheat: &AirTerminalSingleDuctVAVReheat
+                name: '{} VAV Reheat'
+                <<: *AirTerminalSingleDuctFields
+                damper_air_outlet_node_name: '{} Damper Outlet'
+                damper_heating_action: Reverse
+                reheat_coil_name: '{} Reheat Coil'
+          HotWaterReheat: &AirTerminalSingleDuctVAVHotWaterReheat
+            - AirTerminal:SingleDuct:VAV:Reheat:
+                <<: *AirTerminalSingleDuctVAVReheat
+                convergence_tolerance: 0.001
+                reheat_coil_object_type: Coil:Heating:Water
+                maximum_hot_water_or_steam_flow_rate: Autosize
+                minimum_hot_water_or_steam_flow_rate: 0
+                zone_minimum_air_flow_input_method: '{zone_minimum_air_flow_input_method}'
+            - Coil:Heating:Water:
+                <<: *CoilHeatingWaterFields
+                name: '{} Reheat Coil'
+                air_inlet_node_name: '{} Damper Outlet'
+                air_outlet_node_name: '{} Supply Inlet'
+            - Branch:
+                name: '{} Reheat Coil HW Branch'
+                components:
+                  - component_object_type:
+                      Coil:Heating:Water: self
+                    component_name:
+                      Coil:Heating:Water: key
+                    component_inlet_node_name:
+                      Coil:Heating:Water: water_inlet_node_name
+                    component_outlet_node_name:
+                      Coil:Heating:Water: water_outlet_node_name
 
 OptionTree:
   HVACTemplate:
@@ -430,8 +696,6 @@ OptionTree:
               Sizing:Zone: zone_cooling_design_supply_air_humidity_ratio
             zone_cooling_design_supply_air_temperature:
               Sizing:Zone: zone_cooling_design_supply_air_temperature
-            zone_cooling_design_supply_air_temperature_input_method:
-              Sizing:Zone: zone_cooling_design_supply_air_temperature_input_method
             zone_heating_design_supply_air_temperature_input_method:
               Sizing:Zone: zone_heating_design_supply_air_temperature_input_method
             zone_heating_design_supply_air_temperature:
@@ -440,10 +704,6 @@ OptionTree:
               Sizing:Zone: design_specification_outdoor_air_object_name
             design_specification_zone_air_distribution_object_name:
               Sizing:Zone: design_specification_zone_air_distribution_object_name
-            zone_heating_sizing_factor:
-              Sizing:Zone: zone_heating_sizing_factor
-            zone_cooling_sizing_factor:
-              Sizing:Zone: zone_cooling_sizing_factor
           Mappings:
             Sizing:Zone:
               zone_cooling_design_supply_air_temperature_input_method:
@@ -458,9 +718,7 @@ OptionTree:
                 supply_air_maximum_flow_rate:
                   AirTerminal:.*: maximum_air_flow_rate
                 damper_heating_action:
-                  AirTerminal:.*:VAV:Reheat: damper_heating_action
-                zone_minimum_air_flow_input_method:
-                  AirTerminal:.*: zone_minimum_air_flow_input_method
+                  AirTerminal:.*: damper_heating_action
     System:
       VAV:
         BuildPath:
@@ -518,7 +776,6 @@ OptionTree:
                               Coil:Cooling:Water: self
                             component_outlet_node_name:
                               Coil:Cooling:Water: water_outlet_node_name
-                  Transitions:
             - supply_fan_placement:
                 (DrawThrough|None):
                   Location: -1
@@ -528,8 +785,6 @@ OptionTree:
                         Fields: *FanVariableVolumeFields
                         Connectors: *FanVariableVolumeConnectors
                   Transitions:
-                    supply_fan_delta_pressure:
-                      Fan:.*: pressure_rise
                     system_availability_schedule_name:
                       Fan:.*: availability_schedule_name
                   Mappings:
@@ -572,7 +827,7 @@ OptionTree:
                 applicability_schedule_name: HVACTemplate-Always1
             - Schedule:Compact:
                 name: HVACTemplate-Always1
-                structure: Schedule:Compact:ALWAYS_VAL
+                structure: CommonObjects:Schedule:Compact:ALWAYS_VAL
                 insert_values:
                   - 1
             - OutdoorAir:NodeList:
@@ -587,16 +842,16 @@ OptionTree:
                 economizer_minimum_limit_dry_bulb_temperature: '{economizer_lower_temperature_limit}'
                 economizer_maximum_limit_dry_bulb_temperature: '{economizer_upper_temperature_limit}'
             - SetpointManager:Scheduled:
+                <<: *SetpointManagerScheduled
                 name: '{} Cooling Supply Air Temp Manager'
-                control_variable: Temperature
                 setpoint_node_or_nodelist_name:
                   BuildPathReference:
                     Location: -1
                     ValueLocation: Outlet
                 schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint}'
             - SetpointManager:Scheduled:
+                <<: *SetpointManagerScheduled
                 name: '{} Heating Supply Air Temp Manager'
-                control_variable: Temperature
                 setpoint_node_or_nodelist_name: *SystemSupplyPathInletName
                 schedule_name: 'HVACTemplate-Always{heating_coil_design_setpoint}'
             - SetpointManager:MixedAir:
@@ -623,7 +878,98 @@ OptionTree:
               AvailabilityManager:NightCycle: fan_schedule_name
         TemplateObjects:
     Plant:
+      Boiler:
+        BaseObjects:
+          Objects:
+            - *GroupingsPlantEquipmentBoilerHotWaterBaseObjects
+        TemplateObjects:
+          <<: *GroupingsPlantEquipmentBoilerHotWaterTemplateObjects
       ChilledWaterLoop:
+        BaseObjects:
+          Objects:
+            - *GroupingsPlantLoopBase
+            - *GroupingsPlantLoopChilledWater
+            - Sizing:Plant:
+                <<: *SizingPlant
+                loop_type: Cooling
+                loop_design_temperature_difference: 6.67
+                design_loop_exit_temperature: '{chilled_water_design_setpoint}'
+        TemplateObjects:
+          chilled_water_pump_configuration:
+            ConstantPrimaryNoSecondary:
+              Objects:
+                - *GroupingsPlantLoopPrimaryNoSecondary
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                - Branch: *PumpBranchConstantSpeedSupplyInlet
+            VariablePrimaryNoSecondary:
+              Objects:
+                - *GroupingsPlantLoopPrimaryNoSecondary
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                - Branch: *PumpBranchVariableSpeedSupplyInlet
+      Chiller:
+        BaseObjects:
+        TemplateObjects:
+          chiller_type:
+            ElectricReciprocatingChiller:
+              Objects:
+                - *GroupingsPlantEquipmentChillerEIRBaseObjects
+          condenser_type:
+            WaterCooled:
+              Objects:
+                - Branch:
+                    name: '{} CndW Branch'
+                    components:
+                      - component_object_type:
+                          Chiller.*: self
+                        component_name:
+                          Chiller.*: key
+                        component_inlet_node_name:
+                          Chiller.*: condenser_inlet_node_name
+                        component_outlet_node_name:
+                          Chiller.*: condenser_outlet_node_name
       CondenserWaterLoop:
+        BaseObjects:
+          Objects:
+            - *GroupingsPlantLoopBase
+            - *GroupingsPlantNoSecondary
+            - Pump:VariableSpeed:
+                <<: *PumpVariableSpeed
+                design_pump_head: '{condenser_water_pump_rated_head}' # template attribute set in hvac_template
       HotWaterLoop:
+        BaseObjects:
+          Objects:
+            - *GroupingsPlantLoopBase
+            - *GroupingsPlantNoSecondary
+            - Sizing:Plant:
+                <<: *SizingPlant
+                loop_type: Heating
+                loop_design_temperature_difference: 11
+                design_loop_exit_temperature: '{hot_water_design_setpoint}'
+        TemplateObjects:
+          hot_water_pump_configuration:
+            (None|ConstantFlow):
+              Objects:
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                - Branch: *PumpBranchConstantSpeedSupplyInlet
+            VariableFlow:
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                - Branch: *PumpBranchVariableSpeedSupplyInlet
+          hot_water_setpoint_reset_type:
+            OutdoorAirTemperatureReset:
+              Objects:
+                - SetpointManager:OutdoorAirReset:
+                    <<: *SetpointManagerOutdoorAirReset
+                    outdoor_high_temperature: '{hot_water_reset_outdoor_dry_bulb_high}'
+                    outdoor_low_temperature: '{hot_water_reset_outdoor_dry_bulb_low}'
+                    setpoint_at_outdoor_high_temperature: '{hot_water_setpoint_at_outdoor_dry_bulb_high}'
+                    setpoint_at_outdoor_low_temperature: '{hot_water_setpoint_at_outdoor_dry_bulb_low}'
       MixedWaterLoop:
