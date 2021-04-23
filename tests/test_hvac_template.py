@@ -50,6 +50,87 @@ mock_zone_template = {
     }
 }
 
+mock_system_template = {
+    "HVACTemplate:System:VAV": {
+        "VAV Sys 1": {
+            "cooling_coil_design_setpoint": 12.8,
+            "cooling_coil_setpoint_reset_type": "None",
+            "cooling_coil_type": "ChilledWater",
+            "dehumidification_control_type": "None",
+            "dehumidification_setpoint": 60.0,
+            "economizer_lockout": "NoLockout",
+            "economizer_lower_temperature_limit": 4,
+            "economizer_type": "DifferentialDryBulb",
+            "economizer_upper_temperature_limit": 19,
+            "gas_heating_coil_efficiency": 0.8,
+            "gas_heating_coil_parasitic_electric_load": 0.0,
+            "gas_preheat_coil_efficiency": 0.8,
+            "gas_preheat_coil_parasitic_electric_load": 0.0,
+            "heat_recovery_type": "None",
+            "heating_coil_design_setpoint": 10.0,
+            "heating_coil_setpoint_reset_type": "None",
+            "heating_coil_type": "HotWater",
+            "humidifier_rated_capacity": 1e-06,
+            "humidifier_rated_electric_power": 2690.0,
+            "humidifier_setpoint": 30.0,
+            "humidifier_type": "None",
+            "latent_heat_recovery_effectiveness": 0.65,
+            "maximum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_control_type": "FixedMinimum",
+            "minimum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_schedule_name": "Min OA Sched",
+            "night_cycle_control": "CycleOnAny",
+            "preheat_coil_type": "None",
+            "return_plenum_name": "PLENUM-1",
+            "sensible_heat_recovery_effectiveness": 0.7,
+            "sizing_option": "NonCoincident",
+            "supply_fan_delta_pressure": 600,
+            "supply_fan_maximum_flow_rate": "Autosize",
+            "supply_fan_minimum_flow_rate": "Autosize",
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_motor_in_air_stream_fraction": 1,
+            "supply_fan_part_load_power_coefficients": "InletVaneDampers",
+            "supply_fan_placement": "DrawThrough",
+            "supply_fan_total_efficiency": 0.7,
+            "system_availability_schedule_name": "FanAvailSched"
+        }
+    }
+}
+
+mock_chw_plant_loop_template = {
+    "HVACTemplate:Plant:ChilledWaterLoop": {
+        "Chilled Water Loop": {
+            "chilled_water_design_setpoint": 7.22,
+            "chilled_water_pump_configuration": "ConstantPrimaryNoSecondary",
+            "chilled_water_reset_outdoor_dry_bulb_high": 26.7,
+            "chilled_water_reset_outdoor_dry_bulb_low": 15.6,
+            "chilled_water_setpoint_at_outdoor_dry_bulb_high": 6.7,
+            "chilled_water_setpoint_at_outdoor_dry_bulb_low": 12.2,
+            "chilled_water_setpoint_reset_type": "None",
+            "chiller_plant_operation_scheme_type": "Default",
+            "condenser_plant_operation_scheme_type": "Default",
+            "condenser_water_design_setpoint": 29.4,
+            "condenser_water_pump_rated_head": 179352,
+            "minimum_outdoor_dry_bulb_temperature": 7.22,
+            "primary_chilled_water_pump_rated_head": 179352,
+            "pump_control_type": "Intermittent",
+            "secondary_chilled_water_pump_rated_head": 179352
+        }
+    }
+}
+
+mock_plant_equipment_template = {
+    "HVACTemplate:Plant:Chiller": {
+        "Main Chiller": {
+            "capacity": "Autosize",
+            "chiller_type": "ElectricReciprocatingChiller",
+            "condenser_type": "WaterCooled",
+            "nominal_cop": 3.2,
+            "priority": "1"
+        }
+    }
+}
+
 
 class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     """
@@ -630,6 +711,107 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             'Coil:Heating:Water': 1,
             'Branch': 1}
         self.assertDictEqual(expected_summary, self.hvac_template.summarize_epjson(output['epJSON']))
+        return
+
+    @BaseTest._test_logger(doc_text="HVACTemplate:System:Verify System template completes "
+                                    "from parent class (HVACTemplate)")
+    def test_system_processing(self):
+        self.hvac_template._load_epjson({
+            **minimum_objects_d,
+            **mock_thermostat_template,
+            **mock_system_template
+        })
+        output = self.hvac_template.run()
+        self.assertEqual(
+            {
+                'AirLoopHVAC': 1,
+                'AirLoopHVAC:ControllerList': 2,
+                'AirLoopHVAC:OutdoorAirSystem': 1,
+                'AirLoopHVAC:OutdoorAirSystem:EquipmentList': 1,
+                'AirLoopHVAC:ReturnPath': 1,
+                'AirLoopHVAC:ReturnPlenum': 1,
+                'AirLoopHVAC:SupplyPath': 1,
+                'AirLoopHVAC:ZoneSplitter': 1,
+                'AvailabilityManager:NightCycle': 1,
+                'AvailabilityManagerAssignmentList': 1,
+                'Branch': 3,
+                'BranchList': 1,
+                'Building': 1,
+                'Coil:Cooling:Water': 1,
+                'Coil:Heating:Water': 1,
+                'Controller:OutdoorAir': 1,
+                'Controller:WaterCoil': 2,
+                'Fan:VariableVolume': 1,
+                'GlobalGeometryRules': 1,
+                'NodeList': 1,
+                'OutdoorAir:Mixer': 1,
+                'OutdoorAir:NodeList': 1,
+                'Schedule:Compact': 3,
+                'SetpointManager:MixedAir': 2,
+                'SetpointManager:Scheduled': 2,
+                'Sizing:System': 1,
+                'ThermostatSetpoint:DualSetpoint': 1
+            },
+            self.hvac_template.summarize_epjson(output['epJSON'])
+        )
+        return
+
+    @BaseTest._test_logger(doc_text="HVACTemplate:PlantLoop:Verify Plant Loop template completes "
+                                    "from parent class (HVACTemplate)")
+    def test_plant_loop_processing(self):
+        self.hvac_template._load_epjson({
+            **minimum_objects_d,
+            **mock_thermostat_template,
+            **mock_chw_plant_loop_template
+        })
+        output = self.hvac_template.run()
+        self.assertEqual(
+            {
+                'AvailabilityManager:LowTemperatureTurnOff': 1,
+                'AvailabilityManagerAssignmentList': 1,
+                'Branch': 6,
+                'Building': 1,
+                'GlobalGeometryRules': 1,
+                'OutdoorAir:Node': 1,
+                'Pipe:Adiabatic': 5,
+                'Pump:ConstantSpeed': 1,
+                'Schedule:Compact': 1,
+                'SetpointManager:Scheduled': 1,
+                'Sizing:Plant': 1,
+                'ThermostatSetpoint:DualSetpoint': 1
+            },
+            self.hvac_template.summarize_epjson(output['epJSON'])
+        )
+        return
+
+    @BaseTest._test_logger(doc_text="HVACTemplate:PlantEquipment:Verify Plant Equipment template completes "
+                                    "from parent class (HVACTemplate)")
+    def test_plant_equipment_processing(self):
+        self.hvac_template._load_epjson({
+            **minimum_objects_d,
+            **mock_thermostat_template,
+            **mock_chw_plant_loop_template,
+            **mock_plant_equipment_template
+        })
+        output = self.hvac_template.run()
+        self.assertEqual(
+            {
+                'AvailabilityManager:LowTemperatureTurnOff': 1,
+                'AvailabilityManagerAssignmentList': 1,
+                'Branch': 11,
+                'Building': 1,
+                'GlobalGeometryRules': 1,
+                'OutdoorAir:Node': 1,
+                'Pipe:Adiabatic': 10,
+                'Pump:ConstantSpeed': 1,
+                'Pump:VariableSpeed': 1,
+                'Schedule:Compact': 1,
+                'SetpointManager:Scheduled': 1,
+                'Sizing:Plant': 1,
+                'ThermostatSetpoint:DualSetpoint': 1
+            },
+            self.hvac_template.summarize_epjson(output['epJSON'])
+        )
         return
 
     # todo_eo: wrap all dictionary unpacking (_, _), = dict.items() with exceptions and test
