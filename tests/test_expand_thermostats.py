@@ -47,7 +47,6 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
         schedule_name_match = False
         schedule_names = [i for i in list(eo.epjson['Schedule:Compact'].keys())]
         schedule_match = [i for i in schedule_names if i == 'HVACTemplate-Always12']
-        print([i for i in schedule_names])
         if any(schedule_match):
             schedule_name_match = True
         self.assertTrue(schedule_name_match)
