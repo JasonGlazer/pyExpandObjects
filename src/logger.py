@@ -27,11 +27,11 @@ class Logger:
         logging_dir = str(this_script_path.parent.parent / 'logs')
         log_file_location = os.path.join(
             logging_dir,
-            '{}.log'.format(log_file_name)
+            r'{}.log'.format(log_file_name)
         )
         testing_log_file_location = os.path.join(
             logging_dir,
-            '{}.log'.format('test')
+            r'{}.log'.format('test')
         )
         for log_file in [log_file_location, testing_log_file_location]:
             if not os.path.isfile(log_file):  # pragma: no cover
