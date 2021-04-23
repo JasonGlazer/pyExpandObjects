@@ -63,7 +63,7 @@ def main(args=None):
                 else:
                     output[output_key] = output_val
             # get output directory
-            if hasattr(args, 'output_directory'):
+            if hasattr(args, 'output_directory') and args.output_directory:
                 output_directory = args.output_directory
             else:
                 output_directory = os.path.dirname(os.path.abspath(args.file))
