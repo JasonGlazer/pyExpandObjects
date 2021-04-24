@@ -436,6 +436,42 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
         return
 
+    def test_condenser_water_plant_loop_object_created_from_multiple_chiller_wo_attributes_transitioned(self):
+        eph = MagicMock()
+        eph.template_type = 'HVACTemplate:Plant:HotWaterLoop'
+        epc = MagicMock()
+        epc.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
+        del epc.primary_chilled_water_pump_rated_head
+        expanded_plant_loops = {'Test Hot Water': eph, 'Test Chilled Water': epc}
+        epe = MagicMock()
+        epe.template_type = 'HVACTemplate:Plant:Chiller'
+        epe.condenser_type = 'WaterCooled'
+        epe2 = MagicMock()
+        epe2.template_type = 'HVACTemplate:Plant:Chiller'
+        epe2.condenser_type = 'WaterCooled'
+        expanded_plant_equipment = {'Test Equipment Name': epe, 'Test Equipment Name 2': epe2}
+        for _, expanded_pe in expanded_plant_equipment.items():
+            plant_loop_template = self.hvac_template._create_loop_template_from_plant_equipment(
+                plant_equipment_class_object=expanded_pe,
+                plant_loop_class_objects=expanded_plant_loops)
+            if plant_loop_template:
+                self.hvac_template.merge_epjson(
+                    super_dictionary=self.hvac_template.epjson,
+                    object_dictionary=plant_loop_template
+                )
+                additional_plant_loops = self.hvac_template._expand_templates(
+                    templates=plant_loop_template,
+                    expand_class=ExpandPlantLoop
+                )
+                for k, v in additional_plant_loops.items():
+                    if k not in expanded_plant_loops.keys():
+                        expanded_plant_loops[k] = v
+        eo = ExpandObjects()
+        self.assertEqual(
+            {'Branch': 5, 'Pipe:Adiabatic': 5, 'Pump:VariableSpeed': 1},
+            eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
+        return
+
     def test_condenser_water_plant_loop_object_created_from_chiller_with_attributes_transitioned(self):
         eph = MagicMock()
         eph.template_type = 'HVACTemplate:Plant:HotWaterLoop'
@@ -474,5 +510,177 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         )
         return
 
-    # todo_eo: Test that multiple water cooled chillers do not break hvactemplate
+    def test_retrieve_branches_by_loop_type(self):
+        epe = MagicMock()
+        epe.template_type = 'HVACTemplate:Plant:HotWaterLoop'
+        epe.template_plant_loop_type = 'HotWater'
+        epe.epjson = {
+            "Branch": {
+                "Main Boiler HW Branch": {
+                    "components": [
+                        {
+                            "component_inlet_node_name": "Main Boiler HW Inlet",
+                            "component_name": "Main Boiler",
+                            "component_object_type": "Boiler:HotWater",
+                            "component_outlet_node_name": "Main Boiler HW Outlet"
+                        }
+                    ]
+                }
+            }
+        }
+        plant_equipment_class_objects = {'Main Boiler': epe}
+        loops = ['HVACTemplate:Plant:HotWaterLoop', 'HVACTemplate:Plant:CondenserWaterLoop']
+        output_list = []
+        for loop in loops:
+            branch_dictionary = self.hvac_template._get_plant_equipment_waterloop_branches_by_loop_type(
+                loop_type=loop,
+                plant_equipment_class_objects=plant_equipment_class_objects
+            )
+            output_list.append(branch_dictionary)
+        self.assertEqual(
+            1,
+            len([i for i in output_list[0]['Branch'].keys()])
+        )
+        self.assertIsNone(output_list[1])
+        return
+
+    def test_retrieve_water_cooled_chiller_branches_by_loop_type(self):
+        epe = MagicMock()
+        epe.template_type = 'HVACTemplate:Plant:Chiller'
+        epe.template_plant_loop_type = 'ChilledWater'
+        epe.condenser_type = 'WaterCooled'
+        epe.epjson = {
+            "Branch": {
+                "Main Chiller ChW Branch": {
+                    "components": [
+                        {
+                            "component_inlet_node_name": "Main Chiller ChW Inlet",
+                            "component_name": "Main Chiller",
+                            "component_object_type": "Chiller:Electric:EIR",
+                            "component_outlet_node_name": "Main Chiller ChW Outlet"
+                        }
+                    ]
+                },
+                "Main Chiller CndW Branch": {
+                    "components": [
+                        {
+                            "component_inlet_node_name": "Main Chiller Cnd Inlet",
+                            "component_name": "Main Chiller",
+                            "component_object_type": "Chiller:Electric:EIR",
+                            "component_outlet_node_name": "Main Chiller Cnd Outlet"
+                        }
+                    ]
+                }
+            }
+        }
+        epe2 = MagicMock()
+        epe2.template_type = 'HVACTemplate:Plant:Chiller'
+        epe2.template_plant_loop_type = 'ChilledWater'
+        epe2.condenser_type = 'WaterCooled'
+        epe2.epjson = {
+            "Branch": {
+                "Second Chiller ChW Branch": {
+                    "components": [
+                        {
+                            "component_inlet_node_name": "Main Chiller ChW Inlet",
+                            "component_name": "Main Chiller",
+                            "component_object_type": "Chiller:Electric:EIR",
+                            "component_outlet_node_name": "Main Chiller ChW Outlet"
+                        }
+                    ]
+                },
+                "Second Chiller CndW Branch": {
+                    "components": [
+                        {
+                            "component_inlet_node_name": "Main Chiller Cnd Inlet",
+                            "component_name": "Main Chiller",
+                            "component_object_type": "Chiller:Electric:EIR",
+                            "component_outlet_node_name": "Main Chiller Cnd Outlet"
+                        }
+                    ]
+                }
+            }
+        }
+        plant_equipment_class_objects = {'Main Chiller': epe, 'Second Chiller': epe2}
+        loops = ['HVACTemplate:Plant:ChilledWaterLoop', 'HVACTemplate:Plant:CondenserWaterLoop']
+        output_list = []
+        for loop in loops:
+            branch_dictionary = self.hvac_template._get_plant_equipment_waterloop_branches_by_loop_type(
+                loop_type=loop,
+                plant_equipment_class_objects=plant_equipment_class_objects
+            )
+            output_list.append(branch_dictionary)
+        self.assertEqual(
+            2,
+            len([i for i in output_list[0]['Branch'].keys() if 'chw' in i.lower()])
+        )
+        self.assertEqual(
+            2,
+            len([i for i in output_list[1]['Branch'].keys() if 'cnd' in i.lower()])
+        )
+        return
+
+    def test_retrieve_demand_branch_loop_type(self):
+        ez = MagicMock()
+        ez.template_type = 'HVACTemplate:Zone:VAV'
+        ez.epjson = {
+            "Branch": {
+                "VAV Sys 1 Cooling Coil ChW Branch": {
+                    "components": [
+                        {
+                            "component_inlet_node_name": "VAV Sys 1 Cooling Coil ChW Inlet",
+                            "component_name": "VAV Sys 1 Cooling Coil",
+                            "component_object_type": "Coil:Cooling:Water",
+                            "component_outlet_node_name": "VAV Sys 1 Cooling Coil ChW Outlet"
+                        }
+                    ]
+                }
+            }
+        }
+        zone_class_objects = {'Zone Template 1': ez}
+        output_list = []
+        loops = ['HVACTemplate:Plant:ChilledWaterLoop', 'HVACTemplate:Plant:HotWaterLoop']
+        for loop in loops:
+            branch_dictionary = self.hvac_template._get_zone_system_waterloop_branches_by_loop_type(
+                loop_type=loop,
+                zone_class_objects=zone_class_objects,
+                system_class_objects={}
+            )
+            output_list.append(branch_dictionary)
+        self.assertEqual(
+            1,
+            len([i for i in output_list[0]['Branch'].keys()])
+        )
+        self.assertIsNone(output_list[1])
+        return
+
+    # def test_condenser_water_loop_connectors(self):
+    #     plant_equipment_branch_dictionary = {
+    #         'Branch': {
+    #             'Main Chiller CndW Branch': {'components': [{'component_inlet_node_name': 'Main Chiller Cnd Inlet',
+    #                                                          'component_name': 'Main Chiller',
+    #                                                          'component_object_type': 'Chiller:Electric:EIR',
+    #                                                          'component_outlet_node_name': 'Main Chiller Cnd Outlet'}]},
+    #             'Second Chiller CndW Branch': {'components': [{'component_inlet_node_name': 'Main Chiller Cnd Inlet',
+    #                                                            'component_name': 'Main Chiller',
+    #                                                            'component_object_type': 'Chiller:Electric:EIR',
+    #                                                            'component_outlet_node_name': 'Main Chiller Cnd Outlet'}]},
+    #             "Main Tower CndW Branch": {
+    #                 "components": [
+    #                     {
+    #                         "component_inlet_node_name": "Main Tower CndW Inlet",
+    #                         "component_name": "Main Tower",
+    #                         "component_object_type": "CoolingTower:SingleSpeed",
+    #                         "component_outlet_node_name": "Main Tower CndW Outlet"
+    #                     }
+    #                 ]
+    #             }
+    #         }
+    #     }
+    #     self.hvac_template._create_water_loop_connectors(
+    #         loop_type='HVACTemplate:Plant:CondenserWaterLoop',
+    #         plant_equipment_branch_dictionary=plant_equipment_branch_dictionary
+    #     )
+    #     return
+
     # todo_eo: make check to ensure loops aren't empty

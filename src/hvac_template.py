@@ -1,4 +1,5 @@
 import re
+import copy
 from epjson_handler import EPJSON
 from expand_objects import ExpandObjects, ExpandThermostat, ExpandZone, ExpandSystem, ExpandPlantLoop, \
     ExpandPlantEquipment
@@ -389,6 +390,101 @@ class HVACTemplate(EPJSON):
                                              '{}, but the process failed to attach the create objects'
                                              .format(epl_name))
         return
+
+    @staticmethod
+    def _get_plant_equipment_waterloop_branches_by_loop_type(loop_type, plant_equipment_class_objects):
+        """
+        Extract plant equipment branches by loop type and store in epJSON formatted dictionary
+
+        :param loop_type: loop template type (HVACTemplate:Plant:.*Loop) format
+        :param plant_equipment_class_objects: dictionary of ExpandPlantEquipment objects
+        :return: epJSON formatted dictionary of branch objects for loop connections
+        """
+        branch_dictionary = {}
+        for pe in plant_equipment_class_objects.values():
+            branch_objects = copy.deepcopy(pe.epjson.get('Branch', {}))
+            # Special handling for chillers with condenser water and chilled water branches
+            if pe.template_type == 'HVACTemplate:Plant:Chiller' and getattr(pe, 'condenser_type', None) == 'WaterCooled':
+                for branch_name, branch_structure in branch_objects.items():
+                    if 'chilledwater' in loop_type.lower() and 'chw' in branch_name.lower():
+                        branch_dictionary.update({branch_name: branch_objects[branch_name]})
+                    if 'condenserwater' in loop_type.lower() and 'cnd' in branch_name.lower():
+                        branch_dictionary.update({branch_name: branch_objects[branch_name]})
+            # typical handling when all plant equipment branches belong in one loop
+            elif pe.template_plant_loop_type in loop_type:
+                branch_dictionary.update(branch_objects)
+        if branch_dictionary:
+            return {'Branch': branch_dictionary}
+        else:
+            return None
+
+    @staticmethod
+    def _get_zone_system_waterloop_branches_by_loop_type(loop_type, zone_class_objects, system_class_objects):
+        """
+        Extract zone and system branch objects by loop type and store in epJSON formatted dictionary
+
+        :param loop_type: loop template type (HVACTemplate:Plant:.*Loop) format
+        :param zone_class_objects: ExpandZone objects
+        :param system_class_objects: ExpandSystem objects
+        :return: epJSON formatted dictionary of branch objects
+        """
+        # create list of regex matches for the given loop
+        if 'chilledwater' in loop_type.lower():
+            branch_rgx = ['^Coil:Cooling:Water.*', ]
+        elif 'hotwater' in loop_type.lower():
+            branch_rgx = ['^Coil:Heating:Water.*', '^ZoneHVAC:Baseboard.*Water']
+        elif 'mixedwater' in loop_type.lower():
+            branch_rgx = ['^Coil:.*HeatPump.*']
+        else:
+            InvalidTemplateException('an invalid loop type was specified when creating plant loop connections: {}'
+                                     .format(loop_type))
+        branch_dictionary = {}
+        object_list = [zone_class_objects, system_class_objects]
+        for class_object in object_list:
+            for co in class_object.values():
+                branch_objects = copy.deepcopy(co.epjson.get('Branch', {}))
+                for branch_name, branch_structure in branch_objects.items():
+                    for br in branch_rgx:
+                        if re.match(br, branch_structure['components'][0]['component_object_type']):
+                            branch_dictionary.update({branch_name: branch_objects[branch_name]})
+        if branch_dictionary:
+            return {'Branch': branch_dictionary}
+        else:
+            return None
+
+    # @staticmethod
+    # def _create_water_loop_connectors(
+    #         loop_type,
+    #         plant_equipment_branch_dictionary,
+    #         zone_system_branch_dictionary={}):
+    #     connector_objects = {
+    #         'BranchList': {},
+    #         'Connector:Mixer': {},
+    #         'Connector:Splitter': {},
+    #         'ConnectorList': {}
+    #     }
+    #     demand_branches = {}
+    #     supply_branches = {}
+    #     # Special handling for chilled water loop
+    #     if 'condenserwater' in loop_type.lower():
+    #         pebd = copy.deepcopy(plant_equipment_branch_dictionary)
+    #         for object_name, object_structure in plant_equipment_branch_dictionary['Branch'].items():
+    #             if re.match(r'Chiller:.*', object_structure['components'][0]['component_object_type']):
+    #                 demand_branches.update({object_name: pebd['Branch'].pop(object_name)})
+    #         supply_branches = pebd['Branch']
+    #     else:
+    #         demand_branches = zone_system_branch_dictionary
+    #         supply_branches = plant_equipment_branch_dictionary
+    #     # check to make sure loops aren't empty
+    #     if not demand_branches or not supply_branches:
+    #         raise InvalidTemplateException('Demand or supply branches are empty for water loop connectors: Demand: {}, '
+    #                                        'Supply: {}, Loop {}'.format(demand_branches, supply_branches, loop_type))
+    #     formatted_demand_branchlist = [{"branch_name": i} for i in demand_branches.keys()]
+    #     formatted_supply_branchlist = [{"branch_name": i} for i in supply_branches.keys()]
+    #     print(formatted_demand_branchlist)
+    #     print(formatted_supply_branchlist)
+    #     # todo_eo: build objects from formatted lists
+    #     return
 
     def run(self, input_epjson=None):
         """
