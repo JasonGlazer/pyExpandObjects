@@ -46,7 +46,7 @@ def main(args=None):
     output = {'outputPreProcessorMessage': ''}
     if isinstance(args.file, str):
         file_suffix_check = args.file.endswith('.epJSON')
-    elif isinstance(args.file, pathlib.PosixPath):
+    elif isinstance(args.file, (pathlib.PosixPath, pathlib.WindowsPath)):
         file_suffix_check = args.file.suffix == '.epJSON'
     else:
         raise InvalidInputException('Invalid input file reference')  # pragma: no cover - unlikely to be hit
@@ -63,7 +63,7 @@ def main(args=None):
                 else:
                     output[output_key] = output_val
             # get output directory
-            if hasattr(args, 'output_directory'):
+            if hasattr(args, 'output_directory') and args.output_directory:
                 output_directory = args.output_directory
             else:
                 output_directory = os.path.dirname(os.path.abspath(args.file))

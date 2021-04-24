@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import csv
 import re
+import sys
+import os
 
 from src.epjson_handler import EPJSON
 
@@ -81,31 +83,43 @@ class BaseSimulationTest(object):
         finished_statuses = []
         for file_path in epjson_files:
             # move files from previous runs, rm is too dangerous
-            subprocess.run(
-                [
-                    'mv',
+            try:
+                os.rename(
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl.csv'),
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl_previous.csv')
-                ]
-            )
-            subprocess.run(
-                [
-                    'mv',
+                )
+            except:
+                pass
+            try:
+                os.rename(
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.end'),
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.end')
-                ]
-            )
-            subprocess.run(
-                [
-                    'wine',
-                    str(test_dir / '..' / 'simulation' / 'energyplus.exe'),
-                    '-d',
-                    str(test_dir / '..' / 'simulation' / 'test'),
-                    '-w',
-                    str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
-                    file_path
-                ]
-            )
+                )
+            except:
+                pass
+            if sys.platform.startswith('win'):
+                subprocess.run(
+                    [
+                        str(test_dir / '..' / 'simulation' / 'energyplus.exe'),
+                        '-d',
+                        str(test_dir / '..' / 'simulation' / 'test'),
+                        '-w',
+                        str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
+                        str(file_path)
+                    ]
+                )
+            else:
+                subprocess.run(
+                    [
+                        'wine',
+                        str(test_dir / '..' / 'simulation' / 'energyplus.exe'),
+                        '-d',
+                        str(test_dir / '..' / 'simulation' / 'test'),
+                        '-w',
+                        str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
+                        file_path
+                    ]
+                )
             total_energy = 0
             # get sum of total row to use as comparison
             with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl.csv'), 'r') as f:
