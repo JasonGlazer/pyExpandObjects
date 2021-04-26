@@ -3,7 +3,7 @@ import copy
 from epjson_handler import EPJSON
 from expand_objects import ExpandObjects, ExpandThermostat, ExpandZone, ExpandSystem, ExpandPlantLoop, \
     ExpandPlantEquipment
-from custom_exceptions import InvalidTemplateException, InvalidEpJSONException
+from custom_exceptions import InvalidTemplateException, InvalidEpJSONException, PyExpandObjectsYamlStructureException
 
 
 class HVACTemplate(EPJSON):
@@ -215,7 +215,7 @@ class HVACTemplate(EPJSON):
         AirLoopHVAC:ReturnPath and AirLoopHVAC:ReturnPlenum/AirLoopHVAC:ZoneMixer.
 
         :param system_class_object: Expanded HVACTemplate:System:.* class object
-        :param expanded_zones: list of ExpandZone objects
+        :param expanded_zones: dictionary of ExpandZone objects
         :return: system supply air connection objects.  AirLoopHVAC:SupplyPath object and either
             AirLoopHVAC:SupplyPlenum or AirLoopHVAC:ZoneSplitter object as well ass AirLoopHVAC:ReturnPath and either
             AirLoopHVAC:ReturnPlenum or AirLoopHVAC:ZoneMixer.
@@ -308,20 +308,20 @@ class HVACTemplate(EPJSON):
         )
         return resolved_path_dictionary
 
-    def _create_loop_template_from_plant_equipment(self, plant_equipment_class_object, plant_loop_class_objects):
+    def _create_loop_template_from_plant_equipment(self, plant_equipment_class_object, expanded_plant_loops):
         """
         Create plant loop templates from ExpandPlantEquipment object attributes.  These outputs will be used as inputs
         to the initialize a new ExpandPlantLoop class.  This process must be performed because ExpandPlantLoop must be
         run before ExpandPlantEquipment.  However, certain equipment inputs can cause for new loops to be created.
 
-        :param plant_equipment_class_object: ExpandPlantEquipment object
-        :param plant_loop_class_objects: ExpandPlantLoop objects
+        :param plant_equipment_class_object: ExpandPlantEquipment class object
+        :param expanded_plant_loops: ExpandPlantLoop objects
         :return: Dictionary of HVAC:Template:Plant template objects to create an ExpandPlantLoop object
         """
         # create dictionary to store plant loops
         plant_loop_dictionary = {}
         # get each loop type specified in the existing plant loop class objects
-        plant_loops = [getattr(pl, 'template_type').lower() for pl in plant_loop_class_objects.values()]
+        plant_loops = [getattr(pl, 'template_type').lower() for pl in expanded_plant_loops.values()]
         # create condenser water loop for water cooled condensers
         if getattr(plant_equipment_class_object, 'template_type', None).lower() == 'hvactemplate:plant:chiller' \
                 and getattr(plant_equipment_class_object, 'condenser_type', None).lower() == 'watercooled' \
@@ -329,7 +329,7 @@ class HVACTemplate(EPJSON):
             # try to get the chilled water loop attributes to transition to condneser water
             chw_loop = [
                 pl for pl
-                in plant_loop_class_objects.values()
+                in expanded_plant_loops.values()
                 if getattr(pl, 'template_type').lower() == 'hvactemplate:plant:chilledwaterloop']
             cndw_attributes = {}
             if chw_loop:
@@ -355,19 +355,19 @@ class HVACTemplate(EPJSON):
 
     def _create_additional_plant_loops_from_equipment(
             self,
-            plant_equipment_class_objects,
-            plant_loop_class_objects):
+            expanded_plant_equipment,
+            expanded_plant_loops):
         """
         Create additional HVACTemplate:Plant:.*Loops based on HVACTemplate:Plant:(Chiller|Tower|Boiler) inputs
 
-        :param plant_equipment_class_objects: ExpandPlantEquipment objects
-        :param plant_loop_class_objects: ExpandPlantLoop objects
+        :param expanded_plant_equipment: ExpandPlantEquipment objects
+        :param expanded_plant_loops: ExpandPlantLoop objects
         :return: Additional plant loop templates and objects added to the class attributes
         """
-        for epl_name, epl in plant_equipment_class_objects.items():
+        for epl_name, epl in expanded_plant_equipment.items():
             plant_loop_template = self._create_loop_template_from_plant_equipment(
                 plant_equipment_class_object=epl,
-                plant_loop_class_objects=plant_loop_class_objects)
+                expanded_plant_loops=expanded_plant_loops)
             # If a plant loop was created, reprocess it here.
             if plant_loop_template:
                 # add new plant loop to the templates
@@ -383,8 +383,8 @@ class HVACTemplate(EPJSON):
                 )
                 try:
                     for expanded_name, expanded_object in additional_plant_loops.items():
-                        if expanded_name not in plant_loop_class_objects.keys():
-                            plant_loop_class_objects[expanded_name] = expanded_object
+                        if expanded_name not in expanded_plant_loops.keys():
+                            expanded_plant_loops[expanded_name] = expanded_object
                 except (AttributeError, ValueError):
                     InvalidTemplateException('A Plant loop was specified to be created from a plant equipment object '
                                              '{}, but the process failed to attach the create objects'
@@ -392,16 +392,16 @@ class HVACTemplate(EPJSON):
         return
 
     @staticmethod
-    def _get_plant_equipment_waterloop_branches_by_loop_type(loop_type, plant_equipment_class_objects):
+    def _get_plant_equipment_waterloop_branches_by_loop_type(loop_type, expanded_plant_equipment):
         """
         Extract plant equipment branches by loop type and store in epJSON formatted dictionary
 
         :param loop_type: loop template type (HVACTemplate:Plant:.*Loop) format
-        :param plant_equipment_class_objects: dictionary of ExpandPlantEquipment objects
+        :param expanded_plant_equipment: dictionary of ExpandPlantEquipment objects
         :return: epJSON formatted dictionary of branch objects for loop connections
         """
         branch_dictionary = {}
-        for pe in plant_equipment_class_objects.values():
+        for pe in expanded_plant_equipment.values():
             branch_objects = copy.deepcopy(pe.epjson.get('Branch', {}))
             # Special handling for chillers with condenser water and chilled water branches
             if pe.template_type == 'HVACTemplate:Plant:Chiller' and getattr(pe, 'condenser_type', None) == 'WaterCooled':
@@ -419,27 +419,30 @@ class HVACTemplate(EPJSON):
             return None
 
     @staticmethod
-    def _get_zone_system_waterloop_branches_by_loop_type(loop_type, zone_class_objects, system_class_objects):
+    def _get_zone_system_waterloop_branches_by_loop_type(
+            plant_loop_class_object,
+            expanded_zones,
+            expanded_systems):
         """
         Extract zone and system branch objects by loop type and store in epJSON formatted dictionary
 
-        :param loop_type: loop template type (HVACTemplate:Plant:.*Loop) format
-        :param zone_class_objects: ExpandZone objects
-        :param system_class_objects: ExpandSystem objects
+        :param plant_loop_class_object: ExpandPlantLoop class object
+        :param expanded_zones: ExpandZone objects
+        :param expanded_systems: ExpandSystem objects
         :return: epJSON formatted dictionary of branch objects
         """
         # create list of regex matches for the given loop
-        if 'chilledwater' in loop_type.lower():
+        if 'chilledwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:Cooling:Water.*', ]
-        elif 'hotwater' in loop_type.lower():
+        elif 'hotwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:Heating:Water.*', '^ZoneHVAC:Baseboard.*Water']
-        elif 'mixedwater' in loop_type.lower():
+        elif 'mixedwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:.*HeatPump.*']
         else:
             InvalidTemplateException('an invalid loop type was specified when creating plant loop connections: {}'
-                                     .format(loop_type))
+                                     .format(plant_loop_class_object.template_type))
         branch_dictionary = {}
-        object_list = [zone_class_objects, system_class_objects]
+        object_list = [expanded_zones, expanded_systems]
         for class_object in object_list:
             for co in class_object.values():
                 branch_objects = copy.deepcopy(co.epjson.get('Branch', {}))
@@ -452,39 +455,86 @@ class HVACTemplate(EPJSON):
         else:
             return None
 
-    # @staticmethod
-    # def _create_water_loop_connectors(
-    #         loop_type,
-    #         plant_equipment_branch_dictionary,
-    #         zone_system_branch_dictionary={}):
-    #     connector_objects = {
-    #         'BranchList': {},
-    #         'Connector:Mixer': {},
-    #         'Connector:Splitter': {},
-    #         'ConnectorList': {}
-    #     }
-    #     demand_branches = {}
-    #     supply_branches = {}
-    #     # Special handling for chilled water loop
-    #     if 'condenserwater' in loop_type.lower():
-    #         pebd = copy.deepcopy(plant_equipment_branch_dictionary)
-    #         for object_name, object_structure in plant_equipment_branch_dictionary['Branch'].items():
-    #             if re.match(r'Chiller:.*', object_structure['components'][0]['component_object_type']):
-    #                 demand_branches.update({object_name: pebd['Branch'].pop(object_name)})
-    #         supply_branches = pebd['Branch']
-    #     else:
-    #         demand_branches = zone_system_branch_dictionary
-    #         supply_branches = plant_equipment_branch_dictionary
-    #     # check to make sure loops aren't empty
-    #     if not demand_branches or not supply_branches:
-    #         raise InvalidTemplateException('Demand or supply branches are empty for water loop connectors: Demand: {}, '
-    #                                        'Supply: {}, Loop {}'.format(demand_branches, supply_branches, loop_type))
-    #     formatted_demand_branchlist = [{"branch_name": i} for i in demand_branches.keys()]
-    #     formatted_supply_branchlist = [{"branch_name": i} for i in supply_branches.keys()]
-    #     print(formatted_demand_branchlist)
-    #     print(formatted_supply_branchlist)
-    #     # todo_eo: build objects from formatted lists
-    #     return
+    def _create_water_loop_connectors(
+            self,
+            plant_loop_class_object,
+            plant_equipment_branch_dictionary,
+            zone_system_branch_dictionary={}):
+        connector_objects = {
+            'BranchList': {},
+            'Connector:Mixer': {},
+            'Connector:Splitter': {},
+            'ConnectorList': {}
+        }
+        demand_branches = {}
+        # Special handling for chilled water loop
+        if 'condenserwater' in plant_loop_class_object.template_type.lower():
+            pebd = copy.deepcopy(plant_equipment_branch_dictionary)
+            for object_name, object_structure in plant_equipment_branch_dictionary['Branch'].items():
+                if re.match(r'Chiller:.*', object_structure['components'][0]['component_object_type']):
+                    demand_branches.update({object_name: pebd['Branch'].pop(object_name)})
+            supply_branches = pebd['Branch']
+        else:
+            demand_branches = zone_system_branch_dictionary
+            supply_branches = plant_equipment_branch_dictionary
+        # check to make sure loops aren't empty
+        if not demand_branches or not supply_branches:
+            raise InvalidTemplateException('Demand or supply branches are empty for water loop connectors: Demand: {}, '
+                                           'Supply: {}, Loop {}'.format(demand_branches, supply_branches,
+                                                                        plant_loop_class_object.template_type))
+        # Use ExpandObjects class for helper functions
+        eo = ExpandObjects()
+        eo.unique_name = getattr(plant_loop_class_object, 'template_name')
+        # create branchlists
+        demand_branchlist = eo.get_structure(
+            structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'Demand'])
+        # create connector objects
+        supply_branchlist = eo.get_structure(
+            structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'Supply']
+        )
+        connector_demand_splitter = eo.get_structure(
+            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'Demand'])
+        connector_demand_mixer = eo.get_structure(
+            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'Demand'])
+        connector_supply_splitter = eo.get_structure(
+            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'Supply'])
+        connector_supply_mixer = eo.get_structure(
+            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'Supply'])
+        # apply branches
+        try:
+            for branch in demand_branches:
+                demand_branchlist['branches'].insert(1, {'branch_name': branch})
+                connector_demand_splitter['branches'].insert(0, {'outlet_branch_name': branch})
+                connector_demand_mixer['branches'].insert(0, {'inlet_branch_name': branch})
+            for branch in supply_branches:
+                supply_branchlist['branches'].insert(1, {'branch_name': branch})
+                connector_supply_splitter['branches'].insert(0, {'outlet_branch_name': branch})
+                connector_supply_mixer['branches'].insert(0, {'inlet_branch_name': branch})
+        except AttributeError:
+            PyExpandObjectsYamlStructureException('AutoCreated PlantLoop Connector YAML object was '
+                                                  'improperly formatted')
+        # add connector list
+        connectorlist = eo.get_structure(
+            structure_hierarchy=['AutoCreated', 'PlantLoop', 'ConnectorList', 'Demand']
+        )
+        # format yaml objects into epJSON dictionaries, resolve, and output
+        connector_dictionary = eo.yaml_list_to_epjson_dictionaries(
+            yaml_list=[
+                {'BranchList': demand_branchlist},
+                {'BranchList': supply_branchlist},
+                {'Connector:Splitter': connector_demand_splitter},
+                {'Connector:Splitter': connector_supply_splitter},
+                {'Connector:Mixer': connector_demand_mixer},
+                {'Connector:Mixer': connector_supply_mixer},
+                {'ConnectorList': connectorlist}
+            ])
+        resolved_path_dictionary = eo.resolve_objects(epjson=connector_dictionary)
+        # save output to class epsjon
+        self.merge_epjson(
+            super_dictionary=self.epjson,
+            object_dictionary=resolved_path_dictionary
+        )
+        return
 
     def run(self, input_epjson=None):
         """
@@ -534,8 +584,8 @@ class HVACTemplate(EPJSON):
             plant_loop_class_objects=self.expanded_plant_loops)
         # Pass through expanded plant equipment objects to create additional plant loops if necessary
         self._create_additional_plant_loops_from_equipment(
-            plant_equipment_class_objects=self.expanded_plant_equipment,
-            plant_loop_class_objects=self.expanded_plant_loops
+            expanded_plant_equipment=self.expanded_plant_equipment,
+            expanded_plant_loops=self.expanded_plant_loops
         )
         self.logger.info('##### Building Plant-Plant Equipment Connections #####')
 

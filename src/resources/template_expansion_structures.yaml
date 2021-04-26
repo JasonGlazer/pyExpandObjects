@@ -1,5 +1,25 @@
 GlobalNames:
-  Plant:
+  PlantLoop:
+    DemandBypassBranch: &DemandBypassBranch
+      '{} Demand Bypass Branch'
+    DemandInletBranch: &DemandInletBranch
+      '{} Demand Inlet Branch'
+    DemandOutletBranch: &DemandOutletBranch
+      '{} Demand Outlet Branch'
+    DemandMixer: &DemandMixer
+      '{} Demand Mixer'
+    DemandSplitter: &DemandSplitter
+      '{} Demand Splitter'
+    SupplyBypassBranch: &SupplyBypassBranch
+      '{} Supply Bypass Branch'
+    SupplyInletBranch: &SupplyInletBranch
+      '{} Supply Inlet Branch'
+    SupplyOutletBranch: &SupplyOutletBranch
+      '{} Supply Outlet Branch'
+    SupplyMixer: &SupplyMixer
+      '{} Supply Mixer'
+    SupplySplitter: &SupplySplitter
+      '{} Supply Splitter'
     SupplySetpointNodes: &SupplySetpointNodes
       '{} Supply Setpoint Nodes'
   System:
@@ -248,14 +268,14 @@ Objects:
   Pump:
     CommonObjects:
       - Branch: &PumpBranchVariableSpeedSupplyInlet
-          name: '{} Supply Inlet Branch'
+          name: *SupplyInletBranch
           components:
             - component_object_type: Pump:VariableSpeed
               component_name: '{} Supply Pump'
               component_inlet_node_name: '{} Supply Inlet'
               component_outlet_node_name: '{} Supply Inlet Pump Outlet'
       - Branch: &PumpBranchConstantSpeedSupplyInlet
-          name: '{} Supply Inlet Branch'
+          name: *SupplyInletBranch
           components:
             - component_object_type: Pump:ConstantSpeed
               component_name: '{} Supply Pump'
@@ -391,6 +411,56 @@ Objects:
           zone_return_air_node_or_nodelist_name: *ReturnOutlet
 
 AutoCreated:
+  PlantLoop:
+    BranchList:
+      Demand:
+        name: '{} Demand Side Branches'
+        branches:
+          - branch_name: *DemandInletBranch
+          - branch_name: *DemandBypassBranch
+          - branch_name: *DemandOutletBranch
+      Supply:
+        name: '{} Supply Side Branches'
+        branches:
+          - branch_name: *SupplyInletBranch
+          - branch_name: *SupplyBypassBranch
+          - branch_name: *SupplyOutletBranch
+    Connector:
+      Mixer:
+        Demand:
+          name: *DemandMixer
+          outlet_branch_name: *DemandOutletBranch
+          branches:
+            - inlet_branch_name: *DemandBypassBranch
+        Supply:
+          name: *SupplyMixer
+          outlet_branch_name: *SupplyOutletBranch
+          branches:
+            - inlet_branch_name: *SupplyBypassBranch
+      Splitter:
+        Demand:
+          name: *DemandSplitter
+          inlet_branch_name: *DemandInletBranch
+          branches:
+            - outlet_branch_name: *DemandBypassBranch
+        Supply:
+          name: *SupplySplitter
+          inlet_branch_name: *SupplyInletBranch
+          branches:
+            - outlet_branch_name: *SupplyBypassBranch
+    ConnectorList:
+      Demand:
+        name: '{} Demand Side Connectors'
+        connector_1_object_type: Connector:Splitter
+        connector_1_name: *DemandSplitter
+        connector_2_object_type: Connector:Mixer
+        connector_2_name: *DemandMixer
+      Supply:
+        name: '{} Demand Side Connectors'
+        connector_1_object_type: Connector:Splitter
+        connector_1_name: *SupplySplitter
+        connector_2_object_type: Connector:Mixer
+        connector_2_name: *SupplyMixer
   System:
     AirLoopHVAC:
       ControllerList:
@@ -537,7 +607,7 @@ Groupings:
           inlet_node_name: '{} Supply Bypass Inlet'
           outlet_node_name: '{} Supply Bypass Outlet'
       - Branch:
-          name: '{} Supply Bypass Branch'
+          name: *SupplyBypassBranch
           components:
             - component_object_type: Pipe:Adiabatic
               component_name: '{} Supply Bypass Pipe'
@@ -548,7 +618,7 @@ Groupings:
           inlet_node_name: '{} Supply Outlet Pipe Inlet'
           outlet_node_name: '{} Supply Outlet'
       - Branch:
-          name: '{} Supply Outlet Branch'
+          name: *SupplyOutletBranch
           components:
             - component_object_type: Pipe:Adiabatic
               component_name: '{} Supply Outlet Pipe'
@@ -559,7 +629,7 @@ Groupings:
           inlet_node_name: '{} Demand Bypass Inlet'
           outlet_node_name: '{} Demand Bypass Outlet'
       - Branch:
-          name: '{} Demand Bypass Branch'
+          name: *DemandBypassBranch
           components:
             - component_object_type: Pipe:Adiabatic
               component_name: '{} Demand Bypass Pipe'
@@ -570,7 +640,7 @@ Groupings:
           inlet_node_name: '{} Demand Outlet Pipe Inlet'
           outlet_node_name: '{} Demand Outlet'
       - Branch:
-          name: '{} Demand Outlet Branch'
+          name: *DemandOutletBranch
           components:
             - component_object_type: Pipe:Adiabatic
               component_name: '{} Demand Outlet Pipe'
@@ -582,7 +652,7 @@ Groupings:
           inlet_node_name: '{} Demand Inlet'
           outlet_node_name: '{} Demand Inlet Pipe Outlet'
       - Branch:
-          name: '{} Demand Inlet Branch'
+          name: *DemandInletBranch
           components:
             - component_object_type: Pipe:Adiabatic
               component_name: '{} Demand Inlet Pipe'
@@ -611,7 +681,7 @@ Groupings:
           inlet_node_name: '{} Demand Inlet'
           outlet_node_name: '{} Demand Inlet Pipe Outlet'
       - Branch:
-          name: '{} Demand Inlet Branch'
+          name: *DemandInletBranch
           components:
             - component_object_type: Pipe:Adiabatic
               component_name: '{} Demand Inlet Pipe'
