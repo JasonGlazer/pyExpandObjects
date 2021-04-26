@@ -216,6 +216,28 @@ Objects:
             ^Coil:(Cooling|Heating):Water.*: air_outlet_node_name
           actuator_node_name:
             ^Coil:(Cooling|Heating):Water.*: water_inlet_node_name
+  CoolingTower:
+    SingleSpeed:
+      Base:
+        Fields: &CoolingTowerSingleSpeed
+          name: '{}'
+          blowdown_calculation_mode: ConcentrationRatio
+          blowdown_concentration_ratio: 3,
+          capacity_control: FanCycling
+          design_air_flow_rate: Autosize
+          design_fan_power: Autosize
+          design_u_factor_times_area_value: Autosize
+          design_water_flow_rate: Autosize
+          drift_loss_percent: 0.008
+          evaporation_loss_mode: SaturatedExit
+          free_convection_capacity: Autocalculate
+          free_convection_regime_air_flow_rate": Autocalculate
+          free_convection_regime_u_factor_times_area_value: Autocalculate,
+          outdoor_air_inlet_node_name: '{} Outdoor Air Inlet Node'
+          performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+          sizing_factor: 1.0,
+          water_inlet_node_name: '{} Inlet'
+          water_outlet_node_name: '{} Outlet'
   DesignSpecification:
     OutdoorAir:
       Base:
@@ -1009,6 +1031,10 @@ OptionTree:
             - Pump:VariableSpeed:
                 <<: *PumpVariableSpeed
                 design_pump_head: '{condenser_water_pump_rated_head}' # template attribute set in hvac_template
+      CoolingTower:
+        BaseObjects:
+          Objects:
+            - CoolingTower:SingleSpeed: *CoolingTowerSingleSpeed
       HotWaterLoop:
         BaseObjects:
           Objects:
