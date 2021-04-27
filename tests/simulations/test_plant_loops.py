@@ -77,7 +77,9 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'Pipe:Adiabatic': 'Chilled Water Loop ChW.*',
                 'Pump:ConstantSpeed': 'Chilled Water Loop ChW.*',
                 'SetpointManager:Scheduled': 'Chilled Water Loop ChW.*',
-                'Sizing:Plant': 'Sizing:Plant 2'
+                'Sizing:Plant': 'Sizing:Plant 2',
+                'PlantEquipmentOperation:CoolingLoad': 'Chilled Water Loop Chiller.*',
+                'PlantEquipmentOperationSchemes': 'Chilled Water Loop Chiller.*'
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)
@@ -94,6 +96,10 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
             'Chilled Water Loop ChW Availability List'
         output_epjson['Sizing:Plant']['Chilled Water Loop ChW Sizing Plant']['plant_or_condenser_loop_name'] = \
             'Chilled Water Loop Chilled Water Loop'
+        output_epjson['PlantLoop']['Chilled Water Loop Chilled Water Loop']['plant_equipment_operation_scheme_name'] = \
+            'Chilled Water Loop ChW Operation'
+        output_epjson['PlantEquipmentOperation:CoolingLoad']['Chilled Water Loop ChW All Hours']['range_1_equipment_list_name'] = \
+            "Chilled Water Loop All Chillers"
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,
             file_name='test_input_epjson.epJSON')
@@ -173,7 +179,9 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'Pipe:Adiabatic': 'Chilled Water Loop ChW.*',
                 'Pump:ConstantSpeed': 'Chilled Water Loop ChW.*',
                 'SetpointManager:Scheduled': 'Chilled Water Loop ChW.*',
-                'Sizing:Plant': 'Sizing:Plant 2'
+                'Sizing:Plant': 'Sizing:Plant 2',
+                'PlantEquipmentOperation:CoolingLoad': 'Chilled Water Loop Chiller.*',
+                'PlantEquipmentOperationSchemes': 'Chilled Water Loop Chiller.*'
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)
@@ -193,6 +201,10 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
             'Chilled Water Loop ChW Availability List'
         output_epjson['Sizing:Plant']['Chilled Water Loop ChW Sizing Plant']['plant_or_condenser_loop_name'] = \
             'Chilled Water Loop Chilled Water Loop'
+        output_epjson['PlantLoop']['Chilled Water Loop Chilled Water Loop']['plant_equipment_operation_scheme_name'] = \
+            'Chilled Water Loop ChW Operation'
+        output_epjson['PlantEquipmentOperation:CoolingLoad']['Chilled Water Loop ChW All Hours']['range_1_equipment_list_name'] = \
+            "Chilled Water Loop All Chillers"
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,
             file_name='test_input_epjson.epJSON')
@@ -232,7 +244,9 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'Pipe:Adiabatic': 'Hot Water Loop HW.*',
                 'Pump:ConstantSpeed': 'Hot Water Loop HW.*',
                 'SetpointManager:OutdoorAirReset': 'Chilled Water Loop ChW.*',
-                'Sizing:Plant': 'Sizing:Plant 1'
+                'Sizing:Plant': 'Sizing:Plant 1',
+                'PlantEquipmentOperation:HeatingLoad': 'Hot Water Loop.*',
+                'PlantEquipmentOperationSchemes': 'Hot Water Loop.*'
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)
@@ -247,6 +261,10 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         # Rename connection objects due to naming discrepancies from old program to new
         output_epjson['Sizing:Plant']['Hot Water Loop HW Sizing Plant']['plant_or_condenser_loop_name'] = \
             'Hot Water Loop Hot Water Loop'
+        output_epjson['PlantLoop']['Hot Water Loop Hot Water Loop']['plant_equipment_operation_scheme_name'] = \
+            'Hot Water Loop HW Operation'
+        output_epjson['PlantEquipmentOperation:HeatingLoad']['Hot Water Loop HW All Hours']['range_1_equipment_list_name'] = \
+            "Hot Water Loop All Equipment"
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,
             file_name='test_input_epjson.epJSON')

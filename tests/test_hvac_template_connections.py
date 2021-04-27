@@ -447,8 +447,13 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                     if k not in expanded_plant_equipment.keys():
                         expanded_plant_equipment[k] = v
         eo = ExpandObjects()
-        self.assertEqual(
-            {'Branch': 5, 'Pipe:Adiabatic': 5, 'Pump:VariableSpeed': 1},
+        self.assertEqual({
+            'Branch': 5,
+            'Pipe:Adiabatic': 5,
+            'PlantEquipmentOperation:CoolingLoad': 1,
+            'PlantEquipmentOperationSchemes': 1,
+            'Pump:VariableSpeed': 1,
+            'Schedule:Compact': 1},
             eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
         self.assertIn(
             'CoolingTower:SingleSpeed',
@@ -500,8 +505,13 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                     if k not in expanded_plant_equipment.keys():
                         expanded_plant_equipment[k] = v
         eo = ExpandObjects()
-        self.assertEqual(
-            {'Branch': 5, 'Pipe:Adiabatic': 5, 'Pump:VariableSpeed': 1},
+        self.assertEqual({
+            'Branch': 5,
+            'Pipe:Adiabatic': 5,
+            'PlantEquipmentOperation:CoolingLoad': 1,
+            'PlantEquipmentOperationSchemes': 1,
+            'Pump:VariableSpeed': 1,
+            'Schedule:Compact': 1},
             eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
         self.assertIn(
             'CoolingTower:SingleSpeed',
@@ -550,8 +560,13 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                     if k not in expanded_plant_equipment.keys():
                         expanded_plant_equipment[k] = v
         eo = ExpandObjects()
-        self.assertEqual(
-            {'Branch': 5, 'Pipe:Adiabatic': 5, 'Pump:VariableSpeed': 1},
+        self.assertEqual({
+            'Branch': 5,
+            'Pipe:Adiabatic': 5,
+            'PlantEquipmentOperation:CoolingLoad': 1,
+            'PlantEquipmentOperationSchemes': 1,
+            'Pump:VariableSpeed': 1,
+            'Schedule:Compact': 1},
             eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
         self.assertEqual(
             2000,
@@ -765,16 +780,86 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         }
         expanded_plant_equipment = {'Test Chiller': epe, 'Test Tower': epe2}
         for epl in plant_loop_class_object.values():
-            self.hvac_template._create_water_loop_connectors(
+            self.hvac_template._create_water_loop_connectors_and_nodelist(
                 plant_loop_class_object=epl,
-                expanded_plant_equipment=expanded_plant_equipment
-            )
+                expanded_plant_equipment=expanded_plant_equipment)
         self.assertEqual(
-            {'BranchList': 2, 'Connector:Mixer': 2, 'Connector:Splitter': 2, 'ConnectorList': 1},
-            self.hvac_template.summarize_epjson(self.hvac_template.epjson)
+            {'BranchList': 2, 'Connector:Mixer': 2, 'Connector:Splitter': 2, 'ConnectorList': 1, 'NodeList': 1},
+            self.hvac_template.summarize_epjson(self.hvac_template.epjson))
+        return
+
+    def test_plantequipmentlist_objects(self):
+        epl = MagicMock()
+        epl.template_name = 'Chilled Water Loop'
+        epl.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
+        plant_loop_class_object = {'Test Plant Loop': epl}
+        epe = MagicMock()
+        epe.template_type = 'HVACTemplate:Plant:Chiller'
+        epe.template_plant_loop_type = 'ChilledWater'
+        epe.condenser_type = 'WaterCooled'
+        epe.epjson = {
+            'Branch': {
+                "Main Chiller ChW Branch": {
+                    "components": [
+                        {
+                            "component_inlet_node_name": "Main Chiller ChW Inlet",
+                            "component_name": "Main Chiller",
+                            "component_object_type": "Chiller:Electric:EIR",
+                            "component_outlet_node_name": "Main Chiller ChW Outlet"
+                        }
+                    ]
+                },
+                'Main Chiller CndW Branch': {'components': [{'component_inlet_node_name': 'Main Chiller Cnd Inlet',
+                                                             'component_name': 'Main Chiller',
+                                                             'component_object_type': 'Chiller:Electric:EIR',
+                                                             'component_outlet_node_name': 'Main Chiller Cnd Outlet'}]}
+            }
+        }
+        expanded_plant_equipment = {'Test Chiller': epe}
+        for epl in plant_loop_class_object.values():
+            self.hvac_template._create_plant_equipment_lists(
+                plant_loop_class_object=epl,
+                expanded_plant_equipment=expanded_plant_equipment)
+        self.assertEqual(
+            'Main Chiller',
+            self.hvac_template.epjson['PlantEquipmentList']['Chilled Water Loop All Equipment']
+            ['equipment'][0]['equipment_name']
         )
         return
 
-    # todo_eo: PlantEquipmentList next
-    # todo_eo: supply setpoint nodes
+    def test_condenserequipmentlist_objects(self):
+        epl = MagicMock()
+        epl.template_name = 'Condenser Water Loop'
+        epl.template_type = 'HVACTemplate:Plant:CondenserWaterLoop'
+        plant_loop_class_object = {'Test Plant Loop': epl}
+        epe = MagicMock()
+        epe.template_type = 'HVACTemplate:Plant:CoolingTower'
+        epe.template_plant_loop_type = 'CondenserWater'
+        epe.epjson = {
+            'Branch': {
+                "Main Tower CndW Branch": {
+                    "components": [
+                        {
+                            "component_inlet_node_name": "Main Tower CndW Inlet",
+                            "component_name": "Main Tower",
+                            "component_object_type": "CoolingTower:SingleSpeed",
+                            "component_outlet_node_name": "Main Tower CndW Outlet"
+                        }
+                    ]
+                }
+            }
+        }
+        expanded_plant_equipment = {'Test Chiller': epe}
+        for epl in plant_loop_class_object.values():
+            self.hvac_template._create_plant_equipment_lists(
+                plant_loop_class_object=epl,
+                expanded_plant_equipment=expanded_plant_equipment)
+        self.assertEqual(
+            'Main Tower',
+            self.hvac_template.epjson['CondenserEquipmentList']['Condenser Water Loop All Equipment']
+            ['equipment'][0]['equipment_name']
+        )
+        return
+
+    # todo_eo: PlantLoop and CondenserLoop next in yaml?
     # todo_eo: make check to ensure loops aren't empty

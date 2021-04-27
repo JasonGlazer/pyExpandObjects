@@ -1,5 +1,7 @@
 GlobalNames:
   PlantLoop:
+    CondenserEquipmentList: &CondenserEquipmentList
+      '{} All Equipment'
     DemandBypassBranch: &DemandBypassBranch
       '{} Demand Bypass Branch'
     DemandInletBranch: &DemandInletBranch
@@ -8,12 +10,18 @@ GlobalNames:
       '{} Demand Outlet Branch'
     DemandMixer: &DemandMixer
       '{} Demand Mixer'
+    PlantEquipmentList: &PlantEquipmentList
+      '{} All Equipment'
+    PlantEquipmentOperation: &PlantEquipmentOperation
+      '{} All Hours'
     DemandSplitter: &DemandSplitter
       '{} Demand Splitter'
     SupplyBypassBranch: &SupplyBypassBranch
       '{} Supply Bypass Branch'
     SupplyInletBranch: &SupplyInletBranch
       '{} Supply Inlet Branch'
+    SupplyOutlet: &SupplyOutlet
+      '{} Supply Outlet'
     SupplyOutletBranch: &SupplyOutletBranch
       '{} Supply Outlet Branch'
     SupplyMixer: &SupplyMixer
@@ -287,6 +295,37 @@ Objects:
           AirLoop:
             Inlet: outdoor_air_stream_node_name
             Outlet: mixed_air_node_name
+  PlantEquipmentOperation:
+    CoolingLoad:
+      ChilledWater:
+        Base:
+          Fields: &PlantEquipmentOperationCoolingLoadChilledWater
+            name: *PlantEquipmentOperation
+            load_range_1_lower_limit: 0
+            load_range_1_upper_limit: 1000000000000000
+            range_1_equipment_list_name: *PlantEquipmentList
+      CondenserWater:
+        Base:
+          Fields: &PlantEquipmentOperationCoolingLoadCondenserWater
+            <<: *PlantEquipmentOperationCoolingLoadChilledWater
+      HotWater:
+        Base:
+          Fields: &PlantEquipmentOperationHeatingLoadHotWater
+            <<: *PlantEquipmentOperationCoolingLoadChilledWater
+  PlantEquipmentOperationSchemes:
+    CoolingLoad:
+      Base:
+        Fields: &PlantEquipmentOperationSchemesCoolingLoad
+          name: '{} Operation'
+          control_scheme_1_name:
+            PlantEquipmentOperation:.*: key
+          control_scheme_1_object_type:
+            PlantEquipmentOperation:.*: self
+          control_scheme_1_schedule_name: HVACTemplate-Always1
+    HeatingLoad:
+      Base:
+        Fields: &PlantEquipmentOperationSchemesHeatingLoad
+          <<: *PlantEquipmentOperationSchemesCoolingLoad
   Pump:
     CommonObjects:
       - Branch: &PumpBranchVariableSpeedSupplyInlet
@@ -447,6 +486,8 @@ AutoCreated:
           - branch_name: *SupplyInletBranch
           - branch_name: *SupplyBypassBranch
           - branch_name: *SupplyOutletBranch
+    CondenserEquipmentList:
+      name: *CondenserEquipmentList
     Connector:
       Mixer:
         Demand:
@@ -483,6 +524,13 @@ AutoCreated:
         connector_1_name: *SupplySplitter
         connector_2_object_type: Connector:Mixer
         connector_2_name: *SupplyMixer
+    NodeList:
+      Supply:
+        name: *SupplySetpointNodes
+        nodes:
+          - node_name: *SupplyOutlet
+    PlantEquipmentList:
+      name: *PlantEquipmentList
   System:
     AirLoopHVAC:
       ControllerList:
@@ -638,14 +686,14 @@ Groupings:
       - Pipe:Adiabatic:
           name: '{} Supply Outlet Pipe'
           inlet_node_name: '{} Supply Outlet Pipe Inlet'
-          outlet_node_name: '{} Supply Outlet'
+          outlet_node_name: *SupplyOutlet
       - Branch:
           name: *SupplyOutletBranch
           components:
             - component_object_type: Pipe:Adiabatic
               component_name: '{} Supply Outlet Pipe'
               component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
-              component_outlet_node_name: '{} Supply Outlet'
+              component_outlet_node_name: *SupplyOutlet
       - Pipe:Adiabatic:
           name: '{} Demand Bypass Pipe'
           inlet_node_name: '{} Demand Bypass Inlet'
@@ -697,6 +745,8 @@ Groupings:
           schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
       - OutdoorAir:Node:
           name: '{} Outside Air Sensor'
+      - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
+      - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesCoolingLoad
     NoSecondary: &GroupingsPlantNoSecondary
       - Pipe:Adiabatic:
           name: '{} Demand Inlet Pipe'
@@ -1031,6 +1081,8 @@ OptionTree:
             - Pump:VariableSpeed:
                 <<: *PumpVariableSpeed
                 design_pump_head: '{condenser_water_pump_rated_head}' # template attribute set in hvac_template
+            - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadCondenserWater
+            - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesCoolingLoad
       CoolingTower:
         BaseObjects:
           Objects:
@@ -1045,6 +1097,8 @@ OptionTree:
                 loop_type: Heating
                 loop_design_temperature_difference: 11
                 design_loop_exit_temperature: '{hot_water_design_setpoint}'
+            - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadHotWater
+            - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesHeatingLoad
         TemplateObjects:
           hot_water_pump_configuration:
             (None|ConstantFlow):
