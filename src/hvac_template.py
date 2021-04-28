@@ -734,8 +734,7 @@ class HVACTemplate(EPJSON):
             expanded_plant_loops=self.expanded_plant_loops
         )
         self.logger.info('##### Building Plant-Plant Equipment Connections #####')
-        # todo_eo: ExpandPlantEquipment class has template_plant_loop_type attribute which indicates which loop to
-        #  attach to.  Use that for the connections.
+        # todo_eo: uncomment connections and test
         # self._create_water_loop_connectors_and_nodelist
         # self._create_plant_equipment_lists
         self.logger.info('##### Creating epJSON #####')

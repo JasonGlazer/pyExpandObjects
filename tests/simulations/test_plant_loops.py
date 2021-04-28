@@ -6,6 +6,7 @@ from tests import BaseTest
 from tests.simulations import BaseSimulationTest
 from src.hvac_template import HVACTemplate
 from src.epjson_handler import EPJSON
+from src.expand_objects import ExpandPlantLoop
 
 test_dir = Path(__file__).parent.parent
 
@@ -90,8 +91,21 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         )
         # perform steps that would be run in main
         self.hvactemplate = HVACTemplate()
+        self.hvactemplate._hvac_template_preprocess(epjson=test_epjson)
         self.hvactemplate.epjson_process(epjson_ref=test_epjson)
-        output_epjson = self.hvactemplate.run()['epJSON']
+        self.expanded_plant_loops = self.hvactemplate._expand_templates(
+            templates=mock_chw_plant_loop_template,
+            expand_class=ExpandPlantLoop)
+        merge_list = [
+            self.hvactemplate.epjson,
+            self.hvactemplate.base_objects,
+            *[j.epjson for i, j in self.expanded_plant_loops.items()]
+        ]
+        output_epjson = {}
+        for merge_dictionary in merge_list:
+            self.hvactemplate.merge_epjson(
+                super_dictionary=output_epjson,
+                object_dictionary=merge_dictionary)
         # Rename connection objects due to naming discrepancies from old program to new
         output_epjson['PlantEquipmentOperation:CoolingLoad']['Chilled Water Loop ChW All Hours']['range_1_equipment_list_name'] = \
             "Chilled Water Loop All Chillers"
@@ -189,8 +203,21 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         )
         # perform steps that would be run in main
         self.hvactemplate = HVACTemplate()
+        self.hvactemplate._hvac_template_preprocess(epjson=test_epjson)
         self.hvactemplate.epjson_process(epjson_ref=test_epjson)
-        output_epjson = self.hvactemplate.run()['epJSON']
+        self.expanded_plant_loops = self.hvactemplate._expand_templates(
+            templates=tmp_mock,
+            expand_class=ExpandPlantLoop)
+        merge_list = [
+            self.hvactemplate.epjson,
+            self.hvactemplate.base_objects,
+            *[j.epjson for i, j in self.expanded_plant_loops.items()]
+        ]
+        output_epjson = {}
+        for merge_dictionary in merge_list:
+            self.hvactemplate.merge_epjson(
+                super_dictionary=output_epjson,
+                object_dictionary=merge_dictionary)
         # Rename connection objects due to naming discrepancies from old program to new
         output_epjson['PlantEquipmentOperation:CoolingLoad']['Chilled Water Loop ChW All Hours']['range_1_equipment_list_name'] = \
             "Chilled Water Loop All Chillers"
@@ -246,8 +273,21 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         )
         # perform steps that would be run in main
         self.hvactemplate = HVACTemplate()
+        self.hvactemplate._hvac_template_preprocess(epjson=test_epjson)
         self.hvactemplate.epjson_process(epjson_ref=test_epjson)
-        output_epjson = self.hvactemplate.run()['epJSON']
+        self.expanded_plant_loops = self.hvactemplate._expand_templates(
+            templates=mock_hw_plant_loop_template,
+            expand_class=ExpandPlantLoop)
+        merge_list = [
+            self.hvactemplate.epjson,
+            self.hvactemplate.base_objects,
+            *[j.epjson for i, j in self.expanded_plant_loops.items()]
+        ]
+        output_epjson = {}
+        for merge_dictionary in merge_list:
+            self.hvactemplate.merge_epjson(
+                super_dictionary=output_epjson,
+                object_dictionary=merge_dictionary)
         # Rename connection objects due to naming discrepancies from old program to new
         output_epjson['PlantEquipmentOperation:HeatingLoad']['Hot Water Loop HW All Hours']['range_1_equipment_list_name'] = \
             "Hot Water Loop All Equipment"

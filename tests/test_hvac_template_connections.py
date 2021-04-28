@@ -861,5 +861,4 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             ['equipment'][0]['equipment_name'])
         return
 
-    # todo_eo: PlantLoop and CondenserLoop next in yaml?
     # todo_eo: make check to ensure loops aren't empty
