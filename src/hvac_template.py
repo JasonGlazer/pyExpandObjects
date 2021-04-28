@@ -443,6 +443,8 @@ class HVACTemplate(EPJSON):
         for pe in expanded_plant_equipment.values():
             branch_objects = copy.deepcopy(pe.epjson.get('Branch', {}))
             # Special handling for chillers with condenser water and chilled water branches
+            # todo_eo: find a better way to separate the branches instead of searching for chw or cnd in the branch
+            #  names.  It may be unreliable with future user inputs.
             if pe.template_type == 'HVACTemplate:Plant:Chiller' and getattr(pe, 'condenser_type', None) == 'WaterCooled':
                 for branch_name, branch_structure in branch_objects.items():
                     if 'chilledwater' in plant_loop_class_object.template_type.lower() and 'chw' in branch_name.lower():
@@ -471,12 +473,13 @@ class HVACTemplate(EPJSON):
         :return: epJSON formatted dictionary of branch objects
         """
         # create list of regex matches for the given loop
+        # todo_eo: object searching regex need to be expanded.
         if 'chilledwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:Cooling:Water.*', ]
         elif 'hotwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:Heating:Water.*', '^ZoneHVAC:Baseboard.*Water']
         elif 'mixedwater' in plant_loop_class_object.template_type.lower():
-            branch_rgx = ['^Coil:.*HeatPump.*']
+            branch_rgx = ['^Coil:.*HeatPump.*', ]
         elif 'condenserwater' in plant_loop_class_object.template_type.lower():
             return None
         else:
@@ -524,7 +527,7 @@ class HVACTemplate(EPJSON):
         )
         # get branches in the loop
         demand_branches = {}
-        # Special handling for chilled water loop
+        # Special handling for condenser water loop where the chiller objects are the demand side.
         if 'condenserwater' in plant_loop_class_object.template_type.lower():
             pebd = copy.deepcopy(plant_equipment_branch_dictionary)
             for object_name, object_structure in plant_equipment_branch_dictionary['Branch'].items():

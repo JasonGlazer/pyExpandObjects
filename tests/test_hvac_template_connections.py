@@ -724,13 +724,11 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             branch_dictionary = self.hvac_template._get_zone_system_waterloop_branches_by_loop_type(
                 plant_loop_class_object=epl,
                 expanded_zones=zone_class_objects,
-                expanded_systems={}
-            )
+                expanded_systems={})
             output_list.append(branch_dictionary)
         self.assertEqual(
             1,
-            len([i for i in output_list[0]['Branch'].keys()])
-        )
+            len([i for i in output_list[0]['Branch'].keys()]))
         self.assertIsNone(output_list[1])
         return
 
@@ -857,8 +855,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         self.assertEqual(
             'Main Tower',
             self.hvac_template.epjson['CondenserEquipmentList']['Condenser Water Loop All Equipment']
-            ['equipment'][0]['equipment_name']
-        )
+            ['equipment'][0]['equipment_name'])
         return
 
     # todo_eo: PlantLoop and CondenserLoop next in yaml?

@@ -4,30 +4,46 @@ GlobalNames:
       '{} All Equipment'
     DemandBypassBranch: &DemandBypassBranch
       '{} Demand Bypass Branch'
+    DemandInlet: &DemandInlet
+      '{} Demand Inlet'
     DemandInletBranch: &DemandInletBranch
       '{} Demand Inlet Branch'
-    DemandOutletBranch: &DemandOutletBranch
-      '{} Demand Outlet Branch'
     DemandMixer: &DemandMixer
       '{} Demand Mixer'
+    DemandOutlet: &DemandOutlet
+      '{} Demand Outlet'
+    DemandOutletBranch: &DemandOutletBranch
+      '{} Demand Outlet Branch'
+    DemandSplitter: &DemandSplitter
+      '{} Demand Splitter'
+    DemandSideBranches: &DemandSideBranches
+      '{} Demand Side Branches'
+    DemandSideConnectors: &DemandSideConnectors
+      '{} Demand Side Connectors'
     PlantEquipmentList: &PlantEquipmentList
       '{} All Equipment'
     PlantEquipmentOperation: &PlantEquipmentOperation
       '{} All Hours'
-    DemandSplitter: &DemandSplitter
-      '{} Demand Splitter'
+    PlantEquipmentOperationScheme: &PlantEquipmentOperationScheme
+      '{} Operation'
     SupplyBypassBranch: &SupplyBypassBranch
       '{} Supply Bypass Branch'
+    SupplyInlet: &SupplyInlet
+      '{} Supply Inlet'
     SupplyInletBranch: &SupplyInletBranch
       '{} Supply Inlet Branch'
+    SupplyMixer: &SupplyMixer
+      '{} Supply Mixer'
     SupplyOutlet: &SupplyOutlet
       '{} Supply Outlet'
     SupplyOutletBranch: &SupplyOutletBranch
       '{} Supply Outlet Branch'
-    SupplyMixer: &SupplyMixer
-      '{} Supply Mixer'
+    SupplySideConnectors: &SupplySideConnectors
+      '{} Supply Side Connectors'
     SupplySplitter: &SupplySplitter
       '{} Supply Splitter'
+    SupplySideBranches: &SupplySideBranches
+      '{} Supply Side Branches'
     SupplySetpointNodes: &SupplySetpointNodes
       '{} Supply Setpoint Nodes'
   System:
@@ -224,6 +240,26 @@ Objects:
             ^Coil:(Cooling|Heating):Water.*: air_outlet_node_name
           actuator_node_name:
             ^Coil:(Cooling|Heating):Water.*: water_inlet_node_name
+  CondenserLoop:
+    Base:
+      Fields: &CondenserLoopFields
+        condenser_demand_side_branch_list_name: *DemandSideBranches
+        condenser_demand_side_connector_list_name: *DemandSideConnectors
+        condenser_equipment_operation_scheme_name: *PlantEquipmentOperationScheme
+        condenser_loop_temperature_setpoint_node_name: *SupplyOutlet
+        condenser_loop_volume: Autocalculate
+        condenser_side_branch_list_name: *SupplySideBranches
+        condenser_side_connector_list_name: *SupplySideConnectors
+        condenser_side_inlet_node_name: *SupplyInlet
+        condenser_side_outlet_node_name: *SupplyOutlet
+        demand_side_inlet_node_name: *DemandInlet
+        demand_side_outlet_node_name: *DemandOutlet
+        fluid_type: Water
+        load_distribution_scheme: SequentialLoad
+        maximum_loop_flow_rate: Autosize
+        maximum_loop_temperature: 80
+        minimum_loop_flow_rate: 0
+        minimum_loop_temperature: 5
   CoolingTower:
     SingleSpeed:
       Base:
@@ -295,6 +331,36 @@ Objects:
           AirLoop:
             Inlet: outdoor_air_stream_node_name
             Outlet: mixed_air_node_name
+  PlantLoop:
+    Base:
+      Fields: &PlantLoopFields
+        name: '{}'
+        common_pipe_simulation: None
+        demand_side_branch_list_name: *DemandSideBranches
+        demand_side_connector_list_name: *DemandSideConnectors
+        demand_side_inlet_node_name: *DemandInlet
+        demand_side_outlet_node_name: *DemandOutlet
+        fluid_type: Water
+        load_distribution_scheme: SequentialLoad
+        loop_temperature_setpoint_node_name: *SupplyOutlet
+        maximum_loop_flow_rate: Autosize
+        plant_equipment_operation_scheme_name: *PlantEquipmentOperationScheme
+        plant_loop_demand_calculation_scheme: SingleSetpoint
+        plant_loop_volume: Autocalculate
+        plant_side_branch_list_name: *SupplySideBranches
+        plant_side_connector_list_name: *SupplySideConnectors
+        plant_side_inlet_node_name: *SupplyInlet
+        plant_side_outlet_node_name: *SupplyOutlet
+    ChilledWater: &PlantLoopChilledWaterFields
+      <<: *PlantLoopFields
+      maximum_loop_temperature: 98
+      minimum_loop_flow_rate: 0
+      minimum_loop_temperature: 1
+    HotWater:
+      <<: *PlantLoopFields
+      maximum_loop_temperature: 100
+      minimum_loop_flow_rate: 0
+      minimum_loop_temperature: 10
   PlantEquipmentOperation:
     CoolingLoad:
       ChilledWater:
@@ -316,7 +382,7 @@ Objects:
     CoolingLoad:
       Base:
         Fields: &PlantEquipmentOperationSchemesCoolingLoad
-          name: '{} Operation'
+          name: *PlantEquipmentOperationScheme
           control_scheme_1_name:
             PlantEquipmentOperation:.*: key
           control_scheme_1_object_type:
@@ -475,13 +541,13 @@ AutoCreated:
   PlantLoop:
     BranchList:
       Demand:
-        name: '{} Demand Side Branches'
+        name: *DemandSideBranches
         branches:
           - branch_name: *DemandInletBranch
           - branch_name: *DemandBypassBranch
           - branch_name: *DemandOutletBranch
       Supply:
-        name: '{} Supply Side Branches'
+        name: *SupplySideBranches
         branches:
           - branch_name: *SupplyInletBranch
           - branch_name: *SupplyBypassBranch
@@ -513,13 +579,13 @@ AutoCreated:
             - outlet_branch_name: *SupplyBypassBranch
     ConnectorList:
       Demand:
-        name: '{} Demand Side Connectors'
+        name: *DemandSideConnectors
         connector_1_object_type: Connector:Splitter
         connector_1_name: *DemandSplitter
         connector_2_object_type: Connector:Mixer
         connector_2_name: *DemandMixer
       Supply:
-        name: '{} Demand Side Connectors'
+        name: *SupplySideConnectors
         connector_1_object_type: Connector:Splitter
         connector_1_name: *SupplySplitter
         connector_2_object_type: Connector:Mixer
@@ -719,14 +785,14 @@ Groupings:
     PrimaryNoSecondary: &GroupingsPlantLoopPrimaryNoSecondary
       - Pipe:Adiabatic:
           name: '{} Demand Inlet Pipe'
-          inlet_node_name: '{} Demand Inlet'
+          inlet_node_name: *DemandInlet
           outlet_node_name: '{} Demand Inlet Pipe Outlet'
       - Branch:
           name: *DemandInletBranch
           components:
             - component_object_type: Pipe:Adiabatic
               component_name: '{} Demand Inlet Pipe'
-              component_inlet_node_name: '{} Demand Inlet'
+              component_inlet_node_name: *DemandInlet
               component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
     ChilledWater: &GroupingsPlantLoopChilledWater
       - AvailabilityManager:LowTemperatureTurnOff:
@@ -750,14 +816,14 @@ Groupings:
     NoSecondary: &GroupingsPlantNoSecondary
       - Pipe:Adiabatic:
           name: '{} Demand Inlet Pipe'
-          inlet_node_name: '{} Demand Inlet'
+          inlet_node_name: *DemandInlet
           outlet_node_name: '{} Demand Inlet Pipe Outlet'
       - Branch:
           name: *DemandInletBranch
           components:
             - component_object_type: Pipe:Adiabatic
               component_name: '{} Demand Inlet Pipe'
-              component_inlet_node_name: '{} Demand Inlet'
+              component_inlet_node_name: *DemandInlet
               component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
   Zone:
     AirTerminal:
