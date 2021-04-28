@@ -5,6 +5,7 @@ from logging.config import fileConfig
 from io import StringIO
 
 loggers = {}
+stream = StringIO()
 
 this_script_path = Path(__file__).resolve()
 
@@ -73,8 +74,8 @@ class Logger:
             )
         finally:
             # add stream handler for output
-            self.stream = StringIO()
+            self.stream = stream
             handler = logging.StreamHandler(self.stream)
             self.logger.addHandler(handler)
-            self.logger.stream_flush = self.stream.flush
+            self.logger.stream_flush = self.stream.flush()
         return

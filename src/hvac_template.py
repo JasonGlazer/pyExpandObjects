@@ -691,7 +691,7 @@ class HVACTemplate(EPJSON):
         """
         # output_epJSON
         # flush the stream handler
-        self.logger.stream_flush
+        # self.logger.stream_flush
         if not input_epjson:
             if self.input_epjson:
                 input_epjson = self.input_epjson
@@ -734,9 +734,16 @@ class HVACTemplate(EPJSON):
             expanded_plant_loops=self.expanded_plant_loops
         )
         self.logger.info('##### Building Plant-Plant Equipment Connections #####')
-        # todo_eo: uncomment connections and test
-        # self._create_water_loop_connectors_and_nodelist
-        # self._create_plant_equipment_lists
+        # todo_eo: uncomment and test
+        # for expanded_pl in self.expanded_plant_loops.values():
+        #     self._create_water_loop_connectors_and_nodelist(
+        #         plant_loop_class_object=expanded_pl,
+        #         expanded_plant_equipment=self.expanded_plant_equipment,
+        #         expanded_systems=self.expanded_systems,
+        #         expanded_zones=self.expanded_zones)
+        #     self._create_plant_equipment_lists(
+        #         plant_loop_class_object=expanded_pl,
+        #         expanded_plant_equipment=self.expanded_plant_equipment)
         self.logger.info('##### Creating epJSON #####')
         # Merge each set of epJSON dictionaries
         merge_list = [
