@@ -311,3 +311,6 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
             # trigger failure
             self.assertEqual('', comparison_results, comparison_results)
         return
+
+    # todo_eo: test plant loops with connections
+    # todo_eo: do sim tests for plant equipment

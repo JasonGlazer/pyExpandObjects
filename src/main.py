@@ -19,7 +19,7 @@ def build_parser():  # pragma: no cover
     parser.add_argument(
         '--no-schema',
         '-ns',
-        action='store_false',
+        action='store_true',
         help='Skip schema validations')
     parser.add_argument(
         "--file",
@@ -36,13 +36,8 @@ def build_parser():  # pragma: no cover
 
 
 def main(args=None):
-    if hasattr(args, 'no_schema'):
-        no_schema = True
-    else:
-        no_schema = False
     hvt = HVACTemplate(
-        no_schema=no_schema
-    )
+        no_schema=args.no_schema)
     output = {'outputPreProcessorMessage': ''}
     if isinstance(args.file, str):
         file_suffix_check = args.file.endswith('.epJSON')
@@ -79,7 +74,7 @@ def main(args=None):
             output_file_dictionary = {}
             if output.get('epJSON'):
                 # verify expanded epJSON is valid if schema validation is turned on.
-                if not no_schema:
+                if not args.no_schema:
                     hvt.validate_epjson(epjson=output['epJSON'])
                 with open(os.path.join(output_directory, expanded_file_name), 'w') as expanded_file:
                     json.dump(output['epJSON'], expanded_file, indent=4, sort_keys=True)
