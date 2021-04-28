@@ -449,6 +449,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         eo = ExpandObjects()
         self.assertEqual({
             'Branch': 5,
+            'CondenserLoop': 1,
             'Pipe:Adiabatic': 5,
             'PlantEquipmentOperation:CoolingLoad': 1,
             'PlantEquipmentOperationSchemes': 1,
@@ -507,6 +508,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         eo = ExpandObjects()
         self.assertEqual({
             'Branch': 5,
+            'CondenserLoop': 1,
             'Pipe:Adiabatic': 5,
             'PlantEquipmentOperation:CoolingLoad': 1,
             'PlantEquipmentOperationSchemes': 1,
@@ -562,6 +564,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         eo = ExpandObjects()
         self.assertEqual({
             'Branch': 5,
+            'CondenserLoop': 1,
             'Pipe:Adiabatic': 5,
             'PlantEquipmentOperation:CoolingLoad': 1,
             'PlantEquipmentOperationSchemes': 1,

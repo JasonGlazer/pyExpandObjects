@@ -1,5 +1,7 @@
 GlobalNames:
   PlantLoop:
+    AvailabilityManagerList: &AvailabilityManagerList
+     '{} Availability List'
     CondenserEquipmentList: &CondenserEquipmentList
       '{} All Equipment'
     DemandBypassBranch: &DemandBypassBranch
@@ -26,6 +28,8 @@ GlobalNames:
       '{} All Hours'
     PlantEquipmentOperationScheme: &PlantEquipmentOperationScheme
       '{} Operation'
+    PlantLoop: &PlantLoop
+      '{} PlantLoop'
     SupplyBypassBranch: &SupplyBypassBranch
       '{} Supply Bypass Branch'
     SupplyInlet: &SupplyInlet
@@ -243,6 +247,7 @@ Objects:
   CondenserLoop:
     Base:
       Fields: &CondenserLoopFields
+        name: '{}'
         condenser_demand_side_branch_list_name: *DemandSideBranches
         condenser_demand_side_connector_list_name: *DemandSideConnectors
         condenser_equipment_operation_scheme_name: *PlantEquipmentOperationScheme
@@ -334,7 +339,7 @@ Objects:
   PlantLoop:
     Base:
       Fields: &PlantLoopFields
-        name: '{}'
+        name: *PlantLoop
         common_pipe_simulation: None
         demand_side_branch_list_name: *DemandSideBranches
         demand_side_connector_list_name: *DemandSideConnectors
@@ -353,10 +358,11 @@ Objects:
         plant_side_outlet_node_name: *SupplyOutlet
     ChilledWater: &PlantLoopChilledWaterFields
       <<: *PlantLoopFields
+      availability_manager_list_name: *AvailabilityManagerList
       maximum_loop_temperature: 98
       minimum_loop_flow_rate: 0
       minimum_loop_temperature: 1
-    HotWater:
+    HotWater: &PlantLoopHotWaterFields
       <<: *PlantLoopFields
       maximum_loop_temperature: 100
       minimum_loop_flow_rate: 0
@@ -516,7 +522,7 @@ Objects:
     Base:
       Fields: &SizingPlant
         name: '{} Sizing Plant'
-        plant_or_condenser_loop_name: '{} PlantLoop'
+        plant_or_condenser_loop_name: *PlantLoop
   ZoneHVAC:
     AirDistributionUnit:
       Base:
@@ -813,6 +819,7 @@ Groupings:
           name: '{} Outside Air Sensor'
       - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
       - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesCoolingLoad
+      - PlantLoop: *PlantLoopChilledWaterFields
     NoSecondary: &GroupingsPlantNoSecondary
       - Pipe:Adiabatic:
           name: '{} Demand Inlet Pipe'
@@ -1149,6 +1156,7 @@ OptionTree:
                 design_pump_head: '{condenser_water_pump_rated_head}' # template attribute set in hvac_template
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadCondenserWater
             - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesCoolingLoad
+            - CondenserLoop: *CondenserLoopFields
       CoolingTower:
         BaseObjects:
           Objects:
@@ -1165,6 +1173,7 @@ OptionTree:
                 design_loop_exit_temperature: '{hot_water_design_setpoint}'
             - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadHotWater
             - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesHeatingLoad
+            - PlantLoop: *PlantLoopHotWaterFields
         TemplateObjects:
           hot_water_pump_configuration:
             (None|ConstantFlow):

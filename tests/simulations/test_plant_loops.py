@@ -79,7 +79,8 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'SetpointManager:Scheduled': 'Chilled Water Loop ChW.*',
                 'Sizing:Plant': 'Sizing:Plant 2',
                 'PlantEquipmentOperation:CoolingLoad': 'Chilled Water Loop Chiller.*',
-                'PlantEquipmentOperationSchemes': 'Chilled Water Loop Chiller.*'
+                'PlantEquipmentOperationSchemes': 'Chilled Water Loop Chiller.*',
+                'PlantLoop': 'Chilled Water Loop Chilled Water Loop'
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)
@@ -92,12 +93,6 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         self.hvactemplate.epjson_process(epjson_ref=test_epjson)
         output_epjson = self.hvactemplate.run()['epJSON']
         # Rename connection objects due to naming discrepancies from old program to new
-        output_epjson['PlantLoop']['Chilled Water Loop Chilled Water Loop']['availability_manager_list_name'] = \
-            'Chilled Water Loop ChW Availability List'
-        output_epjson['Sizing:Plant']['Chilled Water Loop ChW Sizing Plant']['plant_or_condenser_loop_name'] = \
-            'Chilled Water Loop Chilled Water Loop'
-        output_epjson['PlantLoop']['Chilled Water Loop Chilled Water Loop']['plant_equipment_operation_scheme_name'] = \
-            'Chilled Water Loop ChW Operation'
         output_epjson['PlantEquipmentOperation:CoolingLoad']['Chilled Water Loop ChW All Hours']['range_1_equipment_list_name'] = \
             "Chilled Water Loop All Chillers"
         test_input_file_path = self.write_file_for_testing(
@@ -123,7 +118,6 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Plant:ChilledWaterLoop VariablePrimaryNoSecondary w/o connections")
     def test_simulation_chilled_water_variable_primary_no_secondary_wo_connections(self):
-        # todo_eo: base file needs to be modified for variable pumping.
         base_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                              'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
         base_formatted_epjson = self.setup_file(base_file_path)
@@ -181,7 +175,8 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'SetpointManager:Scheduled': 'Chilled Water Loop ChW.*',
                 'Sizing:Plant': 'Sizing:Plant 2',
                 'PlantEquipmentOperation:CoolingLoad': 'Chilled Water Loop Chiller.*',
-                'PlantEquipmentOperationSchemes': 'Chilled Water Loop Chiller.*'
+                'PlantEquipmentOperationSchemes': 'Chilled Water Loop Chiller.*',
+                'PlantLoop': 'Chilled Water Loop Chilled Water Loop'
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)
@@ -197,12 +192,6 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         self.hvactemplate.epjson_process(epjson_ref=test_epjson)
         output_epjson = self.hvactemplate.run()['epJSON']
         # Rename connection objects due to naming discrepancies from old program to new
-        output_epjson['PlantLoop']['Chilled Water Loop Chilled Water Loop']['availability_manager_list_name'] = \
-            'Chilled Water Loop ChW Availability List'
-        output_epjson['Sizing:Plant']['Chilled Water Loop ChW Sizing Plant']['plant_or_condenser_loop_name'] = \
-            'Chilled Water Loop Chilled Water Loop'
-        output_epjson['PlantLoop']['Chilled Water Loop Chilled Water Loop']['plant_equipment_operation_scheme_name'] = \
-            'Chilled Water Loop ChW Operation'
         output_epjson['PlantEquipmentOperation:CoolingLoad']['Chilled Water Loop ChW All Hours']['range_1_equipment_list_name'] = \
             "Chilled Water Loop All Chillers"
         test_input_file_path = self.write_file_for_testing(
@@ -246,7 +235,8 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'SetpointManager:OutdoorAirReset': 'Chilled Water Loop ChW.*',
                 'Sizing:Plant': 'Sizing:Plant 1',
                 'PlantEquipmentOperation:HeatingLoad': 'Hot Water Loop.*',
-                'PlantEquipmentOperationSchemes': 'Hot Water Loop.*'
+                'PlantEquipmentOperationSchemes': 'Hot Water Loop.*',
+                'PlantLoop': 'Hot Water Loop Hot Water Loop'
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)
@@ -259,10 +249,6 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         self.hvactemplate.epjson_process(epjson_ref=test_epjson)
         output_epjson = self.hvactemplate.run()['epJSON']
         # Rename connection objects due to naming discrepancies from old program to new
-        output_epjson['Sizing:Plant']['Hot Water Loop HW Sizing Plant']['plant_or_condenser_loop_name'] = \
-            'Hot Water Loop Hot Water Loop'
-        output_epjson['PlantLoop']['Hot Water Loop Hot Water Loop']['plant_equipment_operation_scheme_name'] = \
-            'Hot Water Loop HW Operation'
         output_epjson['PlantEquipmentOperation:HeatingLoad']['Hot Water Loop HW All Hours']['range_1_equipment_list_name'] = \
             "Hot Water Loop All Equipment"
         test_input_file_path = self.write_file_for_testing(
