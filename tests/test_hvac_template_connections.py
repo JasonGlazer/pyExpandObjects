@@ -379,8 +379,8 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
 
     def test_plant_equipment_creates_loop_and_equipment_template(self):
         ep = MagicMock()
-        ep.template_type = 'HVACTemplate:Plant:HotWaterLoop'
-        expanded_plant_loops = {'Test Hot Water': ep}
+        ep.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
+        expanded_plant_loops = {'Test Chilled Water': ep}
         epe = MagicMock()
         epe.template_type = 'HVACTemplate:Plant:Chiller'
         epe.condenser_type = 'WaterCooled'
@@ -388,7 +388,6 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             plant_equipment_class_object=epe,
             expanded_plant_loops=expanded_plant_loops)
         self.assertEqual('HVACTemplate:Plant:CondenserWaterLoop', list(output_plant.keys())[0])
-        self.assertEqual('HVACTemplate:Plant:CoolingTower', list(output_equipment.keys())[0])
         return
 
     def test_plant_equipment_doesnt_create_loop_template_if_existing(self):
@@ -447,18 +446,19 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                     if k not in expanded_plant_equipment.keys():
                         expanded_plant_equipment[k] = v
         eo = ExpandObjects()
-        self.assertEqual({
-            'Branch': 5,
-            'CondenserLoop': 1,
-            'Pipe:Adiabatic': 5,
-            'PlantEquipmentOperation:CoolingLoad': 1,
-            'PlantEquipmentOperationSchemes': 1,
-            'Pump:VariableSpeed': 1,
-            'Schedule:Compact': 1},
+        self.assertEqual(
+            {
+                'Branch': 6,
+                'CondenserEquipmentOperationSchemes': 1,
+                'CondenserLoop': 1,
+                'Pipe:Adiabatic': 5,
+                'PlantEquipmentOperation:CoolingLoad': 1,
+                'Pump:VariableSpeed': 1,
+                'Schedule:Compact': 2,
+                'SetpointManager:Scheduled': 1,
+                'Sizing:Plant': 1
+            },
             eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
-        self.assertIn(
-            'CoolingTower:SingleSpeed',
-            expanded_plant_equipment['Condenser Water Loop Tower'].epjson.keys())
         return
 
     def test_condenser_water_plant_loop_object_created_from_multiple_chiller_wo_attributes_transitioned(self):
@@ -506,18 +506,19 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                     if k not in expanded_plant_equipment.keys():
                         expanded_plant_equipment[k] = v
         eo = ExpandObjects()
-        self.assertEqual({
-            'Branch': 5,
-            'CondenserLoop': 1,
-            'Pipe:Adiabatic': 5,
-            'PlantEquipmentOperation:CoolingLoad': 1,
-            'PlantEquipmentOperationSchemes': 1,
-            'Pump:VariableSpeed': 1,
-            'Schedule:Compact': 1},
+        self.assertEqual(
+            {
+                'Branch': 6,
+                'CondenserEquipmentOperationSchemes': 1,
+                'CondenserLoop': 1,
+                'Pipe:Adiabatic': 5,
+                'PlantEquipmentOperation:CoolingLoad': 1,
+                'Pump:VariableSpeed': 1,
+                'Schedule:Compact': 2,
+                'SetpointManager:Scheduled': 1,
+                'Sizing:Plant': 1
+            },
             eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
-        self.assertIn(
-            'CoolingTower:SingleSpeed',
-            expanded_plant_equipment['Condenser Water Loop Tower'].epjson.keys())
         return
 
     def test_condenser_water_plant_loop_object_created_from_chiller_with_attributes_transitioned(self):
@@ -563,22 +564,20 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                         expanded_plant_equipment[k] = v
         eo = ExpandObjects()
         self.assertEqual({
-            'Branch': 5,
+            'Branch': 6,
             'CondenserLoop': 1,
+            'CondenserEquipmentOperationSchemes': 1,
             'Pipe:Adiabatic': 5,
             'PlantEquipmentOperation:CoolingLoad': 1,
-            'PlantEquipmentOperationSchemes': 1,
             'Pump:VariableSpeed': 1,
-            'Schedule:Compact': 1},
+            'Schedule:Compact': 2,
+            'SetpointManager:Scheduled': 1,
+            'Sizing:Plant': 1},
             eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
         self.assertEqual(
             2000,
             expanded_plant_loops['Condenser Water Loop'].epjson
-            ['Pump:VariableSpeed']['Condenser Water Loop Supply Pump']['design_pump_head']
-        )
-        self.assertIn(
-            'CoolingTower:SingleSpeed',
-            expanded_plant_equipment['Condenser Water Loop Tower'].epjson.keys())
+            ['Pump:VariableSpeed']['Condenser Water Loop Supply Pump']['design_pump_head'])
         return
 
     def test_retrieve_branches_by_loop_type(self):
@@ -785,7 +784,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 plant_loop_class_object=epl,
                 expanded_plant_equipment=expanded_plant_equipment)
         self.assertEqual(
-            {'BranchList': 2, 'Connector:Mixer': 2, 'Connector:Splitter': 2, 'ConnectorList': 1, 'NodeList': 1},
+            {'BranchList': 2, 'Connector:Mixer': 2, 'Connector:Splitter': 2, 'ConnectorList': 2, 'NodeList': 1},
             self.hvac_template.summarize_epjson(self.hvac_template.epjson))
         return
 

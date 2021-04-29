@@ -92,6 +92,13 @@ class BaseSimulationTest(object):
                 pass
             try:
                 os.rename(
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.err'),
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.err')
+                )
+            except:
+                pass
+            try:
+                os.rename(
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.end'),
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.end')
                 )

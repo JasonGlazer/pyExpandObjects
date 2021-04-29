@@ -49,8 +49,20 @@ mock_hw_plant_loop_template = {
     }
 }
 
+mock_chiller_water_cooled_template = {
+    "HVACTemplate:Plant:Chiller": {
+        "Main Chiller": {
+            "capacity": "Autosize",
+            "chiller_type": "ElectricReciprocatingChiller",
+            "condenser_type": "WaterCooled",
+            "nominal_cop": 3.2,
+            "priority": "1"
+        }
+    }
+}
 
-class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
+
+class TestSimulationPlantLoopSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
     def setUp(self):
         return
 
@@ -312,5 +324,3 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
             self.assertEqual('', comparison_results, comparison_results)
         return
 
-    # todo_eo: test plant loops with connections
-    # todo_eo: do sim tests for plant equipment

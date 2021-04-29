@@ -191,7 +191,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         self.assertEqual(
             'VAV Sys 1 Availability',
             availability_manager_assignment_list_object['AvailabilityManagerAssignmentList']
-            ['VAV Sys 1 Availability Managers']['availability_manager_name'])
+            ['VAV Sys 1 Availability Managers']['managers'][0]['availability_manager_name'])
         return
 
     def test_reject_create_availability_manager_assignment_list_bad_object(self):

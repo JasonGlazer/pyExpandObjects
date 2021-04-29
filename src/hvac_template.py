@@ -351,16 +351,6 @@ class HVACTemplate(EPJSON):
                         'Condenser Water Loop': cndw_attributes
                     }
                 })
-            self.merge_epjson(
-                super_dictionary=plant_equipment_dictionary,
-                object_dictionary={
-                    'HVACTemplate:Plant:CoolingTower': {
-                        'Condenser Water Loop Tower': {
-                            'template_plant_loop_type': 'CondenserWater'
-                        }
-                    }
-                }
-            )
             # append plant loop to list to prevent another one being added.
             plant_loops.append('hvactemplate:plant:condenserwaterloop')
         return plant_loop_dictionary, plant_equipment_dictionary
@@ -531,8 +521,12 @@ class HVACTemplate(EPJSON):
         if 'condenserwater' in plant_loop_class_object.template_type.lower():
             pebd = copy.deepcopy(plant_equipment_branch_dictionary)
             for object_name, object_structure in plant_equipment_branch_dictionary['Branch'].items():
-                if re.match(r'Chiller:.*', object_structure['components'][0]['component_object_type']):
-                    demand_branches.update({object_name: pebd['Branch'].pop(object_name)})
+                try:
+                    if re.match(r'Chiller:.*', object_structure['components'][0]['component_object_type']):
+                        demand_branches.update({object_name: pebd['Branch'].pop(object_name)})
+                except (AttributeError, KeyError):
+                    raise InvalidTemplateException('Branch object is incorrectly formatted: {}'
+                                                   .format(plant_equipment_branch_dictionary))
             supply_branches = pebd['Branch']
         else:
             demand_branches = zone_system_branch_dictionary.get('Branch') if zone_system_branch_dictionary else None
@@ -606,8 +600,11 @@ class HVACTemplate(EPJSON):
             PyExpandObjectsYamlStructureException('AutoCreated PlantLoop Connector YAML object was '
                                                   'improperly formatted')
         # add connector list
-        connectorlist = eo.get_structure(
+        demand_connectorlist = eo.get_structure(
             structure_hierarchy=['AutoCreated', 'PlantLoop', 'ConnectorList', 'Demand']
+        )
+        supply_connectorlist = eo.get_structure(
+            structure_hierarchy=['AutoCreated', 'PlantLoop', 'ConnectorList', 'Supply']
         )
         # format yaml objects into epJSON dictionaries, resolve, and output
         connector_dictionary = eo.yaml_list_to_epjson_dictionaries(
@@ -618,7 +615,8 @@ class HVACTemplate(EPJSON):
                 {'Connector:Splitter': connector_supply_splitter},
                 {'Connector:Mixer': connector_demand_mixer},
                 {'Connector:Mixer': connector_supply_mixer},
-                {'ConnectorList': connectorlist},
+                {'ConnectorList': demand_connectorlist},
+                {'ConnectorList': supply_connectorlist},
                 {'NodeList': supply_nodelist}
             ])
         resolved_path_dictionary = eo.resolve_objects(epjson=connector_dictionary)
@@ -735,15 +733,15 @@ class HVACTemplate(EPJSON):
         )
         self.logger.info('##### Building Plant-Plant Equipment Connections #####')
         # todo_eo: uncomment and test
-        # for expanded_pl in self.expanded_plant_loops.values():
-        #     self._create_water_loop_connectors_and_nodelist(
-        #         plant_loop_class_object=expanded_pl,
-        #         expanded_plant_equipment=self.expanded_plant_equipment,
-        #         expanded_systems=self.expanded_systems,
-        #         expanded_zones=self.expanded_zones)
-        #     self._create_plant_equipment_lists(
-        #         plant_loop_class_object=expanded_pl,
-        #         expanded_plant_equipment=self.expanded_plant_equipment)
+        for expanded_pl in self.expanded_plant_loops.values():
+            self._create_water_loop_connectors_and_nodelist(
+                plant_loop_class_object=expanded_pl,
+                expanded_plant_equipment=self.expanded_plant_equipment,
+                expanded_systems=self.expanded_systems,
+                expanded_zones=self.expanded_zones)
+            self._create_plant_equipment_lists(
+                plant_loop_class_object=expanded_pl,
+                expanded_plant_equipment=self.expanded_plant_equipment)
         self.logger.info('##### Creating epJSON #####')
         # Merge each set of epJSON dictionaries
         merge_list = [
@@ -752,7 +750,8 @@ class HVACTemplate(EPJSON):
             *[j.epjson for i, j in self.expanded_thermostats.items()],
             *[j.epjson for i, j in self.expanded_zones.items()],
             *[j.epjson for i, j in self.expanded_systems.items()],
-            *[j.epjson for i, j in self.expanded_plant_loops.items()]
+            *[j.epjson for i, j in self.expanded_plant_loops.items()],
+            *[j.epjson for i, j in self.expanded_plant_equipment.items()]
         ]
         output_epjson = {}
         for merge_dictionary in merge_list:
