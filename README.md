@@ -12,11 +12,15 @@ HVACTemplate and ExpandObjects support with epJSON
 
 #### Example Instructions
 
-An example script and files are provided for initial testing.  There are two command line arguments that must be provided
+This program is still in development; however, some files can be processed.  The command for expanding files is as follows
 
-* -y: The yaml file location
-* -f: The epJSON file containing HVACTemplate Objects
+* --file: The epJSON file containing HVACTemplate Objects.
+* --output_directory: The output directory.  If none is specified, the epJSON file directory is used.
 
-`python tests/expand_examples/expand_vav_system.py -y tests/expand_examples/energyplus_objects_config.yaml -f tests/expand_examples/expand_vav_system.epJSON`
+`python src/main.py --file simulation/ExampleFiles/HVACTemplate-5ZoneVAVWaterCooled.epJSON`
 
-The program will output a file 'epjson_test.epJSON' to the same directory as the python file.
+This program will output three files:
+
+* original-file-name_base.epJSON: Contains all non HVACTemplate objects from original file
+* original-file-name_hvac_templates.epJSON: Contains all HVACTemplate objects from original file
+* original-file-name_expanded.epJSON: Expanded file for simulation.
