@@ -161,12 +161,10 @@ class TestSimulationPlantLoopSimple(BaseTest, BaseSimulationTest, unittest.TestC
             object_dictionary={
                 'Pump:VariableSpeed': {
                     "Chilled Water Loop ChW Supply Pump": {
-                        "design_flow_rate": "Autosize",
+                        "design_maximum_flow_rate": "Autosize",
                         "design_power_consumption": "Autosize",
                         "design_pump_head": 179352,
-                        "fraction_of_motor_inefficiencies_to_fluid_stream": 0,
                         "inlet_node_name": "Chilled Water Loop ChW Supply Inlet",
-                        "motor_efficiency": 0.9,
                         "outlet_node_name": "Chilled Water Loop ChW Pump Outlet",
                         "pump_control_type": "Intermittent"
                     }

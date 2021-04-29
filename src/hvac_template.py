@@ -465,9 +465,9 @@ class HVACTemplate(EPJSON):
         # create list of regex matches for the given loop
         # todo_eo: object searching regex need to be expanded.
         if 'chilledwater' in plant_loop_class_object.template_type.lower():
-            branch_rgx = ['^Coil:Cooling:Water.*', ]
+            branch_rgx = ['^Coil:Cooling:Water($|:DetailedGeometry)+', ]
         elif 'hotwater' in plant_loop_class_object.template_type.lower():
-            branch_rgx = ['^Coil:Heating:Water.*', '^ZoneHVAC:Baseboard.*Water']
+            branch_rgx = ['^Coil:Heating:Water($|:DetailedGeometry)+', '^ZoneHVAC:Baseboard.*Water']
         elif 'mixedwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:.*HeatPump.*', ]
         elif 'condenserwater' in plant_loop_class_object.template_type.lower():
