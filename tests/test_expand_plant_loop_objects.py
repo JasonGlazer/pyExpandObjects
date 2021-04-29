@@ -63,10 +63,13 @@ class TestExpandPlantLoopObjects(BaseTest, unittest.TestCase):
             'Branch': 6,
             'OutdoorAir:Node': 1,
             'Pipe:Adiabatic': 5,
+            'PlantEquipmentOperation:CoolingLoad': 1,
+            'PlantEquipmentOperationSchemes': 1,
+            'PlantLoop': 1,
             'Pump:ConstantSpeed': 1,
-            'Schedule:Compact': 1,
+            'Schedule:Compact': 2,
             'SetpointManager:Scheduled': 1,
-            'Sizing:Plant': 1
+            'Sizing:Plant': 1,
         }
         self.assertEqual(summarized_output, ep.summarize_epjson(output.epjson))
         return
@@ -78,7 +81,11 @@ class TestExpandPlantLoopObjects(BaseTest, unittest.TestCase):
             {
                 'Branch': 6,
                 'Pipe:Adiabatic': 5,
+                'PlantEquipmentOperation:HeatingLoad': 1,
+                'PlantEquipmentOperationSchemes': 1,
+                'PlantLoop': 1,
                 'Pump:ConstantSpeed': 1,
+                'Schedule:Compact': 1,
                 'SetpointManager:OutdoorAirReset': 1,
                 'Sizing:Plant': 1
             },
@@ -95,7 +102,11 @@ class TestExpandPlantLoopObjects(BaseTest, unittest.TestCase):
             {
                 'Branch': 6,
                 'Pipe:Adiabatic': 5,
+                'PlantEquipmentOperation:HeatingLoad': 1,
+                'PlantEquipmentOperationSchemes': 1,
+                'PlantLoop': 1,
                 'Pump:VariableSpeed': 1,
+                'Schedule:Compact': 1,
                 'SetpointManager:OutdoorAirReset': 1,
                 'Sizing:Plant': 1
             },

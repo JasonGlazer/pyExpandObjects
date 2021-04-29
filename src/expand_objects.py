@@ -655,7 +655,11 @@ class ExpandObjects(EPJSON):
                                                                             'object {}. Complex input: {}, output value'
                                                                             ' {}'.format(object_name, field_name,
                                                                                          field_value))
-                            if str(ig['value']) == '0' or ig['value']:
+                            try:
+                                test_zero = float(ig['value'])
+                            except (TypeError, ValueError):
+                                test_zero = ig['value']
+                            if test_zero == 0 or ig['value']:
                                 object_fields[ig['field']] = ig['value']
                             else:
                                 object_fields.pop(ig['field'])
@@ -1138,13 +1142,13 @@ class ExpandSystem(ExpandObjects):
         # loop over availability managers and add them to the list.
         availability_manager_list_object = \
             self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AvailabilityManagerAssignmentList', 'Base'])
+        availability_manager_list_object['managers'] = []
         try:
             for object_type, object_structure in availability_managers.items():
                 for object_name, object_fields in object_structure.items():
-                    availability_manager_list_object['availability_manager_name'] = \
-                        object_name
-                    availability_manager_list_object['availability_manager_object_type'] = \
-                        object_type
+                    availability_manager_list_object['managers'].append({
+                        'availability_manager_name': object_name,
+                        'availability_manager_object_type': object_type})
         except AttributeError:
             raise PyExpandObjectsTypeError("AvailabilityManager object not properly formatted: {}"
                                            .format(availability_managers))
@@ -1401,7 +1405,12 @@ class RetrievePlantEquipmentLoop:
                                                " are duplicates present: {}".format(plant_loops))
             for pl in template_plant_loop_type_list:
                 if pl in plant_loops:
-                    obj._template_plant_loop_type = pl
+                    # Special handling for Tower object
+                    (template_type, _), = value['template'].items()
+                    if template_type == 'HVACTemplate:Plant:Tower' and pl == 'ChilledWaterLoop':
+                        obj._template_plant_loop_type = 'CondenserWaterLoop'
+                    else:
+                        obj._template_plant_loop_type = pl
                     break
             # verify the field was set to a value
             if not obj._template_plant_loop_type:

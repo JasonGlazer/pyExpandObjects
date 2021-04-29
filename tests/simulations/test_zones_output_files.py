@@ -101,6 +101,7 @@ class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
         output = main(
             Namespace(
                 file=prepared_file_path,
+                no_schema=False,
                 output_directory=output_directory))
         file_run_list.append(output_directory.joinpath(output['output_files']['expanded']))
         # check outputs

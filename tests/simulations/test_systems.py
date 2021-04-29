@@ -174,7 +174,7 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:System:VAV w zone connections")
-    def test_simulation_without_connections(self):
+    def test_simulation(self):
         base_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                              'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
         base_formatted_epjson = self.setup_file(base_file_path)
@@ -253,7 +253,7 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         return
 
     @BaseTest._test_logger(doc_text="HVACTemplate:System:VAV w/o zone connections")
-    def test_simulation(self):
+    def test_simulation_without_connections(self):
         base_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                              'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
         base_formatted_epjson = self.setup_file(base_file_path)

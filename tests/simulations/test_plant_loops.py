@@ -6,6 +6,7 @@ from tests import BaseTest
 from tests.simulations import BaseSimulationTest
 from src.hvac_template import HVACTemplate
 from src.epjson_handler import EPJSON
+from src.expand_objects import ExpandPlantLoop
 
 test_dir = Path(__file__).parent.parent
 
@@ -48,8 +49,20 @@ mock_hw_plant_loop_template = {
     }
 }
 
+mock_chiller_water_cooled_template = {
+    "HVACTemplate:Plant:Chiller": {
+        "Main Chiller": {
+            "capacity": "Autosize",
+            "chiller_type": "ElectricReciprocatingChiller",
+            "condenser_type": "WaterCooled",
+            "nominal_cop": 3.2,
+            "priority": "1"
+        }
+    }
+}
 
-class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
+
+class TestSimulationPlantLoopSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
     def setUp(self):
         return
 
@@ -77,7 +90,10 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'Pipe:Adiabatic': 'Chilled Water Loop ChW.*',
                 'Pump:ConstantSpeed': 'Chilled Water Loop ChW.*',
                 'SetpointManager:Scheduled': 'Chilled Water Loop ChW.*',
-                'Sizing:Plant': 'Sizing:Plant 2'
+                'Sizing:Plant': 'Sizing:Plant 2',
+                'PlantEquipmentOperation:CoolingLoad': 'Chilled Water Loop Chiller.*',
+                'PlantEquipmentOperationSchemes': 'Chilled Water Loop Chiller.*',
+                'PlantLoop': 'Chilled Water Loop Chilled Water Loop'
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)
@@ -87,13 +103,24 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         )
         # perform steps that would be run in main
         self.hvactemplate = HVACTemplate()
+        self.hvactemplate._hvac_template_preprocess(epjson=test_epjson)
         self.hvactemplate.epjson_process(epjson_ref=test_epjson)
-        output_epjson = self.hvactemplate.run()['epJSON']
+        self.expanded_plant_loops = self.hvactemplate._expand_templates(
+            templates=mock_chw_plant_loop_template,
+            expand_class=ExpandPlantLoop)
+        merge_list = [
+            self.hvactemplate.epjson,
+            self.hvactemplate.base_objects,
+            *[j.epjson for i, j in self.expanded_plant_loops.items()]
+        ]
+        output_epjson = {}
+        for merge_dictionary in merge_list:
+            self.hvactemplate.merge_epjson(
+                super_dictionary=output_epjson,
+                object_dictionary=merge_dictionary)
         # Rename connection objects due to naming discrepancies from old program to new
-        output_epjson['PlantLoop']['Chilled Water Loop Chilled Water Loop']['availability_manager_list_name'] = \
-            'Chilled Water Loop ChW Availability List'
-        output_epjson['Sizing:Plant']['Chilled Water Loop ChW Sizing Plant']['plant_or_condenser_loop_name'] = \
-            'Chilled Water Loop Chilled Water Loop'
+        output_epjson['PlantEquipmentOperation:CoolingLoad']['Chilled Water Loop ChW All Hours']['range_1_equipment_list_name'] = \
+            "Chilled Water Loop All Chillers"
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,
             file_name='test_input_epjson.epJSON')
@@ -117,7 +144,6 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Plant:ChilledWaterLoop VariablePrimaryNoSecondary w/o connections")
     def test_simulation_chilled_water_variable_primary_no_secondary_wo_connections(self):
-        # todo_eo: base file needs to be modified for variable pumping.
         base_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                              'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
         base_formatted_epjson = self.setup_file(base_file_path)
@@ -135,12 +161,10 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
             object_dictionary={
                 'Pump:VariableSpeed': {
                     "Chilled Water Loop ChW Supply Pump": {
-                        "design_flow_rate": "Autosize",
+                        "design_maximum_flow_rate": "Autosize",
                         "design_power_consumption": "Autosize",
                         "design_pump_head": 179352,
-                        "fraction_of_motor_inefficiencies_to_fluid_stream": 0,
                         "inlet_node_name": "Chilled Water Loop ChW Supply Inlet",
-                        "motor_efficiency": 0.9,
                         "outlet_node_name": "Chilled Water Loop ChW Pump Outlet",
                         "pump_control_type": "Intermittent"
                     }
@@ -173,7 +197,10 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'Pipe:Adiabatic': 'Chilled Water Loop ChW.*',
                 'Pump:ConstantSpeed': 'Chilled Water Loop ChW.*',
                 'SetpointManager:Scheduled': 'Chilled Water Loop ChW.*',
-                'Sizing:Plant': 'Sizing:Plant 2'
+                'Sizing:Plant': 'Sizing:Plant 2',
+                'PlantEquipmentOperation:CoolingLoad': 'Chilled Water Loop Chiller.*',
+                'PlantEquipmentOperationSchemes': 'Chilled Water Loop Chiller.*',
+                'PlantLoop': 'Chilled Water Loop Chilled Water Loop'
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)
@@ -186,13 +213,24 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         )
         # perform steps that would be run in main
         self.hvactemplate = HVACTemplate()
+        self.hvactemplate._hvac_template_preprocess(epjson=test_epjson)
         self.hvactemplate.epjson_process(epjson_ref=test_epjson)
-        output_epjson = self.hvactemplate.run()['epJSON']
+        self.expanded_plant_loops = self.hvactemplate._expand_templates(
+            templates=tmp_mock,
+            expand_class=ExpandPlantLoop)
+        merge_list = [
+            self.hvactemplate.epjson,
+            self.hvactemplate.base_objects,
+            *[j.epjson for i, j in self.expanded_plant_loops.items()]
+        ]
+        output_epjson = {}
+        for merge_dictionary in merge_list:
+            self.hvactemplate.merge_epjson(
+                super_dictionary=output_epjson,
+                object_dictionary=merge_dictionary)
         # Rename connection objects due to naming discrepancies from old program to new
-        output_epjson['PlantLoop']['Chilled Water Loop Chilled Water Loop']['availability_manager_list_name'] = \
-            'Chilled Water Loop ChW Availability List'
-        output_epjson['Sizing:Plant']['Chilled Water Loop ChW Sizing Plant']['plant_or_condenser_loop_name'] = \
-            'Chilled Water Loop Chilled Water Loop'
+        output_epjson['PlantEquipmentOperation:CoolingLoad']['Chilled Water Loop ChW All Hours']['range_1_equipment_list_name'] = \
+            "Chilled Water Loop All Chillers"
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,
             file_name='test_input_epjson.epJSON')
@@ -232,7 +270,10 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
                 'Pipe:Adiabatic': 'Hot Water Loop HW.*',
                 'Pump:ConstantSpeed': 'Hot Water Loop HW.*',
                 'SetpointManager:OutdoorAirReset': 'Chilled Water Loop ChW.*',
-                'Sizing:Plant': 'Sizing:Plant 1'
+                'Sizing:Plant': 'Sizing:Plant 1',
+                'PlantEquipmentOperation:HeatingLoad': 'Hot Water Loop.*',
+                'PlantEquipmentOperationSchemes': 'Hot Water Loop.*',
+                'PlantLoop': 'Hot Water Loop Hot Water Loop'
             }
         )
         test_epjson = copy.deepcopy(test_purged_epjson)
@@ -242,11 +283,24 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
         )
         # perform steps that would be run in main
         self.hvactemplate = HVACTemplate()
+        self.hvactemplate._hvac_template_preprocess(epjson=test_epjson)
         self.hvactemplate.epjson_process(epjson_ref=test_epjson)
-        output_epjson = self.hvactemplate.run()['epJSON']
+        self.expanded_plant_loops = self.hvactemplate._expand_templates(
+            templates=mock_hw_plant_loop_template,
+            expand_class=ExpandPlantLoop)
+        merge_list = [
+            self.hvactemplate.epjson,
+            self.hvactemplate.base_objects,
+            *[j.epjson for i, j in self.expanded_plant_loops.items()]
+        ]
+        output_epjson = {}
+        for merge_dictionary in merge_list:
+            self.hvactemplate.merge_epjson(
+                super_dictionary=output_epjson,
+                object_dictionary=merge_dictionary)
         # Rename connection objects due to naming discrepancies from old program to new
-        output_epjson['Sizing:Plant']['Hot Water Loop HW Sizing Plant']['plant_or_condenser_loop_name'] = \
-            'Hot Water Loop Hot Water Loop'
+        output_epjson['PlantEquipmentOperation:HeatingLoad']['Hot Water Loop HW All Hours']['range_1_equipment_list_name'] = \
+            "Hot Water Loop All Equipment"
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,
             file_name='test_input_epjson.epJSON')
@@ -267,3 +321,4 @@ class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
             # trigger failure
             self.assertEqual('', comparison_results, comparison_results)
         return
+

@@ -122,6 +122,7 @@ class TestMain(BaseTest, unittest.TestCase):
                 output = main(
                     Namespace(
                         file=temp_file.name,
+                        no_schema=True,
                         output_directory=output_directory
                     )
                 )
@@ -152,7 +153,8 @@ class TestMain(BaseTest, unittest.TestCase):
             temp_file.seek(0)
             output = main(
                 Namespace(
-                    file=temp_file.name
+                    file=temp_file.name,
+                    no_schema=True
                 )
             )
             self.assertTrue(output['output_files']['expanded'].startswith(os.path.dirname(temp_file.name)))

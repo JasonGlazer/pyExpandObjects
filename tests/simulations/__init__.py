@@ -71,6 +71,33 @@ class BaseSimulationTest(object):
         return input_file_path
 
     @staticmethod
+    def convert_file(file_location):
+        """
+        Convert idf to epJSON and vice versa.
+        converted file in alternative format is created in same directory as base file
+        :return: file path to converted file
+        """
+        # calling the arguments with pathlib causes issues with the conversion exe, so direct strings are passed here.
+        subprocess.Popen(
+            [
+                'wine',
+                '../ConvertInputFormatWithHVACTemplate.exe',
+                '-t',
+                os.path.basename(file_location)
+            ],
+            cwd=str(test_dir / '..' / 'simulation' / 'test'),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        if file_location.suffix == '.epJSON':
+            return file_location.with_suffix('.idf')
+        elif file_location.suffix == '.idf':
+            return file_location.with_suffix('.epJSON')
+        else:
+            print('File has incorrect extension {}'.format(file_location))
+            sys.exit()
+
+    @staticmethod
     def perform_comparison(epjson_files):
         """
         Simulate and compare epJSON files
@@ -88,38 +115,73 @@ class BaseSimulationTest(object):
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl.csv'),
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl_previous.csv')
                 )
-            except:
+            except FileNotFoundError:
+                pass
+            try:
+                os.rename(
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.err'),
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.err')
+                )
+            except FileNotFoundError:
                 pass
             try:
                 os.rename(
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.end'),
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.end')
                 )
-            except:
+            except FileNotFoundError:
                 pass
             if sys.platform.startswith('win'):
-                subprocess.run(
-                    [
-                        str(test_dir / '..' / 'simulation' / 'energyplus.exe'),
-                        '-d',
-                        str(test_dir / '..' / 'simulation' / 'test'),
-                        '-w',
-                        str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
-                        str(file_path)
-                    ]
-                )
+                # enable ExpandObjects for idf files (-x).
+                if file_path.suffix == '.idf':
+                    subprocess.run(
+                        [
+                            str(test_dir / '..' / 'simulation' / 'energyplus.exe'),
+                            '-d',
+                            str(test_dir / '..' / 'simulation' / 'test'),
+                            '-x',
+                            '-w',
+                            str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
+                            str(file_path)
+                        ]
+                    )
+                else:
+                    subprocess.run(
+                        [
+                            str(test_dir / '..' / 'simulation' / 'energyplus.exe'),
+                            '-d',
+                            str(test_dir / '..' / 'simulation' / 'test'),
+                            '-w',
+                            str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
+                            str(file_path)
+                        ]
+                    )
             else:
-                subprocess.run(
-                    [
-                        'wine',
-                        str(test_dir / '..' / 'simulation' / 'energyplus.exe'),
-                        '-d',
-                        str(test_dir / '..' / 'simulation' / 'test'),
-                        '-w',
-                        str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
-                        file_path
-                    ]
-                )
+                if file_path.suffix == '.idf':
+                    subprocess.run(
+                        [
+                            'wine',
+                            str(test_dir / '..' / 'simulation' / 'energyplus.exe'),
+                            '-d',
+                            str(test_dir / '..' / 'simulation' / 'test'),
+                            '-x',
+                            '-w',
+                            str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
+                            file_path
+                        ]
+                    )
+                else:
+                    subprocess.run(
+                        [
+                            'wine',
+                            str(test_dir / '..' / 'simulation' / 'energyplus.exe'),
+                            '-d',
+                            str(test_dir / '..' / 'simulation' / 'test'),
+                            '-w',
+                            str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
+                            file_path
+                        ]
+                    )
             total_energy = 0
             # get sum of total row to use as comparison
             with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl.csv'), 'r') as f:

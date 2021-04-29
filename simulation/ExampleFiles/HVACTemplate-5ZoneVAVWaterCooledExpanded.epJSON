@@ -3014,6 +3014,34 @@
         }
     },
     "Output:Meter:MeterFileOnly": {
+        "Output:Meter:MeterFileOnly 1": {
+            "key_name": "Electricity:Facility",
+            "reporting_frequency": "Monthly"
+        },
+        "Output:Meter:MeterFileOnly 2": {
+            "key_name": "Electricity:Building",
+            "reporting_frequency": "Monthly"
+        },
+        "Output:Meter:MeterFileOnly 3": {
+            "key_name": "InteriorLights:Electricity",
+            "reporting_frequency": "Monthly"
+        },
+        "Output:Meter:MeterFileOnly 4": {
+            "key_name": "Electricity:HVAC",
+            "reporting_frequency": "Monthly"
+        },
+        "Output:Meter:MeterFileOnly 5": {
+            "key_name": "Electricity:Plant",
+            "reporting_frequency": "Monthly"
+        },
+        "Output:Meter:MeterFileOnly 6": {
+            "key_name": "NaturalGas:Plant",
+            "reporting_frequency": "Monthly"
+        },
+        "Output:Meter:MeterFileOnly 7": {
+            "key_name": "NaturalGas:Facility",
+            "reporting_frequency": "Monthly"
+        },
         "Output:Meter:MeterFileOnly 8": {
             "key_name": "Electricity:Facility",
             "reporting_frequency": "RunPeriod"
@@ -3436,7 +3464,7 @@
         }
     },
     "RunPeriod": {
-        "Run Period 1": {
+        "Run Period 2": {
             "apply_weekend_holiday_rule": "No",
             "begin_day_of_month": 14,
             "begin_month": 1,
@@ -3448,7 +3476,7 @@
             "use_weather_file_rain_indicators": "Yes",
             "use_weather_file_snow_indicators": "Yes"
         },
-        "Run Period 2": {
+        "Run Period 3": {
             "apply_weekend_holiday_rule": "No",
             "begin_day_of_month": 7,
             "begin_month": 7,

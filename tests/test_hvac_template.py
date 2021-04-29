@@ -131,6 +131,20 @@ mock_plant_equipment_template = {
     }
 }
 
+mock_tower_template = {
+    "HVACTemplate:Plant:Tower": {
+        "Main Tower": {
+            "free_convection_capacity": "Autosize",
+            "high_speed_fan_power": "Autosize",
+            "high_speed_nominal_capacity": "Autosize",
+            "low_speed_fan_power": "Autosize",
+            "low_speed_nominal_capacity": "Autosize",
+            "priority": "1",
+            "tower_type": "SingleSpeed"
+        }
+    }
+}
+
 
 class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     """
@@ -756,34 +770,6 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         )
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:PlantLoop:Verify Plant Loop template completes "
-                                    "from parent class (HVACTemplate)")
-    def test_plant_loop_processing(self):
-        self.hvac_template._load_epjson({
-            **minimum_objects_d,
-            **mock_thermostat_template,
-            **mock_chw_plant_loop_template
-        })
-        output = self.hvac_template.run()
-        self.assertEqual(
-            {
-                'AvailabilityManager:LowTemperatureTurnOff': 1,
-                'AvailabilityManagerAssignmentList': 1,
-                'Branch': 6,
-                'Building': 1,
-                'GlobalGeometryRules': 1,
-                'OutdoorAir:Node': 1,
-                'Pipe:Adiabatic': 5,
-                'Pump:ConstantSpeed': 1,
-                'Schedule:Compact': 1,
-                'SetpointManager:Scheduled': 1,
-                'Sizing:Plant': 1,
-                'ThermostatSetpoint:DualSetpoint': 1
-            },
-            self.hvac_template.summarize_epjson(output['epJSON'])
-        )
-        return
-
     @BaseTest._test_logger(doc_text="HVACTemplate:PlantEquipment:Verify Plant Equipment template completes "
                                     "from parent class (HVACTemplate)")
     def test_plant_equipment_processing(self):
@@ -791,25 +777,69 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             **minimum_objects_d,
             **mock_thermostat_template,
             **mock_chw_plant_loop_template,
-            **mock_plant_equipment_template
+            **mock_plant_equipment_template,
+            **mock_zone_template,
+            **mock_system_template,
+            **mock_tower_template
         })
         output = self.hvac_template.run()
-        self.assertEqual(
-            {
-                'AvailabilityManager:LowTemperatureTurnOff': 1,
-                'AvailabilityManagerAssignmentList': 1,
-                'Branch': 11,
-                'Building': 1,
-                'GlobalGeometryRules': 1,
-                'OutdoorAir:Node': 1,
-                'Pipe:Adiabatic': 10,
-                'Pump:ConstantSpeed': 1,
-                'Pump:VariableSpeed': 1,
-                'Schedule:Compact': 1,
-                'SetpointManager:Scheduled': 1,
-                'Sizing:Plant': 1,
-                'ThermostatSetpoint:DualSetpoint': 1
-            },
+        self.assertEqual({
+            'AirLoopHVAC': 1,
+            'AirLoopHVAC:ControllerList': 2,
+            'AirLoopHVAC:OutdoorAirSystem': 1,
+            'AirLoopHVAC:OutdoorAirSystem:EquipmentList': 1,
+            'AirLoopHVAC:ReturnPath': 1,
+            'AirLoopHVAC:ReturnPlenum': 1,
+            'AirLoopHVAC:SupplyPath': 1,
+            'AirLoopHVAC:ZoneSplitter': 1,
+            'AirTerminal:SingleDuct:VAV:Reheat': 1,
+            'AvailabilityManager:LowTemperatureTurnOff': 1,
+            'AvailabilityManager:NightCycle': 1,
+            'AvailabilityManagerAssignmentList': 2,
+            'Branch': 19,
+            'BranchList': 5,
+            'Building': 1,
+            'Chiller:Electric:EIR': 1,
+            'Coil:Cooling:Water': 1,
+            'Coil:Heating:Water': 2,
+            'CondenserEquipmentList': 1,
+            'CondenserEquipmentOperationSchemes': 1,
+            'CondenserLoop': 1,
+            'Connector:Mixer': 4,
+            'Connector:Splitter': 4,
+            'ConnectorList': 4,
+            'Controller:OutdoorAir': 1,
+            'Controller:WaterCoil': 2,
+            'CoolingTower:SingleSpeed': 1,
+            'Curve:Biquadratic': 2,
+            'Curve:Quadratic': 1,
+            'DesignSpecification:OutdoorAir': 1,
+            'DesignSpecification:ZoneAirDistribution': 1,
+            'Fan:VariableVolume': 1,
+            'GlobalGeometryRules': 1,
+            'NodeList': 3,
+            'OutdoorAir:Mixer': 1,
+            'OutdoorAir:Node': 2,
+            'OutdoorAir:NodeList': 1,
+            'Pipe:Adiabatic': 10,
+            'PlantEquipmentList': 1,
+            'PlantEquipmentOperation:CoolingLoad': 2,
+            'PlantEquipmentOperationSchemes': 1,
+            'PlantLoop': 1,
+            'Pump:ConstantSpeed': 1,
+            'Pump:VariableSpeed': 1,
+            'Schedule:Compact': 6,
+            'SetpointManager:MixedAir': 2,
+            'SetpointManager:Scheduled': 4,
+            'Sizing:Plant': 2,
+            'Sizing:System': 1,
+            'Sizing:Zone': 1,
+            'ThermostatSetpoint:DualSetpoint': 1,
+            'ZoneControl:Thermostat': 1,
+            'ZoneHVAC:AirDistributionUnit': 1,
+            'ZoneHVAC:EquipmentConnections': 1,
+            'ZoneHVAC:EquipmentList': 1
+        },
             self.hvac_template.summarize_epjson(output['epJSON'])
         )
         return
