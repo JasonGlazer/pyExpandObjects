@@ -23,6 +23,7 @@ def build_parser():  # pragma: no cover
         help='Skip schema validations')
     parser.add_argument(
         "--file",
+        '-f',
         nargs='?',
         help='Path of epJSON file to convert'
     )
@@ -30,7 +31,7 @@ def build_parser():  # pragma: no cover
         '--output_directory',
         '-o',
         nargs='?',
-        help='Specify output directory'
+        help='Specify output directory.  If not provided, input '
     )
     return parser
 

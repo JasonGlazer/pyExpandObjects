@@ -21,7 +21,7 @@ class TestSimulationsFull(BaseTest, BaseSimulationTest, unittest.TestCase):
         Simulate and compare two files where only the objects controlling output data are manipulated.
         Due to conversion issues within EnergyPlus, the baseline file must be simulated as an idf.
         :param baseline_file_location: idf file containing HVACTemplate:.* objects
-        :return: None.  Assertions performed within function
+        :return: None.  Assertions performed within function.
         """
         # setup outputs for perform_comparison to function and write base file
         base_formatted_epjson = self.setup_file(baseline_file_location)

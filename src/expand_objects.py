@@ -256,7 +256,8 @@ class ExpandObjects(EPJSON):
                         # check if field option is 'None' and if object doesn't exist in the class, or if
                         #   the fields match
                         if (field_option == 'None' and not hasattr(self, template_field)) or \
-                                re.match(field_option, getattr(self, template_field)):
+                                (getattr(self, template_field, None) and
+                                 re.match(field_option, getattr(self, template_field))):
                             option_tree_leaf = self._get_option_tree_leaf(
                                 option_tree=option_tree,
                                 leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])

@@ -141,9 +141,14 @@ Objects:
           boiler_flow_mode: ConstantFlow # todo_eo: set by legacy, value is not default
           efficiency_curve_temperature_evaluation_variable: LeavingBoiler # todo_eo: set by legacy, no default indicated
           fuel_type: '{fuel_type}'
-          nominal_thermal_efficiency: '{efficiency}'
-          nominal_capacity: '{capacity}'
+          minimum_part_load_ratio: '{minimum_part_load_ratio}'
+          maximum_part_load_ratio: '{maximum_part_load_ratio}'
+          nominal_thermal_efficiency: 0.8 # todo_eo: set by legacy, no default
+          nominal_capacity: Autosize # todo_eo: set by legacy, no default
           normalized_boiler_efficiency_curve_name: '{} Efficiency Curve'
+          optimum_part_load_ratio: '{optimum_part_load_ratio}'
+          sizing_factor: '{sizing_factor}'
+          water_outlet_upper_temperature_limit: '{water_outlet_upper_temperature_limit}'
   Chiller:
     Electric:
       EIR:
@@ -1062,11 +1067,6 @@ OptionTree:
           Objects:
             - AvailabilityManager:NightCycle:
                 <<: *AvailabilityManagerNightCycle
-#            - Schedule:Compact:
-#                name: HVACTemplate-Always1
-#                structure: CommonObjects:Schedule:Compact:ALWAYS_VAL
-#                insert_values:
-#                  - 1
             - OutdoorAir:NodeList:
                 name: '{} Outdoor Air NodeList'
                 nodes:
@@ -1109,10 +1109,17 @@ OptionTree:
     Plant:
       Boiler:
         BaseObjects:
-          Objects:
-            - *GroupingsPlantEquipmentBoilerHotWaterBaseObjects
         TemplateObjects:
           <<: *GroupingsPlantEquipmentBoilerHotWaterTemplateObjects
+          boiler_type:
+            HotWaterBoiler:
+              Objects:
+                - *GroupingsPlantEquipmentBoilerHotWaterBaseObjects
+              Transitions:
+                capacity:
+                  Boiler.*: nominal_capacity
+                efficiency:
+                  Boiler.*: nominal_thermal_efficiency
       ChilledWaterLoop:
         BaseObjects:
           Objects:
@@ -1244,3 +1251,10 @@ OptionTree:
                     setpoint_at_outdoor_high_temperature: '{hot_water_setpoint_at_outdoor_dry_bulb_high}'
                     setpoint_at_outdoor_low_temperature: '{hot_water_setpoint_at_outdoor_dry_bulb_low}'
       MixedWaterLoop:
+
+
+#            - Schedule:Compact:
+#                name: HVACTemplate-Always1
+#                structure: CommonObjects:Schedule:Compact:ALWAYS_VAL
+#                insert_values:
+#                  - 1

@@ -13,3 +13,5 @@ __author__ = "John Grando"
 # todo_eo: rewrite error outputs to indicate which template (system name, zone name, etc.) the errors are happening in.
 #  Use self.unique_name for the identifier.
 # todo_eo: deepcopy source dictionaries when they are not modified later, and use it for better error messages
+
+# todo_eo: HVACTemplate:Plant:Equipment priority field needs the action to be determined.  test with expansion
