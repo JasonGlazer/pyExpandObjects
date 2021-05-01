@@ -648,7 +648,21 @@ class HVACTemplate(EPJSON):
             expanded_zones=None
         )
         equipment = []
+        # Extract priority from each equipment object referenced by the branch and use it to order the equipment list
+        supply_branches_with_priority = []
         for sb in supply_branches.values():
+            for equipment_name, equipment_objects in expanded_plant_equipment.items():
+                print(equipment_name)
+                if sb['components'][0]['component_name'] == equipment_name:
+                    equipment_epjson = equipment_objects.epjson[
+                        sb['components'][0]['component_object_type']][sb['components'][0]['component_name']]
+                    # make tuple of (object, priority)
+                    # if priority isn't set, use infinity to push it to the end when sorted
+                    supply_branches_with_priority.append((sb, equipment_epjson.get('priority', float('inf'))))
+        supply_branches_ordered = [
+            branch for branch, priority
+            in sorted(supply_branches_with_priority, key=lambda s: s[1])]
+        for sb in supply_branches_ordered:
             equipment.append({
                 'equipment_name': sb['components'][0]['component_name'],
                 'equipment_object_type': sb['components'][0]['component_object_type']

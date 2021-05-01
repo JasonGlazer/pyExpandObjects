@@ -448,11 +448,13 @@ Objects:
       ConstantSpeed:
         Fields: &PumpConstantSpeed
           <<: *PumpFields
-          design_flow_rate: Autosize
+          design_flow_rate: Autosize # not checked yet
       VariableSpeed:
         Fields: &PumpVariableSpeed
           <<: *PumpFields
-          design_maximum_flow_rate: Autosize
+          design_maximum_flow_rate: Autosize # not checked yet
+          coefficient_2_of_the_part_load_performance_curve: 0 # todo_eo: set by legacy, not default
+          coefficient_3_of_the_part_load_performance_curve: 1 # todo_eo: set by legacy, not default
   SetpointManager:
     MixedAir:
       Base:
