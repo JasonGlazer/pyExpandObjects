@@ -77,7 +77,7 @@ CommonObjects:
     AirLoop: &ConnectorsAirLoop
       Inlet: air_inlet_node_name
       Outlet: air_outlet_node_name
-    General: &ConnectorsGeneralLoop
+    General:
       Inlet: inlet_node_name
       Outler: outlet_node_name
     WaterLoop: &ConnectorsWaterLoop
@@ -104,7 +104,7 @@ Objects:
         controller_list_name: *AirLoopHVACWaterControllers
         demand_side_inlet_node_names: *SystemSupplyPathInletName
         demand_side_outlet_node_name: *ReturnAirOutlet
-        design_supply_air_flow_rate: Autosize # todo_eo: value set by legacy, not default
+        design_supply_air_flow_rate: Autosize # value set by legacy, not default
         supply_side_inlet_node_name: *AirLoopInlet
         supply_side_outlet_node_names:
           BuildPathReference:
@@ -115,10 +115,11 @@ Objects:
       Base:
         Fields: &AvailabilityManagerNightCycle
           name: '{} Availability'
-          applicability_schedule_name: HVACTemplate-Always1
-          control_type: 'StayOff' # todo_eo: schema indicates this default for HVACTemplate:System
+          applicability_schedule_name: HVACTemplate-Always1 # required by schema
+          control_type: '{night_cycle_control}'
           control_zone_or_zone_list_name: '{night_cycle_control_zone_name}'
-          thermostat_tolerance: 0.2 # todo_eo: set by legacy, not default
+          fan_schedule_name: '{system_availability_schedule_name}' # required by schema
+          thermostat_tolerance: 0.2 # set by legacy, not default
   Boiler:
     CommonObjects:
       - Branch: &BoilerBranch
@@ -136,15 +137,15 @@ Objects:
       Base: &BoilerHotWaterSuperObject
         Fields:
           name: '{}'
-          boiler_water_inlet_node_name: '{} HW Inlet' # required in template
-          boiler_water_outlet_node_name: '{} HW Outlet' # required in template
-          boiler_flow_mode: ConstantFlow # todo_eo: set by legacy, value is not default
-          efficiency_curve_temperature_evaluation_variable: LeavingBoiler # todo_eo: set by legacy, no default indicated
-          fuel_type: '{fuel_type}' # required in template
+          boiler_water_inlet_node_name: '{} HW Inlet' # required by schema
+          boiler_water_outlet_node_name: '{} HW Outlet' # required by schema
+          boiler_flow_mode: ConstantFlow # set by legacy, value is not default
+          efficiency_curve_temperature_evaluation_variable: LeavingBoiler # set by legacy, no default indicated
+          fuel_type: '{fuel_type}' # required by schema
           minimum_part_load_ratio: '{minimum_part_load_ratio}'
           maximum_part_load_ratio: '{maximum_part_load_ratio}'
-          nominal_thermal_efficiency: '{efficinecy}' # required in template
-          nominal_capacity: Autosize # todo_eo: set by legacy, no default
+          nominal_thermal_efficiency: '{efficinecy}' # required by schema
+          nominal_capacity: Autosize # set by legacy, no default
           normalized_boiler_efficiency_curve_name: '{} Efficiency Curve'
           optimum_part_load_ratio: '{optimum_part_load_ratio}'
           sizing_factor: '{sizing_factor}'
@@ -155,15 +156,15 @@ Objects:
         Base: &ChillerElectricEIRSuperObject
           Fields:
             name: '{}'
-            chilled_water_inlet_node_name: '{} Chiller ChW Inlet' # required in template
-            chilled_water_outlet_node_name: '{} Chiller ChW Outlet' # required in template
+            chilled_water_inlet_node_name: '{} Chiller ChW Inlet' # required by schema
+            chilled_water_outlet_node_name: '{} Chiller ChW Outlet' # required by schema
             condenser_inlet_node_name: '{} Chiller Cnd Inlet'
             condenser_outlet_node_name: '{} Chiller Cnd Outlet'
-            chiller_flow_mode: ConstantFlow # todo_eo: set by legacy, value is not default
+            chiller_flow_mode: ConstantFlow # set by legacy, value is not default
             condenser_type: '{condenser_type}'
-            cooling_capacity_function_of_temperature_curve_name: '{} RecipCapFT' # required in template
-            electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name: '{} RecipEIRFPLR' # required in template
-            electric_input_to_cooling_output_ratio_function_of_temperature_curve_name: '{} RecipEIRFT' # required in template
+            cooling_capacity_function_of_temperature_curve_name: '{} RecipCapFT' # required by schema
+            electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name: '{} RecipEIRFPLR' # required by schema
+            electric_input_to_cooling_output_ratio_function_of_temperature_curve_name: '{} RecipEIRFT' # required by schema
             leaving_chilled_water_lower_temperature_limit: '{leaving_chilled_water_lower_temperature_limit}'
             minimum_part_load_ratio: '{minimum_part_load_ratio}'
             minimum_unloading_ratio: '{minimum_unloading_ratio}'
@@ -171,29 +172,22 @@ Objects:
             optimum_part_load_ratio: '{optimum_part_load_ratio}'
             reference_capacity: '{capacity}' # required in template
             reference_cop: '{nominal_cop}' # required in template
-            reference_chilled_water_flow_rate: Autosize # todo_eo: set by legacy, no default
-            reference_condenser_fluid_flow_rate: Autosize # todo_eo: set by legacy, no default
+            reference_chilled_water_flow_rate: Autosize # set by legacy, no default
+            reference_condenser_fluid_flow_rate: Autosize # set by legacy, no default
             sizing_factor: '{sizing_factor}'
   Coil:
     Cooling:
       Fields: &CoilCoolingFields
         name: '{} Cooling Coil'
-        air_inlet_node_name: '{} Cooling Coil Inlet'
-        air_outlet_node_name: '{} Cooling Coil Outlet'
+        air_inlet_node_name: '{} Cooling Coil Inlet' # required by schema
+        air_outlet_node_name: '{} Cooling Coil Outlet' # required by schema
       Water:
         Fields: &CoilCoolingWaterFields
           <<: *CoilCoolingFields
-          design_air_flow_rate: Autosize
-          design_inlet_air_humidity_ratio: Autosize
-          design_inlet_air_temperature: Autosize
-          design_inlet_water_temperature: Autosize
-          design_outlet_air_humidity_ratio: Autosize
-          design_outlet_air_temperature: Autosize
-          design_water_flow_rate: Autosize
-          heat_exchanger_configuration: CrossFlow
-          type_of_analysis: DetailedAnalysis
-          water_inlet_node_name: '{} Cooling Coil Chw Inlet'
-          water_outlet_node_name: '{} Cooling Coil Chw Outlet'
+          heat_exchanger_configuration: CrossFlow # set by legacy, not default
+          type_of_analysis: DetailedAnalysis # set by legacy, not default
+          water_inlet_node_name: '{} Cooling Coil Chw Inlet' # required by schema
+          water_outlet_node_name: '{} Cooling Coil Chw Outlet' # required by schema
         Connectors: &CoilCoolingWaterConnectors
           AirLoop: *ConnectorsAirLoop
           ChilledWaterLoop: *ConnectorsWaterLoop
@@ -205,24 +199,19 @@ Objects:
     Heating:
       Fields: &CoilHeatingFields
         name: '{} Heating Coil'
-        air_inlet_node_name: '{} Heating Coil Inlet'
-        air_outlet_node_name: '{} Heating Coil Outlet'
+        air_inlet_node_name: '{} Heating Coil Inlet' # required by schema
+        air_outlet_node_name: '{} Heating Coil Outlet' # required by schema
       Connectors:
         AirLoop: *ConnectorsAirLoop
       Water:
         Fields: &CoilHeatingWaterFields
           << : *CoilHeatingFields
-          water_inlet_node_name: '{} Heating Coil Hw Inlet'
-          water_outlet_node_name: '{} Heating Coil Hw Outlet'
-          rated_inlet_air_temperature: 16.6
-          rated_inlet_water_temperature: 82.2
-          rated_outlet_air_temperature: 32.2
-          rated_outlet_water_temperature: 71.1
-          rated_ratio_for_air_and_water_convection: 0.5
-          u_factor_times_area_value: Autosize
-          performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
-          rated_capacity: Autosize
-          maximum_water_flow_rate: Autosize
+          water_inlet_node_name: '{} Heating Coil Hw Inlet' # required by schema
+          water_outlet_node_name: '{} Heating Coil Hw Outlet' # required by schema
+          rated_inlet_air_temperature: 16.6 # set by legacy, default but simulations unstable when omitted
+          rated_inlet_water_temperature: 82.2 # set by legacy, default but simulations unstable when omitted
+          rated_outlet_air_temperature: 32.2 # set by legacy, default but simulations unstable when omitted
+          rated_outlet_water_temperature: 71.1 # set by legacy, default but simulations unstable when omitted
         Connectors: &CoilHeatingWaterConnectors
           AirLoop: *ConnectorsAirLoop
           HotWaterLoop: *ConnectorsWaterLoop
@@ -231,20 +220,22 @@ Objects:
       Base:
         Fields: &ControllerOutdoorAir
           name: '{} OA Controller'
-          actuator_node_name:
-            BuildPathReference:
-              Location: 0
-              ValueLocation: Inlet
-          economizer_control_action_type: ModulateFlow
-          maximum_outdoor_air_flow_rate: Autosize
+          actuator_node_name: # required by schema
+            OutdoorAir:Mixer: outdoor_air_stream_node_name
+          economizer_control_type: '{economizer_type}'
+          economizer_maximum_limit_dewpoint_temperature: '{economizer_maximum_limit_dewpoint_temperature}'
+          economizer_maximum_limit_dry_bulb_temperature: '{economizer_upper_temperature_limit}'
+          economizer_minimum_limit_dry_bulb_temperature: '{economizer_lower_temperature_limit}'
+          economizer_maximum_limit_enthalpy: '{economizer_upper_enthalpy_limit}'
+          maximum_outdoor_air_flow_rate: Autosize # required by schema
           minimum_limit_type: '{minimum_outdoor_air_control_type}'
-          minimum_outdoor_air_flow_rate: Autosize
+          minimum_outdoor_air_flow_rate: Autosize # required by schema
           minimum_outdoor_air_schedule_name: '{minimum_outdoor_air_schedule_name}'
-          mixed_air_node_name:
+          mixed_air_node_name: # required by schema
             OutdoorAir:Mixer: mixed_air_node_name
-          relief_air_outlet_node_name:
-            OutdoorAir:M.*: relief_air_stream_node_name
-          return_air_node_name:
+          relief_air_outlet_node_name: # required by schema
+            OutdoorAir:Mixer: relief_air_stream_node_name
+          return_air_node_name: # required by schema
             OutdoorAir:Mixer: return_air_stream_node_name
     WaterCoil:
       Base:
@@ -354,12 +345,12 @@ Objects:
         Fields: &OutdoorAirMixerFields
           name: '{} OA Mixing Box'
           mixed_air_node_name: '{} Mixed Air Outlet'
-          outdoor_air_stream_node_name: '{} Outside Air Inlet' #will be overridden
+          outdoor_air_stream_node_name: '{} Outside Air Inlet'
           relief_air_stream_node_name: '{} Relief Air Outlet'
           return_air_stream_node_name: *AirLoopInlet
         Connectors: &OutdoorAirMixersConnectors
           AirLoop:
-            Inlet: outdoor_air_stream_node_name
+            Inlet: return_air_stream_node_name
             Outlet: mixed_air_node_name
   PlantLoop:
     Base:
@@ -967,10 +958,6 @@ OptionTree:
             Controller:OutdoorAir: lockout_type
           economizer_type:
             Controller:OutdoorAir: economizer_control_type
-          night_cycle_control:
-            AvailabilityManager:NightCycle: control_type
-          system_availability_schedule_name:
-            AvailabilityManager:NightCycle: fan_schedule_name
       VAV:
         BuildPath:
           BaseObjects:
@@ -1079,9 +1066,7 @@ OptionTree:
                 name: '{} Outdoor Air NodeList'
                 nodes:
                   - node_or_nodelist_name:
-                      BuildPathReference:
-                        Location: 0
-                        ValueLocation: Inlet
+                      OutdoorAir:Mixer: outdoor_air_stream_node_name
             - Controller:OutdoorAir:
                 <<: *ControllerOutdoorAir
                 economizer_minimum_limit_dry_bulb_temperature: '{economizer_lower_temperature_limit}'
@@ -1265,3 +1250,10 @@ OptionTree:
 #      insert_values:
 #        - 1
 # When building option tree, Objects, Transitions, Mappings go on same level for a leaf
+
+# todo_eo: clean up each object that is already present in the file
+# todo_eo: walk through template options and build out additional functions
+# todo_eo: add functions for return fan
+#  The fan is set at the 0th location in the build path, but is not included in the AirLoopHVAC:OutdoorAirSystem
+#  _modify_build_path_for_outside_air_system needs to be adjusted so that the fan at the beginning of the build path
+#  stays there and is not skipped

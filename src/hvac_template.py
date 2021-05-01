@@ -652,7 +652,6 @@ class HVACTemplate(EPJSON):
         supply_branches_with_priority = []
         for sb in supply_branches.values():
             for equipment_name, equipment_objects in expanded_plant_equipment.items():
-                print(equipment_name)
                 if sb['components'][0]['component_name'] == equipment_name:
                     equipment_epjson = equipment_objects.epjson[
                         sb['components'][0]['component_object_type']][sb['components'][0]['component_name']]
