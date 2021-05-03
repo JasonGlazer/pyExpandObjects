@@ -144,7 +144,7 @@ Objects:
           fuel_type: '{fuel_type}' # required by schema
           minimum_part_load_ratio: '{minimum_part_load_ratio}'
           maximum_part_load_ratio: '{maximum_part_load_ratio}'
-          nominal_thermal_efficiency: '{efficinecy}' # required by schema
+          nominal_thermal_efficiency: '{efficiency}' # required by schema
           nominal_capacity: Autosize # set by legacy, no default
           normalized_boiler_efficiency_curve_name: '{} Efficiency Curve'
           optimum_part_load_ratio: '{optimum_part_load_ratio}'
@@ -241,46 +241,40 @@ Objects:
       Base:
         Fields: &ControllerWaterCoil
           name: '{} Coil Controller'
-          control_variable: Temperature
-          actuator_variable: Flow
-          maximum_actuated_flow: Autosize
-          minimum_actuated_flow: 0
-          controller_convergence_tolerance: Autosize
-          sensor_node_name:
+          control_variable: Temperature # set by legacy, no default, required by schema
+          actuator_variable: Flow # set by legacy, no default, only option, required by schema
+          minimum_actuated_flow: 0 # set by legacy, default value but if not specifically entered there are unstable results.
+          sensor_node_name: # required by schema
             ^Coil:(Cooling|Heating):Water.*: air_outlet_node_name
-          actuator_node_name:
+          actuator_node_name: # required by schema
             ^Coil:(Cooling|Heating):Water.*: water_inlet_node_name
   CondenserEquipmentOperationSchemes:
     CondenserLoad:
       Base:
         Fields: &CondenserEquipmentOperationSchemesCondenserLoad
           name: *PlantEquipmentOperationScheme
-          control_scheme_1_name:
+          control_scheme_1_name: # required by schema
             PlantEquipmentOperation:.*: key
-          control_scheme_1_object_type:
+          control_scheme_1_object_type: # required by schema
             PlantEquipmentOperation:.*: self
-          control_scheme_1_schedule_name: HVACTemplate-Always1
+          control_scheme_1_schedule_name: HVACTemplate-Always1 # required by schema
   CondenserLoop:
     Base:
       Fields: &CondenserLoopFields
         name: *PlantLoop
-        condenser_demand_side_branch_list_name: *DemandSideBranches
-        condenser_demand_side_connector_list_name: *DemandSideConnectors
-        condenser_equipment_operation_scheme_name: *PlantEquipmentOperationScheme
-        condenser_loop_temperature_setpoint_node_name: *SupplyOutlet
-        condenser_loop_volume: Autocalculate
-        condenser_side_branch_list_name: *SupplySideBranches
-        condenser_side_connector_list_name: *SupplySideConnectors
-        condenser_side_inlet_node_name: *SupplyInlet
-        condenser_side_outlet_node_name: *SupplyOutlet
-        demand_side_inlet_node_name: *DemandInlet
-        demand_side_outlet_node_name: *DemandOutlet
-        fluid_type: Water
-        load_distribution_scheme: SequentialLoad
-        maximum_loop_flow_rate: Autosize
-        maximum_loop_temperature: 80
-        minimum_loop_flow_rate: 0
-        minimum_loop_temperature: 5
+        condenser_demand_side_branch_list_name: *DemandSideBranches # required by schema
+        condenser_demand_side_connector_list_name: *DemandSideConnectors # required by schema
+        condenser_equipment_operation_scheme_name: *PlantEquipmentOperationScheme # required by schema
+        condenser_loop_temperature_setpoint_node_name: *SupplyOutlet # required by schema
+        condenser_side_branch_list_name: *SupplySideBranches # required by schema
+        condenser_side_connector_list_name: *SupplySideConnectors # required by schema
+        condenser_side_inlet_node_name: *SupplyInlet # required by schema
+        condenser_side_outlet_node_name: *SupplyOutlet # required by schema
+        demand_side_inlet_node_name: *DemandInlet # required by schema
+        demand_side_outlet_node_name: *DemandOutlet # required by schema
+        maximum_loop_flow_rate: Autosize # set by legacy, no default
+        maximum_loop_temperature: 80 # set by legacy, no default
+        minimum_loop_temperature: 5 # set by legacy, no default
   CoolingTower:
     SingleSpeed:
       Base:
@@ -978,7 +972,6 @@ OptionTree:
                     - Controller:WaterCoil:
                         <<: *ControllerWaterCoil
                         name: '{} Heating Coil Controller'
-                        action: Normal
                     - Branch:
                         name: '{} Heating Coil Hw Branch'
                         components:
@@ -1002,7 +995,6 @@ OptionTree:
                     - Controller:WaterCoil:
                         <<: *ControllerWaterCoil
                         name: '{} Cooling Coil Controller'
-                        action: Reverse
                     - Branch:
                         name: '{} Cooling Coil Chw Branch'
                         components:
@@ -1111,8 +1103,6 @@ OptionTree:
               Transitions:
                 capacity:
                   Boiler.*: nominal_capacity
-                efficiency:
-                  Boiler.*: nominal_thermal_efficiency
       ChilledWaterLoop:
         BaseObjects:
           Objects:
