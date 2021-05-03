@@ -14,4 +14,6 @@ __author__ = "John Grando"
 #  Use self.unique_name for the identifier.
 # todo_eo: deepcopy source dictionaries when they are not modified later, and use it for better error messages
 
-# todo_eo: HVACTemplate:Plant:Equipment priority field needs the action to be determined.  test with expansion
+# todo_eo: _create_outdoor_air_equipment_list_from_build_path needs tests for return fan options
+# todo_eo: _resolve_complex_input_from_build_path needs tests for Location by name
+# todo_eo: build new html output for full simulation tests

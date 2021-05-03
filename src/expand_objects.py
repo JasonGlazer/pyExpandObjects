@@ -444,6 +444,8 @@ class ExpandObjects(EPJSON):
         # keep a copy for output
         backup_copy = copy.deepcopy(lookup_instructions)
         # retrieve the necessary instructions from the instructions
+        # if Location is an integer, lookup by index.  If it is a string, treat is as a regex and look for an
+        # 'occurrence' key as well
         try:
             location = lookup_instructions.pop('Location')
             connector_path = connector_path or lookup_instructions.pop('ConnectorPath', None)
@@ -452,8 +454,26 @@ class ExpandObjects(EPJSON):
             raise PyExpandObjectsYamlStructureException("Build path location reference is invalid: build path {}"
                                                         .format(backup_copy))
         try:
-            super_object = build_path[location]
-            (super_object_type, super_object_structure), = super_object.items()
+            # If location is an integer, then just retrieve the index
+            if isinstance(location, int):
+                super_object = build_path[location]
+                (super_object_type, super_object_structure), = super_object.items()
+            else:
+                # If location is not an integer, assume it is a string and perform a regex match.  Also, check for an
+                # Occurrence key in case the first match is not desired.  A Occurrence of -1 will just keep matching and
+                # return the results from the last object match.
+                occurrence = lookup_instructions.pop('Occurrence', 1)
+                match_count = 0
+                for super_object in build_path:
+                    (super_object_type, super_object_structure), = super_object.items()
+                    if re.match(location, super_object_type):
+                        match_count += 1
+                        if match_count == occurrence:
+                            break
+                if (not match_count >= occurrence and occurrence != -1) or match_count == 0:
+                    raise PyExpandObjectsYamlStructureException(
+                        "The number of occurrences in a build path was never reached for "
+                        "complex reference build path: {}, complex reference: {}".format(build_path, backup_copy))
         except (IndexError, ValueError):
             raise PyExpandObjectsYamlStructureException("Invalid build path or super object: {}".format(build_path))
         if value_location.lower() == 'self':
@@ -811,7 +831,7 @@ class ExpandObjects(EPJSON):
         output_build_path = self._flatten_list(output_build_path)
         return output_build_path
 
-    def _connect_and_convert_build_path_to_object_list(self, build_path, loop_type='AirLoop'):
+    def _connect_and_convert_build_path_to_object_list(self, build_path=None, loop_type='AirLoop'):
         """
         Connect nodes in build path and convert to list of epJSON formatted objects
 
@@ -819,6 +839,9 @@ class ExpandObjects(EPJSON):
         :return: object list of modified super objects.  The build path is also saved as a class attribute for
             future reference
         """
+        build_path = build_path or getattr(self, 'build_path', None)
+        if not build_path:
+            raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
         object_list = []
         formatted_build_path = []
         for idx, super_object in enumerate(copy.deepcopy(build_path)):
@@ -873,7 +896,8 @@ class ExpandObjects(EPJSON):
                             # If the template value is 'None' in the yaml, then perform the operation if the class
                             # attribute is missing or None.
                             if (template_value == 'None' and not hasattr(self, template_field)) or \
-                                    re.match(template_value, getattr(self, template_field)):
+                                    (getattr(self, template_field, None) and (
+                                     re.match(template_value, getattr(self, template_field)))):
                                 build_path = self._apply_build_path_action(
                                     build_path=build_path,
                                     action_instructions=action_instructions)
@@ -1108,8 +1132,15 @@ class ExpandSystem(ExpandObjects):
         oa_equipment_list_dictionary = self.get_structure(
             structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'OutdoorAirSystem', 'EquipmentList', 'Base'])
         # iterate over build path returning every object up to the OutdoorAir:Mixer
-        for super_object in build_path:
+        # if return fan is specified skip the first object as long as it is a (return) fan
+        for idx, super_object in enumerate(build_path):
             for super_object_type, super_object_constructor in super_object.items():
+                if getattr(self, 'return_fan', None) and idx == 0:
+                    if not re.match(r'Fan:.*', super_object_type):
+                        raise PyExpandObjectsException('Return fan specified in template but is not the first object in '
+                                                       'build path: {}'.format(build_path))
+                    else:
+                        continue
                 if stop_loop:
                     break
                 oa_equipment_list_dictionary['component_{}_object_type'.format(object_count)] = \
@@ -1263,8 +1294,18 @@ class ExpandSystem(ExpandObjects):
                                                                 .format(self.unique_name, build_path))
         # check that the outdoor air system was applied to the build path
         if 'AirLoopHVAC:OutdoorAirSystem' not in [list(i.keys())[0] for i in parsed_build_path]:
-            raise PyExpandObjectsException("AirLoopHVAC:OutdoorAirSystem failed to bea applied in {} build path {}"
+            raise PyExpandObjectsException("AirLoopHVAC:OutdoorAirSystem failed to be applied in {} build path {}"
                                            .format(self.unique_name, build_path))
+        # check if a return fan is specified in the template.  If so, then copy the first object, which should be a fan
+        # and also should have been skipped by the above process.  Insert the object into the list at the end of the
+        # process at position 0
+        if getattr(self, 'return_fan', None):
+            (return_fan_type, return_fan_structure), = build_path[0].items()
+            if not re.match(r'Fan:.*', return_fan_type):
+                raise PyExpandObjectsException('Return fan was specified in HVACTemplate:System, however, a fan was not '
+                                               'the first object specified in the build path: {}'.format(build_path))
+            else:
+                parsed_build_path.insert(0, copy.deepcopy(build_path[0]))
         return parsed_build_path
 
     def _create_branch_and_branchlist_from_build_path(

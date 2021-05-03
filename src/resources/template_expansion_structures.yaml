@@ -446,9 +446,15 @@ Objects:
         Fields: &SetpointManagerMixedAir
           control_variable: Temperature
           fan_inlet_node_name:
-            Fan:.*: air_inlet_node_name
+            BuildPathReference:
+              Location: Fan:.*
+              Occurrence: -1
+              ValueLocation: Inlet
           fan_outlet_node_name:
-            Fan:.*: air_outlet_node_name
+            BuildPathReference:
+              Location: Fan:.*
+              Occurrence: -1
+              ValueLocation: Outlet
       Cooling:
         Base:
           Fields: &SetpointManagerMixedAirCooling
@@ -1050,6 +1056,18 @@ OptionTree:
                           fan_power_coefficient_4: 0.87198823
                           fan_power_coefficient_5: 0
                           fan_power_minimum_flow_fraction: 0.25
+            - return_fan:
+                'Yes': # Quotes necessary to prevent boolean conversion
+                  Location: 0
+                  ActionType: Insert
+                  Objects:
+                    - Fan:VariableVolume:
+                        Fields:
+                          <<: *FanVariableVolumeFields
+                          name: '{} Return Fan'
+                          air_inlet_node_name: *AirLoopInlet
+                          air_outlet_node_name: '{} Return Fan Outlet'
+                        Connectors: *FanVariableVolumeConnectors
         BaseObjects:
           Objects:
             - AvailabilityManager:NightCycle:
