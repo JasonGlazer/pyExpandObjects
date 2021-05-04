@@ -306,37 +306,44 @@ Objects:
       Base:
         Fields: &DesignSpecificationZoneAirDistribution
           name: '{} SZ DSZAD'
-  Fan: # todo_eo: pick up from here
+  Fan:
     Base:
       Fields: &FanFields
-        motor_efficiency: 0.9
+        name: '{} Supply Fan'
+        air_inlet_node_name: '{} Supply Fan Inlet' # required by schema
+        air_outlet_node_name: '{} Supply Fan Outlet' # required by schema
+        availability_schedule_name: '{system_availability_schedule_name}'
         motor_in_airstream_fraction: '{supply_fan_motor_in_air_stream_fraction}'
-        maximum_flow_rate: Autosize
+        maximum_flow_rate: Autosize # set by legacy, no default
+        pressure_rise: 600 # set by legacy, no default, required by schema
       Connectors: &FanConnectors
         AirLoop: *ConnectorsAirLoop
     VariableVolume:
-      Base:
+      CommonMappings: &FanVariableVolumeCommonMappings
+        Fan:.*:
+          supply_fan_part_load_power_coefficients:
+            InletVaneDampers:
+              fan_power_coefficient_1: 0.35071223
+              fan_power_coefficient_2: 0.30850535
+              fan_power_coefficient_3: -0.54137364
+              fan_power_coefficient_4: 0.87198823
+              fan_power_coefficient_5: 0
+              fan_power_minimum_flow_fraction: 0.25
+      Base: &FanVariableVolumeSuperObject
         Fields: &FanVariableVolumeFields
-          name: '{} Supply Fan'
           << : *FanFields
-          air_inlet_node_name: '{} Supply Fan Inlet'
-          air_outlet_node_name: '{} Supply Fan Outlet'
-          availability_schedule_name: 'HVACTemplate-Always1'
-          fan_power_minimum_flow_rate_input_method: 'Fraction'
-          fan_total_efficiency: 0.7
-          pressure_rise: '{supply_fan_delta_pressure}'
         Connectors: &FanVariableVolumeConnectors
           << : *FanConnectors
   OutdoorAir:
     Base:
-      Mixer:
-        Fields: &OutdoorAirMixerFields
-          name: '{} OA Mixing Box'
-          mixed_air_node_name: '{} Mixed Air Outlet'
-          outdoor_air_stream_node_name: '{} Outside Air Inlet'
-          relief_air_stream_node_name: '{} Relief Air Outlet'
-          return_air_stream_node_name: *AirLoopInlet
-        Connectors: &OutdoorAirMixersConnectors
+      Mixer: &OutdoorAirMixerSuperObject
+        Fields:
+          name: '{} OA Mixing Box' # required by schema
+          mixed_air_node_name: '{} Mixed Air Outlet' # required by schema
+          outdoor_air_stream_node_name: '{} Outside Air Inlet' # required by schema
+          relief_air_stream_node_name: '{} Relief Air Outlet' # required by schema
+          return_air_stream_node_name: *AirLoopInlet # required by schema
+        Connectors:
           AirLoop:
             Inlet: return_air_stream_node_name
             Outlet: mixed_air_node_name
@@ -872,7 +879,7 @@ Groupings:
                 name: '{} Reheat Coil'
                 air_inlet_node_name: '{} Damper Outlet'
                 air_outlet_node_name: '{} Supply Inlet'
-                availability_schedule_name: '{availability_schedule_name}'
+                availability_schedule_name: '{reheat_coil_availability_schedule_name}'
             - Branch:
                 name: '{} Reheat Coil HW Branch'
                 components:
@@ -957,9 +964,7 @@ OptionTree:
         BuildPath:
           BaseObjects:
             Objects:
-              - OutdoorAir:Mixer:
-                  Fields: *OutdoorAirMixerFields
-                  Connectors: *OutdoorAirMixersConnectors
+              - OutdoorAir:Mixer: *OutdoorAirMixerSuperObject
           Actions:
             - heating_coil_type:
                 HotWater:
@@ -1012,45 +1017,21 @@ OptionTree:
                   Location: -1
                   ActionType: Insert
                   Objects:
-                    - Fan:VariableVolume:
-                        Fields: *FanVariableVolumeFields
-                        Connectors: *FanVariableVolumeConnectors
+                    - Fan:VariableVolume: *FanVariableVolumeSuperObject
                   Transitions:
-                    system_availability_schedule_name:
-                      Fan:.*: availability_schedule_name
-                  Mappings:
-                    Fan:.*:
-                      supply_fan_part_load_power_coefficients:
-                        InletVaneDampers:
-                          fan_power_coefficient_1: 0.35071223
-                          fan_power_coefficient_2: 0.30850535
-                          fan_power_coefficient_3: -0.54137364
-                          fan_power_coefficient_4: 0.87198823
-                          fan_power_coefficient_5: 0
-                          fan_power_minimum_flow_fraction: 0.25
+                    supply_fan_delta_pressure:
+                      Fan:.*: pressure_rise
+                  Mappings: *FanVariableVolumeCommonMappings
                 BlowThrough:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
                   Location: After
                   Objects:
-                    - Fan:VariableVolume:
-                        Fields: *FanVariableVolumeFields
-                        Connectors: *FanVariableVolumeConnectors
+                    - Fan:VariableVolume: *FanVariableVolumeSuperObject
                   Transitions:
                     supply_fan_delta_pressure:
                       Fan:.*: pressure_rise
-                    system_availability_schedule_name:
-                      Fan:.*: availability_schedule_name
-                  Mappings:
-                    Fan:.*:
-                      supply_fan_part_load_power_coefficients:
-                        InletVaneDampers:
-                          fan_power_coefficient_1: 0.35071223
-                          fan_power_coefficient_2: 0.30850535
-                          fan_power_coefficient_3: -0.54137364
-                          fan_power_coefficient_4: 0.87198823
-                          fan_power_coefficient_5: 0
-                          fan_power_minimum_flow_fraction: 0.25
+                  Mappings: *FanVariableVolumeCommonMappings
             - return_fan:
                 'Yes': # Quotes necessary to prevent boolean conversion
                   Location: 0
@@ -1063,6 +1044,10 @@ OptionTree:
                           air_inlet_node_name: *AirLoopInlet
                           air_outlet_node_name: '{} Return Fan Outlet'
                         Connectors: *FanVariableVolumeConnectors
+                  Transitions:
+                    return_fan_delta_pressure:
+                      Fan:.*: pressure_rise
+                  Mappings: *FanVariableVolumeCommonMappings
         BaseObjects:
           Objects:
             - AvailabilityManager:NightCycle:
@@ -1071,7 +1056,7 @@ OptionTree:
                 name: '{} Outdoor Air NodeList'
                 nodes:
                   - node_or_nodelist_name:
-                      OutdoorAir:Mixer: outdoor_air_stream_node_name
+                      OutdoorAir:Mixer: outdoor_air_stream_node_name # BuildPathReference not used because node is not a connector
             - Controller:OutdoorAir:
                 <<: *ControllerOutdoorAir
                 economizer_minimum_limit_dry_bulb_temperature: '{economizer_lower_temperature_limit}'
@@ -1126,7 +1111,7 @@ OptionTree:
                 loop_type: Cooling
                 loop_design_temperature_difference: 6.67
                 design_loop_exit_temperature: '{chilled_water_design_setpoint}'
-        TemplateObjects: # todo_eo: Secondary options need to have PlantLoop common_pip_simulation changed to CommonPipe
+        TemplateObjects: # todo_eo: Secondary options need to have PlantLoop common_pipe_simulation changed to CommonPipe
           chilled_water_pump_configuration:
             ConstantPrimaryNoSecondary:
               Objects:
