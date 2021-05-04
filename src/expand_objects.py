@@ -463,6 +463,8 @@ class ExpandObjects(EPJSON):
                 # Occurrence key in case the first match is not desired.  A Occurrence of -1 will just keep matching and
                 # return the results from the last object match.
                 occurrence = lookup_instructions.pop('Occurrence', 1)
+                if not isinstance(occurrence, int):
+                    raise PyExpandObjectsYamlStructureException('Occurrence key is not an integer: {}'.format(backup_copy))
                 match_count = 0
                 for super_object in build_path:
                     (super_object_type, super_object_structure), = super_object.items()

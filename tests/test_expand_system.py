@@ -164,6 +164,85 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             ['VAV Sys 1 OA System Equipment']['component_2_name'])
         return
 
+    def test_create_outdoor_air_equipment_list_from_epjson_with_return_fan(self):
+        # es = ExpandSystem(template=mock_template)
+        es = ExpandSystem(template={})
+        es.build_path = [
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Return Fan',
+                        'air_inlet_node_name': '{} Return Fan Inlet',
+                        'air_outlet_node_name': '{} Return Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}},
+            {
+                'OutdoorAir:Mixer': {
+                    'Fields': {
+                        'name': '{} OA Mixing Box',
+                        'mixed_air_node_name': '{} Mixed Air Outlet',
+                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                        'relief_air_stream_node_name': '{} Relief Air Outlet',
+                        'return_air_stream_node_name': '{} Air Loop Inlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'return_air_stream_node_name',
+                            'Outlet': 'mixed_air_node_name'}}}},
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Supply Fan',
+                        'air_inlet_node_name': '{} Supply Fan Inlet',
+                        'air_outlet_node_name': '{} Supply Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}}
+        ]
+        es.unique_name = 'TEST SYSTEM'
+        es.return_fan = 'Yes'
+        oa_equipment_list_object = es._create_outdoor_air_equipment_list_from_build_path()
+        self.assertEqual('AirLoopHVAC:OutdoorAirSystem:EquipmentList', list(oa_equipment_list_object.keys())[0])
+        self.assertEqual(
+            'TEST SYSTEM OA Mixing Box',
+            oa_equipment_list_object['AirLoopHVAC:OutdoorAirSystem:EquipmentList']
+            ['TEST SYSTEM OA System Equipment']['component_1_name'])
+        return
+
+    def test_create_outdoor_air_equipment_list_from_epjson_with_return_fan_option_but_no_equipment(self):
+        es = ExpandSystem(template={})
+        es.build_path = [
+            {
+                'OutdoorAir:Mixer': {
+                    'Fields': {
+                        'name': '{} OA Mixing Box',
+                        'mixed_air_node_name': '{} Mixed Air Outlet',
+                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                        'relief_air_stream_node_name': '{} Relief Air Outlet',
+                        'return_air_stream_node_name': '{} Air Loop Inlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'return_air_stream_node_name',
+                            'Outlet': 'mixed_air_node_name'}}}},
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Supply Fan',
+                        'air_inlet_node_name': '{} Supply Fan Inlet',
+                        'air_outlet_node_name': '{} Supply Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}}
+        ]
+        es.unique_name = 'TEST SYSTEM'
+        es.return_fan = 'Yes'
+        with self.assertRaisesRegex(PyExpandObjectsException, 'Return fan specified'):
+            es._create_outdoor_air_equipment_list_from_build_path()
+        return
+
     def test_reject_create_outdoor_air_equipment_list_from_epjson_without_build_path(self):
         es = ExpandSystem(template=mock_template)
         with self.assertRaisesRegex(PyExpandObjectsException, 'Build path was not provided nor was it available'):
