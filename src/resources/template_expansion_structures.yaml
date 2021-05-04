@@ -280,23 +280,19 @@ Objects:
       Base:
         Fields: &CoolingTowerSingleSpeed
           name: '{}'
-          blowdown_calculation_mode: ConcentrationRatio
-          blowdown_concentration_ratio: 3
-          capacity_control: FanCycling
-          design_air_flow_rate: Autosize
-          design_fan_power: Autosize
-          design_u_factor_times_area_value: Autosize
-          design_water_flow_rate: Autosize
-          drift_loss_percent: 0.008
-          evaporation_loss_mode: SaturatedExit
-          free_convection_capacity: Autocalculate
-          free_convection_regime_air_flow_rate: Autocalculate
-          free_convection_regime_u_factor_times_area_value: Autocalculate
-          outdoor_air_inlet_node_name: *OutdoorAirInletNodes
-          performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
-          sizing_factor: 1.0
-          water_inlet_node_name: '{} Inlet'
-          water_outlet_node_name: '{} Outlet'
+          blowdown_calculation_mode: ConcentrationRatio # set by legacy, no default
+          design_air_flow_rate: Autosize # set by legacy, no default
+          design_fan_power: Autosize # set by legacy, no default
+          design_u_factor_times_area_value: Autosize # set by legacy, no default
+          design_water_flow_rate: Autosize # set by legacy, no default
+          evaporation_loss_mode: SaturatedExit # set by legacy, no default
+          free_convection_capacity: Autocalculate # set by legacy, no default
+          free_convection_regime_air_flow_rate: Autocalculate # set by legacy, not default
+          free_convection_regime_u_factor_times_area_value: Autocalculate # set by legacy, not default
+          outdoor_air_inlet_node_name: *OutdoorAirInletNodes # set by legacy, no default
+          sizing_factor: '{sizing_factor}'
+          water_inlet_node_name: '{} Inlet' # required by schema
+          water_outlet_node_name: '{} Outlet' # required by schema
   DesignSpecification:
     OutdoorAir:
       Base:
@@ -310,9 +306,7 @@ Objects:
       Base:
         Fields: &DesignSpecificationZoneAirDistribution
           name: '{} SZ DSZAD'
-          zone_air_distribution_effectiveness_in_cooling_mode: 1
-          zone_air_distribution_effectiveness_in_heating_mode: 1
-  Fan:
+  Fan: # todo_eo: pick up from here
     Base:
       Fields: &FanFields
         motor_efficiency: 0.9
@@ -850,26 +844,26 @@ Groupings:
               component_inlet_node_name: *DemandInlet
               component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
   Zone:
-    AirTerminal:
+    AirTerminal: # todo_eo: this section not finished
       SingleDuct:
         Fields: &AirTerminalSingleDuctFields
-          air_inlet_node_name: '{} Zone Equip Inlet'
-          air_outlet_node_name: '{} Supply Inlet'
+          air_inlet_node_name: '{} Zone Equip Inlet' # required by schema
+          air_outlet_node_name: '{} Supply Inlet' # required by schema
           constant_minimum_air_flow_fraction: '{constant_minimum_air_flow_fraction}'
-          maximum_air_flow_rate: Autosize
+          maximum_air_flow_rate: Autosize # required by schema, no default
         VAV:
           Base:
             - AirTerminal:SingleDuct:VAV:Reheat: &AirTerminalSingleDuctVAVReheat
                 name: '{} VAV Reheat'
                 <<: *AirTerminalSingleDuctFields
-                damper_air_outlet_node_name: '{} Damper Outlet'
-                damper_heating_action: Reverse
-                reheat_coil_name: '{} Reheat Coil'
+                damper_air_outlet_node_name: '{} Damper Outlet' # required by schema
+                damper_heating_action: Reverse # this is the default applied in template, but not in target object.
+                reheat_coil_name: '{} Reheat Coil' # required by schema
           HotWaterReheat: &AirTerminalSingleDuctVAVHotWaterReheat
             - AirTerminal:SingleDuct:VAV:Reheat:
                 <<: *AirTerminalSingleDuctVAVReheat
                 convergence_tolerance: 0.001
-                reheat_coil_object_type: Coil:Heating:Water
+                reheat_coil_object_type: Coil:Heating:Water # required by schema
                 maximum_hot_water_or_steam_flow_rate: Autosize
                 minimum_hot_water_or_steam_flow_rate: 0
                 zone_minimum_air_flow_input_method: '{zone_minimum_air_flow_input_method}'
@@ -878,6 +872,7 @@ Groupings:
                 name: '{} Reheat Coil'
                 air_inlet_node_name: '{} Damper Outlet'
                 air_outlet_node_name: '{} Supply Inlet'
+                availability_schedule_name: '{availability_schedule_name}'
             - Branch:
                 name: '{} Reheat Coil HW Branch'
                 components:
@@ -1196,21 +1191,24 @@ OptionTree:
             - CondenserLoop: *CondenserLoopFields
       Tower:
         BaseObjects:
-          Objects:
-            - CoolingTower:SingleSpeed: *CoolingTowerSingleSpeed
-            - OutdoorAir:Node:
-                name: *OutdoorAirInletNodes
-            - Branch:
-                name: '{} Branch'
-                components:
-                  - component_object_type:
-                      CoolingTower.*: self
-                    component_name:
-                      CoolingTower.*: key
-                    component_inlet_node_name:
-                      CoolingTower*: water_inlet_node_name
-                    component_outlet_node_name:
-                      CoolingTower.*: water_outlet_node_name
+        TemplateObjects:
+          tower_type:
+            SingleSpeed:
+              Objects:
+                - CoolingTower:SingleSpeed: *CoolingTowerSingleSpeed
+                - OutdoorAir:Node:
+                    name: *OutdoorAirInletNodes
+                - Branch:
+                    name: '{} Branch'
+                    components:
+                      - component_object_type:
+                          CoolingTower.*: self
+                        component_name:
+                          CoolingTower.*: key
+                        component_inlet_node_name:
+                          CoolingTower*: water_inlet_node_name
+                        component_outlet_node_name:
+                          CoolingTower.*: water_outlet_node_name
       HotWaterLoop:
         BaseObjects:
           Objects:
