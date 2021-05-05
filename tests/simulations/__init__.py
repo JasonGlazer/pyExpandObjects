@@ -20,40 +20,27 @@ class BaseSimulationTest(object):
     @staticmethod
     def setup_file(file_path):
         """
-        Format epJSON file to have correct outputs for testing
+        Read file path and run epJSON through processing to ensure it is a valid json before testing.
+        This is to ensure that if there is a problem with the base file, it will be more obvious by returning an
+        error from this function rather than pyExpandObjects.  Also, it allows for any future manipulations that may
+        be useful
+
         :param file_path: epJSON file path
         :return: formatted epJSON
         """
         with open(file_path, 'r') as f:
             test_data = f.read()
-        base_raw_epjson = json.loads(test_data)
-        epj = EPJSON()
-        epj.epjson_process(epjson_ref=base_raw_epjson)
-        # Edit base epjson, make input epjson, write to test folder, and run
-        purged_epjson = epj.purge_epjson(
-            epjson=base_raw_epjson,
-            purge_dictionary={
-                'Output:Table:SummaryReports': '.*',
-                'OutputControl:Table:Style': '.*'
-            })
-        formatted_epjson = copy.deepcopy(purged_epjson)
-        epj.merge_epjson(
-            super_dictionary=formatted_epjson,
-            object_dictionary={
-                "Output:Table:SummaryReports": {
-                    "report 1": {
-                        "reports": [
-                            {"report_name": "EndUseEnergyConsumptionElectricityMonthly"}
-                        ]
-                    }
-                },
-                "OutputControl:Table:Style": {
-                    "Style 1": {
-                        "column_separator": "Comma"
-                    }
-                }
-            }
-        )
+        formatted_epjson = json.loads(test_data)
+        # Do manipulations if necessary by using the following commands
+        # epj = EPJSON()
+        # epj.epjson_process(epjson_ref=base_raw_epjson)
+        # purged_epjson = epj.purge_epjson(
+        #     epjson=base_raw_epjson,
+        #     purge_dictionary={})
+        # formatted_epjson = copy.deepcopy(purged_epjson)
+        # epj.merge_epjson(
+        #     super_dictionary=formatted_epjson,
+        #     object_dictionary={})
         return formatted_epjson
 
     @staticmethod
@@ -112,8 +99,8 @@ class BaseSimulationTest(object):
             # move files from previous runs, rm is too dangerous
             try:
                 os.rename(
-                    str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl.csv'),
-                    str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl_previous.csv')
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'),
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.csv')
                 )
             except FileNotFoundError:
                 pass
@@ -156,6 +143,13 @@ class BaseSimulationTest(object):
                             str(file_path)
                         ]
                     )
+                subprocess.run(
+                    [
+                        str(test_dir / '..' / 'simulation' / 'PostProcess' / 'ReadVarsESO.exe'),
+                        'convert.rvi'
+                    ],
+                    cwd=str(test_dir / '..' / 'simulation' / 'test')
+                )
             else:
                 if file_path.suffix == '.idf':
                     subprocess.run(
@@ -182,17 +176,27 @@ class BaseSimulationTest(object):
                             file_path
                         ]
                     )
+                subprocess.run(
+                    [
+                        'wine',
+                        str(test_dir / '..' / 'simulation' / 'PostProcess' / 'ReadVarsESO.exe'),
+                        'convert.rvi'
+                    ],
+                    cwd=str(test_dir / '..' / 'simulation' / 'test')
+                )
+            # get sum of output csv rows to use as comparison
             total_energy = 0
-            # get sum of total row to use as comparison
-            with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl.csv'), 'r') as f:
+            with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'), 'r') as f:
                 csvreader = csv.reader(f)
-                for row in csvreader:
-                    if 'Annual Sum or Average' in row:
+                sum_val = []
+                for idx, row in enumerate(csvreader):
+                    if idx != 0:
                         for val in row:
                             try:
-                                total_energy += float(val)
+                                sum_val.append(float(val))
                             except ValueError:
                                 pass
+                total_energy = sum(sum_val)
             with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.end'), 'r') as f:
                 lines = f.readlines()
             # check end file for matches and success message

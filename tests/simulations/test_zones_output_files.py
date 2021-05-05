@@ -60,7 +60,7 @@ class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
         # initialize list of files to run
         file_run_list = []
         # set subdirectory
-        sub_directory = ['tests', 'output_files']
+        sub_directory = ['simulation', 'test', 'output_files']
         original_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                                  'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
         original_formatted_epjson = self.setup_file(original_file_path)
@@ -97,7 +97,7 @@ class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
             sub_directory=sub_directory,
             file_name='HVACTemplate-5ZoneVAVWaterCooledZoneTestPrepared.epJSON')
         # test the file prepped with new templates
-        output_directory = test_dir.joinpath('output_files')
+        output_directory = test_dir.joinpath('../', *sub_directory)
         output = main(
             Namespace(
                 file=prepared_file_path,
