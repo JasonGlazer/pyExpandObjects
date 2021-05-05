@@ -12,7 +12,7 @@ from src.epjson_handler import EPJSON
 test_dir = Path(__file__).parent.parent
 
 
-class TestSimulationsFull(BaseTest, BaseSimulationTest, unittest.TestCase):
+class TestSimulationsFullSystem(BaseTest, BaseSimulationTest, unittest.TestCase):
     def setUp(self):
         return
 
