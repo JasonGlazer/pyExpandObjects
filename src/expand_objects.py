@@ -471,7 +471,7 @@ class ExpandObjects(EPJSON):
                 for super_object in build_path:
                     (super_object_type_check, _), = super_object.items()
                     if re.match(location, super_object_type_check):
-                        (super_object, super_object_structure), = super_object.items()
+                        (super_object_type, super_object_structure), = super_object.items()
                         match_count += 1
                         if match_count == occurrence:
                             break

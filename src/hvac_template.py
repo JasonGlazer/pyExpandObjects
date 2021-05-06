@@ -229,7 +229,8 @@ class HVACTemplate(EPJSON):
         for _, ez in expanded_zones.items():
             if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
                 # todo_eo: Only AirTerminal has been used for this test when all zone equipment objects should be
-                #  included.
+                #  included.  Check zonehvac_or_air_terminal_equipment_object_type in the schema for a list of valid
+                #  objects to construct a better regex.
                 zone_equipment = self.get_epjson_objects(
                     epjson=ez.epjson,
                     object_type_regexp=r'^AirTerminal:.*')

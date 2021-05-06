@@ -71,6 +71,8 @@ GlobalNames:
   Zone:
     SupplyInlet: &ZoneSupplyInlet
       '{} Supply Inlet'
+    Return: &ZoneReturn
+      '{} Return'
     ReturnOutlet: &ZoneReturnOutlet
       '{} Return Outlet'
 
@@ -553,9 +555,34 @@ Objects:
           zone_return_air_node_or_nodelist_name: *ZoneReturnOutlet
   ZoneHVAC:FourPipeFanCoil:
     Base:
-      Fields:
+      Fields: &ZoneHVACFourPipeFanCoil
         name: '{} Fan Coil'
-
+        air_inlet_node: *ZoneSupplyInlet
+        air_outlet_node: *ZoneReturn
+        availability_schedule_name: '{system_availability_schedule_name}'
+        capacity_control_method: ConstantFanVariableFlow # set by legacy, no default
+        maximum_supply_air_flow_rate: '{supply_air_maximum_flow_rate}'
+        maximum_outdoor_air_flow_rate: '{maximum_outdoor_air_flow_rate}'
+        outdoor_air_mixer_name:
+          BuildPathReference:
+            Location: OutdoorAir:Mixer
+            Occurrence: -1
+            ValueLocation: key
+        outdoor_air_mixer_object_type:
+          BuildPathReference:
+            Location: OutdoorAir:Mixer
+            Occurrence: -1
+            ValueLocation: self
+        supply_air_fan_name:
+          BuidPathReference:
+            Location: Fan:.*
+            Occurrence: -1
+            ValueLocation: key
+        supply_air_fan_object_type:
+          BuidPathReference:
+            Location: Fan:.*
+            Occurrence: -1
+            ValueLocation: self
 
 AutoCreated:
   PlantLoop:
@@ -850,7 +877,7 @@ Groupings:
       SingleDuct:
         Fields: &AirTerminalSingleDuctFields
           air_inlet_node_name: '{} Zone Equip Inlet' # required by schema
-          air_outlet_node_name: '{} Supply Inlet' # required by schema
+          air_outlet_node_name: *ZoneSupplyInlet # required by schema
           constant_minimum_air_flow_fraction: '{constant_minimum_air_flow_fraction}'
           maximum_air_flow_rate: Autosize # required by schema, no default
         VAV:
@@ -890,7 +917,7 @@ Groupings:
 OptionTree:
   HVACTemplate:
     Zone:
-      CommonObjects:
+      CommonObjects: # todo_eo: move this section to groupings?
         Base: &ZoneCommonObjects
           - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnections
           - ZoneHVAC:EquipmentList:
@@ -919,6 +946,7 @@ OptionTree:
         BaseObjects:
           Objects:
             - *ZoneCommonObjects
+            - ZoneHVAC:FourPipeFanCoil: *ZoneHVACFourPipeFanCoil
       VAV:
         BaseObjects:
           Objects:

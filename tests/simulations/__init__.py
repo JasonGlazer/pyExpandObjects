@@ -1,6 +1,5 @@
 import unittest
 import json
-import copy
 from pathlib import Path
 import subprocess
 import csv
@@ -61,15 +60,41 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             json.dump(epjson, f, indent=4, sort_keys=True)
         return input_file_path
 
+    def get_epjson_object_from_idf_file(self, idf_file_path):
+        """
+        Return an epJSON object from idf filfe path
+        :param idf_file_path: idf file path
+        :return: epJSON object
+        """
+        epjson_file_path = self.convert_file(idf_file_path)
+        ej = EPJSON()
+        return ej._get_json_file(epjson_file_path)
+
+    def create_idf_file_from_epjson(self, epjson, file_name, sub_directory=('simulation', 'test')):
+        """
+        Create an epJSON and idf file from an epJSON object
+        :param epjson: input epJSON object
+        :param file_name: destination file name
+        :param sub_directory: destination directory
+        :return: idf file name
+        """
+        epjson_file_path = self.write_file_for_testing(epjson=epjson, file_name=file_name, sub_directory=sub_directory)
+        idf_file_path = self.convert_file(epjson_file_path)
+        return idf_file_path
+
     @staticmethod
     def convert_file(file_location):
         """
         Convert idf to epJSON and vice versa.
         converted file in alternative format is created in same directory as base file
+        :param file_location: Path or string reference to file location
         :return: file path to converted file
         """
+        # convert to Path if a string is passed
+        if isinstance(file_location, str):
+            file_location = Path(file_location)
         # calling the arguments with pathlib causes issues with the conversion exe, so direct strings are passed here.
-        subprocess.Popen(
+        subprocess.run(
             [
                 'wine',
                 '../ConvertInputFormatWithHVACTemplate.exe',
@@ -88,20 +113,22 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             print('File has incorrect extension {}'.format(file_location))
             sys.exit()
 
-    def perform_full_comparison(self, baseline_file_location):
+    def perform_full_comparison(self, base_idf_file_path):
         """
         Simulate and compare two files where only the objects controlling output data are manipulated.
         Due to conversion issues within EnergyPlus, the baseline file must be simulated as an idf.
-        :param baseline_file_location: idf file containing HVACTemplate:.* objects
+        :param base_idf_file_path: idf file location containing HVACTemplate:.* objects
         :return: None.  Assertions performed within function.
         """
+        # move file to testing directory manually, shutil does not work reliably for some reason
+        with open(base_idf_file_path, 'r') as f1, \
+                open(test_dir.joinpath('..', 'simulation', 'test', 'base_input.idf'), 'w') as f2:
+            for line in f1:
+                f2.write(line)
+        # convert to epJSON for test simulation input
+        baseline_file_location = self.convert_file(base_idf_file_path)
         # setup outputs for perform_comparison to function and write base file
         base_formatted_epjson = self.setup_file(baseline_file_location)
-        base_input_file_path = self.write_file_for_testing(
-            epjson=base_formatted_epjson,
-            file_name='base_input_epjson.epJSON')
-        # convert to idf for simulation (epJSONs are unstable with the legacy process)
-        base_idf_file_path = self.convert_file(base_input_file_path)
         # write the preformatted base file for main to call
         test_pre_input_file_path = self.write_file_for_testing(
             epjson=base_formatted_epjson,
