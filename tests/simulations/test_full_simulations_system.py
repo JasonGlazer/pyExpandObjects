@@ -15,14 +15,7 @@ class TestSimulationsFullSystem(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:HVACTemplate-5ZoneVAVWAterCooled: Base")
-    def test_simulation_full_hvactemplate_5_zone_vav_watercooled(self):
-        base_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
-                             'HVACTemplate-5ZoneVAVWaterCooled.epJSON')
-        self.perform_full_comparison(baseline_file_location=base_file_path)
-        return
-
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:HVACTemplate-5ZoneVAVWAterCooled:Return Fan")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:System:HVACTemplate-5ZoneVAVWAterCooled:Return Fan")
     def test_simulation_full_hvactemplate_5_zone_vav_watercooled_with_return_fan(self):
         base_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                              'HVACTemplate-5ZoneVAVWaterCooled.epJSON')

@@ -69,7 +69,9 @@ GlobalNames:
     WaterControllers: &AirLoopHVACWaterControllers
       '{} Controllers'
   Zone:
-    ReturnOutlet: &ReturnOutlet
+    SupplyInlet: &ZoneSupplyInlet
+      '{} Supply Inlet'
+    ReturnOutlet: &ZoneReturnOutlet
       '{} Return Outlet'
 
 CommonObjects:
@@ -543,11 +545,13 @@ Objects:
       Base:
         Fields: &ZoneHVACEquipmentConnections
           name: '{} Equipment Connections'
-          zone_name: '{zone_name}' # required by schema
+          zone_air_inlet_node_or_nodelist_name: *ZoneSupplyInlet
+          zone_air_node_name: '{} Zone Air Node' # required by schema
           zone_conditioning_equipment_list_name: # required by schema
             ZoneHVAC:EquipmentList: key
-          zone_air_node_name: '{} Zone Air Node' # required by schema
-          zone_return_air_node_or_nodelist_name: *ReturnOutlet
+          zone_name: '{zone_name}' # required by schema
+          zone_return_air_node_or_nodelist_name: *ZoneReturnOutlet
+
 
 AutoCreated:
   PlantLoop:
@@ -882,9 +886,26 @@ Groupings:
 OptionTree:
   HVACTemplate:
     Zone:
+      CommonObjects:
+        Base: &ZoneCommonObjects
+          - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnections
+          - ZoneHVAC:EquipmentList:
+              <<: *ZoneHVACEquipmentList
+              equipment:
+                - zone_equipment_object_type:
+                    ^ZoneHVAC:(AirDistribution|FourPipe).*: self
+                  zone_equipment_name:
+                    ^ZoneHVAC:(AirDistribution|FourPipe).*: key
+                  zone_equipment_cooling_sequence: 1
+                  zone_equipment_heating_or_no_load_sequence: 1
+      FanCoil:
+        BaseObjects:
+          Objects:
+            - *ZoneCommonObjects
       VAV:
         BaseObjects:
           Objects:
+            - *ZoneCommonObjects
             - ZoneHVAC:AirDistributionUnit:
                 <<: *ZoneHVACAirDistributionUnit
                 air_distribution_unit_outlet_node_name:
@@ -893,19 +914,6 @@ OptionTree:
                   ^AirTerminal:.*: self
                 air_terminal_name:
                   ^AirTerminal:.*: key
-            - ZoneHVAC:EquipmentList:
-                <<: *ZoneHVACEquipmentList
-                equipment:
-                  - zone_equipment_object_type:
-                      ^ZoneHVAC:Air.*: self
-                    zone_equipment_name:
-                      ^ZoneHVAC:Air.*: key
-                    zone_equipment_cooling_sequence: 1
-                    zone_equipment_heating_or_no_load_sequence: 1
-            - ZoneHVAC:EquipmentConnections:
-                <<: *ZoneHVACEquipmentConnections
-                zone_air_inlet_node_or_nodelist_name:
-                  ^AirTerminal:.*: air_outlet_node_name
             - DesignSpecification:OutdoorAir:
                 <<: *DesignSpecificationOutdoorAir
             - DesignSpecification:ZoneAirDistribution:

@@ -425,6 +425,8 @@ class ExpandObjects(EPJSON):
                     object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}}
                 )
             except (TypeError, KeyError, ValueError):
+                from pprint import pprint
+                pprint(transitioned_object, width=200)
                 raise PyExpandObjectsYamlStructureException(
                     "YAML object is incorrectly formatted: {}".format(transitioned_object))
         return output_dictionary
