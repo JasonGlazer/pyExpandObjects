@@ -232,8 +232,7 @@ class HVACTemplate(EPJSON):
                 #  included.
                 zone_equipment = self.get_epjson_objects(
                     epjson=ez.epjson,
-                    object_type_regexp=r'^AirTerminal:.*'
-                )
+                    object_type_regexp=r'^AirTerminal:.*')
                 try:
                     (zone_equipment_type, zone_equipment_structure), = zone_equipment.items()
                     (zone_equipment_name, zone_equipment_fields), = zone_equipment_structure.items()

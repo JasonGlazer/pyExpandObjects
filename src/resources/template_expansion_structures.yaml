@@ -545,12 +545,16 @@ Objects:
       Base:
         Fields: &ZoneHVACEquipmentConnections
           name: '{} Equipment Connections'
-          zone_air_inlet_node_or_nodelist_name: *ZoneSupplyInlet
+          zone_air_inlet_node_or_nodelist_name: *ZoneSupplyInlet # It might be a good idea to just use the same name for zone and system
           zone_air_node_name: '{} Zone Air Node' # required by schema
           zone_conditioning_equipment_list_name: # required by schema
             ZoneHVAC:EquipmentList: key
           zone_name: '{zone_name}' # required by schema
           zone_return_air_node_or_nodelist_name: *ZoneReturnOutlet
+  ZoneHVAC:FourPipeFanCoil:
+    Base:
+      Fields:
+        name: '{} Fan Coil'
 
 
 AutoCreated:
@@ -899,6 +903,19 @@ OptionTree:
                   zone_equipment_cooling_sequence: 1
                   zone_equipment_heating_or_no_load_sequence: 1
       FanCoil:
+        BuildPath: # todo_eo: pick up from here
+          BaseObjects:
+            Objects:
+              - OutdoorAir:Mixer: *OutdoorAirMixerSuperObject
+              - Fan:SystemModel:
+                  Fields:
+                    name: '{} Supply Fan'
+                    air_inlet_node_name: '{} Supply Fan Inlet'
+                    air_outlet_node_name: '{} Supply Fan Outlet'
+                  Connectors:
+                    AirLoop:
+                      Inlet: air_inlet_node_name
+                      Outlet: air_outlet_node_name
         BaseObjects:
           Objects:
             - *ZoneCommonObjects
