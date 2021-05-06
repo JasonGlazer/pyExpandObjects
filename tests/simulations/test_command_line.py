@@ -1,15 +1,13 @@
-import unittest
 from pathlib import Path
 import subprocess
 import tempfile
 
-from tests import BaseTest
 from tests.simulations import BaseSimulationTest
 
 test_dir = Path(__file__).parent.parent
 
 
-class TestSimulationSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
+class TestSimulationCommandLine(BaseSimulationTest):
     def setUp(self):
         return
 

@@ -1,3 +1,4 @@
+import unittest
 import json
 import copy
 from pathlib import Path
@@ -6,13 +7,16 @@ import csv
 import re
 import sys
 import os
+from argparse import Namespace
 
 from src.epjson_handler import EPJSON
+from src.main import main
+from tests import BaseTest
 
 test_dir = Path(__file__).parent.parent
 
 
-class BaseSimulationTest(object):
+class BaseSimulationTest(BaseTest, unittest.TestCase):
     """
     Setup, extraction, and comparison functions for simulation testing.
     """
@@ -84,8 +88,38 @@ class BaseSimulationTest(object):
             print('File has incorrect extension {}'.format(file_location))
             sys.exit()
 
-    @staticmethod
-    def perform_comparison(epjson_files):
+    def perform_full_comparison(self, baseline_file_location):
+        """
+        Simulate and compare two files where only the objects controlling output data are manipulated.
+        Due to conversion issues within EnergyPlus, the baseline file must be simulated as an idf.
+        :param baseline_file_location: idf file containing HVACTemplate:.* objects
+        :return: None.  Assertions performed within function.
+        """
+        # setup outputs for perform_comparison to function and write base file
+        base_formatted_epjson = self.setup_file(baseline_file_location)
+        base_input_file_path = self.write_file_for_testing(
+            epjson=base_formatted_epjson,
+            file_name='base_input_epjson.epJSON')
+        # convert to idf for simulation (epJSONs are unstable with the legacy process)
+        base_idf_file_path = self.convert_file(base_input_file_path)
+        # write the preformatted base file for main to call
+        test_pre_input_file_path = self.write_file_for_testing(
+            epjson=base_formatted_epjson,
+            file_name='test_pre_input_epjson.epJSON')
+        # Expand and perform comparisons between the files
+        output = main(
+            Namespace(
+                no_schema=False,
+                file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' / 'test' / test_pre_input_file_path)))
+        output_epjson = output['epJSON']
+        test_input_file_path = self.write_file_for_testing(
+            epjson=output_epjson,
+            file_name='test_input_epjson.epJSON')
+        # check outputs
+        self.perform_comparison([base_idf_file_path, test_input_file_path])
+        return
+
+    def perform_comparison(self, epjson_files):
         """
         Simulate and compare epJSON files
         :param epjson_files: input epJSON files to compare
@@ -223,15 +257,23 @@ class BaseSimulationTest(object):
                     status_val = 1
             finished_statuses.append(status_val)
             total_energy_outputs.append(total_energy)
-        return {
+        status_checks = {
             "total_energy_outputs": total_energy_outputs,
             "warning_outputs": warning_outputs,
             "error_outputs": error_outputs,
-            "finished_statuses": finished_statuses
-        }
+            "finished_statuses": finished_statuses}
+        for energy_val in status_checks['total_energy_outputs']:
+            self.assertAlmostEqual(energy_val / max(status_checks['total_energy_outputs']), 1, 2)
+        for warning in status_checks['warning_outputs']:
+            self.assertEqual(warning, max(status_checks['warning_outputs']))
+        for error in status_checks['error_outputs']:
+            self.assertEqual(error, max(status_checks['error_outputs']))
+            self.assertGreaterEqual(error, 0)
+        for status in status_checks['finished_statuses']:
+            self.assertEqual(1, status)
+        return
 
-    @staticmethod
-    def compare_epjsons(epjson_1, epjson_2):
+    def compare_epjsons(self, epjson_1, epjson_2):
         """
         Summarize and compare two epJSONs based on object counts.
 
@@ -255,7 +297,5 @@ class BaseSimulationTest(object):
         for k, v in epjson_summary_2.items():
             if k not in epjson_summary_1.keys():
                 msg += '{} not in {}\n'.format(k, epjson_summary_2)
-        if msg == '':
-            return None
-        else:
-            return msg
+        self.assertEqual('', msg, msg)
+        return
