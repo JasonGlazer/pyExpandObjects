@@ -32,23 +32,25 @@ mock_zone_option_tree = {
                             }
                         }
                     ],
-                    'Transitions': {
-                        "template_field": {
-                            "ZoneHVAC:AirDistributionUnit": "object_test_field"
-                        },
-                        "template_field2": {
-                            "ZoneHVAC:AirDistributionUnit": "object_test_field2"
+                    'Transitions': [
+                        {
+                            "ZoneHVAC:AirDistributionUnit": {
+                                "template_field": "object_test_field",
+                                "template_field2": "object_test_field2"
+                            }
                         }
-                    },
-                    'Mappings': {
-                        'ZoneHVAC:AirDistributionUnit': {
-                            "template_field2": {
-                                "test_pre_mapped_value": {
-                                    "test_map_field": "test_mapped_value"
+                    ],
+                    'Mappings': [
+                        {
+                            'ZoneHVAC:AirDistributionUnit': {
+                                "template_field2": {
+                                    "test_pre_mapped_value": {
+                                        "test_map_field": "test_mapped_value"
+                                    }
                                 }
                             }
                         }
-                    }
+                    ]
                 },
                 'TemplateObjects': {
                     'reheat_coil_type': {
@@ -68,11 +70,13 @@ mock_zone_option_tree = {
                                     }
                                 }
                             ],
-                            'Transitions': {
-                                "template_field": {
-                                    "AirTerminal:.*": "object_test_field"
+                            'Transitions': [
+                                {
+                                    "AirTerminal:.*": {
+                                        "template_field": "object_test_field"
+                                    }
                                 }
-                            }
+                            ]
                         }
                     }
                 }
@@ -131,11 +135,13 @@ mock_system_option_tree = {
                                     }
                                 }
                             ],
-                            'Transitions': {
-                                "template_field": {
-                                    "Fan:.*": "object_test_field"
+                            'Transitions': [
+                                {
+                                    "Fan:.*": {
+                                        "template_field": "object_test_field"
+                                    }
                                 }
-                            }
+                            ]
                         },
                         'Actions': [
                             {
@@ -346,19 +352,21 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                         }
                     }
                 ],
-                'Mappings': {
-                    'Fan:.*': {
-                        'supply_fan_part_load_power_coefficients': {
-                            'InletVaneDampers': {
-                                'fan_power_coefficient_1': 0.35071223,
-                                'fan_power_coefficient_2': 0.30850535,
-                                'fan_power_coefficient_3': -0.54137364,
-                                'fan_power_coefficient_4': 0.87198823,
-                                'fan_power_coefficient_5': 0
+                'Mappings': [
+                    {
+                        'Fan:.*': {
+                            'supply_fan_part_load_power_coefficients': {
+                                'InletVaneDampers': {
+                                    'fan_power_coefficient_1': 0.35071223,
+                                    'fan_power_coefficient_2': 0.30850535,
+                                    'fan_power_coefficient_3': -0.54137364,
+                                    'fan_power_coefficient_4': 0.87198823,
+                                    'fan_power_coefficient_5': 0
+                                }
                             }
                         }
                     }
-                }
+                ]
             }
         }
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
@@ -435,11 +443,13 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
     def test_warning_on_bad_apply_transitions(self):
         # make a bad template reference
         bad_mock_zone_option_tree = mock_zone_option_tree
-        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Transitions'] = {
-            "template_bad_field": {
-                "ZoneHVAC:AirDistributionUnit": "object_test_field"
+        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Transitions'] = [
+            {
+                "ZoneHVAC:AirDistributionUnit": {
+                    "template_bad_field": "object_test_field"
+                }
             }
-        }
+        ]
         eo = ExpandObjects(
             template=mock_zone_template,
             expansion_structure=bad_mock_zone_option_tree)
@@ -1842,13 +1852,15 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                                         }
                                     }
                                 ],
-                                'Transitions': {
-                                    'cooling_coil_design_setpoint': {
-                                        'SetpointManager:Scheduled': {
-                                            'schedule_name': 'HVACTemplate-Always{}'
+                                'Transitions': [
+                                    {
+                                        "SetpointManager:Scheduled": {
+                                            "cooling_coil_design_setpoint": {
+                                                'schedule_name': 'HVACTemplate-Always{}'
+                                            }
                                         }
                                     }
-                                }
+                                ]
                             }
                         }
                     }

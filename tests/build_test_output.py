@@ -61,7 +61,6 @@ def main():
             </head>
             <body>
         """)
-        print(sections)
         # write out all full simulation sections
         f.write("""
             <!DOCTYPE html>

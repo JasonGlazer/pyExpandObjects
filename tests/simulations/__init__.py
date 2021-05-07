@@ -134,16 +134,22 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             epjson=base_formatted_epjson,
             file_name='test_pre_input_epjson.epJSON')
         # Expand and perform comparisons between the files
-        output = main(
-            Namespace(
-                no_schema=False,
-                file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' / 'test' / test_pre_input_file_path)))
-        output_epjson = output['epJSON']
-        test_input_file_path = self.write_file_for_testing(
-            epjson=output_epjson,
-            file_name='test_input_epjson.epJSON')
-        # check outputs
-        self.perform_comparison([base_idf_file_path, test_input_file_path])
+        # try expansion.  If it fails, raise an error
+        output_epjson = None
+        try:
+            output = main(
+                Namespace(
+                    no_schema=False,
+                    file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' / 'test' / test_pre_input_file_path)))
+            output_epjson = output['epJSON']
+            test_input_file_path = self.write_file_for_testing(
+                epjson=output_epjson,
+                file_name='test_input_epjson.epJSON')
+            # check outputs
+            self.perform_comparison([base_idf_file_path, test_input_file_path])
+        except:
+            print('pyExpandObjects process failed to complete')
+            self.assertIsNotNone(output_epjson)
         return
 
     def perform_comparison(self, epjson_files):
@@ -290,6 +296,8 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             "error_outputs": error_outputs,
             "finished_statuses": finished_statuses}
         for energy_val in status_checks['total_energy_outputs']:
+            print("Simulation are {} % different".format(
+                abs(1 - energy_val / max(status_checks['total_energy_outputs'])) * 100))
             self.assertAlmostEqual(energy_val / max(status_checks['total_energy_outputs']), 1, 2)
         for warning in status_checks['warning_outputs']:
             self.assertEqual(warning, max(status_checks['warning_outputs']))

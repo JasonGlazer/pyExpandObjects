@@ -327,79 +327,85 @@ class ExpandObjects(EPJSON):
         option_tree_mappings = option_tree_leaf.pop('Mappings', None)
         # for each transition instruction, iterate over the objects and apply if the object_type matches the reference
         if option_tree_transitions:
+            # flatten list if it is nested due to yaml structuring
+            option_tree_transitions = self._flatten_list(option_tree_transitions)
             # iterate over the transitions instructions
             # Note, this method may be deprecated due to the more direct option of specifying the class attribute
             # directly in the yaml text field (e.g. field_name: {class_variable}).  However, this code has not been
             # removed in case it proves useful during development.
-            for template_field, transition_structure in option_tree_transitions.items():
-                for object_type_reference, object_field in transition_structure.items():
-                    # Ensure there is only one object_key and it is 'Objects'
-                    (object_key, tree_objects), = option_tree_leaf.items()
-                    if not object_key == 'Objects':
-                        raise PyExpandObjectsYamlError(
-                            "Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
-                    # iterate over each object from 'Objects' dictionary
-                    for tree_object in tree_objects:
-                        for object_type, _ in tree_object.items():
-                            # if the object reference matches the object, apply the transition
-                            if re.match(object_type_reference, object_type):
-                                # if the object_field is a dictionary, then the value is a formatted string to
-                                # apply with the template_field.  Otherwise, just try to get the value from the
-                                # template field, which is stored as a class attribute (on class initialization).
-                                try:
-                                    if isinstance(object_field, dict):
-                                        (object_field, object_val), = object_field.items()
-                                        object_value = object_val.format(getattr(self, template_field))
-                                    else:
-                                        object_value = getattr(self, template_field)
-                                except AttributeError:
-                                    object_value = None
-                                    self.logger.info("A template value was attempted to be applied "
-                                                     "to an object field but the template "
-                                                     "field was not present in template object. "
-                                                     "object: {}, object fieled: {}, template field: {}"
-                                                     .format(object_type, object_field, template_field))
-                                if object_value:
-                                    # On a match and valid value, apply the field.
-                                    # If the object is a 'super' object used in a
-                                    # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
-                                    # into the top level of the object.
-                                    if 'Fields' in tree_object[object_type].keys():
-                                        tree_object[object_type]['Fields'][object_field] = object_value
-                                    else:
-                                        tree_object[object_type][object_field] = object_value
+            for opt in option_tree_transitions:
+                for object_type_reference, transition_structure in opt.items():
+                    for template_field, object_field in transition_structure.items():
+                        # Ensure there is only one object_key and it is 'Objects'
+                        (object_key, tree_objects), = option_tree_leaf.items()
+                        if not object_key == 'Objects':
+                            raise PyExpandObjectsYamlError(
+                                "Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
+                        # iterate over each object from 'Objects' dictionary
+                        for tree_object in tree_objects:
+                            for object_type, _ in tree_object.items():
+                                # if the object reference matches the object, apply the transition
+                                if re.match(object_type_reference, object_type):
+                                    # if the object_field is a dictionary, then the value is a formatted string to
+                                    # apply with the template_field.  Otherwise, just try to get the value from the
+                                    # template field, which is stored as a class attribute (on class initialization).
+                                    try:
+                                        if isinstance(object_field, dict):
+                                            (object_field, object_val), = object_field.items()
+                                            object_value = object_val.format(getattr(self, template_field))
+                                        else:
+                                            object_value = getattr(self, template_field)
+                                    except AttributeError:
+                                        object_value = None
+                                        self.logger.info("A template value was attempted to be applied "
+                                                         "to an object field but the template "
+                                                         "field was not present in template object. "
+                                                         "object: {}, object fieled: {}, template field: {}"
+                                                         .format(object_type, object_field, template_field))
+                                    if object_value:
+                                        # On a match and valid value, apply the field.
+                                        # If the object is a 'super' object used in a
+                                        # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
+                                        # into the top level of the object.
+                                        if 'Fields' in tree_object[object_type].keys():
+                                            tree_object[object_type]['Fields'][object_field] = object_value
+                                        else:
+                                            tree_object[object_type][object_field] = object_value
         # for each mapping instruction, iterate over the objects and apply if the object_type matches the reference
         if option_tree_mappings:
+            # flatten list if it is nested due to yaml structuring
+            option_tree_mappings = self._flatten_list(option_tree_mappings)
             # iterate over mapping instructions
-            for object_type_reference, mapping_structure in option_tree_mappings.items():
-                for mapping_field, mapping_dictionary in mapping_structure.items():
-                    # Ensure there is only one object_key and it is 'Objects'
-                    (object_key, tree_objects), = option_tree_leaf.items()
-                    if not object_key == 'Objects':
-                        raise PyExpandObjectsYamlError(
-                            "Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
-                    # iterate over each object from 'Objects' dictionary
-                    for tree_object in tree_objects:
-                        for object_type, object_fields in tree_object.items():
-                            # if the object reference in the mapping dictionary matches the object, apply the map
-                            if re.match(object_type_reference, object_type):
-                                for map_option, sub_dictionary in mapping_dictionary.items():
-                                    if hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
-                                        for field, val in sub_dictionary.items():
-                                            try:
-                                                # On a match and valid value, apply the field.
-                                                # If the object is a 'super' object used in a
-                                                # BuildPath, then insert it in the 'Fields' dictionary.
-                                                # Otherwise, insert it into the top level of the object.
-                                                if 'Fields' in tree_object[object_type].keys():
-                                                    tree_object[object_type]['Fields'][field] = val
-                                                else:
-                                                    tree_object[object_type][field] = val
-                                            except AttributeError:
-                                                self.logger.warning("Template field was attempted to be "
-                                                                    "mapped to object but was not present "
-                                                                    "in template inputs. mapping field: {}, "
-                                                                    "object type: {}".format(field, object_type))
+            for otm in option_tree_mappings:
+                for object_type_reference, mapping_structure in otm.items():
+                    for mapping_field, mapping_dictionary in mapping_structure.items():
+                        # Ensure there is only one object_key and it is 'Objects'
+                        (object_key, tree_objects), = option_tree_leaf.items()
+                        if not object_key == 'Objects':
+                            raise PyExpandObjectsYamlError(
+                                "Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
+                        # iterate over each object from 'Objects' dictionary
+                        for tree_object in tree_objects:
+                            for object_type, object_fields in tree_object.items():
+                                # if the object reference in the mapping dictionary matches the object, apply the map
+                                if re.match(object_type_reference, object_type):
+                                    for map_option, sub_dictionary in mapping_dictionary.items():
+                                        if hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
+                                            for field, val in sub_dictionary.items():
+                                                try:
+                                                    # On a match and valid value, apply the field.
+                                                    # If the object is a 'super' object used in a
+                                                    # BuildPath, then insert it in the 'Fields' dictionary.
+                                                    # Otherwise, insert it into the top level of the object.
+                                                    if 'Fields' in tree_object[object_type].keys():
+                                                        tree_object[object_type]['Fields'][field] = val
+                                                    else:
+                                                        tree_object[object_type][field] = val
+                                                except AttributeError:
+                                                    self.logger.warning("Template field was attempted to be "
+                                                                        "mapped to object but was not present "
+                                                                        "in template inputs. mapping field: {}, "
+                                                                        "object type: {}".format(field, object_type))
         return option_tree_leaf['Objects']
 
     def yaml_list_to_epjson_dictionaries(self, yaml_list: list) -> dict:
@@ -425,8 +431,6 @@ class ExpandObjects(EPJSON):
                     object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}}
                 )
             except (TypeError, KeyError, ValueError):
-                from pprint import pprint
-                pprint(transitioned_object, width=200)
                 raise PyExpandObjectsYamlStructureException(
                     "YAML object is incorrectly formatted: {}".format(transitioned_object))
         return output_dictionary
