@@ -1,8 +1,6 @@
-import unittest
 import copy
 from pathlib import Path
 
-from tests import BaseTest
 from tests.simulations import BaseSimulationTest
 from src.hvac_template import HVACTemplate
 from src.epjson_handler import EPJSON
@@ -62,14 +60,14 @@ mock_chiller_water_cooled_template = {
 }
 
 
-class TestSimulationPlantLoopSimple(BaseTest, BaseSimulationTest, unittest.TestCase):
+class TestSimulationSimplePlantLoop(BaseSimulationTest):
     def setUp(self):
         return
 
     def teardown(self):
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Plant:ChilledWaterLoop ConstantPrimaryNoSecondary w/o connections")
+    @BaseSimulationTest._test_logger(doc_text="HVACTemplate:Plant:ChilledWaterLoop ConstantPrimaryNoSecondary w/o connections")
     def test_simulation_chilled_water_constant_primary_no_secondary_wo_connections(self):
         base_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                              'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
@@ -124,25 +122,12 @@ class TestSimulationPlantLoopSimple(BaseTest, BaseSimulationTest, unittest.TestC
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,
             file_name='test_input_epjson.epJSON')
-        # check outputs
-        status_checks = self.perform_comparison([base_input_file_path, test_input_file_path])
-        for energy_val in status_checks['total_energy_outputs']:
-            self.assertAlmostEqual(energy_val / max(status_checks['total_energy_outputs']), 1, 2)
-        for warning in status_checks['warning_outputs']:
-            self.assertEqual(warning, max(status_checks['warning_outputs']))
-        for error in status_checks['error_outputs']:
-            self.assertEqual(error, max(status_checks['error_outputs']))
-            self.assertGreaterEqual(error, 0)
-        for status in status_checks['finished_statuses']:
-            self.assertEqual(1, status)
-        # compare epJSONs
-        comparison_results = self.compare_epjsons(base_formatted_epjson, output_epjson)
-        if comparison_results:
-            # trigger failure
-            self.assertEqual('', comparison_results, comparison_results)
+        # check outputs and compare epJSONs
+        self.perform_comparison([base_input_file_path, test_input_file_path])
+        self.compare_epjsons(base_formatted_epjson, output_epjson)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Plant:ChilledWaterLoop VariablePrimaryNoSecondary w/o connections")
+    @BaseSimulationTest._test_logger(doc_text="HVACTemplate:Plant:ChilledWaterLoop VariablePrimaryNoSecondary w/o connections")
     def test_simulation_chilled_water_variable_primary_no_secondary_wo_connections(self):
         base_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                              'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
@@ -234,25 +219,12 @@ class TestSimulationPlantLoopSimple(BaseTest, BaseSimulationTest, unittest.TestC
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,
             file_name='test_input_epjson.epJSON')
-        # check outputs
-        status_checks = self.perform_comparison([base_input_file_path, test_input_file_path])
-        for energy_val in status_checks['total_energy_outputs']:
-            self.assertAlmostEqual(energy_val / max(status_checks['total_energy_outputs']), 1, 2)
-        for warning in status_checks['warning_outputs']:
-            self.assertEqual(warning, max(status_checks['warning_outputs']))
-        for error in status_checks['error_outputs']:
-            self.assertEqual(error, max(status_checks['error_outputs']))
-            self.assertGreaterEqual(error, 0)
-        for status in status_checks['finished_statuses']:
-            self.assertEqual(1, status)
-        # compare epJSONs
-        comparison_results = self.compare_epjsons(base_formatted_epjson, output_epjson)
-        if comparison_results:
-            # trigger failure
-            self.assertEqual('', comparison_results, comparison_results)
+        # check outputs and compare epJSONs
+        self.perform_comparison([base_input_file_path, test_input_file_path])
+        self.compare_epjsons(base_formatted_epjson, output_epjson)
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Plant:HotWaterLoop ConstantPrimaryNoSecondary w/o connections")
+    @BaseSimulationTest._test_logger(doc_text="HVACTemplate:Plant:HotWaterLoop ConstantPrimaryNoSecondary w/o connections")
     def test_simulation_hot_water_constant_primary_no_secondary_wo_connections(self):
         base_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                              'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
@@ -304,21 +276,7 @@ class TestSimulationPlantLoopSimple(BaseTest, BaseSimulationTest, unittest.TestC
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,
             file_name='test_input_epjson.epJSON')
-        # check outputs
-        status_checks = self.perform_comparison([base_input_file_path, test_input_file_path])
-        for energy_val in status_checks['total_energy_outputs']:
-            self.assertAlmostEqual(energy_val / max(status_checks['total_energy_outputs']), 1, 2)
-        for warning in status_checks['warning_outputs']:
-            self.assertEqual(warning, max(status_checks['warning_outputs']))
-        for error in status_checks['error_outputs']:
-            self.assertEqual(error, max(status_checks['error_outputs']))
-            self.assertGreaterEqual(error, 0)
-        for status in status_checks['finished_statuses']:
-            self.assertEqual(1, status)
-        # compare epJSONs
-        comparison_results = self.compare_epjsons(base_formatted_epjson, output_epjson)
-        if comparison_results:
-            # trigger failure
-            self.assertEqual('', comparison_results, comparison_results)
+        # check outputs and compare epJSONs
+        self.perform_comparison([base_input_file_path, test_input_file_path])
+        self.compare_epjsons(base_formatted_epjson, output_epjson)
         return
-

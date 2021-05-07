@@ -1,18 +1,21 @@
+import unittest
 import json
-import copy
 from pathlib import Path
 import subprocess
 import csv
 import re
 import sys
 import os
+from argparse import Namespace
 
 from src.epjson_handler import EPJSON
+from src.main import main
+from tests import BaseTest
 
 test_dir = Path(__file__).parent.parent
 
 
-class BaseSimulationTest(object):
+class BaseSimulationTest(BaseTest, unittest.TestCase):
     """
     Setup, extraction, and comparison functions for simulation testing.
     """
@@ -20,40 +23,27 @@ class BaseSimulationTest(object):
     @staticmethod
     def setup_file(file_path):
         """
-        Format epJSON file to have correct outputs for testing
+        Read file path and run epJSON through processing to ensure it is a valid json before testing.
+        This is to ensure that if there is a problem with the base file, it will be more obvious by returning an
+        error from this function rather than pyExpandObjects.  Also, it allows for any future manipulations that may
+        be useful
+
         :param file_path: epJSON file path
         :return: formatted epJSON
         """
         with open(file_path, 'r') as f:
             test_data = f.read()
-        base_raw_epjson = json.loads(test_data)
-        epj = EPJSON()
-        epj.epjson_process(epjson_ref=base_raw_epjson)
-        # Edit base epjson, make input epjson, write to test folder, and run
-        purged_epjson = epj.purge_epjson(
-            epjson=base_raw_epjson,
-            purge_dictionary={
-                'Output:Table:SummaryReports': '.*',
-                'OutputControl:Table:Style': '.*'
-            })
-        formatted_epjson = copy.deepcopy(purged_epjson)
-        epj.merge_epjson(
-            super_dictionary=formatted_epjson,
-            object_dictionary={
-                "Output:Table:SummaryReports": {
-                    "report 1": {
-                        "reports": [
-                            {"report_name": "EndUseEnergyConsumptionElectricityMonthly"}
-                        ]
-                    }
-                },
-                "OutputControl:Table:Style": {
-                    "Style 1": {
-                        "column_separator": "Comma"
-                    }
-                }
-            }
-        )
+        formatted_epjson = json.loads(test_data)
+        # Do manipulations if necessary by using the following commands
+        # epj = EPJSON()
+        # epj.epjson_process(epjson_ref=base_raw_epjson)
+        # purged_epjson = epj.purge_epjson(
+        #     epjson=base_raw_epjson,
+        #     purge_dictionary={})
+        # formatted_epjson = copy.deepcopy(purged_epjson)
+        # epj.merge_epjson(
+        #     super_dictionary=formatted_epjson,
+        #     object_dictionary={})
         return formatted_epjson
 
     @staticmethod
@@ -70,15 +60,41 @@ class BaseSimulationTest(object):
             json.dump(epjson, f, indent=4, sort_keys=True)
         return input_file_path
 
+    def get_epjson_object_from_idf_file(self, idf_file_path):
+        """
+        Return an epJSON object from idf filfe path
+        :param idf_file_path: idf file path
+        :return: epJSON object
+        """
+        epjson_file_path = self.convert_file(idf_file_path)
+        ej = EPJSON()
+        return ej._get_json_file(epjson_file_path)
+
+    def create_idf_file_from_epjson(self, epjson, file_name, sub_directory=('simulation', 'test')):
+        """
+        Create an epJSON and idf file from an epJSON object
+        :param epjson: input epJSON object
+        :param file_name: destination file name
+        :param sub_directory: destination directory
+        :return: idf file name
+        """
+        epjson_file_path = self.write_file_for_testing(epjson=epjson, file_name=file_name, sub_directory=sub_directory)
+        idf_file_path = self.convert_file(epjson_file_path)
+        return idf_file_path
+
     @staticmethod
     def convert_file(file_location):
         """
         Convert idf to epJSON and vice versa.
         converted file in alternative format is created in same directory as base file
+        :param file_location: Path or string reference to file location
         :return: file path to converted file
         """
+        # convert to Path if a string is passed
+        if isinstance(file_location, str):
+            file_location = Path(file_location)
         # calling the arguments with pathlib causes issues with the conversion exe, so direct strings are passed here.
-        subprocess.Popen(
+        subprocess.run(
             [
                 'wine',
                 '../ConvertInputFormatWithHVACTemplate.exe',
@@ -97,8 +113,40 @@ class BaseSimulationTest(object):
             print('File has incorrect extension {}'.format(file_location))
             sys.exit()
 
-    @staticmethod
-    def perform_comparison(epjson_files):
+    def perform_full_comparison(self, base_idf_file_path):
+        """
+        Simulate and compare two files where only the objects controlling output data are manipulated.
+        Due to conversion issues within EnergyPlus, the baseline file must be simulated as an idf.
+        :param base_idf_file_path: idf file location containing HVACTemplate:.* objects
+        :return: None.  Assertions performed within function.
+        """
+        # move file to testing directory manually, shutil does not work reliably for some reason
+        with open(base_idf_file_path, 'r') as f1, \
+                open(test_dir.joinpath('..', 'simulation', 'test', 'base_input.idf'), 'w') as f2:
+            for line in f1:
+                f2.write(line)
+        # convert to epJSON for test simulation input
+        baseline_file_location = self.convert_file(base_idf_file_path)
+        # setup outputs for perform_comparison to function and write base file
+        base_formatted_epjson = self.setup_file(baseline_file_location)
+        # write the preformatted base file for main to call
+        test_pre_input_file_path = self.write_file_for_testing(
+            epjson=base_formatted_epjson,
+            file_name='test_pre_input_epjson.epJSON')
+        # Expand and perform comparisons between the files
+        output = main(
+            Namespace(
+                no_schema=False,
+                file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' / 'test' / test_pre_input_file_path)))
+        output_epjson = output['epJSON']
+        test_input_file_path = self.write_file_for_testing(
+            epjson=output_epjson,
+            file_name='test_input_epjson.epJSON')
+        # check outputs
+        self.perform_comparison([base_idf_file_path, test_input_file_path])
+        return
+
+    def perform_comparison(self, epjson_files):
         """
         Simulate and compare epJSON files
         :param epjson_files: input epJSON files to compare
@@ -112,8 +160,8 @@ class BaseSimulationTest(object):
             # move files from previous runs, rm is too dangerous
             try:
                 os.rename(
-                    str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl.csv'),
-                    str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl_previous.csv')
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'),
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.csv')
                 )
             except FileNotFoundError:
                 pass
@@ -156,6 +204,13 @@ class BaseSimulationTest(object):
                             str(file_path)
                         ]
                     )
+                subprocess.run(
+                    [
+                        str(test_dir / '..' / 'simulation' / 'PostProcess' / 'ReadVarsESO.exe'),
+                        'convert.rvi'
+                    ],
+                    cwd=str(test_dir / '..' / 'simulation' / 'test')
+                )
             else:
                 if file_path.suffix == '.idf':
                     subprocess.run(
@@ -182,17 +237,27 @@ class BaseSimulationTest(object):
                             file_path
                         ]
                     )
+                subprocess.run(
+                    [
+                        'wine',
+                        str(test_dir / '..' / 'simulation' / 'PostProcess' / 'ReadVarsESO.exe'),
+                        'convert.rvi'
+                    ],
+                    cwd=str(test_dir / '..' / 'simulation' / 'test')
+                )
+            # get sum of output csv rows to use as comparison
             total_energy = 0
-            # get sum of total row to use as comparison
-            with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl.csv'), 'r') as f:
+            with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'), 'r') as f:
                 csvreader = csv.reader(f)
-                for row in csvreader:
-                    if 'Annual Sum or Average' in row:
+                sum_val = []
+                for idx, row in enumerate(csvreader):
+                    if idx != 0:
                         for val in row:
                             try:
-                                total_energy += float(val)
+                                sum_val.append(float(val))
                             except ValueError:
                                 pass
+                total_energy = sum(sum_val)
             with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.end'), 'r') as f:
                 lines = f.readlines()
             # check end file for matches and success message
@@ -219,15 +284,23 @@ class BaseSimulationTest(object):
                     status_val = 1
             finished_statuses.append(status_val)
             total_energy_outputs.append(total_energy)
-        return {
+        status_checks = {
             "total_energy_outputs": total_energy_outputs,
             "warning_outputs": warning_outputs,
             "error_outputs": error_outputs,
-            "finished_statuses": finished_statuses
-        }
+            "finished_statuses": finished_statuses}
+        for energy_val in status_checks['total_energy_outputs']:
+            self.assertAlmostEqual(energy_val / max(status_checks['total_energy_outputs']), 1, 2)
+        for warning in status_checks['warning_outputs']:
+            self.assertEqual(warning, max(status_checks['warning_outputs']))
+        for error in status_checks['error_outputs']:
+            self.assertEqual(error, max(status_checks['error_outputs']))
+            self.assertGreaterEqual(error, 0)
+        for status in status_checks['finished_statuses']:
+            self.assertEqual(1, status)
+        return
 
-    @staticmethod
-    def compare_epjsons(epjson_1, epjson_2):
+    def compare_epjsons(self, epjson_1, epjson_2):
         """
         Summarize and compare two epJSONs based on object counts.
 
@@ -251,7 +324,5 @@ class BaseSimulationTest(object):
         for k, v in epjson_summary_2.items():
             if k not in epjson_summary_1.keys():
                 msg += '{} not in {}\n'.format(k, epjson_summary_2)
-        if msg == '':
-            return None
-        else:
-            return msg
+        self.assertEqual('', msg, msg)
+        return

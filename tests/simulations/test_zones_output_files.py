@@ -1,9 +1,7 @@
-import unittest
 import copy
 from pathlib import Path
 from argparse import Namespace
 
-from tests import BaseTest
 from tests.simulations import BaseSimulationTest
 from src.epjson_handler import EPJSON
 from src.main import main
@@ -44,7 +42,7 @@ mock_zone_template = {
 test_dir = Path(__file__).parent.parent
 
 
-class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
+class TestSimulationFiles(BaseSimulationTest):
     """
     Simulation testing which writes epJSON objects to non-temporary files.
     """
@@ -55,12 +53,12 @@ class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
     def teardown(self):
         return
 
-    @BaseTest._test_logger(doc_text="HVACTemplate:Zone:VAV w/ HW Reheat Simulation test")
+    @BaseSimulationTest._test_logger(doc_text="HVACTemplate:Zone:VAV w/ HW Reheat Simulation test")
     def test_simulation(self):
         # initialize list of files to run
         file_run_list = []
         # set subdirectory
-        sub_directory = ['tests', 'output_files']
+        sub_directory = ['simulation', 'test', 'output_files']
         original_file_path = str(test_dir / '..' / 'simulation' / 'ExampleFiles' /
                                  'HVACTemplate-5ZoneVAVWaterCooledExpanded.epJSON')
         original_formatted_epjson = self.setup_file(original_file_path)
@@ -97,27 +95,14 @@ class TestSimulationFiles(BaseTest, BaseSimulationTest, unittest.TestCase):
             sub_directory=sub_directory,
             file_name='HVACTemplate-5ZoneVAVWaterCooledZoneTestPrepared.epJSON')
         # test the file prepped with new templates
-        output_directory = test_dir.joinpath('output_files')
+        output_directory = test_dir.joinpath('../', *sub_directory)
         output = main(
             Namespace(
                 file=prepared_file_path,
                 no_schema=False,
                 output_directory=output_directory))
         file_run_list.append(output_directory.joinpath(output['output_files']['expanded']))
-        # check outputs
-        status_checks = self.perform_comparison(file_run_list)
-        for energy_val in status_checks['total_energy_outputs']:
-            self.assertAlmostEqual(energy_val / max(status_checks['total_energy_outputs']), 1, 2)
-        for warning in status_checks['warning_outputs']:
-            self.assertEqual(warning, max(status_checks['warning_outputs']))
-        for error in status_checks['error_outputs']:
-            self.assertEqual(error, max(status_checks['error_outputs']))
-            self.assertGreaterEqual(error, 0)
-        for status in status_checks['finished_statuses']:
-            self.assertEqual(1, status)
-        # compare epJSONs
-        comparison_results = self.compare_epjsons(original_formatted_epjson, output['epJSON'])
-        if comparison_results:
-            # trigger failure
-            self.assertEqual('', comparison_results, comparison_results)
+        # check outputs and compare epJSONs
+        self.perform_comparison(file_run_list)
+        self.compare_epjsons(original_formatted_epjson, output['epJSON'])
         return

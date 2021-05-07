@@ -65,7 +65,7 @@ mock_build_path = [
             },
             'Connectors': {
                 'AirLoop': {
-                    'Inlet': 'outdoor_air_stream_node_name',
+                    'Inlet': 'return_air_stream_node_name',
                     'Outlet': 'mixed_air_node_name'
                 }
             }
@@ -162,6 +162,85 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             'VAV Sys 1 OA Mixing Box',
             oa_equipment_list_object['AirLoopHVAC:OutdoorAirSystem:EquipmentList']
             ['VAV Sys 1 OA System Equipment']['component_2_name'])
+        return
+
+    def test_create_outdoor_air_equipment_list_from_epjson_with_return_fan(self):
+        # es = ExpandSystem(template=mock_template)
+        es = ExpandSystem(template={})
+        es.build_path = [
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Return Fan',
+                        'air_inlet_node_name': '{} Return Fan Inlet',
+                        'air_outlet_node_name': '{} Return Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}},
+            {
+                'OutdoorAir:Mixer': {
+                    'Fields': {
+                        'name': '{} OA Mixing Box',
+                        'mixed_air_node_name': '{} Mixed Air Outlet',
+                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                        'relief_air_stream_node_name': '{} Relief Air Outlet',
+                        'return_air_stream_node_name': '{} Air Loop Inlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'return_air_stream_node_name',
+                            'Outlet': 'mixed_air_node_name'}}}},
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Supply Fan',
+                        'air_inlet_node_name': '{} Supply Fan Inlet',
+                        'air_outlet_node_name': '{} Supply Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}}
+        ]
+        es.unique_name = 'TEST SYSTEM'
+        es.return_fan = 'Yes'
+        oa_equipment_list_object = es._create_outdoor_air_equipment_list_from_build_path()
+        self.assertEqual('AirLoopHVAC:OutdoorAirSystem:EquipmentList', list(oa_equipment_list_object.keys())[0])
+        self.assertEqual(
+            'TEST SYSTEM OA Mixing Box',
+            oa_equipment_list_object['AirLoopHVAC:OutdoorAirSystem:EquipmentList']
+            ['TEST SYSTEM OA System Equipment']['component_1_name'])
+        return
+
+    def test_create_outdoor_air_equipment_list_from_epjson_with_return_fan_option_but_no_equipment(self):
+        es = ExpandSystem(template={})
+        es.build_path = [
+            {
+                'OutdoorAir:Mixer': {
+                    'Fields': {
+                        'name': '{} OA Mixing Box',
+                        'mixed_air_node_name': '{} Mixed Air Outlet',
+                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                        'relief_air_stream_node_name': '{} Relief Air Outlet',
+                        'return_air_stream_node_name': '{} Air Loop Inlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'return_air_stream_node_name',
+                            'Outlet': 'mixed_air_node_name'}}}},
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Supply Fan',
+                        'air_inlet_node_name': '{} Supply Fan Inlet',
+                        'air_outlet_node_name': '{} Supply Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}}
+        ]
+        es.unique_name = 'TEST SYSTEM'
+        es.return_fan = 'Yes'
+        with self.assertRaisesRegex(PyExpandObjectsException, 'Return fan specified'):
+            es._create_outdoor_air_equipment_list_from_build_path()
         return
 
     def test_reject_create_outdoor_air_equipment_list_from_epjson_without_build_path(self):
@@ -298,7 +377,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
     def test_modify_build_path_for_outside_air_system(self):
         es = ExpandSystem(template={})
         es.build_path = mock_build_path
-        self.unique_name = 'TEST SYSTEM'
+        es.unique_name = 'TEST SYSTEM'
         es.epjson = {
             "AirLoopHVAC:OutdoorAirSystem": {
                 "TEST SYSTEM OA System": {
@@ -316,6 +395,78 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         )
         return
 
+    def test_modify_build_path_for_outside_air_system_with_return_fan(self):
+        es = ExpandSystem(template={})
+        es.build_path = [
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Return Fan',
+                        'air_inlet_node_name': '{} Return Fan Inlet',
+                        'air_outlet_node_name': '{} Return Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}},
+            {
+                'OutdoorAir:Mixer': {
+                    'Fields': {
+                        'name': '{} OA Mixing Box',
+                        'mixed_air_node_name': '{} Mixed Air Outlet',
+                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                        'relief_air_stream_node_name': '{} Relief Air Outlet',
+                        'return_air_stream_node_name': '{} Air Loop Inlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'return_air_stream_node_name',
+                            'Outlet': 'mixed_air_node_name'}}}},
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Supply Fan',
+                        'air_inlet_node_name': '{} Supply Fan Inlet',
+                        'air_outlet_node_name': '{} Supply Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}}
+        ]
+        es.unique_name = 'TEST SYSTEM'
+        es.return_fan = 'Yes'
+        es.epjson = {
+            "AirLoopHVAC:OutdoorAirSystem": {
+                "TEST SYSTEM OA System": {
+                    "availability_manager_list_name": "TEST SYSTEM Availability Managers",
+                    "controller_list_name": "TEST SYSTEM OA System Controllers",
+                    "outdoor_air_equipment_list_name": "TEST SYSTEM OA System Equipment"
+                }
+            }
+        }
+        modified_build_path = es._modify_build_path_for_outside_air_system()
+        self.assertEqual('AirLoopHVAC:OutdoorAirSystem', list(modified_build_path[1].keys())[0])
+        self.assertEqual(
+            'Fan:VariableVolume',
+            list(modified_build_path[0].keys())[0])
+        return
+
+    def test_reject_modify_build_path_for_outside_air_system_with_return_fan_specified_but_not_present(self):
+        es = ExpandSystem(template={})
+        es.build_path = mock_build_path
+        es.unique_name = 'TEST SYSTEM'
+        es.return_fan = 'Yes'
+        es.epjson = {
+            "AirLoopHVAC:OutdoorAirSystem": {
+                "TEST SYSTEM OA System": {
+                    "availability_manager_list_name": "TEST SYSTEM Availability Managers",
+                    "controller_list_name": "TEST SYSTEM OA System Controllers",
+                    "outdoor_air_equipment_list_name": "TEST SYSTEM OA System Equipment"
+                }
+            }
+        }
+        with self.assertRaisesRegex(PyExpandObjectsException, 'Return fan was specified'):
+            es._modify_build_path_for_outside_air_system()
+        return
+
     def test_branch_from_build_path(self):
         es = ExpandSystem(template={})
         es.unique_name = 'TEST SYSTEM'
@@ -328,10 +479,66 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
                 }
             }
         }
-        output = es._create_branch_and_branchlist_from_build_path(build_path=copy.deepcopy(mock_build_path))
+        es.build_path = mock_build_path
+        es._connect_and_convert_build_path_to_object_list()
+        output = es._create_branch_and_branchlist_from_build_path()
         self.assertEqual(
             mock_build_path[0]['OutdoorAir:Mixer']['Fields']['return_air_stream_node_name'].format(es.unique_name),
             output['Branch']['{} Main Branch'.format(es.unique_name)]['components'][0]['component_inlet_node_name'])
+        return
+
+    def test_branch_from_build_path_with_return_fan(self):
+        es = ExpandSystem(template={})
+        es.unique_name = 'TEST SYSTEM'
+        es.return_fan = 'Yes'
+        es.epjson = {
+            "AirLoopHVAC:OutdoorAirSystem": {
+                "TEST SYSTEM OA System": {
+                    "availability_manager_list_name": "TEST SYSTEM Availability Managers",
+                    "controller_list_name": "TEST SYSTEM OA System Controllers",
+                    "outdoor_air_equipment_list_name": "TEST SYSTEM OA System Equipment"
+                }
+            }
+        }
+        es.build_path = [
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Return Fan',
+                        'air_inlet_node_name': '{} Return Fan Inlet',
+                        'air_outlet_node_name': '{} Return Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}},
+            {
+                'OutdoorAir:Mixer': {
+                    'Fields': {
+                        'name': '{} OA Mixing Box',
+                        'mixed_air_node_name': '{} Mixed Air Outlet',
+                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                        'relief_air_stream_node_name': '{} Relief Air Outlet',
+                        'return_air_stream_node_name': '{} Air Loop Inlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'return_air_stream_node_name',
+                            'Outlet': 'mixed_air_node_name'}}}},
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Supply Fan',
+                        'air_inlet_node_name': '{} Supply Fan Inlet',
+                        'air_outlet_node_name': '{} Supply Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}}
+        ]
+        es._connect_and_convert_build_path_to_object_list()
+        output = es._create_branch_and_branchlist_from_build_path()
+        self.assertEqual(
+            'TEST SYSTEM Return Fan Outlet',
+            output['Branch']['{} Main Branch'.format(es.unique_name)]['components'][1]['component_inlet_node_name'])
         return
 
     def test_branchlist_from_build_path(self):
@@ -346,7 +553,9 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
                 }
             }
         }
-        output = es._create_branch_and_branchlist_from_build_path(build_path=copy.deepcopy(mock_build_path))
+        es.build_path = mock_build_path
+        es._connect_and_convert_build_path_to_object_list()
+        output = es._create_branch_and_branchlist_from_build_path()
         self.assertEqual(
             '{} Main Branch'.format(es.unique_name),
             output['BranchList']['{} Branches'.format(es.unique_name)]['branches'][0]['branch_name'])

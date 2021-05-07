@@ -13,10 +13,11 @@ Welcome to EpJSON ExpandObjects's documentation!
    HVACTemplate
    CodeStructureOverview
 
-`TestingOutput`_
+`Testing Outputs`_
+'Simulation Outputs'_
 
-.. _TestingOutput: _static/testing_output.html
-
+.. _Testing Outputs: _static/testing_output.html
+.. _Simulation Outputs: _static/simulation_output.html
 
 Indices and tables
 ==================

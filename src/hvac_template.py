@@ -229,11 +229,11 @@ class HVACTemplate(EPJSON):
         for _, ez in expanded_zones.items():
             if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
                 # todo_eo: Only AirTerminal has been used for this test when all zone equipment objects should be
-                #  included.
+                #  included.  Check zonehvac_or_air_terminal_equipment_object_type in the schema for a list of valid
+                #  objects to construct a better regex.
                 zone_equipment = self.get_epjson_objects(
                     epjson=ez.epjson,
-                    object_type_regexp=r'^AirTerminal:.*'
-                )
+                    object_type_regexp=r'^AirTerminal:.*')
                 try:
                     (zone_equipment_type, zone_equipment_structure), = zone_equipment.items()
                     (zone_equipment_name, zone_equipment_fields), = zone_equipment_structure.items()
@@ -648,7 +648,20 @@ class HVACTemplate(EPJSON):
             expanded_zones=None
         )
         equipment = []
+        # Extract priority from each equipment object referenced by the branch and use it to order the equipment list
+        supply_branches_with_priority = []
         for sb in supply_branches.values():
+            for equipment_name, equipment_objects in expanded_plant_equipment.items():
+                if sb['components'][0]['component_name'] == equipment_name:
+                    equipment_epjson = equipment_objects.epjson[
+                        sb['components'][0]['component_object_type']][sb['components'][0]['component_name']]
+                    # make tuple of (object, priority)
+                    # if priority isn't set, use infinity to push it to the end when sorted
+                    supply_branches_with_priority.append((sb, equipment_epjson.get('priority', float('inf'))))
+        supply_branches_ordered = [
+            branch for branch, priority
+            in sorted(supply_branches_with_priority, key=lambda s: s[1])]
+        for sb in supply_branches_ordered:
             equipment.append({
                 'equipment_name': sb['components'][0]['component_name'],
                 'equipment_object_type': sb['components'][0]['component_object_type']

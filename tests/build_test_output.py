@@ -21,7 +21,7 @@ def make_table(df):
             "FunctionStatus": "Status"
         }, inplace=True)
         html_text += sub_df.to_html(index=False) + '\n'
-        html_tables[section] = html_text
+        html_tables[section.strip()] = html_text
     return html_tables
 
 
@@ -43,6 +43,7 @@ def main():
         sections.remove("General")
         sections.insert(0, "General")
     # create html file and save to docs static folder.
+    # write out all testing sections
     with open(os.path.join(base_project_path, "docs", "_static", "testing_output.html"), 'w') as f:
         f.write("""
             <!DOCTYPE html>
@@ -54,7 +55,24 @@ def main():
             notes_data = f2.read()
         f.write(notes_data)
         for section in sections:
-            f.write(html_text[section])
+            if not section.startswith('Simulation'):
+                f.write(html_text[section])
+        f.write("""
+            </head>
+            <body>
+        """)
+        print(sections)
+        # write out all full simulation sections
+        f.write("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <title>Simulation Status</title>
+        """)
+    with open(os.path.join(base_project_path, "docs", "_static", "simulation_output.html"), 'w') as f:
+        for section in sections:
+            if section.startswith('Simulation'):
+                f.write(html_text[section])
         f.write("""
             </head>
             <body>

@@ -1476,9 +1476,171 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
         return
 
+    def test_complex_inputs_build_path_reference_by_object_type(self):
+        es = ExpandSystem(template=mock_system_template)
+        es.build_path = [
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Return Fan',
+                        'air_inlet_node_name': '{} Return Fan Inlet',
+                        'air_outlet_node_name': '{} Return Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}},
+            {
+                'OutdoorAir:Mixer': {
+                    'Fields': {
+                        'name': '{} OA Mixing Box',
+                        'mixed_air_node_name': '{} Mixed Air Outlet',
+                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                        'relief_air_stream_node_name': '{} Relief Air Outlet',
+                        'return_air_stream_node_name': '{} Air Loop Inlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'return_air_stream_node_name',
+                            'Outlet': 'mixed_air_node_name'}}}},
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Supply Fan',
+                        'air_inlet_node_name': '{} Supply Fan Inlet',
+                        'air_outlet_node_name': '{} Supply Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}}]
+        es.unique_name = 'template_name'
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": 'OutdoorAir:M.*',
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        self.assertEqual('template_name Mixed Air Outlet', [i for i in output][0]['value'])
+        return
+
+    def test_complex_inputs_build_path_reference_by_object_type_occurence(self):
+        es = ExpandSystem(template={})
+        es.build_path = [
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Return Fan',
+                        'air_inlet_node_name': '{} Return Fan Inlet',
+                        'air_outlet_node_name': '{} Return Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}},
+            {
+                'OutdoorAir:Mixer': {
+                    'Fields': {
+                        'name': '{} OA Mixing Box',
+                        'mixed_air_node_name': '{} Mixed Air Outlet',
+                        'outdoor_air_stream_node_name': '{} Outside Air Inlet',
+                        'relief_air_stream_node_name': '{} Relief Air Outlet',
+                        'return_air_stream_node_name': '{} Air Loop Inlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'return_air_stream_node_name',
+                            'Outlet': 'mixed_air_node_name'}}}},
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Supply Fan',
+                        'air_inlet_node_name': '{} Supply Fan Inlet',
+                        'air_outlet_node_name': '{} Supply Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}}
+        ]
+        es.unique_name = 'TEST SYSTEM'
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": 'Fan:.*',
+                    'Occurrence': 2,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        self.assertEqual(
+            'TEST SYSTEM Supply Fan Outlet',
+            [o for o in output][0]['value']
+        )
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": 'Fan:.*',
+                    'Occurrence': -1,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        self.assertEqual(
+            'TEST SYSTEM Supply Fan Outlet',
+            [o for o in output][0]['value']
+        )
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": 'Fan:.*',
+                    'Occurrence': 1,
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        self.assertEqual(
+            'TEST SYSTEM Return Fan Outlet',
+            [o for o in output][0]['value']
+        )
+        return
+
+    def test_reject_complex_inputs_build_path_reference_by_object_type_bad_occurence(self):
+        es = ExpandSystem(template={})
+        es.build_path = [
+            {
+                'Fan:VariableVolume': {
+                    'Fields': {
+                        'name': '{} Return Fan',
+                        'air_inlet_node_name': '{} Return Fan Inlet',
+                        'air_outlet_node_name': '{} Return Fan Outlet'},
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'air_inlet_node_name',
+                            'Outlet': 'air_outlet_node_name'}}}}]
+        es.unique_name = 'TEST SYSTEM'
+        output = es._resolve_complex_input(
+            epjson={},
+            field_name="field_1",
+            input_value={
+                "BuildPathReference": {
+                    "Location": 'Fan:.*',
+                    'Occurrence': 'BadValue',
+                    "ValueLocation": "Outlet"
+                }
+            }
+        )
+        with self.assertRaises(PyExpandObjectsYamlStructureException):
+            print([o for o in output])
+        return
+
     def test_complex_inputs_build_path_class_attribute(self):
         es = ExpandSystem(template=mock_system_template)
-        es.expansion_structure = mock_system_option_tree
+        es.expansion_structure = copy.deepcopy(mock_system_option_tree)
         es._create_objects()
         output = es._resolve_complex_input(
             epjson={},
@@ -1495,7 +1657,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_complex_inputs_build_path_class_attribute_get_object(self):
         es = ExpandSystem(template=mock_system_template)
-        es.expansion_structure = mock_system_option_tree
+        es.expansion_structure = copy.deepcopy(mock_system_option_tree)
         es._create_objects()
         output = es._resolve_complex_input(
             epjson={},
@@ -1512,7 +1674,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
 
     def test_complex_inputs_build_path_class_attribute_get_name(self):
         es = ExpandSystem(template=mock_system_template)
-        es.expansion_structure = mock_system_option_tree
+        es.expansion_structure = copy.deepcopy(mock_system_option_tree)
         es._create_objects()
         output = es._resolve_complex_input(
             epjson={},
