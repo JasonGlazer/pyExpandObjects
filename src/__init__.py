@@ -14,3 +14,4 @@ __author__ = "John Grando"
 #  Use self.unique_name for the identifier.
 # todo_eo: deepcopy source dictionaries when they are not modified later, and use it for better error messages
 # todo_eo: create check for empty connectors, connectorlists, etc. in systems and plants.
+# todo_eo: should program gracefully exit on error or stop processing with terminal output

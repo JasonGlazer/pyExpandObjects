@@ -48,7 +48,9 @@ def main(args=None):
         raise InvalidInputException('Invalid input file reference')  # pragma: no cover - unlikely to be hit
     if file_suffix_check:
         if os.path.exists(args.file):
-            hvt.logger.info('Proceessing %s', args.file)
+            hvt.logger.info('Processing %s', args.file)
+            # todo_eo: use try/except to catch any exception from self.run and output self.stream.getvalue() to
+            #  outputPreProcessorMessage for error log and just return output dictionary.
             hvt_output = hvt.run(input_epjson=args.file)
             # merge hvac template output to output dictionary
             for output_key, output_val in hvt_output.items():
