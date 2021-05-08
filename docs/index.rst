@@ -14,7 +14,7 @@ Welcome to EpJSON ExpandObjects's documentation!
    CodeStructureOverview
 
 `Testing Outputs`_
-'Simulation Outputs'_
+`Simulation Outputs`_
 
 .. _Testing Outputs: _static/testing_output.html
 .. _Simulation Outputs: _static/simulation_output.html
