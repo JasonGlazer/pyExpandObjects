@@ -720,6 +720,39 @@ class ExpandObjects(EPJSON):
             object_dictionary=self.resolve_objects(epjson_from_option_tree))
         return self.resolve_objects(epjson_from_option_tree)
 
+    def _parse_build_path(self, object_list, epjson=None):
+        """
+        Iterate over build path and check if each object is a super object.  If not, commit the object to the input
+        epJSON.  Return a build path of only super objects.
+
+        :param epjson: input epJSON dictionary
+        :return: build path of only super objects
+        """
+        # Look over each object in the object_list.  If it is not a super object, then process it and save to
+        #   class epjson object.  Use the current object_list as the reference epJSON to resolve the objects.
+        #   If a larger scope of reference for the epJSON is needed, the object should be placed in BaseObjects or
+        #   TemplateObjects sections of the yaml file.
+        if not epjson:
+            epjson = self.epjson
+        if object_list:
+            # make a temporary object list since non-super objects will be removed from the list
+            tmp_object_list = []
+            for o in object_list:
+                (object_type, object_structure), = o.items()
+                if not object_structure.get('Fields') and not object_structure.get('Connectors'):
+                    epjson_object = self.yaml_list_to_epjson_dictionaries([o, ])
+                    epjson_objects = self.yaml_list_to_epjson_dictionaries(object_list)
+                    epjson_resolved_object = self.resolve_objects(epjson=epjson_object, reference_epjson=epjson_objects)
+                    self.merge_epjson(
+                        super_dictionary=self.epjson,
+                        object_dictionary=epjson_resolved_object
+                    )
+                else:
+                    tmp_object_list.append(o)
+            # set the object list to only contain super objects
+            object_list = tmp_object_list
+        return object_list
+
     def _apply_build_path_action(self, build_path, action_instructions):
         """
         Mutate a build path list based on a set of action instructions
@@ -772,27 +805,7 @@ class ExpandObjects(EPJSON):
             object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
         else:
             object_list = None
-        # Look over each object in the object_list.  If it is not a super object, then process it and save to
-        #   class epjson object.  Use the current object_list as the reference epJSON to resolve the objects.
-        #   If a larger scope of reference for the epJSON is needed, the object should be placed in BaseObjects or
-        #   TemplateObjects sections of the yaml file.
-        if object_list:
-            # make a temporary object list since non-super objects will be removed from the list
-            tmp_object_list = []
-            for o in object_list:
-                (object_type, object_structure), = o.items()
-                if not object_structure.get('Fields') and not object_structure.get('Connectors'):
-                    epjson_object = self.yaml_list_to_epjson_dictionaries([o, ])
-                    epjson_objects = self.yaml_list_to_epjson_dictionaries(object_list)
-                    epjson_resolved_object = self.resolve_objects(epjson=epjson_object, reference_epjson=epjson_objects)
-                    self.merge_epjson(
-                        super_dictionary=self.epjson,
-                        object_dictionary=epjson_resolved_object
-                    )
-                else:
-                    tmp_object_list.append(o)
-            # set the object list to only contain super objects
-            object_list = tmp_object_list
+        object_list = self._parse_build_path(object_list=object_list)
         # Create new build path dictionary since the input dictionary will be mutated
         output_build_path = copy.deepcopy(build_path)
         # if the location is an integer, just perform the action on that index, otherwise, iterate over super objects
@@ -851,9 +864,11 @@ class ExpandObjects(EPJSON):
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
             raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+        # cleanse build path to only contain super objects.  Non super objects are saved to epJSON file
+        parsed_build_path = self._parse_build_path(object_list=copy.deepcopy(build_path))
         object_list = []
         formatted_build_path = []
-        for idx, super_object in enumerate(copy.deepcopy(build_path)):
+        for idx, super_object in enumerate(parsed_build_path):
             (super_object_type, super_object_structure), = super_object.items()
             connectors = super_object_structure.get('Connectors')
             if not connectors:

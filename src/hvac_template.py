@@ -745,7 +745,6 @@ class HVACTemplate(EPJSON):
             expanded_plant_loops=self.expanded_plant_loops
         )
         self.logger.info('##### Building Plant-Plant Equipment Connections #####')
-        # todo_eo: uncomment and test
         for expanded_pl in self.expanded_plant_loops.values():
             self._create_water_loop_connectors_and_nodelist(
                 plant_loop_class_object=expanded_pl,
@@ -764,14 +763,17 @@ class HVACTemplate(EPJSON):
             *[j.epjson for i, j in self.expanded_zones.items()],
             *[j.epjson for i, j in self.expanded_systems.items()],
             *[j.epjson for i, j in self.expanded_plant_loops.items()],
-            *[j.epjson for i, j in self.expanded_plant_equipment.items()]
-        ]
+            *[j.epjson for i, j in self.expanded_plant_equipment.items()]]
         output_epjson = {}
         for merge_dictionary in merge_list:
             self.merge_epjson(
                 super_dictionary=output_epjson,
                 object_dictionary=merge_dictionary
             )
+        # import json
+        # with open('test.epJSON', 'w') as base_file:
+        #     json.dump(output_epjson, base_file, indent=4, sort_keys=True)
+        # sys.exit()
         # Create output format
         output_epjson = {
             "epJSON": output_epjson,

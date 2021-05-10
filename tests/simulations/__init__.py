@@ -150,8 +150,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             self.perform_comparison([base_idf_file_path, test_input_file_path])
         except:
             traceback.print_exc()
-            print('pyExpandObjects process failed to complete')
-            self.assertIsNotNone(output_epjson)
+            self.assertEqual(1, 0, 'pyExpandObjects process failed to complete')
         return
 
     def perform_comparison(self, epjson_files):
