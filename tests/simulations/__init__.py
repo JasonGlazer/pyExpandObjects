@@ -147,7 +147,9 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 file_name='test_input_epjson.epJSON')
             # check outputs
             self.perform_comparison([base_idf_file_path, test_input_file_path])
-        except:
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
             print('pyExpandObjects process failed to complete')
             self.assertIsNotNone(output_epjson)
         return
@@ -252,23 +254,16 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     cwd=str(test_dir / '..' / 'simulation' / 'test')
                 )
             # get sum of output csv rows to use as comparison
-            total_energy = 0
-            with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'), 'r') as f:
-                csvreader = csv.reader(f)
-                sum_val = []
-                for idx, row in enumerate(csvreader):
-                    if idx != 0:
-                        for val in row:
-                            try:
-                                sum_val.append(float(val))
-                            except ValueError:
-                                pass
-                total_energy = sum(sum_val)
+            energy_df = None
+            import pandas as pd
+            energy_df = pd.read_csv(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'))
+            melt_columns = [c for c in energy_df.columns if not c == 'Date/Time']
+            energy_df = energy_df.melt(id_vars=['Date/Time', ], value_vars=melt_columns)
             with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.end'), 'r') as f:
                 lines = f.readlines()
             # check end file for matches and success message
-            warning_rgx = r'(\d+)\s+Warning;'
-            error_rgx = r'(\d+) Severe Errors'
+            warning_rgx = r'.*\s+(\d+)\s+Warning;'
+            error_rgx = r'.*\s+(\d+) Severe Errors'
             status_rgx = r'^EnergyPlus\s+Completed\s+Successfully'
             status_val = 0
             for line in lines:
@@ -289,16 +284,32 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 if status_match:
                     status_val = 1
             finished_statuses.append(status_val)
-            total_energy_outputs.append(total_energy)
+            total_energy_outputs.append(energy_df)
         status_checks = {
             "total_energy_outputs": total_energy_outputs,
             "warning_outputs": warning_outputs,
             "error_outputs": error_outputs,
             "finished_statuses": finished_statuses}
-        for energy_val in status_checks['total_energy_outputs']:
-            print("Simulation are {} % different".format(
-                abs(1 - energy_val / max(status_checks['total_energy_outputs'])) * 100))
-            self.assertAlmostEqual(energy_val / max(status_checks['total_energy_outputs']), 1, 2)
+        # merge each testing output against each other and check if there is a discrepancy
+        for energy_idx in range(len(epjson_files)):
+            index_check = [i for i in range(len(epjson_files)) if i > energy_idx]
+            for i in index_check:
+                test_df = total_energy_outputs[energy_idx].merge(
+                    total_energy_outputs[i],
+                    how='left',
+                    on=['Date/Time', 'variable'])
+                test_df['diff'] = abs(test_df['value_x'] - test_df['value_y']) / test_df['value_x']
+                # Filter out low percentage differences
+                test_df = test_df.loc[test_df['diff'] > 0.01]
+                test_df.rename(columns={
+                    "value_x": os.path.basename(epjson_files[energy_idx]),
+                    "value_y": os.path.basename(epjson_files[i])
+                }, inplace=True)
+                self.assertEqual(
+                    test_df.shape[0],
+                    0,
+                    "Meter Outputs are not approximately equal:\n{}".format(
+                        test_df.sort_values(['diff', ], ascending=False)))
         for warning in status_checks['warning_outputs']:
             self.assertEqual(warning, max(status_checks['warning_outputs']))
         for error in status_checks['error_outputs']:
