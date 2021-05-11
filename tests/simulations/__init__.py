@@ -308,12 +308,12 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     "Meter Outputs are not approximately equal:\n{}".format(
                         test_df.sort_values(['diff', ], ascending=False)))
         for warning in status_checks['warning_outputs']:
-            self.assertEqual(warning, max(status_checks['warning_outputs']))
+            self.assertEqual(warning, max(status_checks['warning_outputs']), 'Unbalanced number of warnings')
         for error in status_checks['error_outputs']:
-            self.assertEqual(error, max(status_checks['error_outputs']))
+            self.assertEqual(error, max(status_checks['error_outputs']), 'Unbalanced number of errors')
             self.assertGreaterEqual(error, 0)
         for status in status_checks['finished_statuses']:
-            self.assertEqual(1, status)
+            self.assertEqual(1, status, 'Varying status outputs')
         return
 
     def compare_epjsons(self, epjson_1, epjson_2):
