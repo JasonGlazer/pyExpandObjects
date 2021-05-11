@@ -316,7 +316,7 @@ Objects:
     Heating:
       Common:
         Objects: &CoilHeatingCommonObjects
-          - Branch:
+          - Branch: &CoilHeatingBranch
               name: '{} Heating Coil Hw Branch'
               components:
                 - component_inlet_node_name:
@@ -1085,7 +1085,9 @@ OptionTree:
                     air_inlet_node_name: '{} Damper Outlet'
                     air_outlet_node_name: '{} Supply Inlet'
                     availability_schedule_name: '{reheat_coil_availability_schedule_name}'
-                - *CoilHeatingCommonObjects
+                - Branch:
+                    <<: *CoilHeatingBranch
+                    name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
               Transitions:
                 - *AirTerminalCommonTransitions
     System:
