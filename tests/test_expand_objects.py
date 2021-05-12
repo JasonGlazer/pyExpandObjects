@@ -76,7 +76,7 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
         return
 
     def test_retrieve_structure(self):
-        structure_hierarchy = ['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL']
+        structure_hierarchy = ['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL']
         eo = ExpandObjects(template=mock_template)
         structure = eo.get_structure(structure_hierarchy=structure_hierarchy)
         name_match_rgx = re.compile(r'^HVACTemplate.*')
@@ -116,7 +116,7 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
 
     @BaseTest._test_logger(doc_text="HVACTemplate:Create always value schedule")
     def test_make_compact_schedule_always_val(self):
-        structure_hierarchy = ['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL']
+        structure_hierarchy = ['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL']
         eo = ExpandObjects(template=mock_template)
         schedule = eo.build_compact_schedule(structure_hierarchy=structure_hierarchy, insert_values=[3, ])
         (schedule_name, schedule_fields), = schedule['Schedule:Compact'].items()

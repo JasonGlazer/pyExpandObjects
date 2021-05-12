@@ -122,12 +122,13 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         :return: None.  Assertions performed within function.
         """
         # move file to testing directory manually, shutil does not work reliably for some reason
+        base_idf_test_file_path = test_dir.joinpath('..', 'simulation', 'test', 'base_input.idf')
         with open(base_idf_file_path, 'r') as f1, \
-                open(test_dir.joinpath('..', 'simulation', 'test', 'base_input.idf'), 'w') as f2:
+                open(base_idf_test_file_path , 'w') as f2:
             for line in f1:
                 f2.write(line)
         # convert to epJSON for test simulation input
-        baseline_file_location = self.convert_file(base_idf_file_path)
+        baseline_file_location = self.convert_file(base_idf_test_file_path)
         # setup outputs for perform_comparison to function and write base file
         base_formatted_epjson = self.setup_file(baseline_file_location)
         # write the preformatted base file for main to call
@@ -297,16 +298,17 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     on=['Date/Time', 'variable'])
                 test_df['diff'] = abs(test_df['value_x'] - test_df['value_y']) / test_df['value_x']
                 # Filter out low percentage differences
-                test_df = test_df.loc[test_df['diff'] > 0.01]
-                test_df.rename(columns={
+                test_filtered_df = test_df.loc[test_df['diff'] > 0.01].copy()
+                test_filtered_df.rename(columns={
                     "value_x": os.path.basename(epjson_files[energy_idx]),
                     "value_y": os.path.basename(epjson_files[i])
                 }, inplace=True)
                 self.assertEqual(
-                    test_df.shape[0],
+                    test_filtered_df.shape[0],
                     0,
                     "Meter Outputs are not approximately equal:\n{}".format(
-                        test_df.sort_values(['diff', ], ascending=False)))
+                        test_filtered_df.sort_values(['diff', ], ascending=False)))
+                print('Meter Outputs:\n{}'.format(test_df.sort_values(['diff', ])))
         for warning in status_checks['warning_outputs']:
             self.assertEqual(warning, max(status_checks['warning_outputs']), 'Unbalanced number of warnings')
         for error in status_checks['error_outputs']:
