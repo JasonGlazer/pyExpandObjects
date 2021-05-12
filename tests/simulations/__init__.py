@@ -84,11 +84,46 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         return idf_file_path
 
     @staticmethod
-    def convert_file(file_location):
+    def expand_idf(file_location, working_dir=str(test_dir / '..' / 'simulation' / 'test')):
+        """
+        Expand idf file and save with a unique file name
+
+        :param file_location: location for idf base file
+        :param working_dir: directory to use as working directory for subprocess
+        :return: file path to expanded file
+        """
+        # convert to Path if a string is passed
+        if isinstance(file_location, str):
+            file_location = Path(file_location)
+        # calling the arguments with pathlib causes issues with the conversion exe, so direct strings are passed here.
+        subprocess.run(
+            [
+                'wine',
+                '../energyplus.exe',
+                '-x',
+                '--convert-only',
+                os.path.basename(file_location)
+            ],
+            cwd=working_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        os.rename(
+            os.path.join(
+                os.path.dirname(file_location),
+                'eplusout.expidf'),
+            os.path.join(
+                os.path.dirname(file_location),
+                os.path.basename(file_location).replace('.idf', 'Expanded.idf')))
+        return os.path.basename(file_location).replace('.idf', 'Expanded.idf')
+
+    @staticmethod
+    def convert_file(file_location, working_dir=str(test_dir / '..' / 'simulation' / 'test')):
         """
         Convert idf to epJSON and vice versa.
         converted file in alternative format is created in same directory as base file
         :param file_location: Path or string reference to file location
+        :param working_dir: directory to use as working directory for subprocess
         :return: file path to converted file
         """
         # convert to Path if a string is passed
@@ -102,7 +137,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 '-t',
                 os.path.basename(file_location)
             ],
-            cwd=str(test_dir / '..' / 'simulation' / 'test'),
+            cwd=working_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
