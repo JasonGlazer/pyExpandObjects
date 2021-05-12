@@ -1162,7 +1162,7 @@ class ExpandSystem(ExpandObjects):
         # if return fan is specified skip the first object as long as it is a (return) fan
         for idx, super_object in enumerate(build_path):
             for super_object_type, super_object_constructor in super_object.items():
-                if getattr(self, 'return_fan', None) and idx == 0:
+                if getattr(self, 'return_fan', None) == 'Yes' and idx == 0:
                     if not re.match(r'Fan:.*', super_object_type):
                         raise PyExpandObjectsException('Return fan specified in template but is not the first object in '
                                                        'build path: {}'.format(build_path))
@@ -1326,7 +1326,7 @@ class ExpandSystem(ExpandObjects):
         # check if a return fan is specified in the template.  If so, then copy the first object, which should be a fan
         # and also should have been skipped by the above process.  Insert the object into the list at the end of the
         # process at position 0
-        if getattr(self, 'return_fan', None):
+        if getattr(self, 'return_fan', None) == 'Yes':
             (return_fan_type, return_fan_structure), = build_path[0].items()
             if not re.match(r'Fan:.*', return_fan_type):
                 raise PyExpandObjectsException('Return fan was specified in HVACTemplate:System, however, a fan was not '
