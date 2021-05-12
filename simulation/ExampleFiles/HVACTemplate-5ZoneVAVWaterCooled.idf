@@ -99,7 +99,7 @@
 ! Environmental Emissions:        None
 ! Utility Tariffs:                None
 
-  Version,9.4;
+  Version,9.5;
 
   Building,
     Building,                !- Name
@@ -2080,10 +2080,6 @@
     NaturalGas,              !- Fuel Type
     1,                       !- Priority
     ;                        !- Sizing Factor
-
-  Output:Variable,*,Fan Electricity Energy, hourly;
-
-  Output:Variable,*,Pump Electricity Energy, hourly;
 
   Output:Variable,*,Site Outdoor Air Drybulb Temperature,hourly;
 
