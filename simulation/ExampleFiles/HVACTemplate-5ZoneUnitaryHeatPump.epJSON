@@ -1,189 +1,463 @@
 {
     "AirLoopHVAC": {
-        "VAV Sys 1": {
-            "availability_manager_list_name": "VAV Sys 1 Availability Managers",
-            "branch_list_name": "VAV Sys 1 Branches",
-            "controller_list_name": "VAV Sys 1 Controllers",
-            "demand_side_inlet_node_names": "VAV Sys 1 Supply Path Inlet",
-            "demand_side_outlet_node_name": "VAV Sys 1 Return Air Outlet",
+        "Heat Pump 1": {
+            "availability_manager_list_name": "Heat Pump 1 Availability Managers",
+            "branch_list_name": "Heat Pump 1 Branches",
+            "demand_side_inlet_node_names": "Heat Pump 1 Supply Path Inlet",
+            "demand_side_outlet_node_name": "Heat Pump 1 Return Air Outlet",
             "design_supply_air_flow_rate": "Autosize",
-            "supply_side_inlet_node_name": "VAV Sys 1 Air Loop Inlet",
-            "supply_side_outlet_node_names": "VAV Sys 1 Supply Fan Outlet"
+            "supply_side_inlet_node_name": "Heat Pump 1 Air Loop Inlet",
+            "supply_side_outlet_node_names": "Heat Pump 1 Air Loop Outlet"
+        },
+        "Heat Pump 2": {
+            "availability_manager_list_name": "Heat Pump 2 Availability Managers",
+            "branch_list_name": "Heat Pump 2 Branches",
+            "demand_side_inlet_node_names": "Heat Pump 2 Supply Path Inlet",
+            "demand_side_outlet_node_name": "Heat Pump 2 Return Air Outlet",
+            "design_supply_air_flow_rate": "Autosize",
+            "supply_side_inlet_node_name": "Heat Pump 2 Air Loop Inlet",
+            "supply_side_outlet_node_names": "Heat Pump 2 Air Loop Outlet"
+        },
+        "Heat Pump 3": {
+            "availability_manager_list_name": "Heat Pump 3 Availability Managers",
+            "branch_list_name": "Heat Pump 3 Branches",
+            "demand_side_inlet_node_names": "Heat Pump 3 Supply Path Inlet",
+            "demand_side_outlet_node_name": "Heat Pump 3 Return Air Outlet",
+            "design_supply_air_flow_rate": "Autosize",
+            "supply_side_inlet_node_name": "Heat Pump 3 Air Loop Inlet",
+            "supply_side_outlet_node_names": "Heat Pump 3 Air Loop Outlet"
+        },
+        "Heat Pump 4": {
+            "availability_manager_list_name": "Heat Pump 4 Availability Managers",
+            "branch_list_name": "Heat Pump 4 Branches",
+            "demand_side_inlet_node_names": "Heat Pump 4 Supply Path Inlet",
+            "demand_side_outlet_node_name": "Heat Pump 4 Return Air Outlet",
+            "design_supply_air_flow_rate": "Autosize",
+            "supply_side_inlet_node_name": "Heat Pump 4 Air Loop Inlet",
+            "supply_side_outlet_node_names": "Heat Pump 4 Air Loop Outlet"
+        },
+        "Heat Pump 5": {
+            "availability_manager_list_name": "Heat Pump 5 Availability Managers",
+            "branch_list_name": "Heat Pump 5 Branches",
+            "demand_side_inlet_node_names": "Heat Pump 5 Supply Path Inlet",
+            "demand_side_outlet_node_name": "Heat Pump 5 Return Air Outlet",
+            "design_supply_air_flow_rate": "Autosize",
+            "supply_side_inlet_node_name": "Heat Pump 5 Air Loop Inlet",
+            "supply_side_outlet_node_names": "Heat Pump 5 Air Loop Outlet"
         }
     },
     "AirLoopHVAC:ControllerList": {
-        "VAV Sys 1 Controllers": {
-            "controller_1_name": "VAV Sys 1 Cooling Coil Controller",
-            "controller_1_object_type": "Controller:WaterCoil",
-            "controller_2_name": "VAV Sys 1 Heating Coil Controller",
-            "controller_2_object_type": "Controller:WaterCoil"
+        "Heat Pump 1 OA System Controllers": {
+            "controller_1_name": "Heat Pump 1 OA Controller",
+            "controller_1_object_type": "Controller:OutdoorAir"
         },
-        "VAV Sys 1 OA System Controllers": {
-            "controller_1_name": "VAV Sys 1 OA Controller",
+        "Heat Pump 2 OA System Controllers": {
+            "controller_1_name": "Heat Pump 2 OA Controller",
+            "controller_1_object_type": "Controller:OutdoorAir"
+        },
+        "Heat Pump 3 OA System Controllers": {
+            "controller_1_name": "Heat Pump 3 OA Controller",
+            "controller_1_object_type": "Controller:OutdoorAir"
+        },
+        "Heat Pump 4 OA System Controllers": {
+            "controller_1_name": "Heat Pump 4 OA Controller",
+            "controller_1_object_type": "Controller:OutdoorAir"
+        },
+        "Heat Pump 5 OA System Controllers": {
+            "controller_1_name": "Heat Pump 5 OA Controller",
             "controller_1_object_type": "Controller:OutdoorAir"
         }
     },
     "AirLoopHVAC:OutdoorAirSystem": {
-        "VAV Sys 1 OA System": {
-            "availability_manager_list_name": "VAV Sys 1 Availability Managers",
-            "controller_list_name": "VAV Sys 1 OA System Controllers",
-            "outdoor_air_equipment_list_name": "VAV Sys 1 OA System Equipment"
+        "Heat Pump 1 OA System": {
+            "availability_manager_list_name": "Heat Pump 1 Availability Managers",
+            "controller_list_name": "Heat Pump 1 OA System Controllers",
+            "outdoor_air_equipment_list_name": "Heat Pump 1 OA System Equipment"
+        },
+        "Heat Pump 2 OA System": {
+            "availability_manager_list_name": "Heat Pump 2 Availability Managers",
+            "controller_list_name": "Heat Pump 2 OA System Controllers",
+            "outdoor_air_equipment_list_name": "Heat Pump 2 OA System Equipment"
+        },
+        "Heat Pump 3 OA System": {
+            "availability_manager_list_name": "Heat Pump 3 Availability Managers",
+            "controller_list_name": "Heat Pump 3 OA System Controllers",
+            "outdoor_air_equipment_list_name": "Heat Pump 3 OA System Equipment"
+        },
+        "Heat Pump 4 OA System": {
+            "availability_manager_list_name": "Heat Pump 4 Availability Managers",
+            "controller_list_name": "Heat Pump 4 OA System Controllers",
+            "outdoor_air_equipment_list_name": "Heat Pump 4 OA System Equipment"
+        },
+        "Heat Pump 5 OA System": {
+            "availability_manager_list_name": "Heat Pump 5 Availability Managers",
+            "controller_list_name": "Heat Pump 5 OA System Controllers",
+            "outdoor_air_equipment_list_name": "Heat Pump 5 OA System Equipment"
         }
     },
     "AirLoopHVAC:OutdoorAirSystem:EquipmentList": {
-        "VAV Sys 1 OA System Equipment": {
-            "component_1_name": "VAV Sys 1 OA Mixing Box",
+        "Heat Pump 1 OA System Equipment": {
+            "component_1_name": "Heat Pump 1 OA Mixing Box",
+            "component_1_object_type": "OutdoorAir:Mixer"
+        },
+        "Heat Pump 2 OA System Equipment": {
+            "component_1_name": "Heat Pump 2 OA Mixing Box",
+            "component_1_object_type": "OutdoorAir:Mixer"
+        },
+        "Heat Pump 3 OA System Equipment": {
+            "component_1_name": "Heat Pump 3 OA Mixing Box",
+            "component_1_object_type": "OutdoorAir:Mixer"
+        },
+        "Heat Pump 4 OA System Equipment": {
+            "component_1_name": "Heat Pump 4 OA Mixing Box",
+            "component_1_object_type": "OutdoorAir:Mixer"
+        },
+        "Heat Pump 5 OA System Equipment": {
+            "component_1_name": "Heat Pump 5 OA Mixing Box",
             "component_1_object_type": "OutdoorAir:Mixer"
         }
     },
     "AirLoopHVAC:ReturnPath": {
-        "VAV Sys 1 Return Path": {
+        "Heat Pump 1 Return Path": {
             "components": [
                 {
-                    "component_name": "VAV Sys 1 Return Plenum",
-                    "component_object_type": "AirLoopHVAC:ReturnPlenum"
+                    "component_name": "Heat Pump 1 Zone Mixer",
+                    "component_object_type": "AirLoopHVAC:ZoneMixer"
                 }
             ],
-            "return_air_path_outlet_node_name": "VAV Sys 1 Return Air Outlet"
+            "return_air_path_outlet_node_name": "Heat Pump 1 Return Air Outlet"
+        },
+        "Heat Pump 2 Return Path": {
+            "components": [
+                {
+                    "component_name": "Heat Pump 2 Zone Mixer",
+                    "component_object_type": "AirLoopHVAC:ZoneMixer"
+                }
+            ],
+            "return_air_path_outlet_node_name": "Heat Pump 2 Return Air Outlet"
+        },
+        "Heat Pump 3 Return Path": {
+            "components": [
+                {
+                    "component_name": "Heat Pump 3 Zone Mixer",
+                    "component_object_type": "AirLoopHVAC:ZoneMixer"
+                }
+            ],
+            "return_air_path_outlet_node_name": "Heat Pump 3 Return Air Outlet"
+        },
+        "Heat Pump 4 Return Path": {
+            "components": [
+                {
+                    "component_name": "Heat Pump 4 Zone Mixer",
+                    "component_object_type": "AirLoopHVAC:ZoneMixer"
+                }
+            ],
+            "return_air_path_outlet_node_name": "Heat Pump 4 Return Air Outlet"
+        },
+        "Heat Pump 5 Return Path": {
+            "components": [
+                {
+                    "component_name": "Heat Pump 5 Zone Mixer",
+                    "component_object_type": "AirLoopHVAC:ZoneMixer"
+                }
+            ],
+            "return_air_path_outlet_node_name": "Heat Pump 5 Return Air Outlet"
         }
     },
-    "AirLoopHVAC:ReturnPlenum": {
-        "VAV Sys 1 Return Plenum": {
+    "AirLoopHVAC:SupplyPath": {
+        "Heat Pump 1 Supply Path": {
+            "components": [
+                {
+                    "component_name": "Heat Pump 1 Zone Splitter",
+                    "component_object_type": "AirLoopHVAC:ZoneSplitter"
+                }
+            ],
+            "supply_air_path_inlet_node_name": "Heat Pump 1 Supply Path Inlet"
+        },
+        "Heat Pump 2 Supply Path": {
+            "components": [
+                {
+                    "component_name": "Heat Pump 2 Zone Splitter",
+                    "component_object_type": "AirLoopHVAC:ZoneSplitter"
+                }
+            ],
+            "supply_air_path_inlet_node_name": "Heat Pump 2 Supply Path Inlet"
+        },
+        "Heat Pump 3 Supply Path": {
+            "components": [
+                {
+                    "component_name": "Heat Pump 3 Zone Splitter",
+                    "component_object_type": "AirLoopHVAC:ZoneSplitter"
+                }
+            ],
+            "supply_air_path_inlet_node_name": "Heat Pump 3 Supply Path Inlet"
+        },
+        "Heat Pump 4 Supply Path": {
+            "components": [
+                {
+                    "component_name": "Heat Pump 4 Zone Splitter",
+                    "component_object_type": "AirLoopHVAC:ZoneSplitter"
+                }
+            ],
+            "supply_air_path_inlet_node_name": "Heat Pump 4 Supply Path Inlet"
+        },
+        "Heat Pump 5 Supply Path": {
+            "components": [
+                {
+                    "component_name": "Heat Pump 5 Zone Splitter",
+                    "component_object_type": "AirLoopHVAC:ZoneSplitter"
+                }
+            ],
+            "supply_air_path_inlet_node_name": "Heat Pump 5 Supply Path Inlet"
+        }
+    },
+    "AirLoopHVAC:UnitaryHeatPump:AirToAir": {
+        "Heat Pump 1 Heat Pump": {
+            "air_inlet_node_name": "Heat Pump 1 Mixed Air Outlet",
+            "air_outlet_node_name": "Heat Pump 1 Air Loop Outlet",
+            "controlling_zone_or_thermostat_location": "SPACE1-1",
+            "cooling_coil_name": "Heat Pump 1 Cooling Coil",
+            "cooling_coil_object_type": "Coil:Cooling:DX:SingleSpeed",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "fan_placement": "BlowThrough",
+            "heating_coil_name": "Heat Pump 1 HP Heating Coil",
+            "heating_coil_object_type": "Coil:Heating:DX:SingleSpeed",
+            "heating_supply_air_flow_rate": "Autosize",
+            "maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation": 21,
+            "maximum_supply_air_temperature_from_supplemental_heater": "Autosize",
+            "no_load_supply_air_flow_rate": "Autosize",
+            "supplemental_heating_coil_name": "Heat Pump 1 Sup Heat Coil",
+            "supplemental_heating_coil_object_type": "Coil:Heating:Electric",
+            "supply_air_fan_name": "Heat Pump 1 Supply Fan",
+            "supply_air_fan_object_type": "Fan:OnOff",
+            "supply_air_fan_operating_mode_schedule_name": "HVACTemplate-Always 0"
+        },
+        "Heat Pump 2 Heat Pump": {
+            "air_inlet_node_name": "Heat Pump 2 Mixed Air Outlet",
+            "air_outlet_node_name": "Heat Pump 2 Air Loop Outlet",
+            "controlling_zone_or_thermostat_location": "SPACE2-1",
+            "cooling_coil_name": "Heat Pump 2 Cooling Coil",
+            "cooling_coil_object_type": "Coil:Cooling:DX:SingleSpeed",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "fan_placement": "BlowThrough",
+            "heating_coil_name": "Heat Pump 2 HP Heating Coil",
+            "heating_coil_object_type": "Coil:Heating:DX:SingleSpeed",
+            "heating_supply_air_flow_rate": "Autosize",
+            "maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation": 21,
+            "maximum_supply_air_temperature_from_supplemental_heater": "Autosize",
+            "no_load_supply_air_flow_rate": "Autosize",
+            "supplemental_heating_coil_name": "Heat Pump 2 Sup Heat Coil",
+            "supplemental_heating_coil_object_type": "Coil:Heating:Electric",
+            "supply_air_fan_name": "Heat Pump 2 Supply Fan",
+            "supply_air_fan_object_type": "Fan:OnOff",
+            "supply_air_fan_operating_mode_schedule_name": "HVACTemplate-Always 0"
+        },
+        "Heat Pump 3 Heat Pump": {
+            "air_inlet_node_name": "Heat Pump 3 Mixed Air Outlet",
+            "air_outlet_node_name": "Heat Pump 3 Air Loop Outlet",
+            "controlling_zone_or_thermostat_location": "SPACE3-1",
+            "cooling_coil_name": "Heat Pump 3 Cooling Coil",
+            "cooling_coil_object_type": "Coil:Cooling:DX:SingleSpeed",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "fan_placement": "BlowThrough",
+            "heating_coil_name": "Heat Pump 3 HP Heating Coil",
+            "heating_coil_object_type": "Coil:Heating:DX:SingleSpeed",
+            "heating_supply_air_flow_rate": "Autosize",
+            "maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation": 21,
+            "maximum_supply_air_temperature_from_supplemental_heater": "Autosize",
+            "no_load_supply_air_flow_rate": "Autosize",
+            "supplemental_heating_coil_name": "Heat Pump 3 Sup Heat Coil",
+            "supplemental_heating_coil_object_type": "Coil:Heating:Electric",
+            "supply_air_fan_name": "Heat Pump 3 Supply Fan",
+            "supply_air_fan_object_type": "Fan:OnOff",
+            "supply_air_fan_operating_mode_schedule_name": "HVACTemplate-Always 0"
+        },
+        "Heat Pump 4 Heat Pump": {
+            "air_inlet_node_name": "Heat Pump 4 Mixed Air Outlet",
+            "air_outlet_node_name": "Heat Pump 4 Air Loop Outlet",
+            "controlling_zone_or_thermostat_location": "SPACE4-1",
+            "cooling_coil_name": "Heat Pump 4 Cooling Coil",
+            "cooling_coil_object_type": "Coil:Cooling:DX:SingleSpeed",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "fan_placement": "BlowThrough",
+            "heating_coil_name": "Heat Pump 4 HP Heating Coil",
+            "heating_coil_object_type": "Coil:Heating:DX:SingleSpeed",
+            "heating_supply_air_flow_rate": "Autosize",
+            "maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation": 21,
+            "maximum_supply_air_temperature_from_supplemental_heater": "Autosize",
+            "no_load_supply_air_flow_rate": "Autosize",
+            "supplemental_heating_coil_name": "Heat Pump 4 Sup Heat Coil",
+            "supplemental_heating_coil_object_type": "Coil:Heating:Electric",
+            "supply_air_fan_name": "Heat Pump 4 Supply Fan",
+            "supply_air_fan_object_type": "Fan:OnOff",
+            "supply_air_fan_operating_mode_schedule_name": "HVACTemplate-Always 0"
+        },
+        "Heat Pump 5 Heat Pump": {
+            "air_inlet_node_name": "Heat Pump 5 Mixed Air Outlet",
+            "air_outlet_node_name": "Heat Pump 5 Air Loop Outlet",
+            "controlling_zone_or_thermostat_location": "SPACE5-1",
+            "cooling_coil_name": "Heat Pump 5 Cooling Coil",
+            "cooling_coil_object_type": "Coil:Cooling:DX:SingleSpeed",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "fan_placement": "BlowThrough",
+            "heating_coil_name": "Heat Pump 5 HP Heating Coil",
+            "heating_coil_object_type": "Coil:Heating:DX:SingleSpeed",
+            "heating_supply_air_flow_rate": "Autosize",
+            "maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation": 21,
+            "maximum_supply_air_temperature_from_supplemental_heater": "Autosize",
+            "no_load_supply_air_flow_rate": "Autosize",
+            "supplemental_heating_coil_name": "Heat Pump 5 Sup Heat Coil",
+            "supplemental_heating_coil_object_type": "Coil:Heating:Electric",
+            "supply_air_fan_name": "Heat Pump 5 Supply Fan",
+            "supply_air_fan_object_type": "Fan:OnOff",
+            "supply_air_fan_operating_mode_schedule_name": "HVACTemplate-Always 0"
+        }
+    },
+    "AirLoopHVAC:ZoneMixer": {
+        "Heat Pump 1 Zone Mixer": {
             "nodes": [
                 {
                     "inlet_node_name": "SPACE1-1 Return Outlet"
-                },
+                }
+            ],
+            "outlet_node_name": "Heat Pump 1 Return Air Outlet"
+        },
+        "Heat Pump 2 Zone Mixer": {
+            "nodes": [
                 {
                     "inlet_node_name": "SPACE2-1 Return Outlet"
-                },
+                }
+            ],
+            "outlet_node_name": "Heat Pump 2 Return Air Outlet"
+        },
+        "Heat Pump 3 Zone Mixer": {
+            "nodes": [
                 {
                     "inlet_node_name": "SPACE3-1 Return Outlet"
-                },
+                }
+            ],
+            "outlet_node_name": "Heat Pump 3 Return Air Outlet"
+        },
+        "Heat Pump 4 Zone Mixer": {
+            "nodes": [
                 {
                     "inlet_node_name": "SPACE4-1 Return Outlet"
-                },
+                }
+            ],
+            "outlet_node_name": "Heat Pump 4 Return Air Outlet"
+        },
+        "Heat Pump 5 Zone Mixer": {
+            "nodes": [
                 {
                     "inlet_node_name": "SPACE5-1 Return Outlet"
                 }
             ],
-            "outlet_node_name": "VAV Sys 1 Return Air Outlet",
-            "zone_name": "PLENUM-1",
-            "zone_node_name": "PLENUM-1 Zone Air Node"
-        }
-    },
-    "AirLoopHVAC:SupplyPath": {
-        "VAV Sys 1 Supply Path": {
-            "components": [
-                {
-                    "component_name": "VAV Sys 1 Zone Splitter",
-                    "component_object_type": "AirLoopHVAC:ZoneSplitter"
-                }
-            ],
-            "supply_air_path_inlet_node_name": "VAV Sys 1 Supply Path Inlet"
+            "outlet_node_name": "Heat Pump 5 Return Air Outlet"
         }
     },
     "AirLoopHVAC:ZoneSplitter": {
-        "VAV Sys 1 Zone Splitter": {
-            "inlet_node_name": "VAV Sys 1 Supply Path Inlet",
+        "Heat Pump 1 Zone Splitter": {
+            "inlet_node_name": "Heat Pump 1 Supply Path Inlet",
             "nodes": [
                 {
                     "outlet_node_name": "SPACE1-1 Zone Equip Inlet"
-                },
+                }
+            ]
+        },
+        "Heat Pump 2 Zone Splitter": {
+            "inlet_node_name": "Heat Pump 2 Supply Path Inlet",
+            "nodes": [
                 {
                     "outlet_node_name": "SPACE2-1 Zone Equip Inlet"
-                },
+                }
+            ]
+        },
+        "Heat Pump 3 Zone Splitter": {
+            "inlet_node_name": "Heat Pump 3 Supply Path Inlet",
+            "nodes": [
                 {
                     "outlet_node_name": "SPACE3-1 Zone Equip Inlet"
-                },
+                }
+            ]
+        },
+        "Heat Pump 4 Zone Splitter": {
+            "inlet_node_name": "Heat Pump 4 Supply Path Inlet",
+            "nodes": [
                 {
                     "outlet_node_name": "SPACE4-1 Zone Equip Inlet"
-                },
+                }
+            ]
+        },
+        "Heat Pump 5 Zone Splitter": {
+            "inlet_node_name": "Heat Pump 5 Supply Path Inlet",
+            "nodes": [
                 {
                     "outlet_node_name": "SPACE5-1 Zone Equip Inlet"
                 }
             ]
         }
     },
-    "AirTerminal:SingleDuct:VAV:Reheat": {
-        "SPACE1-1 VAV Reheat": {
+    "AirTerminal:SingleDuct:ConstantVolume:NoReheat": {
+        "SPACE1-1 CV": {
             "air_inlet_node_name": "SPACE1-1 Zone Equip Inlet",
             "air_outlet_node_name": "SPACE1-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE1-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "maximum_hot_water_or_steam_flow_rate": "Autosize",
-            "minimum_hot_water_or_steam_flow_rate": 0,
-            "reheat_coil_name": "SPACE1-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "maximum_air_flow_rate": "Autosize"
         },
-        "SPACE2-1 VAV Reheat": {
+        "SPACE2-1 CV": {
             "air_inlet_node_name": "SPACE2-1 Zone Equip Inlet",
             "air_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE2-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "maximum_hot_water_or_steam_flow_rate": "Autosize",
-            "minimum_hot_water_or_steam_flow_rate": 0,
-            "reheat_coil_name": "SPACE2-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "maximum_air_flow_rate": "Autosize"
         },
-        "SPACE3-1 VAV Reheat": {
+        "SPACE3-1 CV": {
             "air_inlet_node_name": "SPACE3-1 Zone Equip Inlet",
             "air_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE3-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "maximum_hot_water_or_steam_flow_rate": "Autosize",
-            "minimum_hot_water_or_steam_flow_rate": 0,
-            "reheat_coil_name": "SPACE3-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "maximum_air_flow_rate": "Autosize"
         },
-        "SPACE4-1 VAV Reheat": {
+        "SPACE4-1 CV": {
             "air_inlet_node_name": "SPACE4-1 Zone Equip Inlet",
             "air_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE4-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "maximum_hot_water_or_steam_flow_rate": "Autosize",
-            "minimum_hot_water_or_steam_flow_rate": 0,
-            "reheat_coil_name": "SPACE4-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "maximum_air_flow_rate": "Autosize"
         },
-        "SPACE5-1 VAV Reheat": {
+        "SPACE5-1 CV": {
             "air_inlet_node_name": "SPACE5-1 Zone Equip Inlet",
             "air_outlet_node_name": "SPACE5-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE5-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "maximum_hot_water_or_steam_flow_rate": "Autosize",
-            "minimum_hot_water_or_steam_flow_rate": 0,
-            "reheat_coil_name": "SPACE5-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
-        }
-    },
-    "AvailabilityManager:LowTemperatureTurnOff": {
-        "Chilled Water Loop Availability Low Temp Off": {
-            "sensor_node_name": "Chilled Water Loop Outside Air Sensor",
-            "temperature": 7.22
+            "maximum_air_flow_rate": "Autosize"
         }
     },
     "AvailabilityManager:NightCycle": {
-        "VAV Sys 1 Availability": {
+        "Heat Pump 1 Availability": {
+            "applicability_schedule_name": "HVACTemplate-Always 1",
+            "control_type": "CycleOnAny",
+            "cycling_run_time": 3600,
+            "cycling_run_time_control_type": "FixedRunTime",
+            "fan_schedule_name": "FanAvailSched",
+            "thermostat_tolerance": 0.2
+        },
+        "Heat Pump 2 Availability": {
+            "applicability_schedule_name": "HVACTemplate-Always 1",
+            "control_type": "CycleOnAny",
+            "cycling_run_time": 3600,
+            "cycling_run_time_control_type": "FixedRunTime",
+            "fan_schedule_name": "FanAvailSched",
+            "thermostat_tolerance": 0.2
+        },
+        "Heat Pump 3 Availability": {
+            "applicability_schedule_name": "HVACTemplate-Always 1",
+            "control_type": "CycleOnAny",
+            "cycling_run_time": 3600,
+            "cycling_run_time_control_type": "FixedRunTime",
+            "fan_schedule_name": "FanAvailSched",
+            "thermostat_tolerance": 0.2
+        },
+        "Heat Pump 4 Availability": {
+            "applicability_schedule_name": "HVACTemplate-Always 1",
+            "control_type": "CycleOnAny",
+            "cycling_run_time": 3600,
+            "cycling_run_time_control_type": "FixedRunTime",
+            "fan_schedule_name": "FanAvailSched",
+            "thermostat_tolerance": 0.2
+        },
+        "Heat Pump 5 Availability": {
             "applicability_schedule_name": "HVACTemplate-Always 1",
             "control_type": "CycleOnAny",
             "cycling_run_time": 3600,
@@ -193,478 +467,162 @@
         }
     },
     "AvailabilityManagerAssignmentList": {
-        "Chilled Water Loop Availability List": {
+        "Heat Pump 1 Availability Managers": {
             "managers": [
                 {
-                    "availability_manager_name": "Chilled Water Loop Availability Low Temp Off",
-                    "availability_manager_object_type": "AvailabilityManager:LowTemperatureTurnOff"
+                    "availability_manager_name": "Heat Pump 1 Availability",
+                    "availability_manager_object_type": "AvailabilityManager:NightCycle"
                 }
             ]
         },
-        "VAV Sys 1 Availability Managers": {
+        "Heat Pump 2 Availability Managers": {
             "managers": [
                 {
-                    "availability_manager_name": "VAV Sys 1 Availability",
+                    "availability_manager_name": "Heat Pump 2 Availability",
+                    "availability_manager_object_type": "AvailabilityManager:NightCycle"
+                }
+            ]
+        },
+        "Heat Pump 3 Availability Managers": {
+            "managers": [
+                {
+                    "availability_manager_name": "Heat Pump 3 Availability",
+                    "availability_manager_object_type": "AvailabilityManager:NightCycle"
+                }
+            ]
+        },
+        "Heat Pump 4 Availability Managers": {
+            "managers": [
+                {
+                    "availability_manager_name": "Heat Pump 4 Availability",
+                    "availability_manager_object_type": "AvailabilityManager:NightCycle"
+                }
+            ]
+        },
+        "Heat Pump 5 Availability Managers": {
+            "managers": [
+                {
+                    "availability_manager_name": "Heat Pump 5 Availability",
                     "availability_manager_object_type": "AvailabilityManager:NightCycle"
                 }
             ]
         }
     },
-    "Boiler:HotWater": {
-        "Main Boiler": {
-            "boiler_flow_mode": "ConstantFlow",
-            "boiler_water_inlet_node_name": "Main Boiler HW Inlet",
-            "boiler_water_outlet_node_name": "Main Boiler HW Outlet",
-            "design_water_flow_rate": "Autosize",
-            "efficiency_curve_temperature_evaluation_variable": "LeavingBoiler",
-            "fuel_type": "NaturalGas",
-            "maximum_part_load_ratio": 1.1,
-            "minimum_part_load_ratio": 0.0,
-            "nominal_capacity": "Autosize",
-            "nominal_thermal_efficiency": 0.8,
-            "normalized_boiler_efficiency_curve_name": "Main Boiler Efficiency Curve",
-            "optimum_part_load_ratio": 1.0,
-            "parasitic_electric_load": 0,
-            "sizing_factor": 1.0,
-            "water_outlet_upper_temperature_limit": 100.0
-        }
-    },
     "Branch": {
-        "Chilled Water Loop ChW Demand Bypass Branch": {
+        "Heat Pump 1 Main Branch": {
             "components": [
                 {
-                    "component_inlet_node_name": "Chilled Water Loop ChW Demand Bypass Inlet",
-                    "component_name": "Chilled Water Loop ChW Demand Side Bypass Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Chilled Water Loop ChW Demand Bypass Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop ChW Demand Inlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop ChW Demand Inlet",
-                    "component_name": "Chilled Water Loop ChW Demand Inlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Chilled Water Loop ChW Demand Inlet Pipe Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop ChW Demand Outlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop ChW Demand Outlet Pipe Inlet",
-                    "component_name": "Chilled Water Loop ChW Demand Outlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Chilled Water Loop ChW Demand Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop ChW Supply Bypass Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop ChW Supply Bypass Inlet",
-                    "component_name": "Chilled Water Loop ChW Supply Side Bypass Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Chilled Water Loop ChW Supply Bypass Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop ChW Supply Inlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop ChW Supply Inlet",
-                    "component_name": "Chilled Water Loop ChW Supply Pump",
-                    "component_object_type": "Pump:ConstantSpeed",
-                    "component_outlet_node_name": "Chilled Water Loop ChW Pump Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop ChW Supply Outlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop ChW Supply Outlet Pipe Inlet",
-                    "component_name": "Chilled Water Loop ChW Supply Outlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Chilled Water Loop ChW Supply Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop CndW Demand Bypass Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop CndW Demand Bypass Inlet",
-                    "component_name": "Chilled Water Loop CndW Demand Side Bypass Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Chilled Water Loop CndW Demand Bypass Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop CndW Demand Inlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop CndW Demand Inlet",
-                    "component_name": "Chilled Water Loop CndW Demand Inlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Chilled Water Loop CndW Demand Inlet Pipe Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop CndW Demand Outlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop CndW Demand Outlet Pipe Inlet",
-                    "component_name": "Chilled Water Loop CndW Demand Outlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Chilled Water Loop CndW Demand Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop CndW Supply Bypass Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop CndW Supply Bypass Inlet",
-                    "component_name": "Chilled Water Loop CndW Supply Side Bypass Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Chilled Water Loop CndW Supply Bypass Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop CndW Supply Inlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop CndW Supply Inlet",
-                    "component_name": "Chilled Water Loop CndW Supply Pump",
-                    "component_object_type": "Pump:VariableSpeed",
-                    "component_outlet_node_name": "Chilled Water Loop CndW Pump Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop CndW Supply Outlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Chilled Water Loop CndW Supply Outlet Pipe Inlet",
-                    "component_name": "Chilled Water Loop CndW Supply Outlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Chilled Water Loop CndW Supply Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Demand Bypass Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Demand Bypass Inlet",
-                    "component_name": "Hot Water Loop HW Demand Side Bypass Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Hot Water Loop HW Demand Bypass Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Demand Inlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Demand Inlet",
-                    "component_name": "Hot Water Loop HW Demand Inlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Hot Water Loop HW Demand Inlet Pipe Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Demand Outlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Demand Outlet Pipe Inlet",
-                    "component_name": "Hot Water Loop HW Demand Outlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Hot Water Loop HW Demand Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Supply Bypass Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Supply Bypass Inlet",
-                    "component_name": "Hot Water Loop HW Supply Side Bypass Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Hot Water Loop HW Supply Bypass Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Supply Inlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Supply Inlet",
-                    "component_name": "Hot Water Loop HW Supply Pump",
-                    "component_object_type": "Pump:ConstantSpeed",
-                    "component_outlet_node_name": "Hot Water Loop HW Pump Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Supply Outlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Supply Outlet Pipe Inlet",
-                    "component_name": "Hot Water Loop HW Supply Outlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Hot Water Loop HW Supply Outlet"
-                }
-            ]
-        },
-        "Main Boiler HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Main Boiler HW Inlet",
-                    "component_name": "Main Boiler",
-                    "component_object_type": "Boiler:HotWater",
-                    "component_outlet_node_name": "Main Boiler HW Outlet"
-                }
-            ]
-        },
-        "Main Chiller ChW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Main Chiller ChW Inlet",
-                    "component_name": "Main Chiller",
-                    "component_object_type": "Chiller:Electric:EIR",
-                    "component_outlet_node_name": "Main Chiller ChW Outlet"
-                }
-            ]
-        },
-        "Main Chiller CndW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Main Chiller Cnd Inlet",
-                    "component_name": "Main Chiller",
-                    "component_object_type": "Chiller:Electric:EIR",
-                    "component_outlet_node_name": "Main Chiller Cnd Outlet"
-                }
-            ]
-        },
-        "Main Tower CndW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Main Tower CndW Inlet",
-                    "component_name": "Main Tower",
-                    "component_object_type": "CoolingTower:SingleSpeed",
-                    "component_outlet_node_name": "Main Tower CndW Outlet"
-                }
-            ]
-        },
-        "SPACE1-1 Reheat Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE1-1 Reheat Coil HW Inlet",
-                    "component_name": "SPACE1-1 Reheat Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE1-1 Reheat Coil HW Outlet"
-                }
-            ]
-        },
-        "SPACE2-1 Reheat Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE2-1 Reheat Coil HW Inlet",
-                    "component_name": "SPACE2-1 Reheat Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE2-1 Reheat Coil HW Outlet"
-                }
-            ]
-        },
-        "SPACE3-1 Reheat Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE3-1 Reheat Coil HW Inlet",
-                    "component_name": "SPACE3-1 Reheat Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE3-1 Reheat Coil HW Outlet"
-                }
-            ]
-        },
-        "SPACE4-1 Reheat Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE4-1 Reheat Coil HW Inlet",
-                    "component_name": "SPACE4-1 Reheat Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE4-1 Reheat Coil HW Outlet"
-                }
-            ]
-        },
-        "SPACE5-1 Reheat Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE5-1 Reheat Coil HW Inlet",
-                    "component_name": "SPACE5-1 Reheat Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE5-1 Reheat Coil HW Outlet"
-                }
-            ]
-        },
-        "VAV Sys 1 Cooling Coil ChW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "VAV Sys 1 Cooling Coil ChW Inlet",
-                    "component_name": "VAV Sys 1 Cooling Coil",
-                    "component_object_type": "Coil:Cooling:Water",
-                    "component_outlet_node_name": "VAV Sys 1 Cooling Coil ChW Outlet"
-                }
-            ]
-        },
-        "VAV Sys 1 Heating Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "VAV Sys 1 Heating Coil HW Inlet",
-                    "component_name": "VAV Sys 1 Heating Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "VAV Sys 1 Heating Coil HW Outlet"
-                }
-            ]
-        },
-        "VAV Sys 1 Main Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "VAV Sys 1 Air Loop Inlet",
-                    "component_name": "VAV Sys 1 OA System",
+                    "component_inlet_node_name": "Heat Pump 1 Air Loop Inlet",
+                    "component_name": "Heat Pump 1 OA System",
                     "component_object_type": "AirLoopHVAC:OutdoorAirSystem",
-                    "component_outlet_node_name": "VAV Sys 1 Mixed Air Outlet"
+                    "component_outlet_node_name": "Heat Pump 1 Mixed Air Outlet"
                 },
                 {
-                    "component_inlet_node_name": "VAV Sys 1 Mixed Air Outlet",
-                    "component_name": "VAV Sys 1 Cooling Coil",
-                    "component_object_type": "Coil:Cooling:Water",
-                    "component_outlet_node_name": "VAV Sys 1 Cooling Coil Outlet"
+                    "component_inlet_node_name": "Heat Pump 1 Mixed Air Outlet",
+                    "component_name": "Heat Pump 1 Heat Pump",
+                    "component_object_type": "AirLoopHVAC:UnitaryHeatPump:AirToAir",
+                    "component_outlet_node_name": "Heat Pump 1 Air Loop Outlet"
+                }
+            ]
+        },
+        "Heat Pump 2 Main Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Heat Pump 2 Air Loop Inlet",
+                    "component_name": "Heat Pump 2 OA System",
+                    "component_object_type": "AirLoopHVAC:OutdoorAirSystem",
+                    "component_outlet_node_name": "Heat Pump 2 Mixed Air Outlet"
                 },
                 {
-                    "component_inlet_node_name": "VAV Sys 1 Cooling Coil Outlet",
-                    "component_name": "VAV Sys 1 Heating Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "VAV Sys 1 Heating Coil Outlet"
+                    "component_inlet_node_name": "Heat Pump 2 Mixed Air Outlet",
+                    "component_name": "Heat Pump 2 Heat Pump",
+                    "component_object_type": "AirLoopHVAC:UnitaryHeatPump:AirToAir",
+                    "component_outlet_node_name": "Heat Pump 2 Air Loop Outlet"
+                }
+            ]
+        },
+        "Heat Pump 3 Main Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Heat Pump 3 Air Loop Inlet",
+                    "component_name": "Heat Pump 3 OA System",
+                    "component_object_type": "AirLoopHVAC:OutdoorAirSystem",
+                    "component_outlet_node_name": "Heat Pump 3 Mixed Air Outlet"
                 },
                 {
-                    "component_inlet_node_name": "VAV Sys 1 Heating Coil Outlet",
-                    "component_name": "VAV Sys 1 Supply Fan",
-                    "component_object_type": "Fan:VariableVolume",
-                    "component_outlet_node_name": "VAV Sys 1 Supply Fan Outlet"
+                    "component_inlet_node_name": "Heat Pump 3 Mixed Air Outlet",
+                    "component_name": "Heat Pump 3 Heat Pump",
+                    "component_object_type": "AirLoopHVAC:UnitaryHeatPump:AirToAir",
+                    "component_outlet_node_name": "Heat Pump 3 Air Loop Outlet"
+                }
+            ]
+        },
+        "Heat Pump 4 Main Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Heat Pump 4 Air Loop Inlet",
+                    "component_name": "Heat Pump 4 OA System",
+                    "component_object_type": "AirLoopHVAC:OutdoorAirSystem",
+                    "component_outlet_node_name": "Heat Pump 4 Mixed Air Outlet"
+                },
+                {
+                    "component_inlet_node_name": "Heat Pump 4 Mixed Air Outlet",
+                    "component_name": "Heat Pump 4 Heat Pump",
+                    "component_object_type": "AirLoopHVAC:UnitaryHeatPump:AirToAir",
+                    "component_outlet_node_name": "Heat Pump 4 Air Loop Outlet"
+                }
+            ]
+        },
+        "Heat Pump 5 Main Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Heat Pump 5 Air Loop Inlet",
+                    "component_name": "Heat Pump 5 OA System",
+                    "component_object_type": "AirLoopHVAC:OutdoorAirSystem",
+                    "component_outlet_node_name": "Heat Pump 5 Mixed Air Outlet"
+                },
+                {
+                    "component_inlet_node_name": "Heat Pump 5 Mixed Air Outlet",
+                    "component_name": "Heat Pump 5 Heat Pump",
+                    "component_object_type": "AirLoopHVAC:UnitaryHeatPump:AirToAir",
+                    "component_outlet_node_name": "Heat Pump 5 Air Loop Outlet"
                 }
             ]
         }
     },
     "BranchList": {
-        "Chilled Water Loop ChW Demand Side Branches": {
+        "Heat Pump 1 Branches": {
             "branches": [
                 {
-                    "branch_name": "Chilled Water Loop ChW Demand Inlet Branch"
-                },
-                {
-                    "branch_name": "VAV Sys 1 Cooling Coil ChW Branch"
-                },
-                {
-                    "branch_name": "Chilled Water Loop ChW Demand Bypass Branch"
-                },
-                {
-                    "branch_name": "Chilled Water Loop ChW Demand Outlet Branch"
+                    "branch_name": "Heat Pump 1 Main Branch"
                 }
             ]
         },
-        "Chilled Water Loop ChW Supply Side Branches": {
+        "Heat Pump 2 Branches": {
             "branches": [
                 {
-                    "branch_name": "Chilled Water Loop ChW Supply Inlet Branch"
-                },
-                {
-                    "branch_name": "Main Chiller ChW Branch"
-                },
-                {
-                    "branch_name": "Chilled Water Loop ChW Supply Bypass Branch"
-                },
-                {
-                    "branch_name": "Chilled Water Loop ChW Supply Outlet Branch"
+                    "branch_name": "Heat Pump 2 Main Branch"
                 }
             ]
         },
-        "Chilled Water Loop CndW Demand Side Branches": {
+        "Heat Pump 3 Branches": {
             "branches": [
                 {
-                    "branch_name": "Chilled Water Loop CndW Demand Inlet Branch"
-                },
-                {
-                    "branch_name": "Main Chiller CndW Branch"
-                },
-                {
-                    "branch_name": "Chilled Water Loop CndW Demand Bypass Branch"
-                },
-                {
-                    "branch_name": "Chilled Water Loop CndW Demand Outlet Branch"
+                    "branch_name": "Heat Pump 3 Main Branch"
                 }
             ]
         },
-        "Chilled Water Loop CndW Supply Side Branches": {
+        "Heat Pump 4 Branches": {
             "branches": [
                 {
-                    "branch_name": "Chilled Water Loop CndW Supply Inlet Branch"
-                },
-                {
-                    "branch_name": "Main Tower CndW Branch"
-                },
-                {
-                    "branch_name": "Chilled Water Loop CndW Supply Bypass Branch"
-                },
-                {
-                    "branch_name": "Chilled Water Loop CndW Supply Outlet Branch"
+                    "branch_name": "Heat Pump 4 Main Branch"
                 }
             ]
         },
-        "Hot Water Loop HW Demand Side Branches": {
+        "Heat Pump 5 Branches": {
             "branches": [
                 {
-                    "branch_name": "Hot Water Loop HW Demand Inlet Branch"
-                },
-                {
-                    "branch_name": "SPACE1-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "SPACE2-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "SPACE3-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "SPACE4-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "SPACE5-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "VAV Sys 1 Heating Coil HW Branch"
-                },
-                {
-                    "branch_name": "Hot Water Loop HW Demand Bypass Branch"
-                },
-                {
-                    "branch_name": "Hot Water Loop HW Demand Outlet Branch"
-                }
-            ]
-        },
-        "Hot Water Loop HW Supply Side Branches": {
-            "branches": [
-                {
-                    "branch_name": "Hot Water Loop HW Supply Inlet Branch"
-                },
-                {
-                    "branch_name": "Main Boiler HW Branch"
-                },
-                {
-                    "branch_name": "Hot Water Loop HW Supply Bypass Branch"
-                },
-                {
-                    "branch_name": "Hot Water Loop HW Supply Outlet Branch"
-                }
-            ]
-        },
-        "VAV Sys 1 Branches": {
-            "branches": [
-                {
-                    "branch_name": "VAV Sys 1 Main Branch"
+                    "branch_name": "Heat Pump 5 Main Branch"
                 }
             ]
         }
@@ -1988,382 +1946,260 @@
             "zone_name": "PLENUM-1"
         }
     },
-    "Chiller:Electric:EIR": {
-        "Main Chiller": {
-            "chilled_water_inlet_node_name": "Main Chiller ChW Inlet",
-            "chilled_water_outlet_node_name": "Main Chiller ChW Outlet",
-            "chiller_flow_mode": "ConstantFlow",
-            "condenser_inlet_node_name": "Main Chiller Cnd Inlet",
-            "condenser_outlet_node_name": "Main Chiller Cnd Outlet",
-            "condenser_type": "WaterCooled",
-            "cooling_capacity_function_of_temperature_curve_name": "Main Chiller RecipCapFT",
-            "design_heat_recovery_water_flow_rate": 0,
-            "electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name": "Main Chiller RecipEIRFPLR",
-            "electric_input_to_cooling_output_ratio_function_of_temperature_curve_name": "Main Chiller RecipEIRFT",
-            "fraction_of_compressor_electric_consumption_rejected_by_condenser": 1,
-            "leaving_chilled_water_lower_temperature_limit": 5.0,
-            "maximum_part_load_ratio": 1.0,
-            "minimum_part_load_ratio": 0.0,
-            "minimum_unloading_ratio": 0.25,
-            "optimum_part_load_ratio": 1.0,
-            "reference_capacity": "Autosize",
-            "reference_chilled_water_flow_rate": "Autosize",
-            "reference_condenser_fluid_flow_rate": "Autosize",
-            "reference_cop": 3.2,
-            "reference_entering_condenser_fluid_temperature": 29.4,
-            "reference_leaving_chilled_water_temperature": 6.67,
-            "sizing_factor": 1.0
+    "Coil:Cooling:DX:SingleSpeed": {
+        "Heat Pump 1 Cooling Coil": {
+            "air_inlet_node_name": "Heat Pump 1 Supply Fan Outlet",
+            "air_outlet_node_name": "Heat Pump 1 Cooling Coil Outlet",
+            "condenser_air_inlet_node_name": "Heat Pump 1 Cooling Coil Condenser Inlet",
+            "condenser_type": "AirCooled",
+            "crankcase_heater_capacity": 0,
+            "energy_input_ratio_function_of_flow_fraction_curve_name": "Heat Pump 1 Cool Coil EIR-FF",
+            "energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 1 Cool Coil EIR-FT",
+            "evaporative_condenser_effectiveness": 0,
+            "evaporative_condenser_pump_rated_power_consumption": 0,
+            "gross_rated_cooling_cop": 3,
+            "gross_rated_sensible_heat_ratio": "Autosize",
+            "gross_rated_total_cooling_capacity": "Autosize",
+            "latent_capacity_time_constant": 0,
+            "maximum_cycling_rate": 0,
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 10,
+            "nominal_time_for_condensate_removal_to_begin": 0,
+            "part_load_fraction_correlation_curve_name": "Heat Pump 1 Cool Coil PLF",
+            "rated_air_flow_rate": "Autosize",
+            "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
+            "total_cooling_capacity_function_of_flow_fraction_curve_name": "Heat Pump 1 Cool Coil Cap-FF",
+            "total_cooling_capacity_function_of_temperature_curve_name": "Heat Pump 1 Cool Coil Cap-FT"
+        },
+        "Heat Pump 2 Cooling Coil": {
+            "air_inlet_node_name": "Heat Pump 2 Supply Fan Outlet",
+            "air_outlet_node_name": "Heat Pump 2 Cooling Coil Outlet",
+            "condenser_air_inlet_node_name": "Heat Pump 2 Cooling Coil Condenser Inlet",
+            "condenser_type": "AirCooled",
+            "crankcase_heater_capacity": 0,
+            "energy_input_ratio_function_of_flow_fraction_curve_name": "Heat Pump 2 Cool Coil EIR-FF",
+            "energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 2 Cool Coil EIR-FT",
+            "evaporative_condenser_effectiveness": 0,
+            "evaporative_condenser_pump_rated_power_consumption": 0,
+            "gross_rated_cooling_cop": 3,
+            "gross_rated_sensible_heat_ratio": "Autosize",
+            "gross_rated_total_cooling_capacity": "Autosize",
+            "latent_capacity_time_constant": 0,
+            "maximum_cycling_rate": 0,
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 10,
+            "nominal_time_for_condensate_removal_to_begin": 0,
+            "part_load_fraction_correlation_curve_name": "Heat Pump 2 Cool Coil PLF",
+            "rated_air_flow_rate": "Autosize",
+            "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
+            "total_cooling_capacity_function_of_flow_fraction_curve_name": "Heat Pump 2 Cool Coil Cap-FF",
+            "total_cooling_capacity_function_of_temperature_curve_name": "Heat Pump 2 Cool Coil Cap-FT"
+        },
+        "Heat Pump 3 Cooling Coil": {
+            "air_inlet_node_name": "Heat Pump 3 Supply Fan Outlet",
+            "air_outlet_node_name": "Heat Pump 3 Cooling Coil Outlet",
+            "condenser_air_inlet_node_name": "Heat Pump 3 Cooling Coil Condenser Inlet",
+            "condenser_type": "AirCooled",
+            "crankcase_heater_capacity": 0,
+            "energy_input_ratio_function_of_flow_fraction_curve_name": "Heat Pump 3 Cool Coil EIR-FF",
+            "energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 3 Cool Coil EIR-FT",
+            "evaporative_condenser_effectiveness": 0,
+            "evaporative_condenser_pump_rated_power_consumption": 0,
+            "gross_rated_cooling_cop": 3,
+            "gross_rated_sensible_heat_ratio": "Autosize",
+            "gross_rated_total_cooling_capacity": "Autosize",
+            "latent_capacity_time_constant": 0,
+            "maximum_cycling_rate": 0,
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 10,
+            "nominal_time_for_condensate_removal_to_begin": 0,
+            "part_load_fraction_correlation_curve_name": "Heat Pump 3 Cool Coil PLF",
+            "rated_air_flow_rate": "Autosize",
+            "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
+            "total_cooling_capacity_function_of_flow_fraction_curve_name": "Heat Pump 3 Cool Coil Cap-FF",
+            "total_cooling_capacity_function_of_temperature_curve_name": "Heat Pump 3 Cool Coil Cap-FT"
+        },
+        "Heat Pump 4 Cooling Coil": {
+            "air_inlet_node_name": "Heat Pump 4 Supply Fan Outlet",
+            "air_outlet_node_name": "Heat Pump 4 Cooling Coil Outlet",
+            "condenser_air_inlet_node_name": "Heat Pump 4 Cooling Coil Condenser Inlet",
+            "condenser_type": "AirCooled",
+            "crankcase_heater_capacity": 0,
+            "energy_input_ratio_function_of_flow_fraction_curve_name": "Heat Pump 4 Cool Coil EIR-FF",
+            "energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 4 Cool Coil EIR-FT",
+            "evaporative_condenser_effectiveness": 0,
+            "evaporative_condenser_pump_rated_power_consumption": 0,
+            "gross_rated_cooling_cop": 3,
+            "gross_rated_sensible_heat_ratio": "Autosize",
+            "gross_rated_total_cooling_capacity": "Autosize",
+            "latent_capacity_time_constant": 0,
+            "maximum_cycling_rate": 0,
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 10,
+            "nominal_time_for_condensate_removal_to_begin": 0,
+            "part_load_fraction_correlation_curve_name": "Heat Pump 4 Cool Coil PLF",
+            "rated_air_flow_rate": "Autosize",
+            "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
+            "total_cooling_capacity_function_of_flow_fraction_curve_name": "Heat Pump 4 Cool Coil Cap-FF",
+            "total_cooling_capacity_function_of_temperature_curve_name": "Heat Pump 4 Cool Coil Cap-FT"
+        },
+        "Heat Pump 5 Cooling Coil": {
+            "air_inlet_node_name": "Heat Pump 5 Supply Fan Outlet",
+            "air_outlet_node_name": "Heat Pump 5 Cooling Coil Outlet",
+            "condenser_air_inlet_node_name": "Heat Pump 5 Cooling Coil Condenser Inlet",
+            "condenser_type": "AirCooled",
+            "crankcase_heater_capacity": 0,
+            "energy_input_ratio_function_of_flow_fraction_curve_name": "Heat Pump 5 Cool Coil EIR-FF",
+            "energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 5 Cool Coil EIR-FT",
+            "evaporative_condenser_effectiveness": 0,
+            "evaporative_condenser_pump_rated_power_consumption": 0,
+            "gross_rated_cooling_cop": 3,
+            "gross_rated_sensible_heat_ratio": "Autosize",
+            "gross_rated_total_cooling_capacity": "Autosize",
+            "latent_capacity_time_constant": 0,
+            "maximum_cycling_rate": 0,
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 10,
+            "nominal_time_for_condensate_removal_to_begin": 0,
+            "part_load_fraction_correlation_curve_name": "Heat Pump 5 Cool Coil PLF",
+            "rated_air_flow_rate": "Autosize",
+            "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
+            "total_cooling_capacity_function_of_flow_fraction_curve_name": "Heat Pump 5 Cool Coil Cap-FF",
+            "total_cooling_capacity_function_of_temperature_curve_name": "Heat Pump 5 Cool Coil Cap-FT"
         }
     },
-    "Coil:Cooling:Water": {
-        "VAV Sys 1 Cooling Coil": {
-            "air_inlet_node_name": "VAV Sys 1 Mixed Air Outlet",
-            "air_outlet_node_name": "VAV Sys 1 Cooling Coil Outlet",
-            "design_air_flow_rate": "Autosize",
-            "design_inlet_air_humidity_ratio": "Autosize",
-            "design_inlet_air_temperature": "Autosize",
-            "design_inlet_water_temperature": "Autosize",
-            "design_outlet_air_humidity_ratio": "Autosize",
-            "design_outlet_air_temperature": "Autosize",
-            "design_water_flow_rate": "Autosize",
-            "heat_exchanger_configuration": "CrossFlow",
-            "type_of_analysis": "DetailedAnalysis",
-            "water_inlet_node_name": "VAV Sys 1 Cooling Coil ChW Inlet",
-            "water_outlet_node_name": "VAV Sys 1 Cooling Coil ChW Outlet"
+    "Coil:Heating:DX:SingleSpeed": {
+        "Heat Pump 1 HP Heating Coil": {
+            "air_inlet_node_name": "Heat Pump 1 Cooling Coil Outlet",
+            "air_outlet_node_name": "Heat Pump 1 Heating Coil Outlet",
+            "crankcase_heater_capacity": 0,
+            "defrost_control": "Timed",
+            "defrost_energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 1 HP Heating Coil DefrEIR-FT",
+            "defrost_strategy": "ReverseCycle",
+            "defrost_time_period_fraction": 0.058333,
+            "energy_input_ratio_function_of_flow_fraction_curve_name": "Heat Pump 1 HP Heating Coil EIR-FF",
+            "energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 1 HP Heating Coil EIR-FT",
+            "gross_rated_heating_capacity": "Autosize",
+            "gross_rated_heating_cop": 2.75,
+            "heating_capacity_function_of_flow_fraction_curve_name": "Heat Pump 1 HP Heating Coil Cap-FF",
+            "heating_capacity_function_of_temperature_curve_name": "Heat Pump 1 HP Heating Coil Cap-FT",
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 0,
+            "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
+            "minimum_outdoor_dry_bulb_temperature_for_compressor_operation": -8,
+            "part_load_fraction_correlation_curve_name": "Heat Pump 1 HP Heating Coil PLF",
+            "rated_air_flow_rate": "Autosize",
+            "resistive_defrost_heater_capacity": "Autosize"
+        },
+        "Heat Pump 2 HP Heating Coil": {
+            "air_inlet_node_name": "Heat Pump 2 Cooling Coil Outlet",
+            "air_outlet_node_name": "Heat Pump 2 Heating Coil Outlet",
+            "crankcase_heater_capacity": 0,
+            "defrost_control": "Timed",
+            "defrost_energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 2 HP Heating Coil DefrEIR-FT",
+            "defrost_strategy": "ReverseCycle",
+            "defrost_time_period_fraction": 0.058333,
+            "energy_input_ratio_function_of_flow_fraction_curve_name": "Heat Pump 2 HP Heating Coil EIR-FF",
+            "energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 2 HP Heating Coil EIR-FT",
+            "gross_rated_heating_capacity": "Autosize",
+            "gross_rated_heating_cop": 2.75,
+            "heating_capacity_function_of_flow_fraction_curve_name": "Heat Pump 2 HP Heating Coil Cap-FF",
+            "heating_capacity_function_of_temperature_curve_name": "Heat Pump 2 HP Heating Coil Cap-FT",
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 0,
+            "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
+            "minimum_outdoor_dry_bulb_temperature_for_compressor_operation": -8,
+            "part_load_fraction_correlation_curve_name": "Heat Pump 2 HP Heating Coil PLF",
+            "rated_air_flow_rate": "Autosize",
+            "resistive_defrost_heater_capacity": "Autosize"
+        },
+        "Heat Pump 3 HP Heating Coil": {
+            "air_inlet_node_name": "Heat Pump 3 Cooling Coil Outlet",
+            "air_outlet_node_name": "Heat Pump 3 Heating Coil Outlet",
+            "crankcase_heater_capacity": 0,
+            "defrost_control": "Timed",
+            "defrost_energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 3 HP Heating Coil DefrEIR-FT",
+            "defrost_strategy": "ReverseCycle",
+            "defrost_time_period_fraction": 0.058333,
+            "energy_input_ratio_function_of_flow_fraction_curve_name": "Heat Pump 3 HP Heating Coil EIR-FF",
+            "energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 3 HP Heating Coil EIR-FT",
+            "gross_rated_heating_capacity": "Autosize",
+            "gross_rated_heating_cop": 2.75,
+            "heating_capacity_function_of_flow_fraction_curve_name": "Heat Pump 3 HP Heating Coil Cap-FF",
+            "heating_capacity_function_of_temperature_curve_name": "Heat Pump 3 HP Heating Coil Cap-FT",
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 0,
+            "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
+            "minimum_outdoor_dry_bulb_temperature_for_compressor_operation": -8,
+            "part_load_fraction_correlation_curve_name": "Heat Pump 3 HP Heating Coil PLF",
+            "rated_air_flow_rate": "Autosize",
+            "resistive_defrost_heater_capacity": "Autosize"
+        },
+        "Heat Pump 4 HP Heating Coil": {
+            "air_inlet_node_name": "Heat Pump 4 Cooling Coil Outlet",
+            "air_outlet_node_name": "Heat Pump 4 Heating Coil Outlet",
+            "crankcase_heater_capacity": 0,
+            "defrost_control": "Timed",
+            "defrost_energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 4 HP Heating Coil DefrEIR-FT",
+            "defrost_strategy": "ReverseCycle",
+            "defrost_time_period_fraction": 0.058333,
+            "energy_input_ratio_function_of_flow_fraction_curve_name": "Heat Pump 4 HP Heating Coil EIR-FF",
+            "energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 4 HP Heating Coil EIR-FT",
+            "gross_rated_heating_capacity": "Autosize",
+            "gross_rated_heating_cop": 2.75,
+            "heating_capacity_function_of_flow_fraction_curve_name": "Heat Pump 4 HP Heating Coil Cap-FF",
+            "heating_capacity_function_of_temperature_curve_name": "Heat Pump 4 HP Heating Coil Cap-FT",
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 0,
+            "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
+            "minimum_outdoor_dry_bulb_temperature_for_compressor_operation": -8,
+            "part_load_fraction_correlation_curve_name": "Heat Pump 4 HP Heating Coil PLF",
+            "rated_air_flow_rate": "Autosize",
+            "resistive_defrost_heater_capacity": "Autosize"
+        },
+        "Heat Pump 5 HP Heating Coil": {
+            "air_inlet_node_name": "Heat Pump 5 Cooling Coil Outlet",
+            "air_outlet_node_name": "Heat Pump 5 Heating Coil Outlet",
+            "crankcase_heater_capacity": 0,
+            "defrost_control": "Timed",
+            "defrost_energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 5 HP Heating Coil DefrEIR-FT",
+            "defrost_strategy": "ReverseCycle",
+            "defrost_time_period_fraction": 0.058333,
+            "energy_input_ratio_function_of_flow_fraction_curve_name": "Heat Pump 5 HP Heating Coil EIR-FF",
+            "energy_input_ratio_function_of_temperature_curve_name": "Heat Pump 5 HP Heating Coil EIR-FT",
+            "gross_rated_heating_capacity": "Autosize",
+            "gross_rated_heating_cop": 2.75,
+            "heating_capacity_function_of_flow_fraction_curve_name": "Heat Pump 5 HP Heating Coil Cap-FF",
+            "heating_capacity_function_of_temperature_curve_name": "Heat Pump 5 HP Heating Coil Cap-FT",
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 0,
+            "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
+            "minimum_outdoor_dry_bulb_temperature_for_compressor_operation": -8,
+            "part_load_fraction_correlation_curve_name": "Heat Pump 5 HP Heating Coil PLF",
+            "rated_air_flow_rate": "Autosize",
+            "resistive_defrost_heater_capacity": "Autosize"
         }
     },
-    "Coil:Heating:Water": {
-        "SPACE1-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE1-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE1-1 Supply Inlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE1-1 Reheat Coil HW Inlet",
-            "water_outlet_node_name": "SPACE1-1 Reheat Coil HW Outlet"
+    "Coil:Heating:Electric": {
+        "Heat Pump 1 Sup Heat Coil": {
+            "air_inlet_node_name": "Heat Pump 1 Heating Coil Outlet",
+            "air_outlet_node_name": "Heat Pump 1 Air Loop Outlet",
+            "efficiency": 1,
+            "nominal_capacity": "Autosize"
         },
-        "SPACE2-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE2-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE2-1 Reheat Coil HW Inlet",
-            "water_outlet_node_name": "SPACE2-1 Reheat Coil HW Outlet"
+        "Heat Pump 2 Sup Heat Coil": {
+            "air_inlet_node_name": "Heat Pump 2 Heating Coil Outlet",
+            "air_outlet_node_name": "Heat Pump 2 Air Loop Outlet",
+            "efficiency": 1,
+            "nominal_capacity": "Autosize"
         },
-        "SPACE3-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE3-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE3-1 Reheat Coil HW Inlet",
-            "water_outlet_node_name": "SPACE3-1 Reheat Coil HW Outlet"
+        "Heat Pump 3 Sup Heat Coil": {
+            "air_inlet_node_name": "Heat Pump 3 Heating Coil Outlet",
+            "air_outlet_node_name": "Heat Pump 3 Air Loop Outlet",
+            "efficiency": 1,
+            "nominal_capacity": "Autosize"
         },
-        "SPACE4-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE4-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE4-1 Reheat Coil HW Inlet",
-            "water_outlet_node_name": "SPACE4-1 Reheat Coil HW Outlet"
+        "Heat Pump 4 Sup Heat Coil": {
+            "air_inlet_node_name": "Heat Pump 4 Heating Coil Outlet",
+            "air_outlet_node_name": "Heat Pump 4 Air Loop Outlet",
+            "efficiency": 1,
+            "nominal_capacity": "Autosize"
         },
-        "SPACE5-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE5-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE5-1 Supply Inlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE5-1 Reheat Coil HW Inlet",
-            "water_outlet_node_name": "SPACE5-1 Reheat Coil HW Outlet"
-        },
-        "VAV Sys 1 Heating Coil": {
-            "air_inlet_node_name": "VAV Sys 1 Cooling Coil Outlet",
-            "air_outlet_node_name": "VAV Sys 1 Heating Coil Outlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "VAV Sys 1 Heating Coil HW Inlet",
-            "water_outlet_node_name": "VAV Sys 1 Heating Coil HW Outlet"
-        }
-    },
-    "CondenserEquipmentList": {
-        "Chilled Water Loop All Condensers": {
-            "equipment": [
-                {
-                    "equipment_name": "Main Tower",
-                    "equipment_object_type": "CoolingTower:SingleSpeed"
-                }
-            ]
-        }
-    },
-    "CondenserEquipmentOperationSchemes": {
-        "Chilled Water Loop Condenser Operation": {
-            "control_scheme_1_name": "Chilled Water Loop Condenser Operation All Hours",
-            "control_scheme_1_object_type": "PlantEquipmentOperation:CoolingLoad",
-            "control_scheme_1_schedule_name": "HVACTemplate-Always 1"
-        }
-    },
-    "CondenserLoop": {
-        "Chilled Water Loop Condenser Water Loop": {
-            "condenser_demand_side_branch_list_name": "Chilled Water Loop CndW Demand Side Branches",
-            "condenser_demand_side_connector_list_name": "Chilled Water Loop CndW Demand Side Connectors",
-            "condenser_equipment_operation_scheme_name": "Chilled Water Loop Condenser Operation",
-            "condenser_loop_temperature_setpoint_node_name": "Chilled Water Loop CndW Supply Outlet",
-            "condenser_loop_volume": "Autocalculate",
-            "condenser_side_branch_list_name": "Chilled Water Loop CndW Supply Side Branches",
-            "condenser_side_connector_list_name": "Chilled Water Loop CndW Supply Side Connectors",
-            "condenser_side_inlet_node_name": "Chilled Water Loop CndW Supply Inlet",
-            "condenser_side_outlet_node_name": "Chilled Water Loop CndW Supply Outlet",
-            "demand_side_inlet_node_name": "Chilled Water Loop CndW Demand Inlet",
-            "demand_side_outlet_node_name": "Chilled Water Loop CndW Demand Outlet",
-            "fluid_type": "Water",
-            "load_distribution_scheme": "SequentialLoad",
-            "maximum_loop_flow_rate": "Autosize",
-            "maximum_loop_temperature": 80,
-            "minimum_loop_flow_rate": 0,
-            "minimum_loop_temperature": 5
-        }
-    },
-    "Connector:Mixer": {
-        "Chilled Water Loop ChW Demand Mixer": {
-            "branches": [
-                {
-                    "inlet_branch_name": "Chilled Water Loop ChW Demand Bypass Branch"
-                },
-                {
-                    "inlet_branch_name": "VAV Sys 1 Cooling Coil ChW Branch"
-                }
-            ],
-            "outlet_branch_name": "Chilled Water Loop ChW Demand Outlet Branch"
-        },
-        "Chilled Water Loop ChW Supply Mixer": {
-            "branches": [
-                {
-                    "inlet_branch_name": "Chilled Water Loop ChW Supply Bypass Branch"
-                },
-                {
-                    "inlet_branch_name": "Main Chiller ChW Branch"
-                }
-            ],
-            "outlet_branch_name": "Chilled Water Loop ChW Supply Outlet Branch"
-        },
-        "Chilled Water Loop CndW Demand Mixer": {
-            "branches": [
-                {
-                    "inlet_branch_name": "Chilled Water Loop CndW Demand Bypass Branch"
-                },
-                {
-                    "inlet_branch_name": "Main Chiller CndW Branch"
-                }
-            ],
-            "outlet_branch_name": "Chilled Water Loop CndW Demand Outlet Branch"
-        },
-        "Chilled Water Loop CndW Supply Mixer": {
-            "branches": [
-                {
-                    "inlet_branch_name": "Chilled Water Loop CndW Supply Bypass Branch"
-                },
-                {
-                    "inlet_branch_name": "Main Tower CndW Branch"
-                }
-            ],
-            "outlet_branch_name": "Chilled Water Loop CndW Supply Outlet Branch"
-        },
-        "Hot Water Loop HW Demand Mixer": {
-            "branches": [
-                {
-                    "inlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE1-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE2-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE3-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE4-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE5-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "VAV Sys 1 Heating Coil HW Branch"
-                }
-            ],
-            "outlet_branch_name": "Hot Water Loop HW Demand Outlet Branch"
-        },
-        "Hot Water Loop HW Supply Mixer": {
-            "branches": [
-                {
-                    "inlet_branch_name": "Main Boiler HW Branch"
-                },
-                {
-                    "inlet_branch_name": "Hot Water Loop HW Supply Bypass Branch"
-                }
-            ],
-            "outlet_branch_name": "Hot Water Loop HW Supply Outlet Branch"
-        }
-    },
-    "Connector:Splitter": {
-        "Chilled Water Loop ChW Demand Splitter": {
-            "branches": [
-                {
-                    "outlet_branch_name": "Chilled Water Loop ChW Demand Bypass Branch"
-                },
-                {
-                    "outlet_branch_name": "VAV Sys 1 Cooling Coil ChW Branch"
-                }
-            ],
-            "inlet_branch_name": "Chilled Water Loop ChW Demand Inlet Branch"
-        },
-        "Chilled Water Loop ChW Supply Splitter": {
-            "branches": [
-                {
-                    "outlet_branch_name": "Chilled Water Loop ChW Supply Bypass Branch"
-                },
-                {
-                    "outlet_branch_name": "Main Chiller ChW Branch"
-                }
-            ],
-            "inlet_branch_name": "Chilled Water Loop ChW Supply Inlet Branch"
-        },
-        "Chilled Water Loop CndW Demand Splitter": {
-            "branches": [
-                {
-                    "outlet_branch_name": "Chilled Water Loop CndW Demand Bypass Branch"
-                },
-                {
-                    "outlet_branch_name": "Main Chiller CndW Branch"
-                }
-            ],
-            "inlet_branch_name": "Chilled Water Loop CndW Demand Inlet Branch"
-        },
-        "Chilled Water Loop CndW Supply Splitter": {
-            "branches": [
-                {
-                    "outlet_branch_name": "Chilled Water Loop CndW Supply Bypass Branch"
-                },
-                {
-                    "outlet_branch_name": "Main Tower CndW Branch"
-                }
-            ],
-            "inlet_branch_name": "Chilled Water Loop CndW Supply Inlet Branch"
-        },
-        "Hot Water Loop HW Demand Splitter": {
-            "branches": [
-                {
-                    "outlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE1-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE2-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE3-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE4-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE5-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "VAV Sys 1 Heating Coil HW Branch"
-                }
-            ],
-            "inlet_branch_name": "Hot Water Loop HW Demand Inlet Branch"
-        },
-        "Hot Water Loop HW Supply Splitter": {
-            "branches": [
-                {
-                    "outlet_branch_name": "Main Boiler HW Branch"
-                },
-                {
-                    "outlet_branch_name": "Hot Water Loop HW Supply Bypass Branch"
-                }
-            ],
-            "inlet_branch_name": "Hot Water Loop HW Supply Inlet Branch"
-        }
-    },
-    "ConnectorList": {
-        "Chilled Water Loop ChW Demand Side Connectors": {
-            "connector_1_name": "Chilled Water Loop ChW Demand Splitter",
-            "connector_1_object_type": "Connector:Splitter",
-            "connector_2_name": "Chilled Water Loop ChW Demand Mixer",
-            "connector_2_object_type": "Connector:Mixer"
-        },
-        "Chilled Water Loop ChW Supply Side Connectors": {
-            "connector_1_name": "Chilled Water Loop ChW Supply Splitter",
-            "connector_1_object_type": "Connector:Splitter",
-            "connector_2_name": "Chilled Water Loop ChW Supply Mixer",
-            "connector_2_object_type": "Connector:Mixer"
-        },
-        "Chilled Water Loop CndW Demand Side Connectors": {
-            "connector_1_name": "Chilled Water Loop CndW Demand Splitter",
-            "connector_1_object_type": "Connector:Splitter",
-            "connector_2_name": "Chilled Water Loop CndW Demand Mixer",
-            "connector_2_object_type": "Connector:Mixer"
-        },
-        "Chilled Water Loop CndW Supply Side Connectors": {
-            "connector_1_name": "Chilled Water Loop CndW Supply Splitter",
-            "connector_1_object_type": "Connector:Splitter",
-            "connector_2_name": "Chilled Water Loop CndW Supply Mixer",
-            "connector_2_object_type": "Connector:Mixer"
-        },
-        "Hot Water Loop HW Demand Side Connectors": {
-            "connector_1_name": "Hot Water Loop HW Demand Splitter",
-            "connector_1_object_type": "Connector:Splitter",
-            "connector_2_name": "Hot Water Loop HW Demand Mixer",
-            "connector_2_object_type": "Connector:Mixer"
-        },
-        "Hot Water Loop HW Supply Side Connectors": {
-            "connector_1_name": "Hot Water Loop HW Supply Splitter",
-            "connector_1_object_type": "Connector:Splitter",
-            "connector_2_name": "Hot Water Loop HW Supply Mixer",
-            "connector_2_object_type": "Connector:Mixer"
+        "Heat Pump 5 Sup Heat Coil": {
+            "air_inlet_node_name": "Heat Pump 5 Heating Coil Outlet",
+            "air_outlet_node_name": "Heat Pump 5 Air Loop Outlet",
+            "efficiency": 1,
+            "nominal_capacity": "Autosize"
         }
     },
     "Construction": {
@@ -2400,113 +2236,556 @@
         }
     },
     "Controller:OutdoorAir": {
-        "VAV Sys 1 OA Controller": {
-            "actuator_node_name": "VAV Sys 1 Outside Air Inlet",
+        "Heat Pump 1 OA Controller": {
+            "actuator_node_name": "Heat Pump 1 Outside Air Inlet",
             "economizer_control_action_type": "ModulateFlow",
             "economizer_control_type": "DifferentialDryBulb",
             "economizer_maximum_limit_dry_bulb_temperature": 19,
-            "economizer_minimum_limit_dry_bulb_temperature": 4,
             "lockout_type": "NoLockout",
             "maximum_outdoor_air_flow_rate": "Autosize",
             "minimum_limit_type": "FixedMinimum",
             "minimum_outdoor_air_flow_rate": "Autosize",
             "minimum_outdoor_air_schedule_name": "Min OA Sched",
-            "mixed_air_node_name": "VAV Sys 1 Mixed Air Outlet",
-            "relief_air_outlet_node_name": "VAV Sys 1 Relief Air Outlet",
-            "return_air_node_name": "VAV Sys 1 Air Loop Inlet"
-        }
-    },
-    "Controller:WaterCoil": {
-        "VAV Sys 1 Cooling Coil Controller": {
-            "action": "Reverse",
-            "actuator_node_name": "VAV Sys 1 Cooling Coil ChW Inlet",
-            "actuator_variable": "Flow",
-            "control_variable": "Temperature",
-            "controller_convergence_tolerance": "Autosize",
-            "maximum_actuated_flow": "Autosize",
-            "minimum_actuated_flow": 0,
-            "sensor_node_name": "VAV Sys 1 Cooling Coil Outlet"
+            "mixed_air_node_name": "Heat Pump 1 Mixed Air Outlet",
+            "relief_air_outlet_node_name": "Heat Pump 1 Relief Air Outlet",
+            "return_air_node_name": "Heat Pump 1 Air Loop Inlet"
         },
-        "VAV Sys 1 Heating Coil Controller": {
-            "action": "Normal",
-            "actuator_node_name": "VAV Sys 1 Heating Coil HW Inlet",
-            "actuator_variable": "Flow",
-            "control_variable": "Temperature",
-            "controller_convergence_tolerance": "Autosize",
-            "maximum_actuated_flow": "Autosize",
-            "minimum_actuated_flow": 0,
-            "sensor_node_name": "VAV Sys 1 Heating Coil Outlet"
-        }
-    },
-    "ConvergenceLimits": {
-        "ConvergenceLimits 1": {
-            "maximum_hvac_iterations": 20,
-            "maximum_plant_iterations": 10,
-            "minimum_plant_iterations": 4,
-            "minimum_system_timestep": 1
-        }
-    },
-    "CoolingTower:SingleSpeed": {
-        "Main Tower": {
-            "blowdown_calculation_mode": "ConcentrationRatio",
-            "blowdown_concentration_ratio": 3,
-            "capacity_control": "FanCycling",
-            "design_air_flow_rate": "Autosize",
-            "design_fan_power": "Autosize",
-            "design_u_factor_times_area_value": "Autosize",
-            "design_water_flow_rate": "Autosize",
-            "drift_loss_percent": 0.008,
-            "evaporation_loss_mode": "SaturatedExit",
-            "free_convection_capacity": "Autocalculate",
-            "free_convection_regime_air_flow_rate": "Autocalculate",
-            "free_convection_regime_u_factor_times_area_value": "Autocalculate",
-            "outdoor_air_inlet_node_name": "Main Tower Cooling Tower Outdoor Air Inlet Node",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "sizing_factor": 1.0,
-            "water_inlet_node_name": "Main Tower CndW Inlet",
-            "water_outlet_node_name": "Main Tower CndW Outlet"
+        "Heat Pump 2 OA Controller": {
+            "actuator_node_name": "Heat Pump 2 Outside Air Inlet",
+            "economizer_control_action_type": "ModulateFlow",
+            "economizer_control_type": "DifferentialDryBulb",
+            "economizer_maximum_limit_dry_bulb_temperature": 19,
+            "lockout_type": "NoLockout",
+            "maximum_outdoor_air_flow_rate": "Autosize",
+            "minimum_limit_type": "FixedMinimum",
+            "minimum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_schedule_name": "Min OA Sched",
+            "mixed_air_node_name": "Heat Pump 2 Mixed Air Outlet",
+            "relief_air_outlet_node_name": "Heat Pump 2 Relief Air Outlet",
+            "return_air_node_name": "Heat Pump 2 Air Loop Inlet"
+        },
+        "Heat Pump 3 OA Controller": {
+            "actuator_node_name": "Heat Pump 3 Outside Air Inlet",
+            "economizer_control_action_type": "ModulateFlow",
+            "economizer_control_type": "DifferentialDryBulb",
+            "economizer_maximum_limit_dry_bulb_temperature": 19,
+            "lockout_type": "NoLockout",
+            "maximum_outdoor_air_flow_rate": "Autosize",
+            "minimum_limit_type": "FixedMinimum",
+            "minimum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_schedule_name": "Min OA Sched",
+            "mixed_air_node_name": "Heat Pump 3 Mixed Air Outlet",
+            "relief_air_outlet_node_name": "Heat Pump 3 Relief Air Outlet",
+            "return_air_node_name": "Heat Pump 3 Air Loop Inlet"
+        },
+        "Heat Pump 4 OA Controller": {
+            "actuator_node_name": "Heat Pump 4 Outside Air Inlet",
+            "economizer_control_action_type": "ModulateFlow",
+            "economizer_control_type": "DifferentialDryBulb",
+            "economizer_maximum_limit_dry_bulb_temperature": 19,
+            "lockout_type": "NoLockout",
+            "maximum_outdoor_air_flow_rate": "Autosize",
+            "minimum_limit_type": "FixedMinimum",
+            "minimum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_schedule_name": "Min OA Sched",
+            "mixed_air_node_name": "Heat Pump 4 Mixed Air Outlet",
+            "relief_air_outlet_node_name": "Heat Pump 4 Relief Air Outlet",
+            "return_air_node_name": "Heat Pump 4 Air Loop Inlet"
+        },
+        "Heat Pump 5 OA Controller": {
+            "actuator_node_name": "Heat Pump 5 Outside Air Inlet",
+            "economizer_control_action_type": "ModulateFlow",
+            "economizer_control_type": "DifferentialDryBulb",
+            "economizer_maximum_limit_dry_bulb_temperature": 19,
+            "lockout_type": "NoLockout",
+            "maximum_outdoor_air_flow_rate": "Autosize",
+            "minimum_limit_type": "FixedMinimum",
+            "minimum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_schedule_name": "Min OA Sched",
+            "mixed_air_node_name": "Heat Pump 5 Mixed Air Outlet",
+            "relief_air_outlet_node_name": "Heat Pump 5 Relief Air Outlet",
+            "return_air_node_name": "Heat Pump 5 Air Loop Inlet"
         }
     },
     "Curve:Biquadratic": {
-        "Main Chiller RecipCapFT": {
-            "coefficient1_constant": 0.507883,
-            "coefficient2_x": 0.145228,
-            "coefficient3_x_2": -0.00625644,
-            "coefficient4_y": -0.0011178,
-            "coefficient5_y_2": -0.0001296,
-            "coefficient6_x_y": -0.00028188,
-            "maximum_value_of_x": 10,
-            "maximum_value_of_y": 35,
-            "minimum_value_of_x": 5,
-            "minimum_value_of_y": 24
+        "Heat Pump 1 Cool Coil Cap-FT": {
+            "coefficient1_constant": 0.942587793,
+            "coefficient2_x": 0.009543347,
+            "coefficient3_x_2": 0.00068377,
+            "coefficient4_y": -0.011042676,
+            "coefficient5_y_2": 5.249e-06,
+            "coefficient6_x_y": -9.72e-06,
+            "maximum_value_of_x": 23.88889,
+            "maximum_value_of_y": 46.11111,
+            "minimum_value_of_x": 12.77778,
+            "minimum_value_of_y": 18.0
         },
-        "Main Chiller RecipEIRFT": {
-            "coefficient1_constant": 1.03076,
-            "coefficient2_x": -0.103536,
-            "coefficient3_x_2": 0.00710208,
-            "coefficient4_y": 0.0093186,
-            "coefficient5_y_2": 0.00031752,
-            "coefficient6_x_y": -0.00104328,
-            "maximum_value_of_x": 10,
-            "maximum_value_of_y": 35,
-            "minimum_value_of_x": 5,
-            "minimum_value_of_y": 24
+        "Heat Pump 1 Cool Coil EIR-FT": {
+            "coefficient1_constant": 0.342414409,
+            "coefficient2_x": 0.034885008,
+            "coefficient3_x_2": -0.0006237,
+            "coefficient4_y": 0.004977216,
+            "coefficient5_y_2": 0.000437951,
+            "coefficient6_x_y": -0.000728028,
+            "maximum_value_of_x": 23.88889,
+            "maximum_value_of_y": 46.11111,
+            "minimum_value_of_x": 12.77778,
+            "minimum_value_of_y": 18.0
+        },
+        "Heat Pump 1 HP Heating Coil DefrEIR-FT": {
+            "coefficient1_constant": 1,
+            "coefficient2_x": 0,
+            "coefficient3_x_2": 0,
+            "coefficient4_y": 0,
+            "coefficient5_y_2": 0,
+            "coefficient6_x_y": 0,
+            "maximum_value_of_x": 50,
+            "maximum_value_of_y": 50,
+            "minimum_value_of_x": 0,
+            "minimum_value_of_y": 0
+        },
+        "Heat Pump 2 Cool Coil Cap-FT": {
+            "coefficient1_constant": 0.942587793,
+            "coefficient2_x": 0.009543347,
+            "coefficient3_x_2": 0.00068377,
+            "coefficient4_y": -0.011042676,
+            "coefficient5_y_2": 5.249e-06,
+            "coefficient6_x_y": -9.72e-06,
+            "maximum_value_of_x": 23.88889,
+            "maximum_value_of_y": 46.11111,
+            "minimum_value_of_x": 12.77778,
+            "minimum_value_of_y": 18.0
+        },
+        "Heat Pump 2 Cool Coil EIR-FT": {
+            "coefficient1_constant": 0.342414409,
+            "coefficient2_x": 0.034885008,
+            "coefficient3_x_2": -0.0006237,
+            "coefficient4_y": 0.004977216,
+            "coefficient5_y_2": 0.000437951,
+            "coefficient6_x_y": -0.000728028,
+            "maximum_value_of_x": 23.88889,
+            "maximum_value_of_y": 46.11111,
+            "minimum_value_of_x": 12.77778,
+            "minimum_value_of_y": 18.0
+        },
+        "Heat Pump 2 HP Heating Coil DefrEIR-FT": {
+            "coefficient1_constant": 1,
+            "coefficient2_x": 0,
+            "coefficient3_x_2": 0,
+            "coefficient4_y": 0,
+            "coefficient5_y_2": 0,
+            "coefficient6_x_y": 0,
+            "maximum_value_of_x": 50,
+            "maximum_value_of_y": 50,
+            "minimum_value_of_x": 0,
+            "minimum_value_of_y": 0
+        },
+        "Heat Pump 3 Cool Coil Cap-FT": {
+            "coefficient1_constant": 0.942587793,
+            "coefficient2_x": 0.009543347,
+            "coefficient3_x_2": 0.00068377,
+            "coefficient4_y": -0.011042676,
+            "coefficient5_y_2": 5.249e-06,
+            "coefficient6_x_y": -9.72e-06,
+            "maximum_value_of_x": 23.88889,
+            "maximum_value_of_y": 46.11111,
+            "minimum_value_of_x": 12.77778,
+            "minimum_value_of_y": 18.0
+        },
+        "Heat Pump 3 Cool Coil EIR-FT": {
+            "coefficient1_constant": 0.342414409,
+            "coefficient2_x": 0.034885008,
+            "coefficient3_x_2": -0.0006237,
+            "coefficient4_y": 0.004977216,
+            "coefficient5_y_2": 0.000437951,
+            "coefficient6_x_y": -0.000728028,
+            "maximum_value_of_x": 23.88889,
+            "maximum_value_of_y": 46.11111,
+            "minimum_value_of_x": 12.77778,
+            "minimum_value_of_y": 18.0
+        },
+        "Heat Pump 3 HP Heating Coil DefrEIR-FT": {
+            "coefficient1_constant": 1,
+            "coefficient2_x": 0,
+            "coefficient3_x_2": 0,
+            "coefficient4_y": 0,
+            "coefficient5_y_2": 0,
+            "coefficient6_x_y": 0,
+            "maximum_value_of_x": 50,
+            "maximum_value_of_y": 50,
+            "minimum_value_of_x": 0,
+            "minimum_value_of_y": 0
+        },
+        "Heat Pump 4 Cool Coil Cap-FT": {
+            "coefficient1_constant": 0.942587793,
+            "coefficient2_x": 0.009543347,
+            "coefficient3_x_2": 0.00068377,
+            "coefficient4_y": -0.011042676,
+            "coefficient5_y_2": 5.249e-06,
+            "coefficient6_x_y": -9.72e-06,
+            "maximum_value_of_x": 23.88889,
+            "maximum_value_of_y": 46.11111,
+            "minimum_value_of_x": 12.77778,
+            "minimum_value_of_y": 18.0
+        },
+        "Heat Pump 4 Cool Coil EIR-FT": {
+            "coefficient1_constant": 0.342414409,
+            "coefficient2_x": 0.034885008,
+            "coefficient3_x_2": -0.0006237,
+            "coefficient4_y": 0.004977216,
+            "coefficient5_y_2": 0.000437951,
+            "coefficient6_x_y": -0.000728028,
+            "maximum_value_of_x": 23.88889,
+            "maximum_value_of_y": 46.11111,
+            "minimum_value_of_x": 12.77778,
+            "minimum_value_of_y": 18.0
+        },
+        "Heat Pump 4 HP Heating Coil DefrEIR-FT": {
+            "coefficient1_constant": 1,
+            "coefficient2_x": 0,
+            "coefficient3_x_2": 0,
+            "coefficient4_y": 0,
+            "coefficient5_y_2": 0,
+            "coefficient6_x_y": 0,
+            "maximum_value_of_x": 50,
+            "maximum_value_of_y": 50,
+            "minimum_value_of_x": 0,
+            "minimum_value_of_y": 0
+        },
+        "Heat Pump 5 Cool Coil Cap-FT": {
+            "coefficient1_constant": 0.942587793,
+            "coefficient2_x": 0.009543347,
+            "coefficient3_x_2": 0.00068377,
+            "coefficient4_y": -0.011042676,
+            "coefficient5_y_2": 5.249e-06,
+            "coefficient6_x_y": -9.72e-06,
+            "maximum_value_of_x": 23.88889,
+            "maximum_value_of_y": 46.11111,
+            "minimum_value_of_x": 12.77778,
+            "minimum_value_of_y": 18.0
+        },
+        "Heat Pump 5 Cool Coil EIR-FT": {
+            "coefficient1_constant": 0.342414409,
+            "coefficient2_x": 0.034885008,
+            "coefficient3_x_2": -0.0006237,
+            "coefficient4_y": 0.004977216,
+            "coefficient5_y_2": 0.000437951,
+            "coefficient6_x_y": -0.000728028,
+            "maximum_value_of_x": 23.88889,
+            "maximum_value_of_y": 46.11111,
+            "minimum_value_of_x": 12.77778,
+            "minimum_value_of_y": 18.0
+        },
+        "Heat Pump 5 HP Heating Coil DefrEIR-FT": {
+            "coefficient1_constant": 1,
+            "coefficient2_x": 0,
+            "coefficient3_x_2": 0,
+            "coefficient4_y": 0,
+            "coefficient5_y_2": 0,
+            "coefficient6_x_y": 0,
+            "maximum_value_of_x": 50,
+            "maximum_value_of_y": 50,
+            "minimum_value_of_x": 0,
+            "minimum_value_of_y": 0
+        }
+    },
+    "Curve:Cubic": {
+        "Heat Pump 1 HP Heating Coil Cap-FF": {
+            "coefficient1_constant": 0.84,
+            "coefficient2_x": 0.16,
+            "coefficient3_x_2": 0.0,
+            "coefficient4_x_3": 0.0,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 1 HP Heating Coil Cap-FT": {
+            "coefficient1_constant": 0.758746,
+            "coefficient2_x": 0.027626,
+            "coefficient3_x_2": 0.000148716,
+            "coefficient4_x_3": 3.4992e-06,
+            "maximum_value_of_x": 20.0,
+            "minimum_value_of_x": -20.0
+        },
+        "Heat Pump 1 HP Heating Coil EIR-FT": {
+            "coefficient1_constant": 1.19248,
+            "coefficient2_x": -0.0300438,
+            "coefficient3_x_2": 0.00103745,
+            "coefficient4_x_3": -2.3328e-05,
+            "maximum_value_of_x": 20.0,
+            "minimum_value_of_x": -20.0
+        },
+        "Heat Pump 2 HP Heating Coil Cap-FF": {
+            "coefficient1_constant": 0.84,
+            "coefficient2_x": 0.16,
+            "coefficient3_x_2": 0.0,
+            "coefficient4_x_3": 0.0,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 2 HP Heating Coil Cap-FT": {
+            "coefficient1_constant": 0.758746,
+            "coefficient2_x": 0.027626,
+            "coefficient3_x_2": 0.000148716,
+            "coefficient4_x_3": 3.4992e-06,
+            "maximum_value_of_x": 20.0,
+            "minimum_value_of_x": -20.0
+        },
+        "Heat Pump 2 HP Heating Coil EIR-FT": {
+            "coefficient1_constant": 1.19248,
+            "coefficient2_x": -0.0300438,
+            "coefficient3_x_2": 0.00103745,
+            "coefficient4_x_3": -2.3328e-05,
+            "maximum_value_of_x": 20.0,
+            "minimum_value_of_x": -20.0
+        },
+        "Heat Pump 3 HP Heating Coil Cap-FF": {
+            "coefficient1_constant": 0.84,
+            "coefficient2_x": 0.16,
+            "coefficient3_x_2": 0.0,
+            "coefficient4_x_3": 0.0,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 3 HP Heating Coil Cap-FT": {
+            "coefficient1_constant": 0.758746,
+            "coefficient2_x": 0.027626,
+            "coefficient3_x_2": 0.000148716,
+            "coefficient4_x_3": 3.4992e-06,
+            "maximum_value_of_x": 20.0,
+            "minimum_value_of_x": -20.0
+        },
+        "Heat Pump 3 HP Heating Coil EIR-FT": {
+            "coefficient1_constant": 1.19248,
+            "coefficient2_x": -0.0300438,
+            "coefficient3_x_2": 0.00103745,
+            "coefficient4_x_3": -2.3328e-05,
+            "maximum_value_of_x": 20.0,
+            "minimum_value_of_x": -20.0
+        },
+        "Heat Pump 4 HP Heating Coil Cap-FF": {
+            "coefficient1_constant": 0.84,
+            "coefficient2_x": 0.16,
+            "coefficient3_x_2": 0.0,
+            "coefficient4_x_3": 0.0,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 4 HP Heating Coil Cap-FT": {
+            "coefficient1_constant": 0.758746,
+            "coefficient2_x": 0.027626,
+            "coefficient3_x_2": 0.000148716,
+            "coefficient4_x_3": 3.4992e-06,
+            "maximum_value_of_x": 20.0,
+            "minimum_value_of_x": -20.0
+        },
+        "Heat Pump 4 HP Heating Coil EIR-FT": {
+            "coefficient1_constant": 1.19248,
+            "coefficient2_x": -0.0300438,
+            "coefficient3_x_2": 0.00103745,
+            "coefficient4_x_3": -2.3328e-05,
+            "maximum_value_of_x": 20.0,
+            "minimum_value_of_x": -20.0
+        },
+        "Heat Pump 5 HP Heating Coil Cap-FF": {
+            "coefficient1_constant": 0.84,
+            "coefficient2_x": 0.16,
+            "coefficient3_x_2": 0.0,
+            "coefficient4_x_3": 0.0,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 5 HP Heating Coil Cap-FT": {
+            "coefficient1_constant": 0.758746,
+            "coefficient2_x": 0.027626,
+            "coefficient3_x_2": 0.000148716,
+            "coefficient4_x_3": 3.4992e-06,
+            "maximum_value_of_x": 20.0,
+            "minimum_value_of_x": -20.0
+        },
+        "Heat Pump 5 HP Heating Coil EIR-FT": {
+            "coefficient1_constant": 1.19248,
+            "coefficient2_x": -0.0300438,
+            "coefficient3_x_2": 0.00103745,
+            "coefficient4_x_3": -2.3328e-05,
+            "maximum_value_of_x": 20.0,
+            "minimum_value_of_x": -20.0
         }
     },
     "Curve:Quadratic": {
-        "Main Boiler Efficiency Curve": {
-            "coefficient1_constant": 0.97,
-            "coefficient2_x": 0.0633,
-            "coefficient3_x_2": -0.0333,
+        "Heat Pump 1 Cool Coil Cap-FF": {
+            "coefficient1_constant": 0.8,
+            "coefficient2_x": 0.2,
+            "coefficient3_x_2": 0,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 1 Cool Coil EIR-FF": {
+            "coefficient1_constant": 1.1552,
+            "coefficient2_x": -0.1808,
+            "coefficient3_x_2": 0.0256,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 1 Cool Coil PLF": {
+            "coefficient1_constant": 0.85,
+            "coefficient2_x": 0.15,
+            "coefficient3_x_2": 0,
+            "maximum_value_of_x": 1,
+            "minimum_value_of_x": 0
+        },
+        "Heat Pump 1 HP Heating Coil EIR-FF": {
+            "coefficient1_constant": 1.3824,
+            "coefficient2_x": -0.4336,
+            "coefficient3_x_2": 0.0512,
             "maximum_value_of_x": 1.0,
             "minimum_value_of_x": 0.0
         },
-        "Main Chiller RecipEIRFPLR": {
-            "coefficient1_constant": 0.088065,
-            "coefficient2_x": 1.137742,
-            "coefficient3_x_2": -0.225806,
+        "Heat Pump 1 HP Heating Coil PLF": {
+            "coefficient1_constant": 0.75,
+            "coefficient2_x": 0.25,
+            "coefficient3_x_2": 0.0,
+            "maximum_value_of_x": 1.0,
+            "minimum_value_of_x": 0.0
+        },
+        "Heat Pump 2 Cool Coil Cap-FF": {
+            "coefficient1_constant": 0.8,
+            "coefficient2_x": 0.2,
+            "coefficient3_x_2": 0,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 2 Cool Coil EIR-FF": {
+            "coefficient1_constant": 1.1552,
+            "coefficient2_x": -0.1808,
+            "coefficient3_x_2": 0.0256,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 2 Cool Coil PLF": {
+            "coefficient1_constant": 0.85,
+            "coefficient2_x": 0.15,
+            "coefficient3_x_2": 0,
             "maximum_value_of_x": 1,
             "minimum_value_of_x": 0
+        },
+        "Heat Pump 2 HP Heating Coil EIR-FF": {
+            "coefficient1_constant": 1.3824,
+            "coefficient2_x": -0.4336,
+            "coefficient3_x_2": 0.0512,
+            "maximum_value_of_x": 1.0,
+            "minimum_value_of_x": 0.0
+        },
+        "Heat Pump 2 HP Heating Coil PLF": {
+            "coefficient1_constant": 0.75,
+            "coefficient2_x": 0.25,
+            "coefficient3_x_2": 0.0,
+            "maximum_value_of_x": 1.0,
+            "minimum_value_of_x": 0.0
+        },
+        "Heat Pump 3 Cool Coil Cap-FF": {
+            "coefficient1_constant": 0.8,
+            "coefficient2_x": 0.2,
+            "coefficient3_x_2": 0,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 3 Cool Coil EIR-FF": {
+            "coefficient1_constant": 1.1552,
+            "coefficient2_x": -0.1808,
+            "coefficient3_x_2": 0.0256,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 3 Cool Coil PLF": {
+            "coefficient1_constant": 0.85,
+            "coefficient2_x": 0.15,
+            "coefficient3_x_2": 0,
+            "maximum_value_of_x": 1,
+            "minimum_value_of_x": 0
+        },
+        "Heat Pump 3 HP Heating Coil EIR-FF": {
+            "coefficient1_constant": 1.3824,
+            "coefficient2_x": -0.4336,
+            "coefficient3_x_2": 0.0512,
+            "maximum_value_of_x": 1.0,
+            "minimum_value_of_x": 0.0
+        },
+        "Heat Pump 3 HP Heating Coil PLF": {
+            "coefficient1_constant": 0.75,
+            "coefficient2_x": 0.25,
+            "coefficient3_x_2": 0.0,
+            "maximum_value_of_x": 1.0,
+            "minimum_value_of_x": 0.0
+        },
+        "Heat Pump 4 Cool Coil Cap-FF": {
+            "coefficient1_constant": 0.8,
+            "coefficient2_x": 0.2,
+            "coefficient3_x_2": 0,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 4 Cool Coil EIR-FF": {
+            "coefficient1_constant": 1.1552,
+            "coefficient2_x": -0.1808,
+            "coefficient3_x_2": 0.0256,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 4 Cool Coil PLF": {
+            "coefficient1_constant": 0.85,
+            "coefficient2_x": 0.15,
+            "coefficient3_x_2": 0,
+            "maximum_value_of_x": 1,
+            "minimum_value_of_x": 0
+        },
+        "Heat Pump 4 HP Heating Coil EIR-FF": {
+            "coefficient1_constant": 1.3824,
+            "coefficient2_x": -0.4336,
+            "coefficient3_x_2": 0.0512,
+            "maximum_value_of_x": 1.0,
+            "minimum_value_of_x": 0.0
+        },
+        "Heat Pump 4 HP Heating Coil PLF": {
+            "coefficient1_constant": 0.75,
+            "coefficient2_x": 0.25,
+            "coefficient3_x_2": 0.0,
+            "maximum_value_of_x": 1.0,
+            "minimum_value_of_x": 0.0
+        },
+        "Heat Pump 5 Cool Coil Cap-FF": {
+            "coefficient1_constant": 0.8,
+            "coefficient2_x": 0.2,
+            "coefficient3_x_2": 0,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 5 Cool Coil EIR-FF": {
+            "coefficient1_constant": 1.1552,
+            "coefficient2_x": -0.1808,
+            "coefficient3_x_2": 0.0256,
+            "maximum_value_of_x": 1.5,
+            "minimum_value_of_x": 0.5
+        },
+        "Heat Pump 5 Cool Coil PLF": {
+            "coefficient1_constant": 0.85,
+            "coefficient2_x": 0.15,
+            "coefficient3_x_2": 0,
+            "maximum_value_of_x": 1,
+            "minimum_value_of_x": 0
+        },
+        "Heat Pump 5 HP Heating Coil EIR-FF": {
+            "coefficient1_constant": 1.3824,
+            "coefficient2_x": -0.4336,
+            "coefficient3_x_2": 0.0512,
+            "maximum_value_of_x": 1.0,
+            "minimum_value_of_x": 0.0
+        },
+        "Heat Pump 5 HP Heating Coil PLF": {
+            "coefficient1_constant": 0.75,
+            "coefficient2_x": 0.25,
+            "coefficient3_x_2": 0.0,
+            "maximum_value_of_x": 1.0,
+            "minimum_value_of_x": 0.0
         }
     },
     "DesignSpecification:OutdoorAir": {
@@ -2610,18 +2889,51 @@
             "zone_or_zonelist_name": "SPACE5-1"
         }
     },
-    "Fan:VariableVolume": {
-        "VAV Sys 1 Supply Fan": {
-            "air_inlet_node_name": "VAV Sys 1 Heating Coil Outlet",
-            "air_outlet_node_name": "VAV Sys 1 Supply Fan Outlet",
+    "Fan:OnOff": {
+        "Heat Pump 1 Supply Fan": {
+            "air_inlet_node_name": "Heat Pump 1 Mixed Air Outlet",
+            "air_outlet_node_name": "Heat Pump 1 Supply Fan Outlet",
             "availability_schedule_name": "FanAvailSched",
-            "fan_power_coefficient_1": 0.35071223,
-            "fan_power_coefficient_2": 0.30850535,
-            "fan_power_coefficient_3": -0.54137364,
-            "fan_power_coefficient_4": 0.87198823,
-            "fan_power_coefficient_5": 0,
-            "fan_power_minimum_flow_fraction": 0.25,
-            "fan_power_minimum_flow_rate_input_method": "Fraction",
+            "fan_total_efficiency": 0.7,
+            "maximum_flow_rate": "Autosize",
+            "motor_efficiency": 0.9,
+            "motor_in_airstream_fraction": 1,
+            "pressure_rise": 600
+        },
+        "Heat Pump 2 Supply Fan": {
+            "air_inlet_node_name": "Heat Pump 2 Mixed Air Outlet",
+            "air_outlet_node_name": "Heat Pump 2 Supply Fan Outlet",
+            "availability_schedule_name": "FanAvailSched",
+            "fan_total_efficiency": 0.7,
+            "maximum_flow_rate": "Autosize",
+            "motor_efficiency": 0.9,
+            "motor_in_airstream_fraction": 1,
+            "pressure_rise": 600
+        },
+        "Heat Pump 3 Supply Fan": {
+            "air_inlet_node_name": "Heat Pump 3 Mixed Air Outlet",
+            "air_outlet_node_name": "Heat Pump 3 Supply Fan Outlet",
+            "availability_schedule_name": "FanAvailSched",
+            "fan_total_efficiency": 0.7,
+            "maximum_flow_rate": "Autosize",
+            "motor_efficiency": 0.9,
+            "motor_in_airstream_fraction": 1,
+            "pressure_rise": 600
+        },
+        "Heat Pump 4 Supply Fan": {
+            "air_inlet_node_name": "Heat Pump 4 Mixed Air Outlet",
+            "air_outlet_node_name": "Heat Pump 4 Supply Fan Outlet",
+            "availability_schedule_name": "FanAvailSched",
+            "fan_total_efficiency": 0.7,
+            "maximum_flow_rate": "Autosize",
+            "motor_efficiency": 0.9,
+            "motor_in_airstream_fraction": 1,
+            "pressure_rise": 600
+        },
+        "Heat Pump 5 Supply Fan": {
+            "air_inlet_node_name": "Heat Pump 5 Mixed Air Outlet",
+            "air_outlet_node_name": "Heat Pump 5 Supply Fan Outlet",
+            "availability_schedule_name": "FanAvailSched",
             "fan_total_efficiency": 0.7,
             "maximum_flow_rate": "Autosize",
             "motor_efficiency": 0.9,
@@ -2771,7 +3083,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 1584,
-            "return_air_fraction": 0.2,
+            "return_air_fraction": 0,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE1-1"
         },
@@ -2782,7 +3094,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 684,
-            "return_air_fraction": 0.2,
+            "return_air_fraction": 0,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE2-1"
         },
@@ -2793,7 +3105,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 1584,
-            "return_air_fraction": 0.2,
+            "return_air_fraction": 0,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE3-1"
         },
@@ -2804,7 +3116,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 684,
-            "return_air_fraction": 0.2,
+            "return_air_fraction": 0,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE4-1"
         },
@@ -2815,7 +3127,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 2964,
-            "return_air_fraction": 0.2,
+            "return_air_fraction": 0,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE5-1"
         }
@@ -2946,61 +3258,52 @@
             "visible_absorptance": 0.65
         }
     },
-    "NodeList": {
-        "Chilled Water Loop ChW Supply Setpoint Nodes": {
-            "nodes": [
-                {
-                    "node_name": "Main Chiller ChW Outlet"
-                },
-                {
-                    "node_name": "Chilled Water Loop ChW Supply Outlet"
-                }
-            ]
-        },
-        "Chilled Water Loop CndW Supply Setpoint Nodes": {
-            "nodes": [
-                {
-                    "node_name": "Main Tower CndW Outlet"
-                },
-                {
-                    "node_name": "Chilled Water Loop CndW Supply Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Supply Setpoint Nodes": {
-            "nodes": [
-                {
-                    "node_name": "Main Boiler HW Outlet"
-                },
-                {
-                    "node_name": "Hot Water Loop HW Supply Outlet"
-                }
-            ]
-        },
-        "VAV Sys 1 Mixed Air Nodes": {
-            "nodes": [
-                {
-                    "node_name": "VAV Sys 1 Cooling Coil Outlet"
-                },
-                {
-                    "node_name": "VAV Sys 1 Mixed Air Outlet"
-                }
-            ]
-        }
-    },
     "OutdoorAir:Mixer": {
-        "VAV Sys 1 OA Mixing Box": {
-            "mixed_air_node_name": "VAV Sys 1 Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "VAV Sys 1 Outside Air Inlet",
-            "relief_air_stream_node_name": "VAV Sys 1 Relief Air Outlet",
-            "return_air_stream_node_name": "VAV Sys 1 Air Loop Inlet"
+        "Heat Pump 1 OA Mixing Box": {
+            "mixed_air_node_name": "Heat Pump 1 Mixed Air Outlet",
+            "outdoor_air_stream_node_name": "Heat Pump 1 Outside Air Inlet",
+            "relief_air_stream_node_name": "Heat Pump 1 Relief Air Outlet",
+            "return_air_stream_node_name": "Heat Pump 1 Air Loop Inlet"
+        },
+        "Heat Pump 2 OA Mixing Box": {
+            "mixed_air_node_name": "Heat Pump 2 Mixed Air Outlet",
+            "outdoor_air_stream_node_name": "Heat Pump 2 Outside Air Inlet",
+            "relief_air_stream_node_name": "Heat Pump 2 Relief Air Outlet",
+            "return_air_stream_node_name": "Heat Pump 2 Air Loop Inlet"
+        },
+        "Heat Pump 3 OA Mixing Box": {
+            "mixed_air_node_name": "Heat Pump 3 Mixed Air Outlet",
+            "outdoor_air_stream_node_name": "Heat Pump 3 Outside Air Inlet",
+            "relief_air_stream_node_name": "Heat Pump 3 Relief Air Outlet",
+            "return_air_stream_node_name": "Heat Pump 3 Air Loop Inlet"
+        },
+        "Heat Pump 4 OA Mixing Box": {
+            "mixed_air_node_name": "Heat Pump 4 Mixed Air Outlet",
+            "outdoor_air_stream_node_name": "Heat Pump 4 Outside Air Inlet",
+            "relief_air_stream_node_name": "Heat Pump 4 Relief Air Outlet",
+            "return_air_stream_node_name": "Heat Pump 4 Air Loop Inlet"
+        },
+        "Heat Pump 5 OA Mixing Box": {
+            "mixed_air_node_name": "Heat Pump 5 Mixed Air Outlet",
+            "outdoor_air_stream_node_name": "Heat Pump 5 Outside Air Inlet",
+            "relief_air_stream_node_name": "Heat Pump 5 Relief Air Outlet",
+            "return_air_stream_node_name": "Heat Pump 5 Air Loop Inlet"
         }
     },
     "OutdoorAir:Node": {
-        "Chilled Water Loop Outside Air Sensor": {
+        "Heat Pump 1 Cooling Coil Condenser Inlet": {
             "height_above_ground": -1
         },
-        "Main Tower Cooling Tower Outdoor Air Inlet Node": {
+        "Heat Pump 2 Cooling Coil Condenser Inlet": {
+            "height_above_ground": -1
+        },
+        "Heat Pump 3 Cooling Coil Condenser Inlet": {
+            "height_above_ground": -1
+        },
+        "Heat Pump 4 Cooling Coil Condenser Inlet": {
+            "height_above_ground": -1
+        },
+        "Heat Pump 5 Cooling Coil Condenser Inlet": {
             "height_above_ground": -1
         }
     },
@@ -3008,7 +3311,35 @@
         "OutdoorAir:NodeList 1": {
             "nodes": [
                 {
-                    "node_or_nodelist_name": "VAV Sys 1 Outside Air Inlet"
+                    "node_or_nodelist_name": "Heat Pump 1 Outside Air Inlet"
+                }
+            ]
+        },
+        "OutdoorAir:NodeList 2": {
+            "nodes": [
+                {
+                    "node_or_nodelist_name": "Heat Pump 2 Outside Air Inlet"
+                }
+            ]
+        },
+        "OutdoorAir:NodeList 3": {
+            "nodes": [
+                {
+                    "node_or_nodelist_name": "Heat Pump 3 Outside Air Inlet"
+                }
+            ]
+        },
+        "OutdoorAir:NodeList 4": {
+            "nodes": [
+                {
+                    "node_or_nodelist_name": "Heat Pump 4 Outside Air Inlet"
+                }
+            ]
+        },
+        "OutdoorAir:NodeList 5": {
+            "nodes": [
+                {
+                    "node_or_nodelist_name": "Heat Pump 5 Outside Air Inlet"
                 }
             ]
         }
@@ -3031,43 +3362,19 @@
             "reporting_frequency": "Monthly"
         },
         "Output:Meter:MeterFileOnly 5": {
-            "key_name": "Electricity:Plant",
-            "reporting_frequency": "Monthly"
-        },
-        "Output:Meter:MeterFileOnly 6": {
-            "key_name": "NaturalGas:Plant",
-            "reporting_frequency": "Monthly"
-        },
-        "Output:Meter:MeterFileOnly 7": {
-            "key_name": "NaturalGas:Facility",
-            "reporting_frequency": "Monthly"
-        },
-        "Output:Meter:MeterFileOnly 8": {
             "key_name": "Electricity:Facility",
             "reporting_frequency": "RunPeriod"
         },
-        "Output:Meter:MeterFileOnly 9": {
+        "Output:Meter:MeterFileOnly 6": {
             "key_name": "Electricity:Building",
             "reporting_frequency": "RunPeriod"
         },
-        "Output:Meter:MeterFileOnly 10": {
+        "Output:Meter:MeterFileOnly 7": {
             "key_name": "InteriorLights:Electricity",
             "reporting_frequency": "RunPeriod"
         },
-        "Output:Meter:MeterFileOnly 11": {
+        "Output:Meter:MeterFileOnly 8": {
             "key_name": "Electricity:HVAC",
-            "reporting_frequency": "RunPeriod"
-        },
-        "Output:Meter:MeterFileOnly 12": {
-            "key_name": "Electricity:Plant",
-            "reporting_frequency": "RunPeriod"
-        },
-        "Output:Meter:MeterFileOnly 13": {
-            "key_name": "NaturalGas:Plant",
-            "reporting_frequency": "RunPeriod"
-        },
-        "Output:Meter:MeterFileOnly 14": {
-            "key_name": "NaturalGas:Facility",
             "reporting_frequency": "RunPeriod"
         }
     },
@@ -3114,107 +3421,52 @@
         "Output:Variable 5": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Mean Air Temperature"
+            "variable_name": "Heating Coil Heating Rate"
         },
         "Output:Variable 6": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Mean Radiant Temperature"
+            "variable_name": "Cooling Coil Total Cooling Rate"
         },
         "Output:Variable 7": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Operative Temperature"
+            "variable_name": "Zone Mean Air Temperature"
         },
         "Output:Variable 8": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Thermal Comfort ASHRAE 55 Simple Model Summer or Winter Clothes Not Comfortable Time"
+            "variable_name": "Zone Mean Radiant Temperature"
         },
         "Output:Variable 9": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Air Humidity Ratio"
+            "variable_name": "Zone Operative Temperature"
         },
         "Output:Variable 10": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Air Relative Humidity"
+            "variable_name": "Zone Thermal Comfort ASHRAE 55 Simple Model Summer or Winter Clothes Not Comfortable Time"
         },
         "Output:Variable 11": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Heating Setpoint Not Met While Occupied Time"
+            "variable_name": "Zone Air Humidity Ratio"
         },
         "Output:Variable 12": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Cooling Setpoint Not Met While Occupied Time"
+            "variable_name": "Zone Air Relative Humidity"
         },
         "Output:Variable 13": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Air Terminal VAV Damper Position"
+            "variable_name": "Zone Heating Setpoint Not Met While Occupied Time"
         },
         "Output:Variable 14": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Heating Coil Heating Rate"
-        },
-        "Output:Variable 15": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Coil Total Cooling Rate"
-        },
-        "Output:Variable 16": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Coil Sensible Cooling Rate"
-        },
-        "Output:Variable 17": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Plant Supply Side Outlet Temperature"
-        },
-        "Output:Variable 18": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Chiller Evaporator Cooling Rate"
-        },
-        "Output:Variable 19": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Chiller Condenser Heat Transfer Rate"
-        },
-        "Output:Variable 20": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Chiller Electricity Rate"
-        },
-        "Output:Variable 21": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Chiller COP"
-        },
-        "Output:Variable 22": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Boiler Heating Rate"
-        },
-        "Output:Variable 23": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Boiler NaturalGas Rate"
-        },
-        "Output:Variable 24": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Tower Heat Transfer Rate"
-        },
-        "Output:Variable 25": {
-            "key_value": "*",
-            "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Tower Fan Electricity Rate"
+            "variable_name": "Zone Cooling Setpoint Not Met While Occupied Time"
         }
     },
     "Output:VariableDictionary": {
@@ -3267,200 +3519,6 @@
             "number_of_people_calculation_method": "People",
             "number_of_people_schedule_name": "OCCUPY-1",
             "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
-    "Pipe:Adiabatic": {
-        "Chilled Water Loop ChW Demand Inlet Pipe": {
-            "inlet_node_name": "Chilled Water Loop ChW Demand Inlet",
-            "outlet_node_name": "Chilled Water Loop ChW Demand Inlet Pipe Outlet"
-        },
-        "Chilled Water Loop ChW Demand Outlet Pipe": {
-            "inlet_node_name": "Chilled Water Loop ChW Demand Outlet Pipe Inlet",
-            "outlet_node_name": "Chilled Water Loop ChW Demand Outlet"
-        },
-        "Chilled Water Loop ChW Demand Side Bypass Pipe": {
-            "inlet_node_name": "Chilled Water Loop ChW Demand Bypass Inlet",
-            "outlet_node_name": "Chilled Water Loop ChW Demand Bypass Outlet"
-        },
-        "Chilled Water Loop ChW Supply Outlet Pipe": {
-            "inlet_node_name": "Chilled Water Loop ChW Supply Outlet Pipe Inlet",
-            "outlet_node_name": "Chilled Water Loop ChW Supply Outlet"
-        },
-        "Chilled Water Loop ChW Supply Side Bypass Pipe": {
-            "inlet_node_name": "Chilled Water Loop ChW Supply Bypass Inlet",
-            "outlet_node_name": "Chilled Water Loop ChW Supply Bypass Outlet"
-        },
-        "Chilled Water Loop CndW Demand Inlet Pipe": {
-            "inlet_node_name": "Chilled Water Loop CndW Demand Inlet",
-            "outlet_node_name": "Chilled Water Loop CndW Demand Inlet Pipe Outlet"
-        },
-        "Chilled Water Loop CndW Demand Outlet Pipe": {
-            "inlet_node_name": "Chilled Water Loop CndW Demand Outlet Pipe Inlet",
-            "outlet_node_name": "Chilled Water Loop CndW Demand Outlet"
-        },
-        "Chilled Water Loop CndW Demand Side Bypass Pipe": {
-            "inlet_node_name": "Chilled Water Loop CndW Demand Bypass Inlet",
-            "outlet_node_name": "Chilled Water Loop CndW Demand Bypass Outlet"
-        },
-        "Chilled Water Loop CndW Supply Outlet Pipe": {
-            "inlet_node_name": "Chilled Water Loop CndW Supply Outlet Pipe Inlet",
-            "outlet_node_name": "Chilled Water Loop CndW Supply Outlet"
-        },
-        "Chilled Water Loop CndW Supply Side Bypass Pipe": {
-            "inlet_node_name": "Chilled Water Loop CndW Supply Bypass Inlet",
-            "outlet_node_name": "Chilled Water Loop CndW Supply Bypass Outlet"
-        },
-        "Hot Water Loop HW Demand Inlet Pipe": {
-            "inlet_node_name": "Hot Water Loop HW Demand Inlet",
-            "outlet_node_name": "Hot Water Loop HW Demand Inlet Pipe Outlet"
-        },
-        "Hot Water Loop HW Demand Outlet Pipe": {
-            "inlet_node_name": "Hot Water Loop HW Demand Outlet Pipe Inlet",
-            "outlet_node_name": "Hot Water Loop HW Demand Outlet"
-        },
-        "Hot Water Loop HW Demand Side Bypass Pipe": {
-            "inlet_node_name": "Hot Water Loop HW Demand Bypass Inlet",
-            "outlet_node_name": "Hot Water Loop HW Demand Bypass Outlet"
-        },
-        "Hot Water Loop HW Supply Outlet Pipe": {
-            "inlet_node_name": "Hot Water Loop HW Supply Outlet Pipe Inlet",
-            "outlet_node_name": "Hot Water Loop HW Supply Outlet"
-        },
-        "Hot Water Loop HW Supply Side Bypass Pipe": {
-            "inlet_node_name": "Hot Water Loop HW Supply Bypass Inlet",
-            "outlet_node_name": "Hot Water Loop HW Supply Bypass Outlet"
-        }
-    },
-    "PlantEquipmentList": {
-        "Chilled Water Loop All Chillers": {
-            "equipment": [
-                {
-                    "equipment_name": "Main Chiller",
-                    "equipment_object_type": "Chiller:Electric:EIR"
-                }
-            ]
-        },
-        "Hot Water Loop All Equipment": {
-            "equipment": [
-                {
-                    "equipment_name": "Main Boiler",
-                    "equipment_object_type": "Boiler:HotWater"
-                }
-            ]
-        }
-    },
-    "PlantEquipmentOperation:CoolingLoad": {
-        "Chilled Water Loop Chiller Operation All Hours": {
-            "load_range_1_lower_limit": 0,
-            "load_range_1_upper_limit": 1000000000000000,
-            "range_1_equipment_list_name": "Chilled Water Loop All Chillers"
-        },
-        "Chilled Water Loop Condenser Operation All Hours": {
-            "load_range_1_lower_limit": 0,
-            "load_range_1_upper_limit": 1000000000000000,
-            "range_1_equipment_list_name": "Chilled Water Loop All Condensers"
-        }
-    },
-    "PlantEquipmentOperation:HeatingLoad": {
-        "Hot Water Loop Operation All Hours": {
-            "load_range_1_lower_limit": 0,
-            "load_range_1_upper_limit": 1000000000000000,
-            "range_1_equipment_list_name": "Hot Water Loop All Equipment"
-        }
-    },
-    "PlantEquipmentOperationSchemes": {
-        "Chilled Water Loop Chiller Operation": {
-            "control_scheme_1_name": "Chilled Water Loop Chiller Operation All Hours",
-            "control_scheme_1_object_type": "PlantEquipmentOperation:CoolingLoad",
-            "control_scheme_1_schedule_name": "HVACTemplate-Always 1"
-        },
-        "Hot Water Loop Operation": {
-            "control_scheme_1_name": "Hot Water Loop Operation All Hours",
-            "control_scheme_1_object_type": "PlantEquipmentOperation:HeatingLoad",
-            "control_scheme_1_schedule_name": "HVACTemplate-Always 1"
-        }
-    },
-    "PlantLoop": {
-        "Chilled Water Loop Chilled Water Loop": {
-            "availability_manager_list_name": "Chilled Water Loop Availability List",
-            "common_pipe_simulation": "None",
-            "demand_side_branch_list_name": "Chilled Water Loop ChW Demand Side Branches",
-            "demand_side_connector_list_name": "Chilled Water Loop ChW Demand Side Connectors",
-            "demand_side_inlet_node_name": "Chilled Water Loop ChW Demand Inlet",
-            "demand_side_outlet_node_name": "Chilled Water Loop ChW Demand Outlet",
-            "fluid_type": "Water",
-            "load_distribution_scheme": "SequentialLoad",
-            "loop_temperature_setpoint_node_name": "Chilled Water Loop ChW Supply Outlet",
-            "maximum_loop_flow_rate": "Autosize",
-            "maximum_loop_temperature": 98,
-            "minimum_loop_flow_rate": 0,
-            "minimum_loop_temperature": 1,
-            "plant_equipment_operation_scheme_name": "Chilled Water Loop Chiller Operation",
-            "plant_loop_demand_calculation_scheme": "SingleSetpoint",
-            "plant_loop_volume": "Autocalculate",
-            "plant_side_branch_list_name": "Chilled Water Loop ChW Supply Side Branches",
-            "plant_side_connector_list_name": "Chilled Water Loop ChW Supply Side Connectors",
-            "plant_side_inlet_node_name": "Chilled Water Loop ChW Supply Inlet",
-            "plant_side_outlet_node_name": "Chilled Water Loop ChW Supply Outlet"
-        },
-        "Hot Water Loop Hot Water Loop": {
-            "demand_side_branch_list_name": "Hot Water Loop HW Demand Side Branches",
-            "demand_side_connector_list_name": "Hot Water Loop HW Demand Side Connectors",
-            "demand_side_inlet_node_name": "Hot Water Loop HW Demand Inlet",
-            "demand_side_outlet_node_name": "Hot Water Loop HW Demand Outlet",
-            "fluid_type": "Water",
-            "load_distribution_scheme": "SequentialLoad",
-            "loop_temperature_setpoint_node_name": "Hot Water Loop HW Supply Outlet",
-            "maximum_loop_flow_rate": "Autosize",
-            "maximum_loop_temperature": 100,
-            "minimum_loop_flow_rate": 0,
-            "minimum_loop_temperature": 10,
-            "plant_equipment_operation_scheme_name": "Hot Water Loop Operation",
-            "plant_loop_demand_calculation_scheme": "SingleSetpoint",
-            "plant_loop_volume": "Autocalculate",
-            "plant_side_branch_list_name": "Hot Water Loop HW Supply Side Branches",
-            "plant_side_connector_list_name": "Hot Water Loop HW Supply Side Connectors",
-            "plant_side_inlet_node_name": "Hot Water Loop HW Supply Inlet",
-            "plant_side_outlet_node_name": "Hot Water Loop HW Supply Outlet"
-        }
-    },
-    "Pump:ConstantSpeed": {
-        "Chilled Water Loop ChW Supply Pump": {
-            "design_flow_rate": "Autosize",
-            "design_power_consumption": "Autosize",
-            "design_pump_head": 179352,
-            "fraction_of_motor_inefficiencies_to_fluid_stream": 0,
-            "inlet_node_name": "Chilled Water Loop ChW Supply Inlet",
-            "motor_efficiency": 0.9,
-            "outlet_node_name": "Chilled Water Loop ChW Pump Outlet",
-            "pump_control_type": "Intermittent"
-        },
-        "Hot Water Loop HW Supply Pump": {
-            "design_flow_rate": "Autosize",
-            "design_power_consumption": "Autosize",
-            "design_pump_head": 179352,
-            "fraction_of_motor_inefficiencies_to_fluid_stream": 0,
-            "inlet_node_name": "Hot Water Loop HW Supply Inlet",
-            "motor_efficiency": 0.9,
-            "outlet_node_name": "Hot Water Loop HW Pump Outlet",
-            "pump_control_type": "Intermittent"
-        }
-    },
-    "Pump:VariableSpeed": {
-        "Chilled Water Loop CndW Supply Pump": {
-            "coefficient_1_of_the_part_load_performance_curve": 0,
-            "coefficient_2_of_the_part_load_performance_curve": 0,
-            "coefficient_3_of_the_part_load_performance_curve": 1,
-            "coefficient_4_of_the_part_load_performance_curve": 0,
-            "design_maximum_flow_rate": "Autosize",
-            "design_minimum_flow_rate": 0,
-            "design_power_consumption": "Autosize",
-            "design_pump_head": 179352,
-            "fraction_of_motor_inefficiencies_to_fluid_stream": 0,
-            "inlet_node_name": "Chilled Water Loop CndW Supply Inlet",
-            "motor_efficiency": 0.9,
-            "outlet_node_name": "Chilled Water Loop CndW Pump Outlet",
-            "pump_control_type": "Intermittent"
         }
     },
     "RunPeriod": {
@@ -3687,6 +3745,23 @@
             ],
             "schedule_type_limits_name": "Fraction"
         },
+        "HVACTemplate-Always 0": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 0
+                }
+            ],
+            "schedule_type_limits_name": "HVACTemplate Any Number"
+        },
         "HVACTemplate-Always 1": {
             "data": [
                 {
@@ -3717,74 +3792,6 @@
                 },
                 {
                     "field": 4
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 7.22": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 7.22
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 10.0": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 10.0
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 12.8": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 12.8
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 29.4": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 29.4
                 }
             ],
             "schedule_type_limits_name": "HVACTemplate Any Number"
@@ -4172,51 +4179,87 @@
         }
     },
     "SetpointManager:MixedAir": {
-        "VAV Sys 1 Cooling Coil Air Temp Manager": {
+        "Heat Pump 1 Cooling Coil Air Temp Manager": {
             "control_variable": "Temperature",
-            "fan_inlet_node_name": "VAV Sys 1 Heating Coil Outlet",
-            "fan_outlet_node_name": "VAV Sys 1 Supply Fan Outlet",
-            "reference_setpoint_node_name": "VAV Sys 1 Supply Fan Outlet",
-            "setpoint_node_or_nodelist_name": "VAV Sys 1 Mixed Air Nodes"
+            "fan_inlet_node_name": "Heat Pump 1 Mixed Air Outlet",
+            "fan_outlet_node_name": "Heat Pump 1 Supply Fan Outlet",
+            "reference_setpoint_node_name": "Heat Pump 1 Air Loop Outlet",
+            "setpoint_node_or_nodelist_name": "Heat Pump 1 Mixed Air Outlet"
         },
-        "VAV Sys 1 Heating Coil Air Temp Manager": {
+        "Heat Pump 2 Cooling Coil Air Temp Manager": {
             "control_variable": "Temperature",
-            "fan_inlet_node_name": "VAV Sys 1 Heating Coil Outlet",
-            "fan_outlet_node_name": "VAV Sys 1 Supply Fan Outlet",
-            "reference_setpoint_node_name": "VAV Sys 1 Supply Path Inlet",
-            "setpoint_node_or_nodelist_name": "VAV Sys 1 Heating Coil Outlet"
+            "fan_inlet_node_name": "Heat Pump 2 Mixed Air Outlet",
+            "fan_outlet_node_name": "Heat Pump 2 Supply Fan Outlet",
+            "reference_setpoint_node_name": "Heat Pump 2 Air Loop Outlet",
+            "setpoint_node_or_nodelist_name": "Heat Pump 2 Mixed Air Outlet"
+        },
+        "Heat Pump 3 Cooling Coil Air Temp Manager": {
+            "control_variable": "Temperature",
+            "fan_inlet_node_name": "Heat Pump 3 Mixed Air Outlet",
+            "fan_outlet_node_name": "Heat Pump 3 Supply Fan Outlet",
+            "reference_setpoint_node_name": "Heat Pump 3 Air Loop Outlet",
+            "setpoint_node_or_nodelist_name": "Heat Pump 3 Mixed Air Outlet"
+        },
+        "Heat Pump 4 Cooling Coil Air Temp Manager": {
+            "control_variable": "Temperature",
+            "fan_inlet_node_name": "Heat Pump 4 Mixed Air Outlet",
+            "fan_outlet_node_name": "Heat Pump 4 Supply Fan Outlet",
+            "reference_setpoint_node_name": "Heat Pump 4 Air Loop Outlet",
+            "setpoint_node_or_nodelist_name": "Heat Pump 4 Mixed Air Outlet"
+        },
+        "Heat Pump 5 Cooling Coil Air Temp Manager": {
+            "control_variable": "Temperature",
+            "fan_inlet_node_name": "Heat Pump 5 Mixed Air Outlet",
+            "fan_outlet_node_name": "Heat Pump 5 Supply Fan Outlet",
+            "reference_setpoint_node_name": "Heat Pump 5 Air Loop Outlet",
+            "setpoint_node_or_nodelist_name": "Heat Pump 5 Mixed Air Outlet"
         }
     },
-    "SetpointManager:OutdoorAirReset": {
-        "Hot Water Loop HW Temp Manager": {
+    "SetpointManager:SingleZone:Cooling": {
+        "Heat Pump 1 Economizer Supply Air Temp Manager": {
             "control_variable": "Temperature",
-            "outdoor_high_temperature": 10,
-            "outdoor_low_temperature": -6.7,
-            "setpoint_at_outdoor_high_temperature": 65.6,
-            "setpoint_at_outdoor_low_temperature": 82.2,
-            "setpoint_node_or_nodelist_name": "Hot Water Loop HW Supply Setpoint Nodes"
-        }
-    },
-    "SetpointManager:Scheduled": {
-        "Chilled Water Loop ChW Temp Manager": {
-            "control_variable": "Temperature",
-            "schedule_name": "HVACTemplate-Always 7.22",
-            "setpoint_node_or_nodelist_name": "Chilled Water Loop ChW Supply Setpoint Nodes"
+            "control_zone_name": "SPACE1-1",
+            "maximum_supply_air_temperature": 45,
+            "minimum_supply_air_temperature": 13,
+            "setpoint_node_or_nodelist_name": "Heat Pump 1 Air Loop Outlet",
+            "zone_inlet_node_name": "SPACE1-1 Supply Inlet",
+            "zone_node_name": "SPACE1-1 Zone Air Node"
         },
-        "Chilled Water Loop CndW Temp Manager": {
+        "Heat Pump 2 Economizer Supply Air Temp Manager": {
             "control_variable": "Temperature",
-            "schedule_name": "HVACTemplate-Always 29.4",
-            "setpoint_node_or_nodelist_name": "Chilled Water Loop CndW Supply Setpoint Nodes"
+            "control_zone_name": "SPACE2-1",
+            "maximum_supply_air_temperature": 45,
+            "minimum_supply_air_temperature": 13,
+            "setpoint_node_or_nodelist_name": "Heat Pump 2 Air Loop Outlet",
+            "zone_inlet_node_name": "SPACE2-1 Supply Inlet",
+            "zone_node_name": "SPACE2-1 Zone Air Node"
         },
-        "VAV Sys 1 Cooling Supply Air Temp Manager": {
+        "Heat Pump 3 Economizer Supply Air Temp Manager": {
             "control_variable": "Temperature",
-            "schedule_name": "HVACTemplate-Always 12.8",
-            "setpoint_node_or_nodelist_name": "VAV Sys 1 Supply Fan Outlet"
+            "control_zone_name": "SPACE3-1",
+            "maximum_supply_air_temperature": 45,
+            "minimum_supply_air_temperature": 13,
+            "setpoint_node_or_nodelist_name": "Heat Pump 3 Air Loop Outlet",
+            "zone_inlet_node_name": "SPACE3-1 Supply Inlet",
+            "zone_node_name": "SPACE3-1 Zone Air Node"
         },
-        "VAV Sys 1 Heating Supply Air Temp Manager": {
+        "Heat Pump 4 Economizer Supply Air Temp Manager": {
             "control_variable": "Temperature",
-            "schedule_name": "HVACTemplate-Always 10.0",
-            "setpoint_node_or_nodelist_name": "VAV Sys 1 Supply Path Inlet"
+            "control_zone_name": "SPACE4-1",
+            "maximum_supply_air_temperature": 45,
+            "minimum_supply_air_temperature": 13,
+            "setpoint_node_or_nodelist_name": "Heat Pump 4 Air Loop Outlet",
+            "zone_inlet_node_name": "SPACE4-1 Supply Inlet",
+            "zone_node_name": "SPACE4-1 Zone Air Node"
+        },
+        "Heat Pump 5 Economizer Supply Air Temp Manager": {
+            "control_variable": "Temperature",
+            "control_zone_name": "SPACE5-1",
+            "maximum_supply_air_temperature": 45,
+            "minimum_supply_air_temperature": 13,
+            "setpoint_node_or_nodelist_name": "Heat Pump 5 Air Loop Outlet",
+            "zone_inlet_node_name": "SPACE5-1 Supply Inlet",
+            "zone_node_name": "SPACE5-1 Zone Air Node"
         }
     },
     "Shading:Zone:Detailed": {
@@ -4278,7 +4321,7 @@
     "SimulationControl": {
         "SimulationControl 1": {
             "do_hvac_sizing_simulation_for_sizing_periods": "No",
-            "do_plant_sizing_calculation": "Yes",
+            "do_plant_sizing_calculation": "No",
             "do_system_sizing_calculation": "Yes",
             "do_zone_sizing_calculation": "Yes",
             "maximum_number_of_hvac_sizing_simulation_passes": 1,
@@ -4316,37 +4359,17 @@
             "heating_sizing_factor": 1.2
         }
     },
-    "Sizing:Plant": {
-        "Sizing:Plant 1": {
-            "design_loop_exit_temperature": 82,
-            "loop_design_temperature_difference": 11.0,
-            "loop_type": "Heating",
-            "plant_or_condenser_loop_name": "Hot Water Loop Hot Water Loop"
-        },
-        "Sizing:Plant 2": {
-            "design_loop_exit_temperature": 7.22,
-            "loop_design_temperature_difference": 6.67,
-            "loop_type": "Cooling",
-            "plant_or_condenser_loop_name": "Chilled Water Loop Chilled Water Loop"
-        },
-        "Sizing:Plant 3": {
-            "design_loop_exit_temperature": 29.4,
-            "loop_design_temperature_difference": 5.6,
-            "loop_type": "Condenser",
-            "plant_or_condenser_loop_name": "Chilled Water Loop Condenser Water Loop"
-        }
-    },
     "Sizing:System": {
         "Sizing:System 1": {
             "100_outdoor_air_in_cooling": "No",
             "100_outdoor_air_in_heating": "No",
-            "airloop_name": "VAV Sys 1",
+            "airloop_name": "Heat Pump 1",
             "central_cooling_capacity_control_method": "OnOff",
             "central_cooling_design_supply_air_humidity_ratio": 0.008,
-            "central_cooling_design_supply_air_temperature": 12.8,
+            "central_cooling_design_supply_air_temperature": 14,
             "central_heating_design_supply_air_humidity_ratio": 0.008,
-            "central_heating_design_supply_air_temperature": 10.0,
-            "central_heating_maximum_system_air_flow_ratio": 0.3,
+            "central_heating_design_supply_air_temperature": 50.0,
+            "central_heating_maximum_system_air_flow_ratio": 1,
             "cooling_design_capacity": "Autosize",
             "cooling_design_capacity_method": "CoolingDesignCapacity",
             "cooling_supply_air_flow_rate": 0,
@@ -4359,7 +4382,119 @@
             "precool_design_humidity_ratio": 0.008,
             "precool_design_temperature": 11,
             "preheat_design_humidity_ratio": 0.008,
-            "preheat_design_temperature": 7.2,
+            "preheat_design_temperature": 7,
+            "system_outdoor_air_method": "ZoneSum",
+            "type_of_load_to_size_on": "Sensible",
+            "type_of_zone_sum_to_use": "NonCoincident",
+            "zone_maximum_outdoor_air_fraction": 1.0
+        },
+        "Sizing:System 2": {
+            "100_outdoor_air_in_cooling": "No",
+            "100_outdoor_air_in_heating": "No",
+            "airloop_name": "Heat Pump 2",
+            "central_cooling_capacity_control_method": "OnOff",
+            "central_cooling_design_supply_air_humidity_ratio": 0.008,
+            "central_cooling_design_supply_air_temperature": 14,
+            "central_heating_design_supply_air_humidity_ratio": 0.008,
+            "central_heating_design_supply_air_temperature": 50.0,
+            "central_heating_maximum_system_air_flow_ratio": 1,
+            "cooling_design_capacity": "Autosize",
+            "cooling_design_capacity_method": "CoolingDesignCapacity",
+            "cooling_supply_air_flow_rate": 0,
+            "cooling_supply_air_flow_rate_method": "DesignDay",
+            "design_outdoor_air_flow_rate": "Autosize",
+            "heating_design_capacity": "Autosize",
+            "heating_design_capacity_method": "HeatingDesignCapacity",
+            "heating_supply_air_flow_rate": 0,
+            "heating_supply_air_flow_rate_method": "DesignDay",
+            "precool_design_humidity_ratio": 0.008,
+            "precool_design_temperature": 11,
+            "preheat_design_humidity_ratio": 0.008,
+            "preheat_design_temperature": 7,
+            "system_outdoor_air_method": "ZoneSum",
+            "type_of_load_to_size_on": "Sensible",
+            "type_of_zone_sum_to_use": "NonCoincident",
+            "zone_maximum_outdoor_air_fraction": 1.0
+        },
+        "Sizing:System 3": {
+            "100_outdoor_air_in_cooling": "No",
+            "100_outdoor_air_in_heating": "No",
+            "airloop_name": "Heat Pump 3",
+            "central_cooling_capacity_control_method": "OnOff",
+            "central_cooling_design_supply_air_humidity_ratio": 0.008,
+            "central_cooling_design_supply_air_temperature": 14,
+            "central_heating_design_supply_air_humidity_ratio": 0.008,
+            "central_heating_design_supply_air_temperature": 50.0,
+            "central_heating_maximum_system_air_flow_ratio": 1,
+            "cooling_design_capacity": "Autosize",
+            "cooling_design_capacity_method": "CoolingDesignCapacity",
+            "cooling_supply_air_flow_rate": 0,
+            "cooling_supply_air_flow_rate_method": "DesignDay",
+            "design_outdoor_air_flow_rate": "Autosize",
+            "heating_design_capacity": "Autosize",
+            "heating_design_capacity_method": "HeatingDesignCapacity",
+            "heating_supply_air_flow_rate": 0,
+            "heating_supply_air_flow_rate_method": "DesignDay",
+            "precool_design_humidity_ratio": 0.008,
+            "precool_design_temperature": 11,
+            "preheat_design_humidity_ratio": 0.008,
+            "preheat_design_temperature": 7,
+            "system_outdoor_air_method": "ZoneSum",
+            "type_of_load_to_size_on": "Sensible",
+            "type_of_zone_sum_to_use": "NonCoincident",
+            "zone_maximum_outdoor_air_fraction": 1.0
+        },
+        "Sizing:System 4": {
+            "100_outdoor_air_in_cooling": "No",
+            "100_outdoor_air_in_heating": "No",
+            "airloop_name": "Heat Pump 4",
+            "central_cooling_capacity_control_method": "OnOff",
+            "central_cooling_design_supply_air_humidity_ratio": 0.008,
+            "central_cooling_design_supply_air_temperature": 14,
+            "central_heating_design_supply_air_humidity_ratio": 0.008,
+            "central_heating_design_supply_air_temperature": 50.0,
+            "central_heating_maximum_system_air_flow_ratio": 1,
+            "cooling_design_capacity": "Autosize",
+            "cooling_design_capacity_method": "CoolingDesignCapacity",
+            "cooling_supply_air_flow_rate": 0,
+            "cooling_supply_air_flow_rate_method": "DesignDay",
+            "design_outdoor_air_flow_rate": "Autosize",
+            "heating_design_capacity": "Autosize",
+            "heating_design_capacity_method": "HeatingDesignCapacity",
+            "heating_supply_air_flow_rate": 0,
+            "heating_supply_air_flow_rate_method": "DesignDay",
+            "precool_design_humidity_ratio": 0.008,
+            "precool_design_temperature": 11,
+            "preheat_design_humidity_ratio": 0.008,
+            "preheat_design_temperature": 7,
+            "system_outdoor_air_method": "ZoneSum",
+            "type_of_load_to_size_on": "Sensible",
+            "type_of_zone_sum_to_use": "NonCoincident",
+            "zone_maximum_outdoor_air_fraction": 1.0
+        },
+        "Sizing:System 5": {
+            "100_outdoor_air_in_cooling": "No",
+            "100_outdoor_air_in_heating": "No",
+            "airloop_name": "Heat Pump 5",
+            "central_cooling_capacity_control_method": "OnOff",
+            "central_cooling_design_supply_air_humidity_ratio": 0.008,
+            "central_cooling_design_supply_air_temperature": 14,
+            "central_heating_design_supply_air_humidity_ratio": 0.008,
+            "central_heating_design_supply_air_temperature": 50.0,
+            "central_heating_maximum_system_air_flow_ratio": 1,
+            "cooling_design_capacity": "Autosize",
+            "cooling_design_capacity_method": "CoolingDesignCapacity",
+            "cooling_supply_air_flow_rate": 0,
+            "cooling_supply_air_flow_rate_method": "DesignDay",
+            "design_outdoor_air_flow_rate": "Autosize",
+            "heating_design_capacity": "Autosize",
+            "heating_design_capacity_method": "HeatingDesignCapacity",
+            "heating_supply_air_flow_rate": 0,
+            "heating_supply_air_flow_rate_method": "DesignDay",
+            "precool_design_humidity_ratio": 0.008,
+            "precool_design_temperature": 11,
+            "preheat_design_humidity_ratio": 0.008,
+            "preheat_design_temperature": 7,
             "system_outdoor_air_method": "ZoneSum",
             "type_of_load_to_size_on": "Sensible",
             "type_of_zone_sum_to_use": "NonCoincident",
@@ -4377,7 +4512,7 @@
             "heating_design_air_flow_rate": 0,
             "heating_maximum_air_flow_fraction": 0,
             "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
+            "zone_cooling_design_supply_air_temperature": 14,
             "zone_cooling_design_supply_air_temperature_difference": 11.11,
             "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_heating_design_supply_air_humidity_ratio": 0.008,
@@ -4395,7 +4530,7 @@
             "heating_design_air_flow_rate": 0,
             "heating_maximum_air_flow_fraction": 0,
             "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
+            "zone_cooling_design_supply_air_temperature": 14,
             "zone_cooling_design_supply_air_temperature_difference": 11.11,
             "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_heating_design_supply_air_humidity_ratio": 0.008,
@@ -4413,7 +4548,7 @@
             "heating_design_air_flow_rate": 0,
             "heating_maximum_air_flow_fraction": 0,
             "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
+            "zone_cooling_design_supply_air_temperature": 14,
             "zone_cooling_design_supply_air_temperature_difference": 11.11,
             "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_heating_design_supply_air_humidity_ratio": 0.008,
@@ -4431,7 +4566,7 @@
             "heating_design_air_flow_rate": 0,
             "heating_maximum_air_flow_fraction": 0,
             "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
+            "zone_cooling_design_supply_air_temperature": 14,
             "zone_cooling_design_supply_air_temperature_difference": 11.11,
             "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_heating_design_supply_air_humidity_ratio": 0.008,
@@ -4449,7 +4584,7 @@
             "heating_design_air_flow_rate": 0,
             "heating_maximum_air_flow_fraction": 0,
             "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
+            "zone_cooling_design_supply_air_temperature": 14,
             "zone_cooling_design_supply_air_temperature_difference": 11.11,
             "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_heating_design_supply_air_humidity_ratio": 0.008,
@@ -4501,7 +4636,7 @@
     },
     "SurfaceConvectionAlgorithm:Outside": {
         "SurfaceConvectionAlgorithm:Outside 1": {
-            "algorithm": "DOE-2"
+            "algorithm": "TARP"
         }
     },
     "ThermostatSetpoint:DualSetpoint": {
@@ -4689,28 +4824,28 @@
     "ZoneHVAC:AirDistributionUnit": {
         "SPACE1-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE1-1 Supply Inlet",
-            "air_terminal_name": "SPACE1-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE1-1 CV",
+            "air_terminal_object_type": "AirTerminal:SingleDuct:ConstantVolume:NoReheat"
         },
         "SPACE2-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "air_terminal_name": "SPACE2-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE2-1 CV",
+            "air_terminal_object_type": "AirTerminal:SingleDuct:ConstantVolume:NoReheat"
         },
         "SPACE3-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "air_terminal_name": "SPACE3-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE3-1 CV",
+            "air_terminal_object_type": "AirTerminal:SingleDuct:ConstantVolume:NoReheat"
         },
         "SPACE4-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "air_terminal_name": "SPACE4-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE4-1 CV",
+            "air_terminal_object_type": "AirTerminal:SingleDuct:ConstantVolume:NoReheat"
         },
         "SPACE5-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE5-1 Supply Inlet",
-            "air_terminal_name": "SPACE5-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE5-1 CV",
+            "air_terminal_object_type": "AirTerminal:SingleDuct:ConstantVolume:NoReheat"
         }
     },
     "ZoneHVAC:EquipmentConnections": {

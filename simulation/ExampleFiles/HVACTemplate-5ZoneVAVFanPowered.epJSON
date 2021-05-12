@@ -51,6 +51,9 @@
         "VAV Sys 1 Return Plenum": {
             "nodes": [
                 {
+                    "inlet_node_name": "SPACE5-1 Return Outlet"
+                },
+                {
                     "inlet_node_name": "SPACE1-1 Return Outlet"
                 },
                 {
@@ -61,9 +64,6 @@
                 },
                 {
                     "inlet_node_name": "SPACE4-1 Return Outlet"
-                },
-                {
-                    "inlet_node_name": "SPACE5-1 Return Outlet"
                 }
             ],
             "outlet_node_name": "VAV Sys 1 Return Air Outlet",
@@ -82,10 +82,59 @@
             "supply_air_path_inlet_node_name": "VAV Sys 1 Supply Path Inlet"
         }
     },
+    "AirLoopHVAC:ZoneMixer": {
+        "SPACE1-1 PIU Mixer": {
+            "nodes": [
+                {
+                    "inlet_node_name": "SPACE1-1 Zone Equip Inlet"
+                },
+                {
+                    "inlet_node_name": "SPACE1-1 PIU Secondary Inlet"
+                }
+            ],
+            "outlet_node_name": "SPACE1-1 PIU Mixer Outlet"
+        },
+        "SPACE2-1 PIU Mixer": {
+            "nodes": [
+                {
+                    "inlet_node_name": "SPACE2-1 Zone Equip Inlet"
+                },
+                {
+                    "inlet_node_name": "SPACE2-1 PIU Secondary Inlet"
+                }
+            ],
+            "outlet_node_name": "SPACE2-1 PIU Mixer Outlet"
+        },
+        "SPACE3-1 PIU Mixer": {
+            "nodes": [
+                {
+                    "inlet_node_name": "SPACE3-1 Zone Equip Inlet"
+                },
+                {
+                    "inlet_node_name": "SPACE3-1 PIU Secondary Inlet"
+                }
+            ],
+            "outlet_node_name": "SPACE3-1 PIU Mixer Outlet"
+        },
+        "SPACE4-1 PIU Mixer": {
+            "nodes": [
+                {
+                    "inlet_node_name": "SPACE4-1 Zone Equip Inlet"
+                },
+                {
+                    "inlet_node_name": "SPACE4-1 PIU Secondary Inlet"
+                }
+            ],
+            "outlet_node_name": "SPACE4-1 PIU Mixer Outlet"
+        }
+    },
     "AirLoopHVAC:ZoneSplitter": {
         "VAV Sys 1 Zone Splitter": {
             "inlet_node_name": "VAV Sys 1 Supply Path Inlet",
             "nodes": [
+                {
+                    "outlet_node_name": "SPACE5-1 Zone Equip Inlet"
+                },
                 {
                     "outlet_node_name": "SPACE1-1 Zone Equip Inlet"
                 },
@@ -97,70 +146,77 @@
                 },
                 {
                     "outlet_node_name": "SPACE4-1 Zone Equip Inlet"
-                },
-                {
-                    "outlet_node_name": "SPACE5-1 Zone Equip Inlet"
                 }
             ]
         }
     },
-    "AirTerminal:SingleDuct:VAV:Reheat": {
-        "SPACE1-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE1-1 Zone Equip Inlet",
-            "air_outlet_node_name": "SPACE1-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
+    "AirTerminal:SingleDuct:SeriesPIU:Reheat": {
+        "SPACE1-1 VAV Series PIU Reheat": {
             "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE1-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
+            "fan_name": "SPACE1-1 PIU Fan",
             "maximum_air_flow_rate": "Autosize",
             "maximum_hot_water_or_steam_flow_rate": "Autosize",
+            "maximum_primary_air_flow_rate": "Autosize",
             "minimum_hot_water_or_steam_flow_rate": 0,
+            "minimum_primary_air_flow_fraction": "Autosize",
+            "outlet_node_name": "SPACE1-1 Supply Inlet",
+            "reheat_coil_air_inlet_node_name": "SPACE1-1 PIU Fan Outlet",
             "reheat_coil_name": "SPACE1-1 Reheat Coil",
             "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "secondary_air_inlet_node_name": "SPACE1-1 PIU Secondary Inlet",
+            "supply_air_inlet_node_name": "SPACE1-1 Zone Equip Inlet",
+            "zone_mixer_name": "SPACE1-1 PIU Mixer"
         },
-        "SPACE2-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE2-1 Zone Equip Inlet",
-            "air_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
+        "SPACE2-1 VAV Series PIU Reheat": {
             "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE2-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
+            "fan_name": "SPACE2-1 PIU Fan",
             "maximum_air_flow_rate": "Autosize",
             "maximum_hot_water_or_steam_flow_rate": "Autosize",
+            "maximum_primary_air_flow_rate": "Autosize",
             "minimum_hot_water_or_steam_flow_rate": 0,
+            "minimum_primary_air_flow_fraction": "Autosize",
+            "outlet_node_name": "SPACE2-1 Supply Inlet",
+            "reheat_coil_air_inlet_node_name": "SPACE2-1 PIU Fan Outlet",
             "reheat_coil_name": "SPACE2-1 Reheat Coil",
             "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "secondary_air_inlet_node_name": "SPACE2-1 PIU Secondary Inlet",
+            "supply_air_inlet_node_name": "SPACE2-1 Zone Equip Inlet",
+            "zone_mixer_name": "SPACE2-1 PIU Mixer"
         },
-        "SPACE3-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE3-1 Zone Equip Inlet",
-            "air_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
+        "SPACE3-1 VAV Series PIU Reheat": {
             "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE3-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
+            "fan_name": "SPACE3-1 PIU Fan",
             "maximum_air_flow_rate": "Autosize",
             "maximum_hot_water_or_steam_flow_rate": "Autosize",
+            "maximum_primary_air_flow_rate": "Autosize",
             "minimum_hot_water_or_steam_flow_rate": 0,
+            "minimum_primary_air_flow_fraction": "Autosize",
+            "outlet_node_name": "SPACE3-1 Supply Inlet",
+            "reheat_coil_air_inlet_node_name": "SPACE3-1 PIU Fan Outlet",
             "reheat_coil_name": "SPACE3-1 Reheat Coil",
             "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "secondary_air_inlet_node_name": "SPACE3-1 PIU Secondary Inlet",
+            "supply_air_inlet_node_name": "SPACE3-1 Zone Equip Inlet",
+            "zone_mixer_name": "SPACE3-1 PIU Mixer"
         },
-        "SPACE4-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE4-1 Zone Equip Inlet",
-            "air_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
+        "SPACE4-1 VAV Series PIU Reheat": {
             "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE4-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
+            "fan_name": "SPACE4-1 PIU Fan",
             "maximum_air_flow_rate": "Autosize",
             "maximum_hot_water_or_steam_flow_rate": "Autosize",
+            "maximum_primary_air_flow_rate": "Autosize",
             "minimum_hot_water_or_steam_flow_rate": 0,
+            "minimum_primary_air_flow_fraction": "Autosize",
+            "outlet_node_name": "SPACE4-1 Supply Inlet",
+            "reheat_coil_air_inlet_node_name": "SPACE4-1 PIU Fan Outlet",
             "reheat_coil_name": "SPACE4-1 Reheat Coil",
             "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
-        },
+            "secondary_air_inlet_node_name": "SPACE4-1 PIU Secondary Inlet",
+            "supply_air_inlet_node_name": "SPACE4-1 Zone Equip Inlet",
+            "zone_mixer_name": "SPACE4-1 PIU Mixer"
+        }
+    },
+    "AirTerminal:SingleDuct:VAV:Reheat": {
         "SPACE5-1 VAV Reheat": {
             "air_inlet_node_name": "SPACE5-1 Zone Equip Inlet",
             "air_outlet_node_name": "SPACE5-1 Supply Inlet",
@@ -185,7 +241,7 @@
     "AvailabilityManager:NightCycle": {
         "VAV Sys 1 Availability": {
             "applicability_schedule_name": "HVACTemplate-Always 1",
-            "control_type": "CycleOnAny",
+            "control_type": "CycleOnAnyZoneFansOnly",
             "cycling_run_time": 3600,
             "cycling_run_time_control_type": "FixedRunTime",
             "fan_schedule_name": "FanAvailSched",
@@ -620,6 +676,9 @@
                     "branch_name": "Hot Water Loop HW Demand Inlet Branch"
                 },
                 {
+                    "branch_name": "SPACE5-1 Reheat Coil HW Branch"
+                },
+                {
                     "branch_name": "SPACE1-1 Reheat Coil HW Branch"
                 },
                 {
@@ -630,9 +689,6 @@
                 },
                 {
                     "branch_name": "SPACE4-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "SPACE5-1 Reheat Coil HW Branch"
                 },
                 {
                     "branch_name": "VAV Sys 1 Heating Coil HW Branch"
@@ -2034,7 +2090,7 @@
     },
     "Coil:Heating:Water": {
         "SPACE1-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE1-1 Damper Outlet",
+            "air_inlet_node_name": "SPACE1-1 PIU Fan Outlet",
             "air_outlet_node_name": "SPACE1-1 Supply Inlet",
             "maximum_water_flow_rate": "Autosize",
             "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
@@ -2049,7 +2105,7 @@
             "water_outlet_node_name": "SPACE1-1 Reheat Coil HW Outlet"
         },
         "SPACE2-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE2-1 Damper Outlet",
+            "air_inlet_node_name": "SPACE2-1 PIU Fan Outlet",
             "air_outlet_node_name": "SPACE2-1 Supply Inlet",
             "maximum_water_flow_rate": "Autosize",
             "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
@@ -2064,7 +2120,7 @@
             "water_outlet_node_name": "SPACE2-1 Reheat Coil HW Outlet"
         },
         "SPACE3-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE3-1 Damper Outlet",
+            "air_inlet_node_name": "SPACE3-1 PIU Fan Outlet",
             "air_outlet_node_name": "SPACE3-1 Supply Inlet",
             "maximum_water_flow_rate": "Autosize",
             "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
@@ -2079,7 +2135,7 @@
             "water_outlet_node_name": "SPACE3-1 Reheat Coil HW Outlet"
         },
         "SPACE4-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE4-1 Damper Outlet",
+            "air_inlet_node_name": "SPACE4-1 PIU Fan Outlet",
             "air_outlet_node_name": "SPACE4-1 Supply Inlet",
             "maximum_water_flow_rate": "Autosize",
             "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
@@ -2213,6 +2269,9 @@
                     "inlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"
                 },
                 {
+                    "inlet_branch_name": "SPACE5-1 Reheat Coil HW Branch"
+                },
+                {
                     "inlet_branch_name": "SPACE1-1 Reheat Coil HW Branch"
                 },
                 {
@@ -2223,9 +2282,6 @@
                 },
                 {
                     "inlet_branch_name": "SPACE4-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE5-1 Reheat Coil HW Branch"
                 },
                 {
                     "inlet_branch_name": "VAV Sys 1 Heating Coil HW Branch"
@@ -2296,6 +2352,9 @@
                     "outlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"
                 },
                 {
+                    "outlet_branch_name": "SPACE5-1 Reheat Coil HW Branch"
+                },
+                {
                     "outlet_branch_name": "SPACE1-1 Reheat Coil HW Branch"
                 },
                 {
@@ -2306,9 +2365,6 @@
                 },
                 {
                     "outlet_branch_name": "SPACE4-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE5-1 Reheat Coil HW Branch"
                 },
                 {
                     "outlet_branch_name": "VAV Sys 1 Heating Coil HW Branch"
@@ -2608,6 +2664,48 @@
             "fraction_radiant": 0.3,
             "schedule_name": "EQUIP-1",
             "zone_or_zonelist_name": "SPACE5-1"
+        }
+    },
+    "Fan:ConstantVolume": {
+        "SPACE1-1 PIU Fan": {
+            "air_inlet_node_name": "SPACE1-1 PIU Mixer Outlet",
+            "air_outlet_node_name": "SPACE1-1 PIU Fan Outlet",
+            "availability_schedule_name": "FanAvailSched",
+            "fan_total_efficiency": 0.7,
+            "maximum_flow_rate": "Autosize",
+            "motor_efficiency": 0.9,
+            "motor_in_airstream_fraction": 1,
+            "pressure_rise": 1000
+        },
+        "SPACE2-1 PIU Fan": {
+            "air_inlet_node_name": "SPACE2-1 PIU Mixer Outlet",
+            "air_outlet_node_name": "SPACE2-1 PIU Fan Outlet",
+            "availability_schedule_name": "FanAvailSched",
+            "fan_total_efficiency": 0.7,
+            "maximum_flow_rate": "Autosize",
+            "motor_efficiency": 0.9,
+            "motor_in_airstream_fraction": 1,
+            "pressure_rise": 1000
+        },
+        "SPACE3-1 PIU Fan": {
+            "air_inlet_node_name": "SPACE3-1 PIU Mixer Outlet",
+            "air_outlet_node_name": "SPACE3-1 PIU Fan Outlet",
+            "availability_schedule_name": "FanAvailSched",
+            "fan_total_efficiency": 0.7,
+            "maximum_flow_rate": "Autosize",
+            "motor_efficiency": 0.9,
+            "motor_in_airstream_fraction": 1,
+            "pressure_rise": 1000
+        },
+        "SPACE4-1 PIU Fan": {
+            "air_inlet_node_name": "SPACE4-1 PIU Mixer Outlet",
+            "air_outlet_node_name": "SPACE4-1 PIU Fan Outlet",
+            "availability_schedule_name": "FanAvailSched",
+            "fan_total_efficiency": 0.7,
+            "maximum_flow_rate": "Autosize",
+            "motor_efficiency": 0.9,
+            "motor_in_airstream_fraction": 1,
+            "pressure_rise": 1000
         }
     },
     "Fan:VariableVolume": {
@@ -3159,59 +3257,64 @@
         "Output:Variable 14": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Heating Coil Heating Rate"
+            "variable_name": "Fan Electricity Rate"
         },
         "Output:Variable 15": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Coil Total Cooling Rate"
+            "variable_name": "Heating Coil Heating Rate"
         },
         "Output:Variable 16": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Coil Sensible Cooling Rate"
+            "variable_name": "Cooling Coil Total Cooling Rate"
         },
         "Output:Variable 17": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Plant Supply Side Outlet Temperature"
+            "variable_name": "Cooling Coil Sensible Cooling Rate"
         },
         "Output:Variable 18": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Chiller Evaporator Cooling Rate"
+            "variable_name": "Plant Supply Side Outlet Temperature"
         },
         "Output:Variable 19": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Chiller Condenser Heat Transfer Rate"
+            "variable_name": "Chiller Evaporator Cooling Rate"
         },
         "Output:Variable 20": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Chiller Electricity Rate"
+            "variable_name": "Chiller Condenser Heat Transfer Rate"
         },
         "Output:Variable 21": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Chiller COP"
+            "variable_name": "Chiller Electricity Rate"
         },
         "Output:Variable 22": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Boiler Heating Rate"
+            "variable_name": "Chiller COP"
         },
         "Output:Variable 23": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Boiler NaturalGas Rate"
+            "variable_name": "Boiler Heating Rate"
         },
         "Output:Variable 24": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Tower Heat Transfer Rate"
+            "variable_name": "Boiler NaturalGas Rate"
         },
         "Output:Variable 25": {
+            "key_value": "*",
+            "reporting_frequency": "Hourly",
+            "variable_name": "Cooling Tower Heat Transfer Rate"
+        },
+        "Output:Variable 26": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
             "variable_name": "Cooling Tower Fan Electricity Rate"
@@ -4371,6 +4474,24 @@
             "cooling_design_air_flow_method": "DesignDay",
             "cooling_design_air_flow_rate": 0,
             "cooling_minimum_air_flow_fraction": 0,
+            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE5-1",
+            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE5-1",
+            "heating_design_air_flow_method": "DesignDay",
+            "heating_design_air_flow_rate": 0,
+            "heating_maximum_air_flow_fraction": 0,
+            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
+            "zone_cooling_design_supply_air_temperature": 12.8,
+            "zone_cooling_design_supply_air_temperature_difference": 11.11,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_humidity_ratio": 0.008,
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_or_zonelist_name": "SPACE5-1"
+        },
+        "Sizing:Zone 2": {
+            "cooling_design_air_flow_method": "DesignDay",
+            "cooling_design_air_flow_rate": 0,
+            "cooling_minimum_air_flow_fraction": 0,
             "design_specification_outdoor_air_object_name": "SZ DSOA SPACE1-1",
             "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE1-1",
             "heating_design_air_flow_method": "DesignDay",
@@ -4385,7 +4506,7 @@
             "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_or_zonelist_name": "SPACE1-1"
         },
-        "Sizing:Zone 2": {
+        "Sizing:Zone 3": {
             "cooling_design_air_flow_method": "DesignDay",
             "cooling_design_air_flow_rate": 0,
             "cooling_minimum_air_flow_fraction": 0,
@@ -4403,7 +4524,7 @@
             "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_or_zonelist_name": "SPACE2-1"
         },
-        "Sizing:Zone 3": {
+        "Sizing:Zone 4": {
             "cooling_design_air_flow_method": "DesignDay",
             "cooling_design_air_flow_rate": 0,
             "cooling_minimum_air_flow_fraction": 0,
@@ -4421,7 +4542,7 @@
             "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_or_zonelist_name": "SPACE3-1"
         },
-        "Sizing:Zone 4": {
+        "Sizing:Zone 5": {
             "cooling_design_air_flow_method": "DesignDay",
             "cooling_design_air_flow_rate": 0,
             "cooling_minimum_air_flow_fraction": 0,
@@ -4438,24 +4559,6 @@
             "zone_heating_design_supply_air_temperature": 50.0,
             "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_or_zonelist_name": "SPACE4-1"
-        },
-        "Sizing:Zone 5": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE5-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE5-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE5-1"
         }
     },
     "SizingPeriod:DesignDay": {
@@ -4689,23 +4792,23 @@
     "ZoneHVAC:AirDistributionUnit": {
         "SPACE1-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE1-1 Supply Inlet",
-            "air_terminal_name": "SPACE1-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE1-1 VAV Series PIU Reheat",
+            "air_terminal_object_type": "AirTerminal:SingleDuct:SeriesPIU:Reheat"
         },
         "SPACE2-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "air_terminal_name": "SPACE2-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE2-1 VAV Series PIU Reheat",
+            "air_terminal_object_type": "AirTerminal:SingleDuct:SeriesPIU:Reheat"
         },
         "SPACE3-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "air_terminal_name": "SPACE3-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE3-1 VAV Series PIU Reheat",
+            "air_terminal_object_type": "AirTerminal:SingleDuct:SeriesPIU:Reheat"
         },
         "SPACE4-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "air_terminal_name": "SPACE4-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE4-1 VAV Series PIU Reheat",
+            "air_terminal_object_type": "AirTerminal:SingleDuct:SeriesPIU:Reheat"
         },
         "SPACE5-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE5-1 Supply Inlet",
@@ -4715,39 +4818,43 @@
     },
     "ZoneHVAC:EquipmentConnections": {
         "ZoneHVAC:EquipmentConnections 1": {
+            "zone_air_inlet_node_or_nodelist_name": "SPACE5-1 Supply Inlet",
+            "zone_air_node_name": "SPACE5-1 Zone Air Node",
+            "zone_conditioning_equipment_list_name": "SPACE5-1 Equipment",
+            "zone_name": "SPACE5-1",
+            "zone_return_air_node_or_nodelist_name": "SPACE5-1 Return Outlet"
+        },
+        "ZoneHVAC:EquipmentConnections 2": {
+            "zone_air_exhaust_node_or_nodelist_name": "SPACE1-1 PIU Secondary Inlet",
             "zone_air_inlet_node_or_nodelist_name": "SPACE1-1 Supply Inlet",
             "zone_air_node_name": "SPACE1-1 Zone Air Node",
             "zone_conditioning_equipment_list_name": "SPACE1-1 Equipment",
             "zone_name": "SPACE1-1",
             "zone_return_air_node_or_nodelist_name": "SPACE1-1 Return Outlet"
         },
-        "ZoneHVAC:EquipmentConnections 2": {
+        "ZoneHVAC:EquipmentConnections 3": {
+            "zone_air_exhaust_node_or_nodelist_name": "SPACE2-1 PIU Secondary Inlet",
             "zone_air_inlet_node_or_nodelist_name": "SPACE2-1 Supply Inlet",
             "zone_air_node_name": "SPACE2-1 Zone Air Node",
             "zone_conditioning_equipment_list_name": "SPACE2-1 Equipment",
             "zone_name": "SPACE2-1",
             "zone_return_air_node_or_nodelist_name": "SPACE2-1 Return Outlet"
         },
-        "ZoneHVAC:EquipmentConnections 3": {
+        "ZoneHVAC:EquipmentConnections 4": {
+            "zone_air_exhaust_node_or_nodelist_name": "SPACE3-1 PIU Secondary Inlet",
             "zone_air_inlet_node_or_nodelist_name": "SPACE3-1 Supply Inlet",
             "zone_air_node_name": "SPACE3-1 Zone Air Node",
             "zone_conditioning_equipment_list_name": "SPACE3-1 Equipment",
             "zone_name": "SPACE3-1",
             "zone_return_air_node_or_nodelist_name": "SPACE3-1 Return Outlet"
         },
-        "ZoneHVAC:EquipmentConnections 4": {
+        "ZoneHVAC:EquipmentConnections 5": {
+            "zone_air_exhaust_node_or_nodelist_name": "SPACE4-1 PIU Secondary Inlet",
             "zone_air_inlet_node_or_nodelist_name": "SPACE4-1 Supply Inlet",
             "zone_air_node_name": "SPACE4-1 Zone Air Node",
             "zone_conditioning_equipment_list_name": "SPACE4-1 Equipment",
             "zone_name": "SPACE4-1",
             "zone_return_air_node_or_nodelist_name": "SPACE4-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 5": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE5-1 Supply Inlet",
-            "zone_air_node_name": "SPACE5-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE5-1 Equipment",
-            "zone_name": "SPACE5-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE5-1 Return Outlet"
         }
     },
     "ZoneHVAC:EquipmentList": {

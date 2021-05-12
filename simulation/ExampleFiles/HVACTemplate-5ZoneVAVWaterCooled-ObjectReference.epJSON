@@ -176,12 +176,6 @@
             "zone_minimum_air_flow_input_method": "Constant"
         }
     },
-    "AvailabilityManager:LowTemperatureTurnOff": {
-        "Chilled Water Loop Availability Low Temp Off": {
-            "sensor_node_name": "Chilled Water Loop Outside Air Sensor",
-            "temperature": 7.22
-        }
-    },
     "AvailabilityManager:NightCycle": {
         "VAV Sys 1 Availability": {
             "applicability_schedule_name": "HVACTemplate-Always 1",
@@ -193,14 +187,6 @@
         }
     },
     "AvailabilityManagerAssignmentList": {
-        "Chilled Water Loop Availability List": {
-            "managers": [
-                {
-                    "availability_manager_name": "Chilled Water Loop Availability Low Temp Off",
-                    "availability_manager_object_type": "AvailabilityManager:LowTemperatureTurnOff"
-                }
-            ]
-        },
         "VAV Sys 1 Availability Managers": {
             "managers": [
                 {
@@ -2457,7 +2443,6 @@
             "design_water_flow_rate": "Autosize",
             "drift_loss_percent": 0.008,
             "evaporation_loss_mode": "SaturatedExit",
-            "free_convection_capacity": "Autocalculate",
             "free_convection_regime_air_flow_rate": "Autocalculate",
             "free_convection_regime_u_factor_times_area_value": "Autocalculate",
             "outdoor_air_inlet_node_name": "Main Tower Cooling Tower Outdoor Air Inlet Node",
@@ -2997,7 +2982,7 @@
         }
     },
     "OutdoorAir:Node": {
-        "Chilled Water Loop Outside Air Sensor": {
+        "Main Tower Connection Cooling Tower Outdoor Air Inlet Node": {
             "height_above_ground": -1
         },
         "Main Tower Cooling Tower Outdoor Air Inlet Node": {
@@ -3382,7 +3367,6 @@
     },
     "PlantLoop": {
         "Chilled Water Loop Chilled Water Loop": {
-            "availability_manager_list_name": "Chilled Water Loop Availability List",
             "common_pipe_simulation": "None",
             "demand_side_branch_list_name": "Chilled Water Loop ChW Demand Side Branches",
             "demand_side_connector_list_name": "Chilled Water Loop ChW Demand Side Connectors",

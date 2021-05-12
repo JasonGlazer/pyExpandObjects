@@ -1,54 +1,55 @@
 {
     "AirLoopHVAC": {
-        "VAV Sys 1": {
-            "availability_manager_list_name": "VAV Sys 1 Availability Managers",
-            "branch_list_name": "VAV Sys 1 Branches",
-            "controller_list_name": "VAV Sys 1 Controllers",
-            "demand_side_inlet_node_names": "VAV Sys 1 Supply Path Inlet",
-            "demand_side_outlet_node_name": "VAV Sys 1 Return Air Outlet",
+        "SYS 1": {
+            "availability_manager_list_name": "SYS 1 Availability Managers",
+            "branch_list_name": "SYS 1 Branches",
+            "connector_list_name": "SYS 1 Connectors",
+            "controller_list_name": "SYS 1 Controllers",
+            "demand_side_inlet_node_names": "SYS 1 Supply Path Inlets",
+            "demand_side_outlet_node_name": "SYS 1 Return Air Outlet",
             "design_supply_air_flow_rate": "Autosize",
-            "supply_side_inlet_node_name": "VAV Sys 1 Air Loop Inlet",
-            "supply_side_outlet_node_names": "VAV Sys 1 Supply Fan Outlet"
+            "supply_side_inlet_node_name": "SYS 1 Air Loop Inlet",
+            "supply_side_outlet_node_names": "SYS 1 Supply Side Outlets"
         }
     },
     "AirLoopHVAC:ControllerList": {
-        "VAV Sys 1 Controllers": {
-            "controller_1_name": "VAV Sys 1 Cooling Coil Controller",
+        "SYS 1 Controllers": {
+            "controller_1_name": "SYS 1 Heating Coil Controller",
             "controller_1_object_type": "Controller:WaterCoil",
-            "controller_2_name": "VAV Sys 1 Heating Coil Controller",
+            "controller_2_name": "SYS 1 Cooling Coil Controller",
             "controller_2_object_type": "Controller:WaterCoil"
         },
-        "VAV Sys 1 OA System Controllers": {
-            "controller_1_name": "VAV Sys 1 OA Controller",
+        "SYS 1 OA System Controllers": {
+            "controller_1_name": "SYS 1 OA Controller",
             "controller_1_object_type": "Controller:OutdoorAir"
         }
     },
     "AirLoopHVAC:OutdoorAirSystem": {
-        "VAV Sys 1 OA System": {
-            "availability_manager_list_name": "VAV Sys 1 Availability Managers",
-            "controller_list_name": "VAV Sys 1 OA System Controllers",
-            "outdoor_air_equipment_list_name": "VAV Sys 1 OA System Equipment"
+        "SYS 1 OA System": {
+            "availability_manager_list_name": "SYS 1 Availability Managers",
+            "controller_list_name": "SYS 1 OA System Controllers",
+            "outdoor_air_equipment_list_name": "SYS 1 OA System Equipment"
         }
     },
     "AirLoopHVAC:OutdoorAirSystem:EquipmentList": {
-        "VAV Sys 1 OA System Equipment": {
-            "component_1_name": "VAV Sys 1 OA Mixing Box",
+        "SYS 1 OA System Equipment": {
+            "component_1_name": "SYS 1 OA Mixing Box",
             "component_1_object_type": "OutdoorAir:Mixer"
         }
     },
     "AirLoopHVAC:ReturnPath": {
-        "VAV Sys 1 Return Path": {
+        "SYS 1 Return Path": {
             "components": [
                 {
-                    "component_name": "VAV Sys 1 Return Plenum",
+                    "component_name": "SYS 1 Return Plenum",
                     "component_object_type": "AirLoopHVAC:ReturnPlenum"
                 }
             ],
-            "return_air_path_outlet_node_name": "VAV Sys 1 Return Air Outlet"
+            "return_air_path_outlet_node_name": "SYS 1 Return Air Outlet"
         }
     },
     "AirLoopHVAC:ReturnPlenum": {
-        "VAV Sys 1 Return Plenum": {
+        "SYS 1 Return Plenum": {
             "nodes": [
                 {
                     "inlet_node_name": "SPACE1-1 Return Outlet"
@@ -66,114 +67,103 @@
                     "inlet_node_name": "SPACE5-1 Return Outlet"
                 }
             ],
-            "outlet_node_name": "VAV Sys 1 Return Air Outlet",
+            "outlet_node_name": "SYS 1 Return Air Outlet",
             "zone_name": "PLENUM-1",
             "zone_node_name": "PLENUM-1 Zone Air Node"
         }
     },
     "AirLoopHVAC:SupplyPath": {
-        "VAV Sys 1 Supply Path": {
+        "SYS 1 Cold Supply Path": {
             "components": [
                 {
-                    "component_name": "VAV Sys 1 Zone Splitter",
+                    "component_name": "SYS 1 Cold Zone Splitter",
                     "component_object_type": "AirLoopHVAC:ZoneSplitter"
                 }
             ],
-            "supply_air_path_inlet_node_name": "VAV Sys 1 Supply Path Inlet"
+            "supply_air_path_inlet_node_name": "SYS 1 Cold Supply Path Inlet"
+        },
+        "SYS 1 Hot Supply Path": {
+            "components": [
+                {
+                    "component_name": "SYS 1 Hot Zone Splitter",
+                    "component_object_type": "AirLoopHVAC:ZoneSplitter"
+                }
+            ],
+            "supply_air_path_inlet_node_name": "SYS 1 Hot Supply Path Inlet"
         }
     },
     "AirLoopHVAC:ZoneSplitter": {
-        "VAV Sys 1 Zone Splitter": {
-            "inlet_node_name": "VAV Sys 1 Supply Path Inlet",
+        "SYS 1 Cold Zone Splitter": {
+            "inlet_node_name": "SYS 1 Cold Supply Path Inlet",
             "nodes": [
                 {
-                    "outlet_node_name": "SPACE1-1 Zone Equip Inlet"
+                    "outlet_node_name": "SPACE1-1 Zone Equip Cold Inlet"
                 },
                 {
-                    "outlet_node_name": "SPACE2-1 Zone Equip Inlet"
+                    "outlet_node_name": "SPACE2-1 Zone Equip Cold Inlet"
                 },
                 {
-                    "outlet_node_name": "SPACE3-1 Zone Equip Inlet"
+                    "outlet_node_name": "SPACE3-1 Zone Equip Cold Inlet"
                 },
                 {
-                    "outlet_node_name": "SPACE4-1 Zone Equip Inlet"
+                    "outlet_node_name": "SPACE4-1 Zone Equip Cold Inlet"
                 },
                 {
-                    "outlet_node_name": "SPACE5-1 Zone Equip Inlet"
+                    "outlet_node_name": "SPACE5-1 Zone Equip Cold Inlet"
+                }
+            ]
+        },
+        "SYS 1 Hot Zone Splitter": {
+            "inlet_node_name": "SYS 1 Hot Supply Path Inlet",
+            "nodes": [
+                {
+                    "outlet_node_name": "SPACE1-1 Zone Equip Hot Inlet"
+                },
+                {
+                    "outlet_node_name": "SPACE2-1 Zone Equip Hot Inlet"
+                },
+                {
+                    "outlet_node_name": "SPACE3-1 Zone Equip Hot Inlet"
+                },
+                {
+                    "outlet_node_name": "SPACE4-1 Zone Equip Hot Inlet"
+                },
+                {
+                    "outlet_node_name": "SPACE5-1 Zone Equip Hot Inlet"
                 }
             ]
         }
     },
-    "AirTerminal:SingleDuct:VAV:Reheat": {
-        "SPACE1-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE1-1 Zone Equip Inlet",
+    "AirTerminal:DualDuct:ConstantVolume": {
+        "SPACE1-1 Dual Duct": {
             "air_outlet_node_name": "SPACE1-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE1-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "maximum_hot_water_or_steam_flow_rate": "Autosize",
-            "minimum_hot_water_or_steam_flow_rate": 0,
-            "reheat_coil_name": "SPACE1-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "cold_air_inlet_node_name": "SPACE1-1 Zone Equip Cold Inlet",
+            "hot_air_inlet_node_name": "SPACE1-1 Zone Equip Hot Inlet",
+            "maximum_air_flow_rate": "Autosize"
         },
-        "SPACE2-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE2-1 Zone Equip Inlet",
+        "SPACE2-1 Dual Duct": {
             "air_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE2-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "maximum_hot_water_or_steam_flow_rate": "Autosize",
-            "minimum_hot_water_or_steam_flow_rate": 0,
-            "reheat_coil_name": "SPACE2-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "cold_air_inlet_node_name": "SPACE2-1 Zone Equip Cold Inlet",
+            "hot_air_inlet_node_name": "SPACE2-1 Zone Equip Hot Inlet",
+            "maximum_air_flow_rate": "Autosize"
         },
-        "SPACE3-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE3-1 Zone Equip Inlet",
+        "SPACE3-1 Dual Duct": {
             "air_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE3-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "maximum_hot_water_or_steam_flow_rate": "Autosize",
-            "minimum_hot_water_or_steam_flow_rate": 0,
-            "reheat_coil_name": "SPACE3-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "cold_air_inlet_node_name": "SPACE3-1 Zone Equip Cold Inlet",
+            "hot_air_inlet_node_name": "SPACE3-1 Zone Equip Hot Inlet",
+            "maximum_air_flow_rate": "Autosize"
         },
-        "SPACE4-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE4-1 Zone Equip Inlet",
+        "SPACE4-1 Dual Duct": {
             "air_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE4-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "maximum_hot_water_or_steam_flow_rate": "Autosize",
-            "minimum_hot_water_or_steam_flow_rate": 0,
-            "reheat_coil_name": "SPACE4-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "cold_air_inlet_node_name": "SPACE4-1 Zone Equip Cold Inlet",
+            "hot_air_inlet_node_name": "SPACE4-1 Zone Equip Hot Inlet",
+            "maximum_air_flow_rate": "Autosize"
         },
-        "SPACE5-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE5-1 Zone Equip Inlet",
+        "SPACE5-1 Dual Duct": {
             "air_outlet_node_name": "SPACE5-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE5-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "maximum_hot_water_or_steam_flow_rate": "Autosize",
-            "minimum_hot_water_or_steam_flow_rate": 0,
-            "reheat_coil_name": "SPACE5-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Water",
-            "zone_minimum_air_flow_input_method": "Constant"
+            "cold_air_inlet_node_name": "SPACE5-1 Zone Equip Cold Inlet",
+            "hot_air_inlet_node_name": "SPACE5-1 Zone Equip Hot Inlet",
+            "maximum_air_flow_rate": "Autosize"
         }
     },
     "AvailabilityManager:LowTemperatureTurnOff": {
@@ -183,7 +173,7 @@
         }
     },
     "AvailabilityManager:NightCycle": {
-        "VAV Sys 1 Availability": {
+        "SYS 1 Availability": {
             "applicability_schedule_name": "HVACTemplate-Always 1",
             "control_type": "CycleOnAny",
             "cycling_run_time": 3600,
@@ -201,10 +191,10 @@
                 }
             ]
         },
-        "VAV Sys 1 Availability Managers": {
+        "SYS 1 Availability Managers": {
             "managers": [
                 {
-                    "availability_manager_name": "VAV Sys 1 Availability",
+                    "availability_manager_name": "SYS 1 Availability",
                     "availability_manager_object_type": "AvailabilityManager:NightCycle"
                 }
             ]
@@ -450,101 +440,77 @@
                 }
             ]
         },
-        "SPACE1-1 Reheat Coil HW Branch": {
+        "SYS 1 Cold Branch": {
             "components": [
                 {
-                    "component_inlet_node_name": "SPACE1-1 Reheat Coil HW Inlet",
-                    "component_name": "SPACE1-1 Reheat Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE1-1 Reheat Coil HW Outlet"
-                }
-            ]
-        },
-        "SPACE2-1 Reheat Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE2-1 Reheat Coil HW Inlet",
-                    "component_name": "SPACE2-1 Reheat Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE2-1 Reheat Coil HW Outlet"
-                }
-            ]
-        },
-        "SPACE3-1 Reheat Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE3-1 Reheat Coil HW Inlet",
-                    "component_name": "SPACE3-1 Reheat Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE3-1 Reheat Coil HW Outlet"
-                }
-            ]
-        },
-        "SPACE4-1 Reheat Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE4-1 Reheat Coil HW Inlet",
-                    "component_name": "SPACE4-1 Reheat Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE4-1 Reheat Coil HW Outlet"
-                }
-            ]
-        },
-        "SPACE5-1 Reheat Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE5-1 Reheat Coil HW Inlet",
-                    "component_name": "SPACE5-1 Reheat Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE5-1 Reheat Coil HW Outlet"
-                }
-            ]
-        },
-        "VAV Sys 1 Cooling Coil ChW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "VAV Sys 1 Cooling Coil ChW Inlet",
-                    "component_name": "VAV Sys 1 Cooling Coil",
+                    "component_inlet_node_name": "SYS 1 Cold Duct Inlet",
+                    "component_name": "SYS 1 Cooling Coil",
                     "component_object_type": "Coil:Cooling:Water",
-                    "component_outlet_node_name": "VAV Sys 1 Cooling Coil ChW Outlet"
+                    "component_outlet_node_name": "SYS 1 Cooling Coil Outlet"
+                },
+                {
+                    "component_inlet_node_name": "SYS 1 Cooling Coil Outlet",
+                    "component_name": "SYS 1 Cold Supply Fan",
+                    "component_object_type": "Fan:ConstantVolume",
+                    "component_outlet_node_name": "SYS 1 Cold Supply Fan Outlet"
                 }
             ]
         },
-        "VAV Sys 1 Heating Coil HW Branch": {
+        "SYS 1 Cooling Coil ChW Branch": {
             "components": [
                 {
-                    "component_inlet_node_name": "VAV Sys 1 Heating Coil HW Inlet",
-                    "component_name": "VAV Sys 1 Heating Coil",
+                    "component_inlet_node_name": "SYS 1 Cooling Coil ChW Inlet",
+                    "component_name": "SYS 1 Cooling Coil",
+                    "component_object_type": "Coil:Cooling:Water",
+                    "component_outlet_node_name": "SYS 1 Cooling Coil ChW Outlet"
+                }
+            ]
+        },
+        "SYS 1 Heating Coil HW Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "SYS 1 Heating Coil HW Inlet",
+                    "component_name": "SYS 1 Heating Coil",
                     "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "VAV Sys 1 Heating Coil HW Outlet"
+                    "component_outlet_node_name": "SYS 1 Heating Coil HW Outlet"
                 }
             ]
         },
-        "VAV Sys 1 Main Branch": {
+        "SYS 1 Hot Branch": {
             "components": [
                 {
-                    "component_inlet_node_name": "VAV Sys 1 Air Loop Inlet",
-                    "component_name": "VAV Sys 1 OA System",
+                    "component_inlet_node_name": "SYS 1 Hot Duct Inlet",
+                    "component_name": "SYS 1 Hot Supply Fan",
+                    "component_object_type": "Fan:ConstantVolume",
+                    "component_outlet_node_name": "SYS 1 Hot Supply Fan Outlet"
+                },
+                {
+                    "component_inlet_node_name": "SYS 1 Hot Supply Fan Outlet",
+                    "component_name": "SYS 1 Heating Coil",
+                    "component_object_type": "Coil:Heating:Water",
+                    "component_outlet_node_name": "SYS 1 Heating Coil Outlet"
+                },
+                {
+                    "component_inlet_node_name": "SYS 1 Heating Coil Outlet",
+                    "component_name": "SYS 1 Humidifier",
+                    "component_object_type": "Humidifier:Steam:Electric",
+                    "component_outlet_node_name": "SYS 1 Humidifier Outlet"
+                }
+            ]
+        },
+        "SYS 1 Main Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "SYS 1 Air Loop Inlet",
+                    "component_name": "SYS 1 Return Fan",
+                    "component_object_type": "Fan:ConstantVolume",
+                    "component_outlet_node_name": "SYS 1 Return Fan Outlet"
+                },
+                {
+                    "component_inlet_node_name": "SYS 1 Return Fan Outlet",
+                    "component_name": "SYS 1 OA System",
                     "component_object_type": "AirLoopHVAC:OutdoorAirSystem",
-                    "component_outlet_node_name": "VAV Sys 1 Mixed Air Outlet"
-                },
-                {
-                    "component_inlet_node_name": "VAV Sys 1 Mixed Air Outlet",
-                    "component_name": "VAV Sys 1 Cooling Coil",
-                    "component_object_type": "Coil:Cooling:Water",
-                    "component_outlet_node_name": "VAV Sys 1 Cooling Coil Outlet"
-                },
-                {
-                    "component_inlet_node_name": "VAV Sys 1 Cooling Coil Outlet",
-                    "component_name": "VAV Sys 1 Heating Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "VAV Sys 1 Heating Coil Outlet"
-                },
-                {
-                    "component_inlet_node_name": "VAV Sys 1 Heating Coil Outlet",
-                    "component_name": "VAV Sys 1 Supply Fan",
-                    "component_object_type": "Fan:VariableVolume",
-                    "component_outlet_node_name": "VAV Sys 1 Supply Fan Outlet"
+                    "component_outlet_node_name": "SYS 1 Mixed Air Outlet"
                 }
             ]
         }
@@ -556,7 +522,7 @@
                     "branch_name": "Chilled Water Loop ChW Demand Inlet Branch"
                 },
                 {
-                    "branch_name": "VAV Sys 1 Cooling Coil ChW Branch"
+                    "branch_name": "SYS 1 Cooling Coil ChW Branch"
                 },
                 {
                     "branch_name": "Chilled Water Loop ChW Demand Bypass Branch"
@@ -620,22 +586,7 @@
                     "branch_name": "Hot Water Loop HW Demand Inlet Branch"
                 },
                 {
-                    "branch_name": "SPACE1-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "SPACE2-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "SPACE3-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "SPACE4-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "SPACE5-1 Reheat Coil HW Branch"
-                },
-                {
-                    "branch_name": "VAV Sys 1 Heating Coil HW Branch"
+                    "branch_name": "SYS 1 Heating Coil HW Branch"
                 },
                 {
                     "branch_name": "Hot Water Loop HW Demand Bypass Branch"
@@ -661,10 +612,16 @@
                 }
             ]
         },
-        "VAV Sys 1 Branches": {
+        "SYS 1 Branches": {
             "branches": [
                 {
-                    "branch_name": "VAV Sys 1 Main Branch"
+                    "branch_name": "SYS 1 Main Branch"
+                },
+                {
+                    "branch_name": "SYS 1 Hot Branch"
+                },
+                {
+                    "branch_name": "SYS 1 Cold Branch"
                 }
             ]
         }
@@ -2016,9 +1973,9 @@
         }
     },
     "Coil:Cooling:Water": {
-        "VAV Sys 1 Cooling Coil": {
-            "air_inlet_node_name": "VAV Sys 1 Mixed Air Outlet",
-            "air_outlet_node_name": "VAV Sys 1 Cooling Coil Outlet",
+        "SYS 1 Cooling Coil": {
+            "air_inlet_node_name": "SYS 1 Cold Duct Inlet",
+            "air_outlet_node_name": "SYS 1 Cooling Coil Outlet",
             "design_air_flow_rate": "Autosize",
             "design_inlet_air_humidity_ratio": "Autosize",
             "design_inlet_air_temperature": "Autosize",
@@ -2028,100 +1985,24 @@
             "design_water_flow_rate": "Autosize",
             "heat_exchanger_configuration": "CrossFlow",
             "type_of_analysis": "DetailedAnalysis",
-            "water_inlet_node_name": "VAV Sys 1 Cooling Coil ChW Inlet",
-            "water_outlet_node_name": "VAV Sys 1 Cooling Coil ChW Outlet"
+            "water_inlet_node_name": "SYS 1 Cooling Coil ChW Inlet",
+            "water_outlet_node_name": "SYS 1 Cooling Coil ChW Outlet"
         }
     },
     "Coil:Heating:Water": {
-        "SPACE1-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE1-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE1-1 Supply Inlet",
+        "SYS 1 Heating Coil": {
+            "air_inlet_node_name": "SYS 1 Hot Supply Fan Outlet",
+            "air_outlet_node_name": "SYS 1 Heating Coil Outlet",
             "maximum_water_flow_rate": "Autosize",
             "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
             "rated_inlet_air_temperature": 16.6,
             "rated_inlet_water_temperature": 82.2,
             "rated_outlet_air_temperature": 32.2,
             "rated_outlet_water_temperature": 71.1,
             "rated_ratio_for_air_and_water_convection": 0.5,
             "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE1-1 Reheat Coil HW Inlet",
-            "water_outlet_node_name": "SPACE1-1 Reheat Coil HW Outlet"
-        },
-        "SPACE2-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE2-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE2-1 Reheat Coil HW Inlet",
-            "water_outlet_node_name": "SPACE2-1 Reheat Coil HW Outlet"
-        },
-        "SPACE3-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE3-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE3-1 Reheat Coil HW Inlet",
-            "water_outlet_node_name": "SPACE3-1 Reheat Coil HW Outlet"
-        },
-        "SPACE4-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE4-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE4-1 Reheat Coil HW Inlet",
-            "water_outlet_node_name": "SPACE4-1 Reheat Coil HW Outlet"
-        },
-        "SPACE5-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE5-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE5-1 Supply Inlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE5-1 Reheat Coil HW Inlet",
-            "water_outlet_node_name": "SPACE5-1 Reheat Coil HW Outlet"
-        },
-        "VAV Sys 1 Heating Coil": {
-            "air_inlet_node_name": "VAV Sys 1 Cooling Coil Outlet",
-            "air_outlet_node_name": "VAV Sys 1 Heating Coil Outlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "VAV Sys 1 Heating Coil HW Inlet",
-            "water_outlet_node_name": "VAV Sys 1 Heating Coil HW Outlet"
+            "water_inlet_node_name": "SYS 1 Heating Coil HW Inlet",
+            "water_outlet_node_name": "SYS 1 Heating Coil HW Outlet"
         }
     },
     "CondenserEquipmentList": {
@@ -2169,7 +2050,7 @@
                     "inlet_branch_name": "Chilled Water Loop ChW Demand Bypass Branch"
                 },
                 {
-                    "inlet_branch_name": "VAV Sys 1 Cooling Coil ChW Branch"
+                    "inlet_branch_name": "SYS 1 Cooling Coil ChW Branch"
                 }
             ],
             "outlet_branch_name": "Chilled Water Loop ChW Demand Outlet Branch"
@@ -2213,22 +2094,7 @@
                     "inlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"
                 },
                 {
-                    "inlet_branch_name": "SPACE1-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE2-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE3-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE4-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE5-1 Reheat Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "VAV Sys 1 Heating Coil HW Branch"
+                    "inlet_branch_name": "SYS 1 Heating Coil HW Branch"
                 }
             ],
             "outlet_branch_name": "Hot Water Loop HW Demand Outlet Branch"
@@ -2252,7 +2118,7 @@
                     "outlet_branch_name": "Chilled Water Loop ChW Demand Bypass Branch"
                 },
                 {
-                    "outlet_branch_name": "VAV Sys 1 Cooling Coil ChW Branch"
+                    "outlet_branch_name": "SYS 1 Cooling Coil ChW Branch"
                 }
             ],
             "inlet_branch_name": "Chilled Water Loop ChW Demand Inlet Branch"
@@ -2296,22 +2162,7 @@
                     "outlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"
                 },
                 {
-                    "outlet_branch_name": "SPACE1-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE2-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE3-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE4-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE5-1 Reheat Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "VAV Sys 1 Heating Coil HW Branch"
+                    "outlet_branch_name": "SYS 1 Heating Coil HW Branch"
                 }
             ],
             "inlet_branch_name": "Hot Water Loop HW Demand Inlet Branch"
@@ -2326,6 +2177,17 @@
                 }
             ],
             "inlet_branch_name": "Hot Water Loop HW Supply Inlet Branch"
+        },
+        "SYS 1 Duct Splitter": {
+            "branches": [
+                {
+                    "outlet_branch_name": "SYS 1 Hot Branch"
+                },
+                {
+                    "outlet_branch_name": "SYS 1 Cold Branch"
+                }
+            ],
+            "inlet_branch_name": "SYS 1 Main Branch"
         }
     },
     "ConnectorList": {
@@ -2364,6 +2226,10 @@
             "connector_1_object_type": "Connector:Splitter",
             "connector_2_name": "Hot Water Loop HW Supply Mixer",
             "connector_2_object_type": "Connector:Mixer"
+        },
+        "SYS 1 Connectors": {
+            "connector_1_name": "SYS 1 Duct Splitter",
+            "connector_1_object_type": "Connector:Splitter"
         }
     },
     "Construction": {
@@ -2400,50 +2266,39 @@
         }
     },
     "Controller:OutdoorAir": {
-        "VAV Sys 1 OA Controller": {
-            "actuator_node_name": "VAV Sys 1 Outside Air Inlet",
+        "SYS 1 OA Controller": {
+            "actuator_node_name": "SYS 1 Outside Air Inlet",
             "economizer_control_action_type": "ModulateFlow",
             "economizer_control_type": "DifferentialDryBulb",
-            "economizer_maximum_limit_dry_bulb_temperature": 19,
-            "economizer_minimum_limit_dry_bulb_temperature": 4,
             "lockout_type": "NoLockout",
             "maximum_outdoor_air_flow_rate": "Autosize",
-            "minimum_limit_type": "FixedMinimum",
+            "minimum_limit_type": "ProportionalMinimum",
             "minimum_outdoor_air_flow_rate": "Autosize",
-            "minimum_outdoor_air_schedule_name": "Min OA Sched",
-            "mixed_air_node_name": "VAV Sys 1 Mixed Air Outlet",
-            "relief_air_outlet_node_name": "VAV Sys 1 Relief Air Outlet",
-            "return_air_node_name": "VAV Sys 1 Air Loop Inlet"
+            "mixed_air_node_name": "SYS 1 Mixed Air Outlet",
+            "relief_air_outlet_node_name": "SYS 1 Relief Air Outlet",
+            "return_air_node_name": "SYS 1 Return Fan Outlet"
         }
     },
     "Controller:WaterCoil": {
-        "VAV Sys 1 Cooling Coil Controller": {
+        "SYS 1 Cooling Coil Controller": {
             "action": "Reverse",
-            "actuator_node_name": "VAV Sys 1 Cooling Coil ChW Inlet",
+            "actuator_node_name": "SYS 1 Cooling Coil ChW Inlet",
             "actuator_variable": "Flow",
             "control_variable": "Temperature",
             "controller_convergence_tolerance": "Autosize",
             "maximum_actuated_flow": "Autosize",
             "minimum_actuated_flow": 0,
-            "sensor_node_name": "VAV Sys 1 Cooling Coil Outlet"
+            "sensor_node_name": "SYS 1 Cooling Coil Outlet"
         },
-        "VAV Sys 1 Heating Coil Controller": {
+        "SYS 1 Heating Coil Controller": {
             "action": "Normal",
-            "actuator_node_name": "VAV Sys 1 Heating Coil HW Inlet",
+            "actuator_node_name": "SYS 1 Heating Coil HW Inlet",
             "actuator_variable": "Flow",
             "control_variable": "Temperature",
             "controller_convergence_tolerance": "Autosize",
             "maximum_actuated_flow": "Autosize",
             "minimum_actuated_flow": 0,
-            "sensor_node_name": "VAV Sys 1 Heating Coil Outlet"
-        }
-    },
-    "ConvergenceLimits": {
-        "ConvergenceLimits 1": {
-            "maximum_hvac_iterations": 20,
-            "maximum_plant_iterations": 10,
-            "minimum_plant_iterations": 4,
-            "minimum_system_timestep": 1
+            "sensor_node_name": "SYS 1 Heating Coil Outlet"
         }
     },
     "CoolingTower:SingleSpeed": {
@@ -2512,32 +2367,32 @@
     "DesignSpecification:OutdoorAir": {
         "SZ DSOA SPACE1-1": {
             "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
+            "outdoor_air_flow_per_zone": 0,
+            "outdoor_air_flow_per_zone_floor_area": 0,
             "outdoor_air_method": "Flow/Person"
         },
         "SZ DSOA SPACE2-1": {
             "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
+            "outdoor_air_flow_per_zone": 0,
+            "outdoor_air_flow_per_zone_floor_area": 0,
             "outdoor_air_method": "Flow/Person"
         },
         "SZ DSOA SPACE3-1": {
             "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
+            "outdoor_air_flow_per_zone": 0,
+            "outdoor_air_flow_per_zone_floor_area": 0,
             "outdoor_air_method": "Flow/Person"
         },
         "SZ DSOA SPACE4-1": {
             "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
+            "outdoor_air_flow_per_zone": 0,
+            "outdoor_air_flow_per_zone_floor_area": 0,
             "outdoor_air_method": "Flow/Person"
         },
         "SZ DSOA SPACE5-1": {
             "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
+            "outdoor_air_flow_per_zone": 0,
+            "outdoor_air_flow_per_zone_floor_area": 0,
             "outdoor_air_method": "Flow/Person"
         }
     },
@@ -2610,23 +2465,36 @@
             "zone_or_zonelist_name": "SPACE5-1"
         }
     },
-    "Fan:VariableVolume": {
-        "VAV Sys 1 Supply Fan": {
-            "air_inlet_node_name": "VAV Sys 1 Heating Coil Outlet",
-            "air_outlet_node_name": "VAV Sys 1 Supply Fan Outlet",
+    "Fan:ConstantVolume": {
+        "SYS 1 Cold Supply Fan": {
+            "air_inlet_node_name": "SYS 1 Cooling Coil Outlet",
+            "air_outlet_node_name": "SYS 1 Cold Supply Fan Outlet",
             "availability_schedule_name": "FanAvailSched",
-            "fan_power_coefficient_1": 0.35071223,
-            "fan_power_coefficient_2": 0.30850535,
-            "fan_power_coefficient_3": -0.54137364,
-            "fan_power_coefficient_4": 0.87198823,
-            "fan_power_coefficient_5": 0,
-            "fan_power_minimum_flow_fraction": 0.25,
-            "fan_power_minimum_flow_rate_input_method": "Fraction",
             "fan_total_efficiency": 0.7,
             "maximum_flow_rate": "Autosize",
             "motor_efficiency": 0.9,
             "motor_in_airstream_fraction": 1,
-            "pressure_rise": 600
+            "pressure_rise": 1000
+        },
+        "SYS 1 Hot Supply Fan": {
+            "air_inlet_node_name": "SYS 1 Hot Duct Inlet",
+            "air_outlet_node_name": "SYS 1 Hot Supply Fan Outlet",
+            "availability_schedule_name": "FanAvailSched",
+            "fan_total_efficiency": 0.7,
+            "maximum_flow_rate": "Autosize",
+            "motor_efficiency": 0.9,
+            "motor_in_airstream_fraction": 1,
+            "pressure_rise": 1000
+        },
+        "SYS 1 Return Fan": {
+            "air_inlet_node_name": "SYS 1 Air Loop Inlet",
+            "air_outlet_node_name": "SYS 1 Return Fan Outlet",
+            "availability_schedule_name": "FanAvailSched",
+            "fan_total_efficiency": 0.7,
+            "maximum_flow_rate": "Autosize",
+            "motor_efficiency": 0.9,
+            "motor_in_airstream_fraction": 1,
+            "pressure_rise": 500
         }
     },
     "FenestrationSurface:Detailed": {
@@ -2763,6 +2631,16 @@
             "algorithm": "ConductionTransferFunction"
         }
     },
+    "Humidifier:Steam:Electric": {
+        "SYS 1 Humidifier": {
+            "air_inlet_node_name": "SYS 1 Heating Coil Outlet",
+            "air_outlet_node_name": "SYS 1 Humidifier Outlet",
+            "rated_capacity": 1e-06,
+            "rated_fan_power": 0,
+            "rated_power": "Autosize",
+            "standby_power": 0
+        }
+    },
     "Lights": {
         "SPACE1-1 Lights 1": {
             "design_level_calculation_method": "LightingLevel",
@@ -2771,7 +2649,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 1584,
-            "return_air_fraction": 0.2,
+            "return_air_fraction": 0,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE1-1"
         },
@@ -2782,7 +2660,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 684,
-            "return_air_fraction": 0.2,
+            "return_air_fraction": 0,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE2-1"
         },
@@ -2793,7 +2671,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 1584,
-            "return_air_fraction": 0.2,
+            "return_air_fraction": 0,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE3-1"
         },
@@ -2804,7 +2682,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 684,
-            "return_air_fraction": 0.2,
+            "return_air_fraction": 0,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE4-1"
         },
@@ -2815,7 +2693,7 @@
             "fraction_replaceable": 0,
             "fraction_visible": 0.2,
             "lighting_level": 2964,
-            "return_air_fraction": 0.2,
+            "return_air_fraction": 0,
             "schedule_name": "LIGHTS-1",
             "zone_or_zonelist_name": "SPACE5-1"
         }
@@ -2977,23 +2855,43 @@
                 }
             ]
         },
-        "VAV Sys 1 Mixed Air Nodes": {
+        "SYS 1 Cooling Setpoint Nodes": {
             "nodes": [
                 {
-                    "node_name": "VAV Sys 1 Cooling Coil Outlet"
+                    "node_name": "SYS 1 Mixed Air Outlet"
                 },
                 {
-                    "node_name": "VAV Sys 1 Mixed Air Outlet"
+                    "node_name": "SYS 1 Cooling Coil Outlet"
+                }
+            ]
+        },
+        "SYS 1 Supply Path Inlets": {
+            "nodes": [
+                {
+                    "node_name": "SYS 1 Hot Supply Path Inlet"
+                },
+                {
+                    "node_name": "SYS 1 Cold Supply Path Inlet"
+                }
+            ]
+        },
+        "SYS 1 Supply Side Outlets": {
+            "nodes": [
+                {
+                    "node_name": "SYS 1 Humidifier Outlet"
+                },
+                {
+                    "node_name": "SYS 1 Cold Supply Fan Outlet"
                 }
             ]
         }
     },
     "OutdoorAir:Mixer": {
-        "VAV Sys 1 OA Mixing Box": {
-            "mixed_air_node_name": "VAV Sys 1 Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "VAV Sys 1 Outside Air Inlet",
-            "relief_air_stream_node_name": "VAV Sys 1 Relief Air Outlet",
-            "return_air_stream_node_name": "VAV Sys 1 Air Loop Inlet"
+        "SYS 1 OA Mixing Box": {
+            "mixed_air_node_name": "SYS 1 Mixed Air Outlet",
+            "outdoor_air_stream_node_name": "SYS 1 Outside Air Inlet",
+            "relief_air_stream_node_name": "SYS 1 Relief Air Outlet",
+            "return_air_stream_node_name": "SYS 1 Return Fan Outlet"
         }
     },
     "OutdoorAir:Node": {
@@ -3008,7 +2906,7 @@
         "OutdoorAir:NodeList 1": {
             "nodes": [
                 {
-                    "node_or_nodelist_name": "VAV Sys 1 Outside Air Inlet"
+                    "node_or_nodelist_name": "SYS 1 Outside Air Inlet"
                 }
             ]
         }
@@ -3114,112 +3012,167 @@
         "Output:Variable 5": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Mean Air Temperature"
+            "variable_name": "Zone Mean Radiant Temperature"
         },
         "Output:Variable 6": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Mean Radiant Temperature"
+            "variable_name": "Zone Operative Temperature"
         },
         "Output:Variable 7": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Operative Temperature"
+            "variable_name": "Zone Thermal Comfort ASHRAE 55 Simple Model Summer or Winter Clothes Not Comfortable Time"
         },
         "Output:Variable 8": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Thermal Comfort ASHRAE 55 Simple Model Summer or Winter Clothes Not Comfortable Time"
+            "variable_name": "Zone Air Humidity Ratio"
         },
         "Output:Variable 9": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Air Humidity Ratio"
+            "variable_name": "Zone Air Relative Humidity"
         },
         "Output:Variable 10": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Air Relative Humidity"
+            "variable_name": "Zone Heating Setpoint Not Met While Occupied Time"
         },
         "Output:Variable 11": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Heating Setpoint Not Met While Occupied Time"
+            "variable_name": "Zone Cooling Setpoint Not Met While Occupied Time"
         },
         "Output:Variable 12": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Cooling Setpoint Not Met While Occupied Time"
+            "variable_name": "Heating Coil Heating Rate"
         },
         "Output:Variable 13": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Zone Air Terminal VAV Damper Position"
+            "variable_name": "Cooling Coil Total Cooling Rate"
         },
         "Output:Variable 14": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Heating Coil Heating Rate"
+            "variable_name": "Cooling Coil Sensible Cooling Rate"
         },
         "Output:Variable 15": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Coil Total Cooling Rate"
+            "variable_name": "Plant Supply Side Outlet Temperature"
         },
         "Output:Variable 16": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Coil Sensible Cooling Rate"
+            "variable_name": "Chiller Evaporator Cooling Rate"
         },
         "Output:Variable 17": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Plant Supply Side Outlet Temperature"
+            "variable_name": "Chiller Condenser Heat Transfer Rate"
         },
         "Output:Variable 18": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Chiller Evaporator Cooling Rate"
+            "variable_name": "Chiller Electricity Rate"
         },
         "Output:Variable 19": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Chiller Condenser Heat Transfer Rate"
+            "variable_name": "Chiller COP"
         },
         "Output:Variable 20": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Chiller Electricity Rate"
+            "variable_name": "Boiler Heating Rate"
         },
         "Output:Variable 21": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Chiller COP"
+            "variable_name": "Boiler NaturalGas Rate"
         },
         "Output:Variable 22": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Boiler Heating Rate"
+            "variable_name": "Cooling Tower Heat Transfer Rate"
         },
         "Output:Variable 23": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Boiler NaturalGas Rate"
+            "variable_name": "Cooling Tower Fan Electricity Rate"
         },
         "Output:Variable 24": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Tower Heat Transfer Rate"
+            "variable_name": "Fan Electricity Rate"
         },
         "Output:Variable 25": {
+            "key_value": "SYS 1 Mixed Air Outlet",
+            "reporting_frequency": "Hourly",
+            "variable_name": "System Node Temperature"
+        },
+        "Output:Variable 26": {
+            "key_value": "SYS 1 Mixed Air Outlet",
+            "reporting_frequency": "Hourly",
+            "variable_name": "System Node Standard Density Volume Flow Rate"
+        },
+        "Output:Variable 27": {
+            "key_value": "SYS 1 Hot Supply Path Inlet",
+            "reporting_frequency": "Hourly",
+            "variable_name": "System Node Temperature"
+        },
+        "Output:Variable 28": {
+            "key_value": "SYS 1 Hot Supply Path Inlet",
+            "reporting_frequency": "Hourly",
+            "variable_name": "System Node Standard Density Volume Flow Rate"
+        },
+        "Output:Variable 29": {
+            "key_value": "SYS 1 Cold Supply Path Inlet",
+            "reporting_frequency": "Hourly",
+            "variable_name": "System Node Temperature"
+        },
+        "Output:Variable 30": {
+            "key_value": "SYS 1 Cold Supply Path Inlet",
+            "reporting_frequency": "Hourly",
+            "variable_name": "System Node Standard Density Volume Flow Rate"
+        },
+        "Output:Variable 31": {
+            "key_value": "SYS 1 Cooling Coil Outlet",
+            "reporting_frequency": "Hourly",
+            "variable_name": "System Node Temperature"
+        },
+        "Output:Variable 32": {
+            "key_value": "SYS 1 Cooling Coil Outlet",
+            "reporting_frequency": "Hourly",
+            "variable_name": "System Node Setpoint Temperature"
+        },
+        "Output:Variable 33": {
+            "key_value": "SYS 1 Heating Coil Outlet",
+            "reporting_frequency": "Hourly",
+            "variable_name": "System Node Temperature"
+        },
+        "Output:Variable 34": {
+            "key_value": "SYS 1 Heating Coil Outlet",
+            "reporting_frequency": "Hourly",
+            "variable_name": "System Node Setpoint Temperature"
+        },
+        "Output:Variable 35": {
             "key_value": "*",
             "reporting_frequency": "Hourly",
-            "variable_name": "Cooling Tower Fan Electricity Rate"
+            "variable_name": "Zone Air Terminal Cold Supply Duct Damper Position"
+        },
+        "Output:Variable 36": {
+            "key_value": "*",
+            "reporting_frequency": "Hourly",
+            "variable_name": "Zone Air Terminal Hot Supply Duct Damper Position"
         }
     },
     "Output:VariableDictionary": {
         "Output:VariableDictionary 1": {
-            "key_field": "regular"
+            "key_field": "IDF"
         }
     },
     "OutputControl:Table:Style": {
@@ -3464,7 +3417,7 @@
         }
     },
     "RunPeriod": {
-        "Run Period 2": {
+        "Run Period 1": {
             "apply_weekend_holiday_rule": "No",
             "begin_day_of_month": 14,
             "begin_month": 1,
@@ -3476,7 +3429,7 @@
             "use_weather_file_rain_indicators": "Yes",
             "use_weather_file_snow_indicators": "Yes"
         },
-        "Run Period 3": {
+        "Run Period 2": {
             "apply_weekend_holiday_rule": "No",
             "begin_day_of_month": 7,
             "begin_month": 7,
@@ -3738,40 +3691,6 @@
             ],
             "schedule_type_limits_name": "HVACTemplate Any Number"
         },
-        "HVACTemplate-Always 10.0": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 10.0
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 12.8": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 12.8
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
         "HVACTemplate-Always 29.4": {
             "data": [
                 {
@@ -3785,6 +3704,40 @@
                 },
                 {
                     "field": 29.4
+                }
+            ],
+            "schedule_type_limits_name": "HVACTemplate Any Number"
+        },
+        "HVACTemplate-Always 30": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 30
+                }
+            ],
+            "schedule_type_limits_name": "HVACTemplate Any Number"
+        },
+        "HVACTemplate-Always 100": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 100
                 }
             ],
             "schedule_type_limits_name": "HVACTemplate Any Number"
@@ -3993,62 +3946,6 @@
             ],
             "schedule_type_limits_name": "Fraction"
         },
-        "Min OA Sched": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: WeekDays CustomDay1 CustomDay2"
-                },
-                {
-                    "field": "Until: 8:00"
-                },
-                {
-                    "field": 0.0
-                },
-                {
-                    "field": "Until: 21:00"
-                },
-                {
-                    "field": 1.0
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 0.0
-                },
-                {
-                    "field": "For: Weekends Holiday"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 0.0
-                },
-                {
-                    "field": "For: SummerDesignDay"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 1.0
-                },
-                {
-                    "field": "For: WinterDesignDay"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 1.0
-                }
-            ],
-            "schedule_type_limits_name": "Fraction"
-        },
         "OCCUPY-1": {
             "data": [
                 {
@@ -4172,19 +4069,12 @@
         }
     },
     "SetpointManager:MixedAir": {
-        "VAV Sys 1 Cooling Coil Air Temp Manager": {
+        "SYS 1 Cooling Coil Air Temp Manager": {
             "control_variable": "Temperature",
-            "fan_inlet_node_name": "VAV Sys 1 Heating Coil Outlet",
-            "fan_outlet_node_name": "VAV Sys 1 Supply Fan Outlet",
-            "reference_setpoint_node_name": "VAV Sys 1 Supply Fan Outlet",
-            "setpoint_node_or_nodelist_name": "VAV Sys 1 Mixed Air Nodes"
-        },
-        "VAV Sys 1 Heating Coil Air Temp Manager": {
-            "control_variable": "Temperature",
-            "fan_inlet_node_name": "VAV Sys 1 Heating Coil Outlet",
-            "fan_outlet_node_name": "VAV Sys 1 Supply Fan Outlet",
-            "reference_setpoint_node_name": "VAV Sys 1 Supply Path Inlet",
-            "setpoint_node_or_nodelist_name": "VAV Sys 1 Heating Coil Outlet"
+            "fan_inlet_node_name": "SYS 1 Cooling Coil Outlet",
+            "fan_outlet_node_name": "SYS 1 Cold Supply Fan Outlet",
+            "reference_setpoint_node_name": "SYS 1 Cold Supply Fan Outlet",
+            "setpoint_node_or_nodelist_name": "SYS 1 Cooling Setpoint Nodes"
         }
     },
     "SetpointManager:OutdoorAirReset": {
@@ -4195,6 +4085,22 @@
             "setpoint_at_outdoor_high_temperature": 65.6,
             "setpoint_at_outdoor_low_temperature": 82.2,
             "setpoint_node_or_nodelist_name": "Hot Water Loop HW Supply Setpoint Nodes"
+        },
+        "SYS 1 Cooling Supply Air Temp Manager": {
+            "control_variable": "Temperature",
+            "outdoor_high_temperature": 23.3,
+            "outdoor_low_temperature": 15.6,
+            "setpoint_at_outdoor_high_temperature": 12.8,
+            "setpoint_at_outdoor_low_temperature": 15.6,
+            "setpoint_node_or_nodelist_name": "SYS 1 Cold Supply Fan Outlet"
+        },
+        "SYS 1 Heating Supply Air Temp Manager": {
+            "control_variable": "Temperature",
+            "outdoor_high_temperature": 12.2,
+            "outdoor_low_temperature": 7.8,
+            "setpoint_at_outdoor_high_temperature": 26,
+            "setpoint_at_outdoor_low_temperature": 50,
+            "setpoint_node_or_nodelist_name": "SYS 1 Heating Coil Outlet"
         }
     },
     "SetpointManager:Scheduled": {
@@ -4207,16 +4113,12 @@
             "control_variable": "Temperature",
             "schedule_name": "HVACTemplate-Always 29.4",
             "setpoint_node_or_nodelist_name": "Chilled Water Loop CndW Supply Setpoint Nodes"
-        },
-        "VAV Sys 1 Cooling Supply Air Temp Manager": {
-            "control_variable": "Temperature",
-            "schedule_name": "HVACTemplate-Always 12.8",
-            "setpoint_node_or_nodelist_name": "VAV Sys 1 Supply Fan Outlet"
-        },
-        "VAV Sys 1 Heating Supply Air Temp Manager": {
-            "control_variable": "Temperature",
-            "schedule_name": "HVACTemplate-Always 10.0",
-            "setpoint_node_or_nodelist_name": "VAV Sys 1 Supply Path Inlet"
+        }
+    },
+    "SetpointManager:SingleZone:Humidity:Minimum": {
+        "SYS 1 Humidification Setpoint Manager": {
+            "control_zone_air_node_name": "SPACE5-1 Zone Air Node",
+            "setpoint_node_or_nodelist_name": "SYS 1 Humidifier Outlet"
         }
     },
     "Shading:Zone:Detailed": {
@@ -4340,13 +4242,13 @@
         "Sizing:System 1": {
             "100_outdoor_air_in_cooling": "No",
             "100_outdoor_air_in_heating": "No",
-            "airloop_name": "VAV Sys 1",
+            "airloop_name": "SYS 1",
             "central_cooling_capacity_control_method": "OnOff",
             "central_cooling_design_supply_air_humidity_ratio": 0.008,
             "central_cooling_design_supply_air_temperature": 12.8,
             "central_heating_design_supply_air_humidity_ratio": 0.008,
-            "central_heating_design_supply_air_temperature": 10.0,
-            "central_heating_maximum_system_air_flow_ratio": 0.3,
+            "central_heating_design_supply_air_temperature": 50,
+            "central_heating_maximum_system_air_flow_ratio": 1.0,
             "cooling_design_capacity": "Autosize",
             "cooling_design_capacity_method": "CoolingDesignCapacity",
             "cooling_supply_air_flow_rate": 0,
@@ -4363,7 +4265,7 @@
             "system_outdoor_air_method": "ZoneSum",
             "type_of_load_to_size_on": "Sensible",
             "type_of_zone_sum_to_use": "NonCoincident",
-            "zone_maximum_outdoor_air_fraction": 1.0
+            "zone_maximum_outdoor_air_fraction": 1
         }
     },
     "Sizing:Zone": {
@@ -4381,7 +4283,8 @@
             "zone_cooling_design_supply_air_temperature_difference": 11.11,
             "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
             "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_or_zonelist_name": "SPACE1-1"
         },
@@ -4399,7 +4302,8 @@
             "zone_cooling_design_supply_air_temperature_difference": 11.11,
             "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
             "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_or_zonelist_name": "SPACE2-1"
         },
@@ -4417,7 +4321,8 @@
             "zone_cooling_design_supply_air_temperature_difference": 11.11,
             "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
             "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_or_zonelist_name": "SPACE3-1"
         },
@@ -4435,7 +4340,8 @@
             "zone_cooling_design_supply_air_temperature_difference": 11.11,
             "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
             "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_or_zonelist_name": "SPACE4-1"
         },
@@ -4453,7 +4359,8 @@
             "zone_cooling_design_supply_air_temperature_difference": 11.11,
             "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
             "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
             "zone_or_zonelist_name": "SPACE5-1"
         }
@@ -4654,6 +4561,13 @@
             "z_origin": 0
         }
     },
+    "ZoneControl:Humidistat": {
+        "SYS 1 Humidification Humidistat": {
+            "dehumidifying_relative_humidity_setpoint_schedule_name": "HVACTemplate-Always 100",
+            "humidifying_relative_humidity_setpoint_schedule_name": "HVACTemplate-Always 30",
+            "zone_name": "SPACE5-1"
+        }
+    },
     "ZoneControl:Thermostat": {
         "SPACE1-1 Thermostat": {
             "control_1_name": "All Zones Dual SP Control",
@@ -4689,28 +4603,28 @@
     "ZoneHVAC:AirDistributionUnit": {
         "SPACE1-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE1-1 Supply Inlet",
-            "air_terminal_name": "SPACE1-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE1-1 Dual Duct",
+            "air_terminal_object_type": "AirTerminal:DualDuct:ConstantVolume"
         },
         "SPACE2-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "air_terminal_name": "SPACE2-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE2-1 Dual Duct",
+            "air_terminal_object_type": "AirTerminal:DualDuct:ConstantVolume"
         },
         "SPACE3-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "air_terminal_name": "SPACE3-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE3-1 Dual Duct",
+            "air_terminal_object_type": "AirTerminal:DualDuct:ConstantVolume"
         },
         "SPACE4-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "air_terminal_name": "SPACE4-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE4-1 Dual Duct",
+            "air_terminal_object_type": "AirTerminal:DualDuct:ConstantVolume"
         },
         "SPACE5-1 ATU": {
             "air_distribution_unit_outlet_node_name": "SPACE5-1 Supply Inlet",
-            "air_terminal_name": "SPACE5-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
+            "air_terminal_name": "SPACE5-1 Dual Duct",
+            "air_terminal_object_type": "AirTerminal:DualDuct:ConstantVolume"
         }
     },
     "ZoneHVAC:EquipmentConnections": {

@@ -1,12 +1,12 @@
-!-Generator IDFEditor 1.34
+!-Generator IDFEditor 1.40
 !-Option OriginalOrderTop UseSpecialFormat
 !-NOTE: All comments with '!-' are ignored by the IDFEditor and are generated automatically.
 !-      Use '!' comments if they need to be retained when using the IDFEditor.
-! HVACTemplate-5ZoneFanCoil.idf
+! HVACTemplate-5ZoneFanCoil-DOAS.idf
 ! Basic file description:  1 story building divided into 4 exterior and one interior conditioned zones and return plenum
-!                          illustrates the use of HVACTemplate objects to define zone thermostats and
-!                          fan coil units with chilled water and hot water loops.
-! Highlights:              HVACTemplate thermostats, fan coils, chiller, condenser and boiler loops
+!                          illustrates the use of HVACTempate objects to define zone thermostats and
+!                          fan coil units with a dedicated outdoor air system (DOAS) served by chilled water and hot water loops.
+! Highlights:              HVACTemplate fan coils with DOAS
 !
 ! Simulation Location/Run: CHICAGO_IL_USA TMY2-94846, 2 design days, 2 run periods,
 !                          Run Control executes the run periods using the weather file
@@ -76,13 +76,13 @@
 ! Natural Ventilation:            None
 ! Compact Schedules:              Yes
 !
-! HVAC:                           Four pipe an coil system with outside air, hot water heating coils,
+! HVAC:                           Four pipe fan coil system with dedicated outdoor air system, hot water heating coils,
 !                                 and chilled water cooling coils. Central Plant is single hot water
 !                                 boiler, electric compression chiller with water cooled condenser.
 !                                 All equipment is autosized.
 !
 ! Zonal Equipment:                Yes
-! Central Air Handling Equipment: None
+! Central Air Handling Equipment: Yes
 ! System Equipment Autosize:      Yes
 ! Purchased Cooling:              None
 ! Purchased Heating:              None
@@ -92,17 +92,17 @@
 ! Chillers:                       Yes
 !
 ! Results:
-! Standard Reports:               None
+! Standard Reports:               All
 ! Timestep or Hourly Variables:   Hourly
 ! Time bins Report:               None
-! HTML Report:                    None
+! HTML Report:                    Yes
 ! Environmental Emissions:        None
 ! Utility Tariffs:                None
 
   Version,9.5;
 
   Building,
-    Building,                !- Name
+    Fan Coil with DOAS,      !- Name
     30.,                     !- North Axis {deg}
     City,                    !- Terrain
     0.04,                    !- Loads Convergence Tolerance Value {W}
@@ -158,20 +158,8 @@
     10,                      !- Upper Limit Value
     CONTINUOUS;              !- Numeric Type
 
-!  RunPeriod,
-!    1,                       !- Begin Month
-!    1,                      !- Begin Day Of Month
-!    12,                       !- End Month
-!    31,                      !- End Day Of Month
-!    Tuesday,                 !- Day Of Week For Start Day
-!    Yes,                     !- Use WeatherFile Holidays/Special Days
-!    Yes,                     !- Use WeatherFile DaylightSavingPeriod
-!    No,                      !- Apply Weekend Holiday Rule
-!    Yes,                     !- Use WeatherFile Rain Indicators
-!    Yes;                     !- Use WeatherFile Snow Indicators
-
   RunPeriod,
-    Run Period 2,            !- Name
+    Run Period 1,            !- Name
     1,                       !- Begin Month
     14,                      !- Begin Day of Month
     ,                        !- Begin Year
@@ -186,7 +174,7 @@
     Yes;                     !- Use Weather File Snow Indicators
 
   RunPeriod,
-    Run Period 3,            !- Name
+    Run Period 2,            !- Name
     7,                       !- Begin Month
     7,                       !- Begin Day of Month
     ,                        !- Begin Year
@@ -199,8 +187,6 @@
     No,                      !- Apply Weekend Holiday Rule
     Yes,                     !- Use Weather File Rain Indicators
     Yes;                     !- Use Weather File Snow Indicators
-
-!
 
   Site:Location,
     CHICAGO_IL_USA TMY2-94846,  !- Name
@@ -1770,7 +1756,7 @@
 !     HotWater,                !- Heating Coil Type
 !     ,                        !- Heating Coil Availability Schedule Name
 !     50,                      !- Heating Coil Design Setpoint {C}
-!     ,                        !- Dedicated Outdoor Air System Name
+!     DOAS,                    !- Dedicated Outdoor Air System Name
 !     SupplyAirTemperature,    !- Zone Cooling Design Supply Air Temperature Input Method
 !     ,                        !- Zone Cooling Design Supply Air Temperature Difference {deltaC}
 !     SupplyAirTemperature,    !- Zone Heating Design Supply Air Temperature Input Method
@@ -1806,7 +1792,7 @@
 !     HotWater,                !- Heating Coil Type
 !     ,                        !- Heating Coil Availability Schedule Name
 !     50,                      !- Heating Coil Design Setpoint {C}
-!     ,                        !- Dedicated Outdoor Air System Name
+!     DOAS,                    !- Dedicated Outdoor Air System Name
 !     SupplyAirTemperature,    !- Zone Cooling Design Supply Air Temperature Input Method
 !     ,                        !- Zone Cooling Design Supply Air Temperature Difference {deltaC}
 !     SupplyAirTemperature,    !- Zone Heating Design Supply Air Temperature Input Method
@@ -1842,7 +1828,7 @@
 !     HotWater,                !- Heating Coil Type
 !     ,                        !- Heating Coil Availability Schedule Name
 !     50,                      !- Heating Coil Design Setpoint {C}
-!     ,                        !- Dedicated Outdoor Air System Name
+!     DOAS,                    !- Dedicated Outdoor Air System Name
 !     SupplyAirTemperature,    !- Zone Cooling Design Supply Air Temperature Input Method
 !     ,                        !- Zone Cooling Design Supply Air Temperature Difference {deltaC}
 !     SupplyAirTemperature,    !- Zone Heating Design Supply Air Temperature Input Method
@@ -1878,7 +1864,7 @@
 !     HotWater,                !- Heating Coil Type
 !     ,                        !- Heating Coil Availability Schedule Name
 !     50,                      !- Heating Coil Design Setpoint {C}
-!     ,                        !- Dedicated Outdoor Air System Name
+!     DOAS,                    !- Dedicated Outdoor Air System Name
 !     SupplyAirTemperature,    !- Zone Cooling Design Supply Air Temperature Input Method
 !     ,                        !- Zone Cooling Design Supply Air Temperature Difference {deltaC}
 !     SupplyAirTemperature,    !- Zone Heating Design Supply Air Temperature Input Method
@@ -1914,7 +1900,7 @@
 !     HotWater,                !- Heating Coil Type
 !     ,                        !- Heating Coil Availability Schedule Name
 !     50,                      !- Heating Coil Design Setpoint {C}
-!     ,                        !- Dedicated Outdoor Air System Name
+!     DOAS,                    !- Dedicated Outdoor Air System Name
 !     SupplyAirTemperature,    !- Zone Cooling Design Supply Air Temperature Input Method
 !     ,                        !- Zone Cooling Design Supply Air Temperature Difference {deltaC}
 !     SupplyAirTemperature,    !- Zone Heating Design Supply Air Temperature Input Method
@@ -1928,6 +1914,54 @@
 !     ,                        !- Baseboard Heating Type
 !     ,                        !- Baseboard Heating Availability Schedule Name
 !     ;                        !- Baseboard Heating Capacity {W}
+! 
+!   HVACTemplate:System:DedicatedOutdoorAir,
+!     DOAS,                    !- Name
+!     OCCUPY-1,                !- System Availability Schedule Name
+!     DirectIntoZone,          !- Air Outlet Type
+!     autosize,                !- Supply Fan Flow Rate {m3/s}
+!     0.7,                     !- Supply Fan Total Efficiency
+!     1000,                    !- Supply Fan Delta Pressure {Pa}
+!     0.9,                     !- Supply Fan Motor Efficiency
+!     1,                       !- Supply Fan Motor in Air Stream Fraction
+!     DrawThrough,             !- Supply Fan Placement
+!     ChilledWater,            !- Cooling Coil Type
+!     ,                        !- Cooling Coil Availability Schedule Name
+!     FixedSetpoint,           !- Cooling Coil Setpoint Control Type
+!     12.8,                    !- Cooling Coil Design Setpoint {C}
+!     ,                        !- Cooling Coil Setpoint Schedule Name
+!     15.6,                    !- Cooling Coil Setpoint at Outdoor Dry-Bulb Low {C}
+!     15.6,                    !- Cooling Coil Reset Outdoor Dry-Bulb Low {C}
+!     12.8,                    !- Cooling Coil Setpoint at Outdoor Dry-Bulb High {C}
+!     23.3,                    !- Cooling Coil Reset Outdoor Dry-Bulb High {C}
+!     autosize,                !- DX Cooling Coil Gross Rated Total Capacity {W}
+!     autosize,                !- DX Cooling Coil Gross Rated Sensible Heat Ratio
+!     3,                       !- DX Cooling Coil Gross Rated COP {W/W}
+!     HotWater,                !- Heating Coil Type
+!     ,                        !- Heating Coil Availability Schedule Name
+!     FixedSetpoint,           !- Heating Coil Setpoint Control Type
+!     12.2,                    !- Heating Coil Design Setpoint {C}
+!     ,                        !- Heating Coil Setpoint Schedule Name
+!     15,                      !- Heating Coil Setpoint at Outdoor Dry-Bulb Low {C}
+!     7.8,                     !- Heating Coil Reset Outdoor Dry-Bulb Low {C}
+!     12.2,                    !- Heating Coil Setpoint at Outdoor Dry-Bulb High {C}
+!     12.2,                    !- Heating Coil Reset Outdoor Dry-Bulb High {C}
+!     0.8,                     !- Gas Heating Coil Efficiency
+!     ,                        !- Gas Heating Coil Parasitic Electric Load {W}
+!     Enthalpy,                !- Heat Recovery Type
+!     0.7,                     !- Heat Recovery Sensible Effectiveness
+!     0.65,                    !- Heat Recovery Latent Effectiveness
+!     Plate,                   !- Heat Recovery Heat Exchanger Type
+!     MinimumExhaustTemperature,  !- Heat Recovery Frost Control Type
+!     None,                    !- Dehumidification Control Type
+!     0.00924,                 !- Dehumidification Setpoint {kgWater/kgDryAir}
+!     None,                    !- Humidifier Type
+!     ,                        !- Humidifier Availability Schedule Name
+!     0.000001,                !- Humidifier Rated Capacity {m3/s}
+!     2690,                    !- Humidifier Rated Electric Power {W}
+!     0.003,                   !- Humidifier Constant Setpoint {kgWater/kgDryAir}
+!     ,                        !- Dehumidification Setpoint Schedule Name
+!     ;                        !- Humidifier Setpoint Schedule Name
 ! 
 !   HVACTemplate:Plant:ChilledWaterLoop,
 !     Chilled Water Loop,      !- Name
@@ -1950,17 +1984,7 @@
 !     12.2,                    !- Chilled Water Setpoint at Outdoor Dry-Bulb Low {C}
 !     15.6,                    !- Chilled Water Reset Outdoor Dry-Bulb Low {C}
 !     6.7,                     !- Chilled Water Setpoint at Outdoor Dry-Bulb High {C}
-!     26.7,                    !- Chilled Water Reset Outdoor Dry-Bulb High {C}
-!     ,                        !- Chilled Water Primary Pump Type
-!     ,                        !- Chilled Water Secondary Pump Type
-!     ,                        !- Condenser Water Pump Type
-!     ,                        !- Chilled Water Supply Side Bypass Pipe
-!     ,                        !- Chilled Water Demand Side Bypass Pipe
-!     ,                        !- Condenser Water Supply Side Bypass Pipe
-!     ,                        !- Condenser Water Demand Side Bypass Pipe
-!     ,                        !- Fluid Type
-!     ,                        !- Loop Design Delta Temperature {deltaC}
-!     7.22;                    !- Minimum Outdoor Dry Bulb Temperature {C}
+!     26.7;                    !- Chilled Water Reset Outdoor Dry-Bulb High {C}
 ! 
 !   HVACTemplate:Plant:Chiller,
 !     Main Chiller,            !- Name
@@ -2055,7 +2079,49 @@
 
   Output:Variable,*,Cooling Tower Fan Electricity Rate,hourly;
 
-  Output:VariableDictionary,Regular;
+  Output:Variable,*,Air System Outdoor Air Economizer Status,hourly;
+
+  Output:Variable,*,Air System Outdoor Air Heat Recovery Bypass Status,hourly;
+
+  Output:Variable,*,Air System Outdoor Air Flow Fraction,hourly;
+
+  Output:Variable,*,Air System Outdoor Air Minimum Flow Fraction,hourly;
+
+  Output:Variable,*,Heat Exchanger Sensible Heating Rate,hourly;
+
+  Output:Variable,*,Heat Exchanger Latent Gain Rate,hourly;
+
+  Output:Variable,*,Heat Exchanger Total Heating Rate,hourly;
+
+  Output:Variable,*,Heat Exchanger Sensible Cooling Rate,hourly;
+
+  Output:Variable,*,Heat Exchanger Latent Cooling Rate,hourly;
+
+  Output:Variable,*,Heat Exchanger Total Cooling Rate,hourly;
+
+  Output:Variable,*,Heat Exchanger Electricity Rate,hourly;
+
+  Output:Variable,*,Heat Exchanger Sensible Effectiveness,hourly;
+
+  Output:Variable,*,Heat Exchanger Latent Effectiveness,hourly;
+
+  Output:Variable,*,Heat Exchanger Supply Air Bypass Mass Flow Rate,hourly;
+
+  Output:Variable,*,Heat Exchanger Exhaust Air Bypass Mass Flow Rate,hourly;
+
+  Output:Variable,*,Heat Exchanger Defrost Time Fraction,hourly;
+
+  Output:Variable,DOAS Supply Fan Outlet,System Node Temperature,hourly;
+
+  Output:Variable,DOAS Supply Fan Outlet,System Node Humidity Ratio,hourly;
+
+  Output:Variable,DOAS Supply Fan Outlet,System Node Setpoint Temperature,hourly;
+
+  Output:Variable,DOAS Supply Fan Outlet,System Node Relative Humidity,hourly;
+
+  Output:Variable,DOAS Supply Fan Outlet,System Node Standard Density Volume Flow Rate,hourly;
+
+  Output:VariableDictionary,IDF;
 
   Output:Surfaces:Drawing,dxf;
 
@@ -2094,6 +2160,9 @@
 
   Output:Table:SummaryReports,
     AllSummary;              !- Report 1 Name
+
+  output:diagnostics,
+    displayallwarnings;      !- Key 1
 ! 
 ! -------------------------------------------------------------
 ! New objects created from ExpandObjects
@@ -2163,30 +2232,60 @@ DesignSpecification:ZoneAirDistribution,
 ZoneHVAC:EquipmentConnections,
   SPACE1-1,                                                !- Zone Name
   SPACE1-1 Equipment,                                      !- Zone Conditioning Equipment List Name
-  SPACE1-1 Supply Inlet,                                   !- Zone Air Inlet Node or NodeList Name
+  SPACE1-1 Inlets,                                         !- Zone Air Inlet Node or NodeList Name
   SPACE1-1 Fan Coil Return,                                !- Zone Air Exhaust Node or NodeList Name
   SPACE1-1 Zone Air Node,                                  !- Zone Air Node Name
   SPACE1-1 Return Outlet;                                  !- Zone Return Air Node Name
 
+NodeList,
+  SPACE1-1 Inlets,                                         !- Name
+  SPACE1-1 Supply Inlet,                                   !- Node Name
+  SPACE1-1 DOAS Supply Inlet;                              !- Node Name
+
 ZoneHVAC:EquipmentList,
   SPACE1-1 Equipment,                                      !- Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  ZoneHVAC:FourPipeFanCoil,                                !- Zone Equipment Object Type
-  SPACE1-1 Fan Coil,                                       !- Zone Equipment Name
+  ZoneHVAC:AirDistributionUnit,                            !- Zone Equipment Object Type
+  SPACE1-1 DOAS ATU,                                       !- Zone Equipment Name
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
+  ,                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
+  ZoneHVAC:FourPipeFanCoil,                                !- Zone Equipment Object Type
+  SPACE1-1 Fan Coil,                                       !- Zone Equipment Name
+  2,                                                       !- Zone Equipment Cooling Sequence
+  2,                                                       !- Zone Equipment Heating or No-Load Sequence
+  ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
-! Capacity Control Method was blank, defaulted to ConstantFanVariableFlow
+
+ZoneHVAC:AirDistributionUnit,
+  SPACE1-1 DOAS ATU,                                       !- Name
+  SPACE1-1 DOAS Supply Inlet,                              !- Air Distribution Unit Outlet Node Name
+  AirTerminal:SingleDuct:VAV:NoReheat,                     !- Air Terminal Object Type
+  SPACE1-1 DOAS Air Terminal;                              !- Air Terminal Name
+
+AirTerminal:SingleDuct:VAV:NoReheat,
+  SPACE1-1 DOAS Air Terminal,                              !- Name
+  ,                                                        !- Availability Schedule Name
+  SPACE1-1 DOAS Supply Inlet,                              !- Air Outlet Node Name
+  SPACE1-1 Zone Equip Inlet,                               !- Air Inlet Node Name
+  autosize,                                                !- Maximum Air Flow Rate {m3/s}
+  Constant,                                                !- Zone Minimum Air Flow Input Method
+  1.0,                                                     !- Constant Minimum Air Flow Fraction
+  ,                                                        !- Fixed Minimum Air Flow Rate {m3/s}
+  ,                                                        !- Minimum Air Flow Fraction Schedule Name
+  ;                                                        !- Design Specification Outdoor Air Object Name
+! Capacity Control Method was blank, defaulted to CyclingFan
+! Setting fan coil outdoor air to zero, because zone is served by dedicated outdoor air system (DOAS)
 
 ZoneHVAC:FourPipeFanCoil,
   SPACE1-1 Fan Coil,                                       !- Name
   FanAvailSched,                                           !- Availability Schedule Name
-  ConstantFanVariableFlow,                                 !- Capacity Control Method
+  CyclingFan,                                              !- Capacity Control Method
   autosize,                                                !- Maximum Supply Air Flow Rate {m3/s}
   0.33,                                                    !- Low Speed Supply Air Flow Ratio
   0.66,                                                    !- Medium Speed Supply Air Flow Ratio
-  autosize,                                                !- Maximum Outdoor Air Flow Rate {m3/s}
+  0.0,                                                     !- Maximum Outdoor Air Flow Rate {m3/s}
   ,                                                        !- Outdoor Air Schedule Name
   SPACE1-1 Fan Coil Return,                                !- Air Inlet Node Name
   SPACE1-1 Supply Inlet,                                   !- Air Outlet Node Name
@@ -2338,30 +2437,60 @@ DesignSpecification:ZoneAirDistribution,
 ZoneHVAC:EquipmentConnections,
   SPACE2-1,                                                !- Zone Name
   SPACE2-1 Equipment,                                      !- Zone Conditioning Equipment List Name
-  SPACE2-1 Supply Inlet,                                   !- Zone Air Inlet Node or NodeList Name
+  SPACE2-1 Inlets,                                         !- Zone Air Inlet Node or NodeList Name
   SPACE2-1 Fan Coil Return,                                !- Zone Air Exhaust Node or NodeList Name
   SPACE2-1 Zone Air Node,                                  !- Zone Air Node Name
   SPACE2-1 Return Outlet;                                  !- Zone Return Air Node Name
 
+NodeList,
+  SPACE2-1 Inlets,                                         !- Name
+  SPACE2-1 Supply Inlet,                                   !- Node Name
+  SPACE2-1 DOAS Supply Inlet;                              !- Node Name
+
 ZoneHVAC:EquipmentList,
   SPACE2-1 Equipment,                                      !- Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  ZoneHVAC:FourPipeFanCoil,                                !- Zone Equipment Object Type
-  SPACE2-1 Fan Coil,                                       !- Zone Equipment Name
+  ZoneHVAC:AirDistributionUnit,                            !- Zone Equipment Object Type
+  SPACE2-1 DOAS ATU,                                       !- Zone Equipment Name
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
+  ,                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
+  ZoneHVAC:FourPipeFanCoil,                                !- Zone Equipment Object Type
+  SPACE2-1 Fan Coil,                                       !- Zone Equipment Name
+  2,                                                       !- Zone Equipment Cooling Sequence
+  2,                                                       !- Zone Equipment Heating or No-Load Sequence
+  ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
-! Capacity Control Method was blank, defaulted to ConstantFanVariableFlow
+
+ZoneHVAC:AirDistributionUnit,
+  SPACE2-1 DOAS ATU,                                       !- Name
+  SPACE2-1 DOAS Supply Inlet,                              !- Air Distribution Unit Outlet Node Name
+  AirTerminal:SingleDuct:VAV:NoReheat,                     !- Air Terminal Object Type
+  SPACE2-1 DOAS Air Terminal;                              !- Air Terminal Name
+
+AirTerminal:SingleDuct:VAV:NoReheat,
+  SPACE2-1 DOAS Air Terminal,                              !- Name
+  ,                                                        !- Availability Schedule Name
+  SPACE2-1 DOAS Supply Inlet,                              !- Air Outlet Node Name
+  SPACE2-1 Zone Equip Inlet,                               !- Air Inlet Node Name
+  autosize,                                                !- Maximum Air Flow Rate {m3/s}
+  Constant,                                                !- Zone Minimum Air Flow Input Method
+  1.0,                                                     !- Constant Minimum Air Flow Fraction
+  ,                                                        !- Fixed Minimum Air Flow Rate {m3/s}
+  ,                                                        !- Minimum Air Flow Fraction Schedule Name
+  ;                                                        !- Design Specification Outdoor Air Object Name
+! Capacity Control Method was blank, defaulted to CyclingFan
+! Setting fan coil outdoor air to zero, because zone is served by dedicated outdoor air system (DOAS)
 
 ZoneHVAC:FourPipeFanCoil,
   SPACE2-1 Fan Coil,                                       !- Name
   FanAvailSched,                                           !- Availability Schedule Name
-  ConstantFanVariableFlow,                                 !- Capacity Control Method
+  CyclingFan,                                              !- Capacity Control Method
   autosize,                                                !- Maximum Supply Air Flow Rate {m3/s}
   0.33,                                                    !- Low Speed Supply Air Flow Ratio
   0.66,                                                    !- Medium Speed Supply Air Flow Ratio
-  autosize,                                                !- Maximum Outdoor Air Flow Rate {m3/s}
+  0.0,                                                     !- Maximum Outdoor Air Flow Rate {m3/s}
   ,                                                        !- Outdoor Air Schedule Name
   SPACE2-1 Fan Coil Return,                                !- Air Inlet Node Name
   SPACE2-1 Supply Inlet,                                   !- Air Outlet Node Name
@@ -2513,30 +2642,60 @@ DesignSpecification:ZoneAirDistribution,
 ZoneHVAC:EquipmentConnections,
   SPACE3-1,                                                !- Zone Name
   SPACE3-1 Equipment,                                      !- Zone Conditioning Equipment List Name
-  SPACE3-1 Supply Inlet,                                   !- Zone Air Inlet Node or NodeList Name
+  SPACE3-1 Inlets,                                         !- Zone Air Inlet Node or NodeList Name
   SPACE3-1 Fan Coil Return,                                !- Zone Air Exhaust Node or NodeList Name
   SPACE3-1 Zone Air Node,                                  !- Zone Air Node Name
   SPACE3-1 Return Outlet;                                  !- Zone Return Air Node Name
 
+NodeList,
+  SPACE3-1 Inlets,                                         !- Name
+  SPACE3-1 Supply Inlet,                                   !- Node Name
+  SPACE3-1 DOAS Supply Inlet;                              !- Node Name
+
 ZoneHVAC:EquipmentList,
   SPACE3-1 Equipment,                                      !- Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  ZoneHVAC:FourPipeFanCoil,                                !- Zone Equipment Object Type
-  SPACE3-1 Fan Coil,                                       !- Zone Equipment Name
+  ZoneHVAC:AirDistributionUnit,                            !- Zone Equipment Object Type
+  SPACE3-1 DOAS ATU,                                       !- Zone Equipment Name
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
+  ,                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
+  ZoneHVAC:FourPipeFanCoil,                                !- Zone Equipment Object Type
+  SPACE3-1 Fan Coil,                                       !- Zone Equipment Name
+  2,                                                       !- Zone Equipment Cooling Sequence
+  2,                                                       !- Zone Equipment Heating or No-Load Sequence
+  ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
-! Capacity Control Method was blank, defaulted to ConstantFanVariableFlow
+
+ZoneHVAC:AirDistributionUnit,
+  SPACE3-1 DOAS ATU,                                       !- Name
+  SPACE3-1 DOAS Supply Inlet,                              !- Air Distribution Unit Outlet Node Name
+  AirTerminal:SingleDuct:VAV:NoReheat,                     !- Air Terminal Object Type
+  SPACE3-1 DOAS Air Terminal;                              !- Air Terminal Name
+
+AirTerminal:SingleDuct:VAV:NoReheat,
+  SPACE3-1 DOAS Air Terminal,                              !- Name
+  ,                                                        !- Availability Schedule Name
+  SPACE3-1 DOAS Supply Inlet,                              !- Air Outlet Node Name
+  SPACE3-1 Zone Equip Inlet,                               !- Air Inlet Node Name
+  autosize,                                                !- Maximum Air Flow Rate {m3/s}
+  Constant,                                                !- Zone Minimum Air Flow Input Method
+  1.0,                                                     !- Constant Minimum Air Flow Fraction
+  ,                                                        !- Fixed Minimum Air Flow Rate {m3/s}
+  ,                                                        !- Minimum Air Flow Fraction Schedule Name
+  ;                                                        !- Design Specification Outdoor Air Object Name
+! Capacity Control Method was blank, defaulted to CyclingFan
+! Setting fan coil outdoor air to zero, because zone is served by dedicated outdoor air system (DOAS)
 
 ZoneHVAC:FourPipeFanCoil,
   SPACE3-1 Fan Coil,                                       !- Name
   FanAvailSched,                                           !- Availability Schedule Name
-  ConstantFanVariableFlow,                                 !- Capacity Control Method
+  CyclingFan,                                              !- Capacity Control Method
   autosize,                                                !- Maximum Supply Air Flow Rate {m3/s}
   0.33,                                                    !- Low Speed Supply Air Flow Ratio
   0.66,                                                    !- Medium Speed Supply Air Flow Ratio
-  autosize,                                                !- Maximum Outdoor Air Flow Rate {m3/s}
+  0.0,                                                     !- Maximum Outdoor Air Flow Rate {m3/s}
   ,                                                        !- Outdoor Air Schedule Name
   SPACE3-1 Fan Coil Return,                                !- Air Inlet Node Name
   SPACE3-1 Supply Inlet,                                   !- Air Outlet Node Name
@@ -2688,30 +2847,60 @@ DesignSpecification:ZoneAirDistribution,
 ZoneHVAC:EquipmentConnections,
   SPACE4-1,                                                !- Zone Name
   SPACE4-1 Equipment,                                      !- Zone Conditioning Equipment List Name
-  SPACE4-1 Supply Inlet,                                   !- Zone Air Inlet Node or NodeList Name
+  SPACE4-1 Inlets,                                         !- Zone Air Inlet Node or NodeList Name
   SPACE4-1 Fan Coil Return,                                !- Zone Air Exhaust Node or NodeList Name
   SPACE4-1 Zone Air Node,                                  !- Zone Air Node Name
   SPACE4-1 Return Outlet;                                  !- Zone Return Air Node Name
 
+NodeList,
+  SPACE4-1 Inlets,                                         !- Name
+  SPACE4-1 Supply Inlet,                                   !- Node Name
+  SPACE4-1 DOAS Supply Inlet;                              !- Node Name
+
 ZoneHVAC:EquipmentList,
   SPACE4-1 Equipment,                                      !- Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  ZoneHVAC:FourPipeFanCoil,                                !- Zone Equipment Object Type
-  SPACE4-1 Fan Coil,                                       !- Zone Equipment Name
+  ZoneHVAC:AirDistributionUnit,                            !- Zone Equipment Object Type
+  SPACE4-1 DOAS ATU,                                       !- Zone Equipment Name
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
+  ,                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
+  ZoneHVAC:FourPipeFanCoil,                                !- Zone Equipment Object Type
+  SPACE4-1 Fan Coil,                                       !- Zone Equipment Name
+  2,                                                       !- Zone Equipment Cooling Sequence
+  2,                                                       !- Zone Equipment Heating or No-Load Sequence
+  ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
-! Capacity Control Method was blank, defaulted to ConstantFanVariableFlow
+
+ZoneHVAC:AirDistributionUnit,
+  SPACE4-1 DOAS ATU,                                       !- Name
+  SPACE4-1 DOAS Supply Inlet,                              !- Air Distribution Unit Outlet Node Name
+  AirTerminal:SingleDuct:VAV:NoReheat,                     !- Air Terminal Object Type
+  SPACE4-1 DOAS Air Terminal;                              !- Air Terminal Name
+
+AirTerminal:SingleDuct:VAV:NoReheat,
+  SPACE4-1 DOAS Air Terminal,                              !- Name
+  ,                                                        !- Availability Schedule Name
+  SPACE4-1 DOAS Supply Inlet,                              !- Air Outlet Node Name
+  SPACE4-1 Zone Equip Inlet,                               !- Air Inlet Node Name
+  autosize,                                                !- Maximum Air Flow Rate {m3/s}
+  Constant,                                                !- Zone Minimum Air Flow Input Method
+  1.0,                                                     !- Constant Minimum Air Flow Fraction
+  ,                                                        !- Fixed Minimum Air Flow Rate {m3/s}
+  ,                                                        !- Minimum Air Flow Fraction Schedule Name
+  ;                                                        !- Design Specification Outdoor Air Object Name
+! Capacity Control Method was blank, defaulted to CyclingFan
+! Setting fan coil outdoor air to zero, because zone is served by dedicated outdoor air system (DOAS)
 
 ZoneHVAC:FourPipeFanCoil,
   SPACE4-1 Fan Coil,                                       !- Name
   FanAvailSched,                                           !- Availability Schedule Name
-  ConstantFanVariableFlow,                                 !- Capacity Control Method
+  CyclingFan,                                              !- Capacity Control Method
   autosize,                                                !- Maximum Supply Air Flow Rate {m3/s}
   0.33,                                                    !- Low Speed Supply Air Flow Ratio
   0.66,                                                    !- Medium Speed Supply Air Flow Ratio
-  autosize,                                                !- Maximum Outdoor Air Flow Rate {m3/s}
+  0.0,                                                     !- Maximum Outdoor Air Flow Rate {m3/s}
   ,                                                        !- Outdoor Air Schedule Name
   SPACE4-1 Fan Coil Return,                                !- Air Inlet Node Name
   SPACE4-1 Supply Inlet,                                   !- Air Outlet Node Name
@@ -2863,30 +3052,60 @@ DesignSpecification:ZoneAirDistribution,
 ZoneHVAC:EquipmentConnections,
   SPACE5-1,                                                !- Zone Name
   SPACE5-1 Equipment,                                      !- Zone Conditioning Equipment List Name
-  SPACE5-1 Supply Inlet,                                   !- Zone Air Inlet Node or NodeList Name
+  SPACE5-1 Inlets,                                         !- Zone Air Inlet Node or NodeList Name
   SPACE5-1 Fan Coil Return,                                !- Zone Air Exhaust Node or NodeList Name
   SPACE5-1 Zone Air Node,                                  !- Zone Air Node Name
   SPACE5-1 Return Outlet;                                  !- Zone Return Air Node Name
 
+NodeList,
+  SPACE5-1 Inlets,                                         !- Name
+  SPACE5-1 Supply Inlet,                                   !- Node Name
+  SPACE5-1 DOAS Supply Inlet;                              !- Node Name
+
 ZoneHVAC:EquipmentList,
   SPACE5-1 Equipment,                                      !- Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  ZoneHVAC:FourPipeFanCoil,                                !- Zone Equipment Object Type
-  SPACE5-1 Fan Coil,                                       !- Zone Equipment Name
+  ZoneHVAC:AirDistributionUnit,                            !- Zone Equipment Object Type
+  SPACE5-1 DOAS ATU,                                       !- Zone Equipment Name
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
+  ,                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
+  ZoneHVAC:FourPipeFanCoil,                                !- Zone Equipment Object Type
+  SPACE5-1 Fan Coil,                                       !- Zone Equipment Name
+  2,                                                       !- Zone Equipment Cooling Sequence
+  2,                                                       !- Zone Equipment Heating or No-Load Sequence
+  ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
-! Capacity Control Method was blank, defaulted to ConstantFanVariableFlow
+
+ZoneHVAC:AirDistributionUnit,
+  SPACE5-1 DOAS ATU,                                       !- Name
+  SPACE5-1 DOAS Supply Inlet,                              !- Air Distribution Unit Outlet Node Name
+  AirTerminal:SingleDuct:VAV:NoReheat,                     !- Air Terminal Object Type
+  SPACE5-1 DOAS Air Terminal;                              !- Air Terminal Name
+
+AirTerminal:SingleDuct:VAV:NoReheat,
+  SPACE5-1 DOAS Air Terminal,                              !- Name
+  ,                                                        !- Availability Schedule Name
+  SPACE5-1 DOAS Supply Inlet,                              !- Air Outlet Node Name
+  SPACE5-1 Zone Equip Inlet,                               !- Air Inlet Node Name
+  autosize,                                                !- Maximum Air Flow Rate {m3/s}
+  Constant,                                                !- Zone Minimum Air Flow Input Method
+  1.0,                                                     !- Constant Minimum Air Flow Fraction
+  ,                                                        !- Fixed Minimum Air Flow Rate {m3/s}
+  ,                                                        !- Minimum Air Flow Fraction Schedule Name
+  ;                                                        !- Design Specification Outdoor Air Object Name
+! Capacity Control Method was blank, defaulted to CyclingFan
+! Setting fan coil outdoor air to zero, because zone is served by dedicated outdoor air system (DOAS)
 
 ZoneHVAC:FourPipeFanCoil,
   SPACE5-1 Fan Coil,                                       !- Name
   FanAvailSched,                                           !- Availability Schedule Name
-  ConstantFanVariableFlow,                                 !- Capacity Control Method
+  CyclingFan,                                              !- Capacity Control Method
   autosize,                                                !- Maximum Supply Air Flow Rate {m3/s}
   0.33,                                                    !- Low Speed Supply Air Flow Ratio
   0.66,                                                    !- Medium Speed Supply Air Flow Ratio
-  autosize,                                                !- Maximum Outdoor Air Flow Rate {m3/s}
+  0.0,                                                     !- Maximum Outdoor Air Flow Rate {m3/s}
   ,                                                        !- Outdoor Air Schedule Name
   SPACE5-1 Fan Coil Return,                                !- Air Inlet Node Name
   SPACE5-1 Supply Inlet,                                   !- Air Outlet Node Name
@@ -2990,6 +3209,359 @@ Branch,
   SPACE5-1 Heating Coil,                                   !- Component Name
   SPACE5-1 Heating Coil HW Inlet,                          !- Component Inlet Node Name
   SPACE5-1 Heating Coil HW Outlet;                         !- Component Outlet Node Name
+
+Sizing:System,
+  DOAS,                                                    !- AirLoop Name
+  VentilationRequirement,                                  !- Type of Load to Size On
+  autosize,                                                !- Design Outdoor Air Flow Rate {m3/s}
+  1.0,                                                     !- Central Heating Maximum System Air Flow Ratio
+  2,                                                       !- Preheat Design Temperature {C}
+  0.008,                                                   !- Preheat Design Humidity Ratio {kg-H2O/kg-air}
+  11,                                                      !- Precool Design Temperature {C}
+  0.008,                                                   !- Precool Design Humidity Ratio {kg-H2O/kg-air}
+  12.8,                                                    !- Central Cooling Design Supply Air Temperature {C}
+  12.2,                                                    !- Central Heating Design Supply Air Temperature {C}
+  NonCoincident,                                           !- Type of Zone Sum to Use
+  Yes,                                                     !- 100% Outdoor Air in Cooling
+  Yes,                                                     !- 100% Outdoor Air in Heating
+  0.00924,                                                 !- Central Cooling Design Supply Air Humidity Ratio {kg-H2O/kg-air}
+  0.003,                                                   !- Central Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
+  DesignDay,                                               !- Cooling Supply Air Flow Rate Method
+  0,                                                       !- Cooling Supply Air Flow Rate {m3/s}
+  ,                                                        !- Cooling Supply Air Flow Rate Per Floor Area {m3/s-m2}
+  ,                                                        !- Cooling Fraction of Autosized Cooling Supply Air Flow Rate
+  ,                                                        !- Cooling Supply Air Flow Rate Per Unit Cooling Capacity {m3/s-W}
+  DesignDay,                                               !- Heating Supply Air Flow Rate Method
+  0,                                                       !- Heating Supply Air Flow Rate {m3/s}
+  ,                                                        !- Heating Supply Air Flow Rate Per Floor Area {m3/s-m2}
+  ,                                                        !- Heating Fraction of Autosized Heating Supply Air Flow Rate
+  ,                                                        !- Heating Fraction of Autosized Cooling Supply Air Flow Rate
+  ,                                                        !- Heating Supply Air Flow Rate Per Unit Heating Capacity {m3/s-W}
+  ZoneSum,                                                 !- System Outdoor Air Method
+  1.0,                                                     !- Zone Maximum Outdoor Air Fraction
+  CoolingDesignCapacity,                                   !- Cooling Design Capacity Method
+  autosize,                                                !- Cooling Design Capacity {W}
+  ,                                                        !- Cooling Design Capacity Per Floor Area {W/m2}
+  ,                                                        !- Fraction of Autosized Cooling Design Capacity
+  HeatingDesignCapacity,                                   !- Heating Design Capacity Method
+  autosize,                                                !- Heating Design Capacity {W}
+  ,                                                        !- Heating Design Capacity Per Floor Area {W/m2}
+  ,                                                        !- Fraction of Autosized Heating Design Capacity
+  OnOff;                                                   !- Central Cooling Capacity Control Method
+
+AirLoopHVAC,
+  DOAS,                                                    !- Name
+  DOAS Controllers,                                        !- Controller List Name
+  DOAS Availability Managers,                              !- Availability Manager List Name
+  autosize,                                                !- Design Supply Air Flow Rate {m3/s}
+  DOAS Branches,                                           !- Branch List Name
+  ,                                                        !- Connector List Name
+  DOAS Air Loop Inlet,                                     !- Supply Side Inlet Node Name
+  DOAS Return Air Outlet,                                  !- Demand Side Outlet Node Name
+  DOAS Supply Path Inlet,                                  !- Demand Side Inlet Node Names
+  DOAS Supply Fan Outlet;                                  !- Supply Side Outlet Node Names
+
+AirLoopHVAC:ControllerList,
+  DOAS Controllers,                                        !- Name
+  Controller:WaterCoil,                                    !- Controller Object Type
+  DOAS Cooling Coil Controller,                            !- Controller Name
+  Controller:WaterCoil,                                    !- Controller Object Type
+  DOAS Heating Coil Controller;                            !- Controller Name
+
+BranchList,
+  DOAS Branches,                                           !- Name
+  DOAS Main Branch;                                        !- Branch Name
+
+Branch,
+  DOAS Main Branch,                                        !- Name
+  ,                                                        !- Pressure Drop Curve Name
+  AirLoopHVAC:OutdoorAirSystem,                            !- Component Object Type
+  DOAS OA System,                                          !- Component Name
+  DOAS Air Loop Inlet,                                     !- Component Inlet Node Name
+  DOAS Mixed Air Outlet,                                   !- Component Outlet Node Name
+  Coil:Cooling:Water,                                      !- Component Object Type
+  DOAS Cooling Coil,                                       !- Component Name
+  DOAS Mixed Air Outlet,                                   !- Component Inlet Node Name
+  DOAS Cooling Coil Outlet,                                !- Component Outlet Node Name
+  Coil:Heating:Water,                                      !- Component Object Type
+  DOAS Heating Coil,                                       !- Component Name
+  DOAS Cooling Coil Outlet,                                !- Component Inlet Node Name
+  DOAS Heating Coil Outlet,                                !- Component Outlet Node Name
+  Fan:VariableVolume,                                      !- Component Object Type
+  DOAS Supply Fan,                                         !- Component Name
+  DOAS Heating Coil Outlet,                                !- Component Inlet Node Name
+  DOAS Supply Fan Outlet;                                  !- Component Outlet Node Name
+
+AirLoopHVAC:SupplyPath,
+  DOAS Supply Path,                                        !- Name
+  DOAS Supply Path Inlet,                                  !- Supply Air Path Inlet Node Name
+  AirLoopHVAC:ZoneSplitter,                                !- Component Object Type
+  DOAS Zone Splitter;                                      !- Component Name
+
+AirLoopHVAC:ZoneSplitter,
+  DOAS Zone Splitter,                                      !- Name
+  DOAS Supply Path Inlet,                                  !- Inlet Node Name
+  SPACE1-1 Zone Equip Inlet,                               !- Outlet Node Name
+  SPACE2-1 Zone Equip Inlet,                               !- Outlet Node Name
+  SPACE3-1 Zone Equip Inlet,                               !- Outlet Node Name
+  SPACE4-1 Zone Equip Inlet,                               !- Outlet Node Name
+  SPACE5-1 Zone Equip Inlet;                               !- Outlet Node Name
+
+AirLoopHVAC:ReturnPath,
+  DOAS Return Path,                                        !- Name
+  DOAS Return Air Outlet,                                  !- Return Air Path Outlet Node Name
+  AirLoopHVAC:ZoneMixer,                                   !- Component Object Type
+  DOAS Zone Mixer;                                         !- Component Name
+
+AirLoopHVAC:ZoneMixer,
+  DOAS Zone Mixer,                                         !- Name
+  DOAS Return Air Outlet,                                  !- Outlet Node Name
+  SPACE1-1 Return Outlet,                                  !- Inlet Node Name
+  SPACE2-1 Return Outlet,                                  !- Inlet Node Name
+  SPACE3-1 Return Outlet,                                  !- Inlet Node Name
+  SPACE4-1 Return Outlet,                                  !- Inlet Node Name
+  SPACE5-1 Return Outlet;                                  !- Inlet Node Name
+
+AvailabilityManagerAssignmentList,
+  DOAS Availability Managers,                              !- Name
+  AvailabilityManager:Scheduled,                           !- Availability Manager Object Type
+  DOAS Availability;                                       !- Availability Manager Name
+
+AvailabilityManager:Scheduled,
+  DOAS Availability,                                       !- Name
+  OCCUPY-1;                                                !- Schedule Name
+
+NodeList,
+  DOAS Cooling Setpoint Nodes,                             !- Name
+  DOAS Cooling Coil Outlet;                                !- Node Name
+
+Schedule:Compact,
+  HVACTemplate-Always 12.8,                                !- Name
+  HVACTemplate Any Number,                                 !- Schedule Type Limits Name
+  Through: 12/31,                                          !- Field 1
+  For: AllDays,                                            !- Field 2
+  Until: 24:00,                                            !- Field 3
+  12.8;                                                    !- Field 4
+
+SetpointManager:Scheduled,
+  DOAS Cooling Supply Air Temp Manager,                    !- Name
+  Temperature,                                             !- Control Variable
+  HVACTemplate-Always 12.8,                                !- Schedule Name
+  DOAS Supply Fan Outlet;                                  !- Setpoint Node or NodeList Name
+
+SetpointManager:MixedAir,
+  DOAS Cooling Coil Air Temp Manager,                      !- Name
+  Temperature,                                             !- Control Variable
+  DOAS Supply Fan Outlet,                                  !- Reference Setpoint Node Name
+  DOAS Heating Coil Outlet,                                !- Fan Inlet Node Name
+  DOAS Supply Fan Outlet,                                  !- Fan Outlet Node Name
+  DOAS Cooling Setpoint Nodes;                             !- Setpoint Node or NodeList Name
+
+Coil:Cooling:Water,
+  DOAS Cooling Coil,                                       !- Name
+  ,                                                        !- Availability Schedule Name
+  autosize,                                                !- Design Water Flow Rate {m3/s}
+  autosize,                                                !- Design Air Flow Rate {m3/s}
+  autosize,                                                !- Design Inlet Water Temperature {C}
+  autosize,                                                !- Design Inlet Air Temperature {C}
+  autosize,                                                !- Design Outlet Air Temperature {C}
+  autosize,                                                !- Design Inlet Air Humidity Ratio {kg-H2O/kg-air}
+  autosize,                                                !- Design Outlet Air Humidity Ratio {kg-H2O/kg-air}
+  DOAS Cooling Coil ChW Inlet,                             !- Water Inlet Node Name
+  DOAS Cooling Coil ChW Outlet,                            !- Water Outlet Node Name
+  DOAS Mixed Air Outlet,                                   !- Air Inlet Node Name
+  DOAS Cooling Coil Outlet,                                !- Air Outlet Node Name
+  DetailedAnalysis,                                        !- Type of Analysis
+  CrossFlow;                                               !- Heat Exchanger Configuration
+
+Controller:WaterCoil,
+  DOAS Cooling Coil Controller,                            !- Name
+  Temperature,                                             !- Control Variable
+  Reverse,                                                 !- Action
+  Flow,                                                    !- Actuator Variable
+  DOAS Cooling Coil Outlet,                                !- Sensor Node Name
+  DOAS Cooling Coil ChW Inlet,                             !- Actuator Node Name
+  autosize,                                                !- Controller Convergence Tolerance {deltaC}
+  autosize,                                                !- Maximum Actuated Flow {m3/s}
+  0;                                                       !- Minimum Actuated Flow {m3/s}
+
+Branch,
+  DOAS Cooling Coil ChW Branch,                            !- Name
+  ,                                                        !- Pressure Drop Curve Name
+  Coil:Cooling:Water,                                      !- Component Object Type
+  DOAS Cooling Coil,                                       !- Component Name
+  DOAS Cooling Coil ChW Inlet,                             !- Component Inlet Node Name
+  DOAS Cooling Coil ChW Outlet;                            !- Component Outlet Node Name
+
+Coil:Heating:Water,
+  DOAS Heating Coil,                                       !- Name
+  ,                                                        !- Availability Schedule Name
+  autosize,                                                !- U-Factor Times Area Value {W/K}
+  autosize,                                                !- Maximum Water Flow Rate {m3/s}
+  DOAS Heating Coil HW Inlet,                              !- Water Inlet Node Name
+  DOAS Heating Coil HW Outlet,                             !- Water Outlet Node Name
+  DOAS Cooling Coil Outlet,                                !- Air Inlet Node Name
+  DOAS Heating Coil Outlet,                                !- Air Outlet Node Name
+  UFactorTimesAreaAndDesignWaterFlowRate,                  !- Performance Input Method
+  autosize,                                                !- Nominal Capacity
+  82.2,                                                    !- Rated Inlet Water Temperature
+  16.6,                                                    !- Rated Inlet Air Temperature
+  71.1,                                                    !- Rated Outlet Water Temperature
+  32.2,                                                    !- Rated Outlet Air Temperature
+  0.5;                                                     !- Rated Ratio for Air and Water Convection
+
+Branch,
+  DOAS Heating Coil HW Branch,                             !- Name
+  ,                                                        !- Pressure Drop Curve Name
+  Coil:Heating:Water,                                      !- Component Object Type
+  DOAS Heating Coil,                                       !- Component Name
+  DOAS Heating Coil HW Inlet,                              !- Component Inlet Node Name
+  DOAS Heating Coil HW Outlet;                             !- Component Outlet Node Name
+
+Controller:WaterCoil,
+  DOAS Heating Coil Controller,                            !- Name
+  Temperature,                                             !- Control Variable
+  Normal,                                                  !- Action
+  Flow,                                                    !- Actuator Variable
+  DOAS Heating Coil Outlet,                                !- Sensor Node Name
+  DOAS Heating Coil HW Inlet,                              !- Actuator Node Name
+  autosize,                                                !- Controller Convergence Tolerance {deltaC}
+  autosize,                                                !- Maximum Actuated Flow {m3/s}
+  0;                                                       !- Minimum Actuated Flow {m3/s}
+
+Schedule:Compact,
+  HVACTemplate-Always 12.2,                                !- Name
+  HVACTemplate Any Number,                                 !- Schedule Type Limits Name
+  Through: 12/31,                                          !- Field 1
+  For: AllDays,                                            !- Field 2
+  Until: 24:00,                                            !- Field 3
+  12.2;                                                    !- Field 4
+! NOTE:  Heating supply air setpoint is placed on Supply Path Inlet node to allow separate heating and cooling setpoints.
+! SetpointManager:MixedAir <system name> Heating Coil Air Temp Manager adjusts this setpoint for fan heat and places it on the Heating Coil Outlet
+
+SetpointManager:Scheduled,
+  DOAS Heating Supply Air Temp Manager,                    !- Name
+  Temperature,                                             !- Control Variable
+  HVACTemplate-Always 12.2,                                !- Schedule Name
+  DOAS Supply Path Inlet;                                  !- Setpoint Node or NodeList Name
+
+SetpointManager:MixedAir,
+  DOAS Heating Coil Air Temp Manager,                      !- Name
+  Temperature,                                             !- Control Variable
+  DOAS Supply Path Inlet,                                  !- Reference Setpoint Node Name
+  DOAS Heating Coil Outlet,                                !- Fan Inlet Node Name
+  DOAS Supply Fan Outlet,                                  !- Fan Outlet Node Name
+  DOAS Heating Coil Outlet;                                !- Setpoint Node or NodeList Name
+
+Fan:VariableVolume,
+  DOAS Supply Fan,                                         !- Name
+  OCCUPY-1,                                                !- Availability Schedule Name
+  0.7,                                                     !- Fan Efficiency
+  1000,                                                    !- Pressure Rise {Pa}
+  autosize,                                                !- Maximum Flow Rate {m3/s}
+  Fraction,                                                !- Fan Minimum Flow Rate Input Method For Fan Power
+  0.0,                                                     !- Minimum Flow Fraction For Fan Power
+  ,                                                        !- Minimum Air Flow Rate For Fan Power {m3/s}
+  0.9,                                                     !- Motor Efficiency
+  1,                                                       !- Motor in Airstream Fraction
+  0.0015302446,                                            !- Fan Power Coefficient 1
+  0.0052080574,                                            !- Fan Power Coefficient 2
+  1.1086242,                                               !- Fan Power Coefficient 3
+  -0.11635563,                                             !- Fan Power Coefficient 4
+  0,                                                       !- Fan Power Coefficient 5
+  DOAS Heating Coil Outlet,                                !- Comp Inlet Node Name
+  DOAS Supply Fan Outlet;                                  !- Comp Outlet Node Name
+
+OutdoorAir:NodeList,
+  DOAS Outdoor Air Inlet;                                  !- Node or NodeList Name 1
+
+AirLoopHVAC:OutdoorAirSystem,
+  DOAS OA System,                                          !- Name
+  DOAS OA System Controllers,                              !- Controller List Name
+  DOAS OA System Equipment,                                !- Outdoor Air Equipment List Name
+  DOAS Availability Managers;                              !- Availability Manager List Name
+
+AirLoopHVAC:ControllerList,
+  DOAS OA System Controllers,                              !- Name
+  Controller:OutdoorAir,                                   !- Controller Object Type
+  DOAS OA Controller;                                      !- Controller Name
+
+AirLoopHVAC:OutdoorAirSystem:EquipmentList,
+  DOAS OA System Equipment,                                !- Name
+  HeatExchanger:AirToAir:SensibleAndLatent,                !- Component Object Type
+  DOAS Heat Recovery,                                      !- Component Name
+  OutdoorAir:Mixer,                                        !- Component Object Type
+  DOAS OA Mixing Box;                                      !- Component Name
+
+OutdoorAir:Mixer,
+  DOAS OA Mixing Box,                                      !- Name
+  DOAS Mixed Air Outlet,                                   !- Mixed Air Node Name
+  DOAS Heat Recovery Supply Outlet,                        !- Outdoor Air Stream Node Name
+  DOAS Relief Air Outlet,                                  !- Relief Air Stream Node Name
+  DOAS Air Loop Inlet;                                     !- Return Air Stream Node Name
+
+Controller:OutdoorAir,
+  DOAS OA Controller,                                      !- Name
+  DOAS Relief Air Outlet,                                  !- Relief Air Outlet Node Name
+  DOAS Air Loop Inlet,                                     !- Return Air Node Name
+  DOAS Mixed Air Outlet,                                   !- Mixed Air Node Name
+  DOAS Outdoor Air Inlet,                                  !- Actuator Node Name
+  autosize,                                                !- Minimum Outdoor Air Flow Rate {m3/s}
+  autosize,                                                !- Maximum Outdoor Air Flow Rate {m3/s}
+  DifferentialEnthalpy,                                    !- Economizer Control Type
+  MinimumFlowWithBypass,                                   !- Economizer Control Action Type
+  ,                                                        !- Economizer Maximum Limit Dry-Bulb Temperature {C}
+  ,                                                        !- Economizer Maximum Limit Enthalpy {J/kg}
+  ,                                                        !- Economizer Maximum Limit Dewpoint Temperature (C)
+  ,                                                        !- Electronic Enthalpy Limit Curve Name
+  12.2,                                                    !- Economizer Minimum Limit Dry-Bulb Temperature {C}
+  NoLockout,                                               !- Lockout Type
+  ProportionalMinimum,                                     !- Minimum Limit Type
+  ,                                                        !- Minimum Outdoor Air Schedule Name
+  ,                                                        !- Minimum Fraction of Outdoor Air Schedule Name
+  ,                                                        !- Maximum Fraction of Outdoor Air Schedule Name
+  ;                                                        !- Mechanical Ventilation Controller Name
+
+HeatExchanger:AirToAir:SensibleAndLatent,
+  DOAS Heat Recovery,                                      !- Heat exchanger name
+  ,                                                        !- Availability Schedule Name
+  autosize,                                                !- Nominal supply air flow rate {m3/s}
+  0.7,                                                     !- Sensible Effectiveness at 100% Heating Air Flow
+  0.65,                                                    !- Latent Effectiveness at 100% Heating Air Flow
+  0.750000,                                                !- Sensible Effectiveness at 75% Heating Air Flow
+  0.700000,                                                !- Latent Effectiveness at 75% Heating Air Flow
+  0.7,                                                     !- Sensible Effectiveness at 100% Cooling Air Flow
+  0.65,                                                    !- Latent Effectiveness at 100% Cooling Air Flow
+  0.750000,                                                !- Sensible Effectiveness at 75% Cooling Air Flow
+  0.700000,                                                !- Latent Effectiveness at 75% Cooling Air Flow
+  DOAS Outdoor Air Inlet,                                  !- Supply Air Inlet Node Name
+  DOAS Heat Recovery Supply Outlet,                        !- Supply Air Outlet Node Name
+  DOAS Relief Air Outlet,                                  !- Exhaust Air Inlet Node Name
+  DOAS Heat Recovery Relief Outlet,                        !- Exhaust Air Outlet Node Name
+  0,                                                       !- Nominal electric power {W}
+  Yes,                                                     !- Supply Air Outlet Temperature Control
+  Plate,                                                   !- Heat Exchanger Type
+  MinimumExhaustTemperature,                               !- Frost Control Type
+  1.7,                                                     !- Threshold Temperature
+  0.083,                                                   !- Initial Defrost Time Fraction
+  0.012,                                                   !- Rate of Defrost Time Fraction Increase
+  Yes;                                                     !- Economizer Lockout
+
+SetpointManager:MixedAir,
+  DOAS Heat Recovery Air Temp Manager,                     !- Name
+  Temperature,                                             !- Control Variable
+  DOAS Supply Path Inlet,                                  !- Reference Setpoint Node Name
+  DOAS Heating Coil Outlet,                                !- Fan Inlet Node Name
+  DOAS Supply Fan Outlet,                                  !- Fan Outlet Node Name
+  DOAS Heat Recovery Supply Outlet;                        !- Setpoint Node or NodeList Name
+
+SetpointManager:MixedAir,
+  DOAS Heat Recovery Economizer Temp Manager,              !- Name
+  Temperature,                                             !- Control Variable
+  DOAS Supply Fan Outlet,                                  !- Reference Setpoint Node Name
+  DOAS Heating Coil Outlet,                                !- Fan Inlet Node Name
+  DOAS Supply Fan Outlet,                                  !- Fan Outlet Node Name
+  DOAS Mixed Air Outlet;                                   !- Setpoint Node or NodeList Name
 
 Boiler:HotWater,
   Main Boiler,                                             !- Name
@@ -3309,6 +3881,7 @@ BranchList,
   SPACE3-1 Heating Coil HW Branch,                         !- Name
   SPACE4-1 Heating Coil HW Branch,                         !- Name
   SPACE5-1 Heating Coil HW Branch,                         !- Name
+  DOAS Heating Coil HW Branch,                             !- Name
   Hot Water Loop HW Demand Bypass Branch,                  !- Name
   Hot Water Loop HW Demand Outlet Branch;                  !- Name
 
@@ -3327,7 +3900,8 @@ Connector:Splitter,
   SPACE2-1 Heating Coil HW Branch,                         !- Name
   SPACE3-1 Heating Coil HW Branch,                         !- Name
   SPACE4-1 Heating Coil HW Branch,                         !- Name
-  SPACE5-1 Heating Coil HW Branch;                         !- Name
+  SPACE5-1 Heating Coil HW Branch,                         !- Name
+  DOAS Heating Coil HW Branch;                             !- Name
 
 Connector:Mixer,
   Hot Water Loop HW Demand Mixer,                          !- Name
@@ -3337,7 +3911,8 @@ Connector:Mixer,
   SPACE2-1 Heating Coil HW Branch,                         !- Name
   SPACE3-1 Heating Coil HW Branch,                         !- Name
   SPACE4-1 Heating Coil HW Branch,                         !- Name
-  SPACE5-1 Heating Coil HW Branch;                         !- Name
+  SPACE5-1 Heating Coil HW Branch,                         !- Name
+  DOAS Heating Coil HW Branch;                             !- Name
 
 Branch,
   Hot Water Loop HW Demand Inlet Branch,                   !- Name
@@ -3404,7 +3979,7 @@ PlantLoop,
   Chilled Water Loop ChW Demand Side Branches,             !- Demand Side Branch List Name
   Chilled Water Loop ChW Demand Side Connectors,           !- Demand Side Connector List Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  Chilled Water Loop Availability List,                    !- AvailabilityManagerAssignmentList
+  ,                                                        !- AvailabilityManagerAssignmentList
   SingleSetpoint,                                          !- Plant Loop Demand Calculation Scheme
   None;                                                    !- Common Pipe Simulation
 
@@ -3519,6 +4094,7 @@ BranchList,
   SPACE3-1 Cooling Coil ChW Branch,                        !- Name
   SPACE4-1 Cooling Coil ChW Branch,                        !- Name
   SPACE5-1 Cooling Coil ChW Branch,                        !- Name
+  DOAS Cooling Coil ChW Branch,                            !- Name
   Chilled Water Loop ChW Demand Bypass Branch,             !- Name
   Chilled Water Loop ChW Demand Outlet Branch;             !- Name
 
@@ -3537,7 +4113,8 @@ Connector:Splitter,
   SPACE2-1 Cooling Coil ChW Branch,                        !- Outlet Branch Name
   SPACE3-1 Cooling Coil ChW Branch,                        !- Outlet Branch Name
   SPACE4-1 Cooling Coil ChW Branch,                        !- Outlet Branch Name
-  SPACE5-1 Cooling Coil ChW Branch;                        !- Outlet Branch Name
+  SPACE5-1 Cooling Coil ChW Branch,                        !- Outlet Branch Name
+  DOAS Cooling Coil ChW Branch;                            !- Outlet Branch Name
 
 Connector:Mixer,
   Chilled Water Loop ChW Demand Mixer,                     !- Name
@@ -3547,7 +4124,8 @@ Connector:Mixer,
   SPACE2-1 Cooling Coil ChW Branch,                        !- Inlet Branch Name
   SPACE3-1 Cooling Coil ChW Branch,                        !- Inlet Branch Name
   SPACE4-1 Cooling Coil ChW Branch,                        !- Inlet Branch Name
-  SPACE5-1 Cooling Coil ChW Branch;                        !- Inlet Branch Name
+  SPACE5-1 Cooling Coil ChW Branch,                        !- Inlet Branch Name
+  DOAS Cooling Coil ChW Branch;                            !- Inlet Branch Name
 
 Branch,
   Chilled Water Loop ChW Demand Inlet Branch,              !- Name
@@ -3793,20 +4371,6 @@ Pipe:Adiabatic,
   Chilled Water Loop CndW Demand Outlet Pipe,              !- Name
   Chilled Water Loop CndW Demand Outlet Pipe Inlet,        !- Inlet Node Name
   Chilled Water Loop CndW Demand Outlet;                   !- Outlet Node Name
-
-AvailabilityManagerAssignmentList,
-  Chilled Water Loop Availability List,                    !- Name
-  AvailabilityManager:LowTemperatureTurnOff,               !- Availability Manager Object Type
-  Chilled Water Loop Availability Low Temp Off;            !- Availability Manager Name
-
-AvailabilityManager:LowTemperatureTurnOff,
-  Chilled Water Loop Availability Low Temp Off,            !- Name
-  Chilled Water Loop Outside Air Sensor,                   !- Sensor Node Name
-  7.22;                                                    !- Temperature
-
-OutdoorAir:Node,
-  Chilled Water Loop Outside Air Sensor,                   !- Name
-  -1;                                                      !- Height Above Ground
 
 Site:GroundTemperature:BuildingSurface,
   21.5,                                                    !- January Ground Temperature

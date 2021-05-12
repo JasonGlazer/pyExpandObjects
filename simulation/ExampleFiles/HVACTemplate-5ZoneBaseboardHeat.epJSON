@@ -1,4 +1,191 @@
 {
+    "Boiler:HotWater": {
+        "Main Boiler": {
+            "boiler_flow_mode": "ConstantFlow",
+            "boiler_water_inlet_node_name": "Main Boiler HW Inlet",
+            "boiler_water_outlet_node_name": "Main Boiler HW Outlet",
+            "design_water_flow_rate": "Autosize",
+            "efficiency_curve_temperature_evaluation_variable": "LeavingBoiler",
+            "fuel_type": "NaturalGas",
+            "maximum_part_load_ratio": 1.1,
+            "minimum_part_load_ratio": 0.0,
+            "nominal_capacity": "Autosize",
+            "nominal_thermal_efficiency": 0.8,
+            "normalized_boiler_efficiency_curve_name": "Main Boiler Efficiency Curve",
+            "optimum_part_load_ratio": 1.0,
+            "parasitic_electric_load": 0,
+            "sizing_factor": 1.0,
+            "water_outlet_upper_temperature_limit": 100.0
+        }
+    },
+    "Branch": {
+        "Hot Water Loop HW Demand Bypass Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Hot Water Loop HW Demand Bypass Inlet",
+                    "component_name": "Hot Water Loop HW Demand Side Bypass Pipe",
+                    "component_object_type": "Pipe:Adiabatic",
+                    "component_outlet_node_name": "Hot Water Loop HW Demand Bypass Outlet"
+                }
+            ]
+        },
+        "Hot Water Loop HW Demand Inlet Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Hot Water Loop HW Demand Inlet",
+                    "component_name": "Hot Water Loop HW Demand Inlet Pipe",
+                    "component_object_type": "Pipe:Adiabatic",
+                    "component_outlet_node_name": "Hot Water Loop HW Demand Inlet Pipe Outlet"
+                }
+            ]
+        },
+        "Hot Water Loop HW Demand Outlet Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Hot Water Loop HW Demand Outlet Pipe Inlet",
+                    "component_name": "Hot Water Loop HW Demand Outlet Pipe",
+                    "component_object_type": "Pipe:Adiabatic",
+                    "component_outlet_node_name": "Hot Water Loop HW Demand Outlet"
+                }
+            ]
+        },
+        "Hot Water Loop HW Supply Bypass Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Hot Water Loop HW Supply Bypass Inlet",
+                    "component_name": "Hot Water Loop HW Supply Side Bypass Pipe",
+                    "component_object_type": "Pipe:Adiabatic",
+                    "component_outlet_node_name": "Hot Water Loop HW Supply Bypass Outlet"
+                }
+            ]
+        },
+        "Hot Water Loop HW Supply Inlet Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Hot Water Loop HW Supply Inlet",
+                    "component_name": "Hot Water Loop HW Supply Pump",
+                    "component_object_type": "Pump:ConstantSpeed",
+                    "component_outlet_node_name": "Hot Water Loop HW Pump Outlet"
+                }
+            ]
+        },
+        "Hot Water Loop HW Supply Outlet Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Hot Water Loop HW Supply Outlet Pipe Inlet",
+                    "component_name": "Hot Water Loop HW Supply Outlet Pipe",
+                    "component_object_type": "Pipe:Adiabatic",
+                    "component_outlet_node_name": "Hot Water Loop HW Supply Outlet"
+                }
+            ]
+        },
+        "Main Boiler HW Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "Main Boiler HW Inlet",
+                    "component_name": "Main Boiler",
+                    "component_object_type": "Boiler:HotWater",
+                    "component_outlet_node_name": "Main Boiler HW Outlet"
+                }
+            ]
+        },
+        "SPACE1-1 Baseboard Heat HW Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "SPACE1-1 Baseboard HW Inlet",
+                    "component_name": "SPACE1-1 Baseboard Heat",
+                    "component_object_type": "ZoneHVAC:Baseboard:RadiantConvective:Water",
+                    "component_outlet_node_name": "SPACE1-1 Baseboard HW Outlet"
+                }
+            ]
+        },
+        "SPACE2-1 Baseboard Heat HW Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "SPACE2-1 Baseboard HW Inlet",
+                    "component_name": "SPACE2-1 Baseboard Heat",
+                    "component_object_type": "ZoneHVAC:Baseboard:RadiantConvective:Water",
+                    "component_outlet_node_name": "SPACE2-1 Baseboard HW Outlet"
+                }
+            ]
+        },
+        "SPACE3-1 Baseboard Heat HW Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "SPACE3-1 Baseboard HW Inlet",
+                    "component_name": "SPACE3-1 Baseboard Heat",
+                    "component_object_type": "ZoneHVAC:Baseboard:RadiantConvective:Water",
+                    "component_outlet_node_name": "SPACE3-1 Baseboard HW Outlet"
+                }
+            ]
+        },
+        "SPACE4-1 Baseboard Heat HW Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "SPACE4-1 Baseboard HW Inlet",
+                    "component_name": "SPACE4-1 Baseboard Heat",
+                    "component_object_type": "ZoneHVAC:Baseboard:RadiantConvective:Water",
+                    "component_outlet_node_name": "SPACE4-1 Baseboard HW Outlet"
+                }
+            ]
+        },
+        "SPACE5-1 Baseboard Heat HW Branch": {
+            "components": [
+                {
+                    "component_inlet_node_name": "SPACE5-1 Baseboard HW Inlet",
+                    "component_name": "SPACE5-1 Baseboard Heat",
+                    "component_object_type": "ZoneHVAC:Baseboard:RadiantConvective:Water",
+                    "component_outlet_node_name": "SPACE5-1 Baseboard HW Outlet"
+                }
+            ]
+        }
+    },
+    "BranchList": {
+        "Hot Water Loop HW Demand Side Branches": {
+            "branches": [
+                {
+                    "branch_name": "Hot Water Loop HW Demand Inlet Branch"
+                },
+                {
+                    "branch_name": "SPACE1-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "branch_name": "SPACE2-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "branch_name": "SPACE3-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "branch_name": "SPACE4-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "branch_name": "SPACE5-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "branch_name": "Hot Water Loop HW Demand Bypass Branch"
+                },
+                {
+                    "branch_name": "Hot Water Loop HW Demand Outlet Branch"
+                }
+            ]
+        },
+        "Hot Water Loop HW Supply Side Branches": {
+            "branches": [
+                {
+                    "branch_name": "Hot Water Loop HW Supply Inlet Branch"
+                },
+                {
+                    "branch_name": "Main Boiler HW Branch"
+                },
+                {
+                    "branch_name": "Hot Water Loop HW Supply Bypass Branch"
+                },
+                {
+                    "branch_name": "Hot Water Loop HW Supply Outlet Branch"
+                }
+            ]
+        }
+    },
     "Building": {
         "Building": {
             "loads_convergence_tolerance_value": 0.04,
@@ -1318,6 +1505,92 @@
             "zone_name": "PLENUM-1"
         }
     },
+    "Connector:Mixer": {
+        "Hot Water Loop HW Demand Mixer": {
+            "branches": [
+                {
+                    "inlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"
+                },
+                {
+                    "inlet_branch_name": "SPACE1-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "inlet_branch_name": "SPACE2-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "inlet_branch_name": "SPACE3-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "inlet_branch_name": "SPACE4-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "inlet_branch_name": "SPACE5-1 Baseboard Heat HW Branch"
+                }
+            ],
+            "outlet_branch_name": "Hot Water Loop HW Demand Outlet Branch"
+        },
+        "Hot Water Loop HW Supply Mixer": {
+            "branches": [
+                {
+                    "inlet_branch_name": "Main Boiler HW Branch"
+                },
+                {
+                    "inlet_branch_name": "Hot Water Loop HW Supply Bypass Branch"
+                }
+            ],
+            "outlet_branch_name": "Hot Water Loop HW Supply Outlet Branch"
+        }
+    },
+    "Connector:Splitter": {
+        "Hot Water Loop HW Demand Splitter": {
+            "branches": [
+                {
+                    "outlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"
+                },
+                {
+                    "outlet_branch_name": "SPACE1-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "outlet_branch_name": "SPACE2-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "outlet_branch_name": "SPACE3-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "outlet_branch_name": "SPACE4-1 Baseboard Heat HW Branch"
+                },
+                {
+                    "outlet_branch_name": "SPACE5-1 Baseboard Heat HW Branch"
+                }
+            ],
+            "inlet_branch_name": "Hot Water Loop HW Demand Inlet Branch"
+        },
+        "Hot Water Loop HW Supply Splitter": {
+            "branches": [
+                {
+                    "outlet_branch_name": "Main Boiler HW Branch"
+                },
+                {
+                    "outlet_branch_name": "Hot Water Loop HW Supply Bypass Branch"
+                }
+            ],
+            "inlet_branch_name": "Hot Water Loop HW Supply Inlet Branch"
+        }
+    },
+    "ConnectorList": {
+        "Hot Water Loop HW Demand Side Connectors": {
+            "connector_1_name": "Hot Water Loop HW Demand Splitter",
+            "connector_1_object_type": "Connector:Splitter",
+            "connector_2_name": "Hot Water Loop HW Demand Mixer",
+            "connector_2_object_type": "Connector:Mixer"
+        },
+        "Hot Water Loop HW Supply Side Connectors": {
+            "connector_1_name": "Hot Water Loop HW Supply Splitter",
+            "connector_1_object_type": "Connector:Splitter",
+            "connector_2_name": "Hot Water Loop HW Supply Mixer",
+            "connector_2_object_type": "Connector:Mixer"
+        }
+    },
     "Construction": {
         "CLNG-1": {
             "outside_layer": "MAT-CLNG-1"
@@ -1349,6 +1622,15 @@
             "layer_3": "IN02",
             "layer_4": "GP01",
             "outside_layer": "WD01"
+        }
+    },
+    "Curve:Quadratic": {
+        "Main Boiler Efficiency Curve": {
+            "coefficient1_constant": 0.97,
+            "coefficient2_x": 0.0633,
+            "coefficient3_x_2": -0.0333,
+            "maximum_value_of_x": 1.0,
+            "minimum_value_of_x": 0.0
         }
     },
     "ElectricEquipment": {
@@ -1525,72 +1807,6 @@
             "coordinate_system": "Relative",
             "starting_vertex_position": "UpperLeftCorner",
             "vertex_entry_direction": "Counterclockwise"
-        }
-    },
-    "HVACTemplate:Plant:Boiler": {
-        "Main Boiler": {
-            "boiler_type": "HotWaterBoiler",
-            "capacity": "Autosize",
-            "efficiency": 0.8,
-            "fuel_type": "NaturalGas",
-            "priority": "1"
-        }
-    },
-    "HVACTemplate:Plant:HotWaterLoop": {
-        "Hot Water Loop": {
-            "hot_water_design_setpoint": 82,
-            "hot_water_plant_operation_scheme_type": "Default",
-            "hot_water_pump_configuration": "ConstantFlow",
-            "hot_water_pump_rated_head": 179352,
-            "hot_water_reset_outdoor_dry_bulb_high": 10,
-            "hot_water_reset_outdoor_dry_bulb_low": -6.7,
-            "hot_water_setpoint_at_outdoor_dry_bulb_high": 65.6,
-            "hot_water_setpoint_at_outdoor_dry_bulb_low": 82.2,
-            "hot_water_setpoint_reset_type": "OutdoorAirTemperatureReset",
-            "pump_control_type": "Intermittent"
-        }
-    },
-    "HVACTemplate:Thermostat": {
-        "Heat Only": {
-            "cooling_setpoint_schedule_name": "No-Clg-SetP-Sch",
-            "heating_setpoint_schedule_name": "Htg-SetP-Sch"
-        }
-    },
-    "HVACTemplate:Zone:BaseboardHeat": {
-        "HVACTemplate:Zone:BaseboardHeat 1": {
-            "baseboard_heating_capacity": "Autosize",
-            "baseboard_heating_type": "HotWater",
-            "outdoor_air_method": "Flow/Person",
-            "template_thermostat_name": "Heat Only",
-            "zone_name": "SPACE1-1"
-        },
-        "HVACTemplate:Zone:BaseboardHeat 2": {
-            "baseboard_heating_capacity": "Autosize",
-            "baseboard_heating_type": "HotWater",
-            "outdoor_air_method": "Flow/Person",
-            "template_thermostat_name": "Heat Only",
-            "zone_name": "SPACE2-1"
-        },
-        "HVACTemplate:Zone:BaseboardHeat 3": {
-            "baseboard_heating_capacity": "Autosize",
-            "baseboard_heating_type": "HotWater",
-            "outdoor_air_method": "Flow/Person",
-            "template_thermostat_name": "Heat Only",
-            "zone_name": "SPACE3-1"
-        },
-        "HVACTemplate:Zone:BaseboardHeat 4": {
-            "baseboard_heating_capacity": "Autosize",
-            "baseboard_heating_type": "HotWater",
-            "outdoor_air_method": "Flow/Person",
-            "template_thermostat_name": "Heat Only",
-            "zone_name": "SPACE4-1"
-        },
-        "HVACTemplate:Zone:BaseboardHeat 5": {
-            "baseboard_heating_capacity": "Autosize",
-            "baseboard_heating_type": "HotWater",
-            "outdoor_air_method": "Flow/Person",
-            "template_thermostat_name": "Heat Only",
-            "zone_name": "SPACE5-1"
         }
     },
     "HeatBalanceAlgorithm": {
@@ -1781,6 +1997,18 @@
             "visible_absorptance": 0.65
         }
     },
+    "NodeList": {
+        "Hot Water Loop HW Supply Setpoint Nodes": {
+            "nodes": [
+                {
+                    "node_name": "Main Boiler HW Outlet"
+                },
+                {
+                    "node_name": "Hot Water Loop HW Supply Outlet"
+                }
+            ]
+        }
+    },
     "Output:Meter:MeterFileOnly": {
         "Output:Meter:MeterFileOnly 1": {
             "key_name": "Electricity:Facility",
@@ -1969,6 +2197,86 @@
             "zone_or_zonelist_name": "SPACE5-1"
         }
     },
+    "Pipe:Adiabatic": {
+        "Hot Water Loop HW Demand Inlet Pipe": {
+            "inlet_node_name": "Hot Water Loop HW Demand Inlet",
+            "outlet_node_name": "Hot Water Loop HW Demand Inlet Pipe Outlet"
+        },
+        "Hot Water Loop HW Demand Outlet Pipe": {
+            "inlet_node_name": "Hot Water Loop HW Demand Outlet Pipe Inlet",
+            "outlet_node_name": "Hot Water Loop HW Demand Outlet"
+        },
+        "Hot Water Loop HW Demand Side Bypass Pipe": {
+            "inlet_node_name": "Hot Water Loop HW Demand Bypass Inlet",
+            "outlet_node_name": "Hot Water Loop HW Demand Bypass Outlet"
+        },
+        "Hot Water Loop HW Supply Outlet Pipe": {
+            "inlet_node_name": "Hot Water Loop HW Supply Outlet Pipe Inlet",
+            "outlet_node_name": "Hot Water Loop HW Supply Outlet"
+        },
+        "Hot Water Loop HW Supply Side Bypass Pipe": {
+            "inlet_node_name": "Hot Water Loop HW Supply Bypass Inlet",
+            "outlet_node_name": "Hot Water Loop HW Supply Bypass Outlet"
+        }
+    },
+    "PlantEquipmentList": {
+        "Hot Water Loop All Equipment": {
+            "equipment": [
+                {
+                    "equipment_name": "Main Boiler",
+                    "equipment_object_type": "Boiler:HotWater"
+                }
+            ]
+        }
+    },
+    "PlantEquipmentOperation:HeatingLoad": {
+        "Hot Water Loop Operation All Hours": {
+            "load_range_1_lower_limit": 0,
+            "load_range_1_upper_limit": 1000000000000000,
+            "range_1_equipment_list_name": "Hot Water Loop All Equipment"
+        }
+    },
+    "PlantEquipmentOperationSchemes": {
+        "Hot Water Loop Operation": {
+            "control_scheme_1_name": "Hot Water Loop Operation All Hours",
+            "control_scheme_1_object_type": "PlantEquipmentOperation:HeatingLoad",
+            "control_scheme_1_schedule_name": "HVACTemplate-Always 1"
+        }
+    },
+    "PlantLoop": {
+        "Hot Water Loop Hot Water Loop": {
+            "demand_side_branch_list_name": "Hot Water Loop HW Demand Side Branches",
+            "demand_side_connector_list_name": "Hot Water Loop HW Demand Side Connectors",
+            "demand_side_inlet_node_name": "Hot Water Loop HW Demand Inlet",
+            "demand_side_outlet_node_name": "Hot Water Loop HW Demand Outlet",
+            "fluid_type": "Water",
+            "load_distribution_scheme": "SequentialLoad",
+            "loop_temperature_setpoint_node_name": "Hot Water Loop HW Supply Outlet",
+            "maximum_loop_flow_rate": "Autosize",
+            "maximum_loop_temperature": 100,
+            "minimum_loop_flow_rate": 0,
+            "minimum_loop_temperature": 10,
+            "plant_equipment_operation_scheme_name": "Hot Water Loop Operation",
+            "plant_loop_demand_calculation_scheme": "SingleSetpoint",
+            "plant_loop_volume": "Autocalculate",
+            "plant_side_branch_list_name": "Hot Water Loop HW Supply Side Branches",
+            "plant_side_connector_list_name": "Hot Water Loop HW Supply Side Connectors",
+            "plant_side_inlet_node_name": "Hot Water Loop HW Supply Inlet",
+            "plant_side_outlet_node_name": "Hot Water Loop HW Supply Outlet"
+        }
+    },
+    "Pump:ConstantSpeed": {
+        "Hot Water Loop HW Supply Pump": {
+            "design_flow_rate": "Autosize",
+            "design_power_consumption": "Autosize",
+            "design_pump_head": 179352,
+            "fraction_of_motor_inefficiencies_to_fluid_stream": 0,
+            "inlet_node_name": "Hot Water Loop HW Supply Inlet",
+            "motor_efficiency": 0.9,
+            "outlet_node_name": "Hot Water Loop HW Pump Outlet",
+            "pump_control_type": "Intermittent"
+        }
+    },
     "RunPeriod": {
         "Run Period 1": {
             "apply_weekend_holiday_rule": "No",
@@ -2080,6 +2388,40 @@
                 }
             ],
             "schedule_type_limits_name": "Fraction"
+        },
+        "HVACTemplate-Always 1": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 1
+                }
+            ],
+            "schedule_type_limits_name": "HVACTemplate Any Number"
+        },
+        "HVACTemplate-Always 4": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 4
+                }
+            ],
+            "schedule_type_limits_name": "HVACTemplate Any Number"
         },
         "Htg-SetP-Sch": {
             "data": [
@@ -2494,6 +2836,7 @@
             "numeric_type": "Continuous",
             "upper_limit_value": 1.0
         },
+        "HVACTemplate Any Number": {},
         "On/Off": {
             "lower_limit_value": 0,
             "numeric_type": "Discrete",
@@ -2504,6 +2847,16 @@
             "numeric_type": "Continuous",
             "unit_type": "Temperature",
             "upper_limit_value": 200
+        }
+    },
+    "SetpointManager:OutdoorAirReset": {
+        "Hot Water Loop HW Temp Manager": {
+            "control_variable": "Temperature",
+            "outdoor_high_temperature": 10,
+            "outdoor_low_temperature": -6.7,
+            "setpoint_at_outdoor_high_temperature": 65.6,
+            "setpoint_at_outdoor_low_temperature": 82.2,
+            "setpoint_node_or_nodelist_name": "Hot Water Loop HW Supply Setpoint Nodes"
         }
     },
     "Shading:Zone:Detailed": {
@@ -2603,6 +2956,91 @@
             "heating_sizing_factor": 1.2
         }
     },
+    "Sizing:Plant": {
+        "Sizing:Plant 1": {
+            "design_loop_exit_temperature": 82,
+            "loop_design_temperature_difference": 11.0,
+            "loop_type": "Heating",
+            "plant_or_condenser_loop_name": "Hot Water Loop Hot Water Loop"
+        }
+    },
+    "Sizing:Zone": {
+        "Sizing:Zone 1": {
+            "cooling_design_air_flow_method": "DesignDay",
+            "cooling_design_air_flow_rate": 0,
+            "cooling_minimum_air_flow_fraction": 0,
+            "heating_design_air_flow_method": "DesignDay",
+            "heating_design_air_flow_rate": 0,
+            "heating_maximum_air_flow_fraction": 0,
+            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
+            "zone_cooling_design_supply_air_temperature": 12.5,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_humidity_ratio": 0.008,
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_or_zonelist_name": "SPACE1-1"
+        },
+        "Sizing:Zone 2": {
+            "cooling_design_air_flow_method": "DesignDay",
+            "cooling_design_air_flow_rate": 0,
+            "cooling_minimum_air_flow_fraction": 0,
+            "heating_design_air_flow_method": "DesignDay",
+            "heating_design_air_flow_rate": 0,
+            "heating_maximum_air_flow_fraction": 0,
+            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
+            "zone_cooling_design_supply_air_temperature": 12.5,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_humidity_ratio": 0.008,
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_or_zonelist_name": "SPACE2-1"
+        },
+        "Sizing:Zone 3": {
+            "cooling_design_air_flow_method": "DesignDay",
+            "cooling_design_air_flow_rate": 0,
+            "cooling_minimum_air_flow_fraction": 0,
+            "heating_design_air_flow_method": "DesignDay",
+            "heating_design_air_flow_rate": 0,
+            "heating_maximum_air_flow_fraction": 0,
+            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
+            "zone_cooling_design_supply_air_temperature": 12.5,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_humidity_ratio": 0.008,
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_or_zonelist_name": "SPACE3-1"
+        },
+        "Sizing:Zone 4": {
+            "cooling_design_air_flow_method": "DesignDay",
+            "cooling_design_air_flow_rate": 0,
+            "cooling_minimum_air_flow_fraction": 0,
+            "heating_design_air_flow_method": "DesignDay",
+            "heating_design_air_flow_rate": 0,
+            "heating_maximum_air_flow_fraction": 0,
+            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
+            "zone_cooling_design_supply_air_temperature": 12.5,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_humidity_ratio": 0.008,
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_or_zonelist_name": "SPACE4-1"
+        },
+        "Sizing:Zone 5": {
+            "cooling_design_air_flow_method": "DesignDay",
+            "cooling_design_air_flow_rate": 0,
+            "cooling_minimum_air_flow_fraction": 0,
+            "heating_design_air_flow_method": "DesignDay",
+            "heating_design_air_flow_rate": 0,
+            "heating_maximum_air_flow_fraction": 0,
+            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
+            "zone_cooling_design_supply_air_temperature": 12.5,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_humidity_ratio": 0.008,
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_or_zonelist_name": "SPACE5-1"
+        }
+    },
     "SizingPeriod:DesignDay": {
         "CHICAGO_IL_USA Annual Cooling 1% Design Conditions DB/MCWB": {
             "barometric_pressure": 99063.0,
@@ -2649,6 +3087,12 @@
             "algorithm": "DOE-2"
         }
     },
+    "ThermostatSetpoint:DualSetpoint": {
+        "Heat Only Dual SP Control": {
+            "cooling_setpoint_temperature_schedule_name": "No-Clg-SetP-Sch",
+            "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+        }
+    },
     "Timestep": {
         "Timestep 1": {
             "number_of_timesteps_per_hour": 4
@@ -2656,7 +3100,7 @@
     },
     "Version": {
         "Version 1": {
-            "version_identifier": "9.4"
+            "version_identifier": "9.5"
         }
     },
     "WindowMaterial:Gas": {
@@ -2791,6 +3235,206 @@
             "x_origin": 0,
             "y_origin": 0,
             "z_origin": 0
+        }
+    },
+    "ZoneControl:Thermostat": {
+        "SPACE1-1 Thermostat": {
+            "control_1_name": "Heat Only Dual SP Control",
+            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
+            "control_type_schedule_name": "HVACTemplate-Always 4",
+            "zone_or_zonelist_name": "SPACE1-1"
+        },
+        "SPACE2-1 Thermostat": {
+            "control_1_name": "Heat Only Dual SP Control",
+            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
+            "control_type_schedule_name": "HVACTemplate-Always 4",
+            "zone_or_zonelist_name": "SPACE2-1"
+        },
+        "SPACE3-1 Thermostat": {
+            "control_1_name": "Heat Only Dual SP Control",
+            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
+            "control_type_schedule_name": "HVACTemplate-Always 4",
+            "zone_or_zonelist_name": "SPACE3-1"
+        },
+        "SPACE4-1 Thermostat": {
+            "control_1_name": "Heat Only Dual SP Control",
+            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
+            "control_type_schedule_name": "HVACTemplate-Always 4",
+            "zone_or_zonelist_name": "SPACE4-1"
+        },
+        "SPACE5-1 Thermostat": {
+            "control_1_name": "Heat Only Dual SP Control",
+            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
+            "control_type_schedule_name": "HVACTemplate-Always 4",
+            "zone_or_zonelist_name": "SPACE5-1"
+        }
+    },
+    "ZoneHVAC:Baseboard:RadiantConvective:Water": {
+        "SPACE1-1 Baseboard Heat": {
+            "design_object": "SPACE1-1 Baseboard Heat Design Object",
+            "heating_design_capacity": "Autosize",
+            "inlet_node_name": "SPACE1-1 Baseboard HW Inlet",
+            "maximum_water_flow_rate": "Autosize",
+            "outlet_node_name": "SPACE1-1 Baseboard HW Outlet",
+            "rated_average_water_temperature": 87.78,
+            "rated_water_mass_flow_rate": 0.063
+        },
+        "SPACE2-1 Baseboard Heat": {
+            "design_object": "SPACE2-1 Baseboard Heat Design Object",
+            "heating_design_capacity": "Autosize",
+            "inlet_node_name": "SPACE2-1 Baseboard HW Inlet",
+            "maximum_water_flow_rate": "Autosize",
+            "outlet_node_name": "SPACE2-1 Baseboard HW Outlet",
+            "rated_average_water_temperature": 87.78,
+            "rated_water_mass_flow_rate": 0.063
+        },
+        "SPACE3-1 Baseboard Heat": {
+            "design_object": "SPACE3-1 Baseboard Heat Design Object",
+            "heating_design_capacity": "Autosize",
+            "inlet_node_name": "SPACE3-1 Baseboard HW Inlet",
+            "maximum_water_flow_rate": "Autosize",
+            "outlet_node_name": "SPACE3-1 Baseboard HW Outlet",
+            "rated_average_water_temperature": 87.78,
+            "rated_water_mass_flow_rate": 0.063
+        },
+        "SPACE4-1 Baseboard Heat": {
+            "design_object": "SPACE4-1 Baseboard Heat Design Object",
+            "heating_design_capacity": "Autosize",
+            "inlet_node_name": "SPACE4-1 Baseboard HW Inlet",
+            "maximum_water_flow_rate": "Autosize",
+            "outlet_node_name": "SPACE4-1 Baseboard HW Outlet",
+            "rated_average_water_temperature": 87.78,
+            "rated_water_mass_flow_rate": 0.063
+        },
+        "SPACE5-1 Baseboard Heat": {
+            "design_object": "SPACE5-1 Baseboard Heat Design Object",
+            "heating_design_capacity": "Autosize",
+            "inlet_node_name": "SPACE5-1 Baseboard HW Inlet",
+            "maximum_water_flow_rate": "Autosize",
+            "outlet_node_name": "SPACE5-1 Baseboard HW Outlet",
+            "rated_average_water_temperature": 87.78,
+            "rated_water_mass_flow_rate": 0.063
+        }
+    },
+    "ZoneHVAC:Baseboard:RadiantConvective:Water:Design": {
+        "SPACE1-1 Baseboard Heat Design Object": {
+            "convergence_tolerance": 0.001,
+            "fraction_of_radiant_energy_incident_on_people": 0.0,
+            "fraction_radiant": 0.0,
+            "heating_design_capacity_method": "HeatingDesignCapacity"
+        },
+        "SPACE2-1 Baseboard Heat Design Object": {
+            "convergence_tolerance": 0.001,
+            "fraction_of_radiant_energy_incident_on_people": 0.0,
+            "fraction_radiant": 0.0,
+            "heating_design_capacity_method": "HeatingDesignCapacity"
+        },
+        "SPACE3-1 Baseboard Heat Design Object": {
+            "convergence_tolerance": 0.001,
+            "fraction_of_radiant_energy_incident_on_people": 0.0,
+            "fraction_radiant": 0.0,
+            "heating_design_capacity_method": "HeatingDesignCapacity"
+        },
+        "SPACE4-1 Baseboard Heat Design Object": {
+            "convergence_tolerance": 0.001,
+            "fraction_of_radiant_energy_incident_on_people": 0.0,
+            "fraction_radiant": 0.0,
+            "heating_design_capacity_method": "HeatingDesignCapacity"
+        },
+        "SPACE5-1 Baseboard Heat Design Object": {
+            "convergence_tolerance": 0.001,
+            "fraction_of_radiant_energy_incident_on_people": 0.0,
+            "fraction_radiant": 0.0,
+            "heating_design_capacity_method": "HeatingDesignCapacity"
+        }
+    },
+    "ZoneHVAC:EquipmentConnections": {
+        "ZoneHVAC:EquipmentConnections 1": {
+            "zone_air_node_name": "SPACE1-1 Zone Air Node",
+            "zone_conditioning_equipment_list_name": "SPACE1-1 Equipment",
+            "zone_name": "SPACE1-1",
+            "zone_return_air_node_or_nodelist_name": "SPACE1-1 Return Outlet"
+        },
+        "ZoneHVAC:EquipmentConnections 2": {
+            "zone_air_node_name": "SPACE2-1 Zone Air Node",
+            "zone_conditioning_equipment_list_name": "SPACE2-1 Equipment",
+            "zone_name": "SPACE2-1",
+            "zone_return_air_node_or_nodelist_name": "SPACE2-1 Return Outlet"
+        },
+        "ZoneHVAC:EquipmentConnections 3": {
+            "zone_air_node_name": "SPACE3-1 Zone Air Node",
+            "zone_conditioning_equipment_list_name": "SPACE3-1 Equipment",
+            "zone_name": "SPACE3-1",
+            "zone_return_air_node_or_nodelist_name": "SPACE3-1 Return Outlet"
+        },
+        "ZoneHVAC:EquipmentConnections 4": {
+            "zone_air_node_name": "SPACE4-1 Zone Air Node",
+            "zone_conditioning_equipment_list_name": "SPACE4-1 Equipment",
+            "zone_name": "SPACE4-1",
+            "zone_return_air_node_or_nodelist_name": "SPACE4-1 Return Outlet"
+        },
+        "ZoneHVAC:EquipmentConnections 5": {
+            "zone_air_node_name": "SPACE5-1 Zone Air Node",
+            "zone_conditioning_equipment_list_name": "SPACE5-1 Equipment",
+            "zone_name": "SPACE5-1",
+            "zone_return_air_node_or_nodelist_name": "SPACE5-1 Return Outlet"
+        }
+    },
+    "ZoneHVAC:EquipmentList": {
+        "SPACE1-1 Equipment": {
+            "equipment": [
+                {
+                    "zone_equipment_cooling_sequence": 1,
+                    "zone_equipment_heating_or_no_load_sequence": 1,
+                    "zone_equipment_name": "SPACE1-1 Baseboard Heat",
+                    "zone_equipment_object_type": "ZoneHVAC:Baseboard:RadiantConvective:Water"
+                }
+            ],
+            "load_distribution_scheme": "SequentialLoad"
+        },
+        "SPACE2-1 Equipment": {
+            "equipment": [
+                {
+                    "zone_equipment_cooling_sequence": 1,
+                    "zone_equipment_heating_or_no_load_sequence": 1,
+                    "zone_equipment_name": "SPACE2-1 Baseboard Heat",
+                    "zone_equipment_object_type": "ZoneHVAC:Baseboard:RadiantConvective:Water"
+                }
+            ],
+            "load_distribution_scheme": "SequentialLoad"
+        },
+        "SPACE3-1 Equipment": {
+            "equipment": [
+                {
+                    "zone_equipment_cooling_sequence": 1,
+                    "zone_equipment_heating_or_no_load_sequence": 1,
+                    "zone_equipment_name": "SPACE3-1 Baseboard Heat",
+                    "zone_equipment_object_type": "ZoneHVAC:Baseboard:RadiantConvective:Water"
+                }
+            ],
+            "load_distribution_scheme": "SequentialLoad"
+        },
+        "SPACE4-1 Equipment": {
+            "equipment": [
+                {
+                    "zone_equipment_cooling_sequence": 1,
+                    "zone_equipment_heating_or_no_load_sequence": 1,
+                    "zone_equipment_name": "SPACE4-1 Baseboard Heat",
+                    "zone_equipment_object_type": "ZoneHVAC:Baseboard:RadiantConvective:Water"
+                }
+            ],
+            "load_distribution_scheme": "SequentialLoad"
+        },
+        "SPACE5-1 Equipment": {
+            "equipment": [
+                {
+                    "zone_equipment_cooling_sequence": 1,
+                    "zone_equipment_heating_or_no_load_sequence": 1,
+                    "zone_equipment_name": "SPACE5-1 Baseboard Heat",
+                    "zone_equipment_object_type": "ZoneHVAC:Baseboard:RadiantConvective:Water"
+                }
+            ],
+            "load_distribution_scheme": "SequentialLoad"
         }
     },
     "ZoneInfiltration:DesignFlowRate": {

@@ -2,12 +2,11 @@
 !-Option OriginalOrderTop UseSpecialFormat
 !-NOTE: All comments with '!-' are ignored by the IDFEditor and are generated automatically.
 !-      Use '!' comments if they need to be retained when using the IDFEditor.
-! HVACTemplate-5ZoneBaseBoardHeat.idf
-! Basic file description:  1 story building divided into 4 exterior and one interior zones and a plenum
-!                          illustrates the use of HVACTemplate objects to define zone thermostats and
-!                          hot water baseboard heat with a boiler. Natural ventilation only for cooling.
-!
-! Highlights:              HVACTemplate thermostats, hot water baseboard, and boiler loop
+! HVACTemplate-5ZonePurchAir.idf
+! Basic file description:  1 story building divided into 4 exterior and one interior conditioned zones and return plenum
+!                          illustrates the use of HVACTemplate objects to define zone thermostats and purchased air
+!                          to condition the space without modeling a full HVAC system.
+! Highlights:              HVACTemplate thermostats and purchased air
 !
 ! Simulation Location/Run: CHICAGO_IL_USA TMY2-94846, 2 design days, 2 run periods,
 !                          Run Control executes the run periods using the weather file
@@ -17,9 +16,9 @@
 ! Design Days:             CHICAGO_IL_USA Annual Heating 99% Design Conditions DB, MaxDB= -17.3°C
 !                          CHICAGO_IL_USA Annual Cooling 1% Design Conditions, MaxDB=  31.5°C MCWB=  23.0°C
 !
-! Run Period (Weather File): Winter 1/14, Summer 7/7, CHICAGO_IL_USA TMY2-94846
+! Run Period (Weather File): Annual, CHICAGO_IL_USA TMY2-94846
 !
-! Run Control:             Zone and System sizing with weather file run control (no design days run)
+! Run Control:             Run weather file periods (no design days run)
 !
 ! Building: Single floor rectangular building 100 ft x 50 ft. 5 zones - 4 exterior, 1 interior, zone height 8 feet.
 !           Exterior zone depth is 12 feet. There is a 2 foot high return plenum: the overall building height is
@@ -60,7 +59,6 @@
 !
 ! Internal gains description:     lighting is 1.5 watts/ft2, office equip is 1.0 watts/ft2. There is 1 occupant
 !                                 per 100 ft2 of floor area. The infiltration is 0.25 air changes per hour.
-!                                 Zone ventilation is 5 air changes per hour.
 !
 ! Interzone Surfaces:             6 interzone surfaces (see diagram)
 ! Internal Mass:                  None
@@ -75,29 +73,27 @@
 !
 ! Detached Shading:               None
 ! Daylight:                       None
-! Natural Ventilation:
+! Natural Ventilation:            None
 ! Compact Schedules:              Yes
 !
-! HVAC:                           Dual-duct constant volume system with outside air, hot water heating coil,
-!                                 and chilled water cooling coil.
-!                                 Central Plant is single hot water boiler, electric compression
-!                                 chiller with water cooled condenser. All equipment is autosized.
+! HVAC:                           Ideal loads air system. Each zone adds a variation of outdoor air,
+!                                 economizer, humidity control, and heat recovery.
 !
 ! Zonal Equipment:                Yes
-! Central Air Handling Equipment: No
-! System Equipment Autosize:      Yes
+! Central Air Handling Equipment: None
+! System Equipment Autosize:      N/A
 ! Purchased Cooling:              None
 ! Purchased Heating:              None
-! Coils:                          No
-! Pumps:                          Yes
-! Boilers:                        Yes
-! Chillers:                       No
+! Coils:                          None
+! Pumps:                          None
+! Boilers:                        None
+! Chillers:                       None
 !
 ! Results:
-! Standard Reports:               Yes
+! Standard Reports:               None
 ! Timestep or Hourly Variables:   Hourly
 ! Time bins Report:               None
-! HTML Report:                    Yes
+! HTML Report:                    None
 ! Environmental Emissions:        None
 ! Utility Tariffs:                None
 
@@ -201,8 +197,8 @@
 
   SimulationControl,
     Yes,                     !- Do Zone Sizing Calculation
-    Yes,                     !- Do System Sizing Calculation
-    Yes,                     !- Do Plant Sizing Calculation
+    No,                      !- Do System Sizing Calculation
+    No,                      !- Do Plant Sizing Calculation
     No,                      !- Run Simulation for Sizing Periods
     Yes,                     !- Run Simulation for Weather File Run Periods
     No,                      !- Do HVAC Sizing Simulation for Sizing Periods
@@ -579,22 +575,7 @@
     Through: 12/31,          !- Field 1
     For: WeekDays CustomDay1 CustomDay2, !- Field 2
     Until: 7:00,1.0,         !- Field 3
-    Until: 21:00,1.0,        !- Field 5
-    Until: 24:00,1.0,        !- Field 7
-    For: Weekends Holiday,   !- Field 9
-    Until: 24:00,1.0,        !- Field 10
-    For: SummerDesignDay,    !- Field 12
-    Until: 24:00,1.0,        !- Field 13
-    For: WinterDesignDay,    !- Field 15
-    Until: 24:00,1.0;        !- Field 16
-
-  Schedule:Compact,
-    VENT-SCH,                !- Name
-    Fraction,                !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: WeekDays CustomDay1 CustomDay2, !- Field 2
-    Until: 7:00,1.0,         !- Field 3
-    Until: 21:00,1.0,        !- Field 5
+    Until: 21:00,0.0,        !- Field 5
     Until: 24:00,1.0,        !- Field 7
     For: Weekends Holiday,   !- Field 9
     Until: 24:00,1.0,        !- Field 10
@@ -851,30 +832,6 @@
     0.3,                     !- Fraction Radiant
     0;                       !- Fraction Lost
 
-  ZoneVentilation:DesignFlowRate,
-    SPACE1-1 Ventilation,    !- Name
-    SPACE1-1,                !- Zone or ZoneList Name
-    VENT-SCH,                !- Schedule Name
-    AirChanges/Hour,         !- Design Flow Rate Calculation Method
-    ,                        !- Design Flow Rate {m3/s}
-    ,                        !- Flow Rate per Zone Floor Area {m3/s-m2}
-    ,                        !- Flow Rate per Person {m3/s-person}
-    5.0,                     !- Air Changes per Hour {1/hr}
-    Exhaust,                 !- Ventilation Type
-    400.0,                   !- Fan Pressure Rise {Pa}
-    0.9,                     !- Fan Total Efficiency
-    1.0,                     !- Constant Term Coefficient
-    0.0,                     !- Temperature Term Coefficient
-    0.0,                     !- Velocity Term Coefficient
-    0.0,                     !- Velocity Squared Term Coefficient
-    24.0,                    !- Minimum Indoor Temperature {C}
-    ,                        !- Minimum Indoor Temperature Schedule Name
-    ,                        !- Maximum Indoor Temperature {C}
-    ,                        !- Maximum Indoor Temperature Schedule Name
-    1.0,                     !- Delta Temperature {deltaC}
-    ,                        !- Delta Temperature Schedule Name
-    10;                      !- Minimum Outdoor Temperature {C}
-
   BuildingSurface:Detailed,
     FRONT-1,                 !- Name
     WALL,                    !- Surface Type
@@ -1084,30 +1041,6 @@
     0.3,                     !- Fraction Radiant
     0;                       !- Fraction Lost
 
-  ZoneVentilation:DesignFlowRate,
-    SPACE2-1 Ventilation,    !- Name
-    SPACE2-1,                !- Zone or ZoneList Name
-    VENT-SCH,                !- Schedule Name
-    AirChanges/Hour,         !- Design Flow Rate Calculation Method
-    ,                        !- Design Flow Rate {m3/s}
-    ,                        !- Flow Rate per Zone Floor Area {m3/s-m2}
-    ,                        !- Flow Rate per Person {m3/s-person}
-    5.0,                     !- Air Changes per Hour {1/hr}
-    Exhaust,                 !- Ventilation Type
-    400.0,                   !- Fan Pressure Rise {Pa}
-    0.9,                     !- Fan Total Efficiency
-    1.0,                     !- Constant Term Coefficient
-    0.0,                     !- Temperature Term Coefficient
-    0.0,                     !- Velocity Term Coefficient
-    0.0,                     !- Velocity Squared Term Coefficient
-    24.0,                    !- Minimum Indoor Temperature {C}
-    ,                        !- Minimum Indoor Temperature Schedule Name
-    ,                        !- Maximum Indoor Temperature {C}
-    ,                        !- Maximum Indoor Temperature Schedule Name
-    1.0,                     !- Delta Temperature {deltaC}
-    ,                        !- Delta Temperature Schedule Name
-    10;                      !- Minimum Outdoor Temperature {C}
-
   BuildingSurface:Detailed,
     RIGHT-1,                 !- Name
     WALL,                    !- Surface Type
@@ -1281,30 +1214,6 @@
     0,                       !- Fraction Latent
     0.3,                     !- Fraction Radiant
     0;                       !- Fraction Lost
-
-  ZoneVentilation:DesignFlowRate,
-    SPACE3-1 Ventilation,    !- Name
-    SPACE3-1,                !- Zone or ZoneList Name
-    VENT-SCH,                !- Schedule Name
-    AirChanges/Hour,         !- Design Flow Rate Calculation Method
-    ,                        !- Design Flow Rate {m3/s}
-    ,                        !- Flow Rate per Zone Floor Area {m3/s-m2}
-    ,                        !- Flow Rate per Person {m3/s-person}
-    5.0,                     !- Air Changes per Hour {1/hr}
-    Exhaust,                 !- Ventilation Type
-    400.0,                   !- Fan Pressure Rise {Pa}
-    0.9,                     !- Fan Total Efficiency
-    1.0,                     !- Constant Term Coefficient
-    0.0,                     !- Temperature Term Coefficient
-    0.0,                     !- Velocity Term Coefficient
-    0.0,                     !- Velocity Squared Term Coefficient
-    24.0,                    !- Minimum Indoor Temperature {C}
-    ,                        !- Minimum Indoor Temperature Schedule Name
-    ,                        !- Maximum Indoor Temperature {C}
-    ,                        !- Maximum Indoor Temperature Schedule Name
-    1.0,                     !- Delta Temperature {deltaC}
-    ,                        !- Delta Temperature Schedule Name
-    10;                      !- Minimum Outdoor Temperature {C}
 
   BuildingSurface:Detailed,
     BACK-1,                  !- Name
@@ -1495,30 +1404,6 @@
     0.3,                     !- Fraction Radiant
     0;                       !- Fraction Lost
 
-  ZoneVentilation:DesignFlowRate,
-    SPACE4-1 Ventilation,    !- Name
-    SPACE4-1,                !- Zone or ZoneList Name
-    VENT-SCH,                !- Schedule Name
-    AirChanges/Hour,         !- Design Flow Rate Calculation Method
-    ,                        !- Design Flow Rate {m3/s}
-    ,                        !- Flow Rate per Zone Floor Area {m3/s-m2}
-    ,                        !- Flow Rate per Person {m3/s-person}
-    5.0,                     !- Air Changes per Hour {1/hr}
-    Exhaust,                 !- Ventilation Type
-    400.0,                   !- Fan Pressure Rise {Pa}
-    0.9,                     !- Fan Total Efficiency
-    1.0,                     !- Constant Term Coefficient
-    0.0,                     !- Temperature Term Coefficient
-    0.0,                     !- Velocity Term Coefficient
-    0.0,                     !- Velocity Squared Term Coefficient
-    24.0,                    !- Minimum Indoor Temperature {C}
-    ,                        !- Minimum Indoor Temperature Schedule Name
-    ,                        !- Maximum Indoor Temperature {C}
-    ,                        !- Maximum Indoor Temperature Schedule Name
-    1.0,                     !- Delta Temperature {deltaC}
-    ,                        !- Delta Temperature Schedule Name
-    10;                      !- Minimum Outdoor Temperature {C}
-
   BuildingSurface:Detailed,
     LEFT-1,                  !- Name
     WALL,                    !- Surface Type
@@ -1693,30 +1578,6 @@
     0.3,                     !- Fraction Radiant
     0;                       !- Fraction Lost
 
-  ZoneVentilation:DesignFlowRate,
-    SPACE5-1 Ventilation,    !- Name
-    SPACE5-1,                !- Zone or ZoneList Name
-    VENT-SCH,                !- Schedule Name
-    AirChanges/Hour,         !- Design Flow Rate Calculation Method
-    ,                        !- Design Flow Rate {m3/s}
-    ,                        !- Flow Rate per Zone Floor Area {m3/s-m2}
-    ,                        !- Flow Rate per Person {m3/s-person}
-    5.0,                     !- Air Changes per Hour {1/hr}
-    Exhaust,                 !- Ventilation Type
-    400.0,                   !- Fan Pressure Rise {Pa}
-    0.9,                     !- Fan Total Efficiency
-    1.0,                     !- Constant Term Coefficient
-    0.0,                     !- Temperature Term Coefficient
-    0.0,                     !- Velocity Term Coefficient
-    0.0,                     !- Velocity Squared Term Coefficient
-    24.0,                    !- Minimum Indoor Temperature {C}
-    ,                        !- Minimum Indoor Temperature Schedule Name
-    ,                        !- Maximum Indoor Temperature {C}
-    ,                        !- Maximum Indoor Temperature Schedule Name
-    1.0,                     !- Delta Temperature {deltaC}
-    ,                        !- Delta Temperature Schedule Name
-    10;                      !- Minimum Outdoor Temperature {C}
-
   BuildingSurface:Detailed,
     C5-1,                    !- Name
     CEILING,                 !- Surface Type
@@ -1813,6 +1674,21 @@
     3.7,3.7,0.0,  !- X,Y,Z ==> Vertex 3 {m}
     3.7,3.7,2.4;  !- X,Y,Z ==> Vertex 4 {m}
 
+  Schedule:Compact,
+    Min OA Sched,            !- Name
+    Fraction,                !- Schedule Type Limits Name
+    Through: 12/31,          !- Field 1
+    For: WeekDays CustomDay1 CustomDay2, !- Field 2
+    Until: 8:00,0.0,         !- Field 3
+    Until: 21:00,1.0,        !- Field 5
+    Until: 24:00,0.0,        !- Field 7
+    For: Weekends Holiday,   !- Field 9
+    Until: 24:00,0.0,        !- Field 10
+    For: SummerDesignDay,    !- Field 12
+    Until: 24:00,1.0,        !- Field 13
+    For: WinterDesignDay,    !- Field 15
+    Until: 24:00,1.0;        !- Field 16
+
 ! For heating, recover 2 hrs early
 
   Schedule:Compact,
@@ -1822,156 +1698,255 @@
     For: WeekDays CustomDay1 CustomDay2, !- Field 2
     Until: 6:00,13.0,        !- Field 3
     Until: 7:00,18.0,        !- Field 5
-    Until: 21:00,21.0,       !- Field 7
+    Until: 21:00,23.0,       !- Field 7
     Until: 24:00,13.0,       !- Field 9
     For: WeekEnds Holiday,   !- Field 11
     Until: 24:00,13.0,       !- Field 12
     For: SummerDesignDay,    !- Field 14
     Until: 24:00,13.0,       !- Field 15
     For: WinterDesignDay,    !- Field 17
-    Until: 24:00,21.0;       !- Field 18
+    Until: 24:00,23.0;       !- Field 18
 
 ! For cooling, recover 1 hr early
 
   Schedule:Compact,
-    No-Clg-SetP-Sch,         !- Name
+    Clg-SetP-Sch,            !- Name
     Temperature,             !- Schedule Type Limits Name
     Through: 12/31,          !- Field 1
     For: WeekDays CustomDay1 CustomDay2, !- Field 2
-    Until: 24:00,99.0,       !- Field 3
-    For: WeekEnds Holiday,   !- Field 5
-    Until: 24:00,99.0,       !- Field 6
-    For: SummerDesignDay,    !- Field 8
-    Until: 24:00,99.0,       !- Field 9
-    For: WinterDesignDay,    !- Field 11
-    Until: 24:00,99.0;       !- Field 12
+    Until: 7:00,32.0,        !- Field 3
+    Until: 21:00,24.0,       !- Field 5
+    Until: 24:00,32.0,       !- Field 7
+    For: WeekEnds Holiday,   !- Field 9
+    Until: 24:00,32.0,       !- Field 10
+    For: SummerDesignDay,    !- Field 12
+    Until: 24:00,24.0,       !- Field 13
+    For: WinterDesignDay,    !- Field 15
+    Until: 24:00,32.0;       !- Field 16
 
   Sizing:Parameters,
     1.2,                     !- Heating Sizing Factor
     1.2;                     !- Cooling Sizing Factor
 ! 
 !   HVACTemplate:Thermostat,
-!     Heat Only,               !- Name
+!     All Zones,               !- Name
 !     Htg-SetP-Sch,            !- Heating Setpoint Schedule Name
 !     ,                        !- Constant Heating Setpoint {C}
-!     No-Clg-SetP-Sch,         !- Cooling Setpoint Schedule Name
+!     Clg-SetP-Sch,            !- Cooling Setpoint Schedule Name
 !     ;                        !- Constant Cooling Setpoint {C}
 ! 
-!   HVACTemplate:Zone:BaseboardHeat,
+!   HVACTemplate:Zone:IdealLoadsAirSystem,
 !     SPACE1-1,                !- Zone Name
-!     Heat Only,               !- Template Thermostat Name
-!     ,                        !- Zone Heating Sizing Factor
-!     HotWater,                !- Baseboard Heating Type
-!     ,                        !- Baseboard Heating Availability Schedule Name
-!     autosize,                !- Baseboard Heating Capacity {W}
-!     ,                        !- Dedicated Outdoor Air System Name
-!     Flow/Person,             !- Outdoor Air Method
-!     ,                        !- Outdoor Air Flow Rate per Person {m3/s}
+!     All Zones,               !- Template Thermostat Name
+!     ,                        !- System Availability Schedule Name
+!     50,                      !- Maximum Heating Supply Air Temperature {C}
+!     13,                      !- Minimum Cooling Supply Air Temperature {C}
+!     0.0156,                  !- Maximum Heating Supply Air Humidity Ratio {kgWater/kgDryAir}
+!     0.0077,                  !- Minimum Cooling Supply Air Humidity Ratio {kgWater/kgDryAir}
+!     NoLimit,                 !- Heating Limit
+!     ,                        !- Maximum Heating Air Flow Rate {m3/s}
+!     ,                        !- Maximum Sensible Heating Capacity {W}
+!     NoLimit,                 !- Cooling Limit
+!     ,                        !- Maximum Cooling Air Flow Rate {m3/s}
+!     ,                        !- Maximum Total Cooling Capacity {W}
+!     ,                        !- Heating Availability Schedule Name
+!     ,                        !- Cooling Availability Schedule Name
+!     ConstantSensibleHeatRatio,  !- Dehumidification Control Type
+!     0.7,                     !- Cooling Sensible Heat Ratio {dimensionless}
+!     ,                        !- Dehumidification Setpoint {percent}
+!     None,                    !- Humidification Control Type
+!     30,                      !- Humidification Setpoint {percent}
+!     None,                    !- Outdoor Air Method
+!     0.00944,                 !- Outdoor Air Flow Rate per Person {m3/s}
 !     ,                        !- Outdoor Air Flow Rate per Zone Floor Area {m3/s-m2}
-!     ;                        !- Outdoor Air Flow Rate per Zone {m3/s}
+!     ,                        !- Outdoor Air Flow Rate per Zone {m3/s}
+!     ,                        !- Design Specification Outdoor Air Object Name
+!     None,                    !- Demand Controlled Ventilation Type
+!     NoEconomizer,            !- Outdoor Air Economizer Type
+!     None,                    !- Heat Recovery Type
+!     0.7,                     !- Sensible Heat Recovery Effectiveness {dimensionless}
+!     0.65;                    !- Latent Heat Recovery Effectiveness {dimensionless}
 ! 
-!   HVACTemplate:Zone:BaseboardHeat,
+!   HVACTemplate:Zone:IdealLoadsAirSystem,
 !     SPACE2-1,                !- Zone Name
-!     Heat Only,               !- Template Thermostat Name
-!     ,                        !- Zone Heating Sizing Factor
-!     HotWater,                !- Baseboard Heating Type
-!     ,                        !- Baseboard Heating Availability Schedule Name
-!     autosize,                !- Baseboard Heating Capacity {W}
-!     ,                        !- Dedicated Outdoor Air System Name
+!     All Zones,               !- Template Thermostat Name
+!     ,                        !- System Availability Schedule Name
+!     50,                      !- Maximum Heating Supply Air Temperature {C}
+!     13,                      !- Minimum Cooling Supply Air Temperature {C}
+!     0.0156,                  !- Maximum Heating Supply Air Humidity Ratio {kgWater/kgDryAir}
+!     0.0077,                  !- Minimum Cooling Supply Air Humidity Ratio {kgWater/kgDryAir}
+!     NoLimit,                 !- Heating Limit
+!     ,                        !- Maximum Heating Air Flow Rate {m3/s}
+!     ,                        !- Maximum Sensible Heating Capacity {W}
+!     NoLimit,                 !- Cooling Limit
+!     ,                        !- Maximum Cooling Air Flow Rate {m3/s}
+!     ,                        !- Maximum Total Cooling Capacity {W}
+!     ,                        !- Heating Availability Schedule Name
+!     ,                        !- Cooling Availability Schedule Name
+!     ConstantSensibleHeatRatio,  !- Dehumidification Control Type
+!     0.7,                     !- Cooling Sensible Heat Ratio {dimensionless}
+!     ,                        !- Dehumidification Setpoint {percent}
+!     None,                    !- Humidification Control Type
+!     30,                      !- Humidification Setpoint {percent}
 !     Flow/Person,             !- Outdoor Air Method
-!     ,                        !- Outdoor Air Flow Rate per Person {m3/s}
+!     0.00944,                 !- Outdoor Air Flow Rate per Person {m3/s}
 !     ,                        !- Outdoor Air Flow Rate per Zone Floor Area {m3/s-m2}
-!     ;                        !- Outdoor Air Flow Rate per Zone {m3/s}
+!     ,                        !- Outdoor Air Flow Rate per Zone {m3/s}
+!     ,                        !- Design Specification Outdoor Air Object Name
+!     None,                    !- Demand Controlled Ventilation Type
+!     NoEconomizer,            !- Outdoor Air Economizer Type
+!     None,                    !- Heat Recovery Type
+!     0.7,                     !- Sensible Heat Recovery Effectiveness {dimensionless}
+!     0.65;                    !- Latent Heat Recovery Effectiveness {dimensionless}
 ! 
-!   HVACTemplate:Zone:BaseboardHeat,
+!   HVACTemplate:Zone:IdealLoadsAirSystem,
 !     SPACE3-1,                !- Zone Name
-!     Heat Only,               !- Template Thermostat Name
-!     ,                        !- Zone Heating Sizing Factor
-!     HotWater,                !- Baseboard Heating Type
-!     ,                        !- Baseboard Heating Availability Schedule Name
-!     autosize,                !- Baseboard Heating Capacity {W}
-!     ,                        !- Dedicated Outdoor Air System Name
+!     All Zones,               !- Template Thermostat Name
+!     ,                        !- System Availability Schedule Name
+!     50,                      !- Maximum Heating Supply Air Temperature {C}
+!     13,                      !- Minimum Cooling Supply Air Temperature {C}
+!     0.0156,                  !- Maximum Heating Supply Air Humidity Ratio {kgWater/kgDryAir}
+!     0.0077,                  !- Minimum Cooling Supply Air Humidity Ratio {kgWater/kgDryAir}
+!     NoLimit,                 !- Heating Limit
+!     ,                        !- Maximum Heating Air Flow Rate {m3/s}
+!     ,                        !- Maximum Sensible Heating Capacity {W}
+!     LimitFlowRate,           !- Cooling Limit
+!     autosize,                !- Maximum Cooling Air Flow Rate {m3/s}
+!     ,                        !- Maximum Total Cooling Capacity {W}
+!     ,                        !- Heating Availability Schedule Name
+!     ,                        !- Cooling Availability Schedule Name
+!     ConstantSensibleHeatRatio,  !- Dehumidification Control Type
+!     0.7,                     !- Cooling Sensible Heat Ratio {dimensionless}
+!     ,                        !- Dehumidification Setpoint {percent}
+!     None,                    !- Humidification Control Type
+!     30,                      !- Humidification Setpoint {percent}
 !     Flow/Person,             !- Outdoor Air Method
-!     ,                        !- Outdoor Air Flow Rate per Person {m3/s}
+!     0.00944,                 !- Outdoor Air Flow Rate per Person {m3/s}
 !     ,                        !- Outdoor Air Flow Rate per Zone Floor Area {m3/s-m2}
-!     ;                        !- Outdoor Air Flow Rate per Zone {m3/s}
+!     ,                        !- Outdoor Air Flow Rate per Zone {m3/s}
+!     ,                        !- Design Specification Outdoor Air Object Name
+!     None,                    !- Demand Controlled Ventilation Type
+!     DifferentialDryBulb,     !- Outdoor Air Economizer Type
+!     None,                    !- Heat Recovery Type
+!     0.7,                     !- Sensible Heat Recovery Effectiveness {dimensionless}
+!     0.65;                    !- Latent Heat Recovery Effectiveness {dimensionless}
+
+  DesignSpecification:OutdoorAir,
+    Office Outdoor Air Spec, !- Name
+    flow/person,             !- Outdoor Air Method
+    0.00944,                 !- Outdoor Air Flow per Person {m3/s-person}
+    0.0,                     !- Outdoor Air Flow per Zone Floor Area {m3/s-m2}
+    0.0,                     !- Outdoor Air Flow per Zone {m3/s}
+    0.0,                     !- Outdoor Air Flow Air Changes per Hour {1/hr}
+    Min OA Sched;            !- Outdoor Air Schedule Name
 ! 
-!   HVACTemplate:Zone:BaseboardHeat,
+!   HVACTemplate:Zone:IdealLoadsAirSystem,
 !     SPACE4-1,                !- Zone Name
-!     Heat Only,               !- Template Thermostat Name
-!     ,                        !- Zone Heating Sizing Factor
-!     HotWater,                !- Baseboard Heating Type
-!     ,                        !- Baseboard Heating Availability Schedule Name
-!     autosize,                !- Baseboard Heating Capacity {W}
-!     ,                        !- Dedicated Outdoor Air System Name
-!     Flow/Person,             !- Outdoor Air Method
+!     All Zones,               !- Template Thermostat Name
+!     ,                        !- System Availability Schedule Name
+!     50,                      !- Maximum Heating Supply Air Temperature {C}
+!     13,                      !- Minimum Cooling Supply Air Temperature {C}
+!     0.0156,                  !- Maximum Heating Supply Air Humidity Ratio {kgWater/kgDryAir}
+!     0.0077,                  !- Minimum Cooling Supply Air Humidity Ratio {kgWater/kgDryAir}
+!     NoLimit,                 !- Heating Limit
+!     ,                        !- Maximum Heating Air Flow Rate {m3/s}
+!     ,                        !- Maximum Sensible Heating Capacity {W}
+!     LimitFlowRate,           !- Cooling Limit
+!     autosize,                !- Maximum Cooling Air Flow Rate {m3/s}
+!     ,                        !- Maximum Total Cooling Capacity {W}
+!     ,                        !- Heating Availability Schedule Name
+!     ,                        !- Cooling Availability Schedule Name
+!     ConstantSensibleHeatRatio,  !- Dehumidification Control Type
+!     0.7,                     !- Cooling Sensible Heat Ratio {dimensionless}
+!     ,                        !- Dehumidification Setpoint {percent}
+!     Humidistat,              !- Humidification Control Type
+!     30,                      !- Humidification Setpoint {percent}
+!     DetailedSpecification,   !- Outdoor Air Method
 !     ,                        !- Outdoor Air Flow Rate per Person {m3/s}
 !     ,                        !- Outdoor Air Flow Rate per Zone Floor Area {m3/s-m2}
-!     ;                        !- Outdoor Air Flow Rate per Zone {m3/s}
+!     ,                        !- Outdoor Air Flow Rate per Zone {m3/s}
+!     Office Outdoor Air Spec, !- Design Specification Outdoor Air Object Name
+!     None,                    !- Demand Controlled Ventilation Type
+!     DifferentialDryBulb,     !- Outdoor Air Economizer Type
+!     Sensible,                !- Heat Recovery Type
+!     0.7,                     !- Sensible Heat Recovery Effectiveness {dimensionless}
+!     0.65;                    !- Latent Heat Recovery Effectiveness {dimensionless}
 ! 
-!   HVACTemplate:Zone:BaseboardHeat,
+!   HVACTemplate:Zone:IdealLoadsAirSystem,
 !     SPACE5-1,                !- Zone Name
-!     Heat Only,               !- Template Thermostat Name
-!     ,                        !- Zone Heating Sizing Factor
-!     HotWater,                !- Baseboard Heating Type
-!     ,                        !- Baseboard Heating Availability Schedule Name
-!     autosize,                !- Baseboard Heating Capacity {W}
-!     ,                        !- Dedicated Outdoor Air System Name
-!     Flow/Person,             !- Outdoor Air Method
+!     All Zones,               !- Template Thermostat Name
+!     ,                        !- System Availability Schedule Name
+!     50,                      !- Maximum Heating Supply Air Temperature {C}
+!     13,                      !- Minimum Cooling Supply Air Temperature {C}
+!     0.0156,                  !- Maximum Heating Supply Air Humidity Ratio {kgWater/kgDryAir}
+!     0.0077,                  !- Minimum Cooling Supply Air Humidity Ratio {kgWater/kgDryAir}
+!     LimitFlowRate,           !- Heating Limit
+!     autosize,                !- Maximum Heating Air Flow Rate {m3/s}
+!     ,                        !- Maximum Sensible Heating Capacity {W}
+!     LimitFlowRate,           !- Cooling Limit
+!     autosize,                !- Maximum Cooling Air Flow Rate {m3/s}
+!     ,                        !- Maximum Total Cooling Capacity {W}
+!     ,                        !- Heating Availability Schedule Name
+!     ,                        !- Cooling Availability Schedule Name
+!     Humidistat,              !- Dehumidification Control Type
+!     0.7,                     !- Cooling Sensible Heat Ratio {dimensionless}
+!     60,                      !- Dehumidification Setpoint {percent}
+!     Humidistat,              !- Humidification Control Type
+!     30,                      !- Humidification Setpoint {percent}
+!     DetailedSpecification,   !- Outdoor Air Method
 !     ,                        !- Outdoor Air Flow Rate per Person {m3/s}
 !     ,                        !- Outdoor Air Flow Rate per Zone Floor Area {m3/s-m2}
-!     ;                        !- Outdoor Air Flow Rate per Zone {m3/s}
-! 
-!   HVACTemplate:Plant:HotWaterLoop,
-!     Hot Water Loop,          !- Name
-!     ,                        !- Pump Schedule Name
-!     INTERMITTENT,            !- Pump Control Type
-!     Default,                 !- Hot Water Plant Operation Scheme Type
-!     ,                        !- Hot Water Plant Equipment Operation Schemes Name
-!     ,                        !- Hot Water Setpoint Schedule Name
-!     82,                      !- Hot Water Design Setpoint {C}
-!     ConstantFlow,            !- Hot Water Pump Configuration
-!     179352,                  !- Hot Water Pump Rated Head {Pa}
-!     OutdoorAirTemperatureReset,  !- Hot Water Setpoint Reset Type
-!     82.2,                    !- Hot Water Setpoint at Outdoor Dry-Bulb Low {C}
-!     -6.7,                    !- Hot Water Reset Outdoor Dry-Bulb Low {C}
-!     65.6,                    !- Hot Water Setpoint at Outdoor Dry-Bulb High {C}
-!     10;                      !- Hot Water Reset Outdoor Dry-Bulb High {C}
-! 
-!   HVACTemplate:Plant:Boiler,
-!     Main Boiler,             !- Name
-!     HotWaterBoiler,          !- Boiler Type
-!     autosize,                !- Capacity {W}
-!     0.8,                     !- Efficiency
-!     NaturalGas,              !- Fuel Type
-!     1,                       !- Priority
-!     ;                        !- Sizing Factor
+!     ,                        !- Outdoor Air Flow Rate per Zone {m3/s}
+!     Office Outdoor Air Spec, !- Design Specification Outdoor Air Object Name
+!     OccupancySchedule,       !- Demand Controlled Ventilation Type
+!     DifferentialEnthalpy,    !- Outdoor Air Economizer Type
+!     Enthalpy,                !- Heat Recovery Type
+!     0.7,                     !- Sensible Heat Recovery Effectiveness {dimensionless}
+!     0.65;                    !- Latent Heat Recovery Effectiveness {dimensionless}
 
   Output:Variable,*,Site Outdoor Air Drybulb Temperature,hourly;
 
   Output:Variable,*,Zone Air Temperature,hourly;
 
-  Output:Variable,*,Zone Mean Radiant Temperature,hourly;
-
-  Output:Variable,*,Zone Operative Temperature,hourly;
-
-  Output:Variable,*,Zone Thermal Comfort ASHRAE 55 Simple Model Summer or Winter Clothes Not Comfortable Time,hourly;
-
-  Output:Variable,*,Zone Air Humidity Ratio,hourly;
-
   Output:Variable,*,Zone Air Relative Humidity,hourly;
 
-  Output:Variable,*,Zone Heating Setpoint Not Met While Occupied Time,hourly;
+  Output:Variable,*,Zone Ideal Loads Zone Sensible Cooling Rate,hourly;
 
-  Output:Variable,*,Baseboard Total Heating Rate,hourly;
+  Output:Variable,*,Zone Ideal Loads Zone Sensible Heating Rate,hourly;
 
-  Output:Variable,*,Plant Supply Side Outlet Temperature,hourly;
+  Output:Variable,*,Zone Ideal Loads Supply Air Sensible Cooling Rate,hourly;
 
-  Output:Variable,*,Boiler Heating Rate,hourly;
+  Output:Variable,*,Zone Ideal Loads Supply Air Sensible Heating Rate,hourly;
 
-  Output:Variable,*,Boiler NaturalGas Rate,hourly;
+  Output:Variable,*,Zone Ideal Loads Supply Air Latent Cooling Rate,hourly;
 
-  Output:Variable,*,Zone Ventilation Standard Density Volume Flow Rate,hourly;
+  Output:Variable,*,Zone Ideal Loads Supply Air Latent Heating Rate,hourly;
+
+  Output:Variable,*,Zone Ideal Loads Supply Air Total Cooling Rate,hourly;
+
+  Output:Variable,*,Zone Ideal Loads Supply Air Total Heating Rate,hourly;
+
+  Output:Variable,*,Zone Ideal Loads Economizer Active Time,hourly;
+
+  Output:Variable,*,Zone Ideal Loads Heat Recovery Active Time,hourly;
+
+  Output:Variable,*,Zone Ideal Loads Supply Air Temperature,hourly;
+
+  Output:Variable,*,Zone Ideal Loads Supply Air Humidity Ratio,hourly;
+
+  Output:Variable,*,Zone Ideal Loads Mixed Air Temperature,hourly;
+
+  Output:Variable,*,Zone Ideal Loads Mixed Air Humidity Ratio,hourly;
+
+  Output:Variable,*,System Node Mass Flow Rate,hourly;
+
+  Output:Variable,SPACE2-1 Ideal Loads Outdoor Air Inlet,System Node Standard Density Volume Flow Rate,hourly;
+
+  Output:Variable,SPACE3-1 Ideal Loads Outdoor Air Inlet,System Node Standard Density Volume Flow Rate,hourly;
+
+  Output:Variable,SPACE4-1 Ideal Loads Outdoor Air Inlet,System Node Standard Density Volume Flow Rate,hourly;
+
+  Output:Variable,SPACE5-1 Ideal Loads Outdoor Air Inlet,System Node Standard Density Volume Flow Rate,hourly;
 
   Output:VariableDictionary,IDF;
 
@@ -1985,23 +1960,19 @@
 
   Output:Meter:MeterFileOnly,InteriorLights:Electricity,monthly;
 
-  Output:Meter:MeterFileOnly,Electricity:Plant,monthly;
-
-  Output:Meter:MeterFileOnly,NaturalGas:Plant,monthly;
-
-  Output:Meter:MeterFileOnly,NaturalGas:Facility,monthly;
-
   Output:Meter:MeterFileOnly,Electricity:Facility,runperiod;
 
   Output:Meter:MeterFileOnly,Electricity:Building,runperiod;
 
   Output:Meter:MeterFileOnly,InteriorLights:Electricity,runperiod;
 
-  Output:Meter:MeterFileOnly,Electricity:Plant,runperiod;
+  Output:Meter:MeterFileOnly,DistrictCooling:Facility,monthly;
 
-  Output:Meter:MeterFileOnly,NaturalGas:Plant,runperiod;
+  Output:Meter:MeterFileOnly,DistrictCooling:Facility,runperiod;
 
-  Output:Meter:MeterFileOnly,NaturalGas:Facility,runperiod;
+  Output:Meter:MeterFileOnly,DistrictHeating:Facility,monthly;
+
+  Output:Meter:MeterFileOnly,DistrictHeating:Facility,runperiod;
 
   OutputControl:Table:Style,
     HTML;                    !- Column Separator
@@ -2015,9 +1986,9 @@
 ! 
 
 ThermostatSetpoint:DualSetpoint,
-  Heat Only Dual SP Control,                               !- Name
+  All Zones Dual SP Control,                               !- Name
   Htg-SetP-Sch,                                            !- Heating Setpoint Temperature Schedule Name
-  No-Clg-SetP-Sch;                                         !- Cooling Setpoint Temperature Schedule Name
+  Clg-SetP-Sch;                                            !- Cooling Setpoint Temperature Schedule Name
 
 ScheduleTypeLimits,
   HVACTemplate Any Number;                                 !- Name
@@ -2035,18 +2006,18 @@ ZoneControl:Thermostat,
   SPACE1-1,                                                !- Zone or ZoneList Name
   HVACTemplate-Always 4,                                   !- Control Type Schedule Name
   ThermostatSetpoint:DualSetpoint,                         !- Control Object Type
-  Heat Only Dual SP Control;                               !- Control Name
+  All Zones Dual SP Control;                               !- Control Name
 
 Sizing:Zone,
   SPACE1-1,                                                !- Zone or ZoneList Name
   SupplyAirTemperature,                                    !- Zone Cooling Design Supply Air Temperature Input Method
-  12.5,                                                    !- Zone Cooling Design Supply Air Temperature {C}
+  13,                                                      !- Zone Cooling Design Supply Air Temperature {C}
   ,                                                        !- Zone Cooling Design Supply Air Temperature Difference {delta C}
   SupplyAirTemperature,                                    !- Zone Heating Design Supply Air Temperature Input Method
   50,                                                      !- Zone Heating Design Supply Air Temperature {C}
   ,                                                        !- Zone Heating Design Supply Air Temperature Difference {delta C}
-  0.008,                                                   !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
-  0.008,                                                   !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
+  0.0077,                                                  !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
+  0.0156,                                                  !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
   ,                                                        !- Design Specification Outdoor Air Object Name
   ,                                                        !- Zone Heating Sizing Factor
   ,                                                        !- Zone Cooling Sizing Factor
@@ -2065,7 +2036,7 @@ Sizing:Zone,
 ZoneHVAC:EquipmentConnections,
   SPACE1-1,                                                !- Zone Name
   SPACE1-1 Equipment,                                      !- Zone Conditioning Equipment List Name
-  ,                                                        !- Zone Air Inlet Node or NodeList Name
+  SPACE1-1 Ideal Loads Supply Inlet,                       !- Zone Air Inlet Node or NodeList Name
   ,                                                        !- Zone Air Exhaust Node or NodeList Name
   SPACE1-1 Zone Air Node,                                  !- Zone Air Node Name
   SPACE1-1 Return Outlet;                                  !- Zone Return Air Node Name
@@ -2073,59 +2044,67 @@ ZoneHVAC:EquipmentConnections,
 ZoneHVAC:EquipmentList,
   SPACE1-1 Equipment,                                      !- Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Zone Equipment Object Type
-  SPACE1-1 Baseboard Heat,                                 !- Zone Equipment Name
+  ZoneHVAC:IdealLoadsAirSystem,                            !- Zone Equipment Object Type
+  SPACE1-1 Ideal Loads Air System,                         !- Zone Equipment Name
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
 
-ZoneHVAC:Baseboard:RadiantConvective:Water,
-  SPACE1-1 Baseboard Heat,                                 !- Name
-  SPACE1-1 Baseboard Heat Design Object,                   !- Name
+ZoneHVAC:IdealLoadsAirSystem,
+  SPACE1-1 Ideal Loads Air System,                         !- Name
   ,                                                        !- Availability Schedule Name
-  SPACE1-1 Baseboard HW Inlet,                             !- Inlet Node Name
-  SPACE1-1 Baseboard HW Outlet,                            !- Outlet Node Name
-  87.78,                                                   !- Rated Average Water Temperature {C}
-  0.063,                                                   !- Rated Water Mass Flow Rate {m3/s}
-  autosize,                                                !- Heating Design Capacity {W}
-  autosize;                                                !- Maximum Water Flow Rate
-
-ZoneHVAC:Baseboard:RadiantConvective:Water:Design,
-  SPACE1-1 Baseboard Heat Design Object,                   !- Name
-  HeatingDesignCapacity,                                   !- Heating Design Capacity Method
-  ,                                                        !- Heating Design Capacity Per Floor Area {W/m2}
-  ,                                                        !- Fraction of Autosized Heating Design Capacity
-  0.001,                                                   !- Convergence Tolerance
-  0.0,                                                     !- Fraction Radiant
-  0.0;                                                     !- Fraction of Radiant Energy Incident on People
-
-Branch,
-  SPACE1-1 Baseboard Heat HW Branch,                       !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Component Object Type
-  SPACE1-1 Baseboard Heat,                                 !- Component Name
-  SPACE1-1 Baseboard HW Inlet,                             !- Component Inlet Node Name
-  SPACE1-1 Baseboard HW Outlet;                            !- Component Outlet Node Name
+  SPACE1-1 Ideal Loads Supply Inlet,                       !- Zone Supply Air Node Name
+  ,                                                        !- Zone Exhaust Air Node Name
+  ,                                                        !- System Inlet Air Node Name
+  50,                                                      !- Maximum Heating Supply Air Temperature [C]
+  13,                                                      !- Minimum Cooling Supply Air Temperature [C]
+  0.0156,                                                  !- Maximum Heating Supply Air Humidity Ratio [kg-H20/kg-air]
+  0.0077,                                                  !- Minimum Cooling Supply Air Humidity Ratio [kg-H20/kg-air]
+  NoLimit,                                                 !- Heating Limit
+  ,                                                        !- Maximum Heating Air Flow Rate {m3/s}
+  ,                                                        !- Maximum Sensible Heating Capacity {m3/s}
+  NoLimit,                                                 !- Cooling Limit
+  ,                                                        !- Maximum Cooling Air Flow Rate {m3/s}
+  ,                                                        !- Maximum Total Cooling Capacity {m3/s}
+  ,                                                        !- Heating Availability Schedule Name
+  ,                                                        !- Cooling Availability Schedule Name
+  ConstantSensibleHeatRatio,                               !- Dehumidification Control Type
+  0.7,                                                     !- Cooling Sensible Heat Ratio
+  None,                                                    !- Humidification Control Type
+  ,                                                        !- Design Specification Outdoor Air Object Name
+  ,                                                        !- Outdoor Air Inlet Node Name
+  None,                                                    !- Demand Controlled Ventilation Type
+  NoEconomizer,                                            !- Outdoor Air Economizer Type
+  None,                                                    !- Heat Recovery Type
+  0.7,                                                     !- Sensible Heat Recovery Effectiveness
+  0.65;                                                    !- Latent Heat Recovery Effectiveness
 
 ZoneControl:Thermostat,
   SPACE2-1 Thermostat,                                     !- Name
   SPACE2-1,                                                !- Zone or ZoneList Name
   HVACTemplate-Always 4,                                   !- Control Type Schedule Name
   ThermostatSetpoint:DualSetpoint,                         !- Control Object Type
-  Heat Only Dual SP Control;                               !- Control Name
+  All Zones Dual SP Control;                               !- Control Name
+
+DesignSpecification:OutdoorAir,
+  SZ DSOA SPACE2-1,                                        !- Name
+  Flow/Person,                                             !- Outdoor Air Method
+  0.00944,                                                 !- Outdoor Air Flow per Person {m3/s}
+  0,                                                       !- Outdoor Air Flow per Zone Floor Area {m3/s-m2}
+  0;                                                       !- Outdoor Air Flow per Zone {m3/s}
 
 Sizing:Zone,
   SPACE2-1,                                                !- Zone or ZoneList Name
   SupplyAirTemperature,                                    !- Zone Cooling Design Supply Air Temperature Input Method
-  12.5,                                                    !- Zone Cooling Design Supply Air Temperature {C}
+  13,                                                      !- Zone Cooling Design Supply Air Temperature {C}
   ,                                                        !- Zone Cooling Design Supply Air Temperature Difference {delta C}
   SupplyAirTemperature,                                    !- Zone Heating Design Supply Air Temperature Input Method
   50,                                                      !- Zone Heating Design Supply Air Temperature {C}
   ,                                                        !- Zone Heating Design Supply Air Temperature Difference {delta C}
-  0.008,                                                   !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
-  0.008,                                                   !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
-  ,                                                        !- Design Specification Outdoor Air Object Name
+  0.0077,                                                  !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
+  0.0156,                                                  !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
+  SZ DSOA SPACE2-1,                                        !- Design Specification Outdoor Air Object Name
   ,                                                        !- Zone Heating Sizing Factor
   ,                                                        !- Zone Cooling Sizing Factor
   DesignDay,                                               !- Cooling Design Air Flow Method
@@ -2143,7 +2122,7 @@ Sizing:Zone,
 ZoneHVAC:EquipmentConnections,
   SPACE2-1,                                                !- Zone Name
   SPACE2-1 Equipment,                                      !- Zone Conditioning Equipment List Name
-  ,                                                        !- Zone Air Inlet Node or NodeList Name
+  SPACE2-1 Ideal Loads Supply Inlet,                       !- Zone Air Inlet Node or NodeList Name
   ,                                                        !- Zone Air Exhaust Node or NodeList Name
   SPACE2-1 Zone Air Node,                                  !- Zone Air Node Name
   SPACE2-1 Return Outlet;                                  !- Zone Return Air Node Name
@@ -2151,59 +2130,67 @@ ZoneHVAC:EquipmentConnections,
 ZoneHVAC:EquipmentList,
   SPACE2-1 Equipment,                                      !- Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Zone Equipment Object Type
-  SPACE2-1 Baseboard Heat,                                 !- Zone Equipment Name
+  ZoneHVAC:IdealLoadsAirSystem,                            !- Zone Equipment Object Type
+  SPACE2-1 Ideal Loads Air System,                         !- Zone Equipment Name
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
 
-ZoneHVAC:Baseboard:RadiantConvective:Water,
-  SPACE2-1 Baseboard Heat,                                 !- Name
-  SPACE2-1 Baseboard Heat Design Object,                   !- Name
+ZoneHVAC:IdealLoadsAirSystem,
+  SPACE2-1 Ideal Loads Air System,                         !- Name
   ,                                                        !- Availability Schedule Name
-  SPACE2-1 Baseboard HW Inlet,                             !- Inlet Node Name
-  SPACE2-1 Baseboard HW Outlet,                            !- Outlet Node Name
-  87.78,                                                   !- Rated Average Water Temperature {C}
-  0.063,                                                   !- Rated Water Mass Flow Rate {m3/s}
-  autosize,                                                !- Heating Design Capacity {W}
-  autosize;                                                !- Maximum Water Flow Rate
-
-ZoneHVAC:Baseboard:RadiantConvective:Water:Design,
-  SPACE2-1 Baseboard Heat Design Object,                   !- Name
-  HeatingDesignCapacity,                                   !- Heating Design Capacity Method
-  ,                                                        !- Heating Design Capacity Per Floor Area {W/m2}
-  ,                                                        !- Fraction of Autosized Heating Design Capacity
-  0.001,                                                   !- Convergence Tolerance
-  0.0,                                                     !- Fraction Radiant
-  0.0;                                                     !- Fraction of Radiant Energy Incident on People
-
-Branch,
-  SPACE2-1 Baseboard Heat HW Branch,                       !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Component Object Type
-  SPACE2-1 Baseboard Heat,                                 !- Component Name
-  SPACE2-1 Baseboard HW Inlet,                             !- Component Inlet Node Name
-  SPACE2-1 Baseboard HW Outlet;                            !- Component Outlet Node Name
+  SPACE2-1 Ideal Loads Supply Inlet,                       !- Zone Supply Air Node Name
+  ,                                                        !- Zone Exhaust Air Node Name
+  ,                                                        !- System Inlet Air Node Name
+  50,                                                      !- Maximum Heating Supply Air Temperature [C]
+  13,                                                      !- Minimum Cooling Supply Air Temperature [C]
+  0.0156,                                                  !- Maximum Heating Supply Air Humidity Ratio [kg-H20/kg-air]
+  0.0077,                                                  !- Minimum Cooling Supply Air Humidity Ratio [kg-H20/kg-air]
+  NoLimit,                                                 !- Heating Limit
+  ,                                                        !- Maximum Heating Air Flow Rate {m3/s}
+  ,                                                        !- Maximum Sensible Heating Capacity {m3/s}
+  NoLimit,                                                 !- Cooling Limit
+  ,                                                        !- Maximum Cooling Air Flow Rate {m3/s}
+  ,                                                        !- Maximum Total Cooling Capacity {m3/s}
+  ,                                                        !- Heating Availability Schedule Name
+  ,                                                        !- Cooling Availability Schedule Name
+  ConstantSensibleHeatRatio,                               !- Dehumidification Control Type
+  0.7,                                                     !- Cooling Sensible Heat Ratio
+  None,                                                    !- Humidification Control Type
+  SZ DSOA SPACE2-1,                                        !- Design Specification Outdoor Air Object Name
+  SPACE2-1 Ideal Loads Outdoor Air Inlet,                  !- Outdoor Air Inlet Node Name
+  None,                                                    !- Demand Controlled Ventilation Type
+  NoEconomizer,                                            !- Outdoor Air Economizer Type
+  None,                                                    !- Heat Recovery Type
+  0.7,                                                     !- Sensible Heat Recovery Effectiveness
+  0.65;                                                    !- Latent Heat Recovery Effectiveness
 
 ZoneControl:Thermostat,
   SPACE3-1 Thermostat,                                     !- Name
   SPACE3-1,                                                !- Zone or ZoneList Name
   HVACTemplate-Always 4,                                   !- Control Type Schedule Name
   ThermostatSetpoint:DualSetpoint,                         !- Control Object Type
-  Heat Only Dual SP Control;                               !- Control Name
+  All Zones Dual SP Control;                               !- Control Name
+
+DesignSpecification:OutdoorAir,
+  SZ DSOA SPACE3-1,                                        !- Name
+  Flow/Person,                                             !- Outdoor Air Method
+  0.00944,                                                 !- Outdoor Air Flow per Person {m3/s}
+  0,                                                       !- Outdoor Air Flow per Zone Floor Area {m3/s-m2}
+  0;                                                       !- Outdoor Air Flow per Zone {m3/s}
 
 Sizing:Zone,
   SPACE3-1,                                                !- Zone or ZoneList Name
   SupplyAirTemperature,                                    !- Zone Cooling Design Supply Air Temperature Input Method
-  12.5,                                                    !- Zone Cooling Design Supply Air Temperature {C}
+  13,                                                      !- Zone Cooling Design Supply Air Temperature {C}
   ,                                                        !- Zone Cooling Design Supply Air Temperature Difference {delta C}
   SupplyAirTemperature,                                    !- Zone Heating Design Supply Air Temperature Input Method
   50,                                                      !- Zone Heating Design Supply Air Temperature {C}
   ,                                                        !- Zone Heating Design Supply Air Temperature Difference {delta C}
-  0.008,                                                   !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
-  0.008,                                                   !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
-  ,                                                        !- Design Specification Outdoor Air Object Name
+  0.0077,                                                  !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
+  0.0156,                                                  !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
+  SZ DSOA SPACE3-1,                                        !- Design Specification Outdoor Air Object Name
   ,                                                        !- Zone Heating Sizing Factor
   ,                                                        !- Zone Cooling Sizing Factor
   DesignDay,                                               !- Cooling Design Air Flow Method
@@ -2221,7 +2208,7 @@ Sizing:Zone,
 ZoneHVAC:EquipmentConnections,
   SPACE3-1,                                                !- Zone Name
   SPACE3-1 Equipment,                                      !- Zone Conditioning Equipment List Name
-  ,                                                        !- Zone Air Inlet Node or NodeList Name
+  SPACE3-1 Ideal Loads Supply Inlet,                       !- Zone Air Inlet Node or NodeList Name
   ,                                                        !- Zone Air Exhaust Node or NodeList Name
   SPACE3-1 Zone Air Node,                                  !- Zone Air Node Name
   SPACE3-1 Return Outlet;                                  !- Zone Return Air Node Name
@@ -2229,59 +2216,82 @@ ZoneHVAC:EquipmentConnections,
 ZoneHVAC:EquipmentList,
   SPACE3-1 Equipment,                                      !- Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Zone Equipment Object Type
-  SPACE3-1 Baseboard Heat,                                 !- Zone Equipment Name
+  ZoneHVAC:IdealLoadsAirSystem,                            !- Zone Equipment Object Type
+  SPACE3-1 Ideal Loads Air System,                         !- Zone Equipment Name
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
 
-ZoneHVAC:Baseboard:RadiantConvective:Water,
-  SPACE3-1 Baseboard Heat,                                 !- Name
-  SPACE3-1 Baseboard Heat Design Object,                   !- Name
+ZoneHVAC:IdealLoadsAirSystem,
+  SPACE3-1 Ideal Loads Air System,                         !- Name
   ,                                                        !- Availability Schedule Name
-  SPACE3-1 Baseboard HW Inlet,                             !- Inlet Node Name
-  SPACE3-1 Baseboard HW Outlet,                            !- Outlet Node Name
-  87.78,                                                   !- Rated Average Water Temperature {C}
-  0.063,                                                   !- Rated Water Mass Flow Rate {m3/s}
-  autosize,                                                !- Heating Design Capacity {W}
-  autosize;                                                !- Maximum Water Flow Rate
-
-ZoneHVAC:Baseboard:RadiantConvective:Water:Design,
-  SPACE3-1 Baseboard Heat Design Object,                   !- Name
-  HeatingDesignCapacity,                                   !- Heating Design Capacity Method
-  ,                                                        !- Heating Design Capacity Per Floor Area {W/m2}
-  ,                                                        !- Fraction of Autosized Heating Design Capacity
-  0.001,                                                   !- Convergence Tolerance
-  0.0,                                                     !- Fraction Radiant
-  0.0;                                                     !- Fraction of Radiant Energy Incident on People
-
-Branch,
-  SPACE3-1 Baseboard Heat HW Branch,                       !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Component Object Type
-  SPACE3-1 Baseboard Heat,                                 !- Component Name
-  SPACE3-1 Baseboard HW Inlet,                             !- Component Inlet Node Name
-  SPACE3-1 Baseboard HW Outlet;                            !- Component Outlet Node Name
+  SPACE3-1 Ideal Loads Supply Inlet,                       !- Zone Supply Air Node Name
+  ,                                                        !- Zone Exhaust Air Node Name
+  ,                                                        !- System Inlet Air Node Name
+  50,                                                      !- Maximum Heating Supply Air Temperature [C]
+  13,                                                      !- Minimum Cooling Supply Air Temperature [C]
+  0.0156,                                                  !- Maximum Heating Supply Air Humidity Ratio [kg-H20/kg-air]
+  0.0077,                                                  !- Minimum Cooling Supply Air Humidity Ratio [kg-H20/kg-air]
+  NoLimit,                                                 !- Heating Limit
+  ,                                                        !- Maximum Heating Air Flow Rate {m3/s}
+  ,                                                        !- Maximum Sensible Heating Capacity {m3/s}
+  LimitFlowRate,                                           !- Cooling Limit
+  autosize,                                                !- Maximum Cooling Air Flow Rate {m3/s}
+  ,                                                        !- Maximum Total Cooling Capacity {m3/s}
+  ,                                                        !- Heating Availability Schedule Name
+  ,                                                        !- Cooling Availability Schedule Name
+  ConstantSensibleHeatRatio,                               !- Dehumidification Control Type
+  0.7,                                                     !- Cooling Sensible Heat Ratio
+  None,                                                    !- Humidification Control Type
+  SZ DSOA SPACE3-1,                                        !- Design Specification Outdoor Air Object Name
+  SPACE3-1 Ideal Loads Outdoor Air Inlet,                  !- Outdoor Air Inlet Node Name
+  None,                                                    !- Demand Controlled Ventilation Type
+  DifferentialDryBulb,                                     !- Outdoor Air Economizer Type
+  None,                                                    !- Heat Recovery Type
+  0.7,                                                     !- Sensible Heat Recovery Effectiveness
+  0.65;                                                    !- Latent Heat Recovery Effectiveness
 
 ZoneControl:Thermostat,
   SPACE4-1 Thermostat,                                     !- Name
   SPACE4-1,                                                !- Zone or ZoneList Name
   HVACTemplate-Always 4,                                   !- Control Type Schedule Name
   ThermostatSetpoint:DualSetpoint,                         !- Control Object Type
-  Heat Only Dual SP Control;                               !- Control Name
+  All Zones Dual SP Control;                               !- Control Name
+
+ZoneControl:Humidistat,
+  SPACE4-1 Humidification Humidistat,                      !- Name
+  SPACE4-1,                                                !- Zone Name
+  HVACTemplate-Always 30,                                  !- Humidifying Relative Humidity Setpoint Schedule Name
+  HVACTemplate-Always 100;                                 !- Dehumidifying Relative Humidity Setpoint Schedule Name
+
+Schedule:Compact,
+  HVACTemplate-Always 30,                                  !- Name
+  HVACTemplate Any Number,                                 !- Schedule Type Limits Name
+  Through: 12/31,                                          !- Field 1
+  For: AllDays,                                            !- Field 2
+  Until: 24:00,                                            !- Field 3
+  30;                                                      !- Field 4
+
+Schedule:Compact,
+  HVACTemplate-Always 100,                                 !- Name
+  HVACTemplate Any Number,                                 !- Schedule Type Limits Name
+  Through: 12/31,                                          !- Field 1
+  For: AllDays,                                            !- Field 2
+  Until: 24:00,                                            !- Field 3
+  100;                                                     !- Field 4
 
 Sizing:Zone,
   SPACE4-1,                                                !- Zone or ZoneList Name
   SupplyAirTemperature,                                    !- Zone Cooling Design Supply Air Temperature Input Method
-  12.5,                                                    !- Zone Cooling Design Supply Air Temperature {C}
+  13,                                                      !- Zone Cooling Design Supply Air Temperature {C}
   ,                                                        !- Zone Cooling Design Supply Air Temperature Difference {delta C}
   SupplyAirTemperature,                                    !- Zone Heating Design Supply Air Temperature Input Method
   50,                                                      !- Zone Heating Design Supply Air Temperature {C}
   ,                                                        !- Zone Heating Design Supply Air Temperature Difference {delta C}
-  0.008,                                                   !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
-  0.008,                                                   !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
-  ,                                                        !- Design Specification Outdoor Air Object Name
+  0.0077,                                                  !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
+  0.0156,                                                  !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
+  Office Outdoor Air Spec,                                 !- Design Specification Outdoor Air Object Name
   ,                                                        !- Zone Heating Sizing Factor
   ,                                                        !- Zone Cooling Sizing Factor
   DesignDay,                                               !- Cooling Design Air Flow Method
@@ -2299,7 +2309,7 @@ Sizing:Zone,
 ZoneHVAC:EquipmentConnections,
   SPACE4-1,                                                !- Zone Name
   SPACE4-1 Equipment,                                      !- Zone Conditioning Equipment List Name
-  ,                                                        !- Zone Air Inlet Node or NodeList Name
+  SPACE4-1 Ideal Loads Supply Inlet,                       !- Zone Air Inlet Node or NodeList Name
   ,                                                        !- Zone Air Exhaust Node or NodeList Name
   SPACE4-1 Zone Air Node,                                  !- Zone Air Node Name
   SPACE4-1 Return Outlet;                                  !- Zone Return Air Node Name
@@ -2307,59 +2317,74 @@ ZoneHVAC:EquipmentConnections,
 ZoneHVAC:EquipmentList,
   SPACE4-1 Equipment,                                      !- Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Zone Equipment Object Type
-  SPACE4-1 Baseboard Heat,                                 !- Zone Equipment Name
+  ZoneHVAC:IdealLoadsAirSystem,                            !- Zone Equipment Object Type
+  SPACE4-1 Ideal Loads Air System,                         !- Zone Equipment Name
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
 
-ZoneHVAC:Baseboard:RadiantConvective:Water,
-  SPACE4-1 Baseboard Heat,                                 !- Name
-  SPACE4-1 Baseboard Heat Design Object,                   !- Name
+ZoneHVAC:IdealLoadsAirSystem,
+  SPACE4-1 Ideal Loads Air System,                         !- Name
   ,                                                        !- Availability Schedule Name
-  SPACE4-1 Baseboard HW Inlet,                             !- Inlet Node Name
-  SPACE4-1 Baseboard HW Outlet,                            !- Outlet Node Name
-  87.78,                                                   !- Rated Average Water Temperature {C}
-  0.063,                                                   !- Rated Water Mass Flow Rate {m3/s}
-  autosize,                                                !- Heating Design Capacity {W}
-  autosize;                                                !- Maximum Water Flow Rate
-
-ZoneHVAC:Baseboard:RadiantConvective:Water:Design,
-  SPACE4-1 Baseboard Heat Design Object,                   !- Name
-  HeatingDesignCapacity,                                   !- Heating Design Capacity Method
-  ,                                                        !- Heating Design Capacity Per Floor Area {W/m2}
-  ,                                                        !- Fraction of Autosized Heating Design Capacity
-  0.001,                                                   !- Convergence Tolerance
-  0.0,                                                     !- Fraction Radiant
-  0.0;                                                     !- Fraction of Radiant Energy Incident on People
-
-Branch,
-  SPACE4-1 Baseboard Heat HW Branch,                       !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Component Object Type
-  SPACE4-1 Baseboard Heat,                                 !- Component Name
-  SPACE4-1 Baseboard HW Inlet,                             !- Component Inlet Node Name
-  SPACE4-1 Baseboard HW Outlet;                            !- Component Outlet Node Name
+  SPACE4-1 Ideal Loads Supply Inlet,                       !- Zone Supply Air Node Name
+  ,                                                        !- Zone Exhaust Air Node Name
+  ,                                                        !- System Inlet Air Node Name
+  50,                                                      !- Maximum Heating Supply Air Temperature [C]
+  13,                                                      !- Minimum Cooling Supply Air Temperature [C]
+  0.0156,                                                  !- Maximum Heating Supply Air Humidity Ratio [kg-H20/kg-air]
+  0.0077,                                                  !- Minimum Cooling Supply Air Humidity Ratio [kg-H20/kg-air]
+  NoLimit,                                                 !- Heating Limit
+  ,                                                        !- Maximum Heating Air Flow Rate {m3/s}
+  ,                                                        !- Maximum Sensible Heating Capacity {m3/s}
+  LimitFlowRate,                                           !- Cooling Limit
+  autosize,                                                !- Maximum Cooling Air Flow Rate {m3/s}
+  ,                                                        !- Maximum Total Cooling Capacity {m3/s}
+  ,                                                        !- Heating Availability Schedule Name
+  ,                                                        !- Cooling Availability Schedule Name
+  ConstantSensibleHeatRatio,                               !- Dehumidification Control Type
+  0.7,                                                     !- Cooling Sensible Heat Ratio
+  Humidistat,                                              !- Humidification Control Type
+  Office Outdoor Air Spec,                                 !- Design Specification Outdoor Air Object Name
+  SPACE4-1 Ideal Loads Outdoor Air Inlet,                  !- Outdoor Air Inlet Node Name
+  None,                                                    !- Demand Controlled Ventilation Type
+  DifferentialDryBulb,                                     !- Outdoor Air Economizer Type
+  Sensible,                                                !- Heat Recovery Type
+  0.7,                                                     !- Sensible Heat Recovery Effectiveness
+  0.65;                                                    !- Latent Heat Recovery Effectiveness
 
 ZoneControl:Thermostat,
   SPACE5-1 Thermostat,                                     !- Name
   SPACE5-1,                                                !- Zone or ZoneList Name
   HVACTemplate-Always 4,                                   !- Control Type Schedule Name
   ThermostatSetpoint:DualSetpoint,                         !- Control Object Type
-  Heat Only Dual SP Control;                               !- Control Name
+  All Zones Dual SP Control;                               !- Control Name
+
+ZoneControl:Humidistat,
+  SPACE5-1 Humidistat,                                     !- Name
+  SPACE5-1,                                                !- Zone Name
+  HVACTemplate-Always 30,                                  !- Humidifying Relative Humidity Setpoint Schedule Name
+  HVACTemplate-Always 60;                                  !- Dehumidifying Relative Humidity Setpoint Schedule Name
+
+Schedule:Compact,
+  HVACTemplate-Always 60,                                  !- Name
+  HVACTemplate Any Number,                                 !- Schedule Type Limits Name
+  Through: 12/31,                                          !- Field 1
+  For: AllDays,                                            !- Field 2
+  Until: 24:00,                                            !- Field 3
+  60;                                                      !- Field 4
 
 Sizing:Zone,
   SPACE5-1,                                                !- Zone or ZoneList Name
   SupplyAirTemperature,                                    !- Zone Cooling Design Supply Air Temperature Input Method
-  12.5,                                                    !- Zone Cooling Design Supply Air Temperature {C}
+  13,                                                      !- Zone Cooling Design Supply Air Temperature {C}
   ,                                                        !- Zone Cooling Design Supply Air Temperature Difference {delta C}
   SupplyAirTemperature,                                    !- Zone Heating Design Supply Air Temperature Input Method
   50,                                                      !- Zone Heating Design Supply Air Temperature {C}
   ,                                                        !- Zone Heating Design Supply Air Temperature Difference {delta C}
-  0.008,                                                   !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
-  0.008,                                                   !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
-  ,                                                        !- Design Specification Outdoor Air Object Name
+  0.0077,                                                  !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
+  0.0156,                                                  !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
+  Office Outdoor Air Spec,                                 !- Design Specification Outdoor Air Object Name
   ,                                                        !- Zone Heating Sizing Factor
   ,                                                        !- Zone Cooling Sizing Factor
   DesignDay,                                               !- Cooling Design Air Flow Method
@@ -2377,7 +2402,7 @@ Sizing:Zone,
 ZoneHVAC:EquipmentConnections,
   SPACE5-1,                                                !- Zone Name
   SPACE5-1 Equipment,                                      !- Zone Conditioning Equipment List Name
-  ,                                                        !- Zone Air Inlet Node or NodeList Name
+  SPACE5-1 Ideal Loads Supply Inlet,                       !- Zone Air Inlet Node or NodeList Name
   ,                                                        !- Zone Air Exhaust Node or NodeList Name
   SPACE5-1 Zone Air Node,                                  !- Zone Air Node Name
   SPACE5-1 Return Outlet;                                  !- Zone Return Air Node Name
@@ -2385,291 +2410,41 @@ ZoneHVAC:EquipmentConnections,
 ZoneHVAC:EquipmentList,
   SPACE5-1 Equipment,                                      !- Name
   SequentialLoad,                                          !- Load Distribution Scheme
-  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Zone Equipment Object Type
-  SPACE5-1 Baseboard Heat,                                 !- Zone Equipment Name
+  ZoneHVAC:IdealLoadsAirSystem,                            !- Zone Equipment Object Type
+  SPACE5-1 Ideal Loads Air System,                         !- Zone Equipment Name
   1,                                                       !- Zone Equipment Cooling Sequence
   1,                                                       !- Zone Equipment Heating or No-Load Sequence
   ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
   ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
 
-ZoneHVAC:Baseboard:RadiantConvective:Water,
-  SPACE5-1 Baseboard Heat,                                 !- Name
-  SPACE5-1 Baseboard Heat Design Object,                   !- Name
+ZoneHVAC:IdealLoadsAirSystem,
+  SPACE5-1 Ideal Loads Air System,                         !- Name
   ,                                                        !- Availability Schedule Name
-  SPACE5-1 Baseboard HW Inlet,                             !- Inlet Node Name
-  SPACE5-1 Baseboard HW Outlet,                            !- Outlet Node Name
-  87.78,                                                   !- Rated Average Water Temperature {C}
-  0.063,                                                   !- Rated Water Mass Flow Rate {m3/s}
-  autosize,                                                !- Heating Design Capacity {W}
-  autosize;                                                !- Maximum Water Flow Rate
-
-ZoneHVAC:Baseboard:RadiantConvective:Water:Design,
-  SPACE5-1 Baseboard Heat Design Object,                   !- Name
-  HeatingDesignCapacity,                                   !- Heating Design Capacity Method
-  ,                                                        !- Heating Design Capacity Per Floor Area {W/m2}
-  ,                                                        !- Fraction of Autosized Heating Design Capacity
-  0.001,                                                   !- Convergence Tolerance
-  0.0,                                                     !- Fraction Radiant
-  0.0;                                                     !- Fraction of Radiant Energy Incident on People
-
-Branch,
-  SPACE5-1 Baseboard Heat HW Branch,                       !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  ZoneHVAC:Baseboard:RadiantConvective:Water,              !- Component Object Type
-  SPACE5-1 Baseboard Heat,                                 !- Component Name
-  SPACE5-1 Baseboard HW Inlet,                             !- Component Inlet Node Name
-  SPACE5-1 Baseboard HW Outlet;                            !- Component Outlet Node Name
-
-Boiler:HotWater,
-  Main Boiler,                                             !- Name
-  NaturalGas,                                              !- Fuel Type
-  autosize,                                                !- Nominal Capacity {W}
-  0.8,                                                     !- Nominal Thermal Efficiency
-  LeavingBoiler,                                           !- Efficiency Curve Temperature Evaluation Variable
-  Main Boiler Efficiency Curve,                            !- Normalized Boiler Efficiency Curve Name
-  autosize,                                                !- Max Design Boiler Water Flow Rate {m3/s}
-  0.0,                                                     !- Minimum Part Load Ratio
-  1.1,                                                     !- Maximum Part Load Ratio
-  1.0,                                                     !- Optimum Part Load Ratio
-  Main Boiler HW Inlet,                                    !- Water Inlet Node Name
-  Main Boiler HW Outlet,                                   !- Water Outlet Node Name
-  100.0,                                                   !- Temp Upper Limit Water Outlet {C}
-  ConstantFlow,                                            !- Boiler Flow Mode
-  0,                                                       !- Parasitic Electric Load {W}
-  1.0;                                                     !- Sizing Factor
-
-Curve:Quadratic,
-  Main Boiler Efficiency Curve,                            !- Name
-  0.97,                                                    !- Coefficient1 Constant
-  0.0633,                                                  !- Coefficient2 x
-  -0.0333,                                                 !- Coefficient3 x**2
-  0.0,                                                     !- Minimum Value of x
-  1.0;                                                     !- Maximum Value of x
-
-Branch,
-  Main Boiler HW Branch,                                   !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  Boiler:HotWater,                                         !- Component Object Type
-  Main Boiler,                                             !- Component Name
-  Main Boiler HW Inlet,                                    !- Component Inlet Node Name
-  Main Boiler HW Outlet;                                   !- Component Outlet Node Name
-
-Sizing:Plant,
-  Hot Water Loop Hot Water Loop,                           !- Plant or Condenser Loop Name
-  Heating,                                                 !- Loop Type
-  82,                                                      !- Design loop exit temperature {C}
-  11.0;                                                    !- Design loop delta T {deltaC}
-
-PlantLoop,
-  Hot Water Loop Hot Water Loop,                           !- Name
-  Water,                                                   !- Fluid Type
-  ,                                                        !- User Defined Fluid Type
-  Hot Water Loop Operation,                                !- PlantEquipmentOperationSchemes Name
-  Hot Water Loop HW Supply Outlet,                         !- Loop Temperature Setpoint Node Name
-  100,                                                     !- Maximum Loop Temperature {C}
-  10,                                                      !- Minimum Loop Temperature {C}
-  autosize,                                                !- Maximum Loop Volumetric Flow Rate {m3/s}
-  0,                                                       !- Minimum Loop Volumetric Flow Rate {m3/s}
-  autosize,                                                !- volume of the plant loop {m3}
-  Hot Water Loop HW Supply Inlet,                          !- Plant Side Inlet Node Name
-  Hot Water Loop HW Supply Outlet,                         !- Plant Side Outlet Node Name
-  Hot Water Loop HW Supply Side Branches,                  !- Plant Side Branch List Name
-  Hot Water Loop HW Supply Side Connectors,                !- Plant Side Connector List Name
-  Hot Water Loop HW Demand Inlet,                          !- Demand Side Inlet Node Name
-  Hot Water Loop HW Demand Outlet,                         !- Demand Side Outlet Node Name
-  Hot Water Loop HW Demand Side Branches,                  !- Demand Side Branch List Name
-  Hot Water Loop HW Demand Side Connectors,                !- Demand Side Connector List Name
-  SequentialLoad,                                          !- Load Distribution Scheme
-  ,                                                        !- AvailabilityManagerAssignmentList
-  SingleSetpoint;                                          !- Plant Loop Demand Calculation Scheme
-
-PlantEquipmentOperationSchemes,
-  Hot Water Loop Operation,                                !- Name
-  PlantEquipmentOperation:HeatingLoad,                     !- Control Scheme Object Type
-  Hot Water Loop Operation All Hours,                      !- Control Scheme Name
-  HVACTemplate-Always 1;                                   !- Control Scheme Schedule Name
-
-Schedule:Compact,
-  HVACTemplate-Always 1,                                   !- Name
-  HVACTemplate Any Number,                                 !- Schedule Type Limits Name
-  Through: 12/31,                                          !- Field 1
-  For: AllDays,                                            !- Field 2
-  Until: 24:00,                                            !- Field 3
-  1;                                                       !- Field 4
-
-PlantEquipmentOperation:HeatingLoad,
-  Hot Water Loop Operation All Hours,                      !- Name
-  0,                                                       !- Load Range Lower Limit 1 {W}
-  1000000000000000,                                        !- Load Range Upper Limit 1 {W}
-  Hot Water Loop All Equipment;                            !- Priority Control 1 Equipment List Name
-
-PlantEquipmentList,
-  Hot Water Loop All Equipment,                            !- Name
-  Boiler:HotWater,                                         !- Equipment Object Type
-  Main Boiler;                                             !- Equipment Name
-
-NodeList,
-  Hot Water Loop HW Supply Setpoint Nodes,                 !- Name
-  Main Boiler HW Outlet,                                   !- Node Name
-  Hot Water Loop HW Supply Outlet;                         !- Node Name
-
-SetpointManager:OutdoorAirReset,
-  Hot Water Loop HW Temp Manager,                          !- Name
-  Temperature,                                             !- Control Variable
-  82.2,                                                    !- Set point at outside low {C}
-  -6.7,                                                    !- Outside low {C}
-  65.6,                                                    !- Set point at outside high {C}
-  10,                                                      !- Outside high {C}
-  Hot Water Loop HW Supply Setpoint Nodes;                 !- Setpoint Node or NodeList Name
-
-BranchList,
-  Hot Water Loop HW Supply Side Branches,                  !- Name
-  Hot Water Loop HW Supply Inlet Branch,                   !- Name
-  Main Boiler HW Branch,                                   !- Branch Name
-  Hot Water Loop HW Supply Bypass Branch,                  !- Name
-  Hot Water Loop HW Supply Outlet Branch;                  !- Name
-
-ConnectorList,
-  Hot Water Loop HW Supply Side Connectors,                !- Name
-  Connector:Splitter,                                      !- Connector Object Type
-  Hot Water Loop HW Supply Splitter,                       !- Connector Name
-  Connector:Mixer,                                         !- Connector Object Type
-  Hot Water Loop HW Supply Mixer;                          !- Connector Name
-
-Connector:Splitter,
-  Hot Water Loop HW Supply Splitter,                       !- Name
-  Hot Water Loop HW Supply Inlet Branch,                   !- Inlet Branch Name
-  Main Boiler HW Branch,                                   !- Outlet Branch Name
-  Hot Water Loop HW Supply Bypass Branch;                  !- Outlet Branch Name
-
-Connector:Mixer,
-  Hot Water Loop HW Supply Mixer,                          !- Name
-  Hot Water Loop HW Supply Outlet Branch,                  !- Outlet Branch Name
-  Main Boiler HW Branch,                                   !- Outlet Branch Name
-  Hot Water Loop HW Supply Bypass Branch;                  !- Inlet Branch Name
-
-Branch,
-  Hot Water Loop HW Supply Bypass Branch,                  !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  Pipe:Adiabatic,                                          !- Component Object Type
-  Hot Water Loop HW Supply Side Bypass Pipe,               !- Component Name
-  Hot Water Loop HW Supply Bypass Inlet,                   !- Component Inlet Node Name
-  Hot Water Loop HW Supply Bypass Outlet;                  !- Component Outlet Node Name
-
-Pipe:Adiabatic,
-  Hot Water Loop HW Supply Side Bypass Pipe,               !- Name
-  Hot Water Loop HW Supply Bypass Inlet,                   !- Inlet Node Name
-  Hot Water Loop HW Supply Bypass Outlet;                  !- Outlet Node Name
-
-Pump:ConstantSpeed,
-  Hot Water Loop HW Supply Pump,                           !- Name
-  Hot Water Loop HW Supply Inlet,                          !- Inlet Node Name
-  Hot Water Loop HW Pump Outlet,                           !- Outlet Node Name
-  autosize,                                                !- Rated Volumetric Flow Rate {m3/s}
-  179352,                                                  !- Rated Pump Head {Pa}
-  autosize,                                                !- Rated Power Consumption {W}
-  0.9,                                                     !- Motor Efficiency
-  0,                                                       !- Fraction of Motor Inefficiencies to Fluid Stream
-  INTERMITTENT,                                            !- Pump Control Type
-  ;                                                        !- Pump Flow Rate Schedule Name
-
-Branch,
-  Hot Water Loop HW Supply Inlet Branch,                   !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  Pump:ConstantSpeed,                                      !- Component Object Type
-  Hot Water Loop HW Supply Pump,                           !- Component Name
-  Hot Water Loop HW Supply Inlet,                          !- Component Inlet Node Name
-  Hot Water Loop HW Pump Outlet;                           !- Component Outlet Node Name
-
-Branch,
-  Hot Water Loop HW Supply Outlet Branch,                  !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  Pipe:Adiabatic,                                          !- Component Object Type
-  Hot Water Loop HW Supply Outlet Pipe,                    !- Component Name
-  Hot Water Loop HW Supply Outlet Pipe Inlet,              !- Component Inlet Node Name
-  Hot Water Loop HW Supply Outlet;                         !- Component Outlet Node Name
-
-Pipe:Adiabatic,
-  Hot Water Loop HW Supply Outlet Pipe,                    !- Name
-  Hot Water Loop HW Supply Outlet Pipe Inlet,              !- Inlet Node Name
-  Hot Water Loop HW Supply Outlet;                         !- Outlet Node Name
-
-BranchList,
-  Hot Water Loop HW Demand Side Branches,                  !- Name
-  Hot Water Loop HW Demand Inlet Branch,                   !- Name
-  SPACE1-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE2-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE3-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE4-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE5-1 Baseboard Heat HW Branch,                       !- Name
-  Hot Water Loop HW Demand Bypass Branch,                  !- Name
-  Hot Water Loop HW Demand Outlet Branch;                  !- Name
-
-ConnectorList,
-  Hot Water Loop HW Demand Side Connectors,                !- Name
-  Connector:Splitter,                                      !- Connector Object Type
-  Hot Water Loop HW Demand Splitter,                       !- Connector Name
-  Connector:Mixer,                                         !- Connector Object Type
-  Hot Water Loop HW Demand Mixer;                          !- Connector Name
-
-Connector:Splitter,
-  Hot Water Loop HW Demand Splitter,                       !- Name
-  Hot Water Loop HW Demand Inlet Branch,                   !- Inlet Branch Name
-  Hot Water Loop HW Demand Bypass Branch,                  !- Outlet Branch Name
-  SPACE1-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE2-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE3-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE4-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE5-1 Baseboard Heat HW Branch;                       !- Name
-
-Connector:Mixer,
-  Hot Water Loop HW Demand Mixer,                          !- Name
-  Hot Water Loop HW Demand Outlet Branch,                  !- Outlet Branch Name
-  Hot Water Loop HW Demand Bypass Branch,                  !- Inlet Branch Name
-  SPACE1-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE2-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE3-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE4-1 Baseboard Heat HW Branch,                       !- Name
-  SPACE5-1 Baseboard Heat HW Branch;                       !- Name
-
-Branch,
-  Hot Water Loop HW Demand Inlet Branch,                   !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  Pipe:Adiabatic,                                          !- Component Object Type
-  Hot Water Loop HW Demand Inlet Pipe,                     !- Component Name
-  Hot Water Loop HW Demand Inlet,                          !- Component Inlet Node Name
-  Hot Water Loop HW Demand Inlet Pipe Outlet;              !- Component Outlet Node Name
-
-Pipe:Adiabatic,
-  Hot Water Loop HW Demand Inlet Pipe,                     !- Name
-  Hot Water Loop HW Demand Inlet,                          !- Inlet Node Name
-  Hot Water Loop HW Demand Inlet Pipe Outlet;              !- Outlet Node Name
-
-Branch,
-  Hot Water Loop HW Demand Bypass Branch,                  !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  Pipe:Adiabatic,                                          !- Component Object Type
-  Hot Water Loop HW Demand Side Bypass Pipe,               !- Component Name
-  Hot Water Loop HW Demand Bypass Inlet,                   !- Component Inlet Node Name
-  Hot Water Loop HW Demand Bypass Outlet;                  !- Component Outlet Node Name
-
-Pipe:Adiabatic,
-  Hot Water Loop HW Demand Side Bypass Pipe,               !- Name
-  Hot Water Loop HW Demand Bypass Inlet,                   !- Inlet Node Name
-  Hot Water Loop HW Demand Bypass Outlet;                  !- Outlet Node Name
-
-Branch,
-  Hot Water Loop HW Demand Outlet Branch,                  !- Name
-  ,                                                        !- Pressure Drop Curve Name
-  Pipe:Adiabatic,                                          !- Component Object Type
-  Hot Water Loop HW Demand Outlet Pipe,                    !- Component Name
-  Hot Water Loop HW Demand Outlet Pipe Inlet,              !- Component Inlet Node Name
-  Hot Water Loop HW Demand Outlet;                         !- Component Outlet Node Name
-
-Pipe:Adiabatic,
-  Hot Water Loop HW Demand Outlet Pipe,                    !- Name
-  Hot Water Loop HW Demand Outlet Pipe Inlet,              !- Inlet Node Name
-  Hot Water Loop HW Demand Outlet;                         !- Outlet Node Name
+  SPACE5-1 Ideal Loads Supply Inlet,                       !- Zone Supply Air Node Name
+  ,                                                        !- Zone Exhaust Air Node Name
+  ,                                                        !- System Inlet Air Node Name
+  50,                                                      !- Maximum Heating Supply Air Temperature [C]
+  13,                                                      !- Minimum Cooling Supply Air Temperature [C]
+  0.0156,                                                  !- Maximum Heating Supply Air Humidity Ratio [kg-H20/kg-air]
+  0.0077,                                                  !- Minimum Cooling Supply Air Humidity Ratio [kg-H20/kg-air]
+  LimitFlowRate,                                           !- Heating Limit
+  autosize,                                                !- Maximum Heating Air Flow Rate {m3/s}
+  ,                                                        !- Maximum Sensible Heating Capacity {m3/s}
+  LimitFlowRate,                                           !- Cooling Limit
+  autosize,                                                !- Maximum Cooling Air Flow Rate {m3/s}
+  ,                                                        !- Maximum Total Cooling Capacity {m3/s}
+  ,                                                        !- Heating Availability Schedule Name
+  ,                                                        !- Cooling Availability Schedule Name
+  Humidistat,                                              !- Dehumidification Control Type
+  0.7,                                                     !- Cooling Sensible Heat Ratio
+  Humidistat,                                              !- Humidification Control Type
+  Office Outdoor Air Spec,                                 !- Design Specification Outdoor Air Object Name
+  SPACE5-1 Ideal Loads Outdoor Air Inlet,                  !- Outdoor Air Inlet Node Name
+  OccupancySchedule,                                       !- Demand Controlled Ventilation Type
+  DifferentialEnthalpy,                                    !- Outdoor Air Economizer Type
+  Enthalpy,                                                !- Heat Recovery Type
+  0.7,                                                     !- Sensible Heat Recovery Effectiveness
+  0.65;                                                    !- Latent Heat Recovery Effectiveness
 
 Site:GroundTemperature:BuildingSurface,
   21.5,                                                    !- January Ground Temperature
