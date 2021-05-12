@@ -1,283 +1,4 @@
 {
-    "AirConditioner:VariableRefrigerantFlow": {
-        "VRF Sys 1 Water Source VRF Heat Pump": {
-            "basin_heater_capacity": 0,
-            "basin_heater_setpoint_temperature": 2,
-            "condenser_inlet_node_name": "VRF Sys 1 Water Source Condenser Inlet Node",
-            "condenser_outlet_node_name": "VRF Sys 1 Water Source Condenser Outlet Node",
-            "condenser_type": "WaterCooled",
-            "cooling_capacity_ratio_boundary_curve_name": "VRF Sys 1 Water Source VRFCoolCapFTBoundary",
-            "cooling_capacity_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 1 Water Source VRFCoolCapFTHi",
-            "cooling_capacity_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 1 Water Source VRFCoolCapFT",
-            "cooling_combination_ratio_correction_factor_curve_name": "VRF Sys 1 Water Source CoolingCombRatio",
-            "cooling_energy_input_ratio_boundary_curve_name": "VRF Sys 1 Water Source VRFCoolEIRFTBoundary",
-            "cooling_energy_input_ratio_modifier_function_of_high_part_load_ratio_curve_name": "VRF Sys 1 Water Source CoolingEIRHiPLR",
-            "cooling_energy_input_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 1 Water Source VRFCoolEIRFTHi",
-            "cooling_energy_input_ratio_modifier_function_of_low_part_load_ratio_curve_name": "VRF Sys 1 Water Source CoolingEIRLowPLR",
-            "cooling_energy_input_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 1 Water Source VRFCoolEIRFT",
-            "cooling_part_load_fraction_correlation_curve_name": "VRF Sys 1 Water Source VRFCPLFFPLR",
-            "crankcase_heater_power_per_compressor": 33,
-            "defrost_control": "Timed",
-            "defrost_strategy": "Resistive",
-            "defrost_time_period_fraction": 0.058333,
-            "equivalent_piping_length_used_for_piping_correction_factor_in_cooling_mode": 30,
-            "equivalent_piping_length_used_for_piping_correction_factor_in_heating_mode": 30,
-            "evaporative_condenser_air_flow_rate": "Autosize",
-            "evaporative_condenser_effectiveness": 0.9,
-            "evaporative_condenser_pump_rated_power_consumption": 0,
-            "fuel_type": "Electricity",
-            "gross_rated_cooling_cop": 3.3,
-            "gross_rated_heating_capacity": "Autosize",
-            "gross_rated_heating_cop": 3.4,
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "heat_pump_waste_heat_recovery": "No",
-            "heat_recovery_cooling_capacity_time_constant": 0.45,
-            "heat_recovery_heating_capacity_time_constant": 0.45,
-            "heating_capacity_ratio_boundary_curve_name": "VRF Sys 1 Water Source VRFHeatCapFTBoundary",
-            "heating_capacity_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatCapFTHi",
-            "heating_capacity_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatCapFT",
-            "heating_combination_ratio_correction_factor_curve_name": "VRF Sys 1 Water Source HeatingCombRatio",
-            "heating_energy_input_ratio_boundary_curve_name": "VRF Sys 1 Water Source VRFHeatEIRFTBoundary",
-            "heating_energy_input_ratio_modifier_function_of_high_part_load_ratio_curve_name": "VRF Sys 1 Water Source HeatingEIRHiPLR",
-            "heating_energy_input_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatEIRFTHi",
-            "heating_energy_input_ratio_modifier_function_of_low_part_load_ratio_curve_name": "VRF Sys 1 Water Source HeatingEIRLowPLR",
-            "heating_energy_input_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatEIRFT",
-            "heating_part_load_fraction_correlation_curve_name": "VRF Sys 1 Water Source VRFCPLFFPLR",
-            "heating_performance_curve_outdoor_temperature_type": "DryBulbTemperature",
-            "master_thermostat_priority_control_type": "LoadPriority",
-            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater": 5,
-            "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
-            "maximum_outdoor_temperature_in_cooling_mode": 43,
-            "maximum_outdoor_temperature_in_heat_recovery_mode": 45,
-            "maximum_outdoor_temperature_in_heating_mode": 30,
-            "minimum_heat_pump_part_load_ratio": 0.25,
-            "minimum_outdoor_temperature_in_cooling_mode": -6,
-            "minimum_outdoor_temperature_in_heat_recovery_mode": -15,
-            "minimum_outdoor_temperature_in_heating_mode": -20,
-            "number_of_compressors": 2,
-            "piping_correction_factor_for_height_in_cooling_mode_coefficient": -0.000386,
-            "piping_correction_factor_for_length_in_cooling_mode_curve_name": "VRF Sys 1 Water Source CoolingLengthCorrectionFactor",
-            "rated_heating_capacity_sizing_ratio": 1,
-            "ratio_of_compressor_size_to_total_compressor_capacity": 0.5,
-            "resistive_defrost_heater_capacity": "Autosize",
-            "vertical_height_used_for_piping_correction_factor": 10,
-            "water_condenser_volume_flow_rate": "Autosize",
-            "zone_terminal_unit_list_name": "VRF Sys 1 Water SourceTU List"
-        },
-        "VRF Sys 2 Air Source VRF Heat Pump": {
-            "basin_heater_capacity": 0,
-            "basin_heater_setpoint_temperature": 2,
-            "condenser_inlet_node_name": "VRF Sys 2 Air Source Condenser Inlet Node",
-            "condenser_outlet_node_name": "VRF Sys 2 Air Source Condenser Outlet Node",
-            "condenser_type": "AirCooled",
-            "cooling_capacity_ratio_boundary_curve_name": "VRF Sys 2 Air Source VRFCoolCapFTBoundary",
-            "cooling_capacity_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 2 Air Source VRFCoolCapFTHi",
-            "cooling_capacity_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 2 Air Source VRFCoolCapFT",
-            "cooling_combination_ratio_correction_factor_curve_name": "VRF Sys 2 Air Source CoolingCombRatio",
-            "cooling_energy_input_ratio_boundary_curve_name": "VRF Sys 2 Air Source VRFCoolEIRFTBoundary",
-            "cooling_energy_input_ratio_modifier_function_of_high_part_load_ratio_curve_name": "VRF Sys 2 Air Source CoolingEIRHiPLR",
-            "cooling_energy_input_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 2 Air Source VRFCoolEIRFTHi",
-            "cooling_energy_input_ratio_modifier_function_of_low_part_load_ratio_curve_name": "VRF Sys 2 Air Source CoolingEIRLowPLR",
-            "cooling_energy_input_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 2 Air Source VRFCoolEIRFT",
-            "cooling_part_load_fraction_correlation_curve_name": "VRF Sys 2 Air Source VRFCPLFFPLR",
-            "crankcase_heater_power_per_compressor": 33,
-            "defrost_control": "Timed",
-            "defrost_strategy": "Resistive",
-            "defrost_time_period_fraction": 0.058333,
-            "equivalent_piping_length_used_for_piping_correction_factor_in_cooling_mode": 30,
-            "equivalent_piping_length_used_for_piping_correction_factor_in_heating_mode": 30,
-            "evaporative_condenser_air_flow_rate": "Autosize",
-            "evaporative_condenser_effectiveness": 0.9,
-            "evaporative_condenser_pump_rated_power_consumption": 0,
-            "fuel_type": "Electricity",
-            "gross_rated_cooling_cop": 3.3,
-            "gross_rated_heating_capacity": "Autosize",
-            "gross_rated_heating_cop": 3.4,
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "heat_pump_waste_heat_recovery": "No",
-            "heat_recovery_cooling_capacity_time_constant": 0.45,
-            "heat_recovery_heating_capacity_time_constant": 0.45,
-            "heating_capacity_ratio_boundary_curve_name": "VRF Sys 2 Air Source VRFHeatCapFTBoundary",
-            "heating_capacity_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 2 Air Source VRFHeatCapFTHi",
-            "heating_capacity_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 2 Air Source VRFHeatCapFT",
-            "heating_combination_ratio_correction_factor_curve_name": "VRF Sys 2 Air Source HeatingCombRatio",
-            "heating_energy_input_ratio_boundary_curve_name": "VRF Sys 2 Air Source VRFHeatEIRFTBoundary",
-            "heating_energy_input_ratio_modifier_function_of_high_part_load_ratio_curve_name": "VRF Sys 2 Air Source HeatingEIRHiPLR",
-            "heating_energy_input_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 2 Air Source VRFHeatEIRFTHi",
-            "heating_energy_input_ratio_modifier_function_of_low_part_load_ratio_curve_name": "VRF Sys 2 Air Source HeatingEIRLowPLR",
-            "heating_energy_input_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 2 Air Source VRFHeatEIRFT",
-            "heating_part_load_fraction_correlation_curve_name": "VRF Sys 2 Air Source VRFCPLFFPLR",
-            "heating_performance_curve_outdoor_temperature_type": "WetBulbTemperature",
-            "master_thermostat_priority_control_type": "MasterThermostatPriority",
-            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater": 5,
-            "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
-            "maximum_outdoor_temperature_in_cooling_mode": 43,
-            "maximum_outdoor_temperature_in_heat_recovery_mode": 45,
-            "maximum_outdoor_temperature_in_heating_mode": 25,
-            "minimum_heat_pump_part_load_ratio": 0.25,
-            "minimum_outdoor_temperature_in_cooling_mode": -6,
-            "minimum_outdoor_temperature_in_heat_recovery_mode": -15,
-            "minimum_outdoor_temperature_in_heating_mode": -25,
-            "number_of_compressors": 2,
-            "piping_correction_factor_for_height_in_cooling_mode_coefficient": -0.000386,
-            "piping_correction_factor_for_length_in_cooling_mode_curve_name": "VRF Sys 2 Air Source CoolingLengthCorrectionFactor",
-            "rated_heating_capacity_sizing_ratio": 1,
-            "ratio_of_compressor_size_to_total_compressor_capacity": 0.5,
-            "resistive_defrost_heater_capacity": "Autosize",
-            "vertical_height_used_for_piping_correction_factor": 10,
-            "water_condenser_volume_flow_rate": "Autosize",
-            "zone_name_for_master_thermostat_location": "SPACE5-1",
-            "zone_terminal_unit_list_name": "VRF Sys 2 Air SourceTU List"
-        }
-    },
-    "Boiler:HotWater": {
-        "Main Boiler": {
-            "boiler_flow_mode": "ConstantFlow",
-            "boiler_water_inlet_node_name": "Main Boiler HW Inlet",
-            "boiler_water_outlet_node_name": "Main Boiler HW Outlet",
-            "design_water_flow_rate": "Autosize",
-            "efficiency_curve_temperature_evaluation_variable": "LeavingBoiler",
-            "fuel_type": "NaturalGas",
-            "maximum_part_load_ratio": 1.1,
-            "minimum_part_load_ratio": 0.0,
-            "nominal_capacity": "Autosize",
-            "nominal_thermal_efficiency": 0.8,
-            "normalized_boiler_efficiency_curve_name": "Main Boiler Efficiency Curve",
-            "optimum_part_load_ratio": 1.0,
-            "parasitic_electric_load": 0,
-            "sizing_factor": 1.0,
-            "water_outlet_upper_temperature_limit": 100.0
-        }
-    },
-    "Branch": {
-        "Main Boiler Mixed Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Main Boiler HW Inlet",
-                    "component_name": "Main Boiler",
-                    "component_object_type": "Boiler:HotWater",
-                    "component_outlet_node_name": "Main Boiler HW Outlet"
-                }
-            ]
-        },
-        "Main Tower Mixed Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Main Tower CndW Inlet",
-                    "component_name": "Main Tower",
-                    "component_object_type": "CoolingTower:SingleSpeed",
-                    "component_outlet_node_name": "Main Tower CndW Outlet"
-                }
-            ]
-        },
-        "Only Water Loop Mixed Demand Bypass Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Only Water Loop Mixed Demand Bypass Inlet",
-                    "component_name": "Only Water Loop Mixed Demand Side Bypass Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Only Water Loop Mixed Demand Bypass Outlet"
-                }
-            ]
-        },
-        "Only Water Loop Mixed Demand Inlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Only Water Loop Mixed Demand Inlet",
-                    "component_name": "Only Water Loop Mixed Demand Inlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Only Water Loop Mixed Demand Inlet Pipe Outlet"
-                }
-            ]
-        },
-        "Only Water Loop Mixed Demand Outlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Only Water Loop Mixed Demand Outlet Pipe Inlet",
-                    "component_name": "Only Water Loop Mixed Demand Outlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Only Water Loop Mixed Demand Outlet"
-                }
-            ]
-        },
-        "Only Water Loop Mixed Supply Bypass Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Only Water Loop Mixed Supply Bypass Inlet",
-                    "component_name": "Only Water Loop Mixed Supply Side Bypass Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Only Water Loop Mixed Supply Bypass Outlet"
-                }
-            ]
-        },
-        "Only Water Loop Mixed Supply Inlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Only Water Loop Mixed Supply Inlet",
-                    "component_name": "Only Water Loop Mixed Supply Pump",
-                    "component_object_type": "Pump:ConstantSpeed",
-                    "component_outlet_node_name": "Only Water Loop Mixed Pump Outlet"
-                }
-            ]
-        },
-        "Only Water Loop Mixed Supply Outlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Only Water Loop Mixed Supply Outlet Pipe Inlet",
-                    "component_name": "Only Water Loop Mixed Supply Outlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Only Water Loop Mixed Supply Outlet"
-                }
-            ]
-        },
-        "VRF Sys 1 Water Source VRF Condenser Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "VRF Sys 1 Water Source Condenser Inlet Node",
-                    "component_name": "VRF Sys 1 Water Source VRF Heat Pump",
-                    "component_object_type": "AirConditioner:VariableRefrigerantFlow",
-                    "component_outlet_node_name": "VRF Sys 1 Water Source Condenser Outlet Node"
-                }
-            ]
-        }
-    },
-    "BranchList": {
-        "Only Water Loop Mixed Demand Side Branches": {
-            "branches": [
-                {
-                    "branch_name": "Only Water Loop Mixed Demand Inlet Branch"
-                },
-                {
-                    "branch_name": "VRF Sys 1 Water Source VRF Condenser Branch"
-                },
-                {
-                    "branch_name": "Only Water Loop Mixed Demand Bypass Branch"
-                },
-                {
-                    "branch_name": "Only Water Loop Mixed Demand Outlet Branch"
-                }
-            ]
-        },
-        "Only Water Loop Mixed Supply Side Branches": {
-            "branches": [
-                {
-                    "branch_name": "Only Water Loop Mixed Supply Inlet Branch"
-                },
-                {
-                    "branch_name": "Main Boiler Mixed Branch"
-                },
-                {
-                    "branch_name": "Main Tower Mixed Branch"
-                },
-                {
-                    "branch_name": "Only Water Loop Mixed Supply Bypass Branch"
-                },
-                {
-                    "branch_name": "Only Water Loop Mixed Supply Outlet Branch"
-                }
-            ]
-        }
-    },
     "Building": {
         "Building": {
             "loads_convergence_tolerance_value": 0.04,
@@ -1597,163 +1318,6 @@
             "zone_name": "PLENUM-1"
         }
     },
-    "Coil:Cooling:DX:VariableRefrigerantFlow": {
-        "SPACE1-1 VRF Cooling Coil": {
-            "coil_air_inlet_node": "SPACE1-1 VRF Supply Fan Outlet",
-            "coil_air_outlet_node": "SPACE1-1 VRF Cooling Coil Outlet",
-            "cooling_capacity_modifier_curve_function_of_flow_fraction_name": "SPACE1-1 VRF Cooling Coil Cap-FF",
-            "cooling_capacity_ratio_modifier_function_of_temperature_curve_name": "SPACE1-1 VRF Cooling Coil Cap-FT",
-            "gross_rated_sensible_heat_ratio": "Autosize",
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "rated_air_flow_rate": "Autosize"
-        },
-        "SPACE2-1 VRF Cooling Coil": {
-            "coil_air_inlet_node": "SPACE2-1 VRF Supply Fan Outlet",
-            "coil_air_outlet_node": "SPACE2-1 VRF Cooling Coil Outlet",
-            "cooling_capacity_modifier_curve_function_of_flow_fraction_name": "SPACE2-1 VRF Cooling Coil Cap-FF",
-            "cooling_capacity_ratio_modifier_function_of_temperature_curve_name": "SPACE2-1 VRF Cooling Coil Cap-FT",
-            "gross_rated_sensible_heat_ratio": "Autosize",
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "rated_air_flow_rate": "Autosize"
-        },
-        "SPACE3-1 VRF Cooling Coil": {
-            "coil_air_inlet_node": "SPACE3-1 VRF Supply Fan Outlet",
-            "coil_air_outlet_node": "SPACE3-1 VRF Cooling Coil Outlet",
-            "cooling_capacity_modifier_curve_function_of_flow_fraction_name": "SPACE3-1 VRF Cooling Coil Cap-FF",
-            "cooling_capacity_ratio_modifier_function_of_temperature_curve_name": "SPACE3-1 VRF Cooling Coil Cap-FT",
-            "gross_rated_sensible_heat_ratio": "Autosize",
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "rated_air_flow_rate": "Autosize"
-        },
-        "SPACE4-1 VRF Cooling Coil": {
-            "coil_air_inlet_node": "SPACE4-1 VRF Supply Fan Outlet",
-            "coil_air_outlet_node": "SPACE4-1 VRF Cooling Coil Outlet",
-            "cooling_capacity_modifier_curve_function_of_flow_fraction_name": "SPACE4-1 VRF Cooling Coil Cap-FF",
-            "cooling_capacity_ratio_modifier_function_of_temperature_curve_name": "SPACE4-1 VRF Cooling Coil Cap-FT",
-            "gross_rated_sensible_heat_ratio": "Autosize",
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "rated_air_flow_rate": "Autosize"
-        },
-        "SPACE5-1 VRF Cooling Coil": {
-            "coil_air_inlet_node": "SPACE5-1 VRF Supply Fan Outlet",
-            "coil_air_outlet_node": "SPACE5-1 VRF Cooling Coil Outlet",
-            "cooling_capacity_modifier_curve_function_of_flow_fraction_name": "SPACE5-1 VRF Cooling Coil Cap-FF",
-            "cooling_capacity_ratio_modifier_function_of_temperature_curve_name": "SPACE5-1 VRF Cooling Coil Cap-FT",
-            "gross_rated_sensible_heat_ratio": "Autosize",
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "rated_air_flow_rate": "Autosize"
-        }
-    },
-    "Coil:Heating:DX:VariableRefrigerantFlow": {
-        "SPACE1-1 VRF Heating Coil": {
-            "coil_air_inlet_node": "SPACE1-1 VRF Cooling Coil Outlet",
-            "coil_air_outlet_node": "SPACE1-1 VRF Supply Inlet",
-            "gross_rated_heating_capacity": "Autosize",
-            "heating_capacity_modifier_function_of_flow_fraction_curve_name": "SPACE1-1 VRF Heating Coil Cap-FF",
-            "heating_capacity_ratio_modifier_function_of_temperature_curve_name": "SPACE1-1 VRF Heating Coil Cap-FT",
-            "rated_air_flow_rate": "Autosize"
-        },
-        "SPACE2-1 VRF Heating Coil": {
-            "coil_air_inlet_node": "SPACE2-1 VRF Cooling Coil Outlet",
-            "coil_air_outlet_node": "SPACE2-1 VRF Supply Inlet",
-            "gross_rated_heating_capacity": "Autosize",
-            "heating_capacity_modifier_function_of_flow_fraction_curve_name": "SPACE2-1 VRF Heating Coil Cap-FF",
-            "heating_capacity_ratio_modifier_function_of_temperature_curve_name": "SPACE2-1 VRF Heating Coil Cap-FT",
-            "rated_air_flow_rate": "Autosize"
-        },
-        "SPACE3-1 VRF Heating Coil": {
-            "coil_air_inlet_node": "SPACE3-1 VRF Cooling Coil Outlet",
-            "coil_air_outlet_node": "SPACE3-1 VRF Supply Inlet",
-            "gross_rated_heating_capacity": "Autosize",
-            "heating_capacity_modifier_function_of_flow_fraction_curve_name": "SPACE3-1 VRF Heating Coil Cap-FF",
-            "heating_capacity_ratio_modifier_function_of_temperature_curve_name": "SPACE3-1 VRF Heating Coil Cap-FT",
-            "rated_air_flow_rate": "Autosize"
-        },
-        "SPACE4-1 VRF Heating Coil": {
-            "coil_air_inlet_node": "SPACE4-1 VRF Cooling Coil Outlet",
-            "coil_air_outlet_node": "SPACE4-1 VRF Supply Inlet",
-            "gross_rated_heating_capacity": "Autosize",
-            "heating_capacity_modifier_function_of_flow_fraction_curve_name": "SPACE4-1 VRF Heating Coil Cap-FF",
-            "heating_capacity_ratio_modifier_function_of_temperature_curve_name": "SPACE4-1 VRF Heating Coil Cap-FT",
-            "rated_air_flow_rate": "Autosize"
-        },
-        "SPACE5-1 VRF Heating Coil": {
-            "coil_air_inlet_node": "SPACE5-1 VRF Cooling Coil Outlet",
-            "coil_air_outlet_node": "SPACE5-1 VRF Supply Inlet",
-            "gross_rated_heating_capacity": "Autosize",
-            "heating_capacity_modifier_function_of_flow_fraction_curve_name": "SPACE5-1 VRF Heating Coil Cap-FF",
-            "heating_capacity_ratio_modifier_function_of_temperature_curve_name": "SPACE5-1 VRF Heating Coil Cap-FT",
-            "rated_air_flow_rate": "Autosize"
-        }
-    },
-    "Connector:Mixer": {
-        "Only Water Loop Mixed Demand Mixer": {
-            "branches": [
-                {
-                    "inlet_branch_name": "Only Water Loop Mixed Demand Bypass Branch"
-                },
-                {
-                    "inlet_branch_name": "VRF Sys 1 Water Source VRF Condenser Branch"
-                }
-            ],
-            "outlet_branch_name": "Only Water Loop Mixed Demand Outlet Branch"
-        },
-        "Only Water Loop Mixed Supply Mixer": {
-            "branches": [
-                {
-                    "inlet_branch_name": "Main Boiler Mixed Branch"
-                },
-                {
-                    "inlet_branch_name": "Main Tower Mixed Branch"
-                },
-                {
-                    "inlet_branch_name": "Only Water Loop Mixed Supply Bypass Branch"
-                }
-            ],
-            "outlet_branch_name": "Only Water Loop Mixed Supply Outlet Branch"
-        }
-    },
-    "Connector:Splitter": {
-        "Only Water Loop Mixed Demand Splitter": {
-            "branches": [
-                {
-                    "outlet_branch_name": "Only Water Loop Mixed Demand Bypass Branch"
-                },
-                {
-                    "outlet_branch_name": "VRF Sys 1 Water Source VRF Condenser Branch"
-                }
-            ],
-            "inlet_branch_name": "Only Water Loop Mixed Demand Inlet Branch"
-        },
-        "Only Water Loop Mixed Supply Splitter": {
-            "branches": [
-                {
-                    "outlet_branch_name": "Main Boiler Mixed Branch"
-                },
-                {
-                    "outlet_branch_name": "Main Tower Mixed Branch"
-                },
-                {
-                    "outlet_branch_name": "Only Water Loop Mixed Supply Bypass Branch"
-                }
-            ],
-            "inlet_branch_name": "Only Water Loop Mixed Supply Inlet Branch"
-        }
-    },
-    "ConnectorList": {
-        "Only Water Loop Mixed Demand Side Connectors": {
-            "connector_1_name": "Only Water Loop Mixed Demand Splitter",
-            "connector_1_object_type": "Connector:Splitter",
-            "connector_2_name": "Only Water Loop Mixed Demand Mixer",
-            "connector_2_object_type": "Connector:Mixer"
-        },
-        "Only Water Loop Mixed Supply Side Connectors": {
-            "connector_1_name": "Only Water Loop Mixed Supply Splitter",
-            "connector_1_object_type": "Connector:Splitter",
-            "connector_2_name": "Only Water Loop Mixed Supply Mixer",
-            "connector_2_object_type": "Connector:Mixer"
-        }
-    },
     "Construction": {
         "CLNG-1": {
             "outside_layer": "MAT-CLNG-1"
@@ -1785,778 +1349,6 @@
             "layer_3": "IN02",
             "layer_4": "GP01",
             "outside_layer": "WD01"
-        }
-    },
-    "CoolingTower:SingleSpeed": {
-        "Main Tower": {
-            "blowdown_calculation_mode": "ConcentrationRatio",
-            "blowdown_concentration_ratio": 3,
-            "capacity_control": "FanCycling",
-            "design_air_flow_rate": "Autosize",
-            "design_fan_power": "Autosize",
-            "design_u_factor_times_area_value": "Autosize",
-            "design_water_flow_rate": "Autosize",
-            "drift_loss_percent": 0.008,
-            "evaporation_loss_mode": "SaturatedExit",
-            "free_convection_capacity": "Autocalculate",
-            "free_convection_regime_air_flow_rate": "Autocalculate",
-            "free_convection_regime_u_factor_times_area_value": "Autocalculate",
-            "outdoor_air_inlet_node_name": "Main Tower Cooling Tower Outdoor Air Inlet Node",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "sizing_factor": 1.0,
-            "water_inlet_node_name": "Main Tower CndW Inlet",
-            "water_outlet_node_name": "Main Tower CndW Outlet"
-        }
-    },
-    "Curve:Biquadratic": {
-        "VRF Sys 1 Water Source CoolingLengthCorrectionFactor": {
-            "coefficient1_constant": 1.0693794,
-            "coefficient2_x": -0.0014951,
-            "coefficient3_x_2": 2.56e-06,
-            "coefficient4_y": -0.1151104,
-            "coefficient5_y_2": 0.0511169,
-            "coefficient6_x_y": -0.0004369,
-            "input_unit_type_for_x": "Distance",
-            "input_unit_type_for_y": "Dimensionless",
-            "maximum_value_of_x": 175,
-            "maximum_value_of_y": 1.5,
-            "minimum_value_of_x": 8,
-            "minimum_value_of_y": 0.5,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source VRFCoolCapFT": {
-            "coefficient1_constant": 0.576856477,
-            "coefficient2_x": 0.017450222,
-            "coefficient3_x_2": 0.00058326,
-            "coefficient4_y": 1.15563e-07,
-            "coefficient5_y_2": 7.61504e-09,
-            "coefficient6_x_y": -1.1503e-08,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 24,
-            "maximum_value_of_y": 23,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -5,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source VRFCoolCapFTHi": {
-            "coefficient1_constant": 0.6861551,
-            "coefficient2_x": 0.0207869,
-            "coefficient3_x_2": 0.0005445,
-            "coefficient4_y": -0.0016098,
-            "coefficient5_y_2": -6.254e-07,
-            "coefficient6_x_y": -0.000339,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 24,
-            "maximum_value_of_y": 43,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": 16,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source VRFCoolEIRFT": {
-            "coefficient1_constant": 0.989010541,
-            "coefficient2_x": -0.02347967,
-            "coefficient3_x_2": 0.000199711,
-            "coefficient4_y": 0.005968336,
-            "coefficient5_y_2": -1.0289e-07,
-            "coefficient6_x_y": -0.00015686,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 24,
-            "maximum_value_of_y": 23,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -5,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source VRFCoolEIRFTHi": {
-            "coefficient1_constant": 0.18293171,
-            "coefficient2_x": 0.01635442,
-            "coefficient3_x_2": -0.0003505,
-            "coefficient4_y": 0.02375694,
-            "coefficient5_y_2": 0.00017854,
-            "coefficient6_x_y": -0.0006177,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 24,
-            "maximum_value_of_y": 43,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": 16,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source VRFHeatCapFT": {
-            "coefficient1_constant": 1.014599599,
-            "coefficient2_x": -0.002506703,
-            "coefficient3_x_2": -0.000141599,
-            "coefficient4_y": 0.026931595,
-            "coefficient5_y_2": 1.83538e-06,
-            "coefficient6_x_y": -0.000358147,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 27,
-            "maximum_value_of_y": 15,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -20,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source VRFHeatCapFTHi": {
-            "coefficient1_constant": 1.161134821,
-            "coefficient2_x": 0.027478868,
-            "coefficient3_x_2": -0.00168795,
-            "coefficient4_y": 0.001783378,
-            "coefficient5_y_2": 2.03208e-06,
-            "coefficient6_x_y": -6.8969e-05,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 27,
-            "maximum_value_of_y": 15,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -10,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source VRFHeatEIRFT": {
-            "coefficient1_constant": 0.87465501,
-            "coefficient2_x": -0.01319754,
-            "coefficient3_x_2": 0.00110307,
-            "coefficient4_y": -0.0133118,
-            "coefficient5_y_2": 0.00089017,
-            "coefficient6_x_y": -0.00012766,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 27,
-            "maximum_value_of_y": 12,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -20,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source VRFHeatEIRFTHi": {
-            "coefficient1_constant": 2.504005146,
-            "coefficient2_x": -0.05736767,
-            "coefficient3_x_2": 4.07336e-05,
-            "coefficient4_y": -0.12959669,
-            "coefficient5_y_2": 0.00135839,
-            "coefficient6_x_y": 0.00317047,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 27,
-            "maximum_value_of_y": 15,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -10,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source CoolingLengthCorrectionFactor": {
-            "coefficient1_constant": 1.0693794,
-            "coefficient2_x": -0.0014951,
-            "coefficient3_x_2": 2.56e-06,
-            "coefficient4_y": -0.1151104,
-            "coefficient5_y_2": 0.0511169,
-            "coefficient6_x_y": -0.0004369,
-            "input_unit_type_for_x": "Distance",
-            "input_unit_type_for_y": "Dimensionless",
-            "maximum_value_of_x": 175,
-            "maximum_value_of_y": 1.5,
-            "minimum_value_of_x": 8,
-            "minimum_value_of_y": 0.5,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source VRFCoolCapFT": {
-            "coefficient1_constant": 0.576856477,
-            "coefficient2_x": 0.017450222,
-            "coefficient3_x_2": 0.00058326,
-            "coefficient4_y": 1.15563e-07,
-            "coefficient5_y_2": 7.61504e-09,
-            "coefficient6_x_y": -1.1503e-08,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 24,
-            "maximum_value_of_y": 23,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -5,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source VRFCoolCapFTHi": {
-            "coefficient1_constant": 0.6861551,
-            "coefficient2_x": 0.0207869,
-            "coefficient3_x_2": 0.0005445,
-            "coefficient4_y": -0.0016098,
-            "coefficient5_y_2": -6.254e-07,
-            "coefficient6_x_y": -0.000339,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 24,
-            "maximum_value_of_y": 43,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": 16,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source VRFCoolEIRFT": {
-            "coefficient1_constant": 0.989010541,
-            "coefficient2_x": -0.02347967,
-            "coefficient3_x_2": 0.000199711,
-            "coefficient4_y": 0.005968336,
-            "coefficient5_y_2": -1.0289e-07,
-            "coefficient6_x_y": -0.00015686,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 24,
-            "maximum_value_of_y": 23,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -5,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source VRFCoolEIRFTHi": {
-            "coefficient1_constant": 0.18293171,
-            "coefficient2_x": 0.01635442,
-            "coefficient3_x_2": -0.0003505,
-            "coefficient4_y": 0.02375694,
-            "coefficient5_y_2": 0.00017854,
-            "coefficient6_x_y": -0.0006177,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 24,
-            "maximum_value_of_y": 43,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": 16,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source VRFHeatCapFT": {
-            "coefficient1_constant": 1.014599599,
-            "coefficient2_x": -0.002506703,
-            "coefficient3_x_2": -0.000141599,
-            "coefficient4_y": 0.026931595,
-            "coefficient5_y_2": 1.83538e-06,
-            "coefficient6_x_y": -0.000358147,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 27,
-            "maximum_value_of_y": 15,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -20,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source VRFHeatCapFTHi": {
-            "coefficient1_constant": 1.161134821,
-            "coefficient2_x": 0.027478868,
-            "coefficient3_x_2": -0.00168795,
-            "coefficient4_y": 0.001783378,
-            "coefficient5_y_2": 2.03208e-06,
-            "coefficient6_x_y": -6.8969e-05,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 27,
-            "maximum_value_of_y": 15,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -10,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source VRFHeatEIRFT": {
-            "coefficient1_constant": 0.87465501,
-            "coefficient2_x": -0.01319754,
-            "coefficient3_x_2": 0.00110307,
-            "coefficient4_y": -0.0133118,
-            "coefficient5_y_2": 0.00089017,
-            "coefficient6_x_y": -0.00012766,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 27,
-            "maximum_value_of_y": 12,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -20,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source VRFHeatEIRFTHi": {
-            "coefficient1_constant": 2.504005146,
-            "coefficient2_x": -0.05736767,
-            "coefficient3_x_2": 4.07336e-05,
-            "coefficient4_y": -0.12959669,
-            "coefficient5_y_2": 0.00135839,
-            "coefficient6_x_y": 0.00317047,
-            "input_unit_type_for_x": "Temperature",
-            "input_unit_type_for_y": "Temperature",
-            "maximum_value_of_x": 27,
-            "maximum_value_of_y": 15,
-            "minimum_value_of_x": 15,
-            "minimum_value_of_y": -10,
-            "output_unit_type": "Dimensionless"
-        }
-    },
-    "Curve:Cubic": {
-        "SPACE1-1 VRF Cooling Coil Cap-FT": {
-            "coefficient1_constant": 0.504547273506488,
-            "coefficient2_x": 0.0288891279198444,
-            "coefficient3_x_2": -1.0819418650677e-05,
-            "coefficient4_x_3": 1.01359395177008e-05,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 1.5,
-            "maximum_value_of_x": 50.0,
-            "minimum_curve_output": 0.5,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "SPACE1-1 VRF Heating Coil Cap-FT": {
-            "coefficient1_constant": -0.390708928227928,
-            "coefficient2_x": 0.261815023760162,
-            "coefficient3_x_2": -0.0130431603151873,
-            "coefficient4_x_3": 0.000178131745997821,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 1.5,
-            "maximum_value_of_x": 50.0,
-            "minimum_curve_output": 0.5,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "SPACE2-1 VRF Cooling Coil Cap-FT": {
-            "coefficient1_constant": 0.504547273506488,
-            "coefficient2_x": 0.0288891279198444,
-            "coefficient3_x_2": -1.0819418650677e-05,
-            "coefficient4_x_3": 1.01359395177008e-05,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 1.5,
-            "maximum_value_of_x": 50.0,
-            "minimum_curve_output": 0.5,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "SPACE2-1 VRF Heating Coil Cap-FT": {
-            "coefficient1_constant": -0.390708928227928,
-            "coefficient2_x": 0.261815023760162,
-            "coefficient3_x_2": -0.0130431603151873,
-            "coefficient4_x_3": 0.000178131745997821,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 1.5,
-            "maximum_value_of_x": 50.0,
-            "minimum_curve_output": 0.5,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "SPACE3-1 VRF Cooling Coil Cap-FT": {
-            "coefficient1_constant": 0.504547273506488,
-            "coefficient2_x": 0.0288891279198444,
-            "coefficient3_x_2": -1.0819418650677e-05,
-            "coefficient4_x_3": 1.01359395177008e-05,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 1.5,
-            "maximum_value_of_x": 50.0,
-            "minimum_curve_output": 0.5,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "SPACE3-1 VRF Heating Coil Cap-FT": {
-            "coefficient1_constant": -0.390708928227928,
-            "coefficient2_x": 0.261815023760162,
-            "coefficient3_x_2": -0.0130431603151873,
-            "coefficient4_x_3": 0.000178131745997821,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 1.5,
-            "maximum_value_of_x": 50.0,
-            "minimum_curve_output": 0.5,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "SPACE4-1 VRF Cooling Coil Cap-FT": {
-            "coefficient1_constant": 0.504547273506488,
-            "coefficient2_x": 0.0288891279198444,
-            "coefficient3_x_2": -1.0819418650677e-05,
-            "coefficient4_x_3": 1.01359395177008e-05,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 1.5,
-            "maximum_value_of_x": 50.0,
-            "minimum_curve_output": 0.5,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "SPACE4-1 VRF Heating Coil Cap-FT": {
-            "coefficient1_constant": -0.390708928227928,
-            "coefficient2_x": 0.261815023760162,
-            "coefficient3_x_2": -0.0130431603151873,
-            "coefficient4_x_3": 0.000178131745997821,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 1.5,
-            "maximum_value_of_x": 50.0,
-            "minimum_curve_output": 0.5,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "SPACE5-1 VRF Cooling Coil Cap-FT": {
-            "coefficient1_constant": 0.504547273506488,
-            "coefficient2_x": 0.0288891279198444,
-            "coefficient3_x_2": -1.0819418650677e-05,
-            "coefficient4_x_3": 1.01359395177008e-05,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 1.5,
-            "maximum_value_of_x": 50.0,
-            "minimum_curve_output": 0.5,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "SPACE5-1 VRF Heating Coil Cap-FT": {
-            "coefficient1_constant": -0.390708928227928,
-            "coefficient2_x": 0.261815023760162,
-            "coefficient3_x_2": -0.0130431603151873,
-            "coefficient4_x_3": 0.000178131745997821,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 1.5,
-            "maximum_value_of_x": 50.0,
-            "minimum_curve_output": 0.5,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source CoolingEIRLowPLR": {
-            "coefficient1_constant": 0.4628123,
-            "coefficient2_x": -1.0402406,
-            "coefficient3_x_2": 2.17491,
-            "coefficient4_x_3": -0.5974817,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0,
-            "output_unit_type": "Temperature"
-        },
-        "VRF Sys 1 Water Source HeatingEIRLowPLR": {
-            "coefficient1_constant": 0.1400093,
-            "coefficient2_x": 0.6415002,
-            "coefficient3_x_2": 0.1339047,
-            "coefficient4_x_3": 0.0845859,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source VRFCoolCapFTBoundary": {
-            "coefficient1_constant": 25.73473775,
-            "coefficient2_x": -0.03150043,
-            "coefficient3_x_2": -0.01416595,
-            "coefficient4_x_3": 0,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_value_of_x": 30,
-            "minimum_value_of_x": 11,
-            "output_unit_type": "Temperature"
-        },
-        "VRF Sys 1 Water Source VRFCoolEIRFTBoundary": {
-            "coefficient1_constant": 25.73473775,
-            "coefficient2_x": -0.03150043,
-            "coefficient3_x_2": -0.01416595,
-            "coefficient4_x_3": 0,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_value_of_x": 24,
-            "minimum_value_of_x": 15,
-            "output_unit_type": "Temperature"
-        },
-        "VRF Sys 1 Water Source VRFHeatCapFTBoundary": {
-            "coefficient1_constant": -7.6000882,
-            "coefficient2_x": 3.05090016,
-            "coefficient3_x_2": -0.1162844,
-            "coefficient4_x_3": 0.0,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_value_of_x": 27,
-            "minimum_value_of_x": 15,
-            "output_unit_type": "Temperature"
-        },
-        "VRF Sys 1 Water Source VRFHeatEIRFTBoundary": {
-            "coefficient1_constant": -7.6000882,
-            "coefficient2_x": 3.05090016,
-            "coefficient3_x_2": -0.1162844,
-            "coefficient4_x_3": 0.0,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 15,
-            "maximum_value_of_x": 27,
-            "minimum_curve_output": -20,
-            "minimum_value_of_x": 15,
-            "output_unit_type": "Temperature"
-        },
-        "VRF Sys 2 Air Source CoolingEIRLowPLR": {
-            "coefficient1_constant": 0.4628123,
-            "coefficient2_x": -1.0402406,
-            "coefficient3_x_2": 2.17491,
-            "coefficient4_x_3": -0.5974817,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0,
-            "output_unit_type": "Temperature"
-        },
-        "VRF Sys 2 Air Source HeatingEIRLowPLR": {
-            "coefficient1_constant": 0.1400093,
-            "coefficient2_x": 0.6415002,
-            "coefficient3_x_2": 0.1339047,
-            "coefficient4_x_3": 0.0845859,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source VRFCoolCapFTBoundary": {
-            "coefficient1_constant": 25.73473775,
-            "coefficient2_x": -0.03150043,
-            "coefficient3_x_2": -0.01416595,
-            "coefficient4_x_3": 0,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_value_of_x": 30,
-            "minimum_value_of_x": 11,
-            "output_unit_type": "Temperature"
-        },
-        "VRF Sys 2 Air Source VRFCoolEIRFTBoundary": {
-            "coefficient1_constant": 25.73473775,
-            "coefficient2_x": -0.03150043,
-            "coefficient3_x_2": -0.01416595,
-            "coefficient4_x_3": 0,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_value_of_x": 24,
-            "minimum_value_of_x": 15,
-            "output_unit_type": "Temperature"
-        },
-        "VRF Sys 2 Air Source VRFHeatCapFTBoundary": {
-            "coefficient1_constant": -7.6000882,
-            "coefficient2_x": 3.05090016,
-            "coefficient3_x_2": -0.1162844,
-            "coefficient4_x_3": 0.0,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_value_of_x": 27,
-            "minimum_value_of_x": 15,
-            "output_unit_type": "Temperature"
-        },
-        "VRF Sys 2 Air Source VRFHeatEIRFTBoundary": {
-            "coefficient1_constant": -7.6000882,
-            "coefficient2_x": 3.05090016,
-            "coefficient3_x_2": -0.1162844,
-            "coefficient4_x_3": 0.0,
-            "input_unit_type_for_x": "Temperature",
-            "maximum_curve_output": 15,
-            "maximum_value_of_x": 27,
-            "minimum_curve_output": -20,
-            "minimum_value_of_x": 15,
-            "output_unit_type": "Temperature"
-        }
-    },
-    "Curve:Linear": {
-        "VRF Sys 1 Water Source CoolingCombRatio": {
-            "coefficient1_constant": 0.618055,
-            "coefficient2_x": 0.381945,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_curve_output": 1.2,
-            "maximum_value_of_x": 1.5,
-            "minimum_curve_output": 1.0,
-            "minimum_value_of_x": 1.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source HeatingCombRatio": {
-            "coefficient1_constant": 0.96034,
-            "coefficient2_x": 0.03966,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_curve_output": 1.023,
-            "maximum_value_of_x": 1.5,
-            "minimum_curve_output": 1.0,
-            "minimum_value_of_x": 1.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source CoolingCombRatio": {
-            "coefficient1_constant": 0.618055,
-            "coefficient2_x": 0.381945,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_curve_output": 1.2,
-            "maximum_value_of_x": 1.5,
-            "minimum_curve_output": 1.0,
-            "minimum_value_of_x": 1.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source HeatingCombRatio": {
-            "coefficient1_constant": 0.96034,
-            "coefficient2_x": 0.03966,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_curve_output": 1.023,
-            "maximum_value_of_x": 1.5,
-            "minimum_curve_output": 1.0,
-            "minimum_value_of_x": 1.0,
-            "output_unit_type": "Dimensionless"
-        }
-    },
-    "Curve:Quadratic": {
-        "Main Boiler Efficiency Curve": {
-            "coefficient1_constant": 0.97,
-            "coefficient2_x": 0.0633,
-            "coefficient3_x_2": -0.0333,
-            "maximum_value_of_x": 1.0,
-            "minimum_value_of_x": 0.0
-        },
-        "SPACE1-1 VRF Cooling Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE1-1 VRF Heating Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE2-1 VRF Cooling Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE2-1 VRF Heating Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE3-1 VRF Cooling Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE3-1 VRF Heating Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE4-1 VRF Cooling Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE4-1 VRF Heating Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE5-1 VRF Cooling Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE5-1 VRF Heating Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "VRF Sys 1 Water Source CoolingEIRHiPLR": {
-            "coefficient1_constant": 1.0,
-            "coefficient2_x": 0.0,
-            "coefficient3_x_2": 0.0,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 1.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source HeatingEIRHiPLR": {
-            "coefficient1_constant": 2.4294355,
-            "coefficient2_x": -2.235887,
-            "coefficient3_x_2": 0.8064516,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 1.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 1 Water Source VRFCPLFFPLR": {
-            "coefficient1_constant": 0.85,
-            "coefficient2_x": 0.15,
-            "coefficient3_x_2": 0.0,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_curve_output": 1.0,
-            "maximum_value_of_x": 1.0,
-            "minimum_curve_output": 0.85,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source CoolingEIRHiPLR": {
-            "coefficient1_constant": 1.0,
-            "coefficient2_x": 0.0,
-            "coefficient3_x_2": 0.0,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 1.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source HeatingEIRHiPLR": {
-            "coefficient1_constant": 2.4294355,
-            "coefficient2_x": -2.235887,
-            "coefficient3_x_2": 0.8064516,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 1.0,
-            "output_unit_type": "Dimensionless"
-        },
-        "VRF Sys 2 Air Source VRFCPLFFPLR": {
-            "coefficient1_constant": 0.85,
-            "coefficient2_x": 0.15,
-            "coefficient3_x_2": 0.0,
-            "input_unit_type_for_x": "Dimensionless",
-            "maximum_curve_output": 1.0,
-            "maximum_value_of_x": 1.0,
-            "minimum_curve_output": 0.85,
-            "minimum_value_of_x": 0.0,
-            "output_unit_type": "Dimensionless"
-        }
-    },
-    "DesignSpecification:OutdoorAir": {
-        "SZ DSOA SPACE1-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0,
-            "outdoor_air_flow_per_zone_floor_area": 0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE2-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0,
-            "outdoor_air_flow_per_zone_floor_area": 0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE3-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0,
-            "outdoor_air_flow_per_zone_floor_area": 0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE4-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0,
-            "outdoor_air_flow_per_zone_floor_area": 0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE5-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0,
-            "outdoor_air_flow_per_zone_floor_area": 0,
-            "outdoor_air_method": "Flow/Person"
-        }
-    },
-    "DesignSpecification:ZoneAirDistribution": {
-        "SZ DSZAD SPACE1-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE2-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE3-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE4-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE5-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
         }
     },
     "ElectricEquipment": {
@@ -2604,58 +1396,6 @@
             "fraction_radiant": 0.3,
             "schedule_name": "EQUIP-1",
             "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
-    "Fan:OnOff": {
-        "SPACE1-1 VRF Supply Fan": {
-            "air_inlet_node_name": "SPACE1-1 VRF Mixed Air Outlet",
-            "air_outlet_node_name": "SPACE1-1 VRF Supply Fan Outlet",
-            "availability_schedule_name": "HVACTemplate-Always 1",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 75
-        },
-        "SPACE2-1 VRF Supply Fan": {
-            "air_inlet_node_name": "SPACE2-1 VRF Mixed Air Outlet",
-            "air_outlet_node_name": "SPACE2-1 VRF Supply Fan Outlet",
-            "availability_schedule_name": "HVACTemplate-Always 1",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 75
-        },
-        "SPACE3-1 VRF Supply Fan": {
-            "air_inlet_node_name": "SPACE3-1 VRF Mixed Air Outlet",
-            "air_outlet_node_name": "SPACE3-1 VRF Supply Fan Outlet",
-            "availability_schedule_name": "HVACTemplate-Always 1",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 75
-        },
-        "SPACE4-1 VRF Supply Fan": {
-            "air_inlet_node_name": "SPACE4-1 VRF Mixed Air Outlet",
-            "air_outlet_node_name": "SPACE4-1 VRF Supply Fan Outlet",
-            "availability_schedule_name": "HVACTemplate-Always 1",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 75
-        },
-        "SPACE5-1 VRF Supply Fan": {
-            "air_inlet_node_name": "SPACE5-1 VRF Mixed Air Outlet",
-            "air_outlet_node_name": "SPACE5-1 VRF Supply Fan Outlet",
-            "availability_schedule_name": "HVACTemplate-Always 1",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 75
         }
     },
     "FenestrationSurface:Detailed": {
@@ -2785,6 +1525,280 @@
             "coordinate_system": "Relative",
             "starting_vertex_position": "UpperLeftCorner",
             "vertex_entry_direction": "Counterclockwise"
+        }
+    },
+    "HVACTemplate:Plant:Boiler": {
+        "Main Boiler": {
+            "boiler_type": "HotWaterBoiler",
+            "capacity": "Autosize",
+            "efficiency": 0.8,
+            "fuel_type": "NaturalGas",
+            "priority": "1"
+        }
+    },
+    "HVACTemplate:Plant:MixedWaterLoop": {
+        "Only Water Loop": {
+            "high_temperature_design_setpoint": 30,
+            "low_temperature_design_setpoint": 20,
+            "operation_scheme_type": "Default",
+            "pump_control_type": "Intermittent",
+            "water_pump_configuration": "ConstantFlow",
+            "water_pump_rated_head": 179352
+        }
+    },
+    "HVACTemplate:Plant:Tower": {
+        "Main Tower": {
+            "free_convection_capacity": "Autosize",
+            "high_speed_fan_power": "Autosize",
+            "high_speed_nominal_capacity": "Autosize",
+            "low_speed_fan_power": "Autosize",
+            "low_speed_nominal_capacity": "Autosize",
+            "priority": "1",
+            "tower_type": "SingleSpeed"
+        }
+    },
+    "HVACTemplate:System:VRF": {
+        "VRF Sys 1 Water Source": {
+            "basin_heater_setpoint_temperature": 2,
+            "condenser_type": "WaterCooled",
+            "crankcase_heater_power_per_compressor": 33,
+            "defrost_control": "Timed",
+            "defrost_strategy": "Resistive",
+            "defrost_time_period_fraction": 0.058333,
+            "equivalent_piping_length_used_for_piping_correction_factor_in_cooling_mode": 30,
+            "equivalent_piping_length_used_for_piping_correction_factor_in_heating_mode": 30,
+            "evaporative_condenser_air_flow_rate": "Autosize",
+            "evaporative_condenser_effectiveness": 0.9,
+            "fuel_type": "Electricity",
+            "gross_rated_cooling_cop": 3.3,
+            "gross_rated_heating_capacity": "Autosize",
+            "gross_rated_heating_cop": 3.4,
+            "gross_rated_total_cooling_capacity": "Autosize",
+            "heat_pump_waste_heat_recovery": "No",
+            "master_thermostat_priority_control_type": "LoadPriority",
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater": 5,
+            "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
+            "maximum_outdoor_temperature_in_cooling_mode": 43,
+            "maximum_outdoor_temperature_in_heat_recovery_mode": 45,
+            "maximum_outdoor_temperature_in_heating_mode": 30,
+            "minimum_heat_pump_part_load_ratio": 0.15,
+            "minimum_outdoor_temperature_in_cooling_mode": -6,
+            "minimum_outdoor_temperature_in_heat_recovery_mode": -15,
+            "minimum_outdoor_temperature_in_heating_mode": -20,
+            "number_of_compressors": 2,
+            "rated_heating_capacity_sizing_ratio": 1,
+            "ratio_of_compressor_size_to_total_compressor_capacity": 0.5,
+            "resistive_defrost_heater_capacity": "Autosize",
+            "vertical_height_used_for_piping_correction_factor": 10,
+            "water_condenser_volume_flow_rate": "Autosize"
+        },
+        "VRF Sys 2 Air Source": {
+            "basin_heater_setpoint_temperature": 2,
+            "condenser_type": "AirCooled",
+            "crankcase_heater_power_per_compressor": 33,
+            "defrost_control": "Timed",
+            "defrost_strategy": "Resistive",
+            "defrost_time_period_fraction": 0.058333,
+            "equivalent_piping_length_used_for_piping_correction_factor_in_cooling_mode": 30,
+            "equivalent_piping_length_used_for_piping_correction_factor_in_heating_mode": 30,
+            "evaporative_condenser_air_flow_rate": "Autosize",
+            "evaporative_condenser_effectiveness": 0.9,
+            "fuel_type": "Electricity",
+            "gross_rated_cooling_cop": 3.3,
+            "gross_rated_heating_capacity": "Autosize",
+            "gross_rated_heating_cop": 3.4,
+            "gross_rated_total_cooling_capacity": "Autosize",
+            "heat_pump_waste_heat_recovery": "No",
+            "master_thermostat_priority_control_type": "MasterThermostatPriority",
+            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater": 5,
+            "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
+            "maximum_outdoor_temperature_in_cooling_mode": 43,
+            "maximum_outdoor_temperature_in_heat_recovery_mode": 45,
+            "maximum_outdoor_temperature_in_heating_mode": 25,
+            "minimum_heat_pump_part_load_ratio": 0.15,
+            "minimum_outdoor_temperature_in_cooling_mode": -6,
+            "minimum_outdoor_temperature_in_heat_recovery_mode": -15,
+            "minimum_outdoor_temperature_in_heating_mode": -25,
+            "number_of_compressors": 2,
+            "rated_heating_capacity_sizing_ratio": 1,
+            "ratio_of_compressor_size_to_total_compressor_capacity": 0.5,
+            "resistive_defrost_heater_capacity": "Autosize",
+            "vertical_height_used_for_piping_correction_factor": 10,
+            "water_condenser_volume_flow_rate": "Autosize",
+            "zone_name_for_master_thermostat_location": "SPACE5-1"
+        }
+    },
+    "HVACTemplate:Thermostat": {
+        "All Zones": {
+            "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
+            "heating_setpoint_schedule_name": "Htg-SetP-Sch"
+        }
+    },
+    "HVACTemplate:Zone:VRF": {
+        "HVACTemplate:Zone:VRF 1": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_type": "VariableRefrigerantFlowDX",
+            "cooling_outdoor_air_flow_rate": "Autosize",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "heat_pump_heating_coil_gross_rated_capacity": "Autosize",
+            "heat_pump_heating_coil_type": "VariableRefrigerantFlowDX",
+            "heating_outdoor_air_flow_rate": "Autosize",
+            "heating_supply_air_flow_rate": "Autosize",
+            "no_cooling_supply_air_flow_rate": "Autosize",
+            "no_heating_supply_air_flow_rate": "Autosize",
+            "no_load_outdoor_air_flow_rate": "Autosize",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "rated_total_heating_capacity_sizing_ratio": 1,
+            "supply_air_fan_placement": "BlowThrough",
+            "supply_fan_delta_pressure": 75,
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_operating_mode_schedule_name": "FanAvailSched",
+            "supply_fan_total_efficiency": 0.7,
+            "template_thermostat_name": "All Zones",
+            "template_vrf_system_name": "VRF Sys 1 Water Source",
+            "zone_cooling_design_supply_air_temperature": 14,
+            "zone_cooling_design_supply_air_temperature_difference": 11.11,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE1-1"
+        },
+        "HVACTemplate:Zone:VRF 2": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_type": "VariableRefrigerantFlowDX",
+            "cooling_outdoor_air_flow_rate": "Autosize",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "heat_pump_heating_coil_gross_rated_capacity": "Autosize",
+            "heat_pump_heating_coil_type": "VariableRefrigerantFlowDX",
+            "heating_outdoor_air_flow_rate": "Autosize",
+            "heating_supply_air_flow_rate": "Autosize",
+            "no_cooling_supply_air_flow_rate": "Autosize",
+            "no_heating_supply_air_flow_rate": "Autosize",
+            "no_load_outdoor_air_flow_rate": "Autosize",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "rated_total_heating_capacity_sizing_ratio": 1,
+            "supply_air_fan_placement": "BlowThrough",
+            "supply_fan_delta_pressure": 75,
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_operating_mode_schedule_name": "FanAvailSched",
+            "supply_fan_total_efficiency": 0.7,
+            "template_thermostat_name": "All Zones",
+            "template_vrf_system_name": "VRF Sys 1 Water Source",
+            "zone_cooling_design_supply_air_temperature": 14,
+            "zone_cooling_design_supply_air_temperature_difference": 11.11,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE2-1"
+        },
+        "HVACTemplate:Zone:VRF 3": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_type": "VariableRefrigerantFlowDX",
+            "cooling_outdoor_air_flow_rate": "Autosize",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "heat_pump_heating_coil_gross_rated_capacity": "Autosize",
+            "heat_pump_heating_coil_type": "VariableRefrigerantFlowDX",
+            "heating_outdoor_air_flow_rate": "Autosize",
+            "heating_supply_air_flow_rate": "Autosize",
+            "no_cooling_supply_air_flow_rate": "Autosize",
+            "no_heating_supply_air_flow_rate": "Autosize",
+            "no_load_outdoor_air_flow_rate": "Autosize",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "rated_total_heating_capacity_sizing_ratio": 1,
+            "supply_air_fan_placement": "BlowThrough",
+            "supply_fan_delta_pressure": 75,
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_operating_mode_schedule_name": "FanAvailSched",
+            "supply_fan_total_efficiency": 0.7,
+            "template_thermostat_name": "All Zones",
+            "template_vrf_system_name": "VRF Sys 1 Water Source",
+            "zone_cooling_design_supply_air_temperature": 14,
+            "zone_cooling_design_supply_air_temperature_difference": 11.11,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE3-1"
+        },
+        "HVACTemplate:Zone:VRF 4": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_type": "VariableRefrigerantFlowDX",
+            "cooling_outdoor_air_flow_rate": "Autosize",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "heat_pump_heating_coil_gross_rated_capacity": "Autosize",
+            "heat_pump_heating_coil_type": "VariableRefrigerantFlowDX",
+            "heating_outdoor_air_flow_rate": "Autosize",
+            "heating_supply_air_flow_rate": "Autosize",
+            "no_cooling_supply_air_flow_rate": "Autosize",
+            "no_heating_supply_air_flow_rate": "Autosize",
+            "no_load_outdoor_air_flow_rate": "Autosize",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "rated_total_heating_capacity_sizing_ratio": 1,
+            "supply_air_fan_placement": "BlowThrough",
+            "supply_fan_delta_pressure": 75,
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_operating_mode_schedule_name": "FanAvailSched",
+            "supply_fan_total_efficiency": 0.7,
+            "template_thermostat_name": "All Zones",
+            "template_vrf_system_name": "VRF Sys 1 Water Source",
+            "zone_cooling_design_supply_air_temperature": 14,
+            "zone_cooling_design_supply_air_temperature_difference": 11.11,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE4-1"
+        },
+        "HVACTemplate:Zone:VRF 5": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_type": "VariableRefrigerantFlowDX",
+            "cooling_outdoor_air_flow_rate": "Autosize",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "heat_pump_heating_coil_gross_rated_capacity": "Autosize",
+            "heat_pump_heating_coil_type": "VariableRefrigerantFlowDX",
+            "heating_outdoor_air_flow_rate": "Autosize",
+            "heating_supply_air_flow_rate": "Autosize",
+            "no_cooling_supply_air_flow_rate": "Autosize",
+            "no_heating_supply_air_flow_rate": "Autosize",
+            "no_load_outdoor_air_flow_rate": "Autosize",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "rated_total_heating_capacity_sizing_ratio": 1,
+            "supply_air_fan_placement": "BlowThrough",
+            "supply_fan_delta_pressure": 75,
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_operating_mode_schedule_name": "FanAvailSched",
+            "supply_fan_total_efficiency": 0.7,
+            "template_thermostat_name": "All Zones",
+            "template_vrf_system_name": "VRF Sys 2 Air Source",
+            "zone_cooling_design_supply_air_temperature": 14,
+            "zone_cooling_design_supply_air_temperature_difference": 11.11,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE5-1"
         }
     },
     "HeatBalanceAlgorithm": {
@@ -2973,76 +1987,6 @@
             "thermal_absorptance": 0.65,
             "thermal_resistance": 0.65225929,
             "visible_absorptance": 0.65
-        }
-    },
-    "NodeList": {
-        "Only Water Loop Mixed Supply Setpoint Nodes": {
-            "nodes": [
-                {
-                    "node_name": "Main Boiler HW Outlet"
-                },
-                {
-                    "node_name": "Main Tower CndW Outlet"
-                },
-                {
-                    "node_name": "Only Water Loop Mixed Supply Outlet"
-                }
-            ]
-        }
-    },
-    "OutdoorAir:Mixer": {
-        "SPACE1-1 VRF OA Mixing Box": {
-            "mixed_air_node_name": "SPACE1-1 VRF Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "SPACE1-1 VRF Outdoor Air Inlet",
-            "relief_air_stream_node_name": "SPACE1-1 VRF Relief Air Outlet",
-            "return_air_stream_node_name": "SPACE1-1 VRF Return"
-        },
-        "SPACE2-1 VRF OA Mixing Box": {
-            "mixed_air_node_name": "SPACE2-1 VRF Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "SPACE2-1 VRF Outdoor Air Inlet",
-            "relief_air_stream_node_name": "SPACE2-1 VRF Relief Air Outlet",
-            "return_air_stream_node_name": "SPACE2-1 VRF Return"
-        },
-        "SPACE3-1 VRF OA Mixing Box": {
-            "mixed_air_node_name": "SPACE3-1 VRF Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "SPACE3-1 VRF Outdoor Air Inlet",
-            "relief_air_stream_node_name": "SPACE3-1 VRF Relief Air Outlet",
-            "return_air_stream_node_name": "SPACE3-1 VRF Return"
-        },
-        "SPACE4-1 VRF OA Mixing Box": {
-            "mixed_air_node_name": "SPACE4-1 VRF Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "SPACE4-1 VRF Outdoor Air Inlet",
-            "relief_air_stream_node_name": "SPACE4-1 VRF Relief Air Outlet",
-            "return_air_stream_node_name": "SPACE4-1 VRF Return"
-        },
-        "SPACE5-1 VRF OA Mixing Box": {
-            "mixed_air_node_name": "SPACE5-1 VRF Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "SPACE5-1 VRF Outdoor Air Inlet",
-            "relief_air_stream_node_name": "SPACE5-1 VRF Relief Air Outlet",
-            "return_air_stream_node_name": "SPACE5-1 VRF Return"
-        }
-    },
-    "OutdoorAir:Node": {
-        "Main Tower Cooling Tower Outdoor Air Inlet Node": {
-            "height_above_ground": -1
-        },
-        "SPACE1-1 VRF Outdoor Air Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE2-1 VRF Outdoor Air Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE3-1 VRF Outdoor Air Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE4-1 VRF Outdoor Air Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE5-1 VRF Outdoor Air Inlet": {
-            "height_above_ground": -1
-        },
-        "VRF Sys 2 Air Source Condenser Inlet Node": {
-            "height_above_ground": -1
         }
     },
     "Output:Meter:MeterFileOnly": {
@@ -3371,104 +2315,6 @@
             "zone_or_zonelist_name": "SPACE5-1"
         }
     },
-    "Pipe:Adiabatic": {
-        "Only Water Loop Mixed Demand Inlet Pipe": {
-            "inlet_node_name": "Only Water Loop Mixed Demand Inlet",
-            "outlet_node_name": "Only Water Loop Mixed Demand Inlet Pipe Outlet"
-        },
-        "Only Water Loop Mixed Demand Outlet Pipe": {
-            "inlet_node_name": "Only Water Loop Mixed Demand Outlet Pipe Inlet",
-            "outlet_node_name": "Only Water Loop Mixed Demand Outlet"
-        },
-        "Only Water Loop Mixed Demand Side Bypass Pipe": {
-            "inlet_node_name": "Only Water Loop Mixed Demand Bypass Inlet",
-            "outlet_node_name": "Only Water Loop Mixed Demand Bypass Outlet"
-        },
-        "Only Water Loop Mixed Supply Outlet Pipe": {
-            "inlet_node_name": "Only Water Loop Mixed Supply Outlet Pipe Inlet",
-            "outlet_node_name": "Only Water Loop Mixed Supply Outlet"
-        },
-        "Only Water Loop Mixed Supply Side Bypass Pipe": {
-            "inlet_node_name": "Only Water Loop Mixed Supply Bypass Inlet",
-            "outlet_node_name": "Only Water Loop Mixed Supply Bypass Outlet"
-        }
-    },
-    "PlantEquipmentList": {
-        "Only Water Loop All Cooling Equipment": {
-            "equipment": [
-                {
-                    "equipment_name": "Main Tower",
-                    "equipment_object_type": "CoolingTower:SingleSpeed"
-                }
-            ]
-        },
-        "Only Water Loop All Heating Equipment": {
-            "equipment": [
-                {
-                    "equipment_name": "Main Boiler",
-                    "equipment_object_type": "Boiler:HotWater"
-                }
-            ]
-        }
-    },
-    "PlantEquipmentOperation:CoolingLoad": {
-        "Only Water Loop Cool Operation All Hours": {
-            "load_range_1_lower_limit": 0,
-            "load_range_1_upper_limit": 1000000000000000,
-            "range_1_equipment_list_name": "Only Water Loop All Cooling Equipment"
-        }
-    },
-    "PlantEquipmentOperation:HeatingLoad": {
-        "Only Water Loop Heat Operation All Hours": {
-            "load_range_1_lower_limit": 0,
-            "load_range_1_upper_limit": 1000000000000000,
-            "range_1_equipment_list_name": "Only Water Loop All Heating Equipment"
-        }
-    },
-    "PlantEquipmentOperationSchemes": {
-        "Only Water Loop Operation": {
-            "control_scheme_1_name": "Only Water Loop Heat Operation All Hours",
-            "control_scheme_1_object_type": "PlantEquipmentOperation:HeatingLoad",
-            "control_scheme_1_schedule_name": "HVACTemplate-Always 1",
-            "control_scheme_2_name": "Only Water Loop Cool Operation All Hours",
-            "control_scheme_2_object_type": "PlantEquipmentOperation:CoolingLoad",
-            "control_scheme_2_schedule_name": "HVACTemplate-Always 1"
-        }
-    },
-    "PlantLoop": {
-        "Only Water Loop Mixed Water Loop": {
-            "demand_side_branch_list_name": "Only Water Loop Mixed Demand Side Branches",
-            "demand_side_connector_list_name": "Only Water Loop Mixed Demand Side Connectors",
-            "demand_side_inlet_node_name": "Only Water Loop Mixed Demand Inlet",
-            "demand_side_outlet_node_name": "Only Water Loop Mixed Demand Outlet",
-            "fluid_type": "Water",
-            "load_distribution_scheme": "SequentialLoad",
-            "loop_temperature_setpoint_node_name": "Only Water Loop Mixed Supply Outlet",
-            "maximum_loop_flow_rate": "Autosize",
-            "maximum_loop_temperature": 100,
-            "minimum_loop_flow_rate": 0,
-            "minimum_loop_temperature": 10,
-            "plant_equipment_operation_scheme_name": "Only Water Loop Operation",
-            "plant_loop_demand_calculation_scheme": "DualSetpointDeadband",
-            "plant_loop_volume": "Autocalculate",
-            "plant_side_branch_list_name": "Only Water Loop Mixed Supply Side Branches",
-            "plant_side_connector_list_name": "Only Water Loop Mixed Supply Side Connectors",
-            "plant_side_inlet_node_name": "Only Water Loop Mixed Supply Inlet",
-            "plant_side_outlet_node_name": "Only Water Loop Mixed Supply Outlet"
-        }
-    },
-    "Pump:ConstantSpeed": {
-        "Only Water Loop Mixed Supply Pump": {
-            "design_flow_rate": "Autosize",
-            "design_power_consumption": "Autosize",
-            "design_pump_head": 179352,
-            "fraction_of_motor_inefficiencies_to_fluid_stream": 0,
-            "inlet_node_name": "Only Water Loop Mixed Supply Inlet",
-            "motor_efficiency": 0.9,
-            "outlet_node_name": "Only Water Loop Mixed Pump Outlet",
-            "pump_control_type": "Intermittent"
-        }
-    },
     "RunPeriod": {
         "Run Period 1": {
             "apply_weekend_holiday_rule": "No",
@@ -3692,74 +2538,6 @@
                 }
             ],
             "schedule_type_limits_name": "Fraction"
-        },
-        "HVACTemplate-Always 1": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 1
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 4": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 4
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 20": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 20
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 30": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 30
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
         },
         "Htg-SetP-Sch": {
             "data": [
@@ -4074,7 +2852,6 @@
             "numeric_type": "Continuous",
             "upper_limit_value": 1.0
         },
-        "HVACTemplate Any Number": {},
         "On/Off": {
             "lower_limit_value": 0,
             "numeric_type": "Discrete",
@@ -4085,14 +2862,6 @@
             "numeric_type": "Continuous",
             "unit_type": "Temperature",
             "upper_limit_value": 200
-        }
-    },
-    "SetpointManager:Scheduled:DualSetpoint": {
-        "Only Water Loop Mixed Temp Manager": {
-            "control_variable": "Temperature",
-            "high_setpoint_schedule_name": "HVACTemplate-Always 30",
-            "low_setpoint_schedule_name": "HVACTemplate-Always 20",
-            "setpoint_node_or_nodelist_name": "Only Water Loop Mixed Supply Setpoint Nodes"
         }
     },
     "Shading:Zone:Detailed": {
@@ -4192,111 +2961,6 @@
             "heating_sizing_factor": 1.2
         }
     },
-    "Sizing:Plant": {
-        "Sizing:Plant 1": {
-            "design_loop_exit_temperature": 30,
-            "loop_design_temperature_difference": 5.6,
-            "loop_type": "Condenser",
-            "plant_or_condenser_loop_name": "Only Water Loop Mixed Water Loop"
-        }
-    },
-    "Sizing:Zone": {
-        "Sizing:Zone 1": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE1-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE1-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 14,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_difference": 30,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE1-1"
-        },
-        "Sizing:Zone 2": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE2-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE2-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 14,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_difference": 30,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE2-1"
-        },
-        "Sizing:Zone 3": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE3-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE3-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 14,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_difference": 30,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE3-1"
-        },
-        "Sizing:Zone 4": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE4-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE4-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 14,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_difference": 30,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE4-1"
-        },
-        "Sizing:Zone 5": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE5-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE5-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 14,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_difference": 30,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
     "SizingPeriod:DesignDay": {
         "CHICAGO_IL_USA Annual Cooling 1% Design Conditions DB/MCWB": {
             "barometric_pressure": 99063.0,
@@ -4341,12 +3005,6 @@
     "SurfaceConvectionAlgorithm:Outside": {
         "SurfaceConvectionAlgorithm:Outside 1": {
             "algorithm": "DOE-2"
-        }
-    },
-    "ThermostatSetpoint:DualSetpoint": {
-        "All Zones Dual SP Control": {
-            "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
-            "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
         }
     },
     "Timestep": {
@@ -4493,254 +3151,6 @@
             "z_origin": 0
         }
     },
-    "ZoneControl:Thermostat": {
-        "SPACE1-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE1-1"
-        },
-        "SPACE2-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE2-1"
-        },
-        "SPACE3-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE3-1"
-        },
-        "SPACE4-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE4-1"
-        },
-        "SPACE5-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
-    "ZoneHVAC:EquipmentConnections": {
-        "ZoneHVAC:EquipmentConnections 1": {
-            "zone_air_exhaust_node_or_nodelist_name": "SPACE1-1 VRF Return",
-            "zone_air_inlet_node_or_nodelist_name": "SPACE1-1 VRF Supply Inlet",
-            "zone_air_node_name": "SPACE1-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE1-1 Equipment",
-            "zone_name": "SPACE1-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE1-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 2": {
-            "zone_air_exhaust_node_or_nodelist_name": "SPACE2-1 VRF Return",
-            "zone_air_inlet_node_or_nodelist_name": "SPACE2-1 VRF Supply Inlet",
-            "zone_air_node_name": "SPACE2-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE2-1 Equipment",
-            "zone_name": "SPACE2-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE2-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 3": {
-            "zone_air_exhaust_node_or_nodelist_name": "SPACE3-1 VRF Return",
-            "zone_air_inlet_node_or_nodelist_name": "SPACE3-1 VRF Supply Inlet",
-            "zone_air_node_name": "SPACE3-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE3-1 Equipment",
-            "zone_name": "SPACE3-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE3-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 4": {
-            "zone_air_exhaust_node_or_nodelist_name": "SPACE4-1 VRF Return",
-            "zone_air_inlet_node_or_nodelist_name": "SPACE4-1 VRF Supply Inlet",
-            "zone_air_node_name": "SPACE4-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE4-1 Equipment",
-            "zone_name": "SPACE4-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE4-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 5": {
-            "zone_air_exhaust_node_or_nodelist_name": "SPACE5-1 VRF Return",
-            "zone_air_inlet_node_or_nodelist_name": "SPACE5-1 VRF Supply Inlet",
-            "zone_air_node_name": "SPACE5-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE5-1 Equipment",
-            "zone_name": "SPACE5-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE5-1 Return Outlet"
-        }
-    },
-    "ZoneHVAC:EquipmentList": {
-        "SPACE1-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE1-1 VRF Terminal Unit",
-                    "zone_equipment_object_type": "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE2-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE2-1 VRF Terminal Unit",
-                    "zone_equipment_object_type": "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE3-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE3-1 VRF Terminal Unit",
-                    "zone_equipment_object_type": "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE4-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE4-1 VRF Terminal Unit",
-                    "zone_equipment_object_type": "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE5-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE5-1 VRF Terminal Unit",
-                    "zone_equipment_object_type": "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        }
-    },
-    "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow": {
-        "SPACE1-1 VRF Terminal Unit": {
-            "cooling_coil_object_name": "SPACE1-1 VRF Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:VariableRefrigerantFlow",
-            "cooling_outdoor_air_flow_rate": "Autosize",
-            "cooling_supply_air_flow_rate": "Autosize",
-            "heating_coil_object_name": "SPACE1-1 VRF Heating Coil",
-            "heating_coil_object_type": "Coil:Heating:DX:VariableRefrigerantFlow",
-            "heating_outdoor_air_flow_rate": "Autosize",
-            "heating_supply_air_flow_rate": "Autosize",
-            "no_cooling_supply_air_flow_rate": "Autosize",
-            "no_heating_supply_air_flow_rate": "Autosize",
-            "no_load_outdoor_air_flow_rate": "Autosize",
-            "outside_air_mixer_object_name": "SPACE1-1 VRF OA Mixing Box",
-            "outside_air_mixer_object_type": "OutdoorAir:Mixer",
-            "supply_air_fan_object_name": "SPACE1-1 VRF Supply Fan",
-            "supply_air_fan_object_type": "Fan:OnOff",
-            "supply_air_fan_operating_mode_schedule_name": "FanAvailSched",
-            "supply_air_fan_placement": "BlowThrough",
-            "terminal_unit_air_inlet_node_name": "SPACE1-1 VRF Return",
-            "terminal_unit_air_outlet_node_name": "SPACE1-1 VRF Supply Inlet",
-            "zone_terminal_unit_off_parasitic_electric_energy_use": 0,
-            "zone_terminal_unit_on_parasitic_electric_energy_use": 0
-        },
-        "SPACE2-1 VRF Terminal Unit": {
-            "cooling_coil_object_name": "SPACE2-1 VRF Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:VariableRefrigerantFlow",
-            "cooling_outdoor_air_flow_rate": "Autosize",
-            "cooling_supply_air_flow_rate": "Autosize",
-            "heating_coil_object_name": "SPACE2-1 VRF Heating Coil",
-            "heating_coil_object_type": "Coil:Heating:DX:VariableRefrigerantFlow",
-            "heating_outdoor_air_flow_rate": "Autosize",
-            "heating_supply_air_flow_rate": "Autosize",
-            "no_cooling_supply_air_flow_rate": "Autosize",
-            "no_heating_supply_air_flow_rate": "Autosize",
-            "no_load_outdoor_air_flow_rate": "Autosize",
-            "outside_air_mixer_object_name": "SPACE2-1 VRF OA Mixing Box",
-            "outside_air_mixer_object_type": "OutdoorAir:Mixer",
-            "supply_air_fan_object_name": "SPACE2-1 VRF Supply Fan",
-            "supply_air_fan_object_type": "Fan:OnOff",
-            "supply_air_fan_operating_mode_schedule_name": "FanAvailSched",
-            "supply_air_fan_placement": "BlowThrough",
-            "terminal_unit_air_inlet_node_name": "SPACE2-1 VRF Return",
-            "terminal_unit_air_outlet_node_name": "SPACE2-1 VRF Supply Inlet",
-            "zone_terminal_unit_off_parasitic_electric_energy_use": 0,
-            "zone_terminal_unit_on_parasitic_electric_energy_use": 0
-        },
-        "SPACE3-1 VRF Terminal Unit": {
-            "cooling_coil_object_name": "SPACE3-1 VRF Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:VariableRefrigerantFlow",
-            "cooling_outdoor_air_flow_rate": "Autosize",
-            "cooling_supply_air_flow_rate": "Autosize",
-            "heating_coil_object_name": "SPACE3-1 VRF Heating Coil",
-            "heating_coil_object_type": "Coil:Heating:DX:VariableRefrigerantFlow",
-            "heating_outdoor_air_flow_rate": "Autosize",
-            "heating_supply_air_flow_rate": "Autosize",
-            "no_cooling_supply_air_flow_rate": "Autosize",
-            "no_heating_supply_air_flow_rate": "Autosize",
-            "no_load_outdoor_air_flow_rate": "Autosize",
-            "outside_air_mixer_object_name": "SPACE3-1 VRF OA Mixing Box",
-            "outside_air_mixer_object_type": "OutdoorAir:Mixer",
-            "supply_air_fan_object_name": "SPACE3-1 VRF Supply Fan",
-            "supply_air_fan_object_type": "Fan:OnOff",
-            "supply_air_fan_operating_mode_schedule_name": "FanAvailSched",
-            "supply_air_fan_placement": "BlowThrough",
-            "terminal_unit_air_inlet_node_name": "SPACE3-1 VRF Return",
-            "terminal_unit_air_outlet_node_name": "SPACE3-1 VRF Supply Inlet",
-            "zone_terminal_unit_off_parasitic_electric_energy_use": 0,
-            "zone_terminal_unit_on_parasitic_electric_energy_use": 0
-        },
-        "SPACE4-1 VRF Terminal Unit": {
-            "cooling_coil_object_name": "SPACE4-1 VRF Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:VariableRefrigerantFlow",
-            "cooling_outdoor_air_flow_rate": "Autosize",
-            "cooling_supply_air_flow_rate": "Autosize",
-            "heating_coil_object_name": "SPACE4-1 VRF Heating Coil",
-            "heating_coil_object_type": "Coil:Heating:DX:VariableRefrigerantFlow",
-            "heating_outdoor_air_flow_rate": "Autosize",
-            "heating_supply_air_flow_rate": "Autosize",
-            "no_cooling_supply_air_flow_rate": "Autosize",
-            "no_heating_supply_air_flow_rate": "Autosize",
-            "no_load_outdoor_air_flow_rate": "Autosize",
-            "outside_air_mixer_object_name": "SPACE4-1 VRF OA Mixing Box",
-            "outside_air_mixer_object_type": "OutdoorAir:Mixer",
-            "supply_air_fan_object_name": "SPACE4-1 VRF Supply Fan",
-            "supply_air_fan_object_type": "Fan:OnOff",
-            "supply_air_fan_operating_mode_schedule_name": "FanAvailSched",
-            "supply_air_fan_placement": "BlowThrough",
-            "terminal_unit_air_inlet_node_name": "SPACE4-1 VRF Return",
-            "terminal_unit_air_outlet_node_name": "SPACE4-1 VRF Supply Inlet",
-            "zone_terminal_unit_off_parasitic_electric_energy_use": 0,
-            "zone_terminal_unit_on_parasitic_electric_energy_use": 0
-        },
-        "SPACE5-1 VRF Terminal Unit": {
-            "cooling_coil_object_name": "SPACE5-1 VRF Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:VariableRefrigerantFlow",
-            "cooling_outdoor_air_flow_rate": "Autosize",
-            "cooling_supply_air_flow_rate": "Autosize",
-            "heating_coil_object_name": "SPACE5-1 VRF Heating Coil",
-            "heating_coil_object_type": "Coil:Heating:DX:VariableRefrigerantFlow",
-            "heating_outdoor_air_flow_rate": "Autosize",
-            "heating_supply_air_flow_rate": "Autosize",
-            "no_cooling_supply_air_flow_rate": "Autosize",
-            "no_heating_supply_air_flow_rate": "Autosize",
-            "no_load_outdoor_air_flow_rate": "Autosize",
-            "outside_air_mixer_object_name": "SPACE5-1 VRF OA Mixing Box",
-            "outside_air_mixer_object_type": "OutdoorAir:Mixer",
-            "supply_air_fan_object_name": "SPACE5-1 VRF Supply Fan",
-            "supply_air_fan_object_type": "Fan:OnOff",
-            "supply_air_fan_operating_mode_schedule_name": "FanAvailSched",
-            "supply_air_fan_placement": "BlowThrough",
-            "terminal_unit_air_inlet_node_name": "SPACE5-1 VRF Return",
-            "terminal_unit_air_outlet_node_name": "SPACE5-1 VRF Supply Inlet",
-            "zone_terminal_unit_off_parasitic_electric_energy_use": 0,
-            "zone_terminal_unit_on_parasitic_electric_energy_use": 0
-        }
-    },
     "ZoneInfiltration:DesignFlowRate": {
         "SPACE1-1 Infil 1": {
             "constant_term_coefficient": 0,
@@ -4791,33 +3201,6 @@
             "velocity_squared_term_coefficient": 0,
             "velocity_term_coefficient": 0.2237,
             "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
-    "ZoneTerminalUnitList": {
-        "ZoneTerminalUnitList 1": {
-            "terminal_units": [
-                {
-                    "zone_terminal_unit_name": "SPACE1-1 VRF Terminal Unit"
-                },
-                {
-                    "zone_terminal_unit_name": "SPACE2-1 VRF Terminal Unit"
-                },
-                {
-                    "zone_terminal_unit_name": "SPACE3-1 VRF Terminal Unit"
-                },
-                {
-                    "zone_terminal_unit_name": "SPACE4-1 VRF Terminal Unit"
-                }
-            ],
-            "zone_terminal_unit_list_name": "VRF Sys 1 Water SourceTU List"
-        },
-        "ZoneTerminalUnitList 2": {
-            "terminal_units": [
-                {
-                    "zone_terminal_unit_name": "SPACE5-1 VRF Terminal Unit"
-                }
-            ],
-            "zone_terminal_unit_list_name": "VRF Sys 2 Air SourceTU List"
         }
     }
 }

@@ -2506,11 +2506,7 @@
         "Sys 4 Heat Pump WaterSource SnglSpd Cooling Coil": {
             "air_inlet_node_name": "Sys 4 Heat Pump WaterSource SnglSpd Supply Fan Outlet",
             "air_outlet_node_name": "Sys 4 Heat Pump WaterSource SnglSpd Cooling Coil Outlet",
-            "cooling_power_consumption_coefficient_1": -3.205409884,
-            "cooling_power_consumption_coefficient_2": -0.976409399,
-            "cooling_power_consumption_coefficient_3": 3.97892546,
-            "cooling_power_consumption_coefficient_4": 0.938181818,
-            "cooling_power_consumption_coefficient_5": 0.0,
+            "cooling_power_consumption_curve_name": "Sys 4 Heat Pump WaterSource SnglSpd WAHP ClgPowCurve",
             "gross_rated_cooling_cop": 3,
             "gross_rated_sensible_cooling_capacity": "Autosize",
             "gross_rated_total_cooling_capacity": "Autosize",
@@ -2518,17 +2514,8 @@
             "rated_air_flow_rate": "Autosize",
             "rated_water_flow_rate": "Autosize",
             "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
-            "sensible_cooling_capacity_coefficient_1": -5.462690012,
-            "sensible_cooling_capacity_coefficient_2": 17.95968138,
-            "sensible_cooling_capacity_coefficient_3": -11.87818402,
-            "sensible_cooling_capacity_coefficient_4": -0.980163419,
-            "sensible_cooling_capacity_coefficient_5": 0.767285761,
-            "sensible_cooling_capacity_coefficient_6": 0.0,
-            "total_cooling_capacity_coefficient_1": -9.149069561,
-            "total_cooling_capacity_coefficient_2": 10.87814026,
-            "total_cooling_capacity_coefficient_3": -1.718780157,
-            "total_cooling_capacity_coefficient_4": 0.746414818,
-            "total_cooling_capacity_coefficient_5": 0.0,
+            "sensible_cooling_capacity_curve_name": "Sys 4 Heat Pump WaterSource SnglSpd WAHP ClgSensCapCurve",
+            "total_cooling_capacity_curve_name": "Sys 4 Heat Pump WaterSource SnglSpd WAHP ClgTotCapCurve",
             "water_inlet_node_name": "Sys 4 Heat Pump WaterSource SnglSpd WAHP Cooling Water Inlet Node",
             "water_outlet_node_name": "Sys 4 Heat Pump WaterSource SnglSpd WAHP Cooling Water Outlet Node"
         }
@@ -2611,16 +2598,8 @@
             "air_outlet_node_name": "Sys 4 Heat Pump WaterSource SnglSpd Heating Coil Outlet",
             "gross_rated_heating_capacity": "Autosize",
             "gross_rated_heating_cop": 2.75,
-            "heating_capacity_coefficient_1": -1.361311959,
-            "heating_capacity_coefficient_2": -2.471798046,
-            "heating_capacity_coefficient_3": 4.173164514,
-            "heating_capacity_coefficient_4": 0.640757401,
-            "heating_capacity_coefficient_5": 0.0,
-            "heating_power_consumption_coefficient_1": -2.176941116,
-            "heating_power_consumption_coefficient_2": 0.832114286,
-            "heating_power_consumption_coefficient_3": 1.570743399,
-            "heating_power_consumption_coefficient_4": 0.690793651,
-            "heating_power_consumption_coefficient_5": 0.0,
+            "heating_capacity_curve_name": "Sys 4 Heat Pump WaterSource SnglSpd WAHP HtgCapCurve",
+            "heating_power_consumption_curve_name": "Sys 4 Heat Pump WaterSource SnglSpd WAHP HtgPowCurve",
             "rated_air_flow_rate": "Autosize",
             "rated_water_flow_rate": "Autosize",
             "water_inlet_node_name": "Sys 4 Heat Pump WaterSource SnglSpd WAHP Heating Water Inlet Node",
@@ -3139,6 +3118,68 @@
             "minimum_value_of_x": -20.0
         }
     },
+    "Curve:QuadLinear": {
+        "Sys 4 Heat Pump WaterSource SnglSpd WAHP ClgPowCurve": {
+            "coefficient1_constant": -3.205409884,
+            "coefficient2_w": -0.976409399,
+            "coefficient3_x": 3.97892546,
+            "coefficient4_y": 0.938181818,
+            "coefficient5_z": 0.0,
+            "maximum_value_of_w": 100.0,
+            "maximum_value_of_x": 100.0,
+            "maximum_value_of_y": 100.0,
+            "maximum_value_of_z": 100.0,
+            "minimum_value_of_w": -100.0,
+            "minimum_value_of_x": -100.0,
+            "minimum_value_of_y": -100.0,
+            "minimum_value_of_z": -100.0
+        },
+        "Sys 4 Heat Pump WaterSource SnglSpd WAHP ClgTotCapCurve": {
+            "coefficient1_constant": -9.149069561,
+            "coefficient2_w": 10.87814026,
+            "coefficient3_x": -1.718780157,
+            "coefficient4_y": 0.746414818,
+            "coefficient5_z": 0.0,
+            "maximum_value_of_w": 100.0,
+            "maximum_value_of_x": 100.0,
+            "maximum_value_of_y": 100.0,
+            "maximum_value_of_z": 100.0,
+            "minimum_value_of_w": -100.0,
+            "minimum_value_of_x": -100.0,
+            "minimum_value_of_y": -100.0,
+            "minimum_value_of_z": -100.0
+        },
+        "Sys 4 Heat Pump WaterSource SnglSpd WAHP HtgCapCurve": {
+            "coefficient1_constant": -1.361311959,
+            "coefficient2_w": -2.471798046,
+            "coefficient3_x": 4.173164514,
+            "coefficient4_y": 0.640757401,
+            "coefficient5_z": 0.0,
+            "maximum_value_of_w": 100.0,
+            "maximum_value_of_x": 100.0,
+            "maximum_value_of_y": 100.0,
+            "maximum_value_of_z": 100.0,
+            "minimum_value_of_w": -100.0,
+            "minimum_value_of_x": -100.0,
+            "minimum_value_of_y": -100.0,
+            "minimum_value_of_z": -100.0
+        },
+        "Sys 4 Heat Pump WaterSource SnglSpd WAHP HtgPowCurve": {
+            "coefficient1_constant": -2.176941116,
+            "coefficient2_w": 0.832114286,
+            "coefficient3_x": 1.570743399,
+            "coefficient4_y": 0.690793651,
+            "coefficient5_z": 0.0,
+            "maximum_value_of_w": 100.0,
+            "maximum_value_of_x": 100.0,
+            "maximum_value_of_y": 100.0,
+            "maximum_value_of_z": 100.0,
+            "minimum_value_of_w": -100.0,
+            "minimum_value_of_x": -100.0,
+            "minimum_value_of_y": -100.0,
+            "minimum_value_of_z": -100.0
+        }
+    },
     "Curve:Quadratic": {
         "ChW Loop Chiller RecipEIRFPLR": {
             "coefficient1_constant": 0.088065,
@@ -3216,6 +3257,26 @@
             "coefficient3_x_2": 0.0,
             "maximum_value_of_x": 1.0,
             "minimum_value_of_x": 0.0
+        }
+    },
+    "Curve:QuintLinear": {
+        "Sys 4 Heat Pump WaterSource SnglSpd WAHP ClgSensCapCurve": {
+            "coefficient1_constant": -5.462690012,
+            "coefficient2_v": 17.95968138,
+            "coefficient3_w": -11.87818402,
+            "coefficient4_x": -0.980163419,
+            "coefficient5_y": 0.767285761,
+            "coefficient6_z": 0.0,
+            "maximum_value_of_v": 100.0,
+            "maximum_value_of_w": 100.0,
+            "maximum_value_of_x": 100.0,
+            "maximum_value_of_y": 100.0,
+            "maximum_value_of_z": 100.0,
+            "minimum_value_of_v": -100.0,
+            "minimum_value_of_w": -100.0,
+            "minimum_value_of_x": -100.0,
+            "minimum_value_of_y": -100.0,
+            "minimum_value_of_z": -100.0
         }
     },
     "DesignSpecification:OutdoorAir": {
@@ -5580,7 +5641,7 @@
     },
     "Version": {
         "Version 1": {
-            "version_identifier": "9.4"
+            "version_identifier": "9.5"
         }
     },
     "WindowMaterial:Gas": {

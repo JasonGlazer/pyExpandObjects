@@ -1,326 +1,4 @@
 {
-    "AirLoopHVAC": {
-        "DXVAV Sys 1": {
-            "availability_manager_list_name": "DXVAV Sys 1 Availability Managers",
-            "branch_list_name": "DXVAV Sys 1 Branches",
-            "demand_side_inlet_node_names": "DXVAV Sys 1 Supply Path Inlet",
-            "demand_side_outlet_node_name": "DXVAV Sys 1 Return Air Outlet",
-            "design_supply_air_flow_rate": "Autosize",
-            "supply_side_inlet_node_name": "DXVAV Sys 1 Air Loop Inlet",
-            "supply_side_outlet_node_names": "DXVAV Sys 1 Supply Fan Outlet"
-        },
-        "DXVAV Sys 2": {
-            "availability_manager_list_name": "DXVAV Sys 2 Availability Managers",
-            "branch_list_name": "DXVAV Sys 2 Branches",
-            "demand_side_inlet_node_names": "DXVAV Sys 2 Supply Path Inlet",
-            "demand_side_outlet_node_name": "DXVAV Sys 2 Return Air Outlet",
-            "design_supply_air_flow_rate": "Autosize",
-            "supply_side_inlet_node_name": "DXVAV Sys 2 Air Loop Inlet",
-            "supply_side_outlet_node_names": "DXVAV Sys 2 Supply Fan Outlet"
-        }
-    },
-    "AirLoopHVAC:ControllerList": {
-        "DXVAV Sys 1 OA System Controllers": {
-            "controller_1_name": "DXVAV Sys 1 OA Controller",
-            "controller_1_object_type": "Controller:OutdoorAir"
-        },
-        "DXVAV Sys 2 OA System Controllers": {
-            "controller_1_name": "DXVAV Sys 2 OA Controller",
-            "controller_1_object_type": "Controller:OutdoorAir"
-        }
-    },
-    "AirLoopHVAC:OutdoorAirSystem": {
-        "DXVAV Sys 1 OA System": {
-            "availability_manager_list_name": "DXVAV Sys 1 Availability Managers",
-            "controller_list_name": "DXVAV Sys 1 OA System Controllers",
-            "outdoor_air_equipment_list_name": "DXVAV Sys 1 OA System Equipment"
-        },
-        "DXVAV Sys 2 OA System": {
-            "availability_manager_list_name": "DXVAV Sys 2 Availability Managers",
-            "controller_list_name": "DXVAV Sys 2 OA System Controllers",
-            "outdoor_air_equipment_list_name": "DXVAV Sys 2 OA System Equipment"
-        }
-    },
-    "AirLoopHVAC:OutdoorAirSystem:EquipmentList": {
-        "DXVAV Sys 1 OA System Equipment": {
-            "component_1_name": "DXVAV Sys 1 OA Mixing Box",
-            "component_1_object_type": "OutdoorAir:Mixer"
-        },
-        "DXVAV Sys 2 OA System Equipment": {
-            "component_1_name": "DXVAV Sys 2 OA Mixing Box",
-            "component_1_object_type": "OutdoorAir:Mixer"
-        }
-    },
-    "AirLoopHVAC:ReturnPath": {
-        "DXVAV Sys 1 Return Path": {
-            "components": [
-                {
-                    "component_name": "DXVAV Sys 1 Return Plenum",
-                    "component_object_type": "AirLoopHVAC:ReturnPlenum"
-                }
-            ],
-            "return_air_path_outlet_node_name": "DXVAV Sys 1 Return Air Outlet"
-        },
-        "DXVAV Sys 2 Return Path": {
-            "components": [
-                {
-                    "component_name": "DXVAV Sys 2 Zone Mixer",
-                    "component_object_type": "AirLoopHVAC:ZoneMixer"
-                }
-            ],
-            "return_air_path_outlet_node_name": "DXVAV Sys 2 Return Air Outlet"
-        }
-    },
-    "AirLoopHVAC:ReturnPlenum": {
-        "DXVAV Sys 1 Return Plenum": {
-            "nodes": [
-                {
-                    "inlet_node_name": "SPACE1-1 Return Outlet"
-                },
-                {
-                    "inlet_node_name": "SPACE2-1 Return Outlet"
-                },
-                {
-                    "inlet_node_name": "SPACE3-1 Return Outlet"
-                },
-                {
-                    "inlet_node_name": "SPACE5-1 Return Outlet"
-                }
-            ],
-            "outlet_node_name": "DXVAV Sys 1 Return Air Outlet",
-            "zone_name": "PLENUM-1",
-            "zone_node_name": "PLENUM-1 Zone Air Node"
-        }
-    },
-    "AirLoopHVAC:SupplyPath": {
-        "DXVAV Sys 1 Supply Path": {
-            "components": [
-                {
-                    "component_name": "DXVAV Sys 1 Zone Splitter",
-                    "component_object_type": "AirLoopHVAC:ZoneSplitter"
-                }
-            ],
-            "supply_air_path_inlet_node_name": "DXVAV Sys 1 Supply Path Inlet"
-        },
-        "DXVAV Sys 2 Supply Path": {
-            "components": [
-                {
-                    "component_name": "DXVAV Sys 2 Zone Splitter",
-                    "component_object_type": "AirLoopHVAC:ZoneSplitter"
-                }
-            ],
-            "supply_air_path_inlet_node_name": "DXVAV Sys 2 Supply Path Inlet"
-        }
-    },
-    "AirLoopHVAC:ZoneMixer": {
-        "DXVAV Sys 2 Zone Mixer": {
-            "nodes": [
-                {
-                    "inlet_node_name": "SPACE4-1 Return Outlet"
-                }
-            ],
-            "outlet_node_name": "DXVAV Sys 2 Return Air Outlet"
-        }
-    },
-    "AirLoopHVAC:ZoneSplitter": {
-        "DXVAV Sys 1 Zone Splitter": {
-            "inlet_node_name": "DXVAV Sys 1 Supply Path Inlet",
-            "nodes": [
-                {
-                    "outlet_node_name": "SPACE1-1 Zone Equip Inlet"
-                },
-                {
-                    "outlet_node_name": "SPACE2-1 Zone Equip Inlet"
-                },
-                {
-                    "outlet_node_name": "SPACE3-1 Zone Equip Inlet"
-                },
-                {
-                    "outlet_node_name": "SPACE5-1 Zone Equip Inlet"
-                }
-            ]
-        },
-        "DXVAV Sys 2 Zone Splitter": {
-            "inlet_node_name": "DXVAV Sys 2 Supply Path Inlet",
-            "nodes": [
-                {
-                    "outlet_node_name": "SPACE4-1 Zone Equip Inlet"
-                }
-            ]
-        }
-    },
-    "AirTerminal:SingleDuct:VAV:HeatAndCool:Reheat": {
-        "SPACE4-1 VAV Heat Cool Reheat": {
-            "air_inlet_node_name": "SPACE4-1 Zone Equip Inlet",
-            "air_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE4-1 Damper Outlet",
-            "maximum_air_flow_rate": "Autosize",
-            "reheat_coil_name": "SPACE4-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Electric",
-            "zone_minimum_air_flow_fraction": 0.2
-        }
-    },
-    "AirTerminal:SingleDuct:VAV:Reheat": {
-        "SPACE1-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE1-1 Zone Equip Inlet",
-            "air_outlet_node_name": "SPACE1-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE1-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "reheat_coil_name": "SPACE1-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Electric",
-            "zone_minimum_air_flow_input_method": "Constant"
-        },
-        "SPACE2-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE2-1 Zone Equip Inlet",
-            "air_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE2-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "reheat_coil_name": "SPACE2-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Electric",
-            "zone_minimum_air_flow_input_method": "Constant"
-        },
-        "SPACE3-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE3-1 Zone Equip Inlet",
-            "air_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE3-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "reheat_coil_name": "SPACE3-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Electric",
-            "zone_minimum_air_flow_input_method": "Constant"
-        },
-        "SPACE5-1 VAV Reheat": {
-            "air_inlet_node_name": "SPACE5-1 Zone Equip Inlet",
-            "air_outlet_node_name": "SPACE5-1 Supply Inlet",
-            "constant_minimum_air_flow_fraction": 0.3,
-            "convergence_tolerance": 0.001,
-            "damper_air_outlet_node_name": "SPACE5-1 Damper Outlet",
-            "damper_heating_action": "Reverse",
-            "maximum_air_flow_rate": "Autosize",
-            "reheat_coil_name": "SPACE5-1 Reheat Coil",
-            "reheat_coil_object_type": "Coil:Heating:Electric",
-            "zone_minimum_air_flow_input_method": "Constant"
-        }
-    },
-    "AvailabilityManager:NightCycle": {
-        "DXVAV Sys 1 Availability": {
-            "applicability_schedule_name": "HVACTemplate-Always 1",
-            "control_type": "CycleOnAny",
-            "cycling_run_time": 3600,
-            "cycling_run_time_control_type": "FixedRunTime",
-            "fan_schedule_name": "FanAvailSched",
-            "thermostat_tolerance": 0.2
-        },
-        "DXVAV Sys 2 Availability": {
-            "applicability_schedule_name": "HVACTemplate-Always 1",
-            "control_type": "CycleOnAny",
-            "cycling_run_time": 3600,
-            "cycling_run_time_control_type": "FixedRunTime",
-            "fan_schedule_name": "FanAvailSched",
-            "thermostat_tolerance": 0.2
-        }
-    },
-    "AvailabilityManagerAssignmentList": {
-        "DXVAV Sys 1 Availability Managers": {
-            "managers": [
-                {
-                    "availability_manager_name": "DXVAV Sys 1 Availability",
-                    "availability_manager_object_type": "AvailabilityManager:NightCycle"
-                }
-            ]
-        },
-        "DXVAV Sys 2 Availability Managers": {
-            "managers": [
-                {
-                    "availability_manager_name": "DXVAV Sys 2 Availability",
-                    "availability_manager_object_type": "AvailabilityManager:NightCycle"
-                }
-            ]
-        }
-    },
-    "Branch": {
-        "DXVAV Sys 1 Main Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "DXVAV Sys 1 Air Loop Inlet",
-                    "component_name": "DXVAV Sys 1 OA System",
-                    "component_object_type": "AirLoopHVAC:OutdoorAirSystem",
-                    "component_outlet_node_name": "DXVAV Sys 1 Mixed Air Outlet"
-                },
-                {
-                    "component_inlet_node_name": "DXVAV Sys 1 Mixed Air Outlet",
-                    "component_name": "DXVAV Sys 1 System",
-                    "component_object_type": "CoilSystem:Cooling:DX",
-                    "component_outlet_node_name": "DXVAV Sys 1 Cooling Coil Outlet"
-                },
-                {
-                    "component_inlet_node_name": "DXVAV Sys 1 Cooling Coil Outlet",
-                    "component_name": "DXVAV Sys 1 Heating Coil",
-                    "component_object_type": "Coil:Heating:Fuel",
-                    "component_outlet_node_name": "DXVAV Sys 1 Heating Coil Outlet"
-                },
-                {
-                    "component_inlet_node_name": "DXVAV Sys 1 Heating Coil Outlet",
-                    "component_name": "DXVAV Sys 1 Supply Fan",
-                    "component_object_type": "Fan:VariableVolume",
-                    "component_outlet_node_name": "DXVAV Sys 1 Supply Fan Outlet"
-                }
-            ]
-        },
-        "DXVAV Sys 2 Main Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "DXVAV Sys 2 Air Loop Inlet",
-                    "component_name": "DXVAV Sys 2 OA System",
-                    "component_object_type": "AirLoopHVAC:OutdoorAirSystem",
-                    "component_outlet_node_name": "DXVAV Sys 2 Mixed Air Outlet"
-                },
-                {
-                    "component_inlet_node_name": "DXVAV Sys 2 Mixed Air Outlet",
-                    "component_name": "DXVAV Sys 2 System",
-                    "component_object_type": "CoilSystem:Cooling:DX",
-                    "component_outlet_node_name": "DXVAV Sys 2 Cooling Coil Outlet"
-                },
-                {
-                    "component_inlet_node_name": "DXVAV Sys 2 Cooling Coil Outlet",
-                    "component_name": "DXVAV Sys 2 Heating Coil",
-                    "component_object_type": "Coil:Heating:Fuel",
-                    "component_outlet_node_name": "DXVAV Sys 2 Heating Coil Outlet"
-                },
-                {
-                    "component_inlet_node_name": "DXVAV Sys 2 Heating Coil Outlet",
-                    "component_name": "DXVAV Sys 2 Supply Fan",
-                    "component_object_type": "Fan:VariableVolume",
-                    "component_outlet_node_name": "DXVAV Sys 2 Supply Fan Outlet"
-                }
-            ]
-        }
-    },
-    "BranchList": {
-        "DXVAV Sys 1 Branches": {
-            "branches": [
-                {
-                    "branch_name": "DXVAV Sys 1 Main Branch"
-                }
-            ]
-        },
-        "DXVAV Sys 2 Branches": {
-            "branches": [
-                {
-                    "branch_name": "DXVAV Sys 2 Main Branch"
-                }
-            ]
-        }
-    },
     "Building": {
         "Building": {
             "loads_convergence_tolerance_value": 0.04,
@@ -1640,124 +1318,6 @@
             "zone_name": "PLENUM-1"
         }
     },
-    "Coil:Cooling:DX:TwoSpeed": {
-        "DXVAV Sys 1 Cooling Coil": {
-            "air_inlet_node_name": "DXVAV Sys 1 Mixed Air Outlet",
-            "air_outlet_node_name": "DXVAV Sys 1 Cooling Coil Outlet",
-            "energy_input_ratio_function_of_flow_fraction_curve_name": "DXVAV Sys 1 DX Coil EIR-FF",
-            "energy_input_ratio_function_of_temperature_curve_name": "DXVAV Sys 1 DX Coil EIR-FT",
-            "high_speed_gross_rated_cooling_cop": 3,
-            "high_speed_gross_rated_total_cooling_capacity": "Autosize",
-            "high_speed_rated_air_flow_rate": "Autosize",
-            "high_speed_rated_sensible_heat_ratio": "Autosize",
-            "low_speed_energy_input_ratio_function_of_temperature_curve_name": "DXVAV Sys 1 DX Coil Low EIR-FT",
-            "low_speed_gross_rated_cooling_cop": 4.5,
-            "low_speed_gross_rated_sensible_heat_ratio": "Autosize",
-            "low_speed_gross_rated_total_cooling_capacity": "Autosize",
-            "low_speed_rated_air_flow_rate": "Autosize",
-            "low_speed_total_cooling_capacity_function_of_temperature_curve_name": "DXVAV Sys 1 DX Coil Low Cap-FT",
-            "part_load_fraction_correlation_curve_name": "DXVAV Sys 1 DX Coil PLF",
-            "total_cooling_capacity_function_of_flow_fraction_curve_name": "DXVAV Sys 1 DX Coil Cap-FF",
-            "total_cooling_capacity_function_of_temperature_curve_name": "DXVAV Sys 1 DX Coil Cap-FT"
-        },
-        "DXVAV Sys 2 Cooling Coil": {
-            "air_inlet_node_name": "DXVAV Sys 2 Mixed Air Outlet",
-            "air_outlet_node_name": "DXVAV Sys 2 Cooling Coil Outlet",
-            "energy_input_ratio_function_of_flow_fraction_curve_name": "DXVAV Sys 2 DX Coil EIR-FF",
-            "energy_input_ratio_function_of_temperature_curve_name": "DXVAV Sys 2 DX Coil EIR-FT",
-            "high_speed_gross_rated_cooling_cop": 3,
-            "high_speed_gross_rated_total_cooling_capacity": "Autosize",
-            "high_speed_rated_air_flow_rate": "Autosize",
-            "high_speed_rated_sensible_heat_ratio": "Autosize",
-            "low_speed_energy_input_ratio_function_of_temperature_curve_name": "DXVAV Sys 2 DX Coil Low EIR-FT",
-            "low_speed_gross_rated_cooling_cop": 4.5,
-            "low_speed_gross_rated_sensible_heat_ratio": "Autosize",
-            "low_speed_gross_rated_total_cooling_capacity": "Autosize",
-            "low_speed_rated_air_flow_rate": "Autosize",
-            "low_speed_total_cooling_capacity_function_of_temperature_curve_name": "DXVAV Sys 2 DX Coil Low Cap-FT",
-            "part_load_fraction_correlation_curve_name": "DXVAV Sys 2 DX Coil PLF",
-            "total_cooling_capacity_function_of_flow_fraction_curve_name": "DXVAV Sys 2 DX Coil Cap-FF",
-            "total_cooling_capacity_function_of_temperature_curve_name": "DXVAV Sys 2 DX Coil Cap-FT"
-        }
-    },
-    "Coil:Heating:Electric": {
-        "SPACE1-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE1-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE1-1 Supply Inlet",
-            "efficiency": 1,
-            "nominal_capacity": "Autosize"
-        },
-        "SPACE2-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE2-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "efficiency": 1,
-            "nominal_capacity": "Autosize"
-        },
-        "SPACE3-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE3-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "efficiency": 1,
-            "nominal_capacity": "Autosize"
-        },
-        "SPACE4-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE4-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "efficiency": 1,
-            "nominal_capacity": "Autosize"
-        },
-        "SPACE5-1 Reheat Coil": {
-            "air_inlet_node_name": "SPACE5-1 Damper Outlet",
-            "air_outlet_node_name": "SPACE5-1 Supply Inlet",
-            "efficiency": 1,
-            "nominal_capacity": "Autosize"
-        }
-    },
-    "Coil:Heating:Fuel": {
-        "DXVAV Sys 1 Heating Coil": {
-            "air_inlet_node_name": "DXVAV Sys 1 Cooling Coil Outlet",
-            "air_outlet_node_name": "DXVAV Sys 1 Heating Coil Outlet",
-            "burner_efficiency": 0.8,
-            "fuel_type": "NaturalGas",
-            "nominal_capacity": "Autosize",
-            "parasitic_electric_load": 0.0,
-            "parasitic_fuel_load": 0,
-            "part_load_fraction_correlation_curve_name": "DXVAV Sys 1 Heating Coil PLF-FPLR",
-            "temperature_setpoint_node_name": "DXVAV Sys 1 Heating Coil Outlet"
-        },
-        "DXVAV Sys 2 Heating Coil": {
-            "air_inlet_node_name": "DXVAV Sys 2 Cooling Coil Outlet",
-            "air_outlet_node_name": "DXVAV Sys 2 Heating Coil Outlet",
-            "burner_efficiency": 0.8,
-            "fuel_type": "NaturalGas",
-            "nominal_capacity": "Autosize",
-            "parasitic_electric_load": 0.0,
-            "parasitic_fuel_load": 0,
-            "part_load_fraction_correlation_curve_name": "DXVAV Sys 2 Heating Coil PLF-FPLR",
-            "temperature_setpoint_node_name": "DXVAV Sys 2 Heating Coil Outlet"
-        }
-    },
-    "CoilSystem:Cooling:DX": {
-        "DXVAV Sys 1 System": {
-            "cooling_coil_name": "DXVAV Sys 1 Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:TwoSpeed",
-            "dehumidification_control_type": "None",
-            "dx_cooling_coil_system_inlet_node_name": "DXVAV Sys 1 Mixed Air Outlet",
-            "dx_cooling_coil_system_outlet_node_name": "DXVAV Sys 1 Cooling Coil Outlet",
-            "dx_cooling_coil_system_sensor_node_name": "DXVAV Sys 1 Cooling Coil Outlet",
-            "run_on_latent_load": "No",
-            "run_on_sensible_load": "Yes"
-        },
-        "DXVAV Sys 2 System": {
-            "cooling_coil_name": "DXVAV Sys 2 Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:TwoSpeed",
-            "dehumidification_control_type": "None",
-            "dx_cooling_coil_system_inlet_node_name": "DXVAV Sys 2 Mixed Air Outlet",
-            "dx_cooling_coil_system_outlet_node_name": "DXVAV Sys 2 Cooling Coil Outlet",
-            "dx_cooling_coil_system_sensor_node_name": "DXVAV Sys 2 Cooling Coil Outlet",
-            "run_on_latent_load": "No",
-            "run_on_sensible_load": "Yes"
-        }
-    },
     "Construction": {
         "CLNG-1": {
             "outside_layer": "MAT-CLNG-1"
@@ -1789,256 +1349,6 @@
             "layer_3": "IN02",
             "layer_4": "GP01",
             "outside_layer": "WD01"
-        }
-    },
-    "Controller:OutdoorAir": {
-        "DXVAV Sys 1 OA Controller": {
-            "actuator_node_name": "DXVAV Sys 1 Outside Air Inlet",
-            "economizer_control_action_type": "ModulateFlow",
-            "economizer_control_type": "DifferentialDryBulb",
-            "economizer_maximum_limit_dry_bulb_temperature": 19,
-            "economizer_minimum_limit_dry_bulb_temperature": 4,
-            "lockout_type": "NoLockout",
-            "maximum_outdoor_air_flow_rate": "Autosize",
-            "minimum_limit_type": "ProportionalMinimum",
-            "minimum_outdoor_air_flow_rate": "Autosize",
-            "minimum_outdoor_air_schedule_name": "Min OA Sched",
-            "mixed_air_node_name": "DXVAV Sys 1 Mixed Air Outlet",
-            "relief_air_outlet_node_name": "DXVAV Sys 1 Relief Air Outlet",
-            "return_air_node_name": "DXVAV Sys 1 Air Loop Inlet"
-        },
-        "DXVAV Sys 2 OA Controller": {
-            "actuator_node_name": "DXVAV Sys 2 Outside Air Inlet",
-            "economizer_control_action_type": "ModulateFlow",
-            "economizer_control_type": "DifferentialDryBulb",
-            "economizer_maximum_limit_dry_bulb_temperature": 19,
-            "economizer_minimum_limit_dry_bulb_temperature": 4,
-            "lockout_type": "NoLockout",
-            "maximum_outdoor_air_flow_rate": "Autosize",
-            "minimum_limit_type": "ProportionalMinimum",
-            "minimum_outdoor_air_flow_rate": "Autosize",
-            "minimum_outdoor_air_schedule_name": "Min OA Sched",
-            "mixed_air_node_name": "DXVAV Sys 2 Mixed Air Outlet",
-            "relief_air_outlet_node_name": "DXVAV Sys 2 Relief Air Outlet",
-            "return_air_node_name": "DXVAV Sys 2 Air Loop Inlet"
-        }
-    },
-    "Curve:Biquadratic": {
-        "DXVAV Sys 1 DX Coil Cap-FT": {
-            "coefficient1_constant": 0.476428,
-            "coefficient2_x": 0.0401147,
-            "coefficient3_x_2": 0.000226411,
-            "coefficient4_y": -0.000827136,
-            "coefficient5_y_2": -7.3224e-06,
-            "coefficient6_x_y": -0.000446278,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 23.88889
-        },
-        "DXVAV Sys 1 DX Coil EIR-FT": {
-            "coefficient1_constant": 0.632475,
-            "coefficient2_x": -0.0121321,
-            "coefficient3_x_2": 0.000507773,
-            "coefficient4_y": 0.0155377,
-            "coefficient5_y_2": 0.00027284,
-            "coefficient6_x_y": -0.000679201,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 23.88889
-        },
-        "DXVAV Sys 1 DX Coil Low Cap-FT": {
-            "coefficient1_constant": 0.476428,
-            "coefficient2_x": 0.0401147,
-            "coefficient3_x_2": 0.000226411,
-            "coefficient4_y": -0.000827136,
-            "coefficient5_y_2": -7.3224e-06,
-            "coefficient6_x_y": -0.000446278,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 23.88889
-        },
-        "DXVAV Sys 1 DX Coil Low EIR-FT": {
-            "coefficient1_constant": 0.774645,
-            "coefficient2_x": -0.0343731,
-            "coefficient3_x_2": 0.000783173,
-            "coefficient4_y": 0.0146596,
-            "coefficient5_y_2": 0.000488851,
-            "coefficient6_x_y": -0.000752036,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 23.88889
-        },
-        "DXVAV Sys 2 DX Coil Cap-FT": {
-            "coefficient1_constant": 0.476428,
-            "coefficient2_x": 0.0401147,
-            "coefficient3_x_2": 0.000226411,
-            "coefficient4_y": -0.000827136,
-            "coefficient5_y_2": -7.3224e-06,
-            "coefficient6_x_y": -0.000446278,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 23.88889
-        },
-        "DXVAV Sys 2 DX Coil EIR-FT": {
-            "coefficient1_constant": 0.632475,
-            "coefficient2_x": -0.0121321,
-            "coefficient3_x_2": 0.000507773,
-            "coefficient4_y": 0.0155377,
-            "coefficient5_y_2": 0.00027284,
-            "coefficient6_x_y": -0.000679201,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 23.88889
-        },
-        "DXVAV Sys 2 DX Coil Low Cap-FT": {
-            "coefficient1_constant": 0.476428,
-            "coefficient2_x": 0.0401147,
-            "coefficient3_x_2": 0.000226411,
-            "coefficient4_y": -0.000827136,
-            "coefficient5_y_2": -7.3224e-06,
-            "coefficient6_x_y": -0.000446278,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 23.88889
-        },
-        "DXVAV Sys 2 DX Coil Low EIR-FT": {
-            "coefficient1_constant": 0.774645,
-            "coefficient2_x": -0.0343731,
-            "coefficient3_x_2": 0.000783173,
-            "coefficient4_y": 0.0146596,
-            "coefficient5_y_2": 0.000488851,
-            "coefficient6_x_y": -0.000752036,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 23.88889
-        }
-    },
-    "Curve:Cubic": {
-        "DXVAV Sys 1 DX Coil Cap-FF": {
-            "coefficient1_constant": 0.47278589,
-            "coefficient2_x": 1.2433415,
-            "coefficient3_x_2": -1.0387055,
-            "coefficient4_x_3": 0.32257813,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "DXVAV Sys 1 DX Coil EIR-FF": {
-            "coefficient1_constant": 1.0079484,
-            "coefficient2_x": 0.34544129,
-            "coefficient3_x_2": -0.6922891,
-            "coefficient4_x_3": 0.33889943,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "DXVAV Sys 1 Heating Coil PLF-FPLR": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "coefficient4_x_3": 0,
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0
-        },
-        "DXVAV Sys 2 DX Coil Cap-FF": {
-            "coefficient1_constant": 0.47278589,
-            "coefficient2_x": 1.2433415,
-            "coefficient3_x_2": -1.0387055,
-            "coefficient4_x_3": 0.32257813,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "DXVAV Sys 2 DX Coil EIR-FF": {
-            "coefficient1_constant": 1.0079484,
-            "coefficient2_x": 0.34544129,
-            "coefficient3_x_2": -0.6922891,
-            "coefficient4_x_3": 0.33889943,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "DXVAV Sys 2 Heating Coil PLF-FPLR": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "coefficient4_x_3": 0,
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0
-        }
-    },
-    "Curve:Quadratic": {
-        "DXVAV Sys 1 DX Coil PLF": {
-            "coefficient1_constant": 0.85,
-            "coefficient2_x": 0.15,
-            "coefficient3_x_2": 0.0,
-            "maximum_value_of_x": 1.0,
-            "minimum_value_of_x": 0.0
-        },
-        "DXVAV Sys 2 DX Coil PLF": {
-            "coefficient1_constant": 0.85,
-            "coefficient2_x": 0.15,
-            "coefficient3_x_2": 0.0,
-            "maximum_value_of_x": 1.0,
-            "minimum_value_of_x": 0.0
-        }
-    },
-    "DesignSpecification:OutdoorAir": {
-        "SZ DSOA SPACE1-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE2-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE3-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE4-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0,
-            "outdoor_air_flow_per_zone_floor_area": 0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE5-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person"
-        }
-    },
-    "DesignSpecification:ZoneAirDistribution": {
-        "SZ DSZAD SPACE1-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE2-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE3-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE4-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE5-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
         }
     },
     "ElectricEquipment": {
@@ -2086,42 +1396,6 @@
             "fraction_radiant": 0.3,
             "schedule_name": "EQUIP-1",
             "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
-    "Fan:VariableVolume": {
-        "DXVAV Sys 1 Supply Fan": {
-            "air_inlet_node_name": "DXVAV Sys 1 Heating Coil Outlet",
-            "air_outlet_node_name": "DXVAV Sys 1 Supply Fan Outlet",
-            "availability_schedule_name": "FanAvailSched",
-            "fan_power_coefficient_1": 0.35071223,
-            "fan_power_coefficient_2": 0.30850535,
-            "fan_power_coefficient_3": -0.54137364,
-            "fan_power_coefficient_4": 0.87198823,
-            "fan_power_coefficient_5": 0,
-            "fan_power_minimum_flow_fraction": 0.25,
-            "fan_power_minimum_flow_rate_input_method": "Fraction",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 1000
-        },
-        "DXVAV Sys 2 Supply Fan": {
-            "air_inlet_node_name": "DXVAV Sys 2 Heating Coil Outlet",
-            "air_outlet_node_name": "DXVAV Sys 2 Supply Fan Outlet",
-            "availability_schedule_name": "FanAvailSched",
-            "fan_power_coefficient_1": 0.35071223,
-            "fan_power_coefficient_2": 0.30850535,
-            "fan_power_coefficient_3": -0.54137364,
-            "fan_power_coefficient_4": 0.87198823,
-            "fan_power_coefficient_5": 0,
-            "fan_power_minimum_flow_fraction": 0.25,
-            "fan_power_minimum_flow_rate_input_method": "Fraction",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 1000
         }
     },
     "FenestrationSurface:Detailed": {
@@ -2251,6 +1525,195 @@
             "coordinate_system": "Relative",
             "starting_vertex_position": "UpperLeftCorner",
             "vertex_entry_direction": "Counterclockwise"
+        }
+    },
+    "HVACTemplate:System:PackagedVAV": {
+        "DXVAV Sys 1": {
+            "cooling_coil_design_setpoint": 12.8,
+            "cooling_coil_gross_rated_cop": 3,
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_setpoint_reset_type": "None",
+            "cooling_coil_type": "TwoSpeedDX",
+            "dehumidification_control_type": "None",
+            "dehumidification_setpoint": 60,
+            "economizer_lockout": "NoLockout",
+            "economizer_maximum_limit_dry_bulb_temperature": 19,
+            "economizer_minimum_limit_dry_bulb_temperature": 4,
+            "economizer_type": "DifferentialDryBulb",
+            "gas_heating_coil_efficiency": 0.8,
+            "heat_recovery_type": "None",
+            "heating_coil_capacity": "Autosize",
+            "heating_coil_design_setpoint": 10,
+            "heating_coil_setpoint_reset_type": "None",
+            "heating_coil_type": "Gas",
+            "humidifier_rated_capacity": 1e-06,
+            "humidifier_rated_electric_power": 2690,
+            "humidifier_setpoint": 30,
+            "humidifier_type": "None",
+            "latent_heat_recovery_effectiveness": 0.65,
+            "maximum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_control_type": "ProportionalMinimum",
+            "minimum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_schedule_name": "Min OA Sched",
+            "night_cycle_control": "CycleOnAny",
+            "return_plenum_name": "PLENUM-1",
+            "sensible_heat_recovery_effectiveness": 0.7,
+            "sizing_option": "NonCoincident",
+            "supply_fan_delta_pressure": 1000,
+            "supply_fan_maximum_flow_rate": "Autosize",
+            "supply_fan_minimum_flow_rate": "Autosize",
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_motor_in_air_stream_fraction": 1,
+            "supply_fan_part_load_power_coefficients": "InletVaneDampers",
+            "supply_fan_placement": "DrawThrough",
+            "supply_fan_total_efficiency": 0.7,
+            "system_availability_schedule_name": "FanAvailSched"
+        },
+        "DXVAV Sys 2": {
+            "cooling_coil_design_setpoint": 12.8,
+            "cooling_coil_gross_rated_cop": 3,
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_setpoint_reset_type": "WarmestTemperatureFirst",
+            "cooling_coil_type": "TwoSpeedDX",
+            "dehumidification_control_type": "None",
+            "dehumidification_setpoint": 60,
+            "economizer_lockout": "NoLockout",
+            "economizer_maximum_limit_dry_bulb_temperature": 19,
+            "economizer_minimum_limit_dry_bulb_temperature": 4,
+            "economizer_type": "DifferentialDryBulb",
+            "gas_heating_coil_efficiency": 0.8,
+            "heat_recovery_type": "None",
+            "heating_coil_capacity": "Autosize",
+            "heating_coil_design_setpoint": 10,
+            "heating_coil_setpoint_reset_type": "None",
+            "heating_coil_type": "Gas",
+            "humidifier_rated_capacity": 1e-06,
+            "humidifier_rated_electric_power": 2690,
+            "humidifier_setpoint": 30,
+            "humidifier_type": "None",
+            "latent_heat_recovery_effectiveness": 0.65,
+            "maximum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_control_type": "ProportionalMinimum",
+            "minimum_outdoor_air_flow_rate": "Autosize",
+            "minimum_outdoor_air_schedule_name": "Min OA Sched",
+            "night_cycle_control": "CycleOnAny",
+            "sensible_heat_recovery_effectiveness": 0.7,
+            "sizing_option": "NonCoincident",
+            "supply_fan_delta_pressure": 1000,
+            "supply_fan_maximum_flow_rate": "Autosize",
+            "supply_fan_minimum_flow_rate": "Autosize",
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_motor_in_air_stream_fraction": 1,
+            "supply_fan_part_load_power_coefficients": "InletVaneDampers",
+            "supply_fan_placement": "DrawThrough",
+            "supply_fan_total_efficiency": 0.7,
+            "system_availability_schedule_name": "FanAvailSched"
+        }
+    },
+    "HVACTemplate:Thermostat": {
+        "All Zones": {
+            "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
+            "heating_setpoint_schedule_name": "Htg-SetP-Sch"
+        }
+    },
+    "HVACTemplate:Zone:VAV": {
+        "HVACTemplate:Zone:VAV 1": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+            "outdoor_air_method": "Flow/Person",
+            "reheat_coil_type": "Electric",
+            "supply_air_maximum_flow_rate": "Autosize",
+            "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "DXVAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
+            "zone_name": "SPACE1-1"
+        },
+        "HVACTemplate:Zone:VAV 2": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+            "outdoor_air_method": "Flow/Person",
+            "reheat_coil_type": "Electric",
+            "supply_air_maximum_flow_rate": "Autosize",
+            "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "DXVAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
+            "zone_name": "SPACE2-1"
+        },
+        "HVACTemplate:Zone:VAV 3": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+            "outdoor_air_method": "Flow/Person",
+            "reheat_coil_type": "Electric",
+            "supply_air_maximum_flow_rate": "Autosize",
+            "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "DXVAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
+            "zone_name": "SPACE3-1"
+        },
+        "HVACTemplate:Zone:VAV 4": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.3,
+            "damper_heating_action": "Reverse",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_flow_rate_per_zone": 0.0,
+            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+            "outdoor_air_method": "Flow/Person",
+            "reheat_coil_type": "Electric",
+            "supply_air_maximum_flow_rate": "Autosize",
+            "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "DXVAV Sys 1",
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_minimum_air_flow_input_method": "Constant",
+            "zone_name": "SPACE5-1"
+        }
+    },
+    "HVACTemplate:Zone:VAV:HeatAndCool": {
+        "HVACTemplate:Zone:VAV:HeatAndCool 1": {
+            "baseboard_heating_capacity": "Autosize",
+            "baseboard_heating_type": "None",
+            "constant_minimum_air_flow_fraction": 0.2,
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "reheat_coil_type": "Electric",
+            "supply_air_maximum_flow_rate": "Autosize",
+            "template_thermostat_name": "All Zones",
+            "template_vav_system_name": "DXVAV Sys 2",
+            "zone_cooling_design_supply_air_temperature": 12.8,
+            "zone_cooling_design_supply_air_temperature_difference": 11.11,
+            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50,
+            "zone_heating_design_supply_air_temperature_difference": 30,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE4-1"
         }
     },
     "HeatBalanceAlgorithm": {
@@ -2439,58 +1902,6 @@
             "thermal_absorptance": 0.65,
             "thermal_resistance": 0.65225929,
             "visible_absorptance": 0.65
-        }
-    },
-    "NodeList": {
-        "DXVAV Sys 1 Mixed Air Nodes": {
-            "nodes": [
-                {
-                    "node_name": "DXVAV Sys 1 Cooling Coil Outlet"
-                },
-                {
-                    "node_name": "DXVAV Sys 1 Mixed Air Outlet"
-                }
-            ]
-        },
-        "DXVAV Sys 2 Mixed Air Nodes": {
-            "nodes": [
-                {
-                    "node_name": "DXVAV Sys 2 Cooling Coil Outlet"
-                },
-                {
-                    "node_name": "DXVAV Sys 2 Mixed Air Outlet"
-                }
-            ]
-        }
-    },
-    "OutdoorAir:Mixer": {
-        "DXVAV Sys 1 OA Mixing Box": {
-            "mixed_air_node_name": "DXVAV Sys 1 Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "DXVAV Sys 1 Outside Air Inlet",
-            "relief_air_stream_node_name": "DXVAV Sys 1 Relief Air Outlet",
-            "return_air_stream_node_name": "DXVAV Sys 1 Air Loop Inlet"
-        },
-        "DXVAV Sys 2 OA Mixing Box": {
-            "mixed_air_node_name": "DXVAV Sys 2 Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "DXVAV Sys 2 Outside Air Inlet",
-            "relief_air_stream_node_name": "DXVAV Sys 2 Relief Air Outlet",
-            "return_air_stream_node_name": "DXVAV Sys 2 Air Loop Inlet"
-        }
-    },
-    "OutdoorAir:NodeList": {
-        "OutdoorAir:NodeList 1": {
-            "nodes": [
-                {
-                    "node_or_nodelist_name": "DXVAV Sys 1 Outside Air Inlet"
-                }
-            ]
-        },
-        "OutdoorAir:NodeList 2": {
-            "nodes": [
-                {
-                    "node_or_nodelist_name": "DXVAV Sys 2 Outside Air Inlet"
-                }
-            ]
         }
     },
     "Output:Meter:MeterFileOnly": {
@@ -2897,74 +2308,6 @@
             ],
             "schedule_type_limits_name": "Fraction"
         },
-        "HVACTemplate-Always 1": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 1
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 4": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 4
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 10": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 10
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 12.8": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 12.8
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
         "Htg-SetP-Sch": {
             "data": [
                 {
@@ -3334,7 +2677,6 @@
             "numeric_type": "Continuous",
             "upper_limit_value": 1.0
         },
-        "HVACTemplate Any Number": {},
         "On/Off": {
             "lower_limit_value": 0,
             "numeric_type": "Discrete",
@@ -3345,64 +2687,6 @@
             "numeric_type": "Continuous",
             "unit_type": "Temperature",
             "upper_limit_value": 200
-        }
-    },
-    "SetpointManager:MixedAir": {
-        "DXVAV Sys 1 Cooling Coil Air Temp Manager": {
-            "control_variable": "Temperature",
-            "fan_inlet_node_name": "DXVAV Sys 1 Heating Coil Outlet",
-            "fan_outlet_node_name": "DXVAV Sys 1 Supply Fan Outlet",
-            "reference_setpoint_node_name": "DXVAV Sys 1 Supply Fan Outlet",
-            "setpoint_node_or_nodelist_name": "DXVAV Sys 1 Mixed Air Nodes"
-        },
-        "DXVAV Sys 1 Heating Coil Air Temp Manager": {
-            "control_variable": "Temperature",
-            "fan_inlet_node_name": "DXVAV Sys 1 Heating Coil Outlet",
-            "fan_outlet_node_name": "DXVAV Sys 1 Supply Fan Outlet",
-            "reference_setpoint_node_name": "DXVAV Sys 1 Supply Path Inlet",
-            "setpoint_node_or_nodelist_name": "DXVAV Sys 1 Heating Coil Outlet"
-        },
-        "DXVAV Sys 2 Cooling Coil Air Temp Manager": {
-            "control_variable": "Temperature",
-            "fan_inlet_node_name": "DXVAV Sys 2 Heating Coil Outlet",
-            "fan_outlet_node_name": "DXVAV Sys 2 Supply Fan Outlet",
-            "reference_setpoint_node_name": "DXVAV Sys 2 Supply Fan Outlet",
-            "setpoint_node_or_nodelist_name": "DXVAV Sys 2 Mixed Air Nodes"
-        },
-        "DXVAV Sys 2 Heating Coil Air Temp Manager": {
-            "control_variable": "Temperature",
-            "fan_inlet_node_name": "DXVAV Sys 2 Heating Coil Outlet",
-            "fan_outlet_node_name": "DXVAV Sys 2 Supply Fan Outlet",
-            "reference_setpoint_node_name": "DXVAV Sys 2 Supply Path Inlet",
-            "setpoint_node_or_nodelist_name": "DXVAV Sys 2 Heating Coil Outlet"
-        }
-    },
-    "SetpointManager:Scheduled": {
-        "DXVAV Sys 1 Cooling Supply Air Temp Manager": {
-            "control_variable": "Temperature",
-            "schedule_name": "HVACTemplate-Always 12.8",
-            "setpoint_node_or_nodelist_name": "DXVAV Sys 1 Supply Fan Outlet"
-        },
-        "DXVAV Sys 1 Heating Supply Air Temp Manager": {
-            "control_variable": "Temperature",
-            "schedule_name": "HVACTemplate-Always 10",
-            "setpoint_node_or_nodelist_name": "DXVAV Sys 1 Supply Path Inlet"
-        },
-        "DXVAV Sys 2 Heating Supply Air Temp Manager": {
-            "control_variable": "Temperature",
-            "schedule_name": "HVACTemplate-Always 10",
-            "setpoint_node_or_nodelist_name": "DXVAV Sys 2 Supply Path Inlet"
-        }
-    },
-    "SetpointManager:WarmestTemperatureFlow": {
-        "DXVAV Sys 2 Cooling Supply Air Temp Manager": {
-            "control_variable": "Temperature",
-            "hvac_air_loop_name": "DXVAV Sys 2",
-            "maximum_setpoint_temperature": 18,
-            "minimum_setpoint_temperature": 12.8,
-            "minimum_turndown_ratio": 0.2,
-            "setpoint_node_or_nodelist_name": "DXVAV Sys 2 Supply Fan Outlet",
-            "strategy": "TemperatureFirst"
         }
     },
     "Shading:Zone:Detailed": {
@@ -3502,157 +2786,6 @@
             "heating_sizing_factor": 1.2
         }
     },
-    "Sizing:System": {
-        "Sizing:System 1": {
-            "100_outdoor_air_in_cooling": "No",
-            "100_outdoor_air_in_heating": "No",
-            "airloop_name": "DXVAV Sys 1",
-            "central_cooling_capacity_control_method": "OnOff",
-            "central_cooling_design_supply_air_humidity_ratio": 0.008,
-            "central_cooling_design_supply_air_temperature": 12.8,
-            "central_heating_design_supply_air_humidity_ratio": 0.008,
-            "central_heating_design_supply_air_temperature": 10,
-            "central_heating_maximum_system_air_flow_ratio": 0.3,
-            "cooling_design_capacity": "Autosize",
-            "cooling_design_capacity_method": "CoolingDesignCapacity",
-            "cooling_supply_air_flow_rate": 0,
-            "cooling_supply_air_flow_rate_method": "DesignDay",
-            "design_outdoor_air_flow_rate": "Autosize",
-            "heating_design_capacity": "Autosize",
-            "heating_design_capacity_method": "HeatingDesignCapacity",
-            "heating_supply_air_flow_rate": 0,
-            "heating_supply_air_flow_rate_method": "DesignDay",
-            "precool_design_humidity_ratio": 0.008,
-            "precool_design_temperature": 11,
-            "preheat_design_humidity_ratio": 0.008,
-            "preheat_design_temperature": 2,
-            "system_outdoor_air_method": "ZoneSum",
-            "type_of_load_to_size_on": "Sensible",
-            "type_of_zone_sum_to_use": "NonCoincident",
-            "zone_maximum_outdoor_air_fraction": 1.0
-        },
-        "Sizing:System 2": {
-            "100_outdoor_air_in_cooling": "No",
-            "100_outdoor_air_in_heating": "No",
-            "airloop_name": "DXVAV Sys 2",
-            "central_cooling_capacity_control_method": "OnOff",
-            "central_cooling_design_supply_air_humidity_ratio": 0.008,
-            "central_cooling_design_supply_air_temperature": 12.8,
-            "central_heating_design_supply_air_humidity_ratio": 0.008,
-            "central_heating_design_supply_air_temperature": 10,
-            "central_heating_maximum_system_air_flow_ratio": 0.3,
-            "cooling_design_capacity": "Autosize",
-            "cooling_design_capacity_method": "CoolingDesignCapacity",
-            "cooling_supply_air_flow_rate": 0,
-            "cooling_supply_air_flow_rate_method": "DesignDay",
-            "design_outdoor_air_flow_rate": "Autosize",
-            "heating_design_capacity": "Autosize",
-            "heating_design_capacity_method": "HeatingDesignCapacity",
-            "heating_supply_air_flow_rate": 0,
-            "heating_supply_air_flow_rate_method": "DesignDay",
-            "precool_design_humidity_ratio": 0.008,
-            "precool_design_temperature": 11,
-            "preheat_design_humidity_ratio": 0.008,
-            "preheat_design_temperature": 2,
-            "system_outdoor_air_method": "ZoneSum",
-            "type_of_load_to_size_on": "Sensible",
-            "type_of_zone_sum_to_use": "NonCoincident",
-            "zone_maximum_outdoor_air_fraction": 1.0
-        }
-    },
-    "Sizing:Zone": {
-        "Sizing:Zone 1": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE1-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE1-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE1-1"
-        },
-        "Sizing:Zone 2": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE2-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE2-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE2-1"
-        },
-        "Sizing:Zone 3": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE3-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE3-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE3-1"
-        },
-        "Sizing:Zone 4": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE5-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE5-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE5-1"
-        },
-        "Sizing:Zone 5": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE4-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE4-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 12.8,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_difference": 30,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE4-1"
-        }
-    },
     "SizingPeriod:DesignDay": {
         "CHICAGO_IL_USA Annual Cooling 1% Design Conditions DB/MCWB": {
             "barometric_pressure": 99063.0,
@@ -3697,12 +2830,6 @@
     "SurfaceConvectionAlgorithm:Outside": {
         "SurfaceConvectionAlgorithm:Outside 1": {
             "algorithm": "TARP"
-        }
-    },
-    "ThermostatSetpoint:DualSetpoint": {
-        "All Zones Dual SP Control": {
-            "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
-            "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
         }
     },
     "Timestep": {
@@ -3847,159 +2974,6 @@
             "x_origin": 0,
             "y_origin": 0,
             "z_origin": 0
-        }
-    },
-    "ZoneControl:Thermostat": {
-        "SPACE1-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE1-1"
-        },
-        "SPACE2-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE2-1"
-        },
-        "SPACE3-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE3-1"
-        },
-        "SPACE4-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE4-1"
-        },
-        "SPACE5-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
-    "ZoneHVAC:AirDistributionUnit": {
-        "SPACE1-1 ATU": {
-            "air_distribution_unit_outlet_node_name": "SPACE1-1 Supply Inlet",
-            "air_terminal_name": "SPACE1-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
-        },
-        "SPACE2-1 ATU": {
-            "air_distribution_unit_outlet_node_name": "SPACE2-1 Supply Inlet",
-            "air_terminal_name": "SPACE2-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
-        },
-        "SPACE3-1 ATU": {
-            "air_distribution_unit_outlet_node_name": "SPACE3-1 Supply Inlet",
-            "air_terminal_name": "SPACE3-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
-        },
-        "SPACE4-1 ATU": {
-            "air_distribution_unit_outlet_node_name": "SPACE4-1 Supply Inlet",
-            "air_terminal_name": "SPACE4-1 VAV Heat Cool Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:HeatAndCool:Reheat"
-        },
-        "SPACE5-1 ATU": {
-            "air_distribution_unit_outlet_node_name": "SPACE5-1 Supply Inlet",
-            "air_terminal_name": "SPACE5-1 VAV Reheat",
-            "air_terminal_object_type": "AirTerminal:SingleDuct:VAV:Reheat"
-        }
-    },
-    "ZoneHVAC:EquipmentConnections": {
-        "ZoneHVAC:EquipmentConnections 1": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE1-1 Supply Inlet",
-            "zone_air_node_name": "SPACE1-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE1-1 Equipment",
-            "zone_name": "SPACE1-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE1-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 2": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE2-1 Supply Inlet",
-            "zone_air_node_name": "SPACE2-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE2-1 Equipment",
-            "zone_name": "SPACE2-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE2-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 3": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE3-1 Supply Inlet",
-            "zone_air_node_name": "SPACE3-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE3-1 Equipment",
-            "zone_name": "SPACE3-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE3-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 4": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE5-1 Supply Inlet",
-            "zone_air_node_name": "SPACE5-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE5-1 Equipment",
-            "zone_name": "SPACE5-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE5-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 5": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE4-1 Supply Inlet",
-            "zone_air_node_name": "SPACE4-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE4-1 Equipment",
-            "zone_name": "SPACE4-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE4-1 Return Outlet"
-        }
-    },
-    "ZoneHVAC:EquipmentList": {
-        "SPACE1-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE1-1 ATU",
-                    "zone_equipment_object_type": "ZoneHVAC:AirDistributionUnit"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE2-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE2-1 ATU",
-                    "zone_equipment_object_type": "ZoneHVAC:AirDistributionUnit"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE3-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE3-1 ATU",
-                    "zone_equipment_object_type": "ZoneHVAC:AirDistributionUnit"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE4-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE4-1 ATU",
-                    "zone_equipment_object_type": "ZoneHVAC:AirDistributionUnit"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE5-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE5-1 ATU",
-                    "zone_equipment_object_type": "ZoneHVAC:AirDistributionUnit"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
         }
     },
     "ZoneInfiltration:DesignFlowRate": {

@@ -1359,18 +1359,6 @@
             "outdoor_air_flow_per_zone_floor_area": 0.0,
             "outdoor_air_method": "Flow/Person",
             "outdoor_air_schedule_name": "Min OA Sched"
-        },
-        "SZ DSOA SPACE2-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0,
-            "outdoor_air_flow_per_zone_floor_area": 0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE3-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0,
-            "outdoor_air_flow_per_zone_floor_area": 0,
-            "outdoor_air_method": "Flow/Person"
         }
     },
     "ElectricEquipment": {
@@ -1547,6 +1535,124 @@
             "coordinate_system": "Relative",
             "starting_vertex_position": "UpperLeftCorner",
             "vertex_entry_direction": "Counterclockwise"
+        }
+    },
+    "HVACTemplate:Thermostat": {
+        "All Zones": {
+            "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
+            "heating_setpoint_schedule_name": "Htg-SetP-Sch"
+        }
+    },
+    "HVACTemplate:Zone:IdealLoadsAirSystem": {
+        "HVACTemplate:Zone:IdealLoadsAirSystem 1": {
+            "cooling_limit": "NoLimit",
+            "cooling_sensible_heat_ratio": 0.7,
+            "dehumidification_control_type": "ConstantSensibleHeatRatio",
+            "demand_controlled_ventilation_type": "None",
+            "heat_recovery_type": "None",
+            "heating_limit": "NoLimit",
+            "humidification_control_type": "None",
+            "humidification_setpoint": 30,
+            "latent_heat_recovery_effectiveness": 0.65,
+            "maximum_heating_supply_air_humidity_ratio": 0.0156,
+            "maximum_heating_supply_air_temperature": 50,
+            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
+            "minimum_cooling_supply_air_temperature": 13,
+            "outdoor_air_economizer_type": "NoEconomizer",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "None",
+            "sensible_heat_recovery_effectiveness": 0.7,
+            "template_thermostat_name": "All Zones",
+            "zone_name": "SPACE1-1"
+        },
+        "HVACTemplate:Zone:IdealLoadsAirSystem 2": {
+            "cooling_limit": "NoLimit",
+            "cooling_sensible_heat_ratio": 0.7,
+            "dehumidification_control_type": "ConstantSensibleHeatRatio",
+            "demand_controlled_ventilation_type": "None",
+            "heat_recovery_type": "None",
+            "heating_limit": "NoLimit",
+            "humidification_control_type": "None",
+            "humidification_setpoint": 30,
+            "latent_heat_recovery_effectiveness": 0.65,
+            "maximum_heating_supply_air_humidity_ratio": 0.0156,
+            "maximum_heating_supply_air_temperature": 50,
+            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
+            "minimum_cooling_supply_air_temperature": 13,
+            "outdoor_air_economizer_type": "NoEconomizer",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "sensible_heat_recovery_effectiveness": 0.7,
+            "template_thermostat_name": "All Zones",
+            "zone_name": "SPACE2-1"
+        },
+        "HVACTemplate:Zone:IdealLoadsAirSystem 3": {
+            "cooling_limit": "LimitFlowRate",
+            "cooling_sensible_heat_ratio": 0.7,
+            "dehumidification_control_type": "ConstantSensibleHeatRatio",
+            "demand_controlled_ventilation_type": "None",
+            "heat_recovery_type": "None",
+            "heating_limit": "NoLimit",
+            "humidification_control_type": "None",
+            "humidification_setpoint": 30,
+            "latent_heat_recovery_effectiveness": 0.65,
+            "maximum_cooling_air_flow_rate": "Autosize",
+            "maximum_heating_supply_air_humidity_ratio": 0.0156,
+            "maximum_heating_supply_air_temperature": 50,
+            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
+            "minimum_cooling_supply_air_temperature": 13,
+            "outdoor_air_economizer_type": "DifferentialDryBulb",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "sensible_heat_recovery_effectiveness": 0.7,
+            "template_thermostat_name": "All Zones",
+            "zone_name": "SPACE3-1"
+        },
+        "HVACTemplate:Zone:IdealLoadsAirSystem 4": {
+            "cooling_limit": "LimitFlowRate",
+            "cooling_sensible_heat_ratio": 0.7,
+            "dehumidification_control_type": "ConstantSensibleHeatRatio",
+            "demand_controlled_ventilation_type": "None",
+            "design_specification_outdoor_air_object_name": "Office Outdoor Air Spec",
+            "heat_recovery_type": "Sensible",
+            "heating_limit": "NoLimit",
+            "humidification_control_type": "Humidistat",
+            "humidification_setpoint": 30,
+            "latent_heat_recovery_effectiveness": 0.65,
+            "maximum_cooling_air_flow_rate": "Autosize",
+            "maximum_heating_supply_air_humidity_ratio": 0.0156,
+            "maximum_heating_supply_air_temperature": 50,
+            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
+            "minimum_cooling_supply_air_temperature": 13,
+            "outdoor_air_economizer_type": "DifferentialDryBulb",
+            "outdoor_air_method": "DetailedSpecification",
+            "sensible_heat_recovery_effectiveness": 0.7,
+            "template_thermostat_name": "All Zones",
+            "zone_name": "SPACE4-1"
+        },
+        "HVACTemplate:Zone:IdealLoadsAirSystem 5": {
+            "cooling_limit": "LimitFlowRate",
+            "cooling_sensible_heat_ratio": 0.7,
+            "dehumidification_control_type": "Humidistat",
+            "dehumidification_setpoint": 60,
+            "demand_controlled_ventilation_type": "OccupancySchedule",
+            "design_specification_outdoor_air_object_name": "Office Outdoor Air Spec",
+            "heat_recovery_type": "Enthalpy",
+            "heating_limit": "LimitFlowRate",
+            "humidification_control_type": "Humidistat",
+            "humidification_setpoint": 30,
+            "latent_heat_recovery_effectiveness": 0.65,
+            "maximum_cooling_air_flow_rate": "Autosize",
+            "maximum_heating_air_flow_rate": "Autosize",
+            "maximum_heating_supply_air_humidity_ratio": 0.0156,
+            "maximum_heating_supply_air_temperature": 50,
+            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
+            "minimum_cooling_supply_air_temperature": 13,
+            "outdoor_air_economizer_type": "DifferentialEnthalpy",
+            "outdoor_air_method": "DetailedSpecification",
+            "sensible_heat_recovery_effectiveness": 0.7,
+            "template_thermostat_name": "All Zones",
+            "zone_name": "SPACE5-1"
         }
     },
     "HeatBalanceAlgorithm": {
@@ -2130,74 +2236,6 @@
             ],
             "schedule_type_limits_name": "Fraction"
         },
-        "HVACTemplate-Always 4": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 4
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 30": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 30
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 60": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 60
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 100": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 100
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
         "Htg-SetP-Sch": {
             "data": [
                 {
@@ -2567,7 +2605,6 @@
             "numeric_type": "Continuous",
             "upper_limit_value": 1.0
         },
-        "HVACTemplate Any Number": {},
         "On/Off": {
             "lower_limit_value": 0,
             "numeric_type": "Discrete",
@@ -2677,87 +2714,6 @@
             "heating_sizing_factor": 1.2
         }
     },
-    "Sizing:Zone": {
-        "Sizing:Zone 1": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.0077,
-            "zone_cooling_design_supply_air_temperature": 13,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.0156,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE1-1"
-        },
-        "Sizing:Zone 2": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE2-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.0077,
-            "zone_cooling_design_supply_air_temperature": 13,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.0156,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE2-1"
-        },
-        "Sizing:Zone 3": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE3-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.0077,
-            "zone_cooling_design_supply_air_temperature": 13,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.0156,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE3-1"
-        },
-        "Sizing:Zone 4": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "Office Outdoor Air Spec",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.0077,
-            "zone_cooling_design_supply_air_temperature": 13,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.0156,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE4-1"
-        },
-        "Sizing:Zone 5": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "Office Outdoor Air Spec",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.0077,
-            "zone_cooling_design_supply_air_temperature": 13,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.0156,
-            "zone_heating_design_supply_air_temperature": 50,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
     "SizingPeriod:DesignDay": {
         "CHICAGO_IL_USA Annual Cooling 1% Design Conditions DB/MCWB": {
             "barometric_pressure": 99063.0,
@@ -2802,12 +2758,6 @@
     "SurfaceConvectionAlgorithm:Outside": {
         "SurfaceConvectionAlgorithm:Outside 1": {
             "algorithm": "DOE-2"
-        }
-    },
-    "ThermostatSetpoint:DualSetpoint": {
-        "All Zones Dual SP Control": {
-            "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
-            "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
         }
     },
     "Timestep": {
@@ -2952,243 +2902,6 @@
             "x_origin": 0,
             "y_origin": 0,
             "z_origin": 0
-        }
-    },
-    "ZoneControl:Humidistat": {
-        "SPACE4-1 Humidification Humidistat": {
-            "dehumidifying_relative_humidity_setpoint_schedule_name": "HVACTemplate-Always 100",
-            "humidifying_relative_humidity_setpoint_schedule_name": "HVACTemplate-Always 30",
-            "zone_name": "SPACE4-1"
-        },
-        "SPACE5-1 Humidistat": {
-            "dehumidifying_relative_humidity_setpoint_schedule_name": "HVACTemplate-Always 60",
-            "humidifying_relative_humidity_setpoint_schedule_name": "HVACTemplate-Always 30",
-            "zone_name": "SPACE5-1"
-        }
-    },
-    "ZoneControl:Thermostat": {
-        "SPACE1-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE1-1"
-        },
-        "SPACE2-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE2-1"
-        },
-        "SPACE3-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE3-1"
-        },
-        "SPACE4-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE4-1"
-        },
-        "SPACE5-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
-    "ZoneHVAC:EquipmentConnections": {
-        "ZoneHVAC:EquipmentConnections 1": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE1-1 Ideal Loads Supply Inlet",
-            "zone_air_node_name": "SPACE1-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE1-1 Equipment",
-            "zone_name": "SPACE1-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE1-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 2": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE2-1 Ideal Loads Supply Inlet",
-            "zone_air_node_name": "SPACE2-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE2-1 Equipment",
-            "zone_name": "SPACE2-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE2-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 3": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE3-1 Ideal Loads Supply Inlet",
-            "zone_air_node_name": "SPACE3-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE3-1 Equipment",
-            "zone_name": "SPACE3-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE3-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 4": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE4-1 Ideal Loads Supply Inlet",
-            "zone_air_node_name": "SPACE4-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE4-1 Equipment",
-            "zone_name": "SPACE4-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE4-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 5": {
-            "zone_air_inlet_node_or_nodelist_name": "SPACE5-1 Ideal Loads Supply Inlet",
-            "zone_air_node_name": "SPACE5-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE5-1 Equipment",
-            "zone_name": "SPACE5-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE5-1 Return Outlet"
-        }
-    },
-    "ZoneHVAC:EquipmentList": {
-        "SPACE1-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE1-1 Ideal Loads Air System",
-                    "zone_equipment_object_type": "ZoneHVAC:IdealLoadsAirSystem"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE2-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE2-1 Ideal Loads Air System",
-                    "zone_equipment_object_type": "ZoneHVAC:IdealLoadsAirSystem"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE3-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE3-1 Ideal Loads Air System",
-                    "zone_equipment_object_type": "ZoneHVAC:IdealLoadsAirSystem"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE4-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE4-1 Ideal Loads Air System",
-                    "zone_equipment_object_type": "ZoneHVAC:IdealLoadsAirSystem"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE5-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE5-1 Ideal Loads Air System",
-                    "zone_equipment_object_type": "ZoneHVAC:IdealLoadsAirSystem"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        }
-    },
-    "ZoneHVAC:IdealLoadsAirSystem": {
-        "SPACE1-1 Ideal Loads Air System": {
-            "cooling_limit": "NoLimit",
-            "cooling_sensible_heat_ratio": 0.7,
-            "dehumidification_control_type": "ConstantSensibleHeatRatio",
-            "demand_controlled_ventilation_type": "None",
-            "heat_recovery_type": "None",
-            "heating_limit": "NoLimit",
-            "humidification_control_type": "None",
-            "latent_heat_recovery_effectiveness": 0.65,
-            "maximum_heating_supply_air_humidity_ratio": 0.0156,
-            "maximum_heating_supply_air_temperature": 50,
-            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
-            "minimum_cooling_supply_air_temperature": 13,
-            "outdoor_air_economizer_type": "NoEconomizer",
-            "sensible_heat_recovery_effectiveness": 0.7,
-            "zone_supply_air_node_name": "SPACE1-1 Ideal Loads Supply Inlet"
-        },
-        "SPACE2-1 Ideal Loads Air System": {
-            "cooling_limit": "NoLimit",
-            "cooling_sensible_heat_ratio": 0.7,
-            "dehumidification_control_type": "ConstantSensibleHeatRatio",
-            "demand_controlled_ventilation_type": "None",
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE2-1",
-            "heat_recovery_type": "None",
-            "heating_limit": "NoLimit",
-            "humidification_control_type": "None",
-            "latent_heat_recovery_effectiveness": 0.65,
-            "maximum_heating_supply_air_humidity_ratio": 0.0156,
-            "maximum_heating_supply_air_temperature": 50,
-            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
-            "minimum_cooling_supply_air_temperature": 13,
-            "outdoor_air_economizer_type": "NoEconomizer",
-            "outdoor_air_inlet_node_name": "SPACE2-1 Ideal Loads Outdoor Air Inlet",
-            "sensible_heat_recovery_effectiveness": 0.7,
-            "zone_supply_air_node_name": "SPACE2-1 Ideal Loads Supply Inlet"
-        },
-        "SPACE3-1 Ideal Loads Air System": {
-            "cooling_limit": "LimitFlowRate",
-            "cooling_sensible_heat_ratio": 0.7,
-            "dehumidification_control_type": "ConstantSensibleHeatRatio",
-            "demand_controlled_ventilation_type": "None",
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE3-1",
-            "heat_recovery_type": "None",
-            "heating_limit": "NoLimit",
-            "humidification_control_type": "None",
-            "latent_heat_recovery_effectiveness": 0.65,
-            "maximum_cooling_air_flow_rate": "Autosize",
-            "maximum_heating_supply_air_humidity_ratio": 0.0156,
-            "maximum_heating_supply_air_temperature": 50,
-            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
-            "minimum_cooling_supply_air_temperature": 13,
-            "outdoor_air_economizer_type": "DifferentialDryBulb",
-            "outdoor_air_inlet_node_name": "SPACE3-1 Ideal Loads Outdoor Air Inlet",
-            "sensible_heat_recovery_effectiveness": 0.7,
-            "zone_supply_air_node_name": "SPACE3-1 Ideal Loads Supply Inlet"
-        },
-        "SPACE4-1 Ideal Loads Air System": {
-            "cooling_limit": "LimitFlowRate",
-            "cooling_sensible_heat_ratio": 0.7,
-            "dehumidification_control_type": "ConstantSensibleHeatRatio",
-            "demand_controlled_ventilation_type": "None",
-            "design_specification_outdoor_air_object_name": "Office Outdoor Air Spec",
-            "heat_recovery_type": "Sensible",
-            "heating_limit": "NoLimit",
-            "humidification_control_type": "Humidistat",
-            "latent_heat_recovery_effectiveness": 0.65,
-            "maximum_cooling_air_flow_rate": "Autosize",
-            "maximum_heating_supply_air_humidity_ratio": 0.0156,
-            "maximum_heating_supply_air_temperature": 50,
-            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
-            "minimum_cooling_supply_air_temperature": 13,
-            "outdoor_air_economizer_type": "DifferentialDryBulb",
-            "outdoor_air_inlet_node_name": "SPACE4-1 Ideal Loads Outdoor Air Inlet",
-            "sensible_heat_recovery_effectiveness": 0.7,
-            "zone_supply_air_node_name": "SPACE4-1 Ideal Loads Supply Inlet"
-        },
-        "SPACE5-1 Ideal Loads Air System": {
-            "cooling_limit": "LimitFlowRate",
-            "cooling_sensible_heat_ratio": 0.7,
-            "dehumidification_control_type": "Humidistat",
-            "demand_controlled_ventilation_type": "OccupancySchedule",
-            "design_specification_outdoor_air_object_name": "Office Outdoor Air Spec",
-            "heat_recovery_type": "Enthalpy",
-            "heating_limit": "LimitFlowRate",
-            "humidification_control_type": "Humidistat",
-            "latent_heat_recovery_effectiveness": 0.65,
-            "maximum_cooling_air_flow_rate": "Autosize",
-            "maximum_heating_air_flow_rate": "Autosize",
-            "maximum_heating_supply_air_humidity_ratio": 0.0156,
-            "maximum_heating_supply_air_temperature": 50,
-            "minimum_cooling_supply_air_humidity_ratio": 0.0077,
-            "minimum_cooling_supply_air_temperature": 13,
-            "outdoor_air_economizer_type": "DifferentialEnthalpy",
-            "outdoor_air_inlet_node_name": "SPACE5-1 Ideal Loads Outdoor Air Inlet",
-            "sensible_heat_recovery_effectiveness": 0.7,
-            "zone_supply_air_node_name": "SPACE5-1 Ideal Loads Supply Inlet"
         }
     },
     "ZoneInfiltration:DesignFlowRate": {

@@ -3100,7 +3100,7 @@
     },
     "Version": {
         "Version 1": {
-            "version_identifier": "9.4"
+            "version_identifier": "9.5"
         }
     },
     "WindowMaterial:Gas": {
@@ -3271,11 +3271,8 @@
     },
     "ZoneHVAC:Baseboard:RadiantConvective:Water": {
         "SPACE1-1 Baseboard Heat": {
-            "convergence_tolerance": 0.001,
-            "fraction_of_radiant_energy_incident_on_people": 0.0,
-            "fraction_radiant": 0.0,
+            "design_object": "SPACE1-1 Baseboard Heat Design Object",
             "heating_design_capacity": "Autosize",
-            "heating_design_capacity_method": "HeatingDesignCapacity",
             "inlet_node_name": "SPACE1-1 Baseboard HW Inlet",
             "maximum_water_flow_rate": "Autosize",
             "outlet_node_name": "SPACE1-1 Baseboard HW Outlet",
@@ -3283,11 +3280,8 @@
             "rated_water_mass_flow_rate": 0.063
         },
         "SPACE2-1 Baseboard Heat": {
-            "convergence_tolerance": 0.001,
-            "fraction_of_radiant_energy_incident_on_people": 0.0,
-            "fraction_radiant": 0.0,
+            "design_object": "SPACE2-1 Baseboard Heat Design Object",
             "heating_design_capacity": "Autosize",
-            "heating_design_capacity_method": "HeatingDesignCapacity",
             "inlet_node_name": "SPACE2-1 Baseboard HW Inlet",
             "maximum_water_flow_rate": "Autosize",
             "outlet_node_name": "SPACE2-1 Baseboard HW Outlet",
@@ -3295,11 +3289,8 @@
             "rated_water_mass_flow_rate": 0.063
         },
         "SPACE3-1 Baseboard Heat": {
-            "convergence_tolerance": 0.001,
-            "fraction_of_radiant_energy_incident_on_people": 0.0,
-            "fraction_radiant": 0.0,
+            "design_object": "SPACE3-1 Baseboard Heat Design Object",
             "heating_design_capacity": "Autosize",
-            "heating_design_capacity_method": "HeatingDesignCapacity",
             "inlet_node_name": "SPACE3-1 Baseboard HW Inlet",
             "maximum_water_flow_rate": "Autosize",
             "outlet_node_name": "SPACE3-1 Baseboard HW Outlet",
@@ -3307,11 +3298,8 @@
             "rated_water_mass_flow_rate": 0.063
         },
         "SPACE4-1 Baseboard Heat": {
-            "convergence_tolerance": 0.001,
-            "fraction_of_radiant_energy_incident_on_people": 0.0,
-            "fraction_radiant": 0.0,
+            "design_object": "SPACE4-1 Baseboard Heat Design Object",
             "heating_design_capacity": "Autosize",
-            "heating_design_capacity_method": "HeatingDesignCapacity",
             "inlet_node_name": "SPACE4-1 Baseboard HW Inlet",
             "maximum_water_flow_rate": "Autosize",
             "outlet_node_name": "SPACE4-1 Baseboard HW Outlet",
@@ -3319,16 +3307,45 @@
             "rated_water_mass_flow_rate": 0.063
         },
         "SPACE5-1 Baseboard Heat": {
-            "convergence_tolerance": 0.001,
-            "fraction_of_radiant_energy_incident_on_people": 0.0,
-            "fraction_radiant": 0.0,
+            "design_object": "SPACE5-1 Baseboard Heat Design Object",
             "heating_design_capacity": "Autosize",
-            "heating_design_capacity_method": "HeatingDesignCapacity",
             "inlet_node_name": "SPACE5-1 Baseboard HW Inlet",
             "maximum_water_flow_rate": "Autosize",
             "outlet_node_name": "SPACE5-1 Baseboard HW Outlet",
             "rated_average_water_temperature": 87.78,
             "rated_water_mass_flow_rate": 0.063
+        }
+    },
+    "ZoneHVAC:Baseboard:RadiantConvective:Water:Design": {
+        "SPACE1-1 Baseboard Heat Design Object": {
+            "convergence_tolerance": 0.001,
+            "fraction_of_radiant_energy_incident_on_people": 0.0,
+            "fraction_radiant": 0.0,
+            "heating_design_capacity_method": "HeatingDesignCapacity"
+        },
+        "SPACE2-1 Baseboard Heat Design Object": {
+            "convergence_tolerance": 0.001,
+            "fraction_of_radiant_energy_incident_on_people": 0.0,
+            "fraction_radiant": 0.0,
+            "heating_design_capacity_method": "HeatingDesignCapacity"
+        },
+        "SPACE3-1 Baseboard Heat Design Object": {
+            "convergence_tolerance": 0.001,
+            "fraction_of_radiant_energy_incident_on_people": 0.0,
+            "fraction_radiant": 0.0,
+            "heating_design_capacity_method": "HeatingDesignCapacity"
+        },
+        "SPACE4-1 Baseboard Heat Design Object": {
+            "convergence_tolerance": 0.001,
+            "fraction_of_radiant_energy_incident_on_people": 0.0,
+            "fraction_radiant": 0.0,
+            "heating_design_capacity_method": "HeatingDesignCapacity"
+        },
+        "SPACE5-1 Baseboard Heat Design Object": {
+            "convergence_tolerance": 0.001,
+            "fraction_of_radiant_energy_incident_on_people": 0.0,
+            "fraction_radiant": 0.0,
+            "heating_design_capacity_method": "HeatingDesignCapacity"
         }
     },
     "ZoneHVAC:EquipmentConnections": {

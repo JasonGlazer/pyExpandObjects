@@ -1,152 +1,4 @@
 {
-    "Boiler:HotWater": {
-        "Main Boiler": {
-            "boiler_flow_mode": "ConstantFlow",
-            "boiler_water_inlet_node_name": "Main Boiler HW Inlet",
-            "boiler_water_outlet_node_name": "Main Boiler HW Outlet",
-            "design_water_flow_rate": "Autosize",
-            "efficiency_curve_temperature_evaluation_variable": "LeavingBoiler",
-            "fuel_type": "NaturalGas",
-            "maximum_part_load_ratio": 1.1,
-            "minimum_part_load_ratio": 0.0,
-            "nominal_capacity": "Autosize",
-            "nominal_thermal_efficiency": 0.8,
-            "normalized_boiler_efficiency_curve_name": "Main Boiler Efficiency Curve",
-            "optimum_part_load_ratio": 1.0,
-            "parasitic_electric_load": 0,
-            "sizing_factor": 1.0,
-            "water_outlet_upper_temperature_limit": 100.0
-        }
-    },
-    "Branch": {
-        "Hot Water Loop HW Demand Bypass Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Demand Bypass Inlet",
-                    "component_name": "Hot Water Loop HW Demand Side Bypass Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Hot Water Loop HW Demand Bypass Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Demand Inlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Demand Inlet",
-                    "component_name": "Hot Water Loop HW Demand Inlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Hot Water Loop HW Demand Inlet Pipe Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Demand Outlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Demand Outlet Pipe Inlet",
-                    "component_name": "Hot Water Loop HW Demand Outlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Hot Water Loop HW Demand Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Supply Bypass Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Supply Bypass Inlet",
-                    "component_name": "Hot Water Loop HW Supply Side Bypass Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Hot Water Loop HW Supply Bypass Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Supply Inlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Supply Inlet",
-                    "component_name": "Hot Water Loop HW Supply Pump",
-                    "component_object_type": "Pump:ConstantSpeed",
-                    "component_outlet_node_name": "Hot Water Loop HW Pump Outlet"
-                }
-            ]
-        },
-        "Hot Water Loop HW Supply Outlet Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Hot Water Loop HW Supply Outlet Pipe Inlet",
-                    "component_name": "Hot Water Loop HW Supply Outlet Pipe",
-                    "component_object_type": "Pipe:Adiabatic",
-                    "component_outlet_node_name": "Hot Water Loop HW Supply Outlet"
-                }
-            ]
-        },
-        "Main Boiler HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "Main Boiler HW Inlet",
-                    "component_name": "Main Boiler",
-                    "component_object_type": "Boiler:HotWater",
-                    "component_outlet_node_name": "Main Boiler HW Outlet"
-                }
-            ]
-        },
-        "SPACE2-1 PTAC Heating Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE2-1 PTAC Heating Coil HW Inlet",
-                    "component_name": "SPACE2-1 PTAC Heating Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE2-1 PTAC Heating Coil HW Outlet"
-                }
-            ]
-        },
-        "SPACE3-1 PTAC Heating Coil HW Branch": {
-            "components": [
-                {
-                    "component_inlet_node_name": "SPACE3-1 PTAC Heating Coil HW Inlet",
-                    "component_name": "SPACE3-1 PTAC Heating Coil",
-                    "component_object_type": "Coil:Heating:Water",
-                    "component_outlet_node_name": "SPACE3-1 PTAC Heating Coil HW Outlet"
-                }
-            ]
-        }
-    },
-    "BranchList": {
-        "Hot Water Loop HW Demand Side Branches": {
-            "branches": [
-                {
-                    "branch_name": "Hot Water Loop HW Demand Inlet Branch"
-                },
-                {
-                    "branch_name": "SPACE2-1 PTAC Heating Coil HW Branch"
-                },
-                {
-                    "branch_name": "SPACE3-1 PTAC Heating Coil HW Branch"
-                },
-                {
-                    "branch_name": "Hot Water Loop HW Demand Bypass Branch"
-                },
-                {
-                    "branch_name": "Hot Water Loop HW Demand Outlet Branch"
-                }
-            ]
-        },
-        "Hot Water Loop HW Supply Side Branches": {
-            "branches": [
-                {
-                    "branch_name": "Hot Water Loop HW Supply Inlet Branch"
-                },
-                {
-                    "branch_name": "Main Boiler HW Branch"
-                },
-                {
-                    "branch_name": "Hot Water Loop HW Supply Bypass Branch"
-                },
-                {
-                    "branch_name": "Hot Water Loop HW Supply Outlet Branch"
-                }
-            ]
-        }
-    },
     "Building": {
         "Building": {
             "loads_convergence_tolerance_value": 0.04,
@@ -1466,249 +1318,6 @@
             "zone_name": "PLENUM-1"
         }
     },
-    "Coil:Cooling:DX:SingleSpeed": {
-        "SPACE1-1 PTAC Cooling Coil": {
-            "air_inlet_node_name": "SPACE1-1 PTAC Mixed Air Outlet",
-            "air_outlet_node_name": "SPACE1-1 PTAC Cooling Coil Outlet",
-            "condenser_air_inlet_node_name": "SPACE1-1 PTAC Cooling Coil Condenser Inlet",
-            "condenser_type": "AirCooled",
-            "crankcase_heater_capacity": 0,
-            "energy_input_ratio_function_of_flow_fraction_curve_name": "SPACE1-1 PTAC Cooling Coil EIR-FF",
-            "energy_input_ratio_function_of_temperature_curve_name": "SPACE1-1 PTAC Cooling Coil EIR-FT",
-            "evaporative_condenser_effectiveness": 0,
-            "evaporative_condenser_pump_rated_power_consumption": 0,
-            "gross_rated_cooling_cop": 3,
-            "gross_rated_sensible_heat_ratio": "Autosize",
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "latent_capacity_time_constant": 0,
-            "maximum_cycling_rate": 0,
-            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 10,
-            "nominal_time_for_condensate_removal_to_begin": 0,
-            "part_load_fraction_correlation_curve_name": "SPACE1-1 PTAC Cooling Coil Coil PLF",
-            "rated_air_flow_rate": "Autosize",
-            "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
-            "total_cooling_capacity_function_of_flow_fraction_curve_name": "SPACE1-1 PTAC Cooling Coil Cap-FF",
-            "total_cooling_capacity_function_of_temperature_curve_name": "SPACE1-1 PTAC Cooling Coil Cap-FT"
-        },
-        "SPACE2-1 PTAC Cooling Coil": {
-            "air_inlet_node_name": "SPACE2-1 PTAC Mixed Air Outlet",
-            "air_outlet_node_name": "SPACE2-1 PTAC Cooling Coil Outlet",
-            "condenser_air_inlet_node_name": "SPACE2-1 PTAC Cooling Coil Condenser Inlet",
-            "condenser_type": "AirCooled",
-            "crankcase_heater_capacity": 0,
-            "energy_input_ratio_function_of_flow_fraction_curve_name": "SPACE2-1 PTAC Cooling Coil EIR-FF",
-            "energy_input_ratio_function_of_temperature_curve_name": "SPACE2-1 PTAC Cooling Coil EIR-FT",
-            "evaporative_condenser_effectiveness": 0,
-            "evaporative_condenser_pump_rated_power_consumption": 0,
-            "gross_rated_cooling_cop": 3,
-            "gross_rated_sensible_heat_ratio": "Autosize",
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "latent_capacity_time_constant": 0,
-            "maximum_cycling_rate": 0,
-            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 10,
-            "nominal_time_for_condensate_removal_to_begin": 0,
-            "part_load_fraction_correlation_curve_name": "SPACE2-1 PTAC Cooling Coil Coil PLF",
-            "rated_air_flow_rate": "Autosize",
-            "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
-            "total_cooling_capacity_function_of_flow_fraction_curve_name": "SPACE2-1 PTAC Cooling Coil Cap-FF",
-            "total_cooling_capacity_function_of_temperature_curve_name": "SPACE2-1 PTAC Cooling Coil Cap-FT"
-        },
-        "SPACE3-1 PTAC Cooling Coil": {
-            "air_inlet_node_name": "SPACE3-1 PTAC Supply Fan Outlet",
-            "air_outlet_node_name": "SPACE3-1 PTAC Cooling Coil Outlet",
-            "condenser_air_inlet_node_name": "SPACE3-1 PTAC Cooling Coil Condenser Inlet",
-            "condenser_type": "AirCooled",
-            "crankcase_heater_capacity": 0,
-            "energy_input_ratio_function_of_flow_fraction_curve_name": "SPACE3-1 PTAC Cooling Coil EIR-FF",
-            "energy_input_ratio_function_of_temperature_curve_name": "SPACE3-1 PTAC Cooling Coil EIR-FT",
-            "evaporative_condenser_effectiveness": 0,
-            "evaporative_condenser_pump_rated_power_consumption": 0,
-            "gross_rated_cooling_cop": 3,
-            "gross_rated_sensible_heat_ratio": "Autosize",
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "latent_capacity_time_constant": 0,
-            "maximum_cycling_rate": 0,
-            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 10,
-            "nominal_time_for_condensate_removal_to_begin": 0,
-            "part_load_fraction_correlation_curve_name": "SPACE3-1 PTAC Cooling Coil Coil PLF",
-            "rated_air_flow_rate": "Autosize",
-            "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
-            "total_cooling_capacity_function_of_flow_fraction_curve_name": "SPACE3-1 PTAC Cooling Coil Cap-FF",
-            "total_cooling_capacity_function_of_temperature_curve_name": "SPACE3-1 PTAC Cooling Coil Cap-FT"
-        },
-        "SPACE4-1 PTAC Cooling Coil": {
-            "air_inlet_node_name": "SPACE4-1 PTAC Supply Fan Outlet",
-            "air_outlet_node_name": "SPACE4-1 PTAC Cooling Coil Outlet",
-            "condenser_air_inlet_node_name": "SPACE4-1 PTAC Cooling Coil Condenser Inlet",
-            "condenser_type": "AirCooled",
-            "crankcase_heater_capacity": 0,
-            "energy_input_ratio_function_of_flow_fraction_curve_name": "SPACE4-1 PTAC Cooling Coil EIR-FF",
-            "energy_input_ratio_function_of_temperature_curve_name": "SPACE4-1 PTAC Cooling Coil EIR-FT",
-            "evaporative_condenser_effectiveness": 0,
-            "evaporative_condenser_pump_rated_power_consumption": 0,
-            "gross_rated_cooling_cop": 3,
-            "gross_rated_sensible_heat_ratio": "Autosize",
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "latent_capacity_time_constant": 0,
-            "maximum_cycling_rate": 0,
-            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 10,
-            "nominal_time_for_condensate_removal_to_begin": 0,
-            "part_load_fraction_correlation_curve_name": "SPACE4-1 PTAC Cooling Coil Coil PLF",
-            "rated_air_flow_rate": "Autosize",
-            "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
-            "total_cooling_capacity_function_of_flow_fraction_curve_name": "SPACE4-1 PTAC Cooling Coil Cap-FF",
-            "total_cooling_capacity_function_of_temperature_curve_name": "SPACE4-1 PTAC Cooling Coil Cap-FT"
-        },
-        "SPACE5-1 PTAC Cooling Coil": {
-            "air_inlet_node_name": "SPACE5-1 PTAC Mixed Air Outlet",
-            "air_outlet_node_name": "SPACE5-1 PTAC Cooling Coil Outlet",
-            "condenser_air_inlet_node_name": "SPACE5-1 PTAC Cooling Coil Condenser Inlet",
-            "condenser_type": "AirCooled",
-            "crankcase_heater_capacity": 0,
-            "energy_input_ratio_function_of_flow_fraction_curve_name": "SPACE5-1 PTAC Cooling Coil EIR-FF",
-            "energy_input_ratio_function_of_temperature_curve_name": "SPACE5-1 PTAC Cooling Coil EIR-FT",
-            "evaporative_condenser_effectiveness": 0,
-            "evaporative_condenser_pump_rated_power_consumption": 0,
-            "gross_rated_cooling_cop": 3,
-            "gross_rated_sensible_heat_ratio": "Autosize",
-            "gross_rated_total_cooling_capacity": "Autosize",
-            "latent_capacity_time_constant": 0,
-            "maximum_cycling_rate": 0,
-            "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation": 10,
-            "nominal_time_for_condensate_removal_to_begin": 0,
-            "part_load_fraction_correlation_curve_name": "SPACE5-1 PTAC Cooling Coil Coil PLF",
-            "rated_air_flow_rate": "Autosize",
-            "ratio_of_initial_moisture_evaporation_rate_and_steady_state_latent_capacity": 0,
-            "total_cooling_capacity_function_of_flow_fraction_curve_name": "SPACE5-1 PTAC Cooling Coil Cap-FF",
-            "total_cooling_capacity_function_of_temperature_curve_name": "SPACE5-1 PTAC Cooling Coil Cap-FT"
-        }
-    },
-    "Coil:Heating:Electric": {
-        "SPACE1-1 PTAC Heating Coil": {
-            "air_inlet_node_name": "SPACE1-1 PTAC Cooling Coil Outlet",
-            "air_outlet_node_name": "SPACE1-1 PTAC Heating Coil Outlet",
-            "efficiency": 1,
-            "nominal_capacity": "Autosize"
-        },
-        "SPACE4-1 PTAC Heating Coil": {
-            "air_inlet_node_name": "SPACE4-1 PTAC Cooling Coil Outlet",
-            "air_outlet_node_name": "SPACE4-1 PTAC Supply Inlet",
-            "efficiency": 1,
-            "nominal_capacity": "Autosize"
-        }
-    },
-    "Coil:Heating:Fuel": {
-        "SPACE5-1 PTAC Heating Coil": {
-            "air_inlet_node_name": "SPACE5-1 PTAC Cooling Coil Outlet",
-            "air_outlet_node_name": "SPACE5-1 PTAC Heating Coil Outlet",
-            "burner_efficiency": 0.8,
-            "fuel_type": "NaturalGas",
-            "nominal_capacity": "Autosize",
-            "parasitic_electric_load": 0,
-            "parasitic_fuel_load": 0,
-            "part_load_fraction_correlation_curve_name": "SPACE5-1 PTAC Heating Coil PLF-FPLR"
-        }
-    },
-    "Coil:Heating:Water": {
-        "SPACE2-1 PTAC Heating Coil": {
-            "air_inlet_node_name": "SPACE2-1 PTAC Cooling Coil Outlet",
-            "air_outlet_node_name": "SPACE2-1 PTAC Heating Coil Outlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE2-1 PTAC Heating Coil HW Inlet",
-            "water_outlet_node_name": "SPACE2-1 PTAC Heating Coil HW Outlet"
-        },
-        "SPACE3-1 PTAC Heating Coil": {
-            "air_inlet_node_name": "SPACE3-1 PTAC Cooling Coil Outlet",
-            "air_outlet_node_name": "SPACE3-1 PTAC Supply Inlet",
-            "maximum_water_flow_rate": "Autosize",
-            "performance_input_method": "UFactorTimesAreaAndDesignWaterFlowRate",
-            "rated_capacity": "Autosize",
-            "rated_inlet_air_temperature": 16.6,
-            "rated_inlet_water_temperature": 82.2,
-            "rated_outlet_air_temperature": 32.2,
-            "rated_outlet_water_temperature": 71.1,
-            "rated_ratio_for_air_and_water_convection": 0.5,
-            "u_factor_times_area_value": "Autosize",
-            "water_inlet_node_name": "SPACE3-1 PTAC Heating Coil HW Inlet",
-            "water_outlet_node_name": "SPACE3-1 PTAC Heating Coil HW Outlet"
-        }
-    },
-    "Connector:Mixer": {
-        "Hot Water Loop HW Demand Mixer": {
-            "branches": [
-                {
-                    "inlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE2-1 PTAC Heating Coil HW Branch"
-                },
-                {
-                    "inlet_branch_name": "SPACE3-1 PTAC Heating Coil HW Branch"
-                }
-            ],
-            "outlet_branch_name": "Hot Water Loop HW Demand Outlet Branch"
-        },
-        "Hot Water Loop HW Supply Mixer": {
-            "branches": [
-                {
-                    "inlet_branch_name": "Main Boiler HW Branch"
-                },
-                {
-                    "inlet_branch_name": "Hot Water Loop HW Supply Bypass Branch"
-                }
-            ],
-            "outlet_branch_name": "Hot Water Loop HW Supply Outlet Branch"
-        }
-    },
-    "Connector:Splitter": {
-        "Hot Water Loop HW Demand Splitter": {
-            "branches": [
-                {
-                    "outlet_branch_name": "Hot Water Loop HW Demand Bypass Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE2-1 PTAC Heating Coil HW Branch"
-                },
-                {
-                    "outlet_branch_name": "SPACE3-1 PTAC Heating Coil HW Branch"
-                }
-            ],
-            "inlet_branch_name": "Hot Water Loop HW Demand Inlet Branch"
-        },
-        "Hot Water Loop HW Supply Splitter": {
-            "branches": [
-                {
-                    "outlet_branch_name": "Main Boiler HW Branch"
-                },
-                {
-                    "outlet_branch_name": "Hot Water Loop HW Supply Bypass Branch"
-                }
-            ],
-            "inlet_branch_name": "Hot Water Loop HW Supply Inlet Branch"
-        }
-    },
-    "ConnectorList": {
-        "Hot Water Loop HW Demand Side Connectors": {
-            "connector_1_name": "Hot Water Loop HW Demand Splitter",
-            "connector_1_object_type": "Connector:Splitter",
-            "connector_2_name": "Hot Water Loop HW Demand Mixer",
-            "connector_2_object_type": "Connector:Mixer"
-        },
-        "Hot Water Loop HW Supply Side Connectors": {
-            "connector_1_name": "Hot Water Loop HW Supply Splitter",
-            "connector_1_object_type": "Connector:Splitter",
-            "connector_2_name": "Hot Water Loop HW Supply Mixer",
-            "connector_2_object_type": "Connector:Mixer"
-        }
-    },
     "Construction": {
         "CLNG-1": {
             "outside_layer": "MAT-CLNG-1"
@@ -1740,306 +1349,6 @@
             "layer_3": "IN02",
             "layer_4": "GP01",
             "outside_layer": "WD01"
-        }
-    },
-    "Curve:Biquadratic": {
-        "SPACE1-1 PTAC Cooling Coil Cap-FT": {
-            "coefficient1_constant": 0.942587793,
-            "coefficient2_x": 0.009543347,
-            "coefficient3_x_2": 0.00068377,
-            "coefficient4_y": -0.011042676,
-            "coefficient5_y_2": 5.249e-06,
-            "coefficient6_x_y": -9.72e-06,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 18.0
-        },
-        "SPACE1-1 PTAC Cooling Coil EIR-FT": {
-            "coefficient1_constant": 0.342414409,
-            "coefficient2_x": 0.034885008,
-            "coefficient3_x_2": -0.0006237,
-            "coefficient4_y": 0.004977216,
-            "coefficient5_y_2": 0.000437951,
-            "coefficient6_x_y": -0.000728028,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 18.0
-        },
-        "SPACE2-1 PTAC Cooling Coil Cap-FT": {
-            "coefficient1_constant": 0.942587793,
-            "coefficient2_x": 0.009543347,
-            "coefficient3_x_2": 0.00068377,
-            "coefficient4_y": -0.011042676,
-            "coefficient5_y_2": 5.249e-06,
-            "coefficient6_x_y": -9.72e-06,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 18.0
-        },
-        "SPACE2-1 PTAC Cooling Coil EIR-FT": {
-            "coefficient1_constant": 0.342414409,
-            "coefficient2_x": 0.034885008,
-            "coefficient3_x_2": -0.0006237,
-            "coefficient4_y": 0.004977216,
-            "coefficient5_y_2": 0.000437951,
-            "coefficient6_x_y": -0.000728028,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 18.0
-        },
-        "SPACE3-1 PTAC Cooling Coil Cap-FT": {
-            "coefficient1_constant": 0.942587793,
-            "coefficient2_x": 0.009543347,
-            "coefficient3_x_2": 0.00068377,
-            "coefficient4_y": -0.011042676,
-            "coefficient5_y_2": 5.249e-06,
-            "coefficient6_x_y": -9.72e-06,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 18.0
-        },
-        "SPACE3-1 PTAC Cooling Coil EIR-FT": {
-            "coefficient1_constant": 0.342414409,
-            "coefficient2_x": 0.034885008,
-            "coefficient3_x_2": -0.0006237,
-            "coefficient4_y": 0.004977216,
-            "coefficient5_y_2": 0.000437951,
-            "coefficient6_x_y": -0.000728028,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 18.0
-        },
-        "SPACE4-1 PTAC Cooling Coil Cap-FT": {
-            "coefficient1_constant": 0.942587793,
-            "coefficient2_x": 0.009543347,
-            "coefficient3_x_2": 0.00068377,
-            "coefficient4_y": -0.011042676,
-            "coefficient5_y_2": 5.249e-06,
-            "coefficient6_x_y": -9.72e-06,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 18.0
-        },
-        "SPACE4-1 PTAC Cooling Coil EIR-FT": {
-            "coefficient1_constant": 0.342414409,
-            "coefficient2_x": 0.034885008,
-            "coefficient3_x_2": -0.0006237,
-            "coefficient4_y": 0.004977216,
-            "coefficient5_y_2": 0.000437951,
-            "coefficient6_x_y": -0.000728028,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 18.0
-        },
-        "SPACE5-1 PTAC Cooling Coil Cap-FT": {
-            "coefficient1_constant": 0.942587793,
-            "coefficient2_x": 0.009543347,
-            "coefficient3_x_2": 0.00068377,
-            "coefficient4_y": -0.011042676,
-            "coefficient5_y_2": 5.249e-06,
-            "coefficient6_x_y": -9.72e-06,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 18.0
-        },
-        "SPACE5-1 PTAC Cooling Coil EIR-FT": {
-            "coefficient1_constant": 0.342414409,
-            "coefficient2_x": 0.034885008,
-            "coefficient3_x_2": -0.0006237,
-            "coefficient4_y": 0.004977216,
-            "coefficient5_y_2": 0.000437951,
-            "coefficient6_x_y": -0.000728028,
-            "maximum_value_of_x": 23.88889,
-            "maximum_value_of_y": 46.11111,
-            "minimum_value_of_x": 12.77778,
-            "minimum_value_of_y": 18.0
-        }
-    },
-    "Curve:Cubic": {
-        "SPACE5-1 PTAC Heating Coil PLF-FPLR": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "coefficient4_x_3": 0,
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0
-        }
-    },
-    "Curve:Quadratic": {
-        "Main Boiler Efficiency Curve": {
-            "coefficient1_constant": 0.97,
-            "coefficient2_x": 0.0633,
-            "coefficient3_x_2": -0.0333,
-            "maximum_value_of_x": 1.0,
-            "minimum_value_of_x": 0.0
-        },
-        "SPACE1-1 PTAC Cooling Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE1-1 PTAC Cooling Coil Coil PLF": {
-            "coefficient1_constant": 0.85,
-            "coefficient2_x": 0.15,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0
-        },
-        "SPACE1-1 PTAC Cooling Coil EIR-FF": {
-            "coefficient1_constant": 1.1552,
-            "coefficient2_x": -0.1808,
-            "coefficient3_x_2": 0.0256,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE2-1 PTAC Cooling Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE2-1 PTAC Cooling Coil Coil PLF": {
-            "coefficient1_constant": 0.85,
-            "coefficient2_x": 0.15,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0
-        },
-        "SPACE2-1 PTAC Cooling Coil EIR-FF": {
-            "coefficient1_constant": 1.1552,
-            "coefficient2_x": -0.1808,
-            "coefficient3_x_2": 0.0256,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE3-1 PTAC Cooling Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE3-1 PTAC Cooling Coil Coil PLF": {
-            "coefficient1_constant": 0.85,
-            "coefficient2_x": 0.15,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0
-        },
-        "SPACE3-1 PTAC Cooling Coil EIR-FF": {
-            "coefficient1_constant": 1.1552,
-            "coefficient2_x": -0.1808,
-            "coefficient3_x_2": 0.0256,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE4-1 PTAC Cooling Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE4-1 PTAC Cooling Coil Coil PLF": {
-            "coefficient1_constant": 0.85,
-            "coefficient2_x": 0.15,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0
-        },
-        "SPACE4-1 PTAC Cooling Coil EIR-FF": {
-            "coefficient1_constant": 1.1552,
-            "coefficient2_x": -0.1808,
-            "coefficient3_x_2": 0.0256,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE5-1 PTAC Cooling Coil Cap-FF": {
-            "coefficient1_constant": 0.8,
-            "coefficient2_x": 0.2,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        },
-        "SPACE5-1 PTAC Cooling Coil Coil PLF": {
-            "coefficient1_constant": 0.85,
-            "coefficient2_x": 0.15,
-            "coefficient3_x_2": 0,
-            "maximum_value_of_x": 1,
-            "minimum_value_of_x": 0
-        },
-        "SPACE5-1 PTAC Cooling Coil EIR-FF": {
-            "coefficient1_constant": 1.1552,
-            "coefficient2_x": -0.1808,
-            "coefficient3_x_2": 0.0256,
-            "maximum_value_of_x": 1.5,
-            "minimum_value_of_x": 0.5
-        }
-    },
-    "DesignSpecification:OutdoorAir": {
-        "SZ DSOA SPACE1-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE2-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE3-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE4-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person"
-        },
-        "SZ DSOA SPACE5-1": {
-            "outdoor_air_flow_per_person": 0.00944,
-            "outdoor_air_flow_per_zone": 0.0,
-            "outdoor_air_flow_per_zone_floor_area": 0.0,
-            "outdoor_air_method": "Flow/Person"
-        }
-    },
-    "DesignSpecification:ZoneAirDistribution": {
-        "SZ DSZAD SPACE1-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE2-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE3-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE4-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
-        },
-        "SZ DSZAD SPACE5-1": {
-            "zone_air_distribution_effectiveness_in_cooling_mode": 1,
-            "zone_air_distribution_effectiveness_in_heating_mode": 1
         }
     },
     "ElectricEquipment": {
@@ -2087,58 +1396,6 @@
             "fraction_radiant": 0.3,
             "schedule_name": "EQUIP-1",
             "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
-    "Fan:OnOff": {
-        "SPACE1-1 PTAC Supply Fan": {
-            "air_inlet_node_name": "SPACE1-1 PTAC Heating Coil Outlet",
-            "air_outlet_node_name": "SPACE1-1 PTAC Supply Inlet",
-            "availability_schedule_name": "HVACTemplate-Always 1",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 75
-        },
-        "SPACE2-1 PTAC Supply Fan": {
-            "air_inlet_node_name": "SPACE2-1 PTAC Heating Coil Outlet",
-            "air_outlet_node_name": "SPACE2-1 PTAC Supply Inlet",
-            "availability_schedule_name": "HVACTemplate-Always 1",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 75
-        },
-        "SPACE3-1 PTAC Supply Fan": {
-            "air_inlet_node_name": "SPACE3-1 PTAC Mixed Air Outlet",
-            "air_outlet_node_name": "SPACE3-1 PTAC Supply Fan Outlet",
-            "availability_schedule_name": "HVACTemplate-Always 1",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 75
-        },
-        "SPACE4-1 PTAC Supply Fan": {
-            "air_inlet_node_name": "SPACE4-1 PTAC Mixed Air Outlet",
-            "air_outlet_node_name": "SPACE4-1 PTAC Supply Fan Outlet",
-            "availability_schedule_name": "HVACTemplate-Always 1",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 75
-        },
-        "SPACE5-1 PTAC Supply Fan": {
-            "air_inlet_node_name": "SPACE5-1 PTAC Heating Coil Outlet",
-            "air_outlet_node_name": "SPACE5-1 PTAC Supply Inlet",
-            "availability_schedule_name": "HVACTemplate-Always 1",
-            "fan_total_efficiency": 0.7,
-            "maximum_flow_rate": "Autosize",
-            "motor_efficiency": 0.9,
-            "motor_in_airstream_fraction": 1,
-            "pressure_rise": 75
         }
     },
     "FenestrationSurface:Detailed": {
@@ -2268,6 +1525,159 @@
             "coordinate_system": "Relative",
             "starting_vertex_position": "UpperLeftCorner",
             "vertex_entry_direction": "Counterclockwise"
+        }
+    },
+    "HVACTemplate:Plant:Boiler": {
+        "Main Boiler": {
+            "boiler_type": "HotWaterBoiler",
+            "capacity": "Autosize",
+            "efficiency": 0.8,
+            "fuel_type": "NaturalGas",
+            "priority": "1"
+        }
+    },
+    "HVACTemplate:Plant:HotWaterLoop": {
+        "Hot Water Loop": {
+            "hot_water_design_setpoint": 82,
+            "hot_water_plant_operation_scheme_type": "Default",
+            "hot_water_pump_configuration": "ConstantFlow",
+            "hot_water_pump_rated_head": 179352,
+            "hot_water_reset_outdoor_dry_bulb_high": 10,
+            "hot_water_reset_outdoor_dry_bulb_low": -6.7,
+            "hot_water_setpoint_at_outdoor_dry_bulb_high": 65.6,
+            "hot_water_setpoint_at_outdoor_dry_bulb_low": 82.2,
+            "hot_water_setpoint_reset_type": "OutdoorAirTemperatureReset",
+            "pump_control_type": "Intermittent"
+        }
+    },
+    "HVACTemplate:Thermostat": {
+        "All Zones": {
+            "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
+            "heating_setpoint_schedule_name": "Htg-SetP-Sch"
+        }
+    },
+    "HVACTemplate:Zone:PTAC": {
+        "HVACTemplate:Zone:PTAC 1": {
+            "capacity_control_method": "None",
+            "cooling_coil_gross_rated_cooling_cop": 3,
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_type": "SingleSpeedDX",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "gas_heating_coil_efficiency": 0.8,
+            "heating_coil_capacity": "Autosize",
+            "heating_coil_type": "Electric",
+            "heating_supply_air_flow_rate": "Autosize",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "supply_fan_delta_pressure": 75,
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_placement": "DrawThrough",
+            "supply_fan_total_efficiency": 0.7,
+            "template_thermostat_name": "All Zones",
+            "zone_cooling_design_supply_air_temperature": 14.0,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE1-1"
+        },
+        "HVACTemplate:Zone:PTAC 2": {
+            "capacity_control_method": "None",
+            "cooling_coil_gross_rated_cooling_cop": 3,
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_type": "SingleSpeedDX",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "gas_heating_coil_efficiency": 0.8,
+            "heating_coil_capacity": "Autosize",
+            "heating_coil_type": "HotWater",
+            "heating_supply_air_flow_rate": "Autosize",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "supply_fan_delta_pressure": 75,
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_operating_mode_schedule_name": "Always1",
+            "supply_fan_placement": "DrawThrough",
+            "supply_fan_total_efficiency": 0.7,
+            "template_thermostat_name": "All Zones",
+            "zone_cooling_design_supply_air_temperature": 14.0,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE2-1"
+        },
+        "HVACTemplate:Zone:PTAC 3": {
+            "capacity_control_method": "None",
+            "cooling_coil_gross_rated_cooling_cop": 3,
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_type": "SingleSpeedDX",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "gas_heating_coil_efficiency": 0.8,
+            "heating_coil_capacity": "Autosize",
+            "heating_coil_type": "HotWater",
+            "heating_supply_air_flow_rate": "Autosize",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "supply_fan_delta_pressure": 75,
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_placement": "BlowThrough",
+            "supply_fan_total_efficiency": 0.7,
+            "template_thermostat_name": "All Zones",
+            "zone_cooling_design_supply_air_temperature": 14.0,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE3-1"
+        },
+        "HVACTemplate:Zone:PTAC 4": {
+            "capacity_control_method": "None",
+            "cooling_coil_gross_rated_cooling_cop": 3,
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_type": "SingleSpeedDX",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "gas_heating_coil_efficiency": 0.8,
+            "heating_coil_capacity": "Autosize",
+            "heating_coil_type": "Electric",
+            "heating_supply_air_flow_rate": "Autosize",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "supply_fan_delta_pressure": 75,
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_operating_mode_schedule_name": "Always1",
+            "supply_fan_placement": "BlowThrough",
+            "supply_fan_total_efficiency": 0.7,
+            "template_thermostat_name": "All Zones",
+            "zone_cooling_design_supply_air_temperature": 14.0,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE4-1"
+        },
+        "HVACTemplate:Zone:PTAC 5": {
+            "capacity_control_method": "None",
+            "cooling_coil_gross_rated_cooling_cop": 3,
+            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "cooling_coil_gross_rated_total_capacity": "Autosize",
+            "cooling_coil_type": "SingleSpeedDX",
+            "cooling_supply_air_flow_rate": "Autosize",
+            "gas_heating_coil_efficiency": 0.8,
+            "heating_coil_capacity": "Autosize",
+            "heating_coil_type": "Gas",
+            "heating_supply_air_flow_rate": "Autosize",
+            "outdoor_air_flow_rate_per_person": 0.00944,
+            "outdoor_air_method": "Flow/Person",
+            "supply_fan_delta_pressure": 75,
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_placement": "DrawThrough",
+            "supply_fan_total_efficiency": 0.7,
+            "template_thermostat_name": "All Zones",
+            "zone_cooling_design_supply_air_temperature": 14.0,
+            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_heating_design_supply_air_temperature": 50.0,
+            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+            "zone_name": "SPACE5-1"
         }
     },
     "HeatBalanceAlgorithm": {
@@ -2456,82 +1866,6 @@
             "thermal_absorptance": 0.65,
             "thermal_resistance": 0.65225929,
             "visible_absorptance": 0.65
-        }
-    },
-    "NodeList": {
-        "Hot Water Loop HW Supply Setpoint Nodes": {
-            "nodes": [
-                {
-                    "node_name": "Main Boiler HW Outlet"
-                },
-                {
-                    "node_name": "Hot Water Loop HW Supply Outlet"
-                }
-            ]
-        }
-    },
-    "OutdoorAir:Mixer": {
-        "SPACE1-1 PTAC OA Mixing Box": {
-            "mixed_air_node_name": "SPACE1-1 PTAC Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "SPACE1-1 PTAC Outside Air Inlet",
-            "relief_air_stream_node_name": "SPACE1-1 PTAC Relief Air Outlet",
-            "return_air_stream_node_name": "SPACE1-1 PTAC Return"
-        },
-        "SPACE2-1 PTAC OA Mixing Box": {
-            "mixed_air_node_name": "SPACE2-1 PTAC Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "SPACE2-1 PTAC Outside Air Inlet",
-            "relief_air_stream_node_name": "SPACE2-1 PTAC Relief Air Outlet",
-            "return_air_stream_node_name": "SPACE2-1 PTAC Return"
-        },
-        "SPACE3-1 PTAC OA Mixing Box": {
-            "mixed_air_node_name": "SPACE3-1 PTAC Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "SPACE3-1 PTAC Outside Air Inlet",
-            "relief_air_stream_node_name": "SPACE3-1 PTAC Relief Air Outlet",
-            "return_air_stream_node_name": "SPACE3-1 PTAC Return"
-        },
-        "SPACE4-1 PTAC OA Mixing Box": {
-            "mixed_air_node_name": "SPACE4-1 PTAC Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "SPACE4-1 PTAC Outside Air Inlet",
-            "relief_air_stream_node_name": "SPACE4-1 PTAC Relief Air Outlet",
-            "return_air_stream_node_name": "SPACE4-1 PTAC Return"
-        },
-        "SPACE5-1 PTAC OA Mixing Box": {
-            "mixed_air_node_name": "SPACE5-1 PTAC Mixed Air Outlet",
-            "outdoor_air_stream_node_name": "SPACE5-1 PTAC Outside Air Inlet",
-            "relief_air_stream_node_name": "SPACE5-1 PTAC Relief Air Outlet",
-            "return_air_stream_node_name": "SPACE5-1 PTAC Return"
-        }
-    },
-    "OutdoorAir:Node": {
-        "SPACE1-1 PTAC Cooling Coil Condenser Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE1-1 PTAC Outside Air Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE2-1 PTAC Cooling Coil Condenser Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE2-1 PTAC Outside Air Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE3-1 PTAC Cooling Coil Condenser Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE3-1 PTAC Outside Air Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE4-1 PTAC Cooling Coil Condenser Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE4-1 PTAC Outside Air Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE5-1 PTAC Cooling Coil Condenser Inlet": {
-            "height_above_ground": -1
-        },
-        "SPACE5-1 PTAC Outside Air Inlet": {
-            "height_above_ground": -1
         }
     },
     "Output:Meter:MeterFileOnly": {
@@ -2815,86 +2149,6 @@
             "zone_or_zonelist_name": "SPACE5-1"
         }
     },
-    "Pipe:Adiabatic": {
-        "Hot Water Loop HW Demand Inlet Pipe": {
-            "inlet_node_name": "Hot Water Loop HW Demand Inlet",
-            "outlet_node_name": "Hot Water Loop HW Demand Inlet Pipe Outlet"
-        },
-        "Hot Water Loop HW Demand Outlet Pipe": {
-            "inlet_node_name": "Hot Water Loop HW Demand Outlet Pipe Inlet",
-            "outlet_node_name": "Hot Water Loop HW Demand Outlet"
-        },
-        "Hot Water Loop HW Demand Side Bypass Pipe": {
-            "inlet_node_name": "Hot Water Loop HW Demand Bypass Inlet",
-            "outlet_node_name": "Hot Water Loop HW Demand Bypass Outlet"
-        },
-        "Hot Water Loop HW Supply Outlet Pipe": {
-            "inlet_node_name": "Hot Water Loop HW Supply Outlet Pipe Inlet",
-            "outlet_node_name": "Hot Water Loop HW Supply Outlet"
-        },
-        "Hot Water Loop HW Supply Side Bypass Pipe": {
-            "inlet_node_name": "Hot Water Loop HW Supply Bypass Inlet",
-            "outlet_node_name": "Hot Water Loop HW Supply Bypass Outlet"
-        }
-    },
-    "PlantEquipmentList": {
-        "Hot Water Loop All Equipment": {
-            "equipment": [
-                {
-                    "equipment_name": "Main Boiler",
-                    "equipment_object_type": "Boiler:HotWater"
-                }
-            ]
-        }
-    },
-    "PlantEquipmentOperation:HeatingLoad": {
-        "Hot Water Loop Operation All Hours": {
-            "load_range_1_lower_limit": 0,
-            "load_range_1_upper_limit": 1000000000000000,
-            "range_1_equipment_list_name": "Hot Water Loop All Equipment"
-        }
-    },
-    "PlantEquipmentOperationSchemes": {
-        "Hot Water Loop Operation": {
-            "control_scheme_1_name": "Hot Water Loop Operation All Hours",
-            "control_scheme_1_object_type": "PlantEquipmentOperation:HeatingLoad",
-            "control_scheme_1_schedule_name": "HVACTemplate-Always 1"
-        }
-    },
-    "PlantLoop": {
-        "Hot Water Loop Hot Water Loop": {
-            "demand_side_branch_list_name": "Hot Water Loop HW Demand Side Branches",
-            "demand_side_connector_list_name": "Hot Water Loop HW Demand Side Connectors",
-            "demand_side_inlet_node_name": "Hot Water Loop HW Demand Inlet",
-            "demand_side_outlet_node_name": "Hot Water Loop HW Demand Outlet",
-            "fluid_type": "Water",
-            "load_distribution_scheme": "SequentialLoad",
-            "loop_temperature_setpoint_node_name": "Hot Water Loop HW Supply Outlet",
-            "maximum_loop_flow_rate": "Autosize",
-            "maximum_loop_temperature": 100,
-            "minimum_loop_flow_rate": 0,
-            "minimum_loop_temperature": 10,
-            "plant_equipment_operation_scheme_name": "Hot Water Loop Operation",
-            "plant_loop_demand_calculation_scheme": "SingleSetpoint",
-            "plant_loop_volume": "Autocalculate",
-            "plant_side_branch_list_name": "Hot Water Loop HW Supply Side Branches",
-            "plant_side_connector_list_name": "Hot Water Loop HW Supply Side Connectors",
-            "plant_side_inlet_node_name": "Hot Water Loop HW Supply Inlet",
-            "plant_side_outlet_node_name": "Hot Water Loop HW Supply Outlet"
-        }
-    },
-    "Pump:ConstantSpeed": {
-        "Hot Water Loop HW Supply Pump": {
-            "design_flow_rate": "Autosize",
-            "design_power_consumption": "Autosize",
-            "design_pump_head": 179352,
-            "fraction_of_motor_inefficiencies_to_fluid_stream": 0,
-            "inlet_node_name": "Hot Water Loop HW Supply Inlet",
-            "motor_efficiency": 0.9,
-            "outlet_node_name": "Hot Water Loop HW Pump Outlet",
-            "pump_control_type": "Intermittent"
-        }
-    },
     "RunPeriod": {
         "Run Period 2": {
             "apply_weekend_holiday_rule": "No",
@@ -3062,57 +2316,6 @@
                 }
             ],
             "schedule_type_limits_name": "Fraction"
-        },
-        "HVACTemplate-Always 0": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 0
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 1": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 1
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
-        },
-        "HVACTemplate-Always 4": {
-            "data": [
-                {
-                    "field": "Through: 12/31"
-                },
-                {
-                    "field": "For: AllDays"
-                },
-                {
-                    "field": "Until: 24:00"
-                },
-                {
-                    "field": 4
-                }
-            ],
-            "schedule_type_limits_name": "HVACTemplate Any Number"
         },
         "Htg-SetP-Sch": {
             "data": [
@@ -3432,7 +2635,6 @@
             "numeric_type": "Continuous",
             "upper_limit_value": 1.0
         },
-        "HVACTemplate Any Number": {},
         "On/Off": {
             "lower_limit_value": 0,
             "numeric_type": "Discrete",
@@ -3443,16 +2645,6 @@
             "numeric_type": "Continuous",
             "unit_type": "Temperature",
             "upper_limit_value": 200
-        }
-    },
-    "SetpointManager:OutdoorAirReset": {
-        "Hot Water Loop HW Temp Manager": {
-            "control_variable": "Temperature",
-            "outdoor_high_temperature": 10,
-            "outdoor_low_temperature": -6.7,
-            "setpoint_at_outdoor_high_temperature": 65.6,
-            "setpoint_at_outdoor_low_temperature": 82.2,
-            "setpoint_node_or_nodelist_name": "Hot Water Loop HW Supply Setpoint Nodes"
         }
     },
     "Shading:Zone:Detailed": {
@@ -3552,106 +2744,6 @@
             "heating_sizing_factor": 1.2
         }
     },
-    "Sizing:Plant": {
-        "Sizing:Plant 1": {
-            "design_loop_exit_temperature": 82,
-            "loop_design_temperature_difference": 11.0,
-            "loop_type": "Heating",
-            "plant_or_condenser_loop_name": "Hot Water Loop Hot Water Loop"
-        }
-    },
-    "Sizing:Zone": {
-        "Sizing:Zone 1": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE1-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE1-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 14.0,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE1-1"
-        },
-        "Sizing:Zone 2": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE2-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE2-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 14.0,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE2-1"
-        },
-        "Sizing:Zone 3": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE3-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE3-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 14.0,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE3-1"
-        },
-        "Sizing:Zone 4": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE4-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE4-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 14.0,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE4-1"
-        },
-        "Sizing:Zone 5": {
-            "cooling_design_air_flow_method": "DesignDay",
-            "cooling_design_air_flow_rate": 0,
-            "cooling_minimum_air_flow_fraction": 0,
-            "design_specification_outdoor_air_object_name": "SZ DSOA SPACE5-1",
-            "design_specification_zone_air_distribution_object_name": "SZ DSZAD SPACE5-1",
-            "heating_design_air_flow_method": "DesignDay",
-            "heating_design_air_flow_rate": 0,
-            "heating_maximum_air_flow_fraction": 0,
-            "zone_cooling_design_supply_air_humidity_ratio": 0.008,
-            "zone_cooling_design_supply_air_temperature": 14.0,
-            "zone_cooling_design_supply_air_temperature_difference": 11.11,
-            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_heating_design_supply_air_humidity_ratio": 0.008,
-            "zone_heating_design_supply_air_temperature": 50.0,
-            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
-            "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
     "SizingPeriod:DesignDay": {
         "CHICAGO_IL_USA Annual Cooling 1% Design Conditions DB/MCWB": {
             "barometric_pressure": 99063.0,
@@ -3696,12 +2788,6 @@
     "SurfaceConvectionAlgorithm:Outside": {
         "SurfaceConvectionAlgorithm:Outside 1": {
             "algorithm": "DOE-2"
-        }
-    },
-    "ThermostatSetpoint:DualSetpoint": {
-        "All Zones Dual SP Control": {
-            "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
-            "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
         }
     },
     "Timestep": {
@@ -3846,234 +2932,6 @@
             "x_origin": 0,
             "y_origin": 0,
             "z_origin": 0
-        }
-    },
-    "ZoneControl:Thermostat": {
-        "SPACE1-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE1-1"
-        },
-        "SPACE2-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE2-1"
-        },
-        "SPACE3-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE3-1"
-        },
-        "SPACE4-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE4-1"
-        },
-        "SPACE5-1 Thermostat": {
-            "control_1_name": "All Zones Dual SP Control",
-            "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
-            "control_type_schedule_name": "HVACTemplate-Always 4",
-            "zone_or_zonelist_name": "SPACE5-1"
-        }
-    },
-    "ZoneHVAC:EquipmentConnections": {
-        "ZoneHVAC:EquipmentConnections 1": {
-            "zone_air_exhaust_node_or_nodelist_name": "SPACE1-1 PTAC Return",
-            "zone_air_inlet_node_or_nodelist_name": "SPACE1-1 PTAC Supply Inlet",
-            "zone_air_node_name": "SPACE1-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE1-1 Equipment",
-            "zone_name": "SPACE1-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE1-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 2": {
-            "zone_air_exhaust_node_or_nodelist_name": "SPACE2-1 PTAC Return",
-            "zone_air_inlet_node_or_nodelist_name": "SPACE2-1 PTAC Supply Inlet",
-            "zone_air_node_name": "SPACE2-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE2-1 Equipment",
-            "zone_name": "SPACE2-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE2-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 3": {
-            "zone_air_exhaust_node_or_nodelist_name": "SPACE3-1 PTAC Return",
-            "zone_air_inlet_node_or_nodelist_name": "SPACE3-1 PTAC Supply Inlet",
-            "zone_air_node_name": "SPACE3-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE3-1 Equipment",
-            "zone_name": "SPACE3-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE3-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 4": {
-            "zone_air_exhaust_node_or_nodelist_name": "SPACE4-1 PTAC Return",
-            "zone_air_inlet_node_or_nodelist_name": "SPACE4-1 PTAC Supply Inlet",
-            "zone_air_node_name": "SPACE4-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE4-1 Equipment",
-            "zone_name": "SPACE4-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE4-1 Return Outlet"
-        },
-        "ZoneHVAC:EquipmentConnections 5": {
-            "zone_air_exhaust_node_or_nodelist_name": "SPACE5-1 PTAC Return",
-            "zone_air_inlet_node_or_nodelist_name": "SPACE5-1 PTAC Supply Inlet",
-            "zone_air_node_name": "SPACE5-1 Zone Air Node",
-            "zone_conditioning_equipment_list_name": "SPACE5-1 Equipment",
-            "zone_name": "SPACE5-1",
-            "zone_return_air_node_or_nodelist_name": "SPACE5-1 Return Outlet"
-        }
-    },
-    "ZoneHVAC:EquipmentList": {
-        "SPACE1-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE1-1 PTAC",
-                    "zone_equipment_object_type": "ZoneHVAC:PackagedTerminalAirConditioner"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE2-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE2-1 PTAC",
-                    "zone_equipment_object_type": "ZoneHVAC:PackagedTerminalAirConditioner"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE3-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE3-1 PTAC",
-                    "zone_equipment_object_type": "ZoneHVAC:PackagedTerminalAirConditioner"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE4-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE4-1 PTAC",
-                    "zone_equipment_object_type": "ZoneHVAC:PackagedTerminalAirConditioner"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        },
-        "SPACE5-1 Equipment": {
-            "equipment": [
-                {
-                    "zone_equipment_cooling_sequence": 1,
-                    "zone_equipment_heating_or_no_load_sequence": 1,
-                    "zone_equipment_name": "SPACE5-1 PTAC",
-                    "zone_equipment_object_type": "ZoneHVAC:PackagedTerminalAirConditioner"
-                }
-            ],
-            "load_distribution_scheme": "SequentialLoad"
-        }
-    },
-    "ZoneHVAC:PackagedTerminalAirConditioner": {
-        "SPACE1-1 PTAC": {
-            "air_inlet_node_name": "SPACE1-1 PTAC Return",
-            "air_outlet_node_name": "SPACE1-1 PTAC Supply Inlet",
-            "cooling_coil_name": "SPACE1-1 PTAC Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:SingleSpeed",
-            "cooling_outdoor_air_flow_rate": "Autosize",
-            "cooling_supply_air_flow_rate": "Autosize",
-            "fan_placement": "DrawThrough",
-            "heating_coil_name": "SPACE1-1 PTAC Heating Coil",
-            "heating_coil_object_type": "Coil:Heating:Electric",
-            "heating_outdoor_air_flow_rate": "Autosize",
-            "heating_supply_air_flow_rate": "Autosize",
-            "no_load_outdoor_air_flow_rate": "Autosize",
-            "outdoor_air_mixer_name": "SPACE1-1 PTAC OA Mixing Box",
-            "outdoor_air_mixer_object_type": "OutdoorAir:Mixer",
-            "supply_air_fan_name": "SPACE1-1 PTAC Supply Fan",
-            "supply_air_fan_object_type": "Fan:OnOff",
-            "supply_air_fan_operating_mode_schedule_name": "HVACTemplate-Always 0"
-        },
-        "SPACE2-1 PTAC": {
-            "air_inlet_node_name": "SPACE2-1 PTAC Return",
-            "air_outlet_node_name": "SPACE2-1 PTAC Supply Inlet",
-            "cooling_coil_name": "SPACE2-1 PTAC Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:SingleSpeed",
-            "cooling_outdoor_air_flow_rate": "Autosize",
-            "cooling_supply_air_flow_rate": "Autosize",
-            "fan_placement": "DrawThrough",
-            "heating_coil_name": "SPACE2-1 PTAC Heating Coil",
-            "heating_coil_object_type": "Coil:Heating:Water",
-            "heating_outdoor_air_flow_rate": "Autosize",
-            "heating_supply_air_flow_rate": "Autosize",
-            "no_load_outdoor_air_flow_rate": "Autosize",
-            "outdoor_air_mixer_name": "SPACE2-1 PTAC OA Mixing Box",
-            "outdoor_air_mixer_object_type": "OutdoorAir:Mixer",
-            "supply_air_fan_name": "SPACE2-1 PTAC Supply Fan",
-            "supply_air_fan_object_type": "Fan:OnOff",
-            "supply_air_fan_operating_mode_schedule_name": "Always1"
-        },
-        "SPACE3-1 PTAC": {
-            "air_inlet_node_name": "SPACE3-1 PTAC Return",
-            "air_outlet_node_name": "SPACE3-1 PTAC Supply Inlet",
-            "cooling_coil_name": "SPACE3-1 PTAC Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:SingleSpeed",
-            "cooling_outdoor_air_flow_rate": "Autosize",
-            "cooling_supply_air_flow_rate": "Autosize",
-            "fan_placement": "BlowThrough",
-            "heating_coil_name": "SPACE3-1 PTAC Heating Coil",
-            "heating_coil_object_type": "Coil:Heating:Water",
-            "heating_outdoor_air_flow_rate": "Autosize",
-            "heating_supply_air_flow_rate": "Autosize",
-            "no_load_outdoor_air_flow_rate": "Autosize",
-            "outdoor_air_mixer_name": "SPACE3-1 PTAC OA Mixing Box",
-            "outdoor_air_mixer_object_type": "OutdoorAir:Mixer",
-            "supply_air_fan_name": "SPACE3-1 PTAC Supply Fan",
-            "supply_air_fan_object_type": "Fan:OnOff",
-            "supply_air_fan_operating_mode_schedule_name": "HVACTemplate-Always 0"
-        },
-        "SPACE4-1 PTAC": {
-            "air_inlet_node_name": "SPACE4-1 PTAC Return",
-            "air_outlet_node_name": "SPACE4-1 PTAC Supply Inlet",
-            "cooling_coil_name": "SPACE4-1 PTAC Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:SingleSpeed",
-            "cooling_outdoor_air_flow_rate": "Autosize",
-            "cooling_supply_air_flow_rate": "Autosize",
-            "fan_placement": "BlowThrough",
-            "heating_coil_name": "SPACE4-1 PTAC Heating Coil",
-            "heating_coil_object_type": "Coil:Heating:Electric",
-            "heating_outdoor_air_flow_rate": "Autosize",
-            "heating_supply_air_flow_rate": "Autosize",
-            "no_load_outdoor_air_flow_rate": "Autosize",
-            "outdoor_air_mixer_name": "SPACE4-1 PTAC OA Mixing Box",
-            "outdoor_air_mixer_object_type": "OutdoorAir:Mixer",
-            "supply_air_fan_name": "SPACE4-1 PTAC Supply Fan",
-            "supply_air_fan_object_type": "Fan:OnOff",
-            "supply_air_fan_operating_mode_schedule_name": "Always1"
-        },
-        "SPACE5-1 PTAC": {
-            "air_inlet_node_name": "SPACE5-1 PTAC Return",
-            "air_outlet_node_name": "SPACE5-1 PTAC Supply Inlet",
-            "cooling_coil_name": "SPACE5-1 PTAC Cooling Coil",
-            "cooling_coil_object_type": "Coil:Cooling:DX:SingleSpeed",
-            "cooling_outdoor_air_flow_rate": "Autosize",
-            "cooling_supply_air_flow_rate": "Autosize",
-            "fan_placement": "DrawThrough",
-            "heating_coil_name": "SPACE5-1 PTAC Heating Coil",
-            "heating_coil_object_type": "Coil:Heating:Fuel",
-            "heating_outdoor_air_flow_rate": "Autosize",
-            "heating_supply_air_flow_rate": "Autosize",
-            "no_load_outdoor_air_flow_rate": "Autosize",
-            "outdoor_air_mixer_name": "SPACE5-1 PTAC OA Mixing Box",
-            "outdoor_air_mixer_object_type": "OutdoorAir:Mixer",
-            "supply_air_fan_name": "SPACE5-1 PTAC Supply Fan",
-            "supply_air_fan_object_type": "Fan:OnOff",
-            "supply_air_fan_operating_mode_schedule_name": "HVACTemplate-Always 0"
         }
     },
     "ZoneInfiltration:DesignFlowRate": {

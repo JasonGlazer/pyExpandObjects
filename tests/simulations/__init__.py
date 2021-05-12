@@ -130,17 +130,31 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         if isinstance(file_location, str):
             file_location = Path(file_location)
         # calling the arguments with pathlib causes issues with the conversion exe, so direct strings are passed here.
-        subprocess.run(
-            [
-                'wine',
-                '../ConvertInputFormatWithHVACTemplate.exe',
-                '-t',
-                os.path.basename(file_location)
-            ],
-            cwd=working_dir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        # ConvertWithHVACTemplate.exe is v9.4, so only use it when necessary
+        # todo_eo: ask for updated version of ConvertWithHVACTemplate.exe
+        if 'expanded' in os.path.basename(file_location).lower():
+            subprocess.run(
+                [
+                    'wine',
+                    '../ConvertInputFormat.exe',
+                    os.path.basename(file_location)
+                ],
+                cwd=working_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        else:
+            subprocess.run(
+                [
+                    'wine',
+                    '../ConvertInputFormatWithHVACTemplate.exe',
+                    '-t',
+                    os.path.basename(file_location)
+                ],
+                cwd=working_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
         if file_location.suffix == '.epJSON':
             return file_location.with_suffix('.idf')
         elif file_location.suffix == '.idf':

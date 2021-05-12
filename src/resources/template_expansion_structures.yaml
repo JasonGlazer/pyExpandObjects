@@ -767,27 +767,30 @@ Objects:
                   name: '{} Baseboard Heat Hw Branch'
                   components:
                     - component_inlet_node_name:
-                        ZoneHVAC:Baseboard:RadiantConvective:Water: inlet_node_name
+                        ^ZoneHVAC:Baseboard:RadiantConvective:Water$: inlet_node_name
                       component_name:
-                        ZoneHVAC:Baseboard:RadiantConvective:Water: key
+                        ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
                       component_object_type:
-                        ZoneHVAC:Baseboard:RadiantConvective:Water: self
+                        ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
                       component_outlet_node_name:
-                        ZoneHVAC:Baseboard:RadiantConvective:Water: outlet_node_name
+                        ^ZoneHVAC:Baseboard:RadiantConvective:Water$: outlet_node_name
             Transitions: &ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
-              - ZoneHVAC:Baseboard:RadiantConvective:Water:
+              - ^ZoneHVAC:Baseboard:RadiantConvective:Water$:
                   baseboard_heating_capacity: heating_design_capacity
           Base:
             Fields: &ZoneHVACBaseboardRadiantConvectiveWaterFields
               name: '{} Baseboard Heat'
               availability_schedule_name: '{system_availability_schedule_name}'
+              design_object:
+                ZoneHVAC:Baseboard:RadiantConvective:Water:Design: key
               fraction_of_radiant_energy_incident_on_people: 0.0 # set by legacy, no object default, not reachable from template
-              fraction_radiant: 0.0 # set by legacy, no object default, not reachable from template, required by schema
-              heating_design_capacity: Autosize # todo_eo template default, no object default
-              heating_design_capacity_method: HeatingDesignCapacity # todo_eo: object default, but error unless specified
               inlet_node_name: '{} Baseboard HW Inlet'
               maximum_water_flow_rate: Autosize # set by legacy, no object default, not reachable from template, required by schema
               outlet_node_name: '{} Baseboard HW Outlet'
+          Design:
+            Fields: &ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
+              name: '{} Baseboard Heat Design Object'
+              fraction_radiant: 0.0
     EquipmentList:
       Base:
         Fields: &ZoneHVACEquipmentList
@@ -1023,15 +1026,16 @@ OptionTree:
                        #   secondary equipment in some options.
                 - Sizing:Zone: *SizingZone
                 - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
+                - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
                 - *ZoneHVACBaseboardRadiantConvectiveWaterCommonObjects
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFields
                 - ZoneHVAC:EquipmentList:
                     <<: *ZoneHVACEquipmentList
                     equipment:
                       - zone_equipment_object_type:
-                          ^ZoneHVAC:Baseboard.*: self
+                          ^ZoneHVAC:Baseboard.*(Water$|Steam$|Electric$): self
                         zone_equipment_name:
-                          ^ZoneHVAC:Baseboard.*: key
+                          ^ZoneHVAC:Baseboard.*(Water$|Steam$|Electric$): key
                         zone_equipment_cooling_sequence: 1
                         zone_equipment_heating_or_no_load_sequence: 1
               Transitions:
@@ -1343,9 +1347,6 @@ OptionTree:
                       AvailabilityManager:LowTemperatureTurnOff: key
                     availability_manager_object_type:
                       AvailabilityManager:LowTemperatureTurnOff: self
-            - SetpointManager:Scheduled:
-                <<: *SetpointManagerScheduled
-                schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
             - OutdoorAir:Node:
                 name: '{} Outside Air Sensor'
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
@@ -1401,6 +1402,20 @@ OptionTree:
                     <<: *PumpVariableSpeed
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
                 - Branch: *PumpBranchVariableSpeedSupplyInlet
+          chilled_water_setpoint_reset_type:
+            None:
+              Objects:
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManagerScheduled
+                    schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
+            OutdoorAirTemperatureReset:
+              Objects:
+                - SetpointManager:OutdoorAirReset:
+                    <<: *SetpointManagerOutdoorAirReset
+                    outdoor_high_temperature: '{chilled_water_reset_outdoor_dry_bulb_high}' # required by schema
+                    outdoor_low_temperature: '{chilled_water_reset_outdoor_dry_bulb_low}' # required by schema
+                    setpoint_at_outdoor_high_temperature: '{chilled_water_setpoint_at_outdoor_dry_bulb_high}' # required by schema
+                    setpoint_at_outdoor_low_temperature: '{chilled_water_setpoint_at_outdoor_dry_bulb_low}' # required by schema
       Chiller:
         BaseObjects:
         TemplateObjects:
@@ -1487,6 +1502,11 @@ OptionTree:
                     design_pump_head: '{hot_water_pump_rated_head}'
                 - Branch: *PumpBranchVariableSpeedSupplyInlet
           hot_water_setpoint_reset_type:
+            None:
+              Objects:
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManagerScheduled
+                    schedule_name: 'HVACTemplate-Always{hot_water_design_setpoint}'
             OutdoorAirTemperatureReset:
               Objects:
                 - SetpointManager:OutdoorAirReset:
