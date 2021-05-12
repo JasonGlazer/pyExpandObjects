@@ -2081,6 +2081,10 @@
     1,                       !- Priority
     ;                        !- Sizing Factor
 
+  Output:Variable,*,Fan Electricity Energy, hourly;
+
+  Output:Variable,*,Pump Electricity Energy, hourly;
+
   Output:Variable,*,Site Outdoor Air Drybulb Temperature,hourly;
 
   Output:Variable,*,Zone Air Temperature,hourly;

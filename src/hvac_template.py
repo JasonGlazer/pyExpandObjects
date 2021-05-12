@@ -147,15 +147,15 @@ class HVACTemplate(EPJSON):
             # create control schedule based on thermostat type
             if thermostat_type == "ThermostatSetpoint:SingleHeating":
                 control_schedule = ExpandObjects().build_compact_schedule(
-                    structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=[1, ])
             elif thermostat_type == "ThermostatSetpoint:SingleCooling":
                 control_schedule = ExpandObjects().build_compact_schedule(
-                    structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=[2, ])
             elif thermostat_type == "ThermostatSetpoint:DualSetpoint":
                 control_schedule = ExpandObjects().build_compact_schedule(
-                    structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=[4, ])
             else:
                 raise InvalidTemplateException("Invalid thermostat type set in ExpandThermostat {}"
@@ -770,10 +770,10 @@ class HVACTemplate(EPJSON):
                 super_dictionary=output_epjson,
                 object_dictionary=merge_dictionary
             )
+        # Use this for file debugging
         # import json
         # with open('test.epJSON', 'w') as base_file:
         #     json.dump(output_epjson, base_file, indent=4, sort_keys=True)
-        # sys.exit()
         # Create output format
         output_epjson = {
             "epJSON": output_epjson,

@@ -283,6 +283,7 @@ class ExpandObjects(EPJSON):
         :param leaf_path: path to leaf node of option tree
         :return: Formatted dictionary with objects and alternative options to be applied.
         """
+        # todo_eo: check needs to be made that the right format is returned (e.g. dictionary with correct keys to pop)
         option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
         if option_leaf:
             transitions = option_leaf.pop('Transitions', None)
@@ -540,7 +541,7 @@ class ExpandObjects(EPJSON):
                 if always_val_rgx:
                     always_val = always_val_rgx.group(1)
                     self.build_compact_schedule(
-                        structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                        structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                         insert_values=[always_val, ]
                     )
                 # Try to convert formatted value to correct type
@@ -912,6 +913,8 @@ class ExpandObjects(EPJSON):
         # Get the list actions to perform on a build bath, based on template inputs, and process them in order
         actions = option_tree.pop('Actions', None)
         if actions:
+            # flatten action list due to yaml formatting
+            actions = self._flatten_list(actions)
             for action in actions:
                 try:
                     for template_field, action_structure in action.items():
@@ -1000,7 +1003,7 @@ class ExpandThermostat(ExpandObjects):
             if not getattr(self, '{}_setpoint_schedule_name'.format(thermostat_type), None) \
                     and getattr(self, 'constant_{}_setpoint'.format(thermostat_type), None):
                 thermostat_schedule = self.build_compact_schedule(
-                    structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=getattr(self, 'constant_{}_setpoint'.format(thermostat_type)),
                 )
                 (thermostat_schedule_type, thermostat_schedule_structure), = thermostat_schedule.items()

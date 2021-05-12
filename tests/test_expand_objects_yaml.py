@@ -1815,7 +1815,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         output = eo.resolve_objects(epjson={
             'Schedule:Compact': {
                 "HVACTemplate-Always12.8": {
-                    'structure': 'CommonObjects:Schedule:Compact:ALWAYS_VAL',
+                    'structure': 'Objects:Common:Objects:Schedule:Compact:ALWAYS_VAL',
                     'insert_values': [12.8, ]
                 }
             }
@@ -1855,18 +1855,22 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         })
         es.expansion_structure = {
-            'CommonObjects': {
-                'Schedule': {
-                    'Compact': {
-                        'ALWAYS_VAL': {
-                            'name': 'HVACTemplate-Always{}',
-                            'schedule_type_limits_name': 'Any Number',
-                            'data': [
-                                {'field': 'Through 12/31'},
-                                {'field': 'For AllDays'},
-                                {'field': 'Until 24:00'},
-                                {'field': '{:.1f}'}
-                            ]
+            'Objects': {
+                'Common': {
+                    'Objects': {
+                        'Schedule': {
+                            'Compact': {
+                                'ALWAYS_VAL': {
+                                    'name': 'HVACTemplate-Always{}',
+                                    'schedule_type_limits_name': 'Any Number',
+                                    'data': [
+                                        {'field': 'Through 12/31'},
+                                        {'field': 'For AllDays'},
+                                        {'field': 'Until 24:00'},
+                                        {'field': '{:.1f}'}
+                                    ]
+                                }
+                            }
                         }
                     }
                 }
