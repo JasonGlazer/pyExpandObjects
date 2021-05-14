@@ -283,6 +283,7 @@ class ExpandObjects(EPJSON):
         :param leaf_path: path to leaf node of option tree
         :return: Formatted dictionary with objects and alternative options to be applied.
         """
+        # todo_eo: check needs to be made that the right format is returned (e.g. dictionary with correct keys to pop)
         option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
         if option_leaf:
             transitions = option_leaf.pop('Transitions', None)
@@ -540,7 +541,7 @@ class ExpandObjects(EPJSON):
                 if always_val_rgx:
                     always_val = always_val_rgx.group(1)
                     self.build_compact_schedule(
-                        structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                        structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                         insert_values=[always_val, ]
                     )
                 # Try to convert formatted value to correct type
@@ -720,6 +721,39 @@ class ExpandObjects(EPJSON):
             object_dictionary=self.resolve_objects(epjson_from_option_tree))
         return self.resolve_objects(epjson_from_option_tree)
 
+    def _parse_build_path(self, object_list, epjson=None):
+        """
+        Iterate over build path and check if each object is a super object.  If not, commit the object to the input
+        epJSON.  Return a build path of only super objects.
+
+        :param epjson: input epJSON dictionary
+        :return: build path of only super objects
+        """
+        # Look over each object in the object_list.  If it is not a super object, then process it and save to
+        #   class epjson object.  Use the current object_list as the reference epJSON to resolve the objects.
+        #   If a larger scope of reference for the epJSON is needed, the object should be placed in BaseObjects or
+        #   TemplateObjects sections of the yaml file.
+        if not epjson:
+            epjson = self.epjson
+        if object_list:
+            # make a temporary object list since non-super objects will be removed from the list
+            tmp_object_list = []
+            for o in object_list:
+                (object_type, object_structure), = o.items()
+                if not object_structure.get('Fields') and not object_structure.get('Connectors'):
+                    epjson_object = self.yaml_list_to_epjson_dictionaries([o, ])
+                    epjson_objects = self.yaml_list_to_epjson_dictionaries(object_list)
+                    epjson_resolved_object = self.resolve_objects(epjson=epjson_object, reference_epjson=epjson_objects)
+                    self.merge_epjson(
+                        super_dictionary=self.epjson,
+                        object_dictionary=epjson_resolved_object
+                    )
+                else:
+                    tmp_object_list.append(o)
+            # set the object list to only contain super objects
+            object_list = tmp_object_list
+        return object_list
+
     def _apply_build_path_action(self, build_path, action_instructions):
         """
         Mutate a build path list based on a set of action instructions
@@ -772,27 +806,7 @@ class ExpandObjects(EPJSON):
             object_list = self._apply_transitions(option_tree_leaf=option_tree_leaf)
         else:
             object_list = None
-        # Look over each object in the object_list.  If it is not a super object, then process it and save to
-        #   class epjson object.  Use the current object_list as the reference epJSON to resolve the objects.
-        #   If a larger scope of reference for the epJSON is needed, the object should be placed in BaseObjects or
-        #   TemplateObjects sections of the yaml file.
-        if object_list:
-            # make a temporary object list since non-super objects will be removed from the list
-            tmp_object_list = []
-            for o in object_list:
-                (object_type, object_structure), = o.items()
-                if not object_structure.get('Fields') and not object_structure.get('Connectors'):
-                    epjson_object = self.yaml_list_to_epjson_dictionaries([o, ])
-                    epjson_objects = self.yaml_list_to_epjson_dictionaries(object_list)
-                    epjson_resolved_object = self.resolve_objects(epjson=epjson_object, reference_epjson=epjson_objects)
-                    self.merge_epjson(
-                        super_dictionary=self.epjson,
-                        object_dictionary=epjson_resolved_object
-                    )
-                else:
-                    tmp_object_list.append(o)
-            # set the object list to only contain super objects
-            object_list = tmp_object_list
+        object_list = self._parse_build_path(object_list=object_list)
         # Create new build path dictionary since the input dictionary will be mutated
         output_build_path = copy.deepcopy(build_path)
         # if the location is an integer, just perform the action on that index, otherwise, iterate over super objects
@@ -851,9 +865,11 @@ class ExpandObjects(EPJSON):
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
             raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+        # cleanse build path to only contain super objects.  Non super objects are saved to epJSON file
+        parsed_build_path = self._parse_build_path(object_list=copy.deepcopy(build_path))
         object_list = []
         formatted_build_path = []
-        for idx, super_object in enumerate(copy.deepcopy(build_path)):
+        for idx, super_object in enumerate(parsed_build_path):
             (super_object_type, super_object_structure), = super_object.items()
             connectors = super_object_structure.get('Connectors')
             if not connectors:
@@ -897,6 +913,8 @@ class ExpandObjects(EPJSON):
         # Get the list actions to perform on a build bath, based on template inputs, and process them in order
         actions = option_tree.pop('Actions', None)
         if actions:
+            # flatten action list due to yaml formatting
+            actions = self._flatten_list(actions)
             for action in actions:
                 try:
                     for template_field, action_structure in action.items():
@@ -985,7 +1003,7 @@ class ExpandThermostat(ExpandObjects):
             if not getattr(self, '{}_setpoint_schedule_name'.format(thermostat_type), None) \
                     and getattr(self, 'constant_{}_setpoint'.format(thermostat_type), None):
                 thermostat_schedule = self.build_compact_schedule(
-                    structure_hierarchy=['CommonObjects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=getattr(self, 'constant_{}_setpoint'.format(thermostat_type)),
                 )
                 (thermostat_schedule_type, thermostat_schedule_structure), = thermostat_schedule.items()
@@ -1144,7 +1162,7 @@ class ExpandSystem(ExpandObjects):
         # if return fan is specified skip the first object as long as it is a (return) fan
         for idx, super_object in enumerate(build_path):
             for super_object_type, super_object_constructor in super_object.items():
-                if getattr(self, 'return_fan', None) and idx == 0:
+                if getattr(self, 'return_fan', None) == 'Yes' and idx == 0:
                     if not re.match(r'Fan:.*', super_object_type):
                         raise PyExpandObjectsException('Return fan specified in template but is not the first object in '
                                                        'build path: {}'.format(build_path))
@@ -1308,7 +1326,7 @@ class ExpandSystem(ExpandObjects):
         # check if a return fan is specified in the template.  If so, then copy the first object, which should be a fan
         # and also should have been skipped by the above process.  Insert the object into the list at the end of the
         # process at position 0
-        if getattr(self, 'return_fan', None):
+        if getattr(self, 'return_fan', None) == 'Yes':
             (return_fan_type, return_fan_structure), = build_path[0].items()
             if not re.match(r'Fan:.*', return_fan_type):
                 raise PyExpandObjectsException('Return fan was specified in HVACTemplate:System, however, a fan was not '

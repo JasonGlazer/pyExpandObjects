@@ -9,6 +9,7 @@ simulation/test/*
 !simulation/test/*.txt
 !simulation/test/*.rvi
 tests/output_files/*.epJSON
+simulation/ExampleFiles/eplusout*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

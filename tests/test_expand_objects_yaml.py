@@ -1699,6 +1699,38 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual('template_name Supply Fan', [i for i in output][0]['value'])
         return
 
+    def test_separate_objects_build_path(self):
+        eo = ExpandObjects()
+        eo.epjson = {}
+        object_list = [
+            {
+                "Object:Type1": {
+                    "Fields": {
+                        "name": "ObjectName1",
+                        "field_1": "val_1",
+                        "field_2": "val_2"
+                    },
+                    "Connectors": {
+                        "AirLooop": {
+                            "Inlet": "field_1",
+                            "Outlet": "field_2"
+                        }
+                    }
+                }
+            },
+            {
+                "Object:Type2": {
+                    "name": "ObjectName2",
+                    "field_3": "val_3",
+                    "field_4": "val_4"
+                }
+            }
+        ]
+        output = eo._parse_build_path(object_list=object_list)
+        self.assertEqual('Object:Type1', list(output[0].keys())[0])
+        self.assertEqual('val_3', eo.epjson['Object:Type2']['ObjectName2']['field_3'])
+        return
+
     def test_reject_complex_inputs_build_path_reference_no_build_path(self):
         es = ExpandSystem(template=mock_system_template)
         es.build_path = {}
@@ -1783,7 +1815,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         output = eo.resolve_objects(epjson={
             'Schedule:Compact': {
                 "HVACTemplate-Always12.8": {
-                    'structure': 'CommonObjects:Schedule:Compact:ALWAYS_VAL',
+                    'structure': 'Objects:Common:Objects:Schedule:Compact:ALWAYS_VAL',
                     'insert_values': [12.8, ]
                 }
             }
@@ -1823,18 +1855,22 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         })
         es.expansion_structure = {
-            'CommonObjects': {
-                'Schedule': {
-                    'Compact': {
-                        'ALWAYS_VAL': {
-                            'name': 'HVACTemplate-Always{}',
-                            'schedule_type_limits_name': 'Any Number',
-                            'data': [
-                                {'field': 'Through 12/31'},
-                                {'field': 'For AllDays'},
-                                {'field': 'Until 24:00'},
-                                {'field': '{:.1f}'}
-                            ]
+            'Objects': {
+                'Common': {
+                    'Objects': {
+                        'Schedule': {
+                            'Compact': {
+                                'ALWAYS_VAL': {
+                                    'name': 'HVACTemplate-Always{}',
+                                    'schedule_type_limits_name': 'Any Number',
+                                    'data': [
+                                        {'field': 'Through 12/31'},
+                                        {'field': 'For AllDays'},
+                                        {'field': 'Until 24:00'},
+                                        {'field': '{:.1f}'}
+                                    ]
+                                }
+                            }
                         }
                     }
                 }

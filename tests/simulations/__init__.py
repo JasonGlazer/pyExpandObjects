@@ -2,11 +2,12 @@ import unittest
 import json
 from pathlib import Path
 import subprocess
-import csv
 import re
 import sys
 import os
 from argparse import Namespace
+import traceback
+import pandas as pd
 
 from src.epjson_handler import EPJSON
 from src.main import main
@@ -83,12 +84,13 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         return idf_file_path
 
     @staticmethod
-    def convert_file(file_location):
+    def expand_idf(file_location, working_dir=str(test_dir / '..' / 'simulation' / 'test')):
         """
-        Convert idf to epJSON and vice versa.
-        converted file in alternative format is created in same directory as base file
-        :param file_location: Path or string reference to file location
-        :return: file path to converted file
+        Expand idf file and save with a unique file name
+
+        :param file_location: location for idf base file
+        :param working_dir: directory to use as working directory for subprocess
+        :return: file path to expanded file
         """
         # convert to Path if a string is passed
         if isinstance(file_location, str):
@@ -97,14 +99,62 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         subprocess.run(
             [
                 'wine',
-                '../ConvertInputFormatWithHVACTemplate.exe',
-                '-t',
+                '../energyplus.exe',
+                '-x',
+                '--convert-only',
                 os.path.basename(file_location)
             ],
-            cwd=str(test_dir / '..' / 'simulation' / 'test'),
+            cwd=working_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
+        os.rename(
+            os.path.join(
+                os.path.dirname(file_location),
+                'eplusout.expidf'),
+            os.path.join(
+                os.path.dirname(file_location),
+                os.path.basename(file_location).replace('.idf', 'Expanded.idf')))
+        return os.path.basename(file_location).replace('.idf', 'Expanded.idf')
+
+    @staticmethod
+    def convert_file(file_location, working_dir=str(test_dir / '..' / 'simulation' / 'test')):
+        """
+        Convert idf to epJSON and vice versa.
+        converted file in alternative format is created in same directory as base file
+        :param file_location: Path or string reference to file location
+        :param working_dir: directory to use as working directory for subprocess
+        :return: file path to converted file
+        """
+        # convert to Path if a string is passed
+        if isinstance(file_location, str):
+            file_location = Path(file_location)
+        # calling the arguments with pathlib causes issues with the conversion exe, so direct strings are passed here.
+        # ConvertWithHVACTemplate.exe is v9.4, so only use it when necessary
+        # todo_eo: ask for updated version of ConvertWithHVACTemplate.exe
+        if 'expanded' in os.path.basename(file_location).lower():
+            subprocess.run(
+                [
+                    'wine',
+                    '../ConvertInputFormat.exe',
+                    os.path.basename(file_location)
+                ],
+                cwd=working_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        else:
+            subprocess.run(
+                [
+                    'wine',
+                    '../ConvertInputFormatWithHVACTemplate.exe',
+                    '-t',
+                    os.path.basename(file_location)
+                ],
+                cwd=working_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
         if file_location.suffix == '.epJSON':
             return file_location.with_suffix('.idf')
         elif file_location.suffix == '.idf':
@@ -121,12 +171,13 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         :return: None.  Assertions performed within function.
         """
         # move file to testing directory manually, shutil does not work reliably for some reason
+        base_idf_test_file_path = test_dir.joinpath('..', 'simulation', 'test', 'base_input.idf')
         with open(base_idf_file_path, 'r') as f1, \
-                open(test_dir.joinpath('..', 'simulation', 'test', 'base_input.idf'), 'w') as f2:
+                open(base_idf_test_file_path , 'w') as f2:
             for line in f1:
                 f2.write(line)
         # convert to epJSON for test simulation input
-        baseline_file_location = self.convert_file(base_idf_file_path)
+        baseline_file_location = self.convert_file(base_idf_test_file_path)
         # setup outputs for perform_comparison to function and write base file
         base_formatted_epjson = self.setup_file(baseline_file_location)
         # write the preformatted base file for main to call
@@ -148,8 +199,8 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             # check outputs
             self.perform_comparison([base_idf_file_path, test_input_file_path])
         except:
-            print('pyExpandObjects process failed to complete')
-            self.assertIsNotNone(output_epjson)
+            traceback.print_exc()
+            self.assertEqual(1, 0, 'pyExpandObjects process failed to complete')
         return
 
     def perform_comparison(self, epjson_files):
@@ -252,23 +303,14 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     cwd=str(test_dir / '..' / 'simulation' / 'test')
                 )
             # get sum of output csv rows to use as comparison
-            total_energy = 0
-            with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'), 'r') as f:
-                csvreader = csv.reader(f)
-                sum_val = []
-                for idx, row in enumerate(csvreader):
-                    if idx != 0:
-                        for val in row:
-                            try:
-                                sum_val.append(float(val))
-                            except ValueError:
-                                pass
-                total_energy = sum(sum_val)
+            energy_df = pd.read_csv(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'))
+            melt_columns = [c for c in energy_df.columns if not c == 'Date/Time']
+            energy_df = energy_df.melt(id_vars=['Date/Time', ], value_vars=melt_columns)
             with open(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.end'), 'r') as f:
                 lines = f.readlines()
             # check end file for matches and success message
-            warning_rgx = r'(\d+)\s+Warning;'
-            error_rgx = r'(\d+) Severe Errors'
+            warning_rgx = r'.*\s+(\d+)\s+Warning;'
+            error_rgx = r'.*\s+(\d+) Severe Errors'
             status_rgx = r'^EnergyPlus\s+Completed\s+Successfully'
             status_val = 0
             for line in lines:
@@ -289,23 +331,40 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 if status_match:
                     status_val = 1
             finished_statuses.append(status_val)
-            total_energy_outputs.append(total_energy)
+            total_energy_outputs.append(energy_df)
         status_checks = {
             "total_energy_outputs": total_energy_outputs,
             "warning_outputs": warning_outputs,
             "error_outputs": error_outputs,
             "finished_statuses": finished_statuses}
-        for energy_val in status_checks['total_energy_outputs']:
-            print("Simulation are {} % different".format(
-                abs(1 - energy_val / max(status_checks['total_energy_outputs'])) * 100))
-            self.assertAlmostEqual(energy_val / max(status_checks['total_energy_outputs']), 1, 2)
+        # merge each meter output against the others and check if there is a discrepancy
+        for energy_idx in range(len(epjson_files)):
+            index_check = [i for i in range(len(epjson_files)) if i > energy_idx]
+            for i in index_check:
+                test_df = total_energy_outputs[energy_idx].merge(
+                    total_energy_outputs[i],
+                    how='left',
+                    on=['Date/Time', 'variable'])
+                test_df['diff'] = abs(test_df['value_x'] - test_df['value_y']) / test_df['value_x']
+                # Filter out low percentage differences
+                test_filtered_df = test_df.loc[test_df['diff'] > 0.01].copy()
+                test_filtered_df.rename(columns={
+                    "value_x": os.path.basename(epjson_files[energy_idx]),
+                    "value_y": os.path.basename(epjson_files[i])
+                }, inplace=True)
+                self.assertEqual(
+                    test_filtered_df.shape[0],
+                    0,
+                    "Meter Outputs are not approximately equal:\n{}".format(
+                        test_filtered_df.sort_values(['diff', ], ascending=False)))
+                print('Meter Outputs:\n{}'.format(test_df.sort_values(['diff', ])))
         for warning in status_checks['warning_outputs']:
-            self.assertEqual(warning, max(status_checks['warning_outputs']))
+            self.assertEqual(warning, max(status_checks['warning_outputs']), 'Unbalanced number of warnings')
         for error in status_checks['error_outputs']:
-            self.assertEqual(error, max(status_checks['error_outputs']))
+            self.assertEqual(error, max(status_checks['error_outputs']), 'Unbalanced number of errors')
             self.assertGreaterEqual(error, 0)
         for status in status_checks['finished_statuses']:
-            self.assertEqual(1, status)
+            self.assertEqual(1, status, 'Varying status outputs')
         return
 
     def compare_epjsons(self, epjson_1, epjson_2):
