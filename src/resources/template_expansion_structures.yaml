@@ -128,39 +128,47 @@ Objects:
               maximum_hot_water_or_steam_flow_rate: Autosize # set by legacy, no default, not reachable from template
       ConstantVolume:
         NoReheat:
-          - AirTerminal:SingleDuct:ConstantVolume:NoReheat: &AirTerminalSingleDuctConstantVolumeNoReheat
-              name: '{} CV'
-              <<: *AirTerminalSingleDuctCommonFields
+          Fields: &AirTerminalSingleDuctConstantVolumeNoReheat
+            name: '{} CV'
+            <<: *AirTerminalSingleDuctCommonFields
         Reheat:
           Base:
-            - AirTerminal:SingleDuct:ConstantVolume:Reheat: &AirTerminalSingleDuctConstantVolumeReheat
-                name: '{} CV Reheat'
-                <<: *AirTerminalSingleDuctCommonFields
-                <<: *AirTerminalSingleDuctCommonFieldsReheat
-                <<: *AirTerminalSingleDuctCommonFieldsReheatWater
+            Fields: &AirTerminalSingleDuctConstantVolumeReheat
+              name: '{} CV Reheat'
+              <<: *AirTerminalSingleDuctCommonFields
+              <<: *AirTerminalSingleDuctCommonFieldsReheat
+              <<: *AirTerminalSingleDuctCommonFieldsReheatWater
       VAV:
         Common:
+          Fields:
+            Fields: &AirTerminalSingleDuctVAVCommonFields
+              <<: *AirTerminalSingleDuctCommonFields
+              constant_minimum_air_flow_fraction: '{constant_minimum_air_flow_fraction}'
+              fixed_minimum_air_flow_rate: '{fixed_minimum_air_flow_rate}'
+              maximum_air_flow_rate: '{supply_air_maximum_flow_rate}'
+              minimum_air_flow_fraction_schedule_name: '{minimum_air_flow_fraction_schedule_name}'
+              zone_minimum_air_flow_input_method: '{zone_minimum_air_flow_input_method}'
           Transitions: &AirTerminalSingleDuctVAVCommonTransitions
             - AirTerminal:.*:
                 supply_air_maximum_flow_rate: maximum_air_flow_rate
                 damper_heating_action: damper_heating_action
+        NoReheat:
+          Base:
+            Fields: &AirTerminalSingleDuctVAVNoReheatFields
+              name: '{} VAV NoReheat'
+              <<: *AirTerminalSingleDuctVAVCommonFields
         Reheat:
           Base:
-            - AirTerminal:SingleDuct:VAV:Reheat: &AirTerminalSingleDuctVAVReheat
-                name: '{} VAV Reheat'
-                <<: *AirTerminalSingleDuctCommonFields
-                <<: *AirTerminalSingleDuctCommonFieldsReheat
-                constant_minimum_air_flow_fraction: '{constant_minimum_air_flow_fraction}'
-                damper_air_outlet_node_name: '{} Damper Outlet' # required by schema
-                damper_heating_action: Reverse # template default, not object default
-                fixed_minimum_air_flow_rate: '{fixed_minimum_air_flow_rate}'
-                maximum_air_flow_rate: '{supply_air_maximum_flow_rate}'
-                minimum_air_flow_fraction_schedule_name: '{minimum_air_flow_fraction_schedule_name}'
-                zone_minimum_air_flow_input_method: '{zone_minimum_air_flow_input_method}'
-          HotWater: &AirTerminalSingleDuctVAVReheatHotWater
-            - AirTerminal:SingleDuct:VAV:Reheat:
-                <<: *AirTerminalSingleDuctVAVReheat
-                <<: *AirTerminalSingleDuctCommonFieldsReheatWater
+            Fields: &AirTerminalSingleDuctVAVReheat
+              name: '{} VAV Reheat'
+              <<: *AirTerminalSingleDuctVAVCommonFields
+              <<: *AirTerminalSingleDuctCommonFieldsReheat
+              damper_air_outlet_node_name: '{} Damper Outlet' # required by schema
+              damper_heating_action: Reverse # template default, not object default
+          HotWater:
+            Fields: &AirTerminalSingleDuctVAVReheatHotWater
+              <<: *AirTerminalSingleDuctVAVReheat
+              <<: *AirTerminalSingleDuctCommonFieldsReheatWater
   AvailabilityManager:
     NightCycle:
       Base:
@@ -174,18 +182,19 @@ Objects:
           fan_schedule_name: '{system_availability_schedule_name}' # required by schema
           thermostat_tolerance: 0.2 # set by legacy, not template default, not object default
   Boiler:
-    CommonObjects:
-      - Branch: &BoilerCommonObjectsBranch
-          name: '{} Branch'
-          components:
-            - component_object_type:
-                Boiler.*: self
-              component_name:
-                Boiler.*: key
-              component_inlet_node_name:
-                Boiler.*: boiler_water_inlet_node_name
-              component_outlet_node_name:
-                Boiler.*: boiler_water_outlet_node_name
+    Common:
+        Objects:
+        - Branch: &BoilerCommonObjectsBranch
+            name: '{} Branch'
+            components:
+              - component_object_type:
+                  Boiler.*: self
+                component_name:
+                  Boiler.*: key
+                component_inlet_node_name:
+                  Boiler.*: boiler_water_inlet_node_name
+                component_outlet_node_name:
+                  Boiler.*: boiler_water_outlet_node_name
     HotWater:
       Common:
         Objects: &BoilerHotWaterCommonObjects
@@ -1305,7 +1314,17 @@ OptionTree:
             - *SizingZoneCommonTransitions
             - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
             - *ZoneHVACFourPipeFanCoilCommonTransitions
-        TemplateObjects: *ZoneCommonTemplateObjects
+        TemplateObjects:
+          <<: *ZoneCommonTemplateObjects
+          dedicated_outdoor_air_system_name:
+            '[\S]+':
+              Objects:
+                # todo_eo: discuss why this is not an AirTerminal:SingleDuct:ConstantVolume:NoReheat
+                - AirTerminal:SingleDuct:VAV:NoReheat:
+                    <<: *AirTerminalSingleDuctVAVNoReheatFields
+                    name: '{} Air Terminal'
+                    constant_minimum_air_flow_fraction: 1.0
+                    zone_minimum_air_flow_input_method: Constant
       VAV:
         BaseObjects:
           Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
@@ -1316,7 +1335,7 @@ OptionTree:
           reheat_coil_type:
             HotWater:
               Objects:
-                - *AirTerminalSingleDuctVAVReheatHotWater
+                - AirTerminal:SingleDuct:VAV:Reheat: *AirTerminalSingleDuctVAVReheatHotWater
                 - Coil:Heating:Water:
                     <<: *CoilHeatingWaterFields
                     name: '{} Reheat Coil'
@@ -1469,20 +1488,20 @@ OptionTree:
                       <<: *AvailabilityManagerNightCycle
           ConstantVolume: &SystemCommonTemplateObjectsConstantVolume
             cooling_coil_setpoint_control_type:
-              ControlZone:
+              ControlZone: &SystemCommonTemplateObjectsConstantVolumControlZone
                 Objects:
                   - SetpointManager:SingleZone:Cooling: *SetpointManagerSingleZoneCooling
-              FixedSetpoint:
+              FixedSetpoint: &SystemCommonTemplateObjectsConstantVolumFixedSetpoint
                 Objects:
                   # Some templates append 'temperature' to the field that maps to schedule_name
                   # todo_eo: notify team of cooling_coil_design_setpoint discrepancy
                   - SetpointManager:Scheduled:
                       <<: *SetpointManagerScheduledCooling
                       schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint_temperature}'
-              Warmest:
+              Warmest: &SystemCommonTemplateObjectsConstantVolumeWarmest
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
-            heating_coil_setpoint_control_type:
+            heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
               ControlZone:
                 Objects:
                   - SetpointManager:SingleZone:Heating: *SetpointManagerSingleZoneHeating
@@ -1492,6 +1511,18 @@ OptionTree:
               OutdoorAirTemperatureReset:
                 Objects:
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHeating
+          ConstantVolumeAlt:
+            # This section is necessary due to the cooling_coil_design_setpoint naming discrepancy
+            cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlTypeAlt
+              ControlZone: *SystemCommonTemplateObjectsConstantVolumControlZone
+              FixedSepoint:
+                Objects:
+                  # Some templates append 'temperature' to the field that maps to schedule_name
+                  # todo_eo: notify team of cooling_coil_design_setpoint discrepancy
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledCooling
+                      schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint}'
+              Warmest: *SystemCommonTemplateObjectsConstantVolumeWarmest
           VAV:
       ConstantVolume:
         BuildPath:
@@ -1508,6 +1539,22 @@ OptionTree:
         TemplateObjects:
           <<: *SystemCommonTemplateObjects
           <<: *SystemCommonTemplateObjectsConstantVolume
+      DedicatedOutdoorAir:
+        BuildPath:
+          BaseObjects:
+            Objects: *SystemCommonBuildPathObjects
+          Actions:
+            - *SystemCommonBuildPathActions
+            - *SystemCommonBuildPathActionsConstantVolume
+        BaseObjects:
+          Objects: *SystemCommonBaseObjectsConstantVolume
+          Transitions:
+            - *SystemCommonTransitions
+            - *SizingSystemCommonTransitions
+        TemplateObjects:
+          <<: *SystemCommonTemplateObjects
+          cooling_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlTypeAlt
+          heating_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
       VAV:
         BuildPath:
           BaseObjects:
