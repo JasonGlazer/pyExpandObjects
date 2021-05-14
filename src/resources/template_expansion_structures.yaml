@@ -85,12 +85,6 @@ Objects:
         AirLoop: &ConnectorsAirLoop
           Inlet: air_inlet_node_name
           Outlet: air_outlet_node_name
-        General:
-          Inlet: inlet_node_name
-          Outler: outlet_node_name
-        WaterLoop: &ConnectorsWaterLoop
-          Inlet: water_inlet_node_name
-          Outlet: water_outlet_node_name
       Schedule:
         Compact:
           ALWAYS_VAL:
@@ -181,7 +175,7 @@ Objects:
           thermostat_tolerance: 0.2 # set by legacy, not template default, not object default
   Boiler:
     CommonObjects:
-      - Branch: &BoilerBranch
+      - Branch: &BoilerCommonObjectsBranch
           name: '{} Branch'
           components:
             - component_object_type:
@@ -225,18 +219,32 @@ Objects:
   Chiller:
     Electric:
       Common:
-        Objects: &ChillerElectricCommonObjects
-          - Branch:
-              name: '{} ChW Branch'
-              components:
-                - component_object_type:
-                    Chiller.*: self
-                  component_name:
-                    Chiller.*: key
-                  component_inlet_node_name:
-                    Chiller.*: chilled_water_inlet_node_name
-                  component_outlet_node_name:
-                    Chiller.*: chilled_water_outlet_node_name
+        ChilledWater:
+          Objects: &ChillerElectricCommonChilledWaterObjects
+            - Branch:
+                name: '{} ChW Branch'
+                components:
+                  - component_object_type:
+                      Chiller.*: self
+                    component_name:
+                      Chiller.*: key
+                    component_inlet_node_name:
+                      Chiller.*: chilled_water_inlet_node_name
+                    component_outlet_node_name:
+                      Chiller.*: chilled_water_outlet_node_name
+        CondenserWater:
+          Objects: &ChillerElectricCommonCondenserWaterObjects
+            - Branch:
+                name: '{} CndW Branch'
+                components:
+                  - component_object_type:
+                      Chiller.*: self
+                    component_name:
+                      Chiller.*: key
+                    component_inlet_node_name:
+                      Chiller.*: condenser_inlet_node_name
+                    component_outlet_node_name:
+                      Chiller.*: condenser_outlet_node_name
       EIR:
         Common:
           Objects: &ChillerElectricEIRCommonObjects
@@ -322,7 +330,7 @@ Objects:
           name: '{} Cooling Coil'
           air_inlet_node_name: '{} Cooling Coil Inlet' # required by schema
           air_outlet_node_name: '{} Cooling Coil Outlet' # required by schema
-        Water:
+        Water: &CoolingCoilSuperObject
           Fields: &CoilCoolingWaterFields
             <<: *CoilCoolingFields
             heat_exchanger_configuration: CrossFlow # set by legacy, not reachable by template, no default
@@ -331,7 +339,6 @@ Objects:
             water_outlet_node_name: '{} Cooling Coil Chw Outlet' # required by schema
           Connectors: &CoilCoolingWaterConnectors
             AirLoop: *ConnectorsAirLoop
-            ChilledWaterLoop: *ConnectorsWaterLoop
           DetailedGeometry:
             Fields:
               << : *CoilCoolingWaterFields
@@ -340,7 +347,7 @@ Objects:
     Heating:
       Common:
         Objects: &CoilHeatingCommonObjects
-          - Branch: &CoilHeatingBranch
+          - Branch: &CoilHeatingCommonObjectsBranch
               name: '{} Heating Coil Hw Branch'
               components:
                 - component_inlet_node_name:
@@ -361,7 +368,7 @@ Objects:
           air_outlet_node_name: '{} Heating Coil Outlet' # required by schema
         Connectors:
           AirLoop: *ConnectorsAirLoop
-        Water:
+        Water: &CoilHeatingWaterSuperObject
           Fields: &CoilHeatingWaterFields
             << : *CoilHeatingFields
             water_inlet_node_name: '{} Heating Coil Hw Inlet' # required by schema
@@ -372,7 +379,6 @@ Objects:
             rated_outlet_water_temperature: 71.1 # set by legacy, default but simulations unstable when omitted
           Connectors: &CoilHeatingWaterConnectors
             AirLoop: *ConnectorsAirLoop
-            HotWaterLoop: *ConnectorsWaterLoop
   Controller:
     OutdoorAir:
       Base:
@@ -751,6 +757,11 @@ Objects:
       Base:
         Fields: &SetpointManagerScheduled
           <<: *SetpointManagerOutdoorAirReset
+      ChilledWater:
+        Base:
+          Fields: &SetpointManagerScheduledChilledWater
+            <<: *SetpointManagerScheduled
+            schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
       Cooling:
         Base:
           Fields: &SetpointManagerScheduledCooling
@@ -898,6 +909,24 @@ Objects:
       Fields: &SizingPlant
         name: '{} Sizing Plant'
         plant_or_condenser_loop_name: *PlantLoop
+    ChilledWater:
+      Fields: &SizingPlantChilledWater
+        <<: *SizingPlant
+        loop_type: Cooling
+        loop_design_temperature_difference: 6.67
+        design_loop_exit_temperature: '{chilled_water_design_setpoint}'
+    CondenserWater:
+      Fields: &SizingPlantCondenserWater
+        <<: *SizingPlant
+        loop_type: Condenser
+        loop_design_temperature_difference: 5.6
+        design_loop_exit_temperature: 29.4
+    HotWater:
+      Fields: &SizingPlantHotWater
+        <<: *SizingPlant
+        loop_type: Heating
+        loop_design_temperature_difference: 11
+        design_loop_exit_temperature: '{hot_water_design_setpoint}'
   ZoneHVAC:
     AirDistributionUnit:
       Base:
@@ -954,31 +983,32 @@ Objects:
               zone_equipment_cooling_sequence: 1
               zone_equipment_heating_or_no_load_sequence: 1
       Baseboard:
-        Fields: &ZoneHVACEquipmentListBaseboard
-          <<: *ZoneHVACEquipmentList
-          equipment:
-            - zone_equipment_object_type:
-                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
-              zone_equipment_name:
-                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
-              zone_equipment_cooling_sequence: 1
-              zone_equipment_heating_or_no_load_sequence: 1
-      BaseboardSecondary: # todo_eo: untested
-        Fields: &ZoneHVACEquipmentListBaseboardSecondary
-          <<: *ZoneHVACEquipmentList
-          equipment:
-            - zone_equipment_object_type:
-                ^ZoneHVAC:(AirDistribution|FourPipe).*: self
-              zone_equipment_name:
-                ^ZoneHVAC:(AirDistribution|FourPipe).*: key
-              zone_equipment_cooling_sequence: 1
-              zone_equipment_heating_or_no_load_sequence: 1
-            - zone_equipment_object_type:
-                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
-              zone_equipment_name:
-                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
-              zone_equipment_cooling_sequence: 2
-              zone_equipment_heating_or_no_load_sequence: 2
+        Water:
+          Fields: &ZoneHVACEquipmentListBaseboardWater
+            <<: *ZoneHVACEquipmentList
+            equipment:
+              - zone_equipment_object_type:
+                  ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+                zone_equipment_name:
+                  ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+                zone_equipment_cooling_sequence: 1
+                zone_equipment_heating_or_no_load_sequence: 1
+        BaseboardSecondary: # todo_eo: untested
+          Fields: &ZoneHVACEquipmentListBaseboardWaterSecondary
+            <<: *ZoneHVACEquipmentList
+            equipment:
+              - zone_equipment_object_type:
+                  ^ZoneHVAC:(AirDistribution|FourPipe).*: self
+                zone_equipment_name:
+                  ^ZoneHVAC:(AirDistribution|FourPipe).*: key
+                zone_equipment_cooling_sequence: 1
+                zone_equipment_heating_or_no_load_sequence: 1
+              - zone_equipment_object_type:
+                  ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+                zone_equipment_name:
+                  ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+                zone_equipment_cooling_sequence: 2
+                zone_equipment_heating_or_no_load_sequence: 2
     EquipmentConnections:
       Base:
         Fields: &ZoneHVACEquipmentConnectionsFields
@@ -1195,21 +1225,24 @@ OptionTree:
               Objects:
                 - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
                 - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
-                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseboardSecondary
+                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseboardWaterSecondary
               Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
-      BaseboardHeat:
+      BaseboardHeat: # Common objects not used since baseboards do not use air paths and are also
+                     #   secondary equipment in some options.
         BaseObjects:
+          Objects:
+            - Sizing:Zone: *SizingZone
+          Transitions:
+            - *SizingZoneCommonTransitions
         TemplateObjects:
           baseboard_heating_type:
             HotWater:
-              Objects: # Common objects not used since baseboards do not use air paths and are also
-                       #   secondary equipment in some options.
-                - Sizing:Zone: *SizingZone
+              Objects:
                 - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
                 - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
                 - *ZoneHVACBaseboardRadiantConvectiveWaterCommonObjects
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFields
-                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseboard
+                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseboardWater
               Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
       ConstantVolume:
         BaseObjects:
@@ -1233,7 +1266,7 @@ OptionTree:
                     air_outlet_node_name: '{} Supply Inlet'
                     availability_schedule_name: '{reheat_coil_availability_schedule_name}'
                 - Branch:
-                    <<: *CoilHeatingBranch
+                    <<: *CoilHeatingCommonObjectsBranch
                     name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
       FanCoil:
         BuildPath:
@@ -1248,9 +1281,7 @@ OptionTree:
               - Fan:SystemModel:
                   Fields: *FanSystemModelFields
                   Connectors: *FanConnectors
-              - Coil:Cooling:Water:
-                  Fields: *CoilCoolingWaterFields
-                  Connectors: *CoilCoolingWaterConnectors
+              - Coil:Cooling:Water: *CoolingCoilSuperObject
               - *CoilCoolingCommonObjects
               - Coil:Heating:Water:
                   Fields:
@@ -1293,7 +1324,7 @@ OptionTree:
                     air_outlet_node_name: '{} Supply Inlet'
                     availability_schedule_name: '{reheat_coil_availability_schedule_name}'
                 - Branch:
-                    <<: *CoilHeatingBranch
+                    <<: *CoilHeatingCommonObjectsBranch
                     name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
               Transitions:
                 - *AirTerminalSingleDuctVAVCommonTransitions
@@ -1310,9 +1341,7 @@ OptionTree:
                     Location: After
                     ActionType: Insert
                     Objects:
-                      - Coil:Heating:Water:
-                          Fields: *CoilHeatingWaterFields
-                          Connectors: *CoilHeatingWaterConnectors
+                      - Coil:Heating:Water: *CoilHeatingWaterSuperObject
                       - Controller:WaterCoil:
                           <<: *ControllerWaterCoil
                           name: '{} Heating Coil Controller'
@@ -1324,9 +1353,7 @@ OptionTree:
                     ActionType: Insert
                     Objects:
                       - *CoilCoolingCommonObjects
-                      - Coil:Cooling:Water:
-                          Fields: *CoilCoolingWaterFields
-                          Connectors: *CoilCoolingWaterConnectors
+                      - Coil:Cooling:Water: *CoolingCoilSuperObject
                       - Controller:WaterCoil:
                           <<: *ControllerWaterCoil
                           name: '{} Cooling Coil Controller'
@@ -1588,12 +1615,12 @@ OptionTree:
             (None|HotWaterLoop):
               Objects:
                 - Branch:
-                    <<: *BoilerBranch
+                    <<: *BoilerCommonObjectsBranch
                     name: '{} Boiler HW Branch'
             MixedWaterLoop:
               Objects:
                 - Branch:
-                    <<: *BoilerBranch
+                    <<: *BoilerCommonObjectsBranch
                     name: '{} Boiler MW Branch'
           boiler_type:
             HotWaterBoiler:
@@ -1607,18 +1634,13 @@ OptionTree:
           Objects:
             - *PlantCommonPlantLoopBase
             - *PlantCommonObjectsChilledWaterLoop
-            - Sizing:Plant:
-                <<: *SizingPlant
-                loop_type: Cooling
-                loop_design_temperature_difference: 6.67
-                design_loop_exit_temperature: '{chilled_water_design_setpoint}'
+            - Sizing:Plant: *SizingPlantChilledWater
         TemplateObjects: # todo_eo: Secondary options need to have PlantLoop common_pipe_simulation changed to CommonPipe
           chilled_water_pump_configuration:
             ConstantPrimaryNoSecondary:
               Objects:
                 - *PlantCommonPlantLoopPrimaryNoSecondary
-                - PlantLoop:
-                    <<: *PlantLoopChilledWaterFields
+                - PlantLoop: *PlantLoopChilledWaterFields
                 - Pump:ConstantSpeed:
                     <<: *PumpConstantSpeed
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
@@ -1626,8 +1648,7 @@ OptionTree:
             VariablePrimaryNoSecondary:
               Objects:
                 - *PlantCommonPlantLoopPrimaryNoSecondary
-                - PlantLoop:
-                    <<: *PlantLoopChilledWaterFields
+                - PlantLoop: *PlantLoopChilledWaterFields
                 - Pump:VariableSpeed:
                     <<: *PumpVariableSpeed
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
@@ -1635,9 +1656,7 @@ OptionTree:
           chilled_water_setpoint_reset_type:
             None:
               Objects:
-                - SetpointManager:Scheduled:
-                    <<: *SetpointManagerScheduled
-                    schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
+                - SetpointManager:Scheduled: *SetpointManagerScheduledChilledWater
             OutdoorAirTemperatureReset:
               Objects:
                 - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetChilledWater
@@ -1648,24 +1667,13 @@ OptionTree:
             ElectricReciprocatingChiller:
               Objects:
                 - Chiller:Electric:EIR: *ChillerElectricEIRSuperObject
-                - *ChillerElectricCommonObjects
+                - *ChillerElectricCommonChilledWaterObjects
                 - *ChillerElectricEIRCommonObjects
               Transitions:
                 - *ChillerElectricEIRCommonTransitions
           condenser_type:
             WaterCooled:
-              Objects:
-                - Branch:
-                    name: '{} CndW Branch'
-                    components:
-                      - component_object_type:
-                          Chiller.*: self
-                        component_name:
-                          Chiller.*: key
-                        component_inlet_node_name:
-                          Chiller.*: condenser_inlet_node_name
-                        component_outlet_node_name:
-                          Chiller.*: condenser_outlet_node_name
+              Objects: *ChillerElectricCommonCondenserWaterObjects
       CondenserWaterLoop:
         BaseObjects:
           Objects:
@@ -1674,14 +1682,8 @@ OptionTree:
             - Pump:VariableSpeed:
                 <<: *PumpVariableSpeed
                 design_pump_head: '{condenser_water_pump_rated_head}' # template attribute set in hvac_template.py
-                design_maximum_flow_rate: Autosize
-                design_minimum_flow_rate: 0
             - Branch: *PumpBranchVariableSpeedSupplyInlet
-            - Sizing:Plant:
-                <<: *SizingPlant
-                loop_type: Condenser
-                loop_design_temperature_difference: 5.6
-                design_loop_exit_temperature: 29.4
+            - Sizing:Plant: *SizingPlantCondenserWater
             - SetpointManager:Scheduled:
                 <<: *SetpointManagerScheduled
                 schedule_name: HVACTemplate-Always29.4
@@ -1703,11 +1705,7 @@ OptionTree:
           Objects:
             - *PlantCommonPlantLoopBase
             - *PlantCommonPlantLoopNoSecondary
-            - Sizing:Plant:
-                <<: *SizingPlant
-                loop_type: Heating
-                loop_design_temperature_difference: 11
-                design_loop_exit_temperature: '{hot_water_design_setpoint}'
+            - Sizing:Plant: *SizingPlantHotWater
             - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadHotWater
             - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesHeatingLoad
             - PlantLoop:

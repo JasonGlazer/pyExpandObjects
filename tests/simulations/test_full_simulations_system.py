@@ -12,7 +12,7 @@ class TestSimulationsFullSystem(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:System:HVACTemplate-5ZoneVAVWAterCooled:Return Fan")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:System:HVACTemplate:System:VAV:Return Fan")
     def test_simulation_full_hvactemplate_5_zone_vav_watercooled_with_return_fan(self):
         base_idf_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled.idf')
         # read in base file, then edit inputs for alternate tests
