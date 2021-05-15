@@ -110,23 +110,33 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
 
     def test_create_water_controller_list_from_epjson(self):
         es = ExpandSystem(template=mock_template)
+        es.build_path = [
+            {
+                'Coil:Cooling:Water': {
+                    'Fields': {
+                        'name': 'Cooling Coil',
+                        'water_inlet_node_name': 'Test Chw Inlet'
+                    }
+                }
+            },
+            {
+                'Coil:Heating:Water': {
+                    'Fields': {
+                        'name': 'Heating Coil',
+                        'water_inlet_node_name': 'Test HW Inlet'
+                    }
+                }
+            }
+        ]
         es.epjson = {
             'Controller:WaterCoil': {
                 'test cooling water coil': {
-                    'sensor_node_name': {
-                        '^Coil:Cooling:Water': 'air_outlet_node_name'
-                    },
-                    'actuator_node_name': {
-                        '^Coil:Cooling:Water': 'water_inlet_node_name'
-                    }
+                    'sensor_node_name': 'Test sensor 1',
+                    'actuator_node_name': 'Test HW Inlet'
                 },
                 'test heating water coil': {
-                    'sensor_node_name': {
-                        '^Coil:Heating:Water': 'air_outlet_node_name'
-                    },
-                    'actuator_node_name': {
-                        '^Coil:Heating:Water': 'water_inlet_node_name'
-                    }
+                    'sensor_node_name': 'Test sensonr 2',
+                    'actuator_node_name': 'Test Chw Inlet'
                 }
             }
         }
@@ -134,10 +144,10 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         self.assertEqual('AirLoopHVAC:ControllerList', list(controllerlist.keys())[0])
         self.assertEqual(
             'test cooling water coil',
-            controllerlist['AirLoopHVAC:ControllerList']['VAV Sys 1 Controllers']['controller_1_name'])
+            controllerlist['AirLoopHVAC:ControllerList']['VAV Sys 1 Controllers']['controller_2_name'])
         self.assertEqual(
             'test heating water coil',
-            controllerlist['AirLoopHVAC:ControllerList']['VAV Sys 1 Controllers']['controller_2_name'])
+            controllerlist['AirLoopHVAC:ControllerList']['VAV Sys 1 Controllers']['controller_1_name'])
         return
 
     def test_create_outdoor_air_equipment_list_from_epjson(self):

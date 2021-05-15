@@ -869,6 +869,7 @@ class ExpandObjects(EPJSON):
         parsed_build_path = self._parse_build_path(object_list=copy.deepcopy(build_path))
         object_list = []
         formatted_build_path = []
+        out_node = None
         for idx, super_object in enumerate(parsed_build_path):
             (super_object_type, super_object_structure), = super_object.items()
             connectors = super_object_structure.get('Connectors')
@@ -876,14 +877,19 @@ class ExpandObjects(EPJSON):
                 raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
                                                             .format(super_object))
             try:
-                # The first object only sets the outlet node variable and remains unchanged
-                if idx == 0:
-                    out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
-                else:
-                    # After the first object, the inlet node name is changed to the previous object's outlet node
-                    # name.  Then the outlet node variable is reset.
-                    super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
-                    out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                # if a super object is specified but the Loop Connectors is identified as False, then just
+                #  append it to the build path but don't make a connection.  An example of this is the heat
+                #  exchanger which connects to the OA node, not the inlet node of the OutdoorAir:Mixer, which is
+                #  the return node
+                if connectors[loop_type]:
+                    # The first object only sets the outlet node variable and remains unchanged
+                    if not out_node:
+                        out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                    else:
+                        # After the first object, the inlet node name is changed to the previous object's outlet node
+                        # name.  Then the outlet node variable is reset.
+                        super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
+                        out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
                 object_list.append({super_object_type: super_object_structure['Fields']})
                 formatted_build_path.append({super_object_type: super_object_structure})
             except (AttributeError, KeyError):
@@ -1097,7 +1103,7 @@ class ExpandSystem(ExpandObjects):
         self.build_path = None
         return
 
-    def _create_controller_list_from_epjson(self, epjson: dict = None) -> dict:
+    def _create_controller_list_from_epjson(self, epjson: dict = None, build_path: list = None) -> dict:
         """
         Create AirLoopHVAC:ControllerList objects from epJSON dictionary
         These list objects are separated from the OptionTree build operations because they will vary based on the
@@ -1105,11 +1111,22 @@ class ExpandSystem(ExpandObjects):
         Therefore, the list objects must be built afterwards in order to retrieve the referenced Controller:.* objects.
 
         :param epjson: system epJSON formatted dictionary
+        :param build_path: List of epJSON super objects in build path order
         :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
             input epJSON object.
         """
-        # if epjson not provided, use the class attribute:
+        # if epjson/build_path not provided, use the class attribute:
         epjson = epjson or self.epjson
+        build_path = build_path or self.build_path
+        # Create a list of actuators in stream order.  This will be used to determine the controller list order.
+        actuator_list = []
+        for bp in build_path:
+            (super_object_type, super_object_structure), = bp.items()
+            if re.match(r'Coil:(Cooling|Heating):Water.*', super_object_type):
+                epjson_object = self.yaml_list_to_epjson_dictionaries([bp])
+                resovled_epjson_object = self.resolve_objects(epjson=epjson_object)
+                (object_name, object_fields), = resovled_epjson_object[super_object_type].items()
+                actuator_list.append(object_fields['water_inlet_node_name'])
         object_list = []
         for controller_type in ['Controller:WaterCoil', 'Controller:OutdoorAir']:
             controller_objects = epjson.get(controller_type)
@@ -1117,14 +1134,23 @@ class ExpandSystem(ExpandObjects):
                 airloop_hvac_controllerlist_object = \
                     self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'ControllerList',
                                                             controller_type.split(':')[1], 'Base'])
-                object_count = 1
                 try:
+                    object_id = 0
                     for object_name, object_structure in controller_objects.items():
-                        airloop_hvac_controllerlist_object['controller_{}_name'.format(object_count)] = \
+                        # For water coils, try to get the index of the actuator from the list and use that to set
+                        #  the order.  Raise a ValueError if no match is found
+                        if controller_type == 'Controller:WaterCoil':
+                            object_id = actuator_list.index(object_structure['actuator_node_name']) + 1
+                        else:
+                            object_id += 1
+                        airloop_hvac_controllerlist_object['controller_{}_name'.format(object_id)] = \
                             object_name
-                        airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_count)] = \
+                        airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_id)] = \
                             controller_type
-                        object_count += 1
+                except ValueError:
+                    raise PyExpandObjectsTypeError("Actuator node for water coil object does not match controller "
+                                                   "object reference. build_path: {}, controllers: {}"
+                                                   .format(build_path, controller_objects))
                 except AttributeError:
                     raise PyExpandObjectsTypeError("Controller object not properly formatted: {}"
                                                    .format(controller_objects))
