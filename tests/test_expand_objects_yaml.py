@@ -520,8 +520,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
              'DesignSpecification:ZoneAirDistribution': 1,
              'Sizing:Zone': 1,
              'ZoneHVAC:AirDistributionUnit': 1,
-             'ZoneHVAC:EquipmentConnections': 1,
-             'ZoneHVAC:EquipmentList': 1}
+             'ZoneHVAC:EquipmentConnections': 1}
         )
         return
 
@@ -861,10 +860,9 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             template=mock_zone_template)
         eo.resolve_objects(epjson=test_d)
         # Check that no string remains unformatted.  The * and ^ are the common regex special characters.
-        json_string = json.dumps(test_d)
-        self.assertNotIn('{}', json_string)
-        self.assertNotIn('^', json_string)
-        self.assertNotIn('*', json_string)
+        self.assertNotIn('{}', eo.epjson)
+        self.assertNotIn('^', eo.epjson)
+        self.assertNotIn('*', eo.epjson)
         return
 
     def test_field_with_zero_value_processing(self):
@@ -1904,7 +1902,86 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             }
         }
         es._create_objects()
+        es.epjson = es.resolve_objects(epjson=es.epjson)
         self.assertEqual(
             12.8,
             es.epjson['Schedule:Compact']['HVACTemplate-Always12.8']['data'][-1]['field'])
+        return
+
+    def test_zonehvac_equipmentlist(self):
+        ez = ExpandZone(template={
+            'HVACTemplate:Zone:FanCoil': {
+                'zone_template_name': {
+                    'zone_name': 'test_zone'}}})
+        ez.epjson = {
+            'ZoneHVAC:FourPipeFanCoil': {
+                'Test Fan Coil': {
+                    'field_1': 'val_1'}}}
+        output = ez._create_zone_zonehvac_equipmentlist()
+        ez.epjson.update(output)
+        ez.resolve_objects(epjson=ez.epjson)
+        self.assertEqual(
+            'Test Fan Coil',
+            ez.epjson['ZoneHVAC:EquipmentList']['test_zone Equipment']['equipment'][0]['zone_equipment_name'])
+        return
+
+    def test_zonehvac_equipmentlist_baseboard(self):
+        ez = ExpandZone(template={
+            'HVACTemplate:Zone:FanCoil': {
+                'zone_template_name': {
+                    'zone_name': 'test_zone',
+                    'baseboard_heating_type': 'HotWater'}}})
+        ez.epjson = {
+            'ZoneHVAC:FourPipeFanCoil': {
+                'Test Fan Coil': {}},
+            'ZoneHVAC:Baseboard:RadiantConvective:Water': {
+                'Test Baseboard': {}}}
+        output = ez._create_zone_zonehvac_equipmentlist()
+        ez.epjson.update(output)
+        ez.resolve_objects(epjson=ez.epjson)
+        self.assertEqual(
+            'Test Baseboard',
+            ez.epjson['ZoneHVAC:EquipmentList']['test_zone Equipment']['equipment'][1]['zone_equipment_name'])
+        return
+
+    def test_zonehvac_equipmentlist_doas(self):
+        ez = ExpandZone(template={
+            'HVACTemplate:Zone:FanCoil': {
+                'zone_template_name': {
+                    'zone_name': 'test_zone',
+                    'dedicated_outdoor_air_system_name': 'DOAS'}}})
+        ez.epjson = {
+            'ZoneHVAC:FourPipeFanCoil': {
+                'Test Fan Coil': {}},
+            'ZoneHVAC:Baseboard:RadiantConvective:Water': {
+                'Test Baseboard': {}}}
+        output = ez._create_zone_zonehvac_equipmentlist()
+        ez.epjson.update(output)
+        ez.resolve_objects(epjson=ez.epjson)
+        self.assertEqual(
+            'test_zone DOAS ATU',
+            ez.epjson['ZoneHVAC:EquipmentList']['test_zone Equipment']['equipment'][0]['zone_equipment_name'])
+        return
+
+    def test_zonehvac_equipmentlist_doas_baseboard(self):
+        ez = ExpandZone(template={
+            'HVACTemplate:Zone:FanCoil': {
+                'zone_template_name': {
+                    'zone_name': 'test_zone',
+                    'baseboard_heating_type': 'HotWater',
+                    'dedicated_outdoor_air_system_name': 'DOAS'}}})
+        ez.epjson = {
+            'ZoneHVAC:FourPipeFanCoil': {
+                'Test Fan Coil': {}},
+            'ZoneHVAC:Baseboard:RadiantConvective:Water': {
+                'Test Baseboard': {}}}
+        output = ez._create_zone_zonehvac_equipmentlist()
+        ez.epjson.update(output)
+        ez.resolve_objects(epjson=ez.epjson)
+        self.assertEqual(
+            'test_zone DOAS ATU',
+            ez.epjson['ZoneHVAC:EquipmentList']['test_zone Equipment']['equipment'][0]['zone_equipment_name'])
+        self.assertEqual(
+            'Test Baseboard',
+            ez.epjson['ZoneHVAC:EquipmentList']['test_zone Equipment']['equipment'][-1]['zone_equipment_name'])
         return

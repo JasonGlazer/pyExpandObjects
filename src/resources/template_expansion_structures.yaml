@@ -1234,6 +1234,74 @@ AutoCreated:
         name: '{} Branches'
         branches:
           - branch_name: '{} Main Branch'
+  Zone:
+    ZoneHVAC:
+      EquipmentList:
+        Base: &AutoCreatedZoneZoneHVACEquipmentList
+          name: '{} Equipment'
+          equipment:
+            - zone_equipment_object_type:
+                ^ZoneHVAC:(AirDistribution|FourPipe).*: self
+              zone_equipment_name:
+                ^ZoneHVAC:(AirDistribution|FourPipe).*: key
+              zone_equipment_cooling_sequence: 1
+              zone_equipment_heating_or_no_load_sequence: 1
+        WithDOAS:
+          <<: *AutoCreatedZoneZoneHVACEquipmentList
+          equipment:
+            - zone_equipment_object_type: ZoneHVAC:AirDistributionUnit
+              zone_equipment_name: '{} DOAS ATU'
+              zone_equipment_cooling_sequence: 1
+              zone_equipment_heating_or_no_load_sequence: 1
+            - zone_equipment_object_type:
+                ^ZoneHVAC:FourPipe.*: self
+              zone_equipment_name:
+                ^ZoneHVAC:FourPipe.*: key
+              zone_equipment_cooling_sequence: 2
+              zone_equipment_heating_or_no_load_sequence: 2
+        Baseboard:
+          <<: *AutoCreatedZoneZoneHVACEquipmentList
+          equipment:
+            - zone_equipment_object_type:
+                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+              zone_equipment_name:
+                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+              zone_equipment_cooling_sequence: 1
+              zone_equipment_heating_or_no_load_sequence: 1
+        WithBaseboard:
+          <<: *AutoCreatedZoneZoneHVACEquipmentList
+          equipment:
+            - zone_equipment_object_type:
+                ^ZoneHVAC:(AirDistribution|FourPipe).*: self
+              zone_equipment_name:
+                ^ZoneHVAC:(AirDistribution|FourPipe).*: key
+              zone_equipment_cooling_sequence: 1
+              zone_equipment_heating_or_no_load_sequence: 1
+            - zone_equipment_object_type:
+                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+              zone_equipment_name:
+                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+              zone_equipment_cooling_sequence: 2
+              zone_equipment_heating_or_no_load_sequence: 2
+        WithDOASAndBaseboard:
+          <<: *AutoCreatedZoneZoneHVACEquipmentList
+          equipment:
+            - zone_equipment_object_type: ZoneHVAC:AirDistributionUnit
+              zone_equipment_name: '{} DOAS ATU'
+              zone_equipment_cooling_sequence: 1
+              zone_equipment_heating_or_no_load_sequence: 1
+            - zone_equipment_object_type:
+                ^ZoneHVAC:FourPipe.*: self
+              zone_equipment_name:
+                ^ZoneHVAC:FourPipe.*: key
+              zone_equipment_cooling_sequence: 2
+              zone_equipment_heating_or_no_load_  sequence: 2
+            - zone_equipment_object_type:
+                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+              zone_equipment_name:
+                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+              zone_equipment_cooling_sequence: 3
+              zone_equipment_heating_or_no_load_sequence: 3
 
 OptionTree:
   HVACTemplate:
@@ -1251,14 +1319,10 @@ OptionTree:
               - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
         TemplateObjects: &ZoneCommonTemplateObjects
           baseboard_heating_type:
-            None:
-              Objects:
-                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentList
             HotWater:
               Objects:
                 - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
                 - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
-                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseboardWaterSecondary
               Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
       BaseboardHeat: # Common objects not used since baseboards do not use air paths and are also
                      #   secondary equipment in some options.
@@ -1329,7 +1393,6 @@ OptionTree:
         BaseObjects:
           Objects:
             - *ZoneCommonBaseObjectsObjects
-            - ZoneHVAC:FourPipeFanCoil: *ZoneHVACFourPipeFanCoil
           Transitions:
             - *SizingZoneCommonTransitions
             - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
@@ -1339,13 +1402,17 @@ OptionTree:
           dedicated_outdoor_air_system_name:
             None:
               Objects:
+                - ZoneHVAC:FourPipeFanCoil: *ZoneHVACFourPipeFanCoil
                 - ZoneHVAC:EquipmentConnections:
                     <<: *ZoneHVACEquipmentConnectionsFields
                     zone_air_exhaust_node_or_nodelist_name: *ZoneReturn
                     zone_air_inlet_node_or_nodelist_name: *ZoneSupplyInlet
-            r'\w+':
+            AnyString:
               Objects:
                 # todo_eo: discuss why this is not an AirTerminal:SingleDuct:ConstantVolume:NoReheat
+                - ZoneHVAC:FourPipeFanCoil:
+                    <<: *ZoneHVACFourPipeFanCoil
+                    capacity_control_method: CyclingFan
                 - AirTerminal:SingleDuct:VAV:NoReheat:
                     <<: *AirTerminalSingleDuctVAVNoReheatFields
                     name: '{} Air Terminal'
@@ -1357,7 +1424,9 @@ OptionTree:
                     nodes:
                       - node_name: *ZoneSupplyInlet
                       - node_name: '{} DOAS Supply Inlet'
-                - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
+                - ZoneHVAC:AirDistributionUnit:
+                    <<: *ZoneHVACAirDistributionUnit
+                    name: '{} DOAS ATU'
                 - ZoneHVAC:EquipmentConnections:
                     <<: *ZoneHVACEquipmentConnectionsFields
                     zone_air_exhaust_node_or_nodelist_name: *ZoneReturn

@@ -190,8 +190,12 @@ class ExpandObjects(EPJSON):
                 else:
                     structure_key_list = list(structure.keys())
                     for skl in structure_key_list:
-                        if re.match(skl, key):
-                            structure = structure[skl]
+                        if skl == 'AnyString':
+                            if re.match(r'\w+', key) and key != 'None':
+                                structure = structure['AnyString']
+                        else:
+                            if re.match(skl, key):
+                                structure = structure[skl]
         except KeyError:
             raise PyExpandObjectsTypeError('YAML structure does not exist for hierarchy: {}'.format(
                 structure_hierarchy))
@@ -257,7 +261,8 @@ class ExpandObjects(EPJSON):
                         #   the fields match
                         if (field_option == 'None' and not hasattr(self, template_field)) or \
                                 (getattr(self, template_field, None) and (
-                                 re.match(field_option, getattr(self, template_field)))):
+                                    re.match(field_option, getattr(self, template_field)) or (
+                                        field_option == 'AnyString' and re.match(r'\w+', getattr(self, template_field))))):
                             option_tree_leaf = self._get_option_tree_leaf(
                                 option_tree=option_tree,
                                 leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])
@@ -930,7 +935,8 @@ class ExpandObjects(EPJSON):
                             # attribute is missing or None.
                             if (template_value == 'None' and not hasattr(self, template_field)) or \
                                     (getattr(self, template_field, None) and (
-                                     re.match(template_value, getattr(self, template_field)))):
+                                        re.match(template_value, getattr(self, template_field)) or (
+                                            template_value == 'AnyString' and re.match(r'\w+', getattr(self, template_field))))):
                                 build_path = self._apply_build_path_action(
                                     build_path=build_path,
                                     action_instructions=action_instructions)
@@ -1084,12 +1090,61 @@ class ExpandZone(ExpandObjects):
             raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
         return
 
+    def _create_zone_zonehvac_equipmentlist(self):
+        """
+        Select and save a ZoneHVAC:EquipmentList based on template attributes.
+        :return: None.  A saved ZoneHVAC:EquipmentList to the epJSON dictionary.
+        """
+        # Check for DOAS specification
+        doas_equipment = None
+        if getattr(self, 'dedicated_outdoor_air_system_name', '') != '':
+            doas_equipment = True
+        # Check for Baseboards
+        baseboard_equipment = None
+        if getattr(self, 'baseboard_heating_type', 'None') != 'None':
+            baseboard_equipment = True
+        if doas_equipment and baseboard_equipment:
+            zonehvac_equipmentlist = self.get_structure(
+                structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'WithDOASAndBaseboard'])
+        elif doas_equipment:
+            zonehvac_equipmentlist = self.get_structure(
+                structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'WithDOAS'])
+        elif baseboard_equipment:
+            zonehvac_equipmentlist = self.get_structure(
+                structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'WithBaseboard'])
+        else:
+            zonehvac_equipmentlist = self.get_structure(
+                structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'Base'])
+        zonehvac_equipmentlist_object = self.yaml_list_to_epjson_dictionaries([
+            {'ZoneHVAC:EquipmentList': zonehvac_equipmentlist}])
+        return zonehvac_equipmentlist_object
+
+    def _create_zone_objects(self, epjson=None):
+        """
+        Create a set of EnergyPlus objects for a given template
+
+        :return: epJSON dictionary of newly created objects.  The input epJSON dictionary is also modified to include
+            the newly created objects
+        """
+        # if epJSON dictionary not passed, use the class attribute
+        epjson = epjson or self.epjson
+        # Get the yaml structure from the template type
+        structure_hierarchy = self.template_type.split(':')
+        epjson_from_option_tree = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
+        epjson_from_option_tree.update(self._create_zone_zonehvac_equipmentlist())
+        # Always use merge_epjson to store objects in self.epjson in case objects have already been stored to
+        # that dictionary during processing
+        self.merge_epjson(
+            super_dictionary=epjson,
+            object_dictionary=self.resolve_objects(epjson_from_option_tree))
+        return self.resolve_objects(epjson_from_option_tree)
+
     def run(self):
         """
         Process zone template
         :return: Class object with epJSON dictionary as class attribute
         """
-        self._create_objects()
+        self._create_zone_objects()
         return self
 
 
