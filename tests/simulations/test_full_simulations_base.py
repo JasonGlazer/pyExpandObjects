@@ -24,6 +24,12 @@ class TestSimulationsFullSystem(BaseSimulationTest):
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
 
+    # @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneDualDuct")
+    # def test_simulation_full_hvactemplate_5_zone_dual_duct(self):
+    #     base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneDualDuct.idf')
+    #     self.perform_full_comparison(base_idf_file_path=base_file_path)
+    #     return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneFanCoil")
     def test_simulation_full_hvactemplate_5_zone_fan_coil(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneFanCoil.idf')
@@ -31,8 +37,16 @@ class TestSimulationsFullSystem(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneFanCoil-DOAS")
+    # Chilled water low temp turnoff is not created in base file, appears to be error.  Causing failure
+    # todo_eo: discuss issue with low temp turnoff missing in base file
     def test_simulation_full_hvactemplate_5_zone_fan_coil_doas(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneFanCoil-DOAS.idf')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneFurnaceDX")
+    def test_simulation_full_hvactemplate_5_zone_furnace_dx(self):
+        base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneFurnaceDX.idf')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
 

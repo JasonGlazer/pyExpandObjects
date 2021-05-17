@@ -396,7 +396,8 @@ class ExpandObjects(EPJSON):
                                 # if the object reference in the mapping dictionary matches the object, apply the map
                                 if re.match(object_type_reference, object_type):
                                     for map_option, sub_dictionary in mapping_dictionary.items():
-                                        if hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
+                                        if (map_option == 'None' and not hasattr(self, mapping_field)) or \
+                                                hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
                                             for field, val in sub_dictionary.items():
                                                 try:
                                                     # On a match and valid value, apply the field.
@@ -1110,8 +1111,12 @@ class ExpandZone(ExpandObjects):
             zonehvac_equipmentlist = self.get_structure(
                 structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'WithDOAS'])
         elif baseboard_equipment:
-            zonehvac_equipmentlist = self.get_structure(
-                structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'WithBaseboard'])
+            if self.template_type == 'HVACTemplate:Zone:BaseboardHeat':
+                zonehvac_equipmentlist = self.get_structure(
+                    structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'Baseboard'])
+            else:
+                zonehvac_equipmentlist = self.get_structure(
+                    structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'WithBaseboard'])
         else:
             zonehvac_equipmentlist = self.get_structure(
                 structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'Base'])
