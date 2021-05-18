@@ -520,7 +520,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
              'DesignSpecification:ZoneAirDistribution': 1,
              'Sizing:Zone': 1,
              'ZoneHVAC:AirDistributionUnit': 1,
-             'ZoneHVAC:EquipmentConnections': 1}
+             'ZoneHVAC:EquipmentConnections': 1,
+             'ZoneHVAC:EquipmentList': 1}
         )
         return
 
@@ -1917,11 +1918,9 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             'ZoneHVAC:FourPipeFanCoil': {
                 'Test Fan Coil': {
                     'field_1': 'val_1'}}}
-        output = ez._create_zone_zonehvac_equipmentlist()
-        ez.epjson.update(output)
-        ez.resolve_objects(epjson=ez.epjson)
+        ez._create_objects()
         self.assertEqual(
-            'Test Fan Coil',
+            'test_zone Fan Coil',
             ez.epjson['ZoneHVAC:EquipmentList']['test_zone Equipment']['equipment'][0]['zone_equipment_name'])
         return
 
@@ -1936,11 +1935,9 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 'Test Fan Coil': {}},
             'ZoneHVAC:Baseboard:RadiantConvective:Water': {
                 'Test Baseboard': {}}}
-        output = ez._create_zone_zonehvac_equipmentlist()
-        ez.epjson.update(output)
-        ez.resolve_objects(epjson=ez.epjson)
+        ez._create_objects()
         self.assertEqual(
-            'Test Baseboard',
+            'test_zone Baseboard Heat',
             ez.epjson['ZoneHVAC:EquipmentList']['test_zone Equipment']['equipment'][1]['zone_equipment_name'])
         return
 
@@ -1955,9 +1952,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 'Test Fan Coil': {}},
             'ZoneHVAC:Baseboard:RadiantConvective:Water': {
                 'Test Baseboard': {}}}
-        output = ez._create_zone_zonehvac_equipmentlist()
-        ez.epjson.update(output)
-        ez.resolve_objects(epjson=ez.epjson)
+        ez._create_objects()
         self.assertEqual(
             'test_zone DOAS ATU',
             ez.epjson['ZoneHVAC:EquipmentList']['test_zone Equipment']['equipment'][0]['zone_equipment_name'])
@@ -1975,13 +1970,11 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 'Test Fan Coil': {}},
             'ZoneHVAC:Baseboard:RadiantConvective:Water': {
                 'Test Baseboard': {}}}
-        output = ez._create_zone_zonehvac_equipmentlist()
-        ez.epjson.update(output)
-        ez.resolve_objects(epjson=ez.epjson)
+        ez._create_objects()
         self.assertEqual(
             'test_zone DOAS ATU',
             ez.epjson['ZoneHVAC:EquipmentList']['test_zone Equipment']['equipment'][0]['zone_equipment_name'])
         self.assertEqual(
-            'Test Baseboard',
+            'test_zone Baseboard Heat',
             ez.epjson['ZoneHVAC:EquipmentList']['test_zone Equipment']['equipment'][-1]['zone_equipment_name'])
         return

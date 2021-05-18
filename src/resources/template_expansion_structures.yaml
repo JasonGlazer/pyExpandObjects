@@ -1,10 +1,11 @@
 GlobalNames:
+  General:
+    AvailabilityManagerAssignmentList: &AvailabilityManagerAssignmentList
+     '{} Availability Managers'
   PlantEquipment:
     OutdoorAirInletNodes: &OutdoorAirInletNodes
       '{} Outdoor Air Inlet Node'
   PlantLoop:
-    AvailabilityManagerList: &AvailabilityManagerList
-     '{} Availability List'
     CondenserEquipmentList: &CondenserEquipmentList
       '{} All Equipment'
     DemandBypassBranch: &DemandBypassBranch
@@ -56,8 +57,6 @@ GlobalNames:
   System:
     AirLoopInlet: &AirLoopInlet
       '{} Air Loop Inlet'
-    AvailabilityManagerAssignmentList: &AvailabilityManagerAssignmentList
-      '{} Availability Managers'
     BranchList: &BranchList
       '{} Branches'
     MixedAirNodelistName: &SystemMixedAirNodelistName
@@ -761,7 +760,7 @@ Objects:
         plant_side_outlet_node_name: *SupplyOutlet # required by schema
     ChilledWater: &PlantLoopChilledWaterFields
       <<: *PlantLoopFields
-      availability_manager_list_name: *AvailabilityManagerList
+      availability_manager_list_name: *AvailabilityManagerAssignmentList
       maximum_loop_temperature: 98 # set by legacy, not reachable from template, no default, required by schema
       minimum_loop_temperature: 1 # set by legacy, not reachable from template, no default, required by schema
     HotWater: &PlantLoopHotWaterFields
@@ -957,7 +956,7 @@ Objects:
             <<: *SetpointManager
             control_zone_name: '{cooling_coil_control_zone_name}'
             maximum_supply_air_temperature: 51 # set by legacy, not default, not reachable by template
-            minimum_supply_air_temperature: '{cooling_coil_design_setpoint_temperature}'
+            minimum_supply_air_temperature: '{cooling_coil_design_setpoint}'
             setpoint_node_or_nodelist_name:
               BuildPathReference:
                 Location: -1
@@ -981,7 +980,7 @@ Objects:
           name: '{} Cooling Supply Air Temp Manager'
           <<: *SetpointManager
           hvac_air_loop_name: '{}'
-          minimum_setpoint_temperature: '{cooling_coil_design_setpoint_temperature}'
+          minimum_setpoint_temperature: '{cooling_coil_design_setpoint}'
           setpoint_node_or_nodelist_name:
             BuildPathReference:
               Location: -1
@@ -1147,43 +1146,71 @@ Objects:
               name: '{} Baseboard Heat Design Object'
               fraction_radiant: 0.0
     EquipmentList:
-      Base:
-        Fields: &ZoneHVACEquipmentList
-          name: '{} Equipment'
-          equipment:
-            - zone_equipment_object_type:
-                ^ZoneHVAC:(AirDistribution|FourPipe).*: self
-              zone_equipment_name:
-                ^ZoneHVAC:(AirDistribution|FourPipe).*: key
-              zone_equipment_cooling_sequence: 1
-              zone_equipment_heating_or_no_load_sequence: 1
-      Baseboard:
-        Water:
-          Fields: &ZoneHVACEquipmentListBaseboardWater
-            <<: *ZoneHVACEquipmentList
-            equipment:
-              - zone_equipment_object_type:
-                  ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
-                zone_equipment_name:
-                  ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
-                zone_equipment_cooling_sequence: 1
-                zone_equipment_heating_or_no_load_sequence: 1
-        BaseboardSecondary: # todo_eo: untested
-          Fields: &ZoneHVACEquipmentListBaseboardWaterSecondary
-            <<: *ZoneHVACEquipmentList
-            equipment:
-              - zone_equipment_object_type:
-                  ^ZoneHVAC:(AirDistribution|FourPipe).*: self
-                zone_equipment_name:
-                  ^ZoneHVAC:(AirDistribution|FourPipe).*: key
-                zone_equipment_cooling_sequence: 1
-                zone_equipment_heating_or_no_load_sequence: 1
-              - zone_equipment_object_type:
-                  ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
-                zone_equipment_name:
-                  ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
-                zone_equipment_cooling_sequence: 2
-                zone_equipment_heating_or_no_load_sequence: 2
+      Base: &ZoneHVACEquipmentList
+        name: '{} Equipment'
+        equipment:
+          - zone_equipment_object_type:
+              ^ZoneHVAC:(AirDistribution|FourPipe).*: self
+            zone_equipment_name:
+              ^ZoneHVAC:(AirDistribution|FourPipe).*: key
+            zone_equipment_cooling_sequence: 1
+            zone_equipment_heating_or_no_load_sequence: 1
+      WithDOAS: &ZoneHVACEquipmentListWithDOAS
+        <<: *ZoneHVACEquipmentList
+        equipment:
+          - zone_equipment_object_type: ZoneHVAC:AirDistributionUnit
+            zone_equipment_name: '{} DOAS ATU'
+            zone_equipment_cooling_sequence: 1
+            zone_equipment_heating_or_no_load_sequence: 1
+          - zone_equipment_object_type:
+              ^ZoneHVAC:FourPipe.*: self
+            zone_equipment_name:
+              ^ZoneHVAC:FourPipe.*: key
+            zone_equipment_cooling_sequence: 2
+            zone_equipment_heating_or_no_load_sequence: 2
+      Baseboard: &ZoneHVACEquipmentListBaseBoard
+        <<: *ZoneHVACEquipmentList
+        equipment:
+          - zone_equipment_object_type:
+              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+            zone_equipment_name:
+              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+            zone_equipment_cooling_sequence: 1
+            zone_equipment_heating_or_no_load_sequence: 1
+      WithBaseboard: &ZoneHVACEquipmentListWithBaseboard
+        <<: *ZoneHVACEquipmentList
+        equipment:
+          - zone_equipment_object_type:
+              ^ZoneHVAC:(AirDistribution|FourPipe).*: self
+            zone_equipment_name:
+              ^ZoneHVAC:(AirDistribution|FourPipe).*: key
+            zone_equipment_cooling_sequence: 1
+            zone_equipment_heating_or_no_load_sequence: 1
+          - zone_equipment_object_type:
+              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+            zone_equipment_name:
+              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+            zone_equipment_cooling_sequence: 2
+            zone_equipment_heating_or_no_load_sequence: 2
+      WithDOASAndBaseboard: &ZoneHVACEquipmentListWithDOASAndBaseboard
+        <<: *ZoneHVACEquipmentList
+        equipment:
+          - zone_equipment_object_type: ZoneHVAC:AirDistributionUnit
+            zone_equipment_name: '{} DOAS ATU'
+            zone_equipment_cooling_sequence: 1
+            zone_equipment_heating_or_no_load_sequence: 1
+          - zone_equipment_object_type:
+              ^ZoneHVAC:FourPipe.*: self
+            zone_equipment_name:
+              ^ZoneHVAC:FourPipe.*: key
+            zone_equipment_cooling_sequence: 2
+            zone_equipment_heating_or_no_load_  sequence: 2
+          - zone_equipment_object_type:
+              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+            zone_equipment_name:
+              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+            zone_equipment_cooling_sequence: 3
+            zone_equipment_heating_or_no_load_sequence: 3
     EquipmentConnections:
       Base:
         Fields: &ZoneHVACEquipmentConnectionsFields
@@ -1376,74 +1403,6 @@ AutoCreated:
         name: '{} Branches'
         branches:
           - branch_name: '{} Main Branch'
-  Zone:
-    ZoneHVAC:
-      EquipmentList:
-        Base: &AutoCreatedZoneZoneHVACEquipmentList
-          name: '{} Equipment'
-          equipment:
-            - zone_equipment_object_type:
-                ^ZoneHVAC:(AirDistribution|FourPipe).*: self
-              zone_equipment_name:
-                ^ZoneHVAC:(AirDistribution|FourPipe).*: key
-              zone_equipment_cooling_sequence: 1
-              zone_equipment_heating_or_no_load_sequence: 1
-        WithDOAS:
-          <<: *AutoCreatedZoneZoneHVACEquipmentList
-          equipment:
-            - zone_equipment_object_type: ZoneHVAC:AirDistributionUnit
-              zone_equipment_name: '{} DOAS ATU'
-              zone_equipment_cooling_sequence: 1
-              zone_equipment_heating_or_no_load_sequence: 1
-            - zone_equipment_object_type:
-                ^ZoneHVAC:FourPipe.*: self
-              zone_equipment_name:
-                ^ZoneHVAC:FourPipe.*: key
-              zone_equipment_cooling_sequence: 2
-              zone_equipment_heating_or_no_load_sequence: 2
-        Baseboard:
-          <<: *AutoCreatedZoneZoneHVACEquipmentList
-          equipment:
-            - zone_equipment_object_type:
-                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
-              zone_equipment_name:
-                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
-              zone_equipment_cooling_sequence: 1
-              zone_equipment_heating_or_no_load_sequence: 1
-        WithBaseboard:
-          <<: *AutoCreatedZoneZoneHVACEquipmentList
-          equipment:
-            - zone_equipment_object_type:
-                ^ZoneHVAC:(AirDistribution|FourPipe).*: self
-              zone_equipment_name:
-                ^ZoneHVAC:(AirDistribution|FourPipe).*: key
-              zone_equipment_cooling_sequence: 1
-              zone_equipment_heating_or_no_load_sequence: 1
-            - zone_equipment_object_type:
-                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
-              zone_equipment_name:
-                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
-              zone_equipment_cooling_sequence: 2
-              zone_equipment_heating_or_no_load_sequence: 2
-        WithDOASAndBaseboard:
-          <<: *AutoCreatedZoneZoneHVACEquipmentList
-          equipment:
-            - zone_equipment_object_type: ZoneHVAC:AirDistributionUnit
-              zone_equipment_name: '{} DOAS ATU'
-              zone_equipment_cooling_sequence: 1
-              zone_equipment_heating_or_no_load_sequence: 1
-            - zone_equipment_object_type:
-                ^ZoneHVAC:FourPipe.*: self
-              zone_equipment_name:
-                ^ZoneHVAC:FourPipe.*: key
-              zone_equipment_cooling_sequence: 2
-              zone_equipment_heating_or_no_load_  sequence: 2
-            - zone_equipment_object_type:
-                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
-              zone_equipment_name:
-                ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
-              zone_equipment_cooling_sequence: 3
-              zone_equipment_heating_or_no_load_sequence: 3
 
 OptionTree:
   HVACTemplate:
@@ -1466,6 +1425,22 @@ OptionTree:
                 - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
                 - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
               Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
+          zone_hvac_equipmentlist_object_type: &ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType # Created as a descriptor in ExpandZone
+            ^Base$:
+              Objects:
+                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentList
+            Baseboard:
+              Objects:
+                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseBoard
+            ^WithDOAS$:
+              Objects:
+                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithDOAS
+            WithDOASAndBaseboard:
+              Objects:
+                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithDOASAndBaseboard
+            WithBaseboard:
+              Objects:
+                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
       BaseboardHeat: # Common objects not used since baseboards do not use air paths and are also
                      #   secondary equipment in some options.
         BaseObjects:
@@ -1474,6 +1449,7 @@ OptionTree:
           Transitions:
             - *SizingZoneCommonTransitions
         TemplateObjects:
+          zone_hvac_equipmentlist_object_type: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           baseboard_heating_type:
             HotWater:
               Objects:
@@ -1481,7 +1457,6 @@ OptionTree:
                 - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
                 - *ZoneHVACBaseboardRadiantConvectiveWaterCommonObjects
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFields
-                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseboardWater
               Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
       ConstantVolume:
         BaseObjects:
@@ -1725,10 +1700,7 @@ OptionTree:
               Base: &SystemCommonBaseObjectsConstantVolume
                 - *SystemCommonBaseObjectsObjects
                 - OutdoorAir:NodeList: *OutdoorAirNodeListFields
-                - Controller:OutdoorAir:
-                    <<: *ControllerOutdoorAir
-                    economizer_minimum_limit_dry_bulb_temperature: '{economizer_lower_temperature_limit}'
-                    economizer_maximum_limit_dry_bulb_temperature: '{economizer_upper_temperature_limit}'
+                - Controller:OutdoorAir: *ControllerOutdoorAir
                 - Sizing:System: *SizingSystemConstantVolume
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirEconomizer
@@ -1784,11 +1756,7 @@ OptionTree:
                   - SetpointManager:SingleZone:Cooling: *SetpointManagerSingleZoneCooling
               FixedSetpoint: &SystemCommonTemplateObjectsConstantVolumFixedSetpoint
                 Objects:
-                  # Some templates append 'temperature' to the field that maps to schedule_name
-                  # todo_eo: notify team of cooling_coil_design_setpoint discrepancy
-                  - SetpointManager:Scheduled:
-                      <<: *SetpointManagerScheduledCooling
-                      schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint_temperature}'
+                  - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
               Warmest: &SystemCommonTemplateObjectsConstantVolumeWarmest
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
@@ -1802,18 +1770,6 @@ OptionTree:
               OutdoorAirTemperatureReset:
                 Objects:
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHeating
-          ConstantVolumeAlt:
-            # This section is necessary due to the cooling_coil_design_setpoint naming discrepancy
-            cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlTypeAlt
-              ControlZone: *SystemCommonTemplateObjectsConstantVolumControlZone
-              FixedSetpoint:
-                Objects:
-                  # Some templates append 'temperature' to the field that maps to schedule_name
-                  # todo_eo: notify team of cooling_coil_design_setpoint discrepancy
-                  - SetpointManager:Scheduled:
-                      <<: *SetpointManagerScheduledCooling
-                      schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint}'
-              Warmest: *SystemCommonTemplateObjectsConstantVolumeWarmest
           DOAS: &SystemCommonTemplateObjectsDOAS
             heat_recovery_type:
               Enthalpy:
@@ -1880,15 +1836,14 @@ OptionTree:
         TemplateObjects:
           <<: *SystemCommonTemplateObjects
           <<: *SystemCommonTemplateObjectsDOAS
-          cooling_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlTypeAlt
-          heating_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
+          <<: *SystemCommonTemplateObjectsConstantVolume
       Unitary:
         BuildPath:
           BaseObjects:
             Objects:
               - *SystemCommonBuildPathObjects
           Actions:
-            - airloop_hvac_unitary_object_type:
+            - airloop_hvac_unitary_object_type: # Created as a descriptor in ExpandSystem
                 Furnace:HeatCool:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -1900,10 +1855,7 @@ OptionTree:
           Objects:
             - *SystemCommonBaseObjectsObjects
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
-            - Controller:OutdoorAir:
-                <<: *ControllerOutdoorAir
-                economizer_minimum_limit_dry_bulb_temperature: '{economizer_lower_temperature_limit}'
-                economizer_maximum_limit_dry_bulb_temperature: '{economizer_upper_temperature_limit}'
+            - Controller:OutdoorAir: *ControllerOutdoorAir
             - Sizing:System: *SizingSystemConstantVolume
             - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling # todo_eo: need to reference objects not in build path
             - SetpointManager:MixedAir: *SetpointManagerMixedAirEconomizer # todo_eo: need to reference objects not in build path
@@ -2002,13 +1954,6 @@ OptionTree:
                 name: '{} Availability Low Temp TurnOff'
                 sensor_node_name: '{} Outside Air Sensor'
                 temperature: '{chilled_water_design_setpoint}'
-            - AvailabilityManagerAssignmentList:
-                name: '{} Availability List'
-                managers:
-                  - availability_manager_name:
-                      AvailabilityManager:LowTemperatureTurnOff: key
-                    availability_manager_object_type:
-                      AvailabilityManager:LowTemperatureTurnOff: self
             - OutdoorAir:Node:
                 name: '{} Outside Air Sensor'
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
@@ -2147,4 +2092,3 @@ OptionTree:
 #        - 1
 # When building option tree, Objects, Transitions, Mappings go on same level for a leaf
 # todo_eo: combine equip inlet, zone air node, and supply inlets, to global namings
-# todo_eo: Need to create function to handle ZonHVACEquipmentList to handle different scenarios (e.g. baseboard and doas)

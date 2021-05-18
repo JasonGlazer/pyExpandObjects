@@ -79,6 +79,7 @@ class TestExpandPlantLoopObjects(BaseTest, unittest.TestCase):
         output = ep.run()
         self.assertEqual(
             {
+                'AvailabilityManagerAssignmentList': 1,
                 'Branch': 6,
                 'Pipe:Adiabatic': 5,
                 'PlantEquipmentOperation:HeatingLoad': 1,
@@ -100,6 +101,7 @@ class TestExpandPlantLoopObjects(BaseTest, unittest.TestCase):
         output = ep.run()
         self.assertEqual(
             {
+                'AvailabilityManagerAssignmentList': 1,
                 'Branch': 6,
                 'Pipe:Adiabatic': 5,
                 'PlantEquipmentOperation:HeatingLoad': 1,

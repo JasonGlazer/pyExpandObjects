@@ -795,7 +795,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             'AirTerminal:SingleDuct:VAV:Reheat': 1,
             'AvailabilityManager:LowTemperatureTurnOff': 1,
             'AvailabilityManager:NightCycle': 1,
-            'AvailabilityManagerAssignmentList': 2,
+            'AvailabilityManagerAssignmentList': 3,
             'Branch': 19,
             'BranchList': 5,
             'Building': 1,

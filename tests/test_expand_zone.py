@@ -87,7 +87,7 @@ class TestExpandZone(BaseTest, unittest.TestCase):
         type(et).epjson = et_epjson
         self.hvac_template.expanded_thermostats = {'All Zones': et}
         ez = ExpandZone(template=mock_zone_template)
-        zone_output = ez._create_zone_objects()
+        zone_output = ez._create_objects()
         zone_connection_output = self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
         ez.merge_epjson(
             super_dictionary=zone_output,

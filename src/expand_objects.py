@@ -905,6 +905,40 @@ class ExpandObjects(EPJSON):
         self.build_path = formatted_build_path
         return object_list
 
+    def _create_availability_manager_assignment_list(self, epjson: dict = None) -> dict:
+        """
+        Create AvailabilityManagerAssignmentList object from epJSON dictionary
+        This list object is separated from the OptionTree build operations because it will vary based on the
+        presence of AvailabilityManager:.* objects in the epJSON dictionary.
+        Therefore, the list objects must be built afterwards in order to retrieve the referenced objects.
+
+        :param epjson: system epJSON formatted dictionary
+        :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
+            input epJSON object.
+        """
+        # if build_path and/or epjson are not passed to function, get the class attributes
+        epjson = epjson or self.epjson
+        availability_managers = {i: j for i, j in epjson.items() if re.match(r'^AvailabilityManager:.*', i)}
+        # loop over availability managers and add them to the list.
+        availability_manager_list_object = \
+            self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AvailabilityManagerAssignmentList', 'Base'])
+        availability_manager_list_object['managers'] = []
+        try:
+            for object_type, object_structure in availability_managers.items():
+                for object_name, object_fields in object_structure.items():
+                    availability_manager_list_object['managers'].append({
+                        'availability_manager_name': object_name,
+                        'availability_manager_object_type': object_type})
+        except AttributeError:
+            raise PyExpandObjectsTypeError("AvailabilityManager object not properly formatted: {}"
+                                           .format(availability_managers))
+        availability_manager_assignment_list_object = self.yaml_list_to_epjson_dictionaries([
+            {'AvailabilityManagerAssignmentList': availability_manager_list_object}, ])
+        self.merge_epjson(
+            super_dictionary=epjson,
+            object_dictionary=self.resolve_objects(epjson=availability_manager_assignment_list_object))
+        return self.resolve_objects(epjson=availability_manager_assignment_list_object)
+
     def _process_build_path(self, option_tree):
         """
         Create a connected group of objects from the BuildPath branch in the OptionTree.  A build path is a list of
@@ -1076,10 +1110,45 @@ class ExpandThermostat(ExpandObjects):
         return self
 
 
+class ZonevacEquipmentListOjectType:
+    """
+    Set a class attribute to select the appropriate ZoneHVAC:EquipmentList from TemplateOptions in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._zone_hvac_equipmentlist_object_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        # Check for doas reference
+        doas_equipment = None
+        if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None':
+            doas_equipment = True
+        # Check for baseboard reference
+        baseboard_equipment = None
+        if template_fields.get('baseboard_heating_type', 'None') != 'None':
+            baseboard_equipment = True
+        if doas_equipment and baseboard_equipment:
+            obj._zone_hvac_equipmentlist_object_type = 'WithDOASAndBaseboard'
+        elif doas_equipment:
+            obj._zone_hvac_equipmentlist_object_type = 'WithDOAS'
+        elif baseboard_equipment:
+            if template_type == 'HVACTemplate:Zone:BaseboardHeat':
+                obj._zone_hvac_equipmentlist_object_type = 'Baseboard'
+            else:
+                obj._zone_hvac_equipmentlist_object_type = 'WithBaseboard'
+        else:
+            obj._zone_hvac_equipmentlist_object_type = 'Base'
+        return
+
+
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
     """
+
+    zone_hvac_equipmentlist_object_type = ZonevacEquipmentListOjectType()
+
     def __init__(self, template):
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
@@ -1089,73 +1158,21 @@ class ExpandZone(ExpandObjects):
                 raise InvalidTemplateException("Zone name not provided in template: {}".format(template))
         except AttributeError:
             raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
+        self.zone_hvac_equipmentlist_object_type = template
         return
-
-    def _create_zone_zonehvac_equipmentlist(self):
-        """
-        Select and save a ZoneHVAC:EquipmentList based on template attributes.
-        :return: None.  A saved ZoneHVAC:EquipmentList to the epJSON dictionary.
-        """
-        # Check for DOAS specification
-        doas_equipment = None
-        if getattr(self, 'dedicated_outdoor_air_system_name', '') != '':
-            doas_equipment = True
-        # Check for Baseboards
-        baseboard_equipment = None
-        if getattr(self, 'baseboard_heating_type', 'None') != 'None':
-            baseboard_equipment = True
-        if doas_equipment and baseboard_equipment:
-            zonehvac_equipmentlist = self.get_structure(
-                structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'WithDOASAndBaseboard'])
-        elif doas_equipment:
-            zonehvac_equipmentlist = self.get_structure(
-                structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'WithDOAS'])
-        elif baseboard_equipment:
-            if self.template_type == 'HVACTemplate:Zone:BaseboardHeat':
-                zonehvac_equipmentlist = self.get_structure(
-                    structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'Baseboard'])
-            else:
-                zonehvac_equipmentlist = self.get_structure(
-                    structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'WithBaseboard'])
-        else:
-            zonehvac_equipmentlist = self.get_structure(
-                structure_hierarchy=['AutoCreated', 'Zone', 'ZoneHVAC', 'EquipmentList', 'Base'])
-        zonehvac_equipmentlist_object = self.yaml_list_to_epjson_dictionaries([
-            {'ZoneHVAC:EquipmentList': zonehvac_equipmentlist}])
-        return zonehvac_equipmentlist_object
-
-    def _create_zone_objects(self, epjson=None):
-        """
-        Create a set of EnergyPlus objects for a given template
-
-        :return: epJSON dictionary of newly created objects.  The input epJSON dictionary is also modified to include
-            the newly created objects
-        """
-        # if epJSON dictionary not passed, use the class attribute
-        epjson = epjson or self.epjson
-        # Get the yaml structure from the template type
-        structure_hierarchy = self.template_type.split(':')
-        epjson_from_option_tree = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
-        epjson_from_option_tree.update(self._create_zone_zonehvac_equipmentlist())
-        # Always use merge_epjson to store objects in self.epjson in case objects have already been stored to
-        # that dictionary during processing
-        self.merge_epjson(
-            super_dictionary=epjson,
-            object_dictionary=self.resolve_objects(epjson_from_option_tree))
-        return self.resolve_objects(epjson_from_option_tree)
 
     def run(self):
         """
         Process zone template
         :return: Class object with epJSON dictionary as class attribute
         """
-        self._create_zone_objects()
+        self._create_objects()
         return self
 
 
 class AirLoopHVACUnitaryObjectType:
     """
-    Select unitary equipment based on template attributes
+    Set a class attribute to select the appropriate unitary equipment type from TemplateOptions in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._airloop_hvac_unitary_object_type
@@ -1164,10 +1181,10 @@ class AirLoopHVACUnitaryObjectType:
         (_, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
         cooling_coil_type = None
-        if template_fields.get('cooling_coil_type') != 'None':
+        if template_fields.get('cooling_coil_type', 'None') != 'None':
             cooling_coil_type = True
         heating_coil_type = None
-        if template_fields.get('heating_coil_type') == 'Gas':
+        if template_fields.get('heating_coil_type', 'None') == 'Gas':
             heating_coil_type = 'Furnace'
         if cooling_coil_type and heating_coil_type == 'Furnace':
             obj._airloop_hvac_unitary_object_type = 'Furnace:HeatCool'
@@ -1188,6 +1205,12 @@ class ExpandSystem(ExpandObjects):
         self.unique_name = self.template_name
         self.build_path = None
         self.airloop_hvac_unitary_object_type = template
+        # map cooling_coil_design_setpoint variants to common value and remove original
+        if hasattr(self, 'cooling_coil_design_setpoint_temperature'):
+            print("variant detected")
+            self.cooling_coil_design_setpoint = getattr(self, 'cooling_coil_design_setpoint_temperature')
+            # Might not be totally necessary for this
+            delattr(self, 'cooling_coil_design_setpoint_temperature')
         return
 
     def _create_controller_list_from_epjson(self, epjson: dict = None, build_path: list = None) -> dict:
@@ -1296,40 +1319,6 @@ class ExpandSystem(ExpandObjects):
             super_dictionary=epjson,
             object_dictionary=self.resolve_objects(epjson=outdoor_air_equipment_list_object))
         return self.resolve_objects(epjson=outdoor_air_equipment_list_object)
-
-    def _create_availability_manager_assignment_list(self, epjson: dict = None) -> dict:
-        """
-        Create AvailabilityManagerAssignmentList object from epJSON dictionary
-        This list object is separated from the OptionTree build operations because it will vary based on the
-        presence of AvailabilityManager:.* objects in the epJSON dictionary.
-        Therefore, the list objects must be built afterwards in order to retrieve the referenced objects.
-
-        :param epjson: system epJSON formatted dictionary
-        :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
-            input epJSON object.
-        """
-        # if build_path and/or epjson are not passed to function, get the class attributes
-        epjson = epjson or self.epjson
-        availability_managers = {i: j for i, j in epjson.items() if re.match(r'^AvailabilityManager:.*', i)}
-        # loop over availability managers and add them to the list.
-        availability_manager_list_object = \
-            self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AvailabilityManagerAssignmentList', 'Base'])
-        availability_manager_list_object['managers'] = []
-        try:
-            for object_type, object_structure in availability_managers.items():
-                for object_name, object_fields in object_structure.items():
-                    availability_manager_list_object['managers'].append({
-                        'availability_manager_name': object_name,
-                        'availability_manager_object_type': object_type})
-        except AttributeError:
-            raise PyExpandObjectsTypeError("AvailabilityManager object not properly formatted: {}"
-                                           .format(availability_managers))
-        availability_manager_assignment_list_object = self.yaml_list_to_epjson_dictionaries([
-            {'AvailabilityManagerAssignmentList': availability_manager_list_object}, ])
-        self.merge_epjson(
-            super_dictionary=epjson,
-            object_dictionary=self.resolve_objects(epjson=availability_manager_assignment_list_object))
-        return self.resolve_objects(epjson=availability_manager_assignment_list_object)
 
     def _create_outdoor_air_system(self, epjson: dict = None) -> dict:
         """
@@ -1538,6 +1527,7 @@ class ExpandPlantLoop(ExpandObjects):
         :return: class object with epJSON dictionary as class attribute
         """
         self._create_objects()
+        self._create_availability_manager_assignment_list()
         return self
 
 
