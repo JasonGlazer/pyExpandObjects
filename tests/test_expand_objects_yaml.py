@@ -1534,7 +1534,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         return
 
     def test_complex_inputs_build_path_reference_by_object_type_occurence(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = [
             {
                 'Fan:VariableVolume': {
@@ -1618,7 +1618,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         return
 
     def test_reject_complex_inputs_build_path_reference_by_object_type_bad_occurence(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = [
             {
                 'Fan:VariableVolume': {

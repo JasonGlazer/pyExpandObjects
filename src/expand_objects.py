@@ -1153,14 +1153,41 @@ class ExpandZone(ExpandObjects):
         return self
 
 
+class AirLoopHVACUnitaryObjectType:
+    """
+    Select unitary equipment based on template attributes
+    """
+    def __get__(self, obj, owner):
+        return obj._airloop_hvac_unitary_object_type
+
+    def __set__(self, obj, value):
+        (_, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        cooling_coil_type = None
+        if template_fields.get('cooling_coil_type') != 'None':
+            cooling_coil_type = True
+        heating_coil_type = None
+        if template_fields.get('heating_coil_type') == 'Gas':
+            heating_coil_type = 'Furnace'
+        if cooling_coil_type and heating_coil_type == 'Furnace':
+            obj._airloop_hvac_unitary_object_type = 'Furnace:HeatCool'
+        if not cooling_coil_type and not heating_coil_type:
+            obj._airloop_hvac_unitary_object_type = None
+        return
+
+
 class ExpandSystem(ExpandObjects):
     """
     System expansion operations
     """
+
+    airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
+
     def __init__(self, template):
         super().__init__(template=template)
         self.unique_name = self.template_name
         self.build_path = None
+        self.airloop_hvac_unitary_object_type = template
         return
 
     def _create_controller_list_from_epjson(self, epjson: dict = None, build_path: list = None) -> dict:

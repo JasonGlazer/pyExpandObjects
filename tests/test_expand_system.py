@@ -175,8 +175,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_create_outdoor_air_equipment_list_from_epjson_with_return_fan(self):
-        # es = ExpandSystem(template=mock_template)
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = [
             {
                 'Fan:VariableVolume': {
@@ -222,7 +221,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_create_outdoor_air_equipment_list_from_epjson_with_return_fan_option_but_no_equipment(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = [
             {
                 'OutdoorAir:Mixer': {
@@ -385,7 +384,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_modify_build_path_for_outside_air_system(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = mock_build_path
         es.unique_name = 'TEST SYSTEM'
         es.epjson = {
@@ -406,7 +405,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_modify_build_path_for_outside_air_system_with_return_fan(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = [
             {
                 'Fan:VariableVolume': {
@@ -460,7 +459,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_reject_modify_build_path_for_outside_air_system_with_return_fan_specified_but_not_present(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = mock_build_path
         es.unique_name = 'TEST SYSTEM'
         es.return_fan = 'Yes'
@@ -478,7 +477,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_branch_from_build_path(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.unique_name = 'TEST SYSTEM'
         es.epjson = {
             "AirLoopHVAC:OutdoorAirSystem": {
@@ -498,7 +497,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_branch_from_build_path_with_return_fan(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.unique_name = 'TEST SYSTEM'
         es.return_fan = 'Yes'
         es.epjson = {
@@ -552,7 +551,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_branchlist_from_build_path(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.unique_name = 'TEST SYSTEM'
         es.epjson = {
             "AirLoopHVAC:OutdoorAirSystem": {
@@ -572,7 +571,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_reject_create_branch_and_branchlist_from_build_path_no_build_path(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         with self.assertRaisesRegex(PyExpandObjectsException, 'Build path was not provided'):
             es._create_branch_and_branchlist_from_build_path(build_path=[])
         return
