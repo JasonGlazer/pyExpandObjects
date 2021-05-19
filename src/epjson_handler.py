@@ -171,7 +171,7 @@ class EPJSON(Logger):
         :param epjson: epJSON formatted Dictionary to scan
         :param object_type_regexp: regular expression to match with object type
         :param object_name_regexp: regular expression to match with object_name
-        :return: epJSON ditionary of matched objects.
+        :return: epJSON dictionary of matched objects.
         """
         matched_epjson = {}
         try:

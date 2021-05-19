@@ -476,6 +476,34 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             es._modify_build_path_for_outside_air_system()
         return
 
+    def test_modify_build_path_for_unitary_equipment(self):
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
+        es.unique_name = 'TEST SYSTEM'
+        es.template_type = 'HVACTemplate:System:Unitary'
+        es.cooling_coil_type = 'ChilledWater'
+        es.heating_coil_type = 'HotWater'
+        es.build_path = [
+            {
+                'AirLoopHVAC:OutdoorAirSystem': {}
+            },
+            {
+                'Coil:Cooling:Water': {}
+            },
+            {
+                'Coil:Heating:Fuel': {}
+            },
+            {
+                'Fan:VariableVolume': {}
+            },
+            {
+                "AirLoopHVAC:Unitary:Furnace:HeatCool": {'Fields': {}, 'Connectors': {}}
+            }
+        ]
+        output = es._modify_build_path_for_unitary_equipment()
+        from pprint import pprint
+        pprint(output, width=150)
+        return
+
     def test_branch_from_build_path(self):
         es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.unique_name = 'TEST SYSTEM'

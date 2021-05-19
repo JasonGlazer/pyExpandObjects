@@ -187,7 +187,7 @@ class HVACTemplate(EPJSON):
     def _get_zone_template_field_from_system_type(template_type):
         """
         Retrieve the corresponding zone field name for a system template type
-        :param template_type: HVACTemplate object type
+        :param template_type: HVACTemplate:System object type
         :return: zone field name
         """
         # get the zone field_name that will identify the system template name

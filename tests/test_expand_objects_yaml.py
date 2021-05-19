@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
 import copy
-import json
 
 from src.expand_objects import ExpandObjects, ExpandZone, ExpandSystem
 from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException, \
