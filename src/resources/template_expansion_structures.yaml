@@ -193,10 +193,8 @@ Objects:
             maximum_supply_air_temperature: 80
             no_load_supply_air_flow_rate: Autosize
             supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
-            supply_fan_name:
-              Fan:.*: key
-            supply_fan_object_type:
-              Fan:.*: self
+            supply_fan_name: '{} Supply Fan'
+            supply_fan_object_type: Fan:OnOff
           Connectors:
             AirLoop:
               Inlet: furnace_air_inlet_node_name
@@ -360,18 +358,6 @@ Objects:
   Coil:
     Cooling:
       Common:
-        Objects: &CoilCoolingCommonObjects
-          - Branch:
-              name: '{} Cooling Coil Chw Branch'
-              components:
-                - component_inlet_node_name:
-                    ^Coil:Cooling:Water($|:DetailedGeometry)+: water_inlet_node_name
-                  component_name:
-                    ^Coil:Cooling:Water($|:DetailedGeometry)+: key
-                  component_object_type:
-                    ^Coil:Cooling:Water($|:DetailedGeometry)+: self
-                  component_outlet_node_name:
-                    ^Coil:Cooling:Water($|:DetailedGeometry)+: water_outlet_node_name
         Transitions: &CoilCoolingCommonTransitions
           - ^Coil:Cooling:Water($|:DetailedGeometry)+:
               cooling_coil_availability_schedule_name: availability_schedule_name
@@ -395,7 +381,7 @@ Objects:
                   minimum_value_of_x: 0.5
               - Curve:Quadratic:
                   name: '{} DX Coil PLF'
-                  coefficient1_constant": 0.85
+                  coefficient1_constant: 0.85
                   coefficient2_x: 0.15
                   coefficient3_x_2: 0
                   maximum_value_of_x: 1
@@ -431,8 +417,8 @@ Objects:
                   maximum_value_of_y: 46.11111
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 18.0
-          Base:
-            Fields: &CoilCoolingDXSingleSpeedBaseFields
+          Base: &CoilCoolingDXSingleSpeedSuperObject
+            Fields:
               <<: *CoilCoolingFields
               condenser_air_inlet_node_name: '{} Cooling Coil Condenser Inlet'
               crankcase_heater_capacity: 0
@@ -441,19 +427,37 @@ Objects:
               evaporative_condenser_effectiveness: 0
               maximum_cycling_rate: 2.5
               gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop}'
+              gross_rated_sensible_heat_ratio: '{cooling_coil_gross_rated_sensible_heat_ratio}'
+              gross_rated_total_cooling_capacity: '{cooling_coil_gross_rated_total_capacity}'
               part_load_fraction_correlation_curve_name: '{} 1-1 DX Coil PLF'
               rated_air_flow_rate: '{supply_fan_maximum_flow_rate}'
               total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
               total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Cap-FT'
-      Water: &CoolingCoilSuperObject
-        Fields: &CoilCoolingWaterFields
-          <<: *CoilCoolingFields
-          heat_exchanger_configuration: CrossFlow # set by legacy, not reachable by template, no default
-          type_of_analysis: DetailedAnalysis # set by legacy, not reachable by template, not default
-          water_inlet_node_name: '{} Cooling Coil Chw Inlet' # required by schema
-          water_outlet_node_name: '{} Cooling Coil Chw Outlet' # required by schema
-        Connectors: &CoilCoolingWaterConnectors
-          AirLoop: *ConnectorsAirLoop
+            Connectors:
+              AirLoop: *ConnectorsAirLoop
+      Water:
+        Common:
+          Objects: &CoilCoolingWaterCommonObjects
+            - Branch:
+                name: '{} Cooling Coil Chw Branch'
+                components:
+                  - component_inlet_node_name:
+                      ^Coil:Cooling:Water($|:DetailedGeometry)+: water_inlet_node_name
+                    component_name:
+                      ^Coil:Cooling:Water($|:DetailedGeometry)+: key
+                    component_object_type:
+                      ^Coil:Cooling:Water($|:DetailedGeometry)+: self
+                    component_outlet_node_name:
+                      ^Coil:Cooling:Water($|:DetailedGeometry)+: water_outlet_node_name
+        Base: &CoolingCoilWaterSuperObject
+          Fields: &CoilCoolingWaterFields
+            <<: *CoilCoolingFields
+            heat_exchanger_configuration: CrossFlow # set by legacy, not reachable by template, no default
+            type_of_analysis: DetailedAnalysis # set by legacy, not reachable by template, not default
+            water_inlet_node_name: '{} Cooling Coil Chw Inlet' # required by schema
+            water_outlet_node_name: '{} Cooling Coil Chw Outlet' # required by schema
+          Connectors: &CoilCoolingWaterConnectors
+            AirLoop: *ConnectorsAirLoop
         DetailedGeometry:
           Fields:
             << : *CoilCoolingWaterFields
@@ -461,18 +465,6 @@ Objects:
             << : *CoilCoolingWaterConnectors
     Heating:
       Common:
-        Objects: &CoilHeatingCommonObjects
-          - Branch: &CoilHeatingCommonObjectsBranch
-              name: '{} Heating Coil Hw Branch'
-              components:
-                - component_inlet_node_name:
-                    Coil:Heating:Water: water_inlet_node_name
-                  component_name:
-                    Coil:Heating:Water: key
-                  component_object_type:
-                    Coil:Heating:Water: self
-                  component_outlet_node_name:
-                    Coil:Heating:Water: water_outlet_node_name
         Transitions: &CoilHeatingCommonTransitions
           - ^Coil:Cooling:Heating.*:
               heating_coil_availability_schedule_name: availability_schedule_name
@@ -483,7 +475,51 @@ Objects:
           air_outlet_node_name: '{} Heating Coil Outlet' # required by schema
         Connectors:
           AirLoop: *ConnectorsAirLoop
+        Electric:
+          Base: &CoilHeatingElectricSuperObject
+            Fields: *CoilHeatingFields
+            Connectors: &CoilHeatingElectricConnectors
+              AirLoop: *ConnectorsAirLoop
+        Fuel:
+          Common:
+            Objects: &CoilHeatingFuelCommonObjects
+              - Curve:Cubic:
+                  name: '{} Heating Coil PLF-FPLR'
+                  coefficient1_constant: 0.8
+                  coefficient2_x: 0.2
+                  coefficient3_x_2: 0
+                  coefficient4_x_3: 0
+                  maximum_value_of_x: 1
+                  minimum_value_of_x: 0
+            Mappings: &CoilHeatingFuelCommonMappings
+              - Coil:Heating:Fuel:
+                  heating_coil_type:
+                    Gas:
+                      fuel_type: NaturalGas
+          Base: &CoilHeatingFuelSuperObject
+            Fields: &CoilHeatingFuelFields
+              <<: *CoilHeatingFields
+              burner_efficiency: '{gas_heating_coil_efficiency}'
+              nominal_capacity: '{heating_coil_capacity}'
+              parasitic_electric_load: 0
+              parasitic_fuel_load: 0
+              part_load_fraction_correlation_curve_name: '{} Furnace DX 1-1 Heating Coil PLF-FPLR'
+            Connectors: &CoilHeatingFuelConnectors
+              AirLoop: *ConnectorsAirLoop
         Water: &CoilHeatingWaterSuperObject
+          Common:
+            Objects: &CoilHeatingWaterCommonObjects
+              - Branch: &CoilHeatingWaterCommonObjectsBranch
+                  name: '{} Heating Coil Hw Branch'
+                  components:
+                    - component_inlet_node_name:
+                        Coil:Heating:Water: water_inlet_node_name
+                      component_name:
+                        Coil:Heating:Water: key
+                      component_object_type:
+                        Coil:Heating:Water: self
+                      component_outlet_node_name:
+                        Coil:Heating:Water: water_outlet_node_name
           Fields: &CoilHeatingWaterFields
             << : *CoilHeatingFields
             water_inlet_node_name: '{} Heating Coil Hw Inlet' # required by schema
@@ -673,11 +709,13 @@ Objects:
         Connectors: &FanConstantVolumeConnectors
           <<: *FanConnectors
     OnOff:
-      Base:
+      Base: &FanOnOffSuperObject
         Fields: &FanOnOffFields
           <<: *FanFields
           maximum_flow_rate: Autosize
-          presure_rise: 600
+          pressure_rise: 600
+        Connectors: &FanOnOffConnectors
+          <<: *FanConnectors
     SystemModel:
       Base:
         Fields: &FanSystemModelFields
@@ -993,6 +1031,9 @@ Objects:
               zone_cooling_design_supply_air_temperature_input_method:
                 SystemSupplyAirTemperature: # todo_eo: the system cooling design setpoint needs to be mapped to zone supplyairtemperature
                   zone_cooling_design_supply_air_temperature_input_method: SupplyAirTemperature
+              zone_heating_design_supply_air_temperature_input_method:
+                SystemSupplyAirTemperature: # todo_eo: the system cooling design setpoint needs to be mapped to zone supplyairtemperature
+                  zone_heating_design_supply_air_temperature_input_method: SupplyAirTemperature
         Transitions:
           Base: &SizingZoneCommonTransitions
             - Sizing:Zone:
@@ -1480,7 +1521,7 @@ OptionTree:
                     air_outlet_node_name: '{} Supply Inlet'
                     availability_schedule_name: '{reheat_coil_availability_schedule_name}'
                 - Branch:
-                    <<: *CoilHeatingCommonObjectsBranch
+                    <<: *CoilHeatingWaterCommonObjectsBranch
                     name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
       FanCoil:
         BuildPath:
@@ -1495,14 +1536,14 @@ OptionTree:
               - Fan:SystemModel:
                   Fields: *FanSystemModelFields
                   Connectors: *FanConnectors
-              - Coil:Cooling:Water: *CoolingCoilSuperObject
-              - *CoilCoolingCommonObjects
+              - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
+              - *CoilCoolingWaterCommonObjects
               - Coil:Heating:Water:
                   Fields:
                     <<: *CoilHeatingWaterFields
                     air_outlet_node_name: *ZoneSupplyInlet
                   Connectors: *CoilHeatingWaterConnectors
-              - *CoilHeatingCommonObjects
+              - *CoilHeatingWaterCommonObjects
             Transitions:
               - *FanCommonTransitionsSystemModel
               - *CoilCoolingCommonTransitions
@@ -1551,7 +1592,11 @@ OptionTree:
                     zone_air_inlet_node_or_nodelist_name: '{} Inlets'
       Unitary:
         BaseObjects:
-          Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
+          Objects:
+            - *ZoneCommonBaseObjectsObjectsAirTerminal
+            - AirTerminal:SingleDuct:ConstantVolume:NoReheat: *AirTerminalSingleDuctConstantVolumeNoReheat
+          Mappings: *SizingZoneCommonMappings
+        TemplateObjects: *ZoneCommonTemplateObjects
       VAV:
         BaseObjects:
           Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
@@ -1570,7 +1615,7 @@ OptionTree:
                     air_outlet_node_name: '{} Supply Inlet'
                     availability_schedule_name: '{reheat_coil_availability_schedule_name}'
                 - Branch:
-                    <<: *CoilHeatingCommonObjectsBranch
+                    <<: *CoilHeatingWaterCommonObjectsBranch
                     name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
               Transitions:
                 - *AirTerminalSingleDuctVAVCommonTransitions
@@ -1582,6 +1627,12 @@ OptionTree:
           Actions:
             Base: &SystemCommonBuildPathActions
               - heating_coil_type:
+                  Electric:
+                    ObjectReference: OutdoorAir:Mixer
+                    Location: After
+                    ActionType: Insert
+                    Objects:
+                      - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
                   HotWater:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
@@ -1591,18 +1642,34 @@ OptionTree:
                       - Controller:WaterCoil:
                           <<: *ControllerWaterCoil
                           name: '{} Heating Coil Controller'
-                      - *CoilHeatingCommonObjects
+                      - *CoilHeatingWaterCommonObjects
+                  Gas:
+                    ObjectReference: OutdoorAir:Mixer
+                    Location: After
+                    ActionType: Insert
+                    Objects:
+                      - *CoilHeatingFuelCommonObjects
+                      - Coil:Heating:Fuel: *CoilHeatingFuelSuperObject
+                    Mappings:
+                      - *CoilHeatingFuelCommonMappings
               - cooling_coil_type:
                   ChilledWater:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
                     ActionType: Insert
                     Objects:
-                      - *CoilCoolingCommonObjects
-                      - Coil:Cooling:Water: *CoolingCoilSuperObject
+                      - *CoilCoolingWaterCommonObjects
+                      - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
                       - Controller:WaterCoil:
                           <<: *ControllerWaterCoil
                           name: '{} Cooling Coil Controller'
+                  SingleSpeedDX:
+                    ObjectReference: OutdoorAir:Mixer
+                    Location: After
+                    ActionType: Insert
+                    Objects:
+                      - *CoilCoolingDXSingleSpeedCommonObjects
+                      - Coil:Cooling:DX:SingleSpeed: *CoilCoolingDXSingleSpeedSuperObject
               # multiple steps needed for heat recovery because new OutdoorAir:Mixer is needed
               - heat_recovery_type:
                   Enthalpy:
@@ -1629,13 +1696,14 @@ OptionTree:
                             AirLoop: False
             ConstantVolume: &SystemCommonBuildPathActionsConstantVolume
               - supply_fan_placement:
-                  (DrawThrough|None):
+                  None: &SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacementNone
                     Location: -1
                     ActionType: Insert
                     Objects:
                       - Fan:ConstantVolume: *FanConstantVolumeSuperObject
                     Transitions: *FanCommonTransitionsSupply
                     Mappings: *FanCommonMappingsVariableVolume
+                  DrawThrough: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacementNone
                   BlowThrough:
                     ObjectReference: OutdoorAir:Mixer
                     ActionType: Insert
@@ -1658,15 +1726,46 @@ OptionTree:
                             pressure_rise: 500 # override base fan default
                           Connectors: *FanConstantVolumeConnectors
                     Transitions: *FanCommonTransitionsReturn
+            OnOff: &SystemCommonBuildPathActionOnOff
+              - supply_fan_placement:
+                  None: &SystemCommonBuildPathActionsOnOffSupplyFanPlacementNone
+                    Location: -1
+                    ActionType: Insert
+                    Objects:
+                      - Fan:OnOff: *FanOnOffSuperObject
+                    Transitions: *FanCommonTransitionsSupply
+                  DrawThrough: *SystemCommonBuildPathActionsOnOffSupplyFanPlacementNone
+                  BlowThrough:
+                    ObjectReference: OutdoorAir:Mixer
+                    ActionType: Insert
+                    Location: After
+                    Objects:
+                      - Fan:OnOff: *FanOnOffSuperObject
+                    Transitions: *FanCommonTransitionsSupply
+              - return_fan:
+                  'Yes': # Quotes necessary to prevent boolean conversion
+                    Location: 0
+                    ActionType: Insert
+                    Objects:
+                      - Fan:OnOff:
+                          Fields:
+                            <<: *FanOnOffFields
+                            name: '{} Return Fan'
+                            air_inlet_node_name: *AirLoopInlet
+                            air_outlet_node_name: '{} Return Fan Outlet'
+                            pressure_rise: 500 # override base fan default
+                          Connectors: *FanOnOffConnectors
+                    Transitions: *FanCommonTransitionsReturn
             VAV: &SystemCommonBuildPathActionsVariableVolume
               - supply_fan_placement:
-                  (DrawThrough|None):
+                  None: &SystemCommonBuildPathActionsVariableVolumeSupplyFanPlacementNone
                     Location: -1
                     ActionType: Insert
                     Objects:
                       - Fan:VariableVolume: *FanVariableVolumeSuperObject
                     Transitions: *FanCommonTransitionsSupply
                     Mappings: *FanCommonMappingsVariableVolume
+                  DrawThrough: *SystemCommonBuildPathActionsVariableVolumeSupplyFanPlacementNone
                   BlowThrough:
                     ObjectReference: OutdoorAir:Mixer
                     ActionType: Insert
@@ -1693,8 +1792,7 @@ OptionTree:
         BaseObjects:
           Objects:
             Base: &SystemCommonBaseObjectsObjects
-              - SetpointManager:MixedAir:
-                  <<: *SetpointManagerMixedAirHeating
+              - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
               - AirLoopHVAC: *AirLoopHVAC
             ConstantVolume:
               Base: &SystemCommonBaseObjectsConstantVolume
@@ -1747,20 +1845,24 @@ OptionTree:
             night_cycle_control:
               CycleOnAny:
                 Objects:
+                  - AvailabilityManager:NightCycle: *AvailabilityManagerNightCycle
+              StayOff:
+                Objects:
                   - AvailabilityManager:NightCycle:
                       <<: *AvailabilityManagerNightCycle
+                      control_type: StayOff
           ConstantVolume: &SystemCommonTemplateObjectsConstantVolume
             cooling_coil_setpoint_control_type:
-              ControlZone: &SystemCommonTemplateObjectsConstantVolumControlZone
+              ControlZone:
                 Objects:
                   - SetpointManager:SingleZone:Cooling: *SetpointManagerSingleZoneCooling
-              FixedSetpoint: &SystemCommonTemplateObjectsConstantVolumFixedSetpoint
+              FixedSetpoint:
                 Objects:
                   - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
-              Warmest: &SystemCommonTemplateObjectsConstantVolumeWarmest
+              Warmest:
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
-            heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
+            heating_coil_setpoint_control_type:
               ControlZone:
                 Objects:
                   - SetpointManager:SingleZone:Heating: *SetpointManagerSingleZoneHeating
@@ -1843,28 +1945,12 @@ OptionTree:
             Objects:
               - *SystemCommonBuildPathObjects
           Actions:
-            - airloop_hvac_unitary_object_type: # Created as a descriptor in ExpandSystem
-                Furnace:HeatCool:
-                  ObjectReference: OutdoorAir:Mixer
-                  ActionType: Insert
-                  Location: After
-                  Objects:
-                    - Fan:OnOff: *FanOnOffFields
-                    - AirLoopHVAC:Unitary:Furnace:HeatCool: *AirTerminalUnitaryHeatCoolSuperObject
+            - *SystemCommonBuildPathActions
+            - *SystemCommonBuildPathActionOnOff
         BaseObjects:
-          Objects:
-            - *SystemCommonBaseObjectsObjects
-            - OutdoorAir:NodeList: *OutdoorAirNodeListFields
-            - Controller:OutdoorAir: *ControllerOutdoorAir
-            - Sizing:System: *SizingSystemConstantVolume
-            - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling # todo_eo: need to reference objects not in build path
-            - SetpointManager:MixedAir: *SetpointManagerMixedAirEconomizer # todo_eo: need to reference objects not in build path
-        TemplateObjects:
-          airloop_hvac_unitary_object_type:
-            Furnace:HeatCool:
-              Objects:
-                - *CoilCoolingDXSingleSpeedCommonObjects
-                - Coil:Cooling:DX:SingleSpeed: *CoilCoolingDXSingleSpeedBaseFields
+          Objects: *SystemCommonBaseObjectsConstantVolume
+          Transitions: *SystemCommonTransitions
+        TemplateObjects: *SystemCommonTemplateObjects
       VAV:
         BuildPath:
           BaseObjects:

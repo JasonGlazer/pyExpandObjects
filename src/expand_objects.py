@@ -1207,7 +1207,7 @@ class ExpandSystem(ExpandObjects):
         self.airloop_hvac_unitary_object_type = template
         # map cooling_coil_design_setpoint variants to common value and remove original
         if hasattr(self, 'cooling_coil_design_setpoint_temperature'):
-            print("variant detected")
+            self.logger.info('cooling_coil_design_setpoint_temperature renamed to cooling_coil_design_setpoint')
             self.cooling_coil_design_setpoint = getattr(self, 'cooling_coil_design_setpoint_temperature')
             # Might not be totally necessary for this
             delattr(self, 'cooling_coil_design_setpoint_temperature')
