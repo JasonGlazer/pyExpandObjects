@@ -218,12 +218,13 @@ class ExpandObjects(EPJSON):
             raise PyExpandObjectsTypeError(
                 "Call to YAML object was not a list of structure keys: {}".format(structure_hierarchy))
         structure = self.get_structure(structure_hierarchy=structure_hierarchy)
+        # todo_eo: this restriction is temporarily commented out.  It might not be necessary and too strict
         # Check structure keys.  Return error if there is an unexpected value
-        for key in structure:
-            if key not in ['BuildPath', 'InsertObject', 'ReplaceObject', 'RemoveObject',
-                           'BaseObjects', 'TemplateObjects']:
-                raise PyExpandObjectsYamlStructureException(
-                    "YAML object is incorrectly formatted: {}, bad key: {}".format(structure, key))
+        # for key in structure:
+        #     if key not in ['BuildPath', 'InsertObject', 'ReplaceObject', 'RemoveObject',
+        #                    'BaseObjects', 'TemplateObjects']:
+        #         raise PyExpandObjectsYamlStructureException(
+        #             "YAML object is incorrectly formatted: {}, bad key: {}".format(structure, key))
         return structure
 
     def _get_option_tree_objects(
@@ -237,9 +238,10 @@ class ExpandObjects(EPJSON):
         option_tree = self._get_option_tree(structure_hierarchy=structure_hierarchy)
         options = option_tree.keys()
         option_tree_dictionary = {}
-        if not set(list(options)).issubset({'BaseObjects', 'TemplateObjects', 'BuildPath'}):
-            raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided in YAML: {}"
-                                           .format(options))
+        # todo_eo: this requirement is temporarily commented out, may be too strict
+        # if not set(list(options)).issubset({'BaseObjects', 'TemplateObjects', 'BuildPath'}):
+        #     raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided in YAML: {}"
+        #                                    .format(options))
         if "BuildPath" in options:
             object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
             self.merge_epjson(

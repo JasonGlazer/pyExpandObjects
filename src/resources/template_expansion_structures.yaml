@@ -190,17 +190,33 @@ Objects:
       VAV:
         Common:
           Fields:
-            Fields: &AirTerminalSingleDuctVAVCommonFields
+            Base: &AirTerminalSingleDuctVAVCommonFields
               <<: *AirTerminalSingleDuctCommonFields
               constant_minimum_air_flow_fraction: '{constant_minimum_air_flow_fraction}'
               fixed_minimum_air_flow_rate: '{fixed_minimum_air_flow_rate}'
               maximum_air_flow_rate: '{supply_air_maximum_flow_rate}'
               minimum_air_flow_fraction_schedule_name: '{minimum_air_flow_fraction_schedule_name}'
               zone_minimum_air_flow_input_method: '{zone_minimum_air_flow_input_method}'
+            Reheat: &AirTerminalSingleDuctVAVCommonFieldsReheat
+              damper_air_outlet_node_name: '{} Damper Outlet' # required by schema
+              damper_heating_action: Reverse # template default, not object default
           Transitions: &AirTerminalSingleDuctVAVCommonTransitions
             - AirTerminal:.*:
                 supply_air_maximum_flow_rate: maximum_air_flow_rate
                 damper_heating_action: damper_heating_action
+        HeatAndCool:
+          Reheat:
+            Common:
+              Transitions: &AirTerminalSingleDuctVAVHeatAndCoolReheatCommonTransitions
+                - AirTerminal:.*:
+                    constant_minimum_air_flow_fraction: zone_minimum_air_flow_fraction
+            Base:
+              Fields: &AirTerminalSingleDuctVAVHeatAndCoolReheatFields
+                name: '{} VAV Reheat'
+                <<: *AirTerminalSingleDuctCommonFields
+                <<: *AirTerminalSingleDuctCommonFieldsReheat
+                <<: *AirTerminalSingleDuctVAVCommonFieldsReheat
+                zone_minimum_air_flow_fraction: 0.2
         NoReheat:
           Base:
             Fields: &AirTerminalSingleDuctVAVNoReheatFields
@@ -212,8 +228,7 @@ Objects:
               name: '{} VAV Reheat'
               <<: *AirTerminalSingleDuctVAVCommonFields
               <<: *AirTerminalSingleDuctCommonFieldsReheat
-              damper_air_outlet_node_name: '{} Damper Outlet' # required by schema
-              damper_heating_action: Reverse # template default, not object default
+              <<: *AirTerminalSingleDuctVAVCommonFieldsReheat
           HotWater:
             Fields: &AirTerminalSingleDuctVAVReheatHotWater
               <<: *AirTerminalSingleDuctVAVReheat
@@ -500,7 +515,7 @@ Objects:
             Fields:
               <<: *CoilHeatingFields
               nominal_capacity: Autosize
-            Connectors: &CoilHeatingElectricConnectors
+            Connectors:
               AirLoop: *ConnectorsAirLoop
         Fuel:
           Common:
@@ -519,14 +534,14 @@ Objects:
                     Gas:
                       fuel_type: NaturalGas
           Base: &CoilHeatingFuelSuperObject
-            Fields: &CoilHeatingFuelFields
+            Fields:
               <<: *CoilHeatingFields
               burner_efficiency: '{gas_heating_coil_efficiency}'
               nominal_capacity: '{heating_coil_capacity}'
               parasitic_electric_load: 0
               parasitic_fuel_load: 0
               part_load_fraction_correlation_curve_name: '{} Heating Coil PLF-FPLR'
-            Connectors: &CoilHeatingFuelConnectors
+            Connectors:
               AirLoop: *ConnectorsAirLoop
         Water: &CoilHeatingWaterSuperObject
           Common:
@@ -1481,29 +1496,76 @@ OptionTree:
               - *ZoneCommonBaseObjectsObjects
               - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
               - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
-        TemplateObjects: &ZoneCommonTemplateObjects
-          baseboard_heating_type:
-            HotWater:
-              Objects:
-                - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
-                - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
-              Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
-          zone_hvac_equipmentlist_object_type: &ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType # Created as a descriptor in ExpandZone
-            ^Base$:
-              Objects:
-                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentList
-            Baseboard:
-              Objects:
-                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseBoard
-            ^WithDOAS$:
-              Objects:
-                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithDOAS
-            WithDOASAndBaseboard:
-              Objects:
-                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithDOASAndBaseboard
-            WithBaseboard:
-              Objects:
-                - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
+        TemplateObjects:
+          Base: &ZoneCommonTemplateObjects
+            baseboard_heating_type:
+              HotWater:
+                Objects:
+                  - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
+                  - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
+                Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
+            zone_hvac_equipmentlist_object_type: &ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType # Created as a descriptor in ExpandZone
+              ^Base$:
+                Objects:
+                  - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentList
+              Baseboard:
+                Objects:
+                  - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseBoard
+              ^WithDOAS$:
+                Objects:
+                  - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithDOAS
+              WithDOASAndBaseboard:
+                Objects:
+                  - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithDOASAndBaseboard
+              WithBaseboard:
+                Objects:
+                  - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
+          VAV:
+            Base: &ZoneCommonTemplateObjectsVAV
+              reheat_coil_type:
+                HotWater:
+                  Objects:
+                    - AirTerminal:SingleDuct:VAV:Reheat: *AirTerminalSingleDuctVAVReheatHotWater
+                    - Coil:Heating:Water:
+                        <<: *CoilHeatingWaterFields
+                        name: '{} Reheat Coil'
+                        air_inlet_node_name:
+                          AirTerminal:SingleDuct:.*: damper_air_outlet_node_name
+                        air_outlet_node_name:
+                          AirTerminal:SingleDuct:.*: air_outlet_node_name
+                        availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                    - Branch:
+                        <<: *CoilHeatingWaterCommonObjectsBranch
+                        name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
+                  Transitions:
+                    - *AirTerminalSingleDuctVAVCommonTransitions
+                Electric:
+                  Objects:
+                    - AirTerminal:SingleDuct:VAV:Reheat: *AirTerminalSingleDuctVAVReheat
+                    - Coil:Heating:Electric:
+                        name: '{} Reheat Coil'
+                        air_inlet_node_name:
+                          AirTerminal:SingleDuct:.*: damper_air_outlet_node_name
+                        air_outlet_node_name:
+                          AirTerminal:SingleDuct:.*: air_outlet_node_name
+                        availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                  Transitions:
+                    - *AirTerminalSingleDuctVAVCommonTransitions
+            HeatAndCool: &ZoneCommonTemplateObjectsVAVHeatAndCool
+              reheat_coil_type:
+                Electric:
+                  Objects:
+                    - AirTerminal:SingleDuct:VAV:HeatAndCool:Reheat: *AirTerminalSingleDuctVAVHeatAndCoolReheatFields
+                    - Coil:Heating:Electric:
+                        name: '{} Reheat Coil'
+                        air_inlet_node_name:
+                          AirTerminal:SingleDuct:.*: damper_air_outlet_node_name
+                        air_outlet_node_name:
+                          AirTerminal:SingleDuct:.*: air_outlet_node_name
+                        availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                  Transitions:
+                    - *AirTerminalSingleDuctVAVCommonTransitions
+                    - *AirTerminalSingleDuctVAVHeatAndCoolReheatCommonTransitions
       BaseboardHeat: # Common objects not used since baseboards do not use air paths and are also
                      #   secondary equipment in some options.
         BaseObjects:
@@ -1617,32 +1679,25 @@ OptionTree:
           Objects:
             - *ZoneCommonBaseObjectsObjectsAirTerminal
             - AirTerminal:SingleDuct:ConstantVolume:NoReheat: *AirTerminalSingleDuctConstantVolumeNoReheat
+          Transitions: *SizingZoneCommonTransitions
           Mappings: *SizingZoneCommonMappings
         TemplateObjects: *ZoneCommonTemplateObjects
       VAV:
+        HeatAndCool:
+          BaseObjects:
+            Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
+            Transitions: *SizingZoneCommonTransitions
+            Mappings: *SizingZoneCommonMappings
+          TemplateObjects:
+            <<: *ZoneCommonTemplateObjects
+            <<: *ZoneCommonTemplateObjectsVAVHeatAndCool
         BaseObjects:
           Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
           Transitions: *SizingZoneCommonTransitions
           Mappings: *SizingZoneCommonMappings
         TemplateObjects:
           <<: *ZoneCommonTemplateObjects
-          reheat_coil_type:
-            HotWater:
-              Objects:
-                - AirTerminal:SingleDuct:VAV:Reheat: *AirTerminalSingleDuctVAVReheatHotWater
-                - Coil:Heating:Water:
-                    <<: *CoilHeatingWaterFields
-                    name: '{} Reheat Coil'
-                    air_inlet_node_name:
-                      AirTerminal:SingleDuct:.*: damper_air_outlet_node_name
-                    air_outlet_node_name:
-                      AirTerminal:SingleDuct:.*: air_outlet_node_name
-                    availability_schedule_name: '{reheat_coil_availability_schedule_name}'
-                - Branch:
-                    <<: *CoilHeatingWaterCommonObjectsBranch
-                    name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
-              Transitions:
-                - *AirTerminalSingleDuctVAVCommonTransitions
+          <<: *ZoneCommonTemplateObjectsVAV
     System:
       Common:
         BuildPath:
@@ -1970,6 +2025,17 @@ OptionTree:
           <<: *SystemCommonTemplateObjects
           <<: *SystemCommonTemplateObjectsDOAS
           <<: *SystemCommonTemplateObjectsConstantVolume
+      PackagedVAV:
+        BuildPath:
+          BaseObjects:
+            Objects: *SystemCommonBuildPathObjects
+          Actions:
+            - *SystemCommonBuildPathActions
+            - *SystemCommonBuildPathActionsVariableVolume
+        BaseObjects:
+          Objects: *SystemCommonBaseObjectsVariableVolume
+          Transitions: *SystemCommonTransitions
+        TemplateObjects: *SystemCommonTemplateObjects
       Unitary:
         BuildPath:
           BaseObjects:
@@ -1998,8 +2064,8 @@ OptionTree:
                 maximum_supply_air_temperature: 45 # set by legacy, todo_eo: doesn't seem like it needs to be hard coded
                 minimum_supply_air_temperature: 13 # set by legacy, todo_eo: doesn't seem like it needs to be hard coded
                 control_zone_name: '{control_zone_or_thermostat_location_name}' # todo_eo: combine this name to common
-                zone_node_name: '{control_zone_or_thermostat_location_name} Zone Air Node' # todo_eo: combine this name to common
-                zone_inlet_node_name: '{control_zone_or_thermostat_location_name} Supply Inlet' # todo_eo: combine this name to common
+                zone_node_name: '{control_zone_or_thermostat_location_name} Zone Air Node' # todo_eo: combine this name to common?
+                zone_inlet_node_name: '{control_zone_or_thermostat_location_name} Supply Inlet' # todo_eo: combine this name to common?
             - SetpointManager:MixedAir:
                 <<: *SetpointManagerMixedAirCooling
                 setpoint_node_or_nodelist_name:
@@ -2110,11 +2176,12 @@ OptionTree:
         BaseObjects:
         TemplateObjects:
           template_plant_loop_type:
-            (None|HotWaterLoop):
+            None: &PlantBoilerTemplateObjectsTemplatePlantLoopTypeNone
               Objects:
                 - Branch:
                     <<: *BoilerCommonObjectsBranch
                     name: '{} Boiler HW Branch'
+            HotWaterLoop: *PlantBoilerTemplateObjectsTemplatePlantLoopTypeNone
             MixedWaterLoop:
               Objects:
                 - Branch:
@@ -2210,12 +2277,13 @@ OptionTree:
                 <<: *PlantLoopHotWaterFields
         TemplateObjects:
           hot_water_pump_configuration:
-            (None|ConstantFlow):
+            None: &PlantHotWaterLoopTemplateObjectsHotWaterPumpConfigurationNone
               Objects:
                 - Pump:ConstantSpeed:
                     <<: *PumpConstantSpeed
                     design_pump_head: '{hot_water_pump_rated_head}'
                 - Branch: *PumpBranchConstantSpeedSupplyInlet
+            ConstantFlow: *PlantHotWaterLoopTemplateObjectsHotWaterPumpConfigurationNone
             VariableFlow:
               Objects:
                 - Pump:VariableSpeed:
@@ -2240,3 +2308,17 @@ OptionTree:
 #        - 1
 # When building option tree, Objects, Transitions, Mappings go on same level for a leaf
 # todo_eo: combine equip inlet, zone air node, and supply inlets, to global namings
+
+SystemToZoneMappings:
+  - zone_cooling_design_supply_air_temperature_input_method:
+      SystemSupplyAirTemperature:
+        system_field: cooling_design_supply_air_temperature
+        zone_field: zone_cooling_design_supply_air_temperature
+  - zone_cooling_design_supply_air_temperature_input_method:
+      SystemSupplyAirTemperature:
+        system_value: SupplyAirTemperature
+        zone_field: zone_cooling_design_supply_air_temperature_input_method
+  - zone_cooling_design_supply_air_temperature_input_method':
+      SystemSupplyAirTemperature:
+        system_field: cooling_coil_design_setpoint
+        zone_field: zone_cooling_design_supply_air_temperature

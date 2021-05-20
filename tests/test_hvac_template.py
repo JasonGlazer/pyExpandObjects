@@ -844,5 +844,34 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         )
         return
 
+    def test_system_to_zone_variable_map(self):
+        zt = {
+            'HVACTemplate:Zone:VAV': {
+                "Zone Template 1": {
+                    'template_vav_system_name': 'System Template 1',
+                    'zone_cooling_design_supply_air_temperature_input_method': 'SystemSupplyAirTemperature'
+                }
+            }
+        }
+        st = {
+            'HVACTemplate:System:VAV': {
+                'System Template 1': {
+                    'cooling_design_supply_air_temperature': 14.0
+                }
+            }
+        }
+        (_, zone_template), = zt.items()
+        (_, template_fields), = zone_template.items()
+        self.hvac_template._apply_system_fields_to_zone_template(
+            template_fields=template_fields,
+            system_templates=st)
+        self.assertEqual(
+            14,
+            zone_template['Zone Template 1']['zone_cooling_design_supply_air_temperature'])
+        self.assertEqual(
+            'SupplyAirTemperature',
+            zone_template['Zone Template 1']['zone_cooling_design_supply_air_temperature_input_method'])
+        return
+
     # todo_eo: wrap all dictionary unpacking (_, _), = dict.items() with exceptions and test
     # todo_eo: make check that no loops are empty
