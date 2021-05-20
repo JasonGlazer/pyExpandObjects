@@ -1459,72 +1459,87 @@ class ExpandSystem(ExpandObjects):
                 parsed_build_path.insert(0, copy.deepcopy(build_path[0]))
         return parsed_build_path
 
-    def _modify_build_path_for_unitary_equipment(
-            self, loop_type: str = 'AirLoop', epjson: dict = None, build_path: list = None) -> list:
+    def _modify_build_path_for_equipment(
+            self, loop_type: str = 'AirLoop', build_path: list = None) -> list:
         """
-        Modify input build path to use AirLoopHVAC equipment in the build path, rather than individual components.
+        Modify input build path to use special equipment objects in the build path, rather than individual components.
 
         :param build_path: list of EnergyPlus Super objects
         :return: build path
         """
+        # todo_eo: move this to YAML file
+        equipment_lookup = (
+            (
+                ['HVACTemplate:System:Unitary', ],
+                'AirLoopHVAC:Unitary:.*',
+                {'Inlet': 'furnace_air_inlet_node_name',
+                 'Outlet': 'furnace_air_outlet_node_name'},
+                (
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
+                    ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
+                    ('Fan:.*', True))),
+            (
+                ['HVACTemplate:System:PackagedVAV', ],
+                'CoilSystem:Cooling.*',
+                {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
+                 'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
+                (
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), )))
         # if build_path is not passed to function, get the class attributes
-        epjson = epjson or self.epjson
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
             raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
-        if self.template_type == 'HVACTemplate:System:Unitary':
-            # The unitary equipment must be present, and extracted from, the build path
-            unitary_equipment = None
-            for idx, super_object in enumerate(build_path):
-                (super_object_type, _), = super_object.items()
-                if re.match(r'AirLoopHVAC:Unitary:.*', super_object_type):
-                    unitary_equipment = build_path.pop(idx)
-                    # set connectors now that it will be included in the build path.
-                    #  This is not included in the YAML object to keep the object from connecting to its neighbors
-                    #  before this point.
-                    unitary_equipment[super_object_type]['Connectors']['AirLoop'] = {
-                        'Inlet': 'furnace_air_inlet_node_name',
-                        'Outlet': 'furnace_air_outlet_node_name'
-                    }
-            # make check if no equipment was found
-            if not unitary_equipment:
-                raise PyExpandObjectsException("No AirLoopHVAC:Unitary objects detected in {} build process: {}"
-                                               .format(self.unique_name, build_path))
-            try:
-                (_, unitary_equipment_keys), = unitary_equipment.items()
-                if {'Fields', 'Connectors'} != set(unitary_equipment_keys.keys()):
-                    raise ValueError
-            except ValueError:
-                raise PyExpandObjectsException("AirLoopHVAC:Unitary equipment is improperly formatted, must be a super"
-                                               "object. system: {} object: {}"
-                                               .format(self.unique_name, unitary_equipment))
-            # check for template indicators of objects to remove
-            object_check_list = [
-                ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
-                ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
-                ('Fan:.*', True)
-            ]
-            # Iterate through list and remove objects that match the check list
-            parsed_build_path = []
-            removed_items = 0
-            for super_object in copy.deepcopy(build_path):
-                (super_object_type, super_object_structure), = super_object.items()
-                keep_object = True
-                for object_reference, object_presence in object_check_list:
-                    if re.match(object_reference, super_object_type) and object_presence:
-                        keep_object = None
+        equipment_object = None
+        for el in equipment_lookup:
+            if self.template_type in el[0]:
+                equipment_regex = el[1]
+                equipment_connectors = el[2]
+                # check for template indicators of objects to remove
+                object_check_list = el[3]
+                # The unitary equipment must be present, and extracted from, the build path
+                for idx, super_object in enumerate(build_path):
+                    (super_object_type, _), = super_object.items()
+                    if re.match(equipment_regex, super_object_type):
+                        equipment_object = build_path.pop(idx)
+                        # set connectors now that it will be included in the build path.
+                        #  This is not included in the YAML object to keep the object from connecting to its neighbors
+                        #  before this point.
+                        equipment_object[super_object_type]['Connectors'][loop_type] = equipment_connectors
+                # make check if no equipment was found
+                if not equipment_object:
+                    raise PyExpandObjectsException("No special equipment objects detected in {} build process: {}"
+                                                   .format(self.unique_name, build_path))
+                try:
+                    (_, equipment_object_keys), = equipment_object.items()
+                    if {'Fields', 'Connectors'} != set(equipment_object_keys.keys()):
+                        raise ValueError
+                except ValueError:
+                    raise PyExpandObjectsException("Equipment is improperly formatted, must be a super"
+                                                   "object. system: {} object: {}"
+                                                   .format(self.unique_name, equipment_object))
+                # Iterate through list and remove objects that match the check list
+                parsed_build_path = []
+                removed_items = 0
+                for super_object in copy.deepcopy(build_path):
+                    (super_object_type, super_object_structure), = super_object.items()
+                    keep_object = True
+                    for object_reference, object_presence in object_check_list:
+                        if re.match(object_reference, super_object_type) and object_presence:
+                            keep_object = None
+                            removed_items += 1
+                    if keep_object:
+                        parsed_build_path.append(super_object)
+                    # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the
+                    # removed_items so it isn't called again
+                    if removed_items == len(object_check_list):
+                        parsed_build_path.append(equipment_object)
                         removed_items += 1
-                if keep_object:
-                    parsed_build_path.append(super_object)
-                # if object_check_list is empty, it's done.  Pass the unitary equipment and stop the loop
-                if removed_items == len(object_check_list):
-                    parsed_build_path.append(unitary_equipment)
-            if removed_items != sum(1 for i, j in object_check_list if j):
-                raise PyExpandObjectsException("AirLoopHVAC:Unitary modification process failed to remove all objects "
-                                               "for system {}".format(self.unique_name))
-            return parsed_build_path
-        else:
-            return build_path
+                if removed_items < sum(1 for i, j in object_check_list if j):
+                    raise PyExpandObjectsException("Equipment modification process failed to remove all objects "
+                                                   "for system {}".format(self.unique_name))
+                return parsed_build_path
+        # if no matches are made, return original build_path
+        return build_path
 
     def _create_branch_and_branchlist_from_build_path(
             self,
@@ -1553,8 +1568,7 @@ class ExpandSystem(ExpandObjects):
             epjson=epjson,
             build_path=copy.deepcopy(build_path))
         # Edit build path for AirLoopHVAC:Unitary equipment
-        build_path = self._modify_build_path_for_unitary_equipment(
-            epjson=epjson,
+        build_path = self._modify_build_path_for_equipment(
             build_path=copy.deepcopy(build_path))
         components = []
         for super_object in copy.deepcopy(build_path):

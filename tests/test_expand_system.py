@@ -499,9 +499,11 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
                 "AirLoopHVAC:Unitary:Furnace:HeatCool": {'Fields': {}, 'Connectors': {}}
             }
         ]
-        output = es._modify_build_path_for_unitary_equipment()
-        from pprint import pprint
-        pprint(output, width=150)
+        output = es._modify_build_path_for_equipment()
+        self.assertEqual(
+            'AirLoopHVAC:Unitary:Furnace:HeatCool',
+            list(output[1].keys())[0]
+        )
         return
 
     def test_branch_from_build_path(self):
