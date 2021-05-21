@@ -1913,6 +1913,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         ez = ExpandZone(template={
             'HVACTemplate:Zone:FanCoil': {
                 'zone_template_name': {
+                    "cooling_coil_type": "ChilledWater",
+                    "heating_coil_type": "HotWater",
                     'zone_name': 'test_zone'}}})
         ez.epjson = {
             'ZoneHVAC:FourPipeFanCoil': {
@@ -1928,6 +1930,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         ez = ExpandZone(template={
             'HVACTemplate:Zone:FanCoil': {
                 'zone_template_name': {
+                    "cooling_coil_type": "ChilledWater",
+                    "heating_coil_type": "HotWater",
                     'zone_name': 'test_zone',
                     'baseboard_heating_type': 'HotWater'}}})
         ez.epjson = {
@@ -1945,6 +1949,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         ez = ExpandZone(template={
             'HVACTemplate:Zone:FanCoil': {
                 'zone_template_name': {
+                    "cooling_coil_type": "ChilledWater",
+                    "heating_coil_type": "HotWater",
                     'zone_name': 'test_zone',
                     'dedicated_outdoor_air_system_name': 'DOAS'}}})
         ez.epjson = {
@@ -1962,6 +1968,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         ez = ExpandZone(template={
             'HVACTemplate:Zone:FanCoil': {
                 'zone_template_name': {
+                    "cooling_coil_type": "ChilledWater",
+                    "heating_coil_type": "HotWater",
                     'zone_name': 'test_zone',
                     'baseboard_heating_type': 'HotWater',
                     'dedicated_outdoor_air_system_name': 'DOAS'}}})

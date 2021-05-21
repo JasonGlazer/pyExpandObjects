@@ -722,8 +722,8 @@ Objects:
             OutdoorAir:Mixer: outdoor_air_stream_node_name
           economizer_control_type: '{economizer_type}'
           economizer_maximum_limit_dewpoint_temperature: '{economizer_maximum_limit_dewpoint_temperature}'
-          economizer_maximum_limit_dry_bulb_temperature: '{economizer_upper_temperature_limit}'
-          economizer_minimum_limit_dry_bulb_temperature: '{economizer_lower_temperature_limit}'
+          economizer_maximum_limit_dry_bulb_temperature: '{economizer_maximum_limit_dry_bulb_temperature}'
+          economizer_minimum_limit_dry_bulb_temperature: '{economizer_minimum_limit_dry_bulb_temperature}'
           economizer_maximum_limit_enthalpy: '{economizer_upper_enthalpy_limit}'
           maximum_outdoor_air_flow_rate: Autosize # template default, required by schema
           minimum_limit_type: '{minimum_outdoor_air_control_type}'
@@ -1644,6 +1644,57 @@ OptionTree:
   HVACTemplate:
     Zone:
       Common:
+        BuildPath:
+          BaseObjects:
+            Objects:
+              Base: &ZoneCommonBuildPathBaseObjectsObjects
+                - OutdoorAir:Mixer:
+                    Fields:
+                      <<: *OutdoorAirMixerFields
+                      return_air_stream_node_name: *ZoneReturn
+                    Connectors: *OutdooAirMixerConnectors
+                - OutdoorAir:NodeList: *OutdoorAirNodeListFields
+          Actions:
+            Objects:
+              Base: &ZoneCommonBuildPathActionsObjects
+                - heating_coil_type:
+                    HotWater:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects:
+                        - Coil:Heating:Water:
+                            Fields:
+                              <<: *CoilHeatingWaterFields
+                              air_outlet_node_name: *ZoneSupplyInlet
+                            Connectors: *CoilHeatingWaterConnectors
+                        - *CoilHeatingWaterCommonObjects
+                      Transitions:
+                        - *CoilHeatingCommonTransitions
+                - cooling_coil_type:
+                    ChilledWater:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects:
+                        - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
+                        - *CoilCoolingWaterCommonObjects
+                      Transitions:
+                        - *CoilCoolingCommonTransitions
+              FanOnOff: &ZoneCommonBuildPathActionsObjectsFanOnOff
+                - supply_fan_placement:
+                    None: &ZoneCommonBuildPathActionsObjectsFanOnOffNone
+                      Location: -1
+                      ActionType: Insert
+                      Objects:
+                        - Fan:OnOff: *FanOnOffSuperObject
+                    DrawThrough: *ZoneCommonBuildPathActionsObjectsFanOnOffNone
+                    BlowThrough:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects:
+                        - Fan:OnOff: *FanOnOffSuperObject
         BaseObjects:
           Objects:
             Base: &ZoneCommonBaseObjectsObjects
@@ -1771,27 +1822,14 @@ OptionTree:
         BuildPath:
           BaseObjects:
             Objects:
-              - OutdoorAir:Mixer:
-                  Fields:
-                    <<: *OutdoorAirMixerFields
-                    return_air_stream_node_name: *ZoneReturn
-                  Connectors: *OutdooAirMixerConnectors
-              - OutdoorAir:NodeList: *OutdoorAirNodeListFields
+              - *ZoneCommonBuildPathBaseObjectsObjects
               - Fan:SystemModel:
                   Fields: *FanSystemModelFields
                   Connectors: *FanConnectors
-              - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
-              - *CoilCoolingWaterCommonObjects
-              - Coil:Heating:Water:
-                  Fields:
-                    <<: *CoilHeatingWaterFields
-                    air_outlet_node_name: *ZoneSupplyInlet
-                  Connectors: *CoilHeatingWaterConnectors
-              - *CoilHeatingWaterCommonObjects
             Transitions:
               - *FanCommonTransitionsSystemModel
-              - *CoilCoolingCommonTransitions
-              - *CoilHeatingCommonTransitions
+          Actions:
+              - *ZoneCommonBuildPathActionsObjects
         BaseObjects:
           Objects:
             - *ZoneCommonBaseObjectsObjects
@@ -1834,6 +1872,25 @@ OptionTree:
                     <<: *ZoneHVACEquipmentConnectionsFields
                     zone_air_exhaust_node_or_nodelist_name: *ZoneReturn
                     zone_air_inlet_node_or_nodelist_name: '{} Inlets'
+      PTAC:
+        BuildPath:
+          BaseObjects:
+            Objects:
+              - *ZoneCommonBuildPathBaseObjectsObjects
+            Transitions:
+              - *FanCommonTransitionsSystemModel
+          Actions:
+            - *ZoneCommonBuildPathActionsObjects
+            - *ZoneCommonBuildPathActionsObjectsFanOnOff
+        BaseObjects:
+          Objects:
+            - *ZoneCommonBaseObjectsObjects
+          Transitions:
+            - *SizingZoneCommonTransitions
+            - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
+            - *ZoneHVACFourPipeFanCoilCommonTransitions
+        TemplateObjects:
+          <<: *ZoneCommonTemplateObjects
       Unitary:
         BaseObjects:
           Objects:

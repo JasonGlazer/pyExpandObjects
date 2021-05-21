@@ -143,6 +143,21 @@ class ExpandObjects(EPJSON):
         self.epjson = {}
         return
 
+    def rename_attribute(self, old_attribute, new_attribute):
+        """
+        Change attribute name to commonize variables
+
+        :param old_attribute: old attribute name
+        :param new_attribute: new attribute name
+        :return: None.  Old attribute is deleted and new attribute created in class
+        """
+        if hasattr(self, old_attribute):
+            self.logger.info('{} renamed to {}'.format(old_attribute, new_attribute))
+            setattr(self, new_attribute, getattr(self, old_attribute))
+            # Possibly make this optional
+            delattr(self, old_attribute)
+        return
+
     def _flatten_list(
             self,
             nested_list: list,
@@ -1223,12 +1238,10 @@ class ExpandSystem(ExpandObjects):
 
     def __init__(self, template):
         super().__init__(template=template)
-        # map cooling_coil_design_setpoint variants to common value and remove original
-        if hasattr(self, 'cooling_coil_design_setpoint_temperature'):
-            self.logger.info('cooling_coil_design_setpoint_temperature renamed to cooling_coil_design_setpoint')
-            self.cooling_coil_design_setpoint = getattr(self, 'cooling_coil_design_setpoint_temperature')
-            # Might not be totally necessary for this
-            delattr(self, 'cooling_coil_design_setpoint_temperature')
+        # map variable variants to common value and remove original
+        self.rename_attribute('cooling_coil_design_setpoint_temperature', 'cooling_coil_design_setpoint')
+        self.rename_attribute('economizer_upper_temperature_limit', 'economizer_maximum_limit_dry_bulb_temperature')
+        self.rename_attribute('economizer_lower_temperature_limit', 'economizer_minimum_limit_dry_bulb_temperature')
         self.unique_name = self.template_name
         self.build_path = None
         self.airloop_hvac_unitary_object_type = template
