@@ -278,5 +278,8 @@ class TestSimulationSimplePlantLoop(BaseSimulationTest):
             file_name='test_input_epjson.epJSON')
         # check outputs and compare epJSONs
         self.perform_comparison([base_input_file_path, test_input_file_path])
-        self.compare_epjsons(base_formatted_epjson, output_epjson)
+        self.compare_epjsons(
+            epjson_1=base_formatted_epjson,
+            epjson_2=output_epjson,
+            exclude_list=['Schedule:Compact', 'AvailabilityManagerAssignmentList'])
         return

@@ -190,8 +190,12 @@ class ExpandObjects(EPJSON):
                 else:
                     structure_key_list = list(structure.keys())
                     for skl in structure_key_list:
-                        if re.match(skl, key):
-                            structure = structure[skl]
+                        if skl == 'AnyString':
+                            if re.match(r'\w+', key) and key != 'None':
+                                structure = structure['AnyString']
+                        else:
+                            if re.match(skl, key):
+                                structure = structure[skl]
         except KeyError:
             raise PyExpandObjectsTypeError('YAML structure does not exist for hierarchy: {}'.format(
                 structure_hierarchy))
@@ -214,12 +218,13 @@ class ExpandObjects(EPJSON):
             raise PyExpandObjectsTypeError(
                 "Call to YAML object was not a list of structure keys: {}".format(structure_hierarchy))
         structure = self.get_structure(structure_hierarchy=structure_hierarchy)
+        # todo_eo: this restriction is temporarily commented out.  It might not be necessary and too strict
         # Check structure keys.  Return error if there is an unexpected value
-        for key in structure:
-            if key not in ['BuildPath', 'InsertObject', 'ReplaceObject', 'RemoveObject',
-                           'BaseObjects', 'TemplateObjects']:
-                raise PyExpandObjectsYamlStructureException(
-                    "YAML object is incorrectly formatted: {}, bad key: {}".format(structure, key))
+        # for key in structure:
+        #     if key not in ['BuildPath', 'InsertObject', 'ReplaceObject', 'RemoveObject',
+        #                    'BaseObjects', 'TemplateObjects']:
+        #         raise PyExpandObjectsYamlStructureException(
+        #             "YAML object is incorrectly formatted: {}, bad key: {}".format(structure, key))
         return structure
 
     def _get_option_tree_objects(
@@ -233,9 +238,10 @@ class ExpandObjects(EPJSON):
         option_tree = self._get_option_tree(structure_hierarchy=structure_hierarchy)
         options = option_tree.keys()
         option_tree_dictionary = {}
-        if not set(list(options)).issubset({'BaseObjects', 'TemplateObjects', 'BuildPath'}):
-            raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided in YAML: {}"
-                                           .format(options))
+        # todo_eo: this requirement is temporarily commented out, may be too strict
+        # if not set(list(options)).issubset({'BaseObjects', 'TemplateObjects', 'BuildPath'}):
+        #     raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided in YAML: {}"
+        #                                    .format(options))
         if "BuildPath" in options:
             object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
             self.merge_epjson(
@@ -257,7 +263,8 @@ class ExpandObjects(EPJSON):
                         #   the fields match
                         if (field_option == 'None' and not hasattr(self, template_field)) or \
                                 (getattr(self, template_field, None) and (
-                                 re.match(field_option, getattr(self, template_field)))):
+                                    re.match(field_option, getattr(self, template_field)) or (
+                                        field_option == 'AnyString' and re.match(r'\w+', getattr(self, template_field))))):
                             option_tree_leaf = self._get_option_tree_leaf(
                                 option_tree=option_tree,
                                 leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])
@@ -391,7 +398,8 @@ class ExpandObjects(EPJSON):
                                 # if the object reference in the mapping dictionary matches the object, apply the map
                                 if re.match(object_type_reference, object_type):
                                     for map_option, sub_dictionary in mapping_dictionary.items():
-                                        if hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
+                                        if (map_option == 'None' and not hasattr(self, mapping_field)) or \
+                                                hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
                                             for field, val in sub_dictionary.items():
                                                 try:
                                                     # On a match and valid value, apply the field.
@@ -454,9 +462,10 @@ class ExpandObjects(EPJSON):
         # if Location is an integer, lookup by index.  If it is a string, treat is as a regex and look for an
         # 'occurrence' key as well
         try:
-            location = lookup_instructions.pop('Location')
-            connector_path = connector_path or lookup_instructions.pop('ConnectorPath', None)
-            value_location = lookup_instructions.pop('ValueLocation')
+            li = copy.deepcopy(lookup_instructions)
+            location = li.pop('Location')
+            connector_path = connector_path or li.pop('ConnectorPath', None)
+            value_location = li.pop('ValueLocation')
         except KeyError:
             raise PyExpandObjectsYamlStructureException("Build path location reference is invalid: build path {}"
                                                         .format(backup_copy))
@@ -469,7 +478,7 @@ class ExpandObjects(EPJSON):
                 # If location is not an integer, assume it is a string and perform a regex match.  Also, check for an
                 # Occurrence key in case the first match is not desired.  A Occurrence of -1 will just keep matching and
                 # return the results from the last object match.
-                occurrence = lookup_instructions.pop('Occurrence', 1)
+                occurrence = li.pop('Occurrence', 1)
                 if not isinstance(occurrence, int):
                     raise PyExpandObjectsYamlStructureException('Occurrence key is not an integer: {}'.format(backup_copy))
                 match_count = 0
@@ -869,6 +878,7 @@ class ExpandObjects(EPJSON):
         parsed_build_path = self._parse_build_path(object_list=copy.deepcopy(build_path))
         object_list = []
         formatted_build_path = []
+        out_node = None
         for idx, super_object in enumerate(parsed_build_path):
             (super_object_type, super_object_structure), = super_object.items()
             connectors = super_object_structure.get('Connectors')
@@ -876,14 +886,19 @@ class ExpandObjects(EPJSON):
                 raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
                                                             .format(super_object))
             try:
-                # The first object only sets the outlet node variable and remains unchanged
-                if idx == 0:
-                    out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
-                else:
-                    # After the first object, the inlet node name is changed to the previous object's outlet node
-                    # name.  Then the outlet node variable is reset.
-                    super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
-                    out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                # if a super object is specified but the Loop Connectors is identified as False, then just
+                #  append it to the build path but don't make a connection.  An example of this is the heat
+                #  exchanger which connects to the OA node, not the inlet node of the OutdoorAir:Mixer, which is
+                #  the return node
+                if connectors[loop_type]:
+                    # The first object only sets the outlet node variable and remains unchanged
+                    if not out_node:
+                        out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                    else:
+                        # After the first object, the inlet node name is changed to the previous object's outlet node
+                        # name.  Then the outlet node variable is reset.
+                        super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
+                        out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
                 object_list.append({super_object_type: super_object_structure['Fields']})
                 formatted_build_path.append({super_object_type: super_object_structure})
             except (AttributeError, KeyError):
@@ -892,6 +907,40 @@ class ExpandObjects(EPJSON):
         # Save build path to class attribute for later reference.
         self.build_path = formatted_build_path
         return object_list
+
+    def _create_availability_manager_assignment_list(self, epjson: dict = None) -> dict:
+        """
+        Create AvailabilityManagerAssignmentList object from epJSON dictionary
+        This list object is separated from the OptionTree build operations because it will vary based on the
+        presence of AvailabilityManager:.* objects in the epJSON dictionary.
+        Therefore, the list objects must be built afterwards in order to retrieve the referenced objects.
+
+        :param epjson: system epJSON formatted dictionary
+        :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
+            input epJSON object.
+        """
+        # if build_path and/or epjson are not passed to function, get the class attributes
+        epjson = epjson or self.epjson
+        availability_managers = {i: j for i, j in epjson.items() if re.match(r'^AvailabilityManager:.*', i)}
+        # loop over availability managers and add them to the list.
+        availability_manager_list_object = \
+            self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AvailabilityManagerAssignmentList', 'Base'])
+        availability_manager_list_object['managers'] = []
+        try:
+            for object_type, object_structure in availability_managers.items():
+                for object_name, object_fields in object_structure.items():
+                    availability_manager_list_object['managers'].append({
+                        'availability_manager_name': object_name,
+                        'availability_manager_object_type': object_type})
+        except AttributeError:
+            raise PyExpandObjectsTypeError("AvailabilityManager object not properly formatted: {}"
+                                           .format(availability_managers))
+        availability_manager_assignment_list_object = self.yaml_list_to_epjson_dictionaries([
+            {'AvailabilityManagerAssignmentList': availability_manager_list_object}, ])
+        self.merge_epjson(
+            super_dictionary=epjson,
+            object_dictionary=self.resolve_objects(epjson=availability_manager_assignment_list_object))
+        return self.resolve_objects(epjson=availability_manager_assignment_list_object)
 
     def _process_build_path(self, option_tree):
         """
@@ -924,7 +973,8 @@ class ExpandObjects(EPJSON):
                             # attribute is missing or None.
                             if (template_value == 'None' and not hasattr(self, template_field)) or \
                                     (getattr(self, template_field, None) and (
-                                     re.match(template_value, getattr(self, template_field)))):
+                                        re.match(template_value, getattr(self, template_field)) or (
+                                            template_value == 'AnyString' and re.match(r'\w+', getattr(self, template_field))))):
                                 build_path = self._apply_build_path_action(
                                     build_path=build_path,
                                     action_instructions=action_instructions)
@@ -1063,10 +1113,45 @@ class ExpandThermostat(ExpandObjects):
         return self
 
 
+class ZonevacEquipmentListOjectType:
+    """
+    Set a class attribute to select the appropriate ZoneHVAC:EquipmentList from TemplateOptions in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._zone_hvac_equipmentlist_object_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        # Check for doas reference
+        doas_equipment = None
+        if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None':
+            doas_equipment = True
+        # Check for baseboard reference
+        baseboard_equipment = None
+        if template_fields.get('baseboard_heating_type', 'None') != 'None':
+            baseboard_equipment = True
+        if doas_equipment and baseboard_equipment:
+            obj._zone_hvac_equipmentlist_object_type = 'WithDOASAndBaseboard'
+        elif doas_equipment:
+            obj._zone_hvac_equipmentlist_object_type = 'WithDOAS'
+        elif baseboard_equipment:
+            if template_type == 'HVACTemplate:Zone:BaseboardHeat':
+                obj._zone_hvac_equipmentlist_object_type = 'Baseboard'
+            else:
+                obj._zone_hvac_equipmentlist_object_type = 'WithBaseboard'
+        else:
+            obj._zone_hvac_equipmentlist_object_type = 'Base'
+        return
+
+
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
     """
+
+    zone_hvac_equipmentlist_object_type = ZonevacEquipmentListOjectType()
+
     def __init__(self, template):
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
@@ -1076,6 +1161,7 @@ class ExpandZone(ExpandObjects):
                 raise InvalidTemplateException("Zone name not provided in template: {}".format(template))
         except AttributeError:
             raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
+        self.zone_hvac_equipmentlist_object_type = template
         return
 
     def run(self):
@@ -1087,17 +1173,69 @@ class ExpandZone(ExpandObjects):
         return self
 
 
+class AirLoopHVACUnitaryObjectType:
+    """
+    Set a class attribute to select the appropriate unitary equipment type from TemplateOptions in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._airloop_hvac_unitary_object_type
+
+    def __set__(self, obj, value):
+        (_, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else True
+        heating_coil_type = None
+        if template_fields.get('heating_coil_type', 'None') in ['Gas', 'Electric']:
+            heating_coil_type = 'Furnace'
+        if cooling_coil_type and heating_coil_type == 'Furnace':
+            obj._airloop_hvac_unitary_object_type = 'Furnace:HeatCool'
+        if not cooling_coil_type and not heating_coil_type:
+            obj._airloop_hvac_unitary_object_type = None
+        return
+
+
+class AirLoopHVACObjectType:
+    """
+    Set a class attribute to select the appropriate AirLoopHVAC type from TemplateOptions in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._airloop_hvac_object_type
+
+    def __set__(self, obj, value):
+        (_, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        cooling_coil_type = True if 'water' in template_fields.get('cooling_coil_type', 'None').lower() else False
+        heating_coil_type = True if 'water' in template_fields.get('heating_coil_type', 'None').lower() else False
+        if cooling_coil_type or heating_coil_type:
+            obj._airloop_hvac_object_type = 'Water'
+        else:
+            obj._airloop_hvac_object_type = 'Base'
+        return
+
+
 class ExpandSystem(ExpandObjects):
     """
     System expansion operations
     """
+
+    airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
+    airloop_hvac_object_type = AirLoopHVACObjectType()
+
     def __init__(self, template):
         super().__init__(template=template)
+        # map cooling_coil_design_setpoint variants to common value and remove original
+        if hasattr(self, 'cooling_coil_design_setpoint_temperature'):
+            self.logger.info('cooling_coil_design_setpoint_temperature renamed to cooling_coil_design_setpoint')
+            self.cooling_coil_design_setpoint = getattr(self, 'cooling_coil_design_setpoint_temperature')
+            # Might not be totally necessary for this
+            delattr(self, 'cooling_coil_design_setpoint_temperature')
         self.unique_name = self.template_name
         self.build_path = None
+        self.airloop_hvac_unitary_object_type = template
+        self.airloop_hvac_object_type = template
         return
 
-    def _create_controller_list_from_epjson(self, epjson: dict = None) -> dict:
+    def _create_controller_list_from_epjson(self, epjson: dict = None, build_path: list = None) -> dict:
         """
         Create AirLoopHVAC:ControllerList objects from epJSON dictionary
         These list objects are separated from the OptionTree build operations because they will vary based on the
@@ -1105,11 +1243,22 @@ class ExpandSystem(ExpandObjects):
         Therefore, the list objects must be built afterwards in order to retrieve the referenced Controller:.* objects.
 
         :param epjson: system epJSON formatted dictionary
+        :param build_path: List of epJSON super objects in build path order
         :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
             input epJSON object.
         """
-        # if epjson not provided, use the class attribute:
+        # if epjson/build_path not provided, use the class attribute:
         epjson = epjson or self.epjson
+        build_path = build_path or self.build_path
+        # Create a list of actuators in stream order.  This will be used to determine the controller list order.
+        actuator_list = []
+        for bp in build_path:
+            (super_object_type, super_object_structure), = bp.items()
+            if re.match(r'Coil:(Cooling|Heating):Water.*', super_object_type):
+                epjson_object = self.yaml_list_to_epjson_dictionaries([bp])
+                resovled_epjson_object = self.resolve_objects(epjson=epjson_object)
+                (object_name, object_fields), = resovled_epjson_object[super_object_type].items()
+                actuator_list.append(object_fields['water_inlet_node_name'])
         object_list = []
         for controller_type in ['Controller:WaterCoil', 'Controller:OutdoorAir']:
             controller_objects = epjson.get(controller_type)
@@ -1117,14 +1266,23 @@ class ExpandSystem(ExpandObjects):
                 airloop_hvac_controllerlist_object = \
                     self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'ControllerList',
                                                             controller_type.split(':')[1], 'Base'])
-                object_count = 1
                 try:
+                    object_id = 0
                     for object_name, object_structure in controller_objects.items():
-                        airloop_hvac_controllerlist_object['controller_{}_name'.format(object_count)] = \
+                        # For water coils, try to get the index of the actuator from the list and use that to set
+                        #  the order.  Raise a ValueError if no match is found
+                        if controller_type == 'Controller:WaterCoil':
+                            object_id = actuator_list.index(object_structure['actuator_node_name']) + 1
+                        else:
+                            object_id += 1
+                        airloop_hvac_controllerlist_object['controller_{}_name'.format(object_id)] = \
                             object_name
-                        airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_count)] = \
+                        airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_id)] = \
                             controller_type
-                        object_count += 1
+                except ValueError:
+                    raise PyExpandObjectsTypeError("Actuator node for water coil object does not match controller "
+                                                   "object reference. build_path: {}, controllers: {}"
+                                                   .format(build_path, controller_objects))
                 except AttributeError:
                     raise PyExpandObjectsTypeError("Controller object not properly formatted: {}"
                                                    .format(controller_objects))
@@ -1183,40 +1341,6 @@ class ExpandSystem(ExpandObjects):
             super_dictionary=epjson,
             object_dictionary=self.resolve_objects(epjson=outdoor_air_equipment_list_object))
         return self.resolve_objects(epjson=outdoor_air_equipment_list_object)
-
-    def _create_availability_manager_assignment_list(self, epjson: dict = None) -> dict:
-        """
-        Create AvailabilityManagerAssignmentList object from epJSON dictionary
-        This list object is separated from the OptionTree build operations because it will vary based on the
-        presence of AvailabilityManager:.* objects in the epJSON dictionary.
-        Therefore, the list objects must be built afterwards in order to retrieve the referenced objects.
-
-        :param epjson: system epJSON formatted dictionary
-        :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
-            input epJSON object.
-        """
-        # if build_path and/or epjson are not passed to function, get the class attributes
-        epjson = epjson or self.epjson
-        availability_managers = {i: j for i, j in epjson.items() if re.match(r'^AvailabilityManager:.*', i)}
-        # loop over availability managers and add them to the list.
-        availability_manager_list_object = \
-            self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AvailabilityManagerAssignmentList', 'Base'])
-        availability_manager_list_object['managers'] = []
-        try:
-            for object_type, object_structure in availability_managers.items():
-                for object_name, object_fields in object_structure.items():
-                    availability_manager_list_object['managers'].append({
-                        'availability_manager_name': object_name,
-                        'availability_manager_object_type': object_type})
-        except AttributeError:
-            raise PyExpandObjectsTypeError("AvailabilityManager object not properly formatted: {}"
-                                           .format(availability_managers))
-        availability_manager_assignment_list_object = self.yaml_list_to_epjson_dictionaries([
-            {'AvailabilityManagerAssignmentList': availability_manager_list_object}, ])
-        self.merge_epjson(
-            super_dictionary=epjson,
-            object_dictionary=self.resolve_objects(epjson=availability_manager_assignment_list_object))
-        return self.resolve_objects(epjson=availability_manager_assignment_list_object)
 
     def _create_outdoor_air_system(self, epjson: dict = None) -> dict:
         """
@@ -1335,6 +1459,88 @@ class ExpandSystem(ExpandObjects):
                 parsed_build_path.insert(0, copy.deepcopy(build_path[0]))
         return parsed_build_path
 
+    def _modify_build_path_for_equipment(
+            self, loop_type: str = 'AirLoop', build_path: list = None) -> list:
+        """
+        Modify input build path to use special equipment objects in the build path, rather than individual components.
+
+        :param build_path: list of EnergyPlus Super objects
+        :return: build path
+        """
+        # todo_eo: move this to YAML file
+        equipment_lookup = (
+            (
+                ['HVACTemplate:System:Unitary', ],
+                'AirLoopHVAC:Unitary:.*',
+                {'Inlet': 'furnace_air_inlet_node_name',
+                 'Outlet': 'furnace_air_outlet_node_name'},
+                (
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
+                    ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
+                    ('Fan:.*', True))),
+            (
+                ['HVACTemplate:System:PackagedVAV', ],
+                'CoilSystem:Cooling.*',
+                {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
+                 'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
+                (
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), )))
+        # if build_path is not passed to function, get the class attributes
+        build_path = build_path or getattr(self, 'build_path', None)
+        if not build_path:
+            raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+        equipment_object = None
+        for el in equipment_lookup:
+            if self.template_type in el[0]:
+                equipment_regex = el[1]
+                equipment_connectors = el[2]
+                # check for template indicators of objects to remove
+                object_check_list = el[3]
+                # The unitary equipment must be present, and extracted from, the build path
+                for idx, super_object in enumerate(build_path):
+                    (super_object_type, _), = super_object.items()
+                    if re.match(equipment_regex, super_object_type):
+                        equipment_object = build_path.pop(idx)
+                        # set connectors now that it will be included in the build path.
+                        #  This is not included in the YAML object to keep the object from connecting to its neighbors
+                        #  before this point.
+                        equipment_object[super_object_type]['Connectors'][loop_type] = equipment_connectors
+                # make check if no equipment was found
+                if not equipment_object:
+                    raise PyExpandObjectsException("No special equipment objects detected in {} build process: {}"
+                                                   .format(self.unique_name, build_path))
+                try:
+                    (_, equipment_object_keys), = equipment_object.items()
+                    if {'Fields', 'Connectors'} != set(equipment_object_keys.keys()):
+                        raise ValueError
+                except ValueError:
+                    raise PyExpandObjectsException("Equipment is improperly formatted, must be a super"
+                                                   "object. system: {} object: {}"
+                                                   .format(self.unique_name, equipment_object))
+                # Iterate through list and remove objects that match the check list
+                parsed_build_path = []
+                removed_items = 0
+                for super_object in copy.deepcopy(build_path):
+                    (super_object_type, super_object_structure), = super_object.items()
+                    keep_object = True
+                    for object_reference, object_presence in object_check_list:
+                        if re.match(object_reference, super_object_type) and object_presence:
+                            keep_object = None
+                            removed_items += 1
+                    if keep_object:
+                        parsed_build_path.append(super_object)
+                    # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the
+                    # removed_items so it isn't called again
+                    if removed_items == len(object_check_list):
+                        parsed_build_path.append(equipment_object)
+                        removed_items += 1
+                if removed_items < sum(1 for i, j in object_check_list if j):
+                    raise PyExpandObjectsException("Equipment modification process failed to remove all objects "
+                                                   "for system {}".format(self.unique_name))
+                return parsed_build_path
+        # if no matches are made, return original build_path
+        return build_path
+
     def _create_branch_and_branchlist_from_build_path(
             self,
             build_path: list = None,
@@ -1357,8 +1563,12 @@ class ExpandSystem(ExpandObjects):
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
             raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+        # Edit build path for AirLoopHVAC:OutdoorAirSystem
         build_path = self._modify_build_path_for_outside_air_system(
             epjson=epjson,
+            build_path=copy.deepcopy(build_path))
+        # Edit build path for AirLoopHVAC:Unitary equipment
+        build_path = self._modify_build_path_for_equipment(
             build_path=copy.deepcopy(build_path))
         components = []
         for super_object in copy.deepcopy(build_path):
@@ -1425,6 +1635,7 @@ class ExpandPlantLoop(ExpandObjects):
         :return: class object with epJSON dictionary as class attribute
         """
         self._create_objects()
+        self._create_availability_manager_assignment_list()
         return self
 
 

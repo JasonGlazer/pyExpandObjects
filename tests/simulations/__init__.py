@@ -367,20 +367,22 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             self.assertEqual(1, status, 'Varying status outputs')
         return
 
-    def compare_epjsons(self, epjson_1, epjson_2):
+    def compare_epjsons(self, epjson_1, epjson_2, exclude_list = ['Schedule:Compact',]):
         """
         Summarize and compare two epJSONs based on object counts.
 
         :param epjson_1: epJSON object
         :param epjson_2: epJSON object
+        :param exclude_list: epJSON object types to ignore
         :return: message if failures occur, otherwise None
         """
         eo = EPJSON()
         epjson_summary_1 = eo.summarize_epjson(epjson_1)
         epjson_summary_2 = eo.summarize_epjson(epjson_2)
         # remove schedule compact
-        epjson_summary_1.pop('Schedule:Compact')
-        epjson_summary_2.pop('Schedule:Compact')
+        for el in exclude_list:
+            epjson_summary_1.pop(el)
+            epjson_summary_2.pop(el)
         msg = ''
         for k, v in epjson_summary_1.items():
             if k not in epjson_summary_2.keys():

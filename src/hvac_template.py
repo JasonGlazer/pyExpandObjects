@@ -63,7 +63,7 @@ class HVACTemplate(EPJSON):
                         unique_name_override=False)
                 elif re.match('^HVACTemplate:Zone:('
                               'ConstantVolume|BaseboardHeat|FanCoil|IdealLoadsAirSystem|PTAC|PTHP|WaterToAirHeatPump|'
-                              'VRF|Unitary|VAV|VAV:FanPowered|VAVHeatAndCool|ConstantVolumn|DualDuct)$',
+                              'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|ConstantVolumn|DualDuct)$',
                               object_type):
                     self.merge_epjson(
                         super_dictionary=self.templates_zones,
@@ -187,7 +187,7 @@ class HVACTemplate(EPJSON):
     def _get_zone_template_field_from_system_type(template_type):
         """
         Retrieve the corresponding zone field name for a system template type
-        :param template_type: HVACTemplate object type
+        :param template_type: HVACTemplate:System object type
         :return: zone field name
         """
         # get the zone field_name that will identify the system template name
@@ -693,6 +693,62 @@ class HVACTemplate(EPJSON):
             object_dictionary=resolved_path_dictionary)
         return
 
+    def _apply_system_fields_to_zone_template(self, template_fields, system_templates):
+        """
+        Set zone attributes based on system templates where appropriate
+        :param template_fields: HVACTemplate:Zone fields
+        :param system_templates: dictionary of HVACTemplate:System objects
+        :return: None.  the zone template is updated in the class attributes
+        """
+        # make a tuple of fields that identify the system
+        system_identifiers = (
+            'template_constant_volume_system_name',
+            'dedicated_outdoor_air_system_name',
+            'template_dual_duct_system_name',
+            'template_unitary_system_name',
+            'template_vav_system_name',
+            'template_vrf_system_name')
+        # get system to zone mapping structure
+        eo = ExpandObjects()
+        mapping_indicators = eo.get_structure(structure_hierarchy=['SystemToZoneMappings'])
+        # retrieve system from zone template
+        reference_system_name = None
+        for si in system_identifiers:
+            reference_system_name = template_fields.get(si, None)
+            if reference_system_name:
+                break
+        if not reference_system_name:
+            return
+        try:
+            # iterate over systems
+            for system_template in system_templates.values():
+                for system_name, system_fields in system_template.items():
+                    # if a match is found, apply the map
+                    if reference_system_name == system_name:
+                        for mi in mapping_indicators:
+                            for zone_field, mapping_instructions in mi.items():
+                                for val, value_map in mapping_instructions.items():
+                                    if template_fields.get(zone_field, None) == val:
+                                        # if system_field is a key, then map the system field to the zone field.
+                                        # if system_value is a key, then use the direct map value
+                                        if value_map.get('system_field'):
+                                            try:
+                                                template_fields[value_map['zone_field']] = \
+                                                    system_fields[value_map['system_field']]
+                                            except (ValueError, KeyError):
+                                                self.logger.info('System field does not have a value for zone'
+                                                                 'field: {}'.format(value_map))
+                                        elif value_map.get('system_value'):
+                                            try:
+                                                template_fields[value_map['zone_field']] = \
+                                                    value_map['system_value']
+                                            except (ValueError, KeyError):
+                                                self.logger.info('Zone field mapping error {}'.format(value_map))
+        except ValueError:
+            raise InvalidTemplateException("Mapping of system to zone variables failed. zone_template: {}, "
+                                           "system template: {}".format(template_fields, system_templates))
+        return
+
     def run(self, input_epjson=None):
         """
         Execute HVAC Template process workflow
@@ -709,7 +765,13 @@ class HVACTemplate(EPJSON):
             else:
                 raise InvalidEpJSONException("No epJSON file loaded or provided to HVACTemplate processor")
         self.epjson_process(epjson_ref=input_epjson)
+        self.logger.info('##### PreProcessing Data #####')
         self._hvac_template_preprocess(epjson=self.input_epjson)
+        for zone_templates in self.templates_zones.values():
+            for template_fields in zone_templates.values():
+                self._apply_system_fields_to_zone_template(
+                    template_fields=template_fields,
+                    system_templates=self.templates_systems)
         self.logger.info('##### Processing Thermostats #####')
         self.expanded_thermostats = self._expand_templates(
             templates=self.templates_thermostats,

@@ -448,6 +448,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         eo = ExpandObjects()
         self.assertEqual(
             {
+                'AvailabilityManagerAssignmentList': 1,
                 'Branch': 6,
                 'CondenserEquipmentOperationSchemes': 1,
                 'CondenserLoop': 1,
@@ -508,6 +509,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         eo = ExpandObjects()
         self.assertEqual(
             {
+                'AvailabilityManagerAssignmentList': 1,
                 'Branch': 6,
                 'CondenserEquipmentOperationSchemes': 1,
                 'CondenserLoop': 1,
@@ -564,6 +566,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                         expanded_plant_equipment[k] = v
         eo = ExpandObjects()
         self.assertEqual({
+            'AvailabilityManagerAssignmentList': 1,
             'Branch': 6,
             'CondenserLoop': 1,
             'CondenserEquipmentOperationSchemes': 1,

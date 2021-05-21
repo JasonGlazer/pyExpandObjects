@@ -110,23 +110,33 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
 
     def test_create_water_controller_list_from_epjson(self):
         es = ExpandSystem(template=mock_template)
+        es.build_path = [
+            {
+                'Coil:Cooling:Water': {
+                    'Fields': {
+                        'name': 'Cooling Coil',
+                        'water_inlet_node_name': 'Test Chw Inlet'
+                    }
+                }
+            },
+            {
+                'Coil:Heating:Water': {
+                    'Fields': {
+                        'name': 'Heating Coil',
+                        'water_inlet_node_name': 'Test HW Inlet'
+                    }
+                }
+            }
+        ]
         es.epjson = {
             'Controller:WaterCoil': {
                 'test cooling water coil': {
-                    'sensor_node_name': {
-                        '^Coil:Cooling:Water': 'air_outlet_node_name'
-                    },
-                    'actuator_node_name': {
-                        '^Coil:Cooling:Water': 'water_inlet_node_name'
-                    }
+                    'sensor_node_name': 'Test sensor 1',
+                    'actuator_node_name': 'Test HW Inlet'
                 },
                 'test heating water coil': {
-                    'sensor_node_name': {
-                        '^Coil:Heating:Water': 'air_outlet_node_name'
-                    },
-                    'actuator_node_name': {
-                        '^Coil:Heating:Water': 'water_inlet_node_name'
-                    }
+                    'sensor_node_name': 'Test sensonr 2',
+                    'actuator_node_name': 'Test Chw Inlet'
                 }
             }
         }
@@ -134,10 +144,10 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         self.assertEqual('AirLoopHVAC:ControllerList', list(controllerlist.keys())[0])
         self.assertEqual(
             'test cooling water coil',
-            controllerlist['AirLoopHVAC:ControllerList']['VAV Sys 1 Controllers']['controller_1_name'])
+            controllerlist['AirLoopHVAC:ControllerList']['VAV Sys 1 Controllers']['controller_2_name'])
         self.assertEqual(
             'test heating water coil',
-            controllerlist['AirLoopHVAC:ControllerList']['VAV Sys 1 Controllers']['controller_2_name'])
+            controllerlist['AirLoopHVAC:ControllerList']['VAV Sys 1 Controllers']['controller_1_name'])
         return
 
     def test_create_outdoor_air_equipment_list_from_epjson(self):
@@ -165,8 +175,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_create_outdoor_air_equipment_list_from_epjson_with_return_fan(self):
-        # es = ExpandSystem(template=mock_template)
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = [
             {
                 'Fan:VariableVolume': {
@@ -212,7 +221,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_create_outdoor_air_equipment_list_from_epjson_with_return_fan_option_but_no_equipment(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = [
             {
                 'OutdoorAir:Mixer': {
@@ -375,7 +384,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_modify_build_path_for_outside_air_system(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = mock_build_path
         es.unique_name = 'TEST SYSTEM'
         es.epjson = {
@@ -396,7 +405,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_modify_build_path_for_outside_air_system_with_return_fan(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = [
             {
                 'Fan:VariableVolume': {
@@ -450,7 +459,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_reject_modify_build_path_for_outside_air_system_with_return_fan_specified_but_not_present(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.build_path = mock_build_path
         es.unique_name = 'TEST SYSTEM'
         es.return_fan = 'Yes'
@@ -467,8 +476,38 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             es._modify_build_path_for_outside_air_system()
         return
 
+    def test_modify_build_path_for_unitary_equipment(self):
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
+        es.unique_name = 'TEST SYSTEM'
+        es.template_type = 'HVACTemplate:System:Unitary'
+        es.cooling_coil_type = 'ChilledWater'
+        es.heating_coil_type = 'HotWater'
+        es.build_path = [
+            {
+                'AirLoopHVAC:OutdoorAirSystem': {}
+            },
+            {
+                'Coil:Cooling:Water': {}
+            },
+            {
+                'Coil:Heating:Fuel': {}
+            },
+            {
+                'Fan:VariableVolume': {}
+            },
+            {
+                "AirLoopHVAC:Unitary:Furnace:HeatCool": {'Fields': {}, 'Connectors': {}}
+            }
+        ]
+        output = es._modify_build_path_for_equipment()
+        self.assertEqual(
+            'AirLoopHVAC:Unitary:Furnace:HeatCool',
+            list(output[1].keys())[0]
+        )
+        return
+
     def test_branch_from_build_path(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.unique_name = 'TEST SYSTEM'
         es.epjson = {
             "AirLoopHVAC:OutdoorAirSystem": {
@@ -488,7 +527,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_branch_from_build_path_with_return_fan(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.unique_name = 'TEST SYSTEM'
         es.return_fan = 'Yes'
         es.epjson = {
@@ -542,7 +581,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_branchlist_from_build_path(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         es.unique_name = 'TEST SYSTEM'
         es.epjson = {
             "AirLoopHVAC:OutdoorAirSystem": {
@@ -562,7 +601,7 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         return
 
     def test_reject_create_branch_and_branchlist_from_build_path_no_build_path(self):
-        es = ExpandSystem(template={})
+        es = ExpandSystem(template={'template_type': {'template_name': {}}})
         with self.assertRaisesRegex(PyExpandObjectsException, 'Build path was not provided'):
             es._create_branch_and_branchlist_from_build_path(build_path=[])
         return
@@ -602,3 +641,5 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Super object is missing Connectors"):
             es._create_branch_and_branchlist_from_build_path(build_path=temp_mock_build_path)
         return
+
+# todo_eo: descriptors need to be tested
