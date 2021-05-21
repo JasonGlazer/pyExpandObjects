@@ -1198,9 +1198,21 @@ Objects:
     Warmest:
       Base:
         Fields: &SetpointManagerWarmest
-          name: '{} Cooling Supply Air Temp Manager'
           <<: *SetpointManager
+          name: '{} Cooling Supply Air Temp Manager'
           hvac_air_loop_name: '{}'
+          minimum_setpoint_temperature: '{cooling_coil_design_setpoint}'
+          setpoint_node_or_nodelist_name:
+            BuildPathReference:
+              Location: -1
+              ValueLocation: Outlet
+    WarmestTemperatureFlow:
+      Base:
+        Fields: &SetpointManagerWarmestTemperatureFlow
+          <<: *SetpointManager
+          name: '{} Cooling Supply Air Temp Manager'
+          hvac_air_loop_name: '{}'
+          maximum_setpoint_temperature: 18
           minimum_setpoint_temperature: '{cooling_coil_design_setpoint}'
           setpoint_node_or_nodelist_name:
             BuildPathReference:
@@ -2086,7 +2098,6 @@ OptionTree:
                     <<: *ControllerOutdoorAir
                 - OutdoorAir:NodeList: *OutdoorAirNodeListFields
                 - Sizing:System: *SizingSystemVAV
-                - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
                 - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirCoolingSystemNodelist
                 - NodeList:
@@ -2152,7 +2163,14 @@ OptionTree:
                       <<: *SetpointManagerMixedAirHeating
                       name: '{} Heat Recovery Air Temp Manager'
                       setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
-          VAV:
+          VAV: &SystemCommonTemplateObjectsVAV
+            cooling_coil_setpoint_reset_type:
+              None:
+                Objects:
+                  - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
+              WarmestTemperatureFirst:
+                Objects:
+                  - SetpointManager:WarmestTemperatureFlow: *SetpointManagerWarmestTemperatureFlow
       ConstantVolume:
         BuildPath:
           BaseObjects:
@@ -2225,7 +2243,9 @@ OptionTree:
         BaseObjects:
           Objects: *SystemCommonBaseObjectsVariableVolume
           Transitions: *SystemCommonTransitions
-        TemplateObjects: *SystemCommonTemplateObjects
+        TemplateObjects:
+          <<: *SystemCommonTemplateObjects
+          <<: *SystemCommonTemplateObjectsVAV
       Unitary:
         BuildPath:
           BaseObjects:
@@ -2281,7 +2301,9 @@ OptionTree:
         BaseObjects:
           Objects: *SystemCommonBaseObjectsVariableVolume
           Transitions: *SystemCommonTransitions
-        TemplateObjects: *SystemCommonTemplateObjects
+        TemplateObjects:
+          <<: *SystemCommonTemplateObjects
+          <<: *SystemCommonTemplateObjectsVAV
     Plant:
       Common:
         PlantLoop:
