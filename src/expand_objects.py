@@ -205,9 +205,9 @@ class ExpandObjects(EPJSON):
                 else:
                     structure_key_list = list(structure.keys())
                     for skl in structure_key_list:
-                        if skl == 'AnyString':
-                            if re.match(r'\w+', key) and key != 'None':
-                                structure = structure['AnyString']
+                        if skl == 'AnyValue':
+                            if re.match(r'\w+', str(key)) and str(key) != 'None':
+                                structure = structure['AnyValue']
                         else:
                             if re.match(skl, key):
                                 structure = structure[skl]
@@ -278,8 +278,8 @@ class ExpandObjects(EPJSON):
                         #   the fields match
                         if (field_option == 'None' and not hasattr(self, template_field)) or \
                                 (getattr(self, template_field, None) and (
-                                    re.match(field_option, getattr(self, template_field)) or (
-                                        field_option == 'AnyString' and re.match(r'\w+', getattr(self, template_field))))):
+                                    re.match(field_option, str(getattr(self, template_field))) or (
+                                        field_option == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
                             option_tree_leaf = self._get_option_tree_leaf(
                                 option_tree=option_tree,
                                 leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])
@@ -988,8 +988,8 @@ class ExpandObjects(EPJSON):
                             # attribute is missing or None.
                             if (template_value == 'None' and not hasattr(self, template_field)) or \
                                     (getattr(self, template_field, None) and (
-                                        re.match(template_value, getattr(self, template_field)) or (
-                                            template_value == 'AnyString' and re.match(r'\w+', getattr(self, template_field))))):
+                                        re.match(template_value, str(getattr(self, template_field))) or (
+                                            template_value == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
                                 build_path = self._apply_build_path_action(
                                     build_path=build_path,
                                     action_instructions=action_instructions)
@@ -1580,7 +1580,7 @@ class ExpandSystem(ExpandObjects):
         build_path = self._modify_build_path_for_outside_air_system(
             epjson=epjson,
             build_path=copy.deepcopy(build_path))
-        # Edit build path for AirLoopHVAC:Unitary equipment
+        # Edit build path for special equipment
         build_path = self._modify_build_path_for_equipment(
             build_path=copy.deepcopy(build_path))
         components = []
