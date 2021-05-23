@@ -1409,9 +1409,9 @@ Objects:
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
           - zone_equipment_object_type:
-              ^ZoneHVAC:FourPipe.*: self
+              ^ZoneHVAC:(FourPipe.*|PackagedTerminal.*): self
             zone_equipment_name:
-              ^ZoneHVAC:FourPipe.*: key
+              ^ZoneHVAC:(FourPipe.*|PackagedTerminal.*): key
             zone_equipment_cooling_sequence: 2
             zone_equipment_heating_or_no_load_sequence: 2
       Baseboard: &ZoneHVACEquipmentListBaseBoard
@@ -1539,6 +1539,7 @@ Objects:
           - ZoneHVAC:PackagedTerminal:
               cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
               heating_supply_air_flow_rate: heating_supply_air_flow_rate
+              supply_fan_operating_mode_schedule_name: supply_air_fan_operating_mode_schedule_name
       Base:
         Fields: &ZoneHVACPackagedTerminalAirConditionerFields
           name: '{} PTAC'
@@ -1811,14 +1812,26 @@ OptionTree:
                       Location: -1
                       ActionType: Insert
                       Objects:
-                        - Fan:OnOff: *FanOnOffSuperObject
+                        - Fan:OnOff:
+                            Fields:
+                              <<: *FanOnOffFields
+                              pressure_rise: 75
+                            Connectors: *FanOnOffConnectors
+                      Transitions:
+                        - *FanCommonTransitionsSupply
                     DrawThrough: *ZoneCommonBuildPathActionsObjectsFanOnOffNone
                     BlowThrough:
                       ObjectReference: OutdoorAir:Mixer
                       Location: After
                       ActionType: Insert
                       Objects:
-                        - Fan:OnOff: *FanOnOffSuperObject
+                        - Fan:OnOff:
+                            Fields:
+                              <<: *FanOnOffFields
+                              pressure_rise: 75
+                            Connectors: *FanOnOffConnectors
+                      Transitions:
+                        - *FanCommonTransitionsSupply
         BaseObjects:
           Objects:
             Base: &ZoneCommonBaseObjectsObjects
@@ -1853,6 +1866,35 @@ OptionTree:
               WithBaseboard:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
+          DOAS:
+            Base:
+              dedicated_outdoor_air_system_name:
+                None:
+                  Objects:
+                AnyValue:
+                  Objects: &ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
+                    # todo_eo: discuss why this is not an AirTerminal:SingleDuct:ConstantVolume:NoReheat
+                    - AirTerminal:SingleDuct:VAV:NoReheat:
+                        <<: *AirTerminalSingleDuctVAVNoReheatFields
+                        name: '{} DOAS Air Terminal'
+                        air_outlet_node_name: '{} DOAS Supply Inlet'
+                        constant_minimum_air_flow_fraction: 1.0
+                        zone_minimum_air_flow_input_method: Constant
+                    - NodeList:
+                        name: '{} Inlets'
+                        nodes:
+                          - node_name:
+                              BuildPathReference:
+                                Location: -1
+                                ValueLocation: Outlet
+                          - node_name: '{} DOAS Supply Inlet'
+                    - ZoneHVAC:AirDistributionUnit:
+                        <<: *ZoneHVACAirDistributionUnit
+                        name: '{} DOAS ATU'
+                    - ZoneHVAC:EquipmentConnections:
+                        <<: *ZoneHVACEquipmentConnectionsFields
+                        zone_air_exhaust_node_or_nodelist_name: *ZoneReturn
+                        zone_air_inlet_node_or_nodelist_name: '{} Inlets'
           VAV:
             Base: &ZoneCommonTemplateObjectsVAV
               reheat_coil_type:
@@ -1970,32 +2012,11 @@ OptionTree:
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
             AnyValue:
               Objects:
+                - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
                 - ZoneHVAC:FourPipeFanCoil:
                     <<: *ZoneHVACFourPipeFanCoil
                     capacity_control_method: CyclingFan
                     maximum_outdoor_air_flow_rate: 0.0
-                # todo_eo: discuss why this is not an AirTerminal:SingleDuct:ConstantVolume:NoReheat
-                - AirTerminal:SingleDuct:VAV:NoReheat:
-                    <<: *AirTerminalSingleDuctVAVNoReheatFields
-                    name: '{} DOAS Air Terminal'
-                    air_outlet_node_name: '{} DOAS Supply Inlet'
-                    constant_minimum_air_flow_fraction: 1.0
-                    zone_minimum_air_flow_input_method: Constant
-                - NodeList:
-                    name: '{} Inlets'
-                    nodes:
-                      - node_name:
-                          BuildPathReference:
-                            Location: -1
-                            ValueLocation: Outlet
-                      - node_name: '{} DOAS Supply Inlet'
-                - ZoneHVAC:AirDistributionUnit:
-                    <<: *ZoneHVACAirDistributionUnit
-                    name: '{} DOAS ATU'
-                - ZoneHVAC:EquipmentConnections:
-                    <<: *ZoneHVACEquipmentConnectionsFields
-                    zone_air_exhaust_node_or_nodelist_name: *ZoneReturn
-                    zone_air_inlet_node_or_nodelist_name: '{} Inlets'
       PTAC:
         BuildPath:
           BaseObjects:
@@ -2009,15 +2030,24 @@ OptionTree:
         BaseObjects:
           Objects:
             - *ZoneCommonBaseObjectsObjects
-            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
-            - ZoneHVAC:PackagedTerminalAirConditioner: *ZoneHVACPackagedTerminalAirConditionerFields
           Transitions:
             - *SizingZoneCommonTransitions
             - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
-            - *ZoneHVACFourPipeFanCoilCommonTransitions
-            - *ZoneHVACPackagedTerminalAirConditionerTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjects
+          dedicated_outdoor_air_system_name:
+            None:
+              Objects:
+                - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+                - ZoneHVAC:PackagedTerminalAirConditioner: *ZoneHVACPackagedTerminalAirConditionerFields
+              Transitions:
+                - *ZoneHVACPackagedTerminalAirConditionerTransitions
+            AnyValue:
+              Objects:
+                - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
+                - ZoneHVAC:PackagedTerminalAirConditioner: *ZoneHVACPackagedTerminalAirConditionerFields
+              Transitions:
+                - *ZoneHVACPackagedTerminalAirConditionerTransitions
       Unitary:
         BaseObjects:
           Objects:

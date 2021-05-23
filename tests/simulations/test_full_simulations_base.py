@@ -62,6 +62,12 @@ class TestSimulationsFullSystem(BaseSimulationTest):
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZonePTAC-DOAS")
+    def test_5_zone_ptac_doas(self):
+        base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZonePTAC-DOAS.idf')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneVAVWaterCooled")
     def test_5_zone_vav_watercooled(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled.idf')

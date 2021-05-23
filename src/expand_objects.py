@@ -1492,7 +1492,7 @@ class ExpandSystem(ExpandObjects):
                     ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
                     ('Fan:.*', True))),
             (
-                ['HVACTemplate:System:PackagedVAV', ],
+                ['HVACTemplate:System:PackagedVAV', 'HVACTemplate:System:DedicatedOutdoorAir'],
                 'CoilSystem:Cooling.*',
                 {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
                  'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
@@ -1518,39 +1518,39 @@ class ExpandSystem(ExpandObjects):
                         #  This is not included in the YAML object to keep the object from connecting to its neighbors
                         #  before this point.
                         equipment_object[super_object_type]['Connectors'][loop_type] = equipment_connectors
-                # make check if no equipment was found
-                if not equipment_object:
-                    raise PyExpandObjectsException("No special equipment objects detected in {} build process: {}"
-                                                   .format(self.unique_name, build_path))
-                try:
-                    (_, equipment_object_keys), = equipment_object.items()
-                    if {'Fields', 'Connectors'} != set(equipment_object_keys.keys()):
-                        raise ValueError
-                except ValueError:
-                    raise PyExpandObjectsException("Equipment is improperly formatted, must be a super"
-                                                   "object. system: {} object: {}"
-                                                   .format(self.unique_name, equipment_object))
-                # Iterate through list and remove objects that match the check list
-                parsed_build_path = []
-                removed_items = 0
-                for super_object in copy.deepcopy(build_path):
-                    (super_object_type, super_object_structure), = super_object.items()
-                    keep_object = True
-                    for object_reference, object_presence in object_check_list:
-                        if re.match(object_reference, super_object_type) and object_presence:
-                            keep_object = None
+                # make check if equipment object was found.  If not, return original build path
+                if equipment_object:
+                    try:
+                        (_, equipment_object_keys), = equipment_object.items()
+                        if {'Fields', 'Connectors'} != set(equipment_object_keys.keys()):
+                            raise ValueError
+                    except ValueError:
+                        raise PyExpandObjectsException("Equipment is improperly formatted, must be a super"
+                                                       "object. system: {} object: {}"
+                                                       .format(self.unique_name, equipment_object))
+                    # Iterate through list and remove objects that match the check list
+                    parsed_build_path = []
+                    removed_items = 0
+                    for super_object in copy.deepcopy(build_path):
+                        (super_object_type, super_object_structure), = super_object.items()
+                        keep_object = True
+                        for object_reference, object_presence in object_check_list:
+                            if re.match(object_reference, super_object_type) and object_presence:
+                                keep_object = None
+                                removed_items += 1
+                        if keep_object:
+                            parsed_build_path.append(super_object)
+                        # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the
+                        # removed_items so it isn't called again
+                        if removed_items == len(object_check_list):
+                            parsed_build_path.append(equipment_object)
                             removed_items += 1
-                    if keep_object:
-                        parsed_build_path.append(super_object)
-                    # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the
-                    # removed_items so it isn't called again
-                    if removed_items == len(object_check_list):
-                        parsed_build_path.append(equipment_object)
-                        removed_items += 1
-                if removed_items < sum(1 for i, j in object_check_list if j):
-                    raise PyExpandObjectsException("Equipment modification process failed to remove all objects "
-                                                   "for system {}".format(self.unique_name))
-                return parsed_build_path
+                    if removed_items < sum(1 for i, j in object_check_list if j):
+                        raise PyExpandObjectsException("Equipment modification process failed to remove all objects "
+                                                       "for system {}".format(self.unique_name))
+                    return parsed_build_path
+                else:
+                    return build_path
         # if no matches are made, return original build_path
         return build_path
 
