@@ -276,7 +276,7 @@ class ExpandObjects(EPJSON):
                     for field_option, objects in template_tree.items():
                         # check if field option is 'None' and if object doesn't exist in the class, or if
                         #   the fields match
-                        if (field_option == 'None' and not hasattr(self, template_field)) or \
+                        if (field_option == 'None' and getattr(self, template_field, 'None') == 'None') or \
                                 (getattr(self, template_field, None) and (
                                     re.match(field_option, str(getattr(self, template_field))) or (
                                         field_option == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
@@ -413,7 +413,7 @@ class ExpandObjects(EPJSON):
                                 # if the object reference in the mapping dictionary matches the object, apply the map
                                 if re.match(object_type_reference, object_type):
                                     for map_option, sub_dictionary in mapping_dictionary.items():
-                                        if (map_option == 'None' and not hasattr(self, mapping_field)) or \
+                                        if (map_option == 'None' and getattr(self, mapping_field, 'None') == 'None') or \
                                                 hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
                                             for field, val in sub_dictionary.items():
                                                 try:
@@ -568,13 +568,19 @@ class ExpandObjects(EPJSON):
                         structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                         insert_values=[always_val, ]
                     )
-                # Try to convert formatted value to correct type
-                num_rgx = re.match(r'^[-\d\.]+$', formatted_value)
-                if num_rgx:
-                    if '.' in formatted_value:
-                        formatted_value = float(formatted_value)
-                    else:
-                        formatted_value = int(formatted_value)
+                # Try to evaluate the string, in case it is a mathematical expression.
+                #  If the value is 'None' then pass it along without evaluation so it stays as a string.
+                if str(formatted_value) != 'None':
+                    try:
+                        formatted_value = eval(formatted_value)
+                    except (NameError, SyntaxError):
+                        # Try to convert formatted value to correct type if it was not evaluated
+                        num_rgx = re.match(r'^[-\d\.]+$', formatted_value)
+                        if num_rgx:
+                            if '.' in formatted_value:
+                                formatted_value = float(formatted_value)
+                            else:
+                                formatted_value = int(formatted_value)
                 yield {"field": field_name, "value": formatted_value}
         elif isinstance(input_value, dict):
             # unpack the referenced object type and the lookup instructions
@@ -986,7 +992,7 @@ class ExpandObjects(EPJSON):
                             # check if the option tree template value matches a class template field.
                             # If the template value is 'None' in the yaml, then perform the operation if the class
                             # attribute is missing or None.
-                            if (template_value == 'None' and not hasattr(self, template_field)) or \
+                            if (template_value == 'None' and getattr(self, template_field, 'None') == 'None') or \
                                     (getattr(self, template_field, None) and (
                                         re.match(template_value, str(getattr(self, template_field))) or (
                                             template_value == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
@@ -1026,7 +1032,7 @@ class ExpandObjects(EPJSON):
         if insert_values:
             formatted_data_lines = [
                 {j: float(k.format(float(*insert_values)))}
-                if re.match(r'.*{.*f}', k, re.IGNORECASE) else {j: k}
+                if re.match(r'.*{}', k, re.IGNORECASE) else {j: k}
                 for i in structure_object['data'] for j, k in i.items()]
         else:
             formatted_data_lines = [{j: k} for i in structure_object for j, k in i.items()]
@@ -1228,6 +1234,50 @@ class AirLoopHVACObjectType:
         return
 
 
+class ModifyCoolingCoilSetpointControlType:
+    """
+    Modify cooling_coil_setpoint_control_type based on other template attributes for YAML TemplateOptions lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._cooling_coil_setpoint_control_type
+
+    def __set__(self, obj, value):
+        # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
+        #  the template
+        if isinstance(value, str):
+            obj._cooling_coil_setpoint_control_type = value
+        else:
+            (_, template_structure), = value.items()
+            (_, template_fields), = template_structure.items()
+            dehumidification_status = True if template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+            cooling_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
+            if dehumidification_status:
+                obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, 'WithDehumidification'])
+        return
+
+
+class ModifyHeatingCoilSetpointControlType:
+    """
+    Modify heating_coil_setpoint_control_type based on other template attributes for YAML TemplateOptions lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._heating_coil_setpoint_control_type
+
+    def __set__(self, obj, value):
+        # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
+        #  the template
+        if isinstance(value, str):
+            obj._heating_coil_setpoint_control_type = value
+        else:
+            (_, template_structure), = value.items()
+            (_, template_fields), = template_structure.items()
+            dehumidification_status = True if template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+            heating_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
+            if dehumidification_status:
+                obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, 'WithDehumidification'])
+        return
+
+
 class ExpandSystem(ExpandObjects):
     """
     System expansion operations
@@ -1235,6 +1285,8 @@ class ExpandSystem(ExpandObjects):
 
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
     airloop_hvac_object_type = AirLoopHVACObjectType()
+    cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
+    heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
 
     def __init__(self, template):
         super().__init__(template=template)
@@ -1246,6 +1298,8 @@ class ExpandSystem(ExpandObjects):
         self.build_path = None
         self.airloop_hvac_unitary_object_type = template
         self.airloop_hvac_object_type = template
+        self.cooling_coil_setpoint_control_type = template
+        self.heating_coil_setpoint_control_type = template
         return
 
     def _create_controller_list_from_epjson(self, epjson: dict = None, build_path: list = None) -> dict:

@@ -1866,7 +1866,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                                         {'field': 'Through 12/31'},
                                         {'field': 'For AllDays'},
                                         {'field': 'Until 24:00'},
-                                        {'field': '{:.1f}'}
+                                        {'field': '{}'}
                                     ]
                                 }
                             }
