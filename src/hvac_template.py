@@ -336,8 +336,10 @@ class HVACTemplate(EPJSON):
             cndw_attributes = {}
             if chw_loop:
                 for cndw_attribute, chw_attribute in zip(
-                        ['condenser_water_pump_rated_head'],
-                        ['primary_chilled_water_pump_rated_head']):
+                        ['condenser_water_pump_rated_head', 'condenser_water_design_setpoint',
+                         'condenser_plant_operation_scheme_type'],
+                        ['primary_chilled_water_pump_rated_head', 'condenser_water_design_setpoint',
+                         'condenser_plant_operation_scheme_type']):
                     try:
                         cndw_attributes[cndw_attribute] = getattr(chw_loop[0], chw_attribute)
                     except AttributeError:
@@ -596,9 +598,9 @@ class HVACTemplate(EPJSON):
                 supply_nodelist['nodes'].insert(
                     0,
                     {'node_name': supply_branches[branch]['components'][0]['component_outlet_node_name']})
-        except AttributeError:
-            PyExpandObjectsYamlStructureException('AutoCreated PlantLoop Connector YAML object was '
-                                                  'improperly formatted')
+        except (KeyError, AttributeError):
+            raise PyExpandObjectsYamlStructureException('AutoCreated PlantLoop Connector YAML object was '
+                                                        'improperly formatted')
         # add connector list
         demand_connectorlist = eo.get_structure(
             structure_hierarchy=['AutoCreated', 'PlantLoop', 'ConnectorList', 'Demand']
@@ -833,9 +835,9 @@ class HVACTemplate(EPJSON):
                 object_dictionary=merge_dictionary
             )
         # Use this for file debugging
-        # import json
-        # with open('test.epJSON', 'w') as base_file:
-        #     json.dump(output_epjson, base_file, indent=4, sort_keys=True)
+        import json
+        with open('test.epJSON', 'w') as base_file:
+            json.dump(output_epjson, base_file, indent=4, sort_keys=True)
         # Create output format
         output_epjson = {
             "epJSON": output_epjson,

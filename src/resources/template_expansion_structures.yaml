@@ -129,24 +129,75 @@ Objects:
         <<: *AirLoopHVAC
         controller_list_name: *AirLoopHVACWaterControllers
     Unitary:
+      Common:
+        Transitions: &AirLoopHVACUnitaryCommonTransitions
+          - AirLoopHVAC:Unitary.*:
+              heating_supply_air_flow_rate: heating_supply_air_flow_rate
+        Fields: &AirLoopHVACUnitaryCommonFields
+          controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
+          cooling_coil_name:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: 1
+              ValueLocation: key
+          cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
+          cooling_coil_object_type:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: 1
+              ValueLocation: self
+          heating_coil_name:
+            BuildPathReference:
+              Location: Coil:Heating.*
+              Occurrence: 1
+              ValueLocation: key
+          heating_coil_object_type:
+            BuildPathReference:
+              Location: Coil:Heating.*
+              Occurrence: 1
+              ValueLocation: self
+          fan_placement: '{supply_fan_placement}'
+          heating_supply_air_flow_rate: Autosize
+          no_load_supply_air_flow_rate: Autosize
+        HeatPump:
+          Fields: &AirLoopHVACUnitaryCommonHeatPumpFields
+            air_inlet_node_name:
+              BuildPathReference:
+                Location: OutdoorAir:Mixer
+                ValueLocation: Outlet
+            air_outlet_node_name:
+              BuildPathReference:
+                Location: -1
+                ValueLocation: Outlet
+            controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
+            heating_supply_air_flow_rate: Autosize
+            maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: '{supplemental_heating_coil_maximum_outdoor_dry_bulb_temperature}'
+            maximum_supply_air_temperature_from_supplemental_heater: Autosize
+            supplemental_heating_coil_name:
+              BuildPathReference:
+                Location: Coil:Heating.*
+                Occurrence: -1
+                ValueLocation: key
+            supplemental_heating_coil_object_type:
+              BuildPathReference:
+                Location: Coil:Heating.*
+                Occurrence: -1
+                ValueLocation: self
+            supply_air_fan_name:
+              BuildPathReference:
+                Location: Fan:.*
+                ValueLocation: key
+            supply_air_fan_object_type:
+              BuildPathReference:
+                Location: Fan:.*
+                ValueLocation: self
+            supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always0
       HeatCool:
         Base: &AirLoopHVACUnitaryHeatCoolSuperObject
           Fields:
             name: '{} Furnace with DX Cooling'
-            controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
-            cooling_coil_name:
-              BuildPathReference:
-                Location: Coil:Cooling.*
-                Occurrence: 1
-                ValueLocation: key
-            cooling_coil_object_type:
-              BuildPathReference:
-                Location: Coil:Cooling.*
-                Occurrence: 1
-                ValueLocation: self
-            cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
+            <<: *AirLoopHVACUnitaryCommonFields
             dehumidification_control_type: '{dehumidification_control_type}'
-            fan_placement: '{supply_fan_placement}'
             furnace_air_inlet_node_name:
               BuildPathReference:
                 Location: OutdoorAir:Mixer
@@ -155,24 +206,35 @@ Objects:
               BuildPathReference:
                 Location: -1
                 ValueLocation: Outlet
-            heating_coil_name:
+            supply_fan_name:
               BuildPathReference:
-                Location: Coil:Heating.*
-                Occurrence: 1
+                Location: Fan:.*
                 ValueLocation: key
-            heating_coil_object_type:
+            supply_fan_object_type:
               BuildPathReference:
-                Location: Coil:Heating.*
-                Occurrence: 1
+                Location: Fan:.*
                 ValueLocation: self
-            heating_supply_air_flow_rate: Autosize
             maximum_supply_air_temperature: 80
-            no_load_supply_air_flow_rate: Autosize
             supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
-            supply_fan_name: '{} Supply Fan'
-            supply_fan_object_type: Fan:OnOff
           Connectors:
             AirLoop: False
+    UnitaryHeatPump:
+      AirToAir:
+        Base: &AirLoopHVACUnitaryHeatPumpAirToAirSuperObject
+          Fields:
+            name: '{} Heat Pump'
+            <<: *AirLoopHVACUnitaryCommonFields
+            <<: *AirLoopHVACUnitaryCommonHeatPumpFields
+          Connectors:
+            AirLoop: False
+    UnitarySystem:
+      Base: &AirLoopHVACUnitarySystemSuperObject
+        Fields:
+          name: '{} Unitary System'
+          <<: *AirLoopHVACUnitaryCommonFields
+          <<: *AirLoopHVACUnitaryCommonHeatPumpFields
+        Connectors:
+          AirLoop: False
   AirTerminal:
     SingleDuct:
       Common:
@@ -845,9 +907,10 @@ Objects:
                   coefficient3_x_2: 0.0
                   maximum_value_of_x: 1.0
                   minimum_value_of_x: 0.0
-            Transitions:
+            Transitions: &CoilHeatingDXSingleSpeedCommonTransitions
               - Coil:Heating:DX:SingleSpeed:
                   heating_supply_air_flow_rate: rated_air_flow_rate
+                  heat_pump_heating_coil_rated_cop: gross_rated_heating_cop # todo_eo: could be combined into one variable
           Base: &CoilHeatingDXSingleSpeedSuperObject
             Fields:
               <<: *CoilHeatingFields
@@ -1235,6 +1298,11 @@ Objects:
       <<: *PlantLoopFields
       maximum_loop_temperature: 100 # set by legacy, not reachable from template, no default, required by schema
       minimum_loop_temperature: 10 # set by legacy, not reachable from template, no default, required by schema
+    MixedWater: &PlantLoopMixedWaterFields
+      <<: *PlantLoopFields
+      maximum_loop_temperature: 100 # set by legacy, not reachable from template, no default, required by schema
+      minimum_loop_temperature: 10 # set by legacy, not reachable from template, no default, required by schema
+      plant_loop_demand_calculation_scheme: DualSetpointDeadband
   PlantEquipmentOperation:
     CoolingLoad:
       ChilledWater:
@@ -1577,28 +1645,38 @@ Objects:
             - Sizing:System:
                 cooling_coil_design_setpoint_temperature: central_cooling_design_supply_air_temperature
                 heating_coil_design_setpoint: central_heating_design_supply_air_temperature
-    Base:
-      Fields: &SizingPlant
-        name: '{} Sizing Plant'
-        plant_or_condenser_loop_name: *PlantLoop
-    ChilledWater:
-      Fields: &SizingPlantChilledWater
-        <<: *SizingPlant
-        loop_type: Cooling
-        loop_design_temperature_difference: 6.67
-        design_loop_exit_temperature: '{chilled_water_design_setpoint}'
-    CondenserWater:
-      Fields: &SizingPlantCondenserWater
-        <<: *SizingPlant
-        loop_type: Condenser
-        loop_design_temperature_difference: 5.6
-        design_loop_exit_temperature: 29.4
-    HotWater:
-      Fields: &SizingPlantHotWater
-        <<: *SizingPlant
-        loop_type: Heating
-        loop_design_temperature_difference: 11
-        design_loop_exit_temperature: '{hot_water_design_setpoint}'
+    Plant:
+      Common:
+        Fields: &SizingPlantCommonFields
+          name: '{} Sizing Plant'
+          plant_or_condenser_loop_name: *PlantLoop
+        Transitions: &SizingPlantCommonTransitions
+          - Plant:Sizing:
+              loop_design_delta_temperature: loop_design_temperature_difference
+      ChilledWater:
+        Fields: &SizingPlantChilledWater
+          <<: *SizingPlantCommonFields
+          loop_type: Cooling
+          loop_design_temperature_difference: 6.67
+          design_loop_exit_temperature: '{chilled_water_design_setpoint}'
+      CondenserWater:
+        Fields: &SizingPlantCondenserWater
+          <<: *SizingPlantCommonFields
+          loop_type: Condenser
+          loop_design_temperature_difference: 5.6
+          design_loop_exit_temperature: '{condenser_water_design_setpoint}'
+      HotWater:
+        Fields: &SizingPlantHotWater
+          <<: *SizingPlantCommonFields
+          loop_type: Heating
+          loop_design_temperature_difference: 11
+          design_loop_exit_temperature: '{hot_water_design_setpoint}'
+      MixedWater:
+        Fields: &SizingPlantMixedWater
+          <<: *SizingPlantCommonFields
+          design_loop_exit_temperature: '{high_temperature_design_setpoint}'
+          loop_design_temperature_difference: '{loop_design_delta_temperature}'
+          loop_type: Heating
   ZoneHVAC:
     Common:
       ZoneEquipment:
@@ -2333,14 +2411,15 @@ OptionTree:
           Actions:
             - *ZoneCommonBuildPathActionsObjectsAfterMixer
             - heat_pump_heating_coil_type:
-                SingleSpeedDXHeatPump:
+                SingleSpeedDXHeatPump: &ZonePTHPBuildPathActionsHeatPumpHeatingCoilTypeSingleSpeedDXHeatPump
                   Location: -1
                   ActionType: Insert
                   Objects:
                     - Coil:Heating:DX:SingleSpeed: *CoilHeatingDXSingleSpeedSuperObject
                     - *CoilHeatingDXSingleSpeedCommonObjects
+                  Transitions: *CoilHeatingDXSingleSpeedCommonTransitions
             - *ZoneCommonBuildPathActionsObjectsFanOnOff
-            - supplemental_heating_coil_type:
+            - supplemental_heating_coil_type: &ZonePTHPBuildPathActionsSupplementalHeatingCoilType
                 Electric:
                   Location: -1
                   ActionType: Insert
@@ -2555,6 +2634,7 @@ OptionTree:
                       - *CoilHeatingFuelCommonTransitions
                     Mappings:
                       - *CoilHeatingFuelCommonMappings
+                  SingleSpeedDXHeatPump: *ZonePTHPBuildPathActionsHeatPumpHeatingCoilTypeSingleSpeedDXHeatPump
               # multiple steps needed for heat recovery because new OutdoorAir:Mixer is needed
               - heat_recovery_type:
                   Enthalpy:
@@ -2902,7 +2982,8 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:Unitary:Furnace:HeatCool: *AirLoopHVACUnitaryHeatCoolSuperObject
-        BaseObjects:
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
+        BaseObjects: &SystemUnitaryBaseObjects
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Controller:OutdoorAir:
@@ -2927,8 +3008,50 @@ OptionTree:
             - Sizing:System:
                 cooling_design_supply_air_temperature: central_cooling_design_supply_air_temperature
                 heating_design_supply_air_temperature: central_heating_design_supply_air_temperature
-        TemplateObjects:
-          <<: *SystemCommonTemplateObjects
+        TemplateObjects: *SystemCommonTemplateObjects
+      UnitaryHeatPump:
+        AirToAir:
+          BuildPath:
+            BaseObjects:
+              Objects:
+                - *SystemCommonBuildPathObjects
+            Actions:
+              - heat_pump_heating_coil_type: *SystemCommonBuildPathActionsHeatingCoilType
+              - supplemental_heating_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
+              - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
+              - *SystemCommonBuildPathActionOnOff
+              - airloop_hvac_unitary_object_type:
+                  HeatPump:AirToAir:
+                    ObjectReference: OutdoorAir:Mixer
+                    ActionType: Insert
+                    Location: After
+                    Objects:
+                      # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                      - AirLoopHVAC:UnitaryHeatPump:AirToAir: *AirLoopHVACUnitaryHeatPumpAirToAirSuperObject
+                    Transitions: *AirLoopHVACUnitaryCommonTransitions
+          BaseObjects: *SystemUnitaryBaseObjects
+          TemplateObjects: *SystemCommonTemplateObjects
+      UnitarySystem:
+        BuildPath:
+          BaseObjects:
+            Objects:
+              - *SystemCommonBuildPathObjects
+          Actions:
+            - heating_coil_type: *SystemCommonBuildPathActionsHeatingCoilType
+            - supplemental_heating_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
+            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
+            - *SystemCommonBuildPathActionOnOff
+            - airloop_hvac_unitary_object_type:
+                HeatPump:AirToAir:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemSuperObject
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
+        BaseObjects: *SystemUnitaryBaseObjects
+        TemplateObjects: *SystemCommonTemplateObjects
       VAV:
         BuildPath:
           BaseObjects:
@@ -3049,6 +3172,7 @@ OptionTree:
             - *PlantCommonPlantLoopBase
             - *PlantCommonObjectsChilledWaterLoop
             - Sizing:Plant: *SizingPlantChilledWater
+          Transitions: *SizingPlantCommonTransitions
         TemplateObjects: # todo_eo: Secondary options need to have PlantLoop common_pipe_simulation changed to CommonPipe
           chilled_water_pump_configuration:
             ConstantPrimaryNoSecondary:
@@ -3111,6 +3235,7 @@ OptionTree:
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadCondenserWater
             - CondenserEquipmentOperationSchemes: *CondenserEquipmentOperationSchemesCondenserLoad
             - CondenserLoop: *CondenserLoopFields
+          Transitions: *SizingPlantCommonTransitions
       Tower:
         BaseObjects:
         TemplateObjects:
@@ -3129,8 +3254,8 @@ OptionTree:
             - Sizing:Plant: *SizingPlantHotWater
             - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadHotWater
             - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesHeatingLoad
-            - PlantLoop:
-                <<: *PlantLoopHotWaterFields
+            - PlantLoop: *PlantLoopHotWaterFields
+          Transitions: *SizingPlantCommonTransitions
         TemplateObjects:
           hot_water_pump_configuration:
             None: &PlantHotWaterLoopTemplateObjectsHotWaterPumpConfigurationNone
@@ -3154,7 +3279,28 @@ OptionTree:
               Objects:
                 - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHotWater
       MixedWaterLoop:
-
+        BaseObjects:
+          Objects:
+            - *PlantCommonPlantLoopBase
+            - *PlantCommonPlantLoopNoSecondary
+            - Sizing:Plant: *SizingPlantMixedWater
+            # Custom naming needed for two PlantEquipmentOperation objects and PlantEquipmentOperationSchemes
+            - PlantEquipmentOperation:CoolingLoad:
+                <<: *PlantEquipmentOperationCoolingLoadChilledWater
+                name: '{} Cool Operation All Hours'
+            - PlantEquipmentOperation:HeatingLoad:
+                <<: *PlantEquipmentOperationHeatingLoadHotWater
+                name: '{} Heat Operation All Hours'
+            - PlantEquipmentOperationSchemes:
+                <<: *PlantEquipmentOperationSchemesHeatingLoad
+                control_scheme_1_name: '{} Cool Operation All Hours'
+                control_scheme_1_object_type: PlantEquipmentOperation:CoolingLoad
+                control_scheme_1_schedule_name: HVACTemplate-Always1
+                control_scheme_2_name: '{} Heat Operation All Hours'
+                control_scheme_2_object_type: PlantEquipmentOperation:HeatingLoad
+                control_scheme_2_schedule_name: HVACTemplate-Always1
+            - PlantLoop: *PlantLoopMixedWaterFields
+          Transitions: *SizingPlantCommonTransitions
 # Notes
 # Compact schedules can be created on their own via specialized structure
 #  - Schedule:Compact:

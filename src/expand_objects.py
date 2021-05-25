@@ -1208,10 +1208,12 @@ class AirLoopHVACUnitaryObjectType:
         heating_coil_type = None
         if template_fields.get('heating_coil_type', 'None') in ['Gas', 'Electric']:
             heating_coil_type = 'Furnace'
+        elif template_fields.get('heat_pump_heating_coil_type') in ['SingleSpeedDXHeatPump', ]:
+            heating_coil_type = 'HeatPump'
         if cooling_coil_type and heating_coil_type == 'Furnace':
             obj._airloop_hvac_unitary_object_type = 'Furnace:HeatCool'
-        if not cooling_coil_type and not heating_coil_type:
-            obj._airloop_hvac_unitary_object_type = None
+        elif cooling_coil_type and heating_coil_type == 'HeatPump':
+            obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAir'
         return
 
 
@@ -1544,6 +1546,15 @@ class ExpandSystem(ExpandObjects):
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
                     ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
+                    ('Fan:.*', True))),
+            (
+                ['HVACTemplate:System:UnitaryHeatPump:AirToAir', ],
+                'AirLoopHVAC:UnitaryHeatPump.*',
+                {'Inlet': 'air_inlet_node_name',
+                 'Outlet': 'air_outlet_node_name'},
+                (
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
+                    ('Coil:Heating.*', None if getattr(self, 'heat_pump_heating_coil_type', 'None') == 'None' else True),
                     ('Fan:.*', True))),
             (
                 ['HVACTemplate:System:PackagedVAV', 'HVACTemplate:System:DedicatedOutdoorAir'],
