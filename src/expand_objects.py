@@ -250,6 +250,7 @@ class ExpandObjects(EPJSON):
 
         :return: epJSON dictionary with unresolved complex inputs
         """
+        self.logger.info('Processing option tree: {}'.format(structure_hierarchy))
         option_tree = self._get_option_tree(structure_hierarchy=structure_hierarchy)
         options = option_tree.keys()
         option_tree_dictionary = {}
@@ -272,7 +273,10 @@ class ExpandObjects(EPJSON):
                 object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
         if 'TemplateObjects' in options and option_tree['TemplateObjects']:
             try:
+                template_applied = None
+                template_field_processing = None
                 for template_field, template_tree in option_tree['TemplateObjects'].items():
+                    template_field_processing = template_field
                     for field_option, objects in template_tree.items():
                         # check if field option is 'None' and if object doesn't exist in the class, or if
                         #   the fields match
@@ -288,10 +292,17 @@ class ExpandObjects(EPJSON):
                                 super_dictionary=option_tree_dictionary,
                                 object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
                             # Only one field option should be applied, so break after it is successful
+                            template_applied = True
                             break
             except (AttributeError, KeyError):
                 raise PyExpandObjectsYamlStructureException('TemplateObjects section for system type {} is invalid in '
                                                             'yaml file.'.format(self.template_type))
+            if not template_applied:
+                raise PyExpandObjectsYamlStructureException('A template option was not applied for template field {} '
+                                                            'and option {}: {}'.format(
+                                                                template_field_processing,
+                                                                getattr(self, template_field_processing, None),
+                                                                option_tree['TemplateObjects']))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -986,8 +997,13 @@ class ExpandObjects(EPJSON):
             # flatten action list due to yaml formatting
             actions = self._flatten_list(actions)
             for action in actions:
+                action_applied = None
+                template_field_processing = None
                 try:
                     for template_field, action_structure in action.items():
+                        template_field_processing = template_field
+                        if getattr(self, template_field, 'None') == 'None':
+                            action_applied = True
                         for template_value, action_instructions in action_structure.items():
                             # check if the option tree template value matches a class template field.
                             # If the template value is 'None' in the yaml, then perform the operation if the class
@@ -996,11 +1012,19 @@ class ExpandObjects(EPJSON):
                                     (getattr(self, template_field, None) and (
                                         re.match(template_value, str(getattr(self, template_field))) or (
                                             template_value == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
-                                build_path = self._apply_build_path_action(
-                                    build_path=build_path,
-                                    action_instructions=action_instructions)
+                                if action_instructions:
+                                    build_path = self._apply_build_path_action(
+                                        build_path=build_path,
+                                        action_instructions=action_instructions)
+                                action_applied = True
                 except (AttributeError, KeyError):
                     raise PyExpandObjectsYamlStructureException("Action is incorrectly formatted: {}".format(action))
+                if not action_applied:
+                    raise PyExpandObjectsYamlStructureException('A build path action was not applied for template field {} '
+                                                                'and option {}: {}'.format(
+                                                                    template_field_processing,
+                                                                    getattr(self, template_field_processing, None),
+                                                                    action))
         # Format the created build path
         object_list = self._connect_and_convert_build_path_to_object_list(build_path)
         return object_list
@@ -1129,6 +1153,7 @@ class ExpandThermostat(ExpandObjects):
         Perform all template expansion operations and return the class to the parent calling function.
         :return: Class object with epJSON dictionary as class attribute
         """
+        self.logger.info('Processing Thermostat: {}'.format(self.unique_name))
         self._create_and_set_schedules()
         self._create_thermostat_setpoints()
         return self
@@ -1190,6 +1215,7 @@ class ExpandZone(ExpandObjects):
         Process zone template
         :return: Class object with epJSON dictionary as class attribute
         """
+        self.logger.info('Processing Zone: {}'.format(self.unique_name))
         self._create_objects()
         return self
 
@@ -1202,18 +1228,33 @@ class AirLoopHVACUnitaryObjectType:
         return obj._airloop_hvac_unitary_object_type
 
     def __set__(self, obj, value):
-        (_, template_structure), = value.items()
+        (template_type, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
         cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else True
         heating_coil_type = None
         if template_fields.get('heating_coil_type', 'None') in ['Gas', 'Electric']:
-            heating_coil_type = 'Furnace'
+            heating_coil_type = 'Base'
+        elif template_fields.get('heating_coil_type', 'None') in ['SingleSpeedDXHeatPumpAirSource', ]:
+            heating_coil_type = 'HeatPump'
         elif template_fields.get('heat_pump_heating_coil_type') in ['SingleSpeedDXHeatPump', ]:
             heating_coil_type = 'HeatPump'
-        if cooling_coil_type and heating_coil_type == 'Furnace':
+        supplemental_heating_type = None
+        if template_type == 'HVACTemplate:System:UnitaryHeatPump:AirToAir':
+            supplemental_heating_type = True
+        elif template_type == 'HVACTemplate:System:UnitarySystem':
+            if template_fields.get('supplemental_heating_or_reheat_coil_type', 'None') == 'None':
+                supplemental_heating_type = None
+            else:
+                supplemental_heating_type = True
+        if template_type == 'HVACTemplate:System:Unitary' and cooling_coil_type and heating_coil_type == 'Base':
             obj._airloop_hvac_unitary_object_type = 'Furnace:HeatCool'
-        elif cooling_coil_type and heating_coil_type == 'HeatPump':
-            obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAir'
+        elif template_type == 'HVACTemplate:System:UnitaryHeatPump:AirToAir':
+            obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
+        elif template_type == 'HVACTemplate:System:UnitarySystem':
+            if cooling_coil_type and heating_coil_type and not supplemental_heating_type:
+                obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAir'
+            elif cooling_coil_type and heating_coil_type and supplemental_heating_type:
+                obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
         return
 
 
@@ -1537,12 +1578,22 @@ class ExpandSystem(ExpandObjects):
         :return: build path
         """
         # todo_eo: move this to YAML file
+        # todo_eo: Coil:Heating:.* will remove the heating coil and supplemental heating coil, might be an issue
         equipment_lookup = (
             (
                 ['HVACTemplate:System:Unitary', ],
                 'AirLoopHVAC:Unitary:.*',
                 {'Inlet': 'furnace_air_inlet_node_name',
                  'Outlet': 'furnace_air_outlet_node_name'},
+                (
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
+                    ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
+                    ('Fan:.*', True))),
+            (
+                ['HVACTemplate:System:UnitarySystem', ],
+                'AirLoopHVAC:Unitary*',
+                {'Inlet': 'air_inlet_node_name',
+                 'Outlet': 'air_outlet_node_name'},
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
                     ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
@@ -1689,6 +1740,7 @@ class ExpandSystem(ExpandObjects):
         Process system template
         :return: class object with epJSON dictionary as class attribute
         """
+        self.logger.info('Processing System: {}'.format(self.unique_name))
         self._create_objects()
         self._create_outdoor_air_equipment_list_from_build_path()
         self._create_availability_manager_assignment_list()
@@ -1712,6 +1764,7 @@ class ExpandPlantLoop(ExpandObjects):
         Process plant loop template
         :return: class object with epJSON dictionary as class attribute
         """
+        self.logger.info('Processing PlantLoop: {}'.format(self.unique_name))
         self._create_objects()
         self._create_availability_manager_assignment_list()
         return self
@@ -1803,5 +1856,6 @@ class ExpandPlantEquipment(ExpandObjects):
         Process plant loop template
         :return: class object with epJSON dictionary as class attribute
         """
+        self.logger.info('Processing Plant Equipment: {}'.format(self.unique_name))
         self._create_objects()
         return self
