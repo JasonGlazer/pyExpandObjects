@@ -523,28 +523,28 @@ Objects:
               - OutdoorAir:Node:
                   name: '{} Cooling Coil Condenser Inlet'
               - Curve:Quadratic:
-                  name: '{} DX Coil EIR-FF'
+                  name: '{} Cool DX Coil EIR-FF'
                   coefficient1_constant: 1.1552
                   coefficient2_x: -0.1808
                   coefficient3_x_2: 0.0256
                   maximum_value_of_x: 1.5
                   minimum_value_of_x: 0.5
               - Curve:Quadratic:
-                  name: '{} DX Coil PLF'
+                  name: '{} Cool DX Coil PLF'
                   coefficient1_constant: 0.85
                   coefficient2_x: 0.15
                   coefficient3_x_2: 0
                   maximum_value_of_x: 1
                   minimum_value_of_x: 0
               - Curve:Quadratic:
-                  name: '{} DX Coil Cap-FF'
+                  name: '{} Cool DX Coil Cap-FF'
                   coefficient1_constant: 0.8
                   coefficient2_x: 0.2
                   coefficient3_x_2: 0
                   maximum_value_of_x: 1.5
                   minimum_value_of_x: 0.5
               - Curve:Biquadratic:
-                  name: '{} DX Coil EIR-FT'
+                  name: '{} Cool DX Coil EIR-FT'
                   coefficient1_constant: 0.342414409
                   coefficient2_x: 0.034885008
                   coefficient3_x_2: -0.0006237
@@ -556,7 +556,7 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 18.0
               - Curve:Biquadratic:
-                  name: '{} DX Coil Cap-FT'
+                  name: '{} Cool DX Coil Cap-FT'
                   coefficient1_constant: 0.942587793
                   coefficient2_x: 0.009543347
                   coefficient3_x_2: 0.00068377
@@ -577,25 +577,24 @@ Objects:
               <<: *CoilCoolingFields
               condenser_air_inlet_node_name: '{} Cooling Coil Condenser Inlet'
               crankcase_heater_capacity: 0
-              energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-              energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil EIR-FT'
+              energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool DX Coil EIR-FF'
+              energy_input_ratio_function_of_temperature_curve_name: '{} Cool DX Coil EIR-FT'
               evaporative_condenser_effectiveness: 0
               gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop}'
               gross_rated_sensible_heat_ratio: '{cooling_coil_gross_rated_sensible_heat_ratio}'
               gross_rated_total_cooling_capacity: '{cooling_coil_gross_rated_total_capacity}'
               maximum_cycling_rate: 0
-              maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation: 10
-              part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
+              part_load_fraction_correlation_curve_name: '{} Cool DX Coil PLF'
               rated_air_flow_rate: Autosize
-              total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-              total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Cap-FT'
+              total_cooling_capacity_function_of_flow_fraction_curve_name: '{} Cool DX Coil Cap-FF'
+              total_cooling_capacity_function_of_temperature_curve_name: '{} Cool DX Coil Cap-FT'
             Connectors:
               AirLoop: *ConnectorsAirLoop
         TwoSpeed:
           Common:
             Objects: &CoilCoolingDXTwoSpeedCommonObjects
               - Curve:Biquadratic:
-                  name: '{} DX Coil EIR-FT'
+                  name: '{} Cool DX Coil EIR-FT'
                   coefficient1_constant: 0.632475
                   coefficient2_x: -0.0121321
                   coefficient3_x_2: 0.000507773
@@ -607,7 +606,7 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 23.88889
               - Curve:Biquadratic:
-                  name: '{} DX Coil Cap-FT'
+                  name: '{} Cool DX Coil Cap-FT'
                   coefficient1_constant: 0.476428
                   coefficient2_x: 0.0401147
                   coefficient3_x_2: 0.000226411
@@ -619,7 +618,7 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 23.88889
               - Curve:Biquadratic:
-                  name: '{} DX Coil Low EIR-FT'
+                  name: '{} Cool DX Coil Low EIR-FT'
                   coefficient1_constant: 0.774645
                   coefficient2_x: -0.0343731
                   coefficient3_x_2: 0.000783173
@@ -631,7 +630,7 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 23.88889
               - Curve:Biquadratic:
-                  name: '{} DX Coil Low Cap-FT'
+                  name: '{} Cool DX Coil Low Cap-FT'
                   coefficient1_constant: 0.476428
                   coefficient2_x: 0.0401147
                   coefficient3_x_2: 0.000226411
@@ -643,7 +642,7 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 23.88889
               - Curve:Cubic:
-                  name: '{} DX Coil EIR-FF'
+                  name: '{} Cool DX Coil EIR-FF'
                   coefficient1_constant: 1.0079484
                   coefficient2_x: 0.34544129
                   coefficient3_x_2: -0.6922891
@@ -651,7 +650,7 @@ Objects:
                   maximum_value_of_x: 1.5
                   minimum_value_of_x: 0.5
               - Curve:Cubic:
-                  name: '{} DX Coil Cap-FF'
+                  name: '{} Cool DX Coil Cap-FF'
                   coefficient1_constant: 0.47278589
                   coefficient2_x: 1.2433415
                   coefficient3_x_2: -1.0387055
@@ -659,7 +658,7 @@ Objects:
                   maximum_value_of_x: 1.5
                   minimum_value_of_x: 0.5
               - Curve:Quadratic:
-                  name: '{} DX Coil PLF'
+                  name: '{} Cool DX Coil PLF'
                   coefficient1_constant: 0.85
                   coefficient2_x: 0.15
                   coefficient3_x_2: 0.0
@@ -672,21 +671,151 @@ Objects:
           Base: &CoilCoolingDXTwoSpeedSuperObject
             Fields:
               <<: *CoilCoolingFields
-              energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-              energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil EIR-FT'
+              energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool DX Coil EIR-FF'
+              energy_input_ratio_function_of_temperature_curve_name: '{} Cool DX Coil EIR-FT'
               high_speed_gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop}'
               high_speed_gross_rated_total_cooling_capacity: Autosize # set by legacy, no default, required by template
               high_speed_rated_air_flow_rate: Autosize # set by legacy, no default, required by template
               high_speed_rated_sensible_heat_ratio: Autosize # set by legacy, no default, required by template
-              low_speed_energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Low EIR-FT'
+              low_speed_energy_input_ratio_function_of_temperature_curve_name: '{} Cool DX Coil Low EIR-FT'
               low_speed_gross_rated_cooling_cop: 4.5 # set by legacy, not object default, not reachable from template
               low_speed_gross_rated_sensible_heat_ratio: Autosize # set by legacy, no default, required by template
               low_speed_gross_rated_total_cooling_capacity: Autosize # set by legacy, no default, required by template
               low_speed_rated_air_flow_rate: Autosize # set by legacy, no default, required by template
-              low_speed_total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Low Cap-FT'
-              part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
-              total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-              total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Cap-FT'
+              low_speed_total_cooling_capacity_function_of_temperature_curve_name: '{} Cool DX Coil Low Cap-FT'
+              part_load_fraction_correlation_curve_name: '{} Cool DX Coil PLF'
+              total_cooling_capacity_function_of_flow_fraction_curve_name: '{} Cool DX Coil Cap-FF'
+              total_cooling_capacity_function_of_temperature_curve_name: '{} Cool DX Coil Cap-FT'
+            Connectors:
+              AirLoop: *ConnectorsAirLoop
+        MultiSpeed:
+          Common:
+            Objects: &CoilCoolingDXMultiSpeedCommonObjects
+              - Curve:Cubic:
+                  name: '{} Cool Coil EIR-FF'
+                  coefficient1_constant: 0.47278589
+                  coefficient2_x: 1.2433415
+                  coefficient3_x_2: -1.0387055
+                  coefficient4_x_3: 0.32257813
+                  maximum_value_of_x: 1.5
+                  minimum_value_of_x: 0.5
+              - Curve:Biquadratic:
+                  name: '{} Cool Coil EIR-FT'
+                  coefficient1_constant: 0.632475
+                  coefficient2_x: -0.0121321
+                  coefficient3_x_2: 0.000507773
+                  coefficient4_y: 0.0155377
+                  coefficient5_y_2: 0.00027284
+                  coefficient6_x_y: -0.000679201
+                  input_unit_type_for_x: Temperature
+                  input_unit_type_for_y: Temperature
+                  maximum_curve_output: 5.0
+                  maximum_value_of_x: 50.0
+                  maximum_value_of_y: 50.0
+                  minimum_curve_output: 0.0
+                  minimum_value_of_x: 0.0
+                  minimum_value_of_y: 0.0
+                  output_unit_type: Dimensionless
+              - Curve:Quadratic:
+                  name: '{} Cool Coil PLF'
+                  coefficient1_constant: 0.85
+                  coefficient2_x: 0.15
+                  coefficient3_x_2: 0
+                  maximum_value_of_x: 1
+                  minimum_value_of_x: 0
+              - Curve:Cubic:
+                  name: '{} Cool Coil Cap-FF'
+                  coefficient1_constant: 0.47278589
+                  coefficient2_x: 1.2433415
+                  coefficient3_x_2: -1.0387055
+                  coefficient4_x_3: 0.32257813
+                  maximum_value_of_x: 1.5
+                  minimum_value_of_x: 0.5
+              - Curve:Biquadratic:
+                  name: '{} Cool Coil WH-FT'
+                  coefficient1_constant: 1.0
+                  coefficient2_x: 0.0
+                  coefficient3_x_2: 0.0
+                  coefficient4_y: 0.0
+                  coefficient5_y_2: 0.0
+                  coefficient6_x_y: 0.0
+                  input_unit_type_for_x: Temperature
+                  input_unit_type_for_y: Temperature
+                  maximum_value_of_x: 50
+                  maximum_value_of_y: 50
+                  minimum_value_of_x: 0
+                  minimum_value_of_y: 0
+                  output_unit_type: Dimensionless
+              - Curve:Quadratic:
+                  name: '{} Cool Coil PLF'
+                  coefficient1_constant: 0.85
+                  coefficient2_x: 0.15
+                  coefficient3_x_2: 0
+                  maximum_value_of_x: 1
+                  minimum_value_of_x: 0
+              - Curve:Biquadratic:
+                  name: '{} Cool Coil Cap-FT'
+                  coefficient1_constant: 0.476428
+                  coefficient2_x: 0.0401147
+                  coefficient3_x_2: 0.000226411
+                  coefficient4_y: -0.000827136
+                  coefficient5_y_2: -7.3224e-06
+                  coefficient6_x_y: -0.000446278
+                  input_unit_type_for_x: Temperature
+                  input_unit_type_for_y: Temperature
+                  maximum_curve_output: 5.0
+                  maximum_value_of_x: 50.0
+                  maximum_value_of_y: 50.0
+                  minimum_curve_output: 0.0
+                  minimum_value_of_x: 0.0
+                  minimum_value_of_y: 0.0
+                  output_unit_type: Dimensionless
+            Transitions: &CoilCoolingDXMultiSpeedCommonTransitions
+              - Coil:Cooling:DX:MultiSpeed:
+                  dx_cooling_coil_gross_rated_sensible_heat_ratio: speed_1_gross_rated_sensible_heat_ratio # todo_eo: need to test this
+                  dx_cooling_coil_gross_rated_total_capacity: speed_1_gross_rated_total_cooling_capacity # todo_eo: need to test this
+              - Coil:Cooling:DX:MultiSpeed:
+                  dx_cooling_coil_gross_rated_sensible_heat_ratio: speed_2_gross_rated_sensible_heat_ratio # todo_eo: need to test this
+                  dx_cooling_coil_gross_rated_total_capacity: speed_2_gross_rated_total_cooling_capacity # todo_eo: need to test this
+              - Coil:Cooling:DX:MultiSpeed:
+                  dx_cooling_coil_gross_rated_sensible_heat_ratio: speed_3_gross_rated_sensible_heat_ratio # todo_eo: need to test this
+                  dx_cooling_coil_gross_rated_total_capacity: speed_3_gross_rated_total_cooling_capacity # todo_eo: need to test this
+          Base: &CoilCoolingDXMultiSpeedSuperObject
+            Fields:
+              <<: *CoilCoolingFields
+              condenser_air_inlet_node_name: '{} Cooling Coil Condenser Inlet'
+              fuel_type: Electricity
+              number_of_speeds: '{number_of_speeds_for_cooling}'
+              speed_1_energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool Coil EIR-FF'
+              speed_1_energy_input_ratio_function_of_temperature_curve_name: '{} Cool Coil EIR-FT'
+              speed_1_gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
+              speed_1_gross_rated_sensible_heat_ratio: Autosize
+              speed_1_gross_rated_total_cooling_capacity: Autosize
+              speed_1_part_load_fraction_correlation_curve_name: '{} Cool Coil PLF'
+              speed_1_rated_air_flow_rate: Autosize
+              speed_1_total_cooling_capacity_function_of_flow_fraction_curve_name: '{} Cool Coil Cap-FF'
+              speed_1_total_cooling_capacity_function_of_temperature_curve_name: '{} Cool Coil Cap-FT'
+              speed_1_waste_heat_function_of_temperature_curve_name: '{} Cool Coil WH-FT'
+              speed_2_energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool Coil EIR-FF'
+              speed_2_energy_input_ratio_function_of_temperature_curve_name: '{} Cool Coil EIR-FT'
+              speed_2_gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}' # todo_eo: need to test this
+              speed_2_gross_rated_sensible_heat_ratio: Autosize
+              speed_2_gross_rated_total_cooling_capacity: Autosize
+              speed_2_part_load_fraction_correlation_curve_name: '{} Cool Coil PLF'
+              speed_2_rated_air_flow_rate: Autosize
+              speed_2_total_cooling_capacity_function_of_flow_fraction_curve_name: '{} Cool Coil Cap-FF'
+              speed_2_total_cooling_capacity_function_of_temperature_curve_name: '{} Cool Coil Cap-FT'
+              speed_2_waste_heat_function_of_temperature_curve_name: '{} Cool Coil WH-FT'
+              speed_3_energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool Coil EIR-FF'
+              speed_3_energy_input_ratio_function_of_temperature_curve_name: '{} Cool Coil EIR-FT'
+              speed_3_gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}' # todo_eo: need to test this
+              speed_3_gross_rated_sensible_heat_ratio: Autosize
+              speed_3_gross_rated_total_cooling_capacity: Autosize
+              speed_3_part_load_fraction_correlation_curve_name: '{} Cool Coil PLF'
+              speed_3_rated_air_flow_rate": Autosize
+              speed_3_total_cooling_capacity_function_of_flow_fraction_curve_name: '{} Cool Coil Cap-FF'
+              speed_3_total_cooling_capacity_function_of_temperature_curve_name: '{} Cool Coil Cap-FT'
+              speed_3_waste_heat_function_of_temperature_curve_name: '{} Cool Coil WH-FT'
             Connectors:
               AirLoop: *ConnectorsAirLoop
         TwoStageWithHumidityControlMode:
@@ -2626,12 +2755,14 @@ OptionTree:
                                 AirLoop: False
                         Transitions:
                           - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
-#                      MultiSpeedDX: todo_eo: pick up from here
-#                        ObjectReference: OutdoorAir:Mixer
-#                        Location: After
-#                        ActionType: Insert
-#                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDX
-#                          - Coil:Cooling:DX:MultiSpeed:
+                      MultiSpeedDX:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDX
+                          - Coil:Cooling:DX:MultiSpeed: *CoilCoolingDXMultiSpeedSuperObject
+                          - *CoilCoolingDXMultiSpeedCommonObjects
+                        Transitions: *CoilCoolingDXMultiSpeedCommonTransitions
               CoolingCoilLast:
                 Objects: &SystemCommonBuildPathActionsCommonCoolingCoilLast
                   - cooling_coil_type:
@@ -2651,10 +2782,10 @@ OptionTree:
                         Location: -1
                         ActionType: Insert
                         Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDX
-#                      MultiSpeedDX:
-#                        Location: -1
-#                        ActionType: Insert
-#                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDX
+                      MultiSpeedDX:
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDX
             Base: &SystemCommonBuildPathActions
               - heating_coil_type: &SystemCommonBuildPathActionsHeatingCoilType
                   Electric:
