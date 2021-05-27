@@ -2524,19 +2524,19 @@ OptionTree:
                   - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
                 Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
             zone_hvac_equipmentlist_object_type: &ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType # Created as a descriptor in ExpandZone
-              ^Base$:
+              Base:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentList
-              ^Baseboard$:
+              Baseboard:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseBoard
-              ^WithDOAS$:
+              WithDOAS:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithDOAS
-              ^WithDOASAndBaseboard$:
+              WithDOASAndBaseboard:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithDOASAndBaseboard
-              ^WithBaseboard$:
+              WithBaseboard:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
           DOAS:
@@ -2867,7 +2867,7 @@ OptionTree:
               CoolingCoilAfterMixer:
                 Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
                   - cooling_coil_type:
-                      ^ChilledWater$:
+                      ChilledWater:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
@@ -2877,7 +2877,7 @@ OptionTree:
                           - Controller:WaterCoil:
                               <<: *ControllerWaterCoil
                               name: '{} Cooling Coil Controller'
-                      ^SingleSpeedDX$:
+                      SingleSpeedDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
@@ -2885,7 +2885,7 @@ OptionTree:
                           - *CoilCoolingDXSingleSpeedCommonObjects
                           - Coil:Cooling:DX:SingleSpeed: *CoilCoolingDXSingleSpeedSuperObject
                         Transitions: *CoilCoolingDXSingleSpeedCommonTransitions
-                      ^TwoSpeedDX$:
+                      TwoSpeedDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
@@ -2895,7 +2895,7 @@ OptionTree:
                           - *CoilCoolingDXTwoSpeedCommonObjects
                         Transitions:
                           - *CoilCoolingDXTwoSpeedCommonTransitions
-                      ^TwoStageHumidityControlDX$:
+                      TwoStageHumidityControlDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
@@ -2912,7 +2912,7 @@ OptionTree:
                                 AirLoop: False
                         Transitions:
                           - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
-                      ^MultiSpeedDX$:
+                      MultiSpeedDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
@@ -2920,7 +2920,7 @@ OptionTree:
                           - Coil:Cooling:DX:MultiSpeed: *CoilCoolingDXMultiSpeedSuperObject
                           - *CoilCoolingDXMultiSpeedCommonObjects
                         Transitions: *CoilCoolingDXMultiSpeedCommonTransitions
-                      ^SingleSpeedDXWaterCooled$:
+                      SingleSpeedDXWaterCooled:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
@@ -2930,40 +2930,40 @@ OptionTree:
               CoolingCoilLast:
                 Objects: &SystemCommonBuildPathActionsCommonCoolingCoilLast
                   - cooling_coil_type:
-                      ^ChilledWater$:
+                      ChilledWater:
                         Location: -1
                         ActionType: Insert
                         Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerChilledWater
-                      ^SingleSpeedDX$:
+                      SingleSpeedDX:
                         Location: -1
                         ActionType: Insert
                         Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDX
-                      ^TwoSpeedDX$:
+                      TwoSpeedDX:
                         Location: -1
                         ActionType: Insert
                         Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDX
-                      ^TwoStageHumidityControlDX$:
+                      TwoStageHumidityControlDX:
                         Location: -1
                         ActionType: Insert
                         Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDX
-                      ^MultiSpeedDX$:
+                      MultiSpeedDX:
                         Location: -1
                         ActionType: Insert
                         Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDX
-                      ^SingleSpeedDXWaterCooled$:
+                      SingleSpeedDXWaterCooled:
                         ObjectReference: OutdoorAir:Mixer
                         Location: -1
                         ActionType: Insert
                         Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooled
             Base: &SystemCommonBuildPathActions
               - heating_coil_type: &SystemCommonBuildPathActionsHeatingCoilType
-                  ^Electric$:
+                  Electric:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
                     ActionType: Insert
                     Objects:
                       - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
-                  ^HotWater$:
+                  HotWater:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
                     ActionType: Insert
@@ -2973,7 +2973,7 @@ OptionTree:
                           <<: *ControllerWaterCoil
                           name: '{} Heating Coil Controller'
                       - *CoilHeatingWaterCommonObjects
-                  ^Gas$:
+                  Gas:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
                     ActionType: Insert
@@ -2984,7 +2984,7 @@ OptionTree:
                       - *CoilHeatingFuelCommonTransitions
                     Mappings:
                       - *CoilHeatingFuelCommonMappings
-                  ^SingleSpeedDXHeatPump$: *ZonePTHPBuildPathActionsHeatPumpHeatingCoilTypeSingleSpeedDXHeatPump
+                  SingleSpeedDXHeatPump: *ZonePTHPBuildPathActionsHeatPumpHeatingCoilTypeSingleSpeedDXHeatPump
               # multiple steps needed for heat recovery because new OutdoorAir:Mixer is needed
               - heat_recovery_type:
                   Enthalpy:
@@ -3175,7 +3175,7 @@ OptionTree:
               ControlZone:
                 Objects:
                   - SetpointManager:SingleZone:Cooling: *SetpointManagerSingleZoneCooling
-              ^FixedSetpoint$:
+              FixedSetpoint:
                 Objects:
                   - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
               FixedSetpointWithDehumidification: # Created via descriptor in expand_objects.py
@@ -3191,7 +3191,7 @@ OptionTree:
               ControlZone:
                 Objects:
                   - SetpointManager:SingleZone:Heating: *SetpointManagerSingleZoneHeating
-              ^FixedSetpoint$:
+              FixedSetpoint:
                 Objects:
                   - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
               FixedSetpointWithDehumidification: # Created via descriptor in expand_objects.py
@@ -3318,7 +3318,7 @@ OptionTree:
           Actions:
             - heating_coil_type:
                 <<: *SystemCommonBuildPathActionsHeatingCoilType
-                ^Gas$: # Override existing Gas option with different Coil:Heating:Fuel object
+                Gas: # Override existing Gas option with different Coil:Heating:Fuel object
                   ObjectReference: OutdoorAir:Mixer
                   Location: After
                   ActionType: Insert
@@ -3394,7 +3394,7 @@ OptionTree:
             - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionFanOnOff
             - airloop_hvac_unitary_object_type:
-                ^HeatPump:AirToAir$:
+                HeatPump:AirToAir:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
                   Location: After
@@ -3402,7 +3402,7 @@ OptionTree:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitions
-                ^HeatPump:AirToAirWithSupplemental$:
+                HeatPump:AirToAirWithSupplemental:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
                   Location: After

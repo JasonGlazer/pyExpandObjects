@@ -209,7 +209,7 @@ class ExpandObjects(EPJSON):
                             if re.match(r'\w+', str(key)) and str(key) != 'None':
                                 structure = structure['AnyValue']
                         else:
-                            if re.match(skl, key):
+                            if skl == str(key):
                                 structure = structure[skl]
         except KeyError:
             raise PyExpandObjectsTypeError('YAML structure does not exist for hierarchy: {}'.format(
@@ -282,7 +282,7 @@ class ExpandObjects(EPJSON):
                         #   the fields match
                         if (field_option == 'None' and getattr(self, template_field, 'None') == 'None') or \
                                 (getattr(self, template_field, None) and (
-                                    re.match(field_option, str(getattr(self, template_field))) or (
+                                    field_option == str(getattr(self, template_field)) or (
                                         field_option == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
                             option_tree_leaf = self._get_option_tree_leaf(
                                 option_tree=option_tree,
@@ -1010,7 +1010,7 @@ class ExpandObjects(EPJSON):
                             # attribute is missing or None.
                             if (template_value == 'None' and getattr(self, template_field, 'None') == 'None') or \
                                     (getattr(self, template_field, None) and (
-                                        re.match(template_value, str(getattr(self, template_field))) or (
+                                        template_value == str(getattr(self, template_field)) or (
                                             template_value == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
                                 if action_instructions:
                                     build_path = self._apply_build_path_action(
