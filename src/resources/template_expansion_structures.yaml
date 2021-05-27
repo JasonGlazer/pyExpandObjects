@@ -2737,7 +2737,7 @@ OptionTree:
           Actions:
             - *ZoneCommonBuildPathActionsObjectsAfterMixer
             - heat_pump_heating_coil_type:
-                SingleSpeedDXHeatPump: &ZonePTHPBuildPathActionsHeatPumpHeatingCoilTypeSingleSpeedDXHeatPump
+                SingleSpeedDXHeatPump:
                   Location: -1
                   ActionType: Insert
                   Objects:
@@ -2984,7 +2984,15 @@ OptionTree:
                       - *CoilHeatingFuelCommonTransitions
                     Mappings:
                       - *CoilHeatingFuelCommonMappings
-                  SingleSpeedDXHeatPump: *ZonePTHPBuildPathActionsHeatPumpHeatingCoilTypeSingleSpeedDXHeatPump
+                  SingleSpeedDXHeatPump: &SystemCommonBuildPathActionsHeatingCoilTypeSingleSpeedDXHeatPump
+                    ObjectReference: OutdoorAir:Mixer
+                    Location: After
+                    ActionType: Insert
+                    Objects:
+                      - Coil:Heating:DX:SingleSpeed: *CoilHeatingDXSingleSpeedSuperObject
+                      - *CoilHeatingDXSingleSpeedCommonObjects
+                    Transitions: *CoilHeatingDXSingleSpeedCommonTransitions
+                  SingleSpeedDXHeatPumpAirSource: *SystemCommonBuildPathActionsHeatingCoilTypeSingleSpeedDXHeatPump
               # multiple steps needed for heat recovery because new OutdoorAir:Mixer is needed
               - heat_recovery_type:
                   Enthalpy:
