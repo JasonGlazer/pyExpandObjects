@@ -1035,7 +1035,7 @@ Objects:
                       component_outlet_node_name:
                         ^Coil:Cooling:WaterToAirHeatPump.*: water_outlet_node_name
               - Curve:QuadLinear:
-                  name: '{} WaterSource SnglSpd WAHP ClgPowCurve'
+                  name: '{} WAHP ClgPowCurve'
                   coefficient1_constant": -3.205409884
                   coefficient2_w: -0.976409399
                   coefficient3_x: 3.97892546
@@ -1050,7 +1050,7 @@ Objects:
                   minimum_value_of_y: -100.0
                   minimum_value_of_z: -100.0
               - Curve:QuintLinear:
-                  name: '{} WaterSource SnglSpd WAHP ClgSensCapCurve'
+                  name: '{} WAHP ClgSensCapCurve'
                   coefficient1_constant: -5.462690012
                   coefficient2_v: 17.95968138
                   coefficient3_w: -11.87818402
@@ -1068,7 +1068,7 @@ Objects:
                   minimum_value_of_y: -100.0
                   minimum_value_of_z: -100.0
               - Curve:QuadLinear:
-                  name: '{} WaterSource SnglSpd WAHP ClgTotCapCurve'
+                  name: '{} SnglSpd WAHP ClgTotCapCurve'
                   coefficient1_constant: -9.149069561
                   coefficient2_w: 10.87814026
                   coefficient3_x: -1.718780157
@@ -1088,15 +1088,15 @@ Objects:
           Base: &CoilCoolingWatertoAirHeatPumpEquationFitSuperObject
             Fields:
               <<: *CoilCoolingCommonFields
-              name: '{} WaterSource SnglSpd Cooling Coil'
-              cooling_power_consumption_curve_name: '{} WaterSource SnglSpd WAHP ClgPowCurve'
+              name: '{} Cooling Coil'
+              cooling_power_consumption_curve_name: '{} WAHP ClgPowCurve'
               gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
               gross_rated_sensible_cooling_capacity: Autosize
               gross_rated_total_cooling_capacity: Autosize
               rated_air_flow_rate: Autosize
               rated_water_flow_rate: Autosize
-              sensible_cooling_capacity_curve_name: '{} WaterSource SnglSpd WAHP ClgSensCapCurve'
-              total_cooling_capacity_curve_name: '{} WaterSource SnglSpd WAHP ClgTotCapCurve'
+              sensible_cooling_capacity_curve_name: '{} WAHP ClgSensCapCurve'
+              total_cooling_capacity_curve_name: '{} WAHP ClgTotCapCurve'
               water_inlet_node_name: '{} Cooling Water Inlet' # required by schema
               water_outlet_node_name: '{} Cooling Water Outlet' # required by schema
             Connectors: *CoilCoolingWaterConnectors
@@ -1124,7 +1124,7 @@ Objects:
           Common:
             Objects: &CoilHeatingDXSingleSpeedCommonObjects
               - Curve:Biquadratic:
-                  name: '{} PTHP Heating Coil DefrEIR-FT'
+                  name: '{} Heating Coil DefrEIR-FT'
                   coefficient1_constant: 1
                   coefficient2_x: 0
                   coefficient3_x_2: 0
@@ -1136,7 +1136,7 @@ Objects:
                   minimum_value_of_x: 0
                   minimum_value_of_y: 0
               - Curve:Biquadratic:
-                  name: '{} PTHP Cooling Coil Cap-FT'
+                  name: '{} Cooling Coil Cap-FT'
                   coefficient1_constant: 0.942587793
                   coefficient2_x: 0.009543347
                   coefficient3_x_2: 0.00068377
@@ -1148,14 +1148,14 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 18.0
               - Curve:Quadratic:
-                  name: '{} PTHP Heating Coil EIR-FF'
+                  name: '{} Heating Coil EIR-FF'
                   coefficient1_constant: 1.3824
                   coefficient2_x: -0.4336
                   coefficient3_x_2: 0.0512
                   maximum_value_of_x: 1.0
                   minimum_value_of_x: 0.0
               - Curve:Cubic:
-                  name: '{} PTHP Heating Coil EIR-FT'
+                  name: '{} Heating Coil EIR-FT'
                   coefficient1_constant: 1.19248
                   coefficient2_x: -0.0300438
                   coefficient3_x_2: 0.00103745
@@ -1163,7 +1163,7 @@ Objects:
                   maximum_value_of_x: 20.0
                   minimum_value_of_x: -20.0
               - Curve:Cubic:
-                  name: '{} PTHP Heating Coil Cap-FF'
+                  name: '{} Heating Coil Cap-FF'
                   coefficient1_constant: 0.84
                   coefficient2_x: 0.16
                   coefficient3_x_2: 0.0
@@ -1171,7 +1171,7 @@ Objects:
                   maximum_value_of_x: 1.5
                   minimum_value_of_x: 0.5
               - Curve:Cubic:
-                  name: '{} PTHP Heating Coil Cap-FT'
+                  name: '{} Heating Coil Cap-FT'
                   coefficient1_constant: 0.758746
                   coefficient2_x: 0.027626
                   coefficient3_x_2: 0.000148716
@@ -1179,14 +1179,14 @@ Objects:
                   maximum_value_of_x: 20.0
                   minimum_value_of_x: -20.0
               - Curve:Quadratic:
-                  name: '{} PTHP Cooling Coil Cap-FF'
+                  name: '{} Cooling Coil Cap-FF'
                   coefficient1_constant: 0.8
                   coefficient2_x: 0.2
                   coefficient3_x_2: 0
                   maximum_value_of_x: 1.5
                   minimum_value_of_x: 0.5
               - Curve:Quadratic:
-                  name: '{} PTHP Heating Coil PLF'
+                  name: '{} Heating Coil PLF'
                   coefficient1_constant: 0.75
                   coefficient2_x: 0.25
                   coefficient3_x_2: 0.0
@@ -1201,18 +1201,18 @@ Objects:
             Fields:
               <<: *CoilHeatingFields
               defrost_control: '{heat_pump_defrost_control}'
-              defrost_energy_input_ratio_function_of_temperature_curve_name: '{} PTHP Heating Coil DefrEIR-FT'
+              defrost_energy_input_ratio_function_of_temperature_curve_name: '{} Heating Coil DefrEIR-FT'
               defrost_strategy: '{heat_pump_defrost_strategy}'
               defrost_time_period_fraction: '{heat_pump_defrost_time_period_fraction}'
-              energy_input_ratio_function_of_flow_fraction_curve_name: '{} PTHP Heating Coil EIR-FF'
-              energy_input_ratio_function_of_temperature_curve_name: '{} PTHP Heating Coil EIR-FT'
+              energy_input_ratio_function_of_flow_fraction_curve_name: '{} Heating Coil EIR-FF'
+              energy_input_ratio_function_of_temperature_curve_name: '{} Heating Coil EIR-FT'
               gross_rated_heating_capacity: '{heating_coil_gross_rated_capacity}'
               gross_rated_heating_cop: '{heat_pump_heating_coil_gross_rated_cop}'
-              heating_capacity_function_of_flow_fraction_curve_name: '{} PTHP Heating Coil Cap-FF'
-              heating_capacity_function_of_temperature_curve_name: '{} PTHP Heating Coil Cap-FT'
+              heating_capacity_function_of_flow_fraction_curve_name: '{} Heating Coil Cap-FF'
+              heating_capacity_function_of_temperature_curve_name: '{} Heating Coil Cap-FT'
               maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation: 0 # set by legacy, not default
               minimum_outdoor_dry_bulb_temperature_for_compressor_operation: '{heat_pump_heating_minimum_outdoor_dry_bulb_temperature}'
-              part_load_fraction_correlation_curve_name: '{} PTHP Heating Coil PLF'
+              part_load_fraction_correlation_curve_name: '{} Heating Coil PLF'
               rated_air_flow_rate: Autosize # set by legacy, no defaut, required by schema
               resistive_defrost_heater_capacity: Autosize # set by legacy, not default
             Connectors:
