@@ -1229,24 +1229,17 @@ class AirLoopHVACUnitaryObjectType:
 
     def __set__(self, obj, value):
         (template_type, template_structure), = value.items()
-        (_, template_fields), = template_structure.items()
-        cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else True
-        heating_coil_type = None
-        if template_fields.get('heating_coil_type', 'None') in ['Gas', 'Electric']:
-            heating_coil_type = 'Base'
-        elif template_fields.get('heating_coil_type', 'None') in ['SingleSpeedDXHeatPumpAirSource', ]:
-            heating_coil_type = 'HeatPump'
-        elif template_fields.get('heat_pump_heating_coil_type') in ['SingleSpeedDXHeatPump', ]:
-            heating_coil_type = 'HeatPump'
-        supplemental_heating_type = None
-        if template_type == 'HVACTemplate:System:UnitaryHeatPump:AirToAir':
-            supplemental_heating_type = True
-        elif template_type == 'HVACTemplate:System:UnitarySystem':
-            if template_fields.get('supplemental_heating_or_reheat_coil_type', 'None') == 'None':
-                supplemental_heating_type = None
-            else:
-                supplemental_heating_type = True
-        if template_type == 'HVACTemplate:System:Unitary' and cooling_coil_type and heating_coil_type == 'Base':
+        (template_name, template_fields), = template_structure.items()
+        cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
+            template_fields.get('cooling_coil_type')
+        heating_coil_type = None if template_fields.get('heating_coil_type', 'None') == 'None' else \
+            template_fields.get('heating_coil_type')
+        if not heating_coil_type:
+            heating_coil_type = None if template_fields.get('heat_pump_heating_coil_type') == 'None' else \
+                template_fields.get('heat_pump_heating_coil_type')
+        supplemental_heating_type = None if template_fields.get('supplemental_heating_or_reheat_coil_type', 'None') == \
+            'None' else True
+        if template_type == 'HVACTemplate:System:Unitary' and cooling_coil_type and heating_coil_type:
             obj._airloop_hvac_unitary_object_type = 'Furnace:HeatCool'
         elif template_type == 'HVACTemplate:System:UnitaryHeatPump:AirToAir':
             obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
