@@ -247,7 +247,7 @@ Objects:
             BuildPathReference:
               Location: Fan:.*
               ValueLocation: self
-          supply_air_fan_operating_mode_schedule_name: '{supply_air_fan_operating_mode_schedule_name}'
+          supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
       Base: &AirLoopHVACUnitarySystemSuperObject
         Fields:
           name: '{} Unitary System'
@@ -270,6 +270,17 @@ Objects:
               Location: Coil:Heating.*
               Occurrence: -1
               ValueLocation: self
+        Connectors:
+          AirLoop: False
+      MultiSpeedDX: &AirLoopHVACUnitarySystemMultiSpeedDXSuperObject
+        Fields:
+          name: '{} Unitary System'
+          <<: *AirLoopHVACUnitaryCommonFields
+          <<: *AirLoopHVACUnitarySystemCommonObjects
+          design_specification_multispeed_object_name:
+            UnitarySystemPerformance.*: key
+          design_specification_multispeed_object_type:
+            UnitarySystemPerformance.*: self
         Connectors:
           AirLoop: False
   AirTerminal:
@@ -2060,6 +2071,36 @@ Objects:
           design_loop_exit_temperature: '{high_temperature_design_setpoint}'
           loop_design_temperature_difference: '{loop_design_delta_temperature}'
           loop_type: Heating
+  UnitarySystemPerformance:
+    Multispeed:
+      Base:
+        Fields: &UnitarySystemPerformanceMultispeedFields
+          name: '{} MultiSpeed Performance'
+          flow_ratios:
+            - cooling_speed_supply_air_flow_ratio: Autosize
+              heating_speed_supply_air_flow_ratio: Autosize
+            - cooling_speed_supply_air_flow_ratio: Autosize
+              heating_speed_supply_air_flow_ratio: Autosize
+            - cooling_speed_supply_air_flow_ratio: Autosize
+              heating_speed_supply_air_flow_ratio: Autosize
+            - cooling_speed_supply_air_flow_ratio: Autosize
+              heating_speed_supply_air_flow_ratio: Autosize
+            - cooling_speed_supply_air_flow_ratio: Autosize
+              heating_speed_supply_air_flow_ratio: Autosize
+            - cooling_speed_supply_air_flow_ratio: Autosize
+              heating_speed_supply_air_flow_ratio: Autosize
+            - cooling_speed_supply_air_flow_ratio: Autosize
+              heating_speed_supply_air_flow_ratio: Autosize
+            - cooling_speed_supply_air_flow_ratio: Autosize
+              heating_speed_supply_air_flow_ratio: Autosize
+            - cooling_speed_supply_air_flow_ratio: Autosize
+              heating_speed_supply_air_flow_ratio: Autosize
+            - cooling_speed_supply_air_flow_ratio: Autosize
+              heating_speed_supply_air_flow_ratio: Autosize
+          no_load_supply_air_flow_rate_ratio: '1/{number_of_speeds_for_cooling}'
+          number_of_speeds_for_cooling: '{number_of_speeds_for_cooling}'
+          number_of_speeds_for_heating: '{number_of_speeds_or_stages_for_heating}'
+          single_mode_operation: 'No'
   ZoneHVAC:
     Common:
       ZoneEquipment:
@@ -3483,6 +3524,14 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemWithSupplementalSuperObject
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
+                HeatPump:AirToAirMultiSpeedDX:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    - UnitarySystemPerformance:Multispeed: *UnitarySystemPerformanceMultispeedFields
+                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemMultiSpeedDXSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitions
         BaseObjects: *SystemUnitaryBaseObjects
         TemplateObjects: *SystemCommonTemplateObjects
