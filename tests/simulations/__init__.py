@@ -163,11 +163,12 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             print('File has incorrect extension {}'.format(file_location))
             sys.exit()
 
-    def perform_full_comparison(self, base_idf_file_path):
+    def perform_full_comparison(self, base_idf_file_path, warning_check=True):
         """
         Simulate and compare two files where only the objects controlling output data are manipulated.
         Due to conversion issues within EnergyPlus, the baseline file must be simulated as an idf.
         :param base_idf_file_path: idf file location containing HVACTemplate:.* objects
+        :param warning_check: boolean to indicate whether to check warnings or not.
         :return: None.  Assertions performed within function.
         """
         # move file to testing directory manually, shutil does not work reliably for some reason
@@ -197,16 +198,17 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 epjson=output_epjson,
                 file_name='test_input_epjson.epJSON')
             # check outputs
-            self.perform_comparison([base_idf_file_path, test_input_file_path])
+            self.perform_comparison([base_idf_file_path, test_input_file_path], warning_check=warning_check)
         except:
             traceback.print_exc()
             self.assertEqual(1, 0, 'pyExpandObjects process failed to complete')
         return
 
-    def perform_comparison(self, epjson_files):
+    def perform_comparison(self, epjson_files, warning_check=True):
         """
         Simulate and compare epJSON files
         :param epjson_files: input epJSON files to compare
+        :param warning_check: boolean to run warning checks or not
         :return: dictionary of status outputs
         """
         total_energy_outputs = []
@@ -358,8 +360,9 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     "Meter Outputs are not approximately equal:\n{}".format(
                         test_filtered_df.sort_values(['diff', ], ascending=False)))
                 print('Meter Outputs:\n{}'.format(test_df.sort_values(['diff', ])))
-        for warning in status_checks['warning_outputs']:
-            self.assertEqual(warning, max(status_checks['warning_outputs']), 'Unbalanced number of warnings')
+        if warning_check:
+            for warning in status_checks['warning_outputs']:
+                self.assertEqual(warning, max(status_checks['warning_outputs']), 'Unbalanced number of warnings')
         for error in status_checks['error_outputs']:
             self.assertEqual(error, max(status_checks['error_outputs']), 'Unbalanced number of errors')
             self.assertGreaterEqual(error, 0)
@@ -367,7 +370,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             self.assertEqual(1, status, 'Varying status outputs')
         return
 
-    def compare_epjsons(self, epjson_1, epjson_2, exclude_list = ['Schedule:Compact',]):
+    def compare_epjsons(self, epjson_1, epjson_2, exclude_list=['Schedule:Compact', ]):
         """
         Summarize and compare two epJSONs based on object counts.
 

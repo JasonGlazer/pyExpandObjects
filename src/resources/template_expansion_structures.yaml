@@ -109,7 +109,7 @@ Objects:
               - field: Through 12/31
               - field: For AllDays
               - field: Until 24:00
-              - field: '{:.1f}'
+              - field: '{}'
   AirLoopHVAC:
     Base:
       Fields: &AirLoopHVAC
@@ -129,24 +129,64 @@ Objects:
         <<: *AirLoopHVAC
         controller_list_name: *AirLoopHVACWaterControllers
     Unitary:
+      Common:
+        Transitions: &AirLoopHVACUnitaryCommonTransitions
+          - AirLoopHVAC:Unitary.*:
+              heating_supply_air_flow_rate: heating_supply_air_flow_rate
+        Fields: &AirLoopHVACUnitaryCommonFields
+          controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
+          cooling_coil_name:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: 1
+              ValueLocation: key
+          cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
+          cooling_coil_object_type:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: 1
+              ValueLocation: self
+          heating_coil_name:
+            BuildPathReference:
+              Location: Coil:Heating.*
+              Occurrence: 1
+              ValueLocation: key
+          heating_coil_object_type:
+            BuildPathReference:
+              Location: Coil:Heating.*
+              Occurrence: 1
+              ValueLocation: self
+          fan_placement: '{supply_fan_placement}'
+          heating_supply_air_flow_rate: Autosize
+          no_load_supply_air_flow_rate: Autosize
+        HeatPump:
+          Fields: &AirLoopHVACUnitaryCommonHeatPumpFields
+            air_inlet_node_name:
+              BuildPathReference:
+                Location: OutdoorAir:Mixer
+                ValueLocation: Outlet
+            air_outlet_node_name:
+              BuildPathReference:
+                Location: -1
+                ValueLocation: Outlet
+            controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
+            maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: '{supplemental_heating_coil_maximum_outdoor_dry_bulb_temperature}'
+            maximum_supply_air_temperature_from_supplemental_heater: Autosize
+            supply_air_fan_name:
+              BuildPathReference:
+                Location: Fan:.*
+                ValueLocation: key
+            supply_air_fan_object_type:
+              BuildPathReference:
+                Location: Fan:.*
+                ValueLocation: self
+            supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always0
       HeatCool:
         Base: &AirLoopHVACUnitaryHeatCoolSuperObject
           Fields:
             name: '{} Furnace with DX Cooling'
-            controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
-            cooling_coil_name:
-              BuildPathReference:
-                Location: Coil:Cooling.*
-                Occurrence: 1
-                ValueLocation: key
-            cooling_coil_object_type:
-              BuildPathReference:
-                Location: Coil:Cooling.*
-                Occurrence: 1
-                ValueLocation: self
-            cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
+            <<: *AirLoopHVACUnitaryCommonFields
             dehumidification_control_type: '{dehumidification_control_type}'
-            fan_placement: '{supply_fan_placement}'
             furnace_air_inlet_node_name:
               BuildPathReference:
                 Location: OutdoorAir:Mixer
@@ -155,24 +195,96 @@ Objects:
               BuildPathReference:
                 Location: -1
                 ValueLocation: Outlet
-            heating_coil_name:
+            supply_fan_name:
               BuildPathReference:
-                Location: Coil:Heating.*
-                Occurrence: 1
+                Location: Fan:.*
                 ValueLocation: key
-            heating_coil_object_type:
+            supply_fan_object_type:
               BuildPathReference:
-                Location: Coil:Heating.*
-                Occurrence: 1
+                Location: Fan:.*
                 ValueLocation: self
-            heating_supply_air_flow_rate: Autosize
             maximum_supply_air_temperature: 80
-            no_load_supply_air_flow_rate: Autosize
             supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
-            supply_fan_name: '{} Supply Fan'
-            supply_fan_object_type: Fan:OnOff
           Connectors:
             AirLoop: False
+    UnitaryHeatPump:
+      AirToAir:
+        WithSupplemental: &AirLoopHVACUnitaryHeatPumpAirToAirWithSupplementalSuperObject
+          Fields:
+            name: '{} Heat Pump'
+            <<: *AirLoopHVACUnitaryCommonFields
+            <<: *AirLoopHVACUnitaryCommonHeatPumpFields
+            supplemental_heating_coil_name:
+              BuildPathReference:
+                Location: Coil:Heating.*
+                Occurrence: -1
+                ValueLocation: key
+            supplemental_heating_coil_object_type:
+              BuildPathReference:
+                Location: Coil:Heating.*
+                Occurrence: -1
+                ValueLocation: self
+          Connectors:
+            AirLoop: False
+    UnitarySystem:
+      Base: &AirLoopHVACUnitarySystemSuperObject
+        Fields:
+          name: '{} Unitary System'
+          <<: *AirLoopHVACUnitaryCommonFields
+          air_inlet_node_name:
+            BuildPathReference:
+              Location: OutdoorAir:Mixer
+              ValueLocation: Outlet
+          air_outlet_node_name:
+            BuildPathReference:
+              Location: -1
+              ValueLocation: Outlet
+          controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
+          supply_fan_name:
+            BuildPathReference:
+              Location: Fan:.*
+              ValueLocation: key
+          supply_fan_object_type:
+            BuildPathReference:
+              Location: Fan:.*
+              ValueLocation: self
+          supply_air_fan_operating_mode_schedule_name: '{supply_air_fan_operating_mode_schedule_name}'
+        Connectors:
+          AirLoop: False
+      WithSupplemental: &AirLoopHVACUnitarySystemWithSupplementalSuperObject
+        Fields:
+          name: '{} Heat Pump'
+          <<: *AirLoopHVACUnitaryCommonFields
+          air_inlet_node_name:
+            BuildPathReference:
+              Location: OutdoorAir:Mixer
+              ValueLocation: Outlet
+          air_outlet_node_name:
+            BuildPathReference:
+              Location: -1
+              ValueLocation: Outlet
+          controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
+          supplemental_heating_coil_name:
+            BuildPathReference:
+              Location: Coil:Heating.*
+              Occurrence: -1
+              ValueLocation: key
+          supplemental_heating_coil_object_type:
+            BuildPathReference:
+              Location: Coil:Heating.*
+              Occurrence: -1
+              ValueLocation: self
+          supply_fan_name:
+            BuildPathReference:
+              Location: Fan:.*
+              ValueLocation: key
+          supply_fan_object_type:
+            BuildPathReference:
+              Location: Fan:.*
+              ValueLocation: self
+          supply_air_fan_operating_mode_schedule_name: '{supply_air_fan_operating_mode_schedule_name}'
+        Connectors:
+          AirLoop: False
   AirTerminal:
     SingleDuct:
       Common:
@@ -284,34 +396,57 @@ Objects:
                   Boiler.*: boiler_water_outlet_node_name
     HotWater:
       Common:
-        Objects: &BoilerHotWaterCommonObjects
-          - Curve:Quadratic:
-              name: '{} Efficiency Curve'
-              coefficient1_constant: 0.97
-              coefficient2_x: 0.0633
-              coefficient3_x_2: -0.0333
-              maximum_value_of_x: 1.0
-              minimum_value_of_x: 0.0
         Transitions: &BoilerHotWaterCommonTransitions
           - Boiler:.*:
               capacity: nominal_capacity
               maximum_part_load_ratio: maximum_part_load_ratio
-      Base:
-        Fields: &BoilerHotWaterFields
-          name: '{}'
+        Fields: &BoilerHotWaterCommonFields
+          boiler_flow_mode: ConstantFlow # set by legacy, not reachable by template, not object default
           boiler_water_inlet_node_name: '{} HW Inlet' # required by schema
           boiler_water_outlet_node_name: '{} HW Outlet' # required by schema
-          boiler_flow_mode: ConstantFlow # set by legacy, not reachable by template, not object default
-          efficiency_curve_temperature_evaluation_variable: LeavingBoiler # set by legacy, no default
           fuel_type: '{fuel_type}' # required by schema
-          minimum_part_load_ratio: '{minimum_part_load_ratio}'
           maximum_part_load_ratio: 1.1 # template default, not object default
-          nominal_thermal_efficiency: '{efficiency}' # required by schema
+          minimum_part_load_ratio: '{minimum_part_load_ratio}'
           nominal_capacity: Autosize # template default
-          normalized_boiler_efficiency_curve_name: '{} Efficiency Curve'
+          nominal_thermal_efficiency: '{efficiency}' # required by schema
           optimum_part_load_ratio: '{optimum_part_load_ratio}'
           sizing_factor: '{sizing_factor}'
           water_outlet_upper_temperature_limit: '{water_outlet_upper_temperature_limit}'
+      Base:
+        Common:
+          Objects: &BoilerHotWaterCommonObjects
+            - Curve:Quadratic:
+                name: '{} Efficiency Curve'
+                coefficient1_constant: 0.97
+                coefficient2_x: 0.0633
+                coefficient3_x_2: -0.0333
+                maximum_value_of_x: 1.0
+                minimum_value_of_x: 0.0
+        Fields: &BoilerHotWaterFields
+          name: '{}'
+          <<: *BoilerHotWaterCommonFields
+          efficiency_curve_temperature_evaluation_variable: LeavingBoiler # set by legacy, no default
+          normalized_boiler_efficiency_curve_name: '{} Efficiency Curve'
+      CondensingBoiler:
+        Common:
+          Objects: &BoilerHotWaterCondensingBoilerCommonObjects
+            - Curve:Biquadratic:
+                name: '{} Condensing Boiler Efficiency Curve'
+                coefficient1_constant: 1.124970374
+                coefficient2_x: 0.014963852
+                coefficient3_x_2: -0.02599835
+                coefficient4_y: 0.0
+                coefficient5_y_2: -1.40464e-06
+                coefficient6_x_y: -0.00153624
+                maximum_value_of_x: 1.0
+                maximum_value_of_y: 85.0
+                minimum_value_of_x: 0.1
+                minimum_value_of_y: 30.0
+        Fields: &BoilerHotWaterCondensingBoilerFields
+          name: '{}'
+          <<: *BoilerHotWaterCommonFields
+          efficiency_curve_temperature_evaluation_variable: EnteringBoiler # set by legacy, no default
+          normalized_boiler_efficiency_curve_name": '{} Condensing Boiler Efficiency Curve'
   Chiller:
     Electric:
       Common:
@@ -409,11 +544,10 @@ Objects:
         Transitions: &CoilCoolingCommonTransitions
           - ^Coil:Cooling:Water($|:DetailedGeometry)+:
               cooling_coil_availability_schedule_name: availability_schedule_name
-      Base:
-        Fields: &CoilCoolingFields
-          name: '{} Cooling Coil'
-          air_inlet_node_name: '{} Cooling Coil Inlet' # required by schema
-          air_outlet_node_name: '{} Cooling Coil Outlet' # required by schema
+      Fields: &CoilCoolingCommonFields
+        name: '{} Cooling Coil'
+        air_inlet_node_name: '{} Cooling Coil Inlet' # required by schema
+        air_outlet_node_name: '{} Cooling Coil Outlet' # required by schema
       DX:
         SingleSpeed:
           Common:
@@ -421,28 +555,28 @@ Objects:
               - OutdoorAir:Node:
                   name: '{} Cooling Coil Condenser Inlet'
               - Curve:Quadratic:
-                  name: '{} DX Coil EIR-FF'
+                  name: '{} Cool DX Coil EIR-FF'
                   coefficient1_constant: 1.1552
                   coefficient2_x: -0.1808
                   coefficient3_x_2: 0.0256
                   maximum_value_of_x: 1.5
                   minimum_value_of_x: 0.5
               - Curve:Quadratic:
-                  name: '{} DX Coil PLF'
+                  name: '{} Cool DX Coil PLF'
                   coefficient1_constant: 0.85
                   coefficient2_x: 0.15
                   coefficient3_x_2: 0
                   maximum_value_of_x: 1
                   minimum_value_of_x: 0
               - Curve:Quadratic:
-                  name: '{} DX Coil Cap-FF'
+                  name: '{} Cool DX Coil Cap-FF'
                   coefficient1_constant: 0.8
                   coefficient2_x: 0.2
                   coefficient3_x_2: 0
                   maximum_value_of_x: 1.5
                   minimum_value_of_x: 0.5
               - Curve:Biquadratic:
-                  name: '{} DX Coil EIR-FT'
+                  name: '{} Cool DX Coil EIR-FT'
                   coefficient1_constant: 0.342414409
                   coefficient2_x: 0.034885008
                   coefficient3_x_2: -0.0006237
@@ -454,7 +588,7 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 18.0
               - Curve:Biquadratic:
-                  name: '{} DX Coil Cap-FT'
+                  name: '{} Cool DX Coil Cap-FT'
                   coefficient1_constant: 0.942587793
                   coefficient2_x: 0.009543347
                   coefficient3_x_2: 0.00068377
@@ -465,30 +599,37 @@ Objects:
                   maximum_value_of_y: 46.11111
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 18.0
+            Transitions: &CoilCoolingDXSingleSpeedCommonTransitions
+              - Coil:Cooling:DX.*:
+                  dx_cooling_coil_gross_rated_cop: gross_rated_cooling_cop
+                  dx_cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
+                  dx_cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
+                  supply_air_maximum_flow_rate: rated_air_flow_rate
+              - Coil:Cooling:DX.*:
+                  cooling_supply_air_flow_rate: rated_air_flow_rate
           Base: &CoilCoolingDXSingleSpeedSuperObject
             Fields:
-              <<: *CoilCoolingFields
+              <<: *CoilCoolingCommonFields
               condenser_air_inlet_node_name: '{} Cooling Coil Condenser Inlet'
               crankcase_heater_capacity: 0
-              energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-              energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil EIR-FT'
+              energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool DX Coil EIR-FF'
+              energy_input_ratio_function_of_temperature_curve_name: '{} Cool DX Coil EIR-FT'
               evaporative_condenser_effectiveness: 0
               gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop}'
               gross_rated_sensible_heat_ratio: '{cooling_coil_gross_rated_sensible_heat_ratio}'
               gross_rated_total_cooling_capacity: '{cooling_coil_gross_rated_total_capacity}'
               maximum_cycling_rate: 0
-              maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation: 10
-              part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
-              rated_air_flow_rate: '{supply_fan_maximum_flow_rate}'
-              total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-              total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Cap-FT'
+              part_load_fraction_correlation_curve_name: '{} Cool DX Coil PLF'
+              rated_air_flow_rate: Autosize
+              total_cooling_capacity_function_of_flow_fraction_curve_name: '{} Cool DX Coil Cap-FF'
+              total_cooling_capacity_function_of_temperature_curve_name: '{} Cool DX Coil Cap-FT'
             Connectors:
               AirLoop: *ConnectorsAirLoop
         TwoSpeed:
           Common:
             Objects: &CoilCoolingDXTwoSpeedCommonObjects
               - Curve:Biquadratic:
-                  name: '{} DX Coil EIR-FT'
+                  name: '{} Cool DX Coil EIR-FT'
                   coefficient1_constant: 0.632475
                   coefficient2_x: -0.0121321
                   coefficient3_x_2: 0.000507773
@@ -500,7 +641,7 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 23.88889
               - Curve:Biquadratic:
-                  name: '{} DX Coil Cap-FT'
+                  name: '{} Cool DX Coil Cap-FT'
                   coefficient1_constant: 0.476428
                   coefficient2_x: 0.0401147
                   coefficient3_x_2: 0.000226411
@@ -512,7 +653,7 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 23.88889
               - Curve:Biquadratic:
-                  name: '{} DX Coil Low EIR-FT'
+                  name: '{} Cool DX Coil Low EIR-FT'
                   coefficient1_constant: 0.774645
                   coefficient2_x: -0.0343731
                   coefficient3_x_2: 0.000783173
@@ -524,7 +665,7 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 23.88889
               - Curve:Biquadratic:
-                  name: '{} DX Coil Low Cap-FT'
+                  name: '{} Cool DX Coil Low Cap-FT'
                   coefficient1_constant: 0.476428
                   coefficient2_x: 0.0401147
                   coefficient3_x_2: 0.000226411
@@ -536,7 +677,7 @@ Objects:
                   minimum_value_of_x: 12.77778
                   minimum_value_of_y: 23.88889
               - Curve:Cubic:
-                  name: '{} DX Coil EIR-FF'
+                  name: '{} Cool DX Coil EIR-FF'
                   coefficient1_constant: 1.0079484
                   coefficient2_x: 0.34544129
                   coefficient3_x_2: -0.6922891
@@ -544,7 +685,7 @@ Objects:
                   maximum_value_of_x: 1.5
                   minimum_value_of_x: 0.5
               - Curve:Cubic:
-                  name: '{} DX Coil Cap-FF'
+                  name: '{} Cool DX Coil Cap-FF'
                   coefficient1_constant: 0.47278589
                   coefficient2_x: 1.2433415
                   coefficient3_x_2: -1.0387055
@@ -552,7 +693,7 @@ Objects:
                   maximum_value_of_x: 1.5
                   minimum_value_of_x: 0.5
               - Curve:Quadratic:
-                  name: '{} DX Coil PLF'
+                  name: '{} Cool DX Coil PLF'
                   coefficient1_constant: 0.85
                   coefficient2_x: 0.15
                   coefficient3_x_2: 0.0
@@ -564,22 +705,290 @@ Objects:
                   cooling_coil_gross_rated_sensible_heat_ratio: high_speed_rated_sensible_heat_ratio
           Base: &CoilCoolingDXTwoSpeedSuperObject
             Fields:
-              <<: *CoilCoolingFields
-              energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-              energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil EIR-FT'
+              <<: *CoilCoolingCommonFields
+              energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool DX Coil EIR-FF'
+              energy_input_ratio_function_of_temperature_curve_name: '{} Cool DX Coil EIR-FT'
               high_speed_gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop}'
               high_speed_gross_rated_total_cooling_capacity: Autosize # set by legacy, no default, required by template
               high_speed_rated_air_flow_rate: Autosize # set by legacy, no default, required by template
               high_speed_rated_sensible_heat_ratio: Autosize # set by legacy, no default, required by template
-              low_speed_energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Low EIR-FT'
+              low_speed_energy_input_ratio_function_of_temperature_curve_name: '{} Cool DX Coil Low EIR-FT'
               low_speed_gross_rated_cooling_cop: 4.5 # set by legacy, not object default, not reachable from template
               low_speed_gross_rated_sensible_heat_ratio: Autosize # set by legacy, no default, required by template
               low_speed_gross_rated_total_cooling_capacity: Autosize # set by legacy, no default, required by template
               low_speed_rated_air_flow_rate: Autosize # set by legacy, no default, required by template
-              low_speed_total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Low Cap-FT'
-              part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
-              total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-              total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Cap-FT'
+              low_speed_total_cooling_capacity_function_of_temperature_curve_name: '{} Cool DX Coil Low Cap-FT'
+              part_load_fraction_correlation_curve_name: '{} Cool DX Coil PLF'
+              total_cooling_capacity_function_of_flow_fraction_curve_name: '{} Cool DX Coil Cap-FF'
+              total_cooling_capacity_function_of_temperature_curve_name: '{} Cool DX Coil Cap-FT'
+            Connectors:
+              AirLoop: *ConnectorsAirLoop
+        MultiSpeed:
+          Common:
+            Objects: &CoilCoolingDXMultiSpeedCommonObjects
+              - Curve:Cubic:
+                  name: '{} Cool Coil EIR-FF'
+                  coefficient1_constant: 0.47278589
+                  coefficient2_x: 1.2433415
+                  coefficient3_x_2: -1.0387055
+                  coefficient4_x_3: 0.32257813
+                  maximum_value_of_x: 1.5
+                  minimum_value_of_x: 0.5
+              - Curve:Biquadratic:
+                  name: '{} Cool Coil EIR-FT'
+                  coefficient1_constant: 0.632475
+                  coefficient2_x: -0.0121321
+                  coefficient3_x_2: 0.000507773
+                  coefficient4_y: 0.0155377
+                  coefficient5_y_2: 0.00027284
+                  coefficient6_x_y: -0.000679201
+                  input_unit_type_for_x: Temperature
+                  input_unit_type_for_y: Temperature
+                  maximum_curve_output: 5.0
+                  maximum_value_of_x: 50.0
+                  maximum_value_of_y: 50.0
+                  minimum_curve_output: 0.0
+                  minimum_value_of_x: 0.0
+                  minimum_value_of_y: 0.0
+                  output_unit_type: Dimensionless
+              - Curve:Quadratic:
+                  name: '{} Cool Coil PLF'
+                  coefficient1_constant: 0.85
+                  coefficient2_x: 0.15
+                  coefficient3_x_2: 0
+                  maximum_value_of_x: 1
+                  minimum_value_of_x: 0
+              - Curve:Cubic:
+                  name: '{} Cool Coil Cap-FF'
+                  coefficient1_constant: 0.47278589
+                  coefficient2_x: 1.2433415
+                  coefficient3_x_2: -1.0387055
+                  coefficient4_x_3: 0.32257813
+                  maximum_value_of_x: 1.5
+                  minimum_value_of_x: 0.5
+              - Curve:Biquadratic:
+                  name: '{} Cool Coil WH-FT'
+                  coefficient1_constant: 1.0
+                  coefficient2_x: 0.0
+                  coefficient3_x_2: 0.0
+                  coefficient4_y: 0.0
+                  coefficient5_y_2: 0.0
+                  coefficient6_x_y: 0.0
+                  input_unit_type_for_x: Temperature
+                  input_unit_type_for_y: Temperature
+                  maximum_value_of_x: 50
+                  maximum_value_of_y: 50
+                  minimum_value_of_x: 0
+                  minimum_value_of_y: 0
+                  output_unit_type: Dimensionless
+              - Curve:Quadratic:
+                  name: '{} Cool Coil PLF'
+                  coefficient1_constant: 0.85
+                  coefficient2_x: 0.15
+                  coefficient3_x_2: 0
+                  maximum_value_of_x: 1
+                  minimum_value_of_x: 0
+              - Curve:Biquadratic:
+                  name: '{} Cool Coil Cap-FT'
+                  coefficient1_constant: 0.476428
+                  coefficient2_x: 0.0401147
+                  coefficient3_x_2: 0.000226411
+                  coefficient4_y: -0.000827136
+                  coefficient5_y_2: -7.3224e-06
+                  coefficient6_x_y: -0.000446278
+                  input_unit_type_for_x: Temperature
+                  input_unit_type_for_y: Temperature
+                  maximum_curve_output: 5.0
+                  maximum_value_of_x: 50.0
+                  maximum_value_of_y: 50.0
+                  minimum_curve_output: 0.0
+                  minimum_value_of_x: 0.0
+                  minimum_value_of_y: 0.0
+                  output_unit_type: Dimensionless
+            Transitions: &CoilCoolingDXMultiSpeedCommonTransitions
+              - Coil:Cooling:DX:MultiSpeed:
+                  dx_cooling_coil_gross_rated_sensible_heat_ratio: speed_1_gross_rated_sensible_heat_ratio # todo_eo: need to test this
+                  dx_cooling_coil_gross_rated_total_capacity: speed_1_gross_rated_total_cooling_capacity # todo_eo: need to test this
+              - Coil:Cooling:DX:MultiSpeed:
+                  dx_cooling_coil_gross_rated_sensible_heat_ratio: speed_2_gross_rated_sensible_heat_ratio # todo_eo: need to test this
+                  dx_cooling_coil_gross_rated_total_capacity: speed_2_gross_rated_total_cooling_capacity # todo_eo: need to test this
+              - Coil:Cooling:DX:MultiSpeed:
+                  dx_cooling_coil_gross_rated_sensible_heat_ratio: speed_3_gross_rated_sensible_heat_ratio # todo_eo: need to test this
+                  dx_cooling_coil_gross_rated_total_capacity: speed_3_gross_rated_total_cooling_capacity # todo_eo: need to test this
+          Base: &CoilCoolingDXMultiSpeedSuperObject
+            Fields:
+              <<: *CoilCoolingCommonFields
+              condenser_air_inlet_node_name: '{} Cooling Coil Condenser Inlet'
+              fuel_type: Electricity
+              number_of_speeds: '{number_of_speeds_for_cooling}'
+              speed_1_energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool Coil EIR-FF'
+              speed_1_energy_input_ratio_function_of_temperature_curve_name: '{} Cool Coil EIR-FT'
+              speed_1_gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
+              speed_1_gross_rated_sensible_heat_ratio: Autosize
+              speed_1_gross_rated_total_cooling_capacity: Autosize
+              speed_1_part_load_fraction_correlation_curve_name: '{} Cool Coil PLF'
+              speed_1_rated_air_flow_rate: Autosize
+              speed_1_total_cooling_capacity_function_of_flow_fraction_curve_name: '{} Cool Coil Cap-FF'
+              speed_1_total_cooling_capacity_function_of_temperature_curve_name: '{} Cool Coil Cap-FT'
+              speed_1_waste_heat_function_of_temperature_curve_name: '{} Cool Coil WH-FT'
+              speed_2_energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool Coil EIR-FF'
+              speed_2_energy_input_ratio_function_of_temperature_curve_name: '{} Cool Coil EIR-FT'
+              speed_2_gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}' # todo_eo: need to test this
+              speed_2_gross_rated_sensible_heat_ratio: Autosize
+              speed_2_gross_rated_total_cooling_capacity: Autosize
+              speed_2_part_load_fraction_correlation_curve_name: '{} Cool Coil PLF'
+              speed_2_rated_air_flow_rate: Autosize
+              speed_2_total_cooling_capacity_function_of_flow_fraction_curve_name: '{} Cool Coil Cap-FF'
+              speed_2_total_cooling_capacity_function_of_temperature_curve_name: '{} Cool Coil Cap-FT'
+              speed_2_waste_heat_function_of_temperature_curve_name: '{} Cool Coil WH-FT'
+              speed_3_energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool Coil EIR-FF'
+              speed_3_energy_input_ratio_function_of_temperature_curve_name: '{} Cool Coil EIR-FT'
+              speed_3_gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}' # todo_eo: need to test this
+              speed_3_gross_rated_sensible_heat_ratio: Autosize
+              speed_3_gross_rated_total_cooling_capacity: Autosize
+              speed_3_part_load_fraction_correlation_curve_name: '{} Cool Coil PLF'
+              speed_3_rated_air_flow_rate: Autosize
+              speed_3_total_cooling_capacity_function_of_flow_fraction_curve_name: '{} Cool Coil Cap-FF'
+              speed_3_total_cooling_capacity_function_of_temperature_curve_name: '{} Cool Coil Cap-FT'
+              speed_3_waste_heat_function_of_temperature_curve_name: '{} Cool Coil WH-FT'
+            Connectors:
+              AirLoop: *ConnectorsAirLoop
+        TwoStageWithHumidityControlMode:
+          Common:
+            Objects: &CoilCoolingDXTwoStageWithHumidityControlModeCommonObjects
+              - Curve:Biquadratic:
+                  name: '{} DX Coil Dehum EIR-FT'
+                  coefficient1_constant: 0.435347586
+                  coefficient2_x: 0.004015641
+                  coefficient3_x_2: 0.000604235
+                  coefficient4_y: 0.015824043
+                  coefficient5_y_2: 0.000747287
+                  coefficient6_x_y: -0.001779745
+                  maximum_value_of_x: 100
+                  maximum_value_of_y: 100
+                  minimum_value_of_x: -100
+                  minimum_value_of_y: -100
+              - Curve:Quadratic:
+                  name: '{} DX Coil EIR-FF'
+                  coefficient1_constant: 1.1552
+                  coefficient2_x: -0.1808
+                  coefficient3_x_2: 0.0256
+                  maximum_value_of_x: 1.5
+                  minimum_value_of_x: 0.5
+              - Curve:Quadratic:
+                  name: '{} DX Coil PLF'
+                  coefficient1_constant: 0.85
+                  coefficient2_x: 0.15
+                  coefficient3_x_2: 0.0
+                  maximum_value_of_x: 1.0
+                  minimum_value_of_x: 0.0
+              - Curve:Quadratic:
+                  name: '{} DX Coil Cap-FF'
+                  coefficient1_constant: 0.8
+                  coefficient2_x: 0.2
+                  coefficient3_x_2: 0.0
+                  maximum_value_of_x: 1.5
+                  minimum_value_of_x: 0.5
+              - Curve:Biquadratic:
+                  name: '{} DX Coil Dehum Cap-FT'
+                  coefficient1_constant: 0.596779741
+                  coefficient2_x: 0.034216637
+                  coefficient3_x_2: 0.000113924
+                  coefficient4_y: -0.00375859
+                  coefficient5_y_2: -9.17495e-05
+                  coefficient6_x_y: -8.98373e-05
+                  maximum_value_of_x: 100
+                  maximum_value_of_y: 100
+                  minimum_value_of_x: -100
+                  minimum_value_of_y: -100
+              - Curve:Biquadratic:
+                  name: '{} DX Coil Std EIR-FT'
+                  coefficient1_constant: 0.174059889
+                  coefficient2_x: 0.022281508
+                  coefficient3_x_2: -0.000134077
+                  coefficient4_y: 0.028298025
+                  coefficient5_y_2: 0.0004851
+                  coefficient6_x_y: -0.001677095
+                  maximum_value_of_x: 100
+                  maximum_value_of_y: 100
+                  minimum_value_of_x: -100
+                  minimum_value_of_y: -100
+              - Curve:Biquadratic:
+                  name: '{} DX Coil Std Cap-FT'
+                  coefficient1_constant: 1.067939449
+                  coefficient2_x: -0.031261829
+                  coefficient3_x_2: 0.001974308
+                  coefficient4_y: -0.002726426
+                  coefficient5_y_2: -5.52654e-05
+                  coefficient6_x_y: -6.31169e-05
+                  maximum_value_of_x: 100
+                  maximum_value_of_y: 100
+                  minimum_value_of_x: -100
+                  minimum_value_of_y: -100
+              - CoilPerformance:DX:Cooling:
+                  name: '{} Dehumid Perf 1+2'
+                  energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
+                  energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Dehum EIR-FT'
+                  gross_rated_cooling_cop: '0.9 * {dx_cooling_coil_gross_rated_cop}'
+                  gross_rated_sensible_heat_ratio: Autosize
+                  gross_rated_total_cooling_capacity: Autosize
+                  part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
+                  rated_air_flow_rate: Autosize
+                  total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
+                  total_cooling_capacity_function_of_temperature_curve_name: "{} DX Coil Dehum Cap-FT"
+              - CoilPerformance:DX:Cooling:
+                  name: '{} Dehumid Perf 1'
+                  energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
+                  energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Dehum EIR-FT'
+                  fraction_of_air_flow_bypassed_around_coil: 0.5 # set by legacy, not default
+                  gross_rated_cooling_cop: '0.9 * {dx_cooling_coil_gross_rated_cop}'
+                  gross_rated_sensible_heat_ratio: Autosize
+                  gross_rated_total_cooling_capacity: Autosize
+                  part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
+                  rated_air_flow_rate: Autosize
+                  total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
+                  total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Dehum Cap-FT'
+              - CoilPerformance:DX:Cooling:
+                  name: '{} Standard Perf 1+2'
+                  energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
+                  energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Std EIR-FT'
+                  gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
+                  gross_rated_sensible_heat_ratio: Autosize
+                  gross_rated_total_cooling_capacity: Autosize
+                  part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
+                  rated_air_flow_rate: Autosize
+                  total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
+                  total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Std Cap-FT'
+              - CoilPerformance:DX:Cooling:
+                  name: '{} Standard Perf 1'
+                  energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
+                  energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Std EIR-FT'
+                  fraction_of_air_flow_bypassed_around_coil: 0.5 # set by legacy, not default
+                  gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
+                  gross_rated_sensible_heat_ratio: Autosize
+                  gross_rated_total_cooling_capacity: Autosize
+                  part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
+                  rated_air_flow_rate: Autosize
+                  total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
+                  total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Std Cap-FT'
+            Transitions: &CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
+              - CoilPerformance:DX:Cooling:
+                  dx_cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
+                  dx_cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
+                  supply_fan_flow_rate: rated_air_flow_rate
+          Base: &CoilCoolingDXTwoStageWithHumidityControlModeSuperObject
+            Fields:
+              <<: *CoilCoolingCommonFields
+              dehumidification_mode_1_stage_1_2_coil_performance_name: '{} Dehumid Perf 1+2'
+              dehumidification_mode_1_stage_1_2_coil_performance_object_type: 'CoilPerformance:DX:Cooling'
+              dehumidification_mode_1_stage_1_coil_performance_name: '{} Dehumid Perf 1'
+              dehumidification_mode_1_stage_1_coil_performance_object_type: 'CoilPerformance:DX:Cooling'
+              normal_mode_stage_1_2_coil_performance_name: '{} Standard Perf 1+2'
+              normal_mode_stage_1_2_coil_performance_object_type: 'CoilPerformance:DX:Cooling'
+              normal_mode_stage_1_coil_performance_name: "DOAS Standard Perf 1"
+              normal_mode_stage_1_coil_performance_object_type: "CoilPerformance:DX:Cooling"
+              number_of_capacity_stages: 2
+              number_of_enhanced_dehumidification_modes: 1
             Connectors:
               AirLoop: *ConnectorsAirLoop
       Water:
@@ -598,18 +1007,102 @@ Objects:
                       ^Coil:Cooling:Water($|:DetailedGeometry)+: water_outlet_node_name
         Base: &CoolingCoilWaterSuperObject
           Fields: &CoilCoolingWaterFields
-            <<: *CoilCoolingFields
+            <<: *CoilCoolingCommonFields
             heat_exchanger_configuration: CrossFlow # set by legacy, not reachable by template, no default
             type_of_analysis: DetailedAnalysis # set by legacy, not reachable by template, not default
             water_inlet_node_name: '{} Cooling Coil Chw Inlet' # required by schema
             water_outlet_node_name: '{} Cooling Coil Chw Outlet' # required by schema
-          Connectors: &CoilCoolingWaterConnectors
+          Connectors:
             AirLoop: *ConnectorsAirLoop
         DetailedGeometry:
           Fields:
             << : *CoilCoolingWaterFields
           Connectors:
-            << : *CoilCoolingWaterConnectors
+            AirLoop: *ConnectorsAirLoop
+      WaterToAirHeatPump:
+        Common:
+          Objects: &CoilCoolingWaterToAirHeatPumpCommonObjects
+            - Branch:
+                name: '{} WaterSource Cooling Condenser Branch'
+                components:
+                  - component_inlet_node_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: water_inlet_node_name
+                    component_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: key
+                    component_object_type:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: self
+                    component_outlet_node_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: water_outlet_node_name
+        EquationFit:
+          Common:
+            Objects: &CoilCoolingWaterToAirHeatPumpEquationFitCommonObjects
+              - Curve:QuadLinear:
+                  name: '{} WAHP ClgPowCurve'
+                  coefficient1_constant: -3.205409884
+                  coefficient2_w: -0.976409399
+                  coefficient3_x: 3.97892546
+                  coefficient4_y: 0.938181818
+                  coefficient5_z: 0.0
+                  maximum_value_of_w: 100.0
+                  maximum_value_of_x: 100.0
+                  maximum_value_of_y: 100.0
+                  maximum_value_of_z: 100.0
+                  minimum_value_of_w: -100.0
+                  minimum_value_of_x: -100.0
+                  minimum_value_of_y: -100.0
+                  minimum_value_of_z: -100.0
+              - Curve:QuintLinear:
+                  name: '{} WAHP ClgSensCapCurve'
+                  coefficient1_constant: -5.462690012
+                  coefficient2_v: 17.95968138
+                  coefficient3_w: -11.87818402
+                  coefficient4_x: -0.980163419
+                  coefficient5_y: 0.767285761
+                  coefficient6_z: 0.0
+                  maximum_value_of_v: 100.0
+                  maximum_value_of_w: 100.0
+                  maximum_value_of_x: 100.0
+                  maximum_value_of_y: 100.0
+                  maximum_value_of_z: 100.0
+                  minimum_value_of_v: -100.0
+                  minimum_value_of_w: -100.0
+                  minimum_value_of_x: -100.0
+                  minimum_value_of_y: -100.0
+                  minimum_value_of_z: -100.0
+              - Curve:QuadLinear:
+                  name: '{} SnglSpd WAHP ClgTotCapCurve'
+                  coefficient1_constant: -9.149069561
+                  coefficient2_w: 10.87814026
+                  coefficient3_x: -1.718780157
+                  coefficient4_y: 0.746414818
+                  coefficient5_z: 0.0
+                  maximum_value_of_w: 100.0
+                  maximum_value_of_x: 100.0
+                  maximum_value_of_y: 100.0
+                  maximum_value_of_z: 100.0
+                  minimum_value_of_w: -100.0
+                  minimum_value_of_x: -100.0
+                  minimum_value_of_y: -100.0
+                  minimum_value_of_z: -100.0
+          Transitions: &CoilCoolingWaterToAirHeatPumpEquationFitCommonTransitions
+            dx_cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
+            cooling_supply_air_flow_rate: rated_air_flow_rate
+          Base: &CoilCoolingWatertoAirHeatPumpEquationFitSuperObject
+            Fields:
+              <<: *CoilCoolingCommonFields
+              name: '{} Cooling Coil'
+              cooling_power_consumption_curve_name: '{} WAHP ClgPowCurve'
+              gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
+              gross_rated_sensible_cooling_capacity: Autosize
+              gross_rated_total_cooling_capacity: Autosize
+              rated_air_flow_rate: Autosize
+              rated_water_flow_rate: Autosize
+              sensible_cooling_capacity_curve_name: '{} WAHP ClgSensCapCurve'
+              total_cooling_capacity_curve_name: '{} WAHP ClgTotCapCurve'
+              water_inlet_node_name: '{} Cooling Water Inlet' # required by schema
+              water_outlet_node_name: '{} Cooling Water Outlet' # required by schema
+            Connectors:
+              AirLoop: *ConnectorsAirLoop
     Heating:
       Common:
         Transitions: &CoilHeatingCommonTransitions
@@ -629,62 +1122,233 @@ Objects:
               nominal_capacity: Autosize
             Connectors:
               AirLoop: *ConnectorsAirLoop
-        Fuel:
+      DX:
+        SingleSpeed:
           Common:
-            Objects: &CoilHeatingFuelCommonObjects
+            Objects: &CoilHeatingDXSingleSpeedCommonObjects
+              - Curve:Biquadratic:
+                  name: '{} Heating Coil DefrEIR-FT'
+                  coefficient1_constant: 1
+                  coefficient2_x: 0
+                  coefficient3_x_2: 0
+                  coefficient4_y: 0
+                  coefficient5_y_2: 0
+                  coefficient6_x_y: 0
+                  maximum_value_of_x: 50
+                  maximum_value_of_y: 50
+                  minimum_value_of_x: 0
+                  minimum_value_of_y: 0
+              - Curve:Biquadratic:
+                  name: '{} Cooling Coil Cap-FT'
+                  coefficient1_constant: 0.942587793
+                  coefficient2_x: 0.009543347
+                  coefficient3_x_2: 0.00068377
+                  coefficient4_y: -0.011042676
+                  coefficient5_y_2: 5.249e-06
+                  coefficient6_x_y: -9.72e-06
+                  maximum_value_of_x: 23.88889
+                  maximum_value_of_y: 46.11111
+                  minimum_value_of_x: 12.77778
+                  minimum_value_of_y: 18.0
+              - Curve:Quadratic:
+                  name: '{} Heating Coil EIR-FF'
+                  coefficient1_constant: 1.3824
+                  coefficient2_x: -0.4336
+                  coefficient3_x_2: 0.0512
+                  maximum_value_of_x: 1.0
+                  minimum_value_of_x: 0.0
               - Curve:Cubic:
-                  name: '{} Heating Coil PLF-FPLR'
+                  name: '{} Heating Coil EIR-FT'
+                  coefficient1_constant: 1.19248
+                  coefficient2_x: -0.0300438
+                  coefficient3_x_2: 0.00103745
+                  coefficient4_x_3: -2.3328e-05
+                  maximum_value_of_x: 20.0
+                  minimum_value_of_x: -20.0
+              - Curve:Cubic:
+                  name: '{} Heating Coil Cap-FF'
+                  coefficient1_constant: 0.84
+                  coefficient2_x: 0.16
+                  coefficient3_x_2: 0.0
+                  coefficient4_x_3: 0.0
+                  maximum_value_of_x: 1.5
+                  minimum_value_of_x: 0.5
+              - Curve:Cubic:
+                  name: '{} Heating Coil Cap-FT'
+                  coefficient1_constant: 0.758746
+                  coefficient2_x: 0.027626
+                  coefficient3_x_2: 0.000148716
+                  coefficient4_x_3: 3.4992e-06
+                  maximum_value_of_x: 20.0
+                  minimum_value_of_x: -20.0
+              - Curve:Quadratic:
+                  name: '{} Cooling Coil Cap-FF'
                   coefficient1_constant: 0.8
                   coefficient2_x: 0.2
                   coefficient3_x_2: 0
-                  coefficient4_x_3: 0
-                  maximum_value_of_x: 1
-                  minimum_value_of_x: 0
-            Mappings: &CoilHeatingFuelCommonMappings
-              - Coil:Heating:Fuel:
-                  heating_coil_type:
-                    Gas:
-                      fuel_type: NaturalGas
-          Base: &CoilHeatingFuelSuperObject
+                  maximum_value_of_x: 1.5
+                  minimum_value_of_x: 0.5
+              - Curve:Quadratic:
+                  name: '{} Heating Coil PLF'
+                  coefficient1_constant: 0.75
+                  coefficient2_x: 0.25
+                  coefficient3_x_2: 0.0
+                  maximum_value_of_x: 1.0
+                  minimum_value_of_x: 0.0
+            Transitions: &CoilHeatingDXSingleSpeedCommonTransitions
+              - Coil:Heating:DX:SingleSpeed:
+                  heating_supply_air_flow_rate: rated_air_flow_rate
+                  heat_pump_heating_coil_rated_cop: gross_rated_heating_cop # todo_eo: could be combined into one variable
+                  heat_pump_heating_coil_gross_rated_capacity: gross_rated_heating_capacity
+          Base: &CoilHeatingDXSingleSpeedSuperObject
             Fields:
               <<: *CoilHeatingFields
-              burner_efficiency: '{gas_heating_coil_efficiency}'
-              nominal_capacity: '{heating_coil_capacity}'
-              parasitic_electric_load: 0
-              parasitic_fuel_load: 0
-              part_load_fraction_correlation_curve_name: '{} Heating Coil PLF-FPLR'
-              temperature_setpoint_node_name: '{} Heating Coil Outlet'
+              defrost_control: '{heat_pump_defrost_control}'
+              defrost_energy_input_ratio_function_of_temperature_curve_name: '{} Heating Coil DefrEIR-FT'
+              defrost_strategy: '{heat_pump_defrost_strategy}'
+              defrost_time_period_fraction: '{heat_pump_defrost_time_period_fraction}'
+              energy_input_ratio_function_of_flow_fraction_curve_name: '{} Heating Coil EIR-FF'
+              energy_input_ratio_function_of_temperature_curve_name: '{} Heating Coil EIR-FT'
+              gross_rated_heating_capacity: '{heating_coil_gross_rated_capacity}'
+              gross_rated_heating_cop: '{heat_pump_heating_coil_gross_rated_cop}'
+              heating_capacity_function_of_flow_fraction_curve_name: '{} Heating Coil Cap-FF'
+              heating_capacity_function_of_temperature_curve_name: '{} Heating Coil Cap-FT'
+              maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation: 0 # set by legacy, not default
+              minimum_outdoor_dry_bulb_temperature_for_compressor_operation: '{heat_pump_heating_minimum_outdoor_dry_bulb_temperature}'
+              part_load_fraction_correlation_curve_name: '{} Heating Coil PLF'
+              rated_air_flow_rate: Autosize # set by legacy, no defaut, required by schema
+              resistive_defrost_heater_capacity: Autosize # set by legacy, not default
             Connectors:
               AirLoop: *ConnectorsAirLoop
-        Water: &CoilHeatingWaterSuperObject
-          Common:
-            Objects: &CoilHeatingWaterCommonObjects
-              - Branch: &CoilHeatingWaterCommonObjectsBranch
-                  name: '{} Heating Coil Hw Branch'
-                  components:
-                    - component_inlet_node_name:
-                        Coil:Heating:Water: water_inlet_node_name
-                      component_name:
-                        Coil:Heating:Water: key
-                      component_object_type:
-                        Coil:Heating:Water: self
-                      component_outlet_node_name:
-                        Coil:Heating:Water: water_outlet_node_name
-          Fields: &CoilHeatingWaterFields
-            << : *CoilHeatingFields
-            water_inlet_node_name: '{} Heating Coil Hw Inlet' # required by schema
-            water_outlet_node_name: '{} Heating Coil Hw Outlet' # required by schema
-            rated_inlet_air_temperature: 16.6 # set by legacy, default but simulations unstable when omitted
-            rated_inlet_water_temperature: 82.2 # set by legacy, default but simulations unstable when omitted
-            rated_outlet_air_temperature: 32.2 # set by legacy, default but simulations unstable when omitted
-            rated_outlet_water_temperature: 71.1 # set by legacy, default but simulations unstable when omitted
-          Connectors: &CoilHeatingWaterConnectors
+      Fuel:
+        Common:
+          Objects: &CoilHeatingFuelCommonObjects
+            - Curve:Cubic:
+                name: '{} Heating Coil PLF-FPLR'
+                coefficient1_constant: 0.8
+                coefficient2_x: 0.2
+                coefficient3_x_2: 0
+                coefficient4_x_3: 0
+                maximum_value_of_x: 1
+                minimum_value_of_x: 0
+          Transitions: &CoilHeatingFuelCommonTransitions
+            Coil:Heating:Fuel:
+              heating_coil_capacity: nominal_capacity
+          Mappings: &CoilHeatingFuelCommonMappings
+            - Coil:Heating:Fuel:
+                heating_coil_type:
+                  Gas:
+                    fuel_type: NaturalGas
+        Base: &CoilHeatingFuelSuperObject
+          Fields: &CoilHeatingFuelFields
+            <<: *CoilHeatingFields
+            burner_efficiency: '{gas_heating_coil_efficiency}'
+            nominal_capacity: Autosize
+            parasitic_electric_load: 0
+            parasitic_fuel_load: 0
+            part_load_fraction_correlation_curve_name: '{} Heating Coil PLF-FPLR'
+          Connectors:
             AirLoop: *ConnectorsAirLoop
+        NoParentObject: &CoilHeatingFuelNoParentObjectSuperObject
+          Fields:
+            <<: *CoilHeatingFuelFields
+            temperature_setpoint_node_name: '{} Heating Coil Outlet'
+          Connectors:
+            AirLoop: *ConnectorsAirLoop
+      Water: &CoilHeatingWaterSuperObject
+        Common:
+          Objects: &CoilHeatingWaterCommonObjects
+            - Branch: &CoilHeatingWaterCommonObjectsBranch
+                name: '{} Heating Coil Hw Branch'
+                components:
+                  - component_inlet_node_name:
+                      Coil:Heating:Water: water_inlet_node_name
+                    component_name:
+                      Coil:Heating:Water: key
+                    component_object_type:
+                      Coil:Heating:Water: self
+                    component_outlet_node_name:
+                      Coil:Heating:Water: water_outlet_node_name
+        Fields: &CoilHeatingWaterFields
+          << : *CoilHeatingFields
+          water_inlet_node_name: '{} Heating Coil Hw Inlet' # required by schema
+          water_outlet_node_name: '{} Heating Coil Hw Outlet' # required by schema
+          rated_inlet_air_temperature: 16.6 # set by legacy, default but simulations unstable when omitted
+          rated_inlet_water_temperature: 82.2 # set by legacy, default but simulations unstable when omitted
+          rated_outlet_air_temperature: 32.2 # set by legacy, default but simulations unstable when omitted
+          rated_outlet_water_temperature: 71.1 # set by legacy, default but simulations unstable when omitted
+        Connectors:
+          AirLoop: *ConnectorsAirLoop
+      WaterToAirHeatPump:
+        Common:
+          Objects: &CoilHeatingWaterToAirHeatPumpCommonObjects
+            - Branch:
+                name: '{} WaterSource Cooling Condenser Branch'
+                components:
+                  - component_inlet_node_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: water_inlet_node_name
+                    component_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: key
+                    component_object_type:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: self
+                    component_outlet_node_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: water_outlet_node_name
+        EquationFit:
+          Common:
+            Objects: &CoilHeatingWaterToAirHeatPumpEquationFitCommonObjects
+              - Curve:QuadLinear:
+                  name: '{} WAHP ClgPowCurve'
+                  coefficient1_constant: -3.205409884
+                  coefficient2_w: -0.976409399
+                  coefficient3_x: 3.97892546
+                  coefficient4_y: 0.938181818
+                  coefficient5_z: 0.0
+                  maximum_value_of_w: 100.0
+                  maximum_value_of_x: 100.0
+                  maximum_value_of_y: 100.0
+                  maximum_value_of_z: 100.0
+                  minimum_value_of_w: -100.0
+                  minimum_value_of_x: -100.0
+                  minimum_value_of_y: -100.0
+                  minimum_value_of_z: -100.0
+              - Curve:QuadLinear:
+                  name: '{} WAHP HtgPowCurve'
+                  coefficient1_constant: -2.176941116
+                  coefficient2_w: 0.832114286
+                  coefficient3_x: 1.570743399
+                  coefficient4_y: 0.690793651
+                  coefficient5_z: 0.0
+                  maximum_value_of_w: 100.0
+                  maximum_value_of_x: 100.0
+                  maximum_value_of_y: 100.0
+                  maximum_value_of_z: 100.0
+                  minimum_value_of_w: -100.0
+                  minimum_value_of_x: -100.0
+                  minimum_value_of_y: -100.0
+                  minimum_value_of_z: -100.0
+            Transitions: &CoilHeatingWaterToAirHeatPumpEquationFitCommonTransitions
+              - Coil:Heating:WaterToAirHeatPump:EquationFit:
+                  heating_coil_gross_rated_capacity: gross_rated_heating_capacity
+                  heating_supply_air_flow_rate: rated_air_flow_rate
+          Base: &CoilHeatingWaterToAirHeatPumpEquationFitSuperObject
+            Fields:
+              name: '{} Heating Coil'
+              <<: *CoilCoolingCommonFields
+              gross_rated_heating_capacity: Autosize
+              gross_rated_heating_cop: '{heat_pump_heating_coil_gross_rated_cop}'
+              heating_capacity_curve_name: '{} WAHP HtgCapCurve'
+              heating_power_consumption_curve_name: '{} WAHP HtgPowCurve'
+              rated_air_flow_rate: Autosize
+              rated_water_flow_rate: Autosize
+              water_inlet_node_name: '{} Heating Water Inlet' # required by schema
+              water_outlet_node_name: '{} Heating Water Outlet' # required by schema
+            Connectors:
+              AirLoop: *ConnectorsAirLoop
   CoilSystem:
     Cooling:
       DX:
         Base: &CoilSystemCoolingDXSuperObject
-          Fields:
+          Fields: &CoilSystemCoolingDXFields
             name: '{} Cooling System'
             cooling_coil_name:
               BuildPathReference:
@@ -722,8 +1386,8 @@ Objects:
             OutdoorAir:Mixer: outdoor_air_stream_node_name
           economizer_control_type: '{economizer_type}'
           economizer_maximum_limit_dewpoint_temperature: '{economizer_maximum_limit_dewpoint_temperature}'
-          economizer_maximum_limit_dry_bulb_temperature: '{economizer_upper_temperature_limit}'
-          economizer_minimum_limit_dry_bulb_temperature: '{economizer_lower_temperature_limit}'
+          economizer_maximum_limit_dry_bulb_temperature: '{economizer_maximum_limit_dry_bulb_temperature}'
+          economizer_minimum_limit_dry_bulb_temperature: '{economizer_minimum_limit_dry_bulb_temperature}'
           economizer_maximum_limit_enthalpy: '{economizer_upper_enthalpy_limit}'
           maximum_outdoor_air_flow_rate: Autosize # template default, required by schema
           minimum_limit_type: '{minimum_outdoor_air_control_type}'
@@ -791,23 +1455,63 @@ Objects:
                   CoolingTower*: water_inlet_node_name
                 component_outlet_node_name:
                   CoolingTower.*: water_outlet_node_name
+      Fields: &CoolingTowerCommonFields
+        blowdown_calculation_mode: ConcentrationRatio # set by legacy, not reachable from template, no default
+        design_water_flow_rate: Autosize # set by legacy, not reachable from template, no default
+        evaporation_loss_mode: SaturatedExit # set by legacy, not reachable from template, no default
+        free_convection_regime_air_flow_rate: Autocalculate # set by legacy, not reachable from template, not default
+        free_convection_regime_u_factor_times_area_value: Autocalculate # set by legacy, not reachable from template, not default
+        outdoor_air_inlet_node_name: *OutdoorAirInletNodes
+        sizing_factor: '{sizing_factor}'
+        water_inlet_node_name: '{} Inlet' # required by schema
+        water_outlet_node_name: '{} Outlet' # required by schema
     SingleSpeed:
+      Common:
+        Transitions: &CoolingTowerSingleSpeedCommonTransitions
+          - CoolingTower:TwoSpeed:
+              free_convection_capacity: free_convection_capacity
+              high_speed_fan_power: design_fan_power
+        Mappings: &CoolingTowerSingleSpeedCommonMappings
+          - free_convection_capacity:
+              Autosize:
+                free_convection_capacity: Autocalculate
       Base:
         Fields: &CoolingTowerSingleSpeed
           name: '{}'
-          blowdown_calculation_mode: ConcentrationRatio # set by legacy, not reachable from template, no default
+          <<: *CoolingTowerCommonFields
           design_air_flow_rate: Autosize # set by legacy, not reachable from template, no default, required by schema
           design_fan_power: Autosize # set by legacy, not reachable from template, no default, required by schema
           design_u_factor_times_area_value: Autosize # set by legacy, not reachable from template, no default
-          design_water_flow_rate: Autosize # set by legacy, not reachable from template, no default
-          evaporation_loss_mode: SaturatedExit # set by legacy, not reachable from template, no default
           free_convection_capacity: Autocalculate # set by legacy, not reachable from template, no default
-          free_convection_regime_air_flow_rate: Autocalculate # set by legacy, not reachable from template, not default
-          free_convection_regime_u_factor_times_area_value: Autocalculate # set by legacy, not reachable from template, not default
-          outdoor_air_inlet_node_name: *OutdoorAirInletNodes
-          sizing_factor: '{sizing_factor}'
-          water_inlet_node_name: '{} Inlet' # required by schema
-          water_outlet_node_name: '{} Outlet' # required by schema
+    TwoSpeed:
+      Common:
+        Transitions: &CoolingTowerTwoSpeedCommonTransitions
+          - CoolingTower:TwoSpeed:
+              free_convection_capacity: free_convection_nominal_capacity
+              high_speed_fan_power: high_fan_speed_fan_power
+              low_speed_fan_powe": low_fan_speed_fan_power
+              low_speed_nominal_capacity: low_speed_nominal_capacity
+        Mappings: &CoolingTowerTwoSpeedCommonMappings
+          - free_convection_capacity:
+              Autosize:
+                free_convection_capacity: Autocalculate
+          - low_speed_nominal_capacity:
+              Autosize:
+                low_speed_nominal_capacity: Autocalculate
+      Base:
+        Fields: &CoolingTowerTwoSpeed
+          name: '{}'
+          <<: *CoolingTowerCommonFields
+          free_convection_nominal_capacity: Autocalculate
+          high_fan_speed_air_flow_rate: Autosize
+          high_fan_speed_fan_power: Autosize
+          high_fan_speed_u_factor_times_area_value: Autosize
+#          high_speed_nominal_capacity # todo_eo: no transitions or setting since only numeric allowed, not Autosize
+          low_fan_speed_air_flow_rate: Autocalculate
+          low_fan_speed_fan_power: Autocalculate
+          low_fan_speed_u_factor_times_area_value: Autocalculate
+          low_speed_nominal_capacity: Autocalculate
+          performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
   DesignSpecification:
     OutdoorAir:
       Base:
@@ -988,6 +1692,11 @@ Objects:
       <<: *PlantLoopFields
       maximum_loop_temperature: 100 # set by legacy, not reachable from template, no default, required by schema
       minimum_loop_temperature: 10 # set by legacy, not reachable from template, no default, required by schema
+    MixedWater: &PlantLoopMixedWaterFields
+      <<: *PlantLoopFields
+      maximum_loop_temperature: 100 # set by legacy, not reachable from template, no default, required by schema
+      minimum_loop_temperature: 10 # set by legacy, not reachable from template, no default, required by schema
+      plant_loop_demand_calculation_scheme: DualSetpointDeadband
   PlantEquipmentOperation:
     CoolingLoad:
       ChilledWater:
@@ -1157,6 +1866,15 @@ Objects:
                   Location: -1
                   ValueLocation: Outlet
               schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint}'
+      Dehumidification:
+        Base:
+          Fields: &SetpointManagerScheduledDehumidification
+            control_variable: MaximumHumidityRatio
+            schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
+            setpoint_node_or_nodelist_name:
+              BuildPathReference:
+                Location: Coil:Cooling.*
+                ValueLocation: Outlet
       Heating:
         Base:
           Fields: &SetpointManagerScheduledHeating
@@ -1248,6 +1966,12 @@ Objects:
           Alt: &SizingZoneCommonTransitionsAlt
             - Sizing:Zone:
                 cooling_coil_design_setpoint: zone_cooling_design_supply_air_temperature
+          IdealLoads: &SizingZoneCommonTransitionsIdealLoads
+            - Sizing:Zone:
+                minimum_cooling_supply_air_humidity_ratio: zone_cooling_design_supply_air_humidity_ratio
+                minimum_cooling_supply_air_temperature: zone_cooling_design_supply_air_temperature
+                maximum_heating_supply_air_humidity_ratio: zone_heating_design_supply_air_humidity_ratio
+                maximum_heating_supply_air_temperature: zone_heating_design_supply_air_temperature
       Base:
         Fields: &SizingZone
           name: '{} Sizing Zone'
@@ -1315,29 +2039,90 @@ Objects:
             - Sizing:System:
                 cooling_coil_design_setpoint_temperature: central_cooling_design_supply_air_temperature
                 heating_coil_design_setpoint: central_heating_design_supply_air_temperature
-    Base:
-      Fields: &SizingPlant
-        name: '{} Sizing Plant'
-        plant_or_condenser_loop_name: *PlantLoop
-    ChilledWater:
-      Fields: &SizingPlantChilledWater
-        <<: *SizingPlant
-        loop_type: Cooling
-        loop_design_temperature_difference: 6.67
-        design_loop_exit_temperature: '{chilled_water_design_setpoint}'
-    CondenserWater:
-      Fields: &SizingPlantCondenserWater
-        <<: *SizingPlant
-        loop_type: Condenser
-        loop_design_temperature_difference: 5.6
-        design_loop_exit_temperature: 29.4
-    HotWater:
-      Fields: &SizingPlantHotWater
-        <<: *SizingPlant
-        loop_type: Heating
-        loop_design_temperature_difference: 11
-        design_loop_exit_temperature: '{hot_water_design_setpoint}'
+    Plant:
+      Common:
+        Fields: &SizingPlantCommonFields
+          name: '{} Sizing Plant'
+          plant_or_condenser_loop_name: *PlantLoop
+        Transitions: &SizingPlantCommonTransitions
+          - Plant:Sizing:
+              loop_design_delta_temperature: loop_design_temperature_difference
+      ChilledWater:
+        Fields: &SizingPlantChilledWater
+          <<: *SizingPlantCommonFields
+          loop_type: Cooling
+          loop_design_temperature_difference: 6.67
+          design_loop_exit_temperature: '{chilled_water_design_setpoint}'
+      CondenserWater:
+        Fields: &SizingPlantCondenserWater
+          <<: *SizingPlantCommonFields
+          loop_type: Condenser
+          loop_design_temperature_difference: 5.6
+          design_loop_exit_temperature: '{condenser_water_design_setpoint}'
+      HotWater:
+        Fields: &SizingPlantHotWater
+          <<: *SizingPlantCommonFields
+          loop_type: Heating
+          loop_design_temperature_difference: 11
+          design_loop_exit_temperature: '{hot_water_design_setpoint}'
+      MixedWater:
+        Fields: &SizingPlantMixedWater
+          <<: *SizingPlantCommonFields
+          design_loop_exit_temperature: '{high_temperature_design_setpoint}'
+          loop_design_temperature_difference: '{loop_design_delta_temperature}'
+          loop_type: Heating
   ZoneHVAC:
+    Common:
+      ZoneEquipment:
+        Transitions: &ZoneHVACCommonZoneEquipmentTransitions
+          - ZoneHVAC:PackagedTerminal:
+              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
+              heating_supply_air_flow_rate: heating_supply_air_flow_rate
+              supply_fan_operating_mode_schedule_name: supply_air_fan_operating_mode_schedule_name
+        Base:
+          Fields: &ZoneHVACCommonZoneEquipmentFields
+            air_inlet_node_name: *ZoneReturn
+            air_outlet_node_name:
+              BuildPathReference:
+                Location: -1
+                ValueLocation: Outlet
+            outdoor_air_mixer_name:
+              BuildPathReference:
+                Location: OutdoorAir:Mixer
+                Occurrence: -1
+                ValueLocation: key
+            outdoor_air_mixer_object_type:
+              BuildPathReference:
+                Location: OutdoorAir:Mixer
+                Occurrence: -1
+                ValueLocation: self
+            cooling_coil_object_type:
+              BuildPathReference:
+                Location: Coil:Cooling*
+                ValueLocation: self
+            cooling_coil_name:
+              BuildPathReference:
+                Location: Coil:Cooling.*
+                ValueLocation: key
+            heating_coil_object_type:
+              BuildPathReference:
+                Location: Coil:Heating.*
+                ValueLocation: self
+            heating_coil_name:
+              BuildPathReference:
+                Location: Coil:Heating.*
+                ValueLocation: key
+            supply_air_fan_name:
+              BuildPathReference:
+                Location: Fan:.*
+                ValueLocation: key
+            supply_air_fan_object_type:
+              BuildPathReference:
+                Location: Fan:.*
+                ValueLocation: self
+      Packaged:
+        Fields:
+          <<: *ZoneHVACCommonZoneEquipmentFields
     AirDistributionUnit:
       Base:
         Fields: &ZoneHVACAirDistributionUnit
@@ -1386,9 +2171,9 @@ Objects:
         name: '{} Equipment'
         equipment:
           - zone_equipment_object_type:
-              ^ZoneHVAC:(AirDistribution|FourPipe).*: self
+              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|IdealLoads).*: self
             zone_equipment_name:
-              ^ZoneHVAC:(AirDistribution|FourPipe).*: key
+              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|IdealLoads).*: key
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
       WithDOAS: &ZoneHVACEquipmentListWithDOAS
@@ -1399,9 +2184,9 @@ Objects:
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
           - zone_equipment_object_type:
-              ^ZoneHVAC:FourPipe.*: self
+              ^ZoneHVAC:(FourPipe.*|PackagedTerminal.*): self
             zone_equipment_name:
-              ^ZoneHVAC:FourPipe.*: key
+              ^ZoneHVAC:(FourPipe.*|PackagedTerminal.*): key
             zone_equipment_cooling_sequence: 2
             zone_equipment_heating_or_no_load_sequence: 2
       Baseboard: &ZoneHVACEquipmentListBaseBoard
@@ -1460,6 +2245,14 @@ Objects:
         Fields: &ZoneHVACEquipmentConnectionsFieldsAir
           <<: *ZoneHVACEquipmentConnectionsFields
           zone_air_inlet_node_or_nodelist_name: *ZoneSupplyInlet # It might be a good idea to just use the same name for zone and system
+      AirUsingBuildPath:
+        Fields: &ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+          <<: *ZoneHVACEquipmentConnectionsFields
+          zone_air_exhaust_node_or_nodelist_name: *ZoneReturn
+          zone_air_inlet_node_or_nodelist_name:
+            BuildPathReference:
+              Location: -1
+              ValueLocation: Outlet
     FourPipeFanCoil:
       Common:
         Transitions: &ZoneHVACFourPipeFanCoilCommonTransitions
@@ -1468,51 +2261,70 @@ Objects:
       Base:
         Fields: &ZoneHVACFourPipeFanCoil
           name: '{} Fan Coil'
-          air_inlet_node_name: *ZoneReturn
-          air_outlet_node_name: *ZoneSupplyInlet
+          <<: *ZoneHVACCommonZoneEquipmentFields
           availability_schedule_name: '{system_availability_schedule_name}'
           capacity_control_method: ConstantFanVariableFlow # set by legacy, no default
           maximum_cold_water_flow_rate: Autosize # set by legacy, not reachable from template, no object default, required by schema
           maximum_hot_water_flow_rate: Autosize # set by legacy, not reachable from template, no object default, required by schema
           maximum_outdoor_air_flow_rate: Autosize # set by legacy, unreachable from template, required by schema
           maximum_supply_air_flow_rate: Autosize # set by template default, no object default, required by schema
-          outdoor_air_mixer_name:
+    ZoneHVAC:IdealLoadsAirSystem:
+      Base:
+        Fields: &ZoneHVACIdealLoadsAirSystemFields
+          name: '{} Ideal Loads Air System'
+          cooling_limit: '{cooling_limit}'
+          cooling_sensible_heat_ratio: '{cooling_sensible_heat_ratio}'
+          dehumidification_control_type: '{dehumidification_control_type}'
+          demand_controlled_ventilation_type: '{demand_controlled_ventilation_type}'
+          heat_recovery_type: '{heat_recovery_type}'
+          heating_limit: '{heating_limit}'
+          humidification_control_type: '{humidification_control_type}'
+          latent_heat_recovery_effectiveness: '{latent_heat_recovery_effectiveness}'
+          maximum_cooling_air_flow_rate: '{maximum_cooling_air_flow_rate}'
+          maximum_heating_air_flow_rate: '{maximum_heating_air_flow_rate}'
+          maximum_heating_supply_air_humidity_ratio: '{maximum_heating_supply_air_humidity_ratio}'
+          maximum_heating_supply_air_temperature: '{maximum_heating_supply_air_temperature}'
+          minimum_cooling_supply_air_humidity_ratio: '{minimum_cooling_supply_air_humidity_ratio}'
+          minimum_cooling_supply_air_temperature: '{minimum_cooling_supply_air_temperature}'
+          outdoor_air_economizer_type: '{outdoor_air_economizer_type}'
+          sensible_heat_recovery_effectiveness: '{sensible_heat_recovery_effectiveness}'
+          zone_supply_air_node_name: *ZoneSupplyInlet
+    PackagedTerminalAirConditioner:
+      Base:
+        Fields: &ZoneHVACPackagedTerminalAirConditionerFields
+          name: '{} PTAC'
+          <<: *ZoneHVACCommonZoneEquipmentFields
+          cooling_outdoor_air_flow_rate: Autosize
+          cooling_supply_air_flow_rate: Autosize
+          fan_placement: '{supply_fan_placement}'
+          heating_outdoor_air_flow_rate: Autosize
+          heating_supply_air_flow_rate: Autosize
+          no_load_outdoor_air_flow_rate: Autosize
+          supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always0
+    PackagedTerminalHeatPump:
+      Base:
+        Fields: &ZoneHVACPackagedTerminalHeatPumpFields
+          name: '{} PTHP'
+          <<: *ZoneHVACCommonZoneEquipmentFields
+          cooling_outdoor_air_flow_rate: Autosize
+          cooling_supply_air_flow_rate: Autosize
+          fan_placement: '{supply_fan_placement}'
+          heating_outdoor_air_flow_rate: Autosize
+          heating_supply_air_flow_rate: Autosize
+          maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: '{supplemental_heating_coil_maximum_outdoor_dry_bulb_temperature}'
+          maximum_supply_air_temperature_from_supplemental_heater: Autosize
+          no_load_outdoor_air_flow_rate: Autosize
+          supplemental_heating_coil_name:
             BuildPathReference:
-              Location: OutdoorAir:Mixer
+              Location: Coil:Heating.*
               Occurrence: -1
               ValueLocation: key
-          outdoor_air_mixer_object_type:
+          supplemental_heating_coil_object_type:
             BuildPathReference:
-              Location: OutdoorAir:Mixer
+              Location: Coil:Heating.*
               Occurrence: -1
               ValueLocation: self
-          supply_air_fan_name:
-            BuildPathReference:
-              Location: Fan:.*
-              Occurrence: -1
-              ValueLocation: key
-          supply_air_fan_object_type:
-            BuildPathReference:
-              Location: Fan:.*
-              Occurrence: -1
-              ValueLocation: self
-          cooling_coil_object_type:
-            BuildPathReference:
-              Location: Coil:Cooling:Water.*
-              ValueLocation: self
-          cooling_coil_name:
-            BuildPathReference:
-              Location: Coil:Cooling:Water.*
-              ValueLocation: key
-          heating_coil_object_type:
-            BuildPathReference:
-              Location: Coil:Heating:Water.*
-              ValueLocation: self
-          heating_coil_name:
-            BuildPathReference:
-              Location: Coil:Heating:Water.*
-              ValueLocation: key
-
+          supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always0
 AutoCreated:
   PlantLoop:
     BranchList:
@@ -1644,6 +2456,123 @@ OptionTree:
   HVACTemplate:
     Zone:
       Common:
+        BuildPath:
+          BaseObjects:
+            Objects:
+              Base: &ZoneCommonBuildPathBaseObjectsObjects
+                - OutdoorAir:Mixer:
+                    Fields:
+                      <<: *OutdoorAirMixerFields
+                      return_air_stream_node_name: *ZoneReturn
+                    Connectors: *OutdooAirMixerConnectors
+                - OutdoorAir:NodeList: *OutdoorAirNodeListFields
+          Actions:
+            Objects:
+              ReferenceFan: &ZoneCommonBuildPathActionsObjectsReferenceFan
+                - heating_coil_type:
+                    Electric:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects: &ZoneCommonBuildPathActionsObjectsHeatingCoilTypeElectricObjects
+                        - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
+                    HotWater:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects: &ZoneCommonBuildPathActionsObjectsHeatingCoilTypeHotWaterObjects
+                        - Coil:Heating:Water: *CoilHeatingWaterSuperObject
+                        - *CoilHeatingWaterCommonObjects
+                      Transitions:
+                        - *CoilHeatingCommonTransitions
+                    Gas:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects: &ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasObjects
+                        - *CoilHeatingFuelCommonObjects
+                        - Coil:Heating:Fuel: *CoilHeatingFuelSuperObject
+                      Transitions:
+                        - *CoilHeatingFuelCommonTransitions
+                      Mappings: &ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasMappings
+                        - *CoilHeatingFuelCommonMappings
+                - cooling_coil_type:
+                    ChilledWater:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects: &ZoneCommonBuildPathActionsObjectsCoolingCoilTypeChilledWaterObjects
+                        - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
+                        - *CoilCoolingWaterCommonObjects
+                      Transitions:
+                        - *CoilCoolingCommonTransitions
+                    SingleSpeedDX:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects: &ZoneCommonBuildPathActionsObjectsCoolingCoilTypeSingleSpeedDXObjects
+                        - Coil:Cooling:DX:SingleSpeed: *CoilCoolingDXSingleSpeedSuperObject
+                        - *CoilCoolingDXSingleSpeedCommonObjects
+                      Transitions: *CoilCoolingDXSingleSpeedCommonTransitions
+              AfterMixer: &ZoneCommonBuildPathActionsObjectsAfterMixer
+                - heating_coil_type:
+                    Electric:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeElectricObjects
+                    Gas:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasObjects
+                      Mappings: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasMappings
+                    HotWater:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeHotWaterObjects
+                      Transitions:
+                        - *CoilHeatingCommonTransitions
+                - cooling_coil_type:
+                    ChilledWater:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsCoolingCoilTypeChilledWaterObjects
+                    SingleSpeedDX:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsCoolingCoilTypeSingleSpeedDXObjects
+              FanOnOff: &ZoneCommonBuildPathActionsObjectsFanOnOff
+                - supply_fan_placement:
+                    None: &ZoneCommonBuildPathActionsObjectsFanOnOffNone
+                      Location: -1
+                      ActionType: Insert
+                      Objects:
+                        - Fan:OnOff:
+                            Fields:
+                              <<: *FanOnOffFields
+                              pressure_rise: 75
+                              availability_schedule_name: HVACTemplate-Always1 # todo_eo: necessary to actually make system always available
+                            Connectors: *FanOnOffConnectors
+                      Transitions:
+                        - *FanCommonTransitionsSupply
+                    DrawThrough: *ZoneCommonBuildPathActionsObjectsFanOnOffNone
+                    BlowThrough:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects:
+                        - Fan:OnOff:
+                            Fields:
+                              <<: *FanOnOffFields
+                              pressure_rise: 75
+                              availability_schedule_name: HVACTemplate-Always1
+                            Connectors: *FanOnOffConnectors
+                      Transitions:
+                        - *FanCommonTransitionsSupply
         BaseObjects:
           Objects:
             Base: &ZoneCommonBaseObjectsObjects
@@ -1663,13 +2592,13 @@ OptionTree:
                   - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
                 Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
             zone_hvac_equipmentlist_object_type: &ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType # Created as a descriptor in ExpandZone
-              ^Base$:
+              Base:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentList
               Baseboard:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseBoard
-              ^WithDOAS$:
+              WithDOAS:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithDOAS
               WithDOASAndBaseboard:
@@ -1678,6 +2607,35 @@ OptionTree:
               WithBaseboard:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
+          DOAS:
+            Base:
+              dedicated_outdoor_air_system_name:
+                None:
+                  Objects:
+                AnyValue:
+                  Objects: &ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
+                    # todo_eo: discuss why this is not an AirTerminal:SingleDuct:ConstantVolume:NoReheat
+                    - AirTerminal:SingleDuct:VAV:NoReheat:
+                        <<: *AirTerminalSingleDuctVAVNoReheatFields
+                        name: '{} DOAS Air Terminal'
+                        air_outlet_node_name: '{} DOAS Supply Inlet'
+                        constant_minimum_air_flow_fraction: 1.0
+                        zone_minimum_air_flow_input_method: Constant
+                    - NodeList:
+                        name: '{} Inlets'
+                        nodes:
+                          - node_name:
+                              BuildPathReference:
+                                Location: -1
+                                ValueLocation: Outlet
+                          - node_name: '{} DOAS Supply Inlet'
+                    - ZoneHVAC:AirDistributionUnit:
+                        <<: *ZoneHVACAirDistributionUnit
+                        name: '{} DOAS ATU'
+                    - ZoneHVAC:EquipmentConnections:
+                        <<: *ZoneHVACEquipmentConnectionsFields
+                        zone_air_exhaust_node_or_nodelist_name: *ZoneReturn
+                        zone_air_inlet_node_or_nodelist_name: '{} Inlets'
           VAV:
             Base: &ZoneCommonTemplateObjectsVAV
               reheat_coil_type:
@@ -1726,8 +2684,8 @@ OptionTree:
                   Transitions:
                     - *AirTerminalSingleDuctVAVCommonTransitions
                     - *AirTerminalSingleDuctVAVHeatAndCoolReheatCommonTransitions
-      BaseboardHeat: # Common objects not used since baseboards do not use air paths and are also
-                     #   secondary equipment in some options.
+      BaseboardHeat: # Common objects not used since HVACTemplate:Zone:BaseboardHeat does not use air paths and these
+                     # objects are also secondary equipment in other templates.
         BaseObjects:
           Objects:
             - Sizing:Zone: *SizingZone
@@ -1771,27 +2729,14 @@ OptionTree:
         BuildPath:
           BaseObjects:
             Objects:
-              - OutdoorAir:Mixer:
-                  Fields:
-                    <<: *OutdoorAirMixerFields
-                    return_air_stream_node_name: *ZoneReturn
-                  Connectors: *OutdooAirMixerConnectors
-              - OutdoorAir:NodeList: *OutdoorAirNodeListFields
+              - *ZoneCommonBuildPathBaseObjectsObjects
               - Fan:SystemModel:
                   Fields: *FanSystemModelFields
                   Connectors: *FanConnectors
-              - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
-              - *CoilCoolingWaterCommonObjects
-              - Coil:Heating:Water:
-                  Fields:
-                    <<: *CoilHeatingWaterFields
-                    air_outlet_node_name: *ZoneSupplyInlet
-                  Connectors: *CoilHeatingWaterConnectors
-              - *CoilHeatingWaterCommonObjects
             Transitions:
               - *FanCommonTransitionsSystemModel
-              - *CoilCoolingCommonTransitions
-              - *CoilHeatingCommonTransitions
+          Actions:
+              - *ZoneCommonBuildPathActionsObjectsReferenceFan
         BaseObjects:
           Objects:
             - *ZoneCommonBaseObjectsObjects
@@ -1805,35 +2750,157 @@ OptionTree:
             None:
               Objects:
                 - ZoneHVAC:FourPipeFanCoil: *ZoneHVACFourPipeFanCoil
-                - ZoneHVAC:EquipmentConnections:
-                    <<: *ZoneHVACEquipmentConnectionsFields
-                    zone_air_exhaust_node_or_nodelist_name: *ZoneReturn
-                    zone_air_inlet_node_or_nodelist_name: *ZoneSupplyInlet
-            AnyString:
+                - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+            AnyValue:
               Objects:
-                # todo_eo: discuss why this is not an AirTerminal:SingleDuct:ConstantVolume:NoReheat
+                - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
                 - ZoneHVAC:FourPipeFanCoil:
                     <<: *ZoneHVACFourPipeFanCoil
                     capacity_control_method: CyclingFan
                     maximum_outdoor_air_flow_rate: 0.0
-                - AirTerminal:SingleDuct:VAV:NoReheat:
-                    <<: *AirTerminalSingleDuctVAVNoReheatFields
-                    name: '{} DOAS Air Terminal'
-                    air_outlet_node_name: '{} DOAS Supply Inlet'
-                    constant_minimum_air_flow_fraction: 1.0
-                    zone_minimum_air_flow_input_method: Constant
-                - NodeList:
-                    name: '{} Inlets'
-                    nodes:
-                      - node_name: *ZoneSupplyInlet
-                      - node_name: '{} DOAS Supply Inlet'
-                - ZoneHVAC:AirDistributionUnit:
-                    <<: *ZoneHVACAirDistributionUnit
-                    name: '{} DOAS ATU'
-                - ZoneHVAC:EquipmentConnections:
-                    <<: *ZoneHVACEquipmentConnectionsFields
-                    zone_air_exhaust_node_or_nodelist_name: *ZoneReturn
-                    zone_air_inlet_node_or_nodelist_name: '{} Inlets'
+      PTAC:
+        BuildPath:
+          BaseObjects:
+            Objects:
+              - *ZoneCommonBuildPathBaseObjectsObjects
+            Transitions:
+              - *FanCommonTransitionsSystemModel
+          Actions:
+            - *ZoneCommonBuildPathActionsObjectsAfterMixer
+            - *ZoneCommonBuildPathActionsObjectsFanOnOff
+        BaseObjects:
+          Objects:
+            - *ZoneCommonBaseObjectsObjects
+          Transitions:
+            - *SizingZoneCommonTransitions
+            - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
+        TemplateObjects:
+          <<: *ZoneCommonTemplateObjects
+          dedicated_outdoor_air_system_name:
+            None:
+              Objects:
+                - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+                - ZoneHVAC:PackagedTerminalAirConditioner: *ZoneHVACPackagedTerminalAirConditionerFields
+              Transitions:
+                - *ZoneHVACCommonZoneEquipmentTransitions
+            AnyValue:
+              Objects:
+                - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
+                - ZoneHVAC:PackagedTerminalAirConditioner:
+                    <<: *ZoneHVACPackagedTerminalAirConditionerFields
+                    cooling_outdoor_air_flow_rate: 0.0
+                    heating_outdoor_air_flow_rate: 0.0
+                    no_load_outdoor_air_flow_rate: 0.0
+              Transitions:
+                - *ZoneHVACCommonZoneEquipmentTransitions
+                - AirTerminal:SingleDuct.*: # todo_eo Maybe this value should get merged with supply_air_maximum_flow_rate if not set
+                    cooling_supply_air_flow_rate: maximum_air_flow_rate
+      PTHP:
+        BuildPath:
+          BaseObjects:
+            Objects:
+              - *ZoneCommonBuildPathBaseObjectsObjects
+            Transitions:
+              - *FanCommonTransitionsSystemModel
+          Actions:
+            - *ZoneCommonBuildPathActionsObjectsAfterMixer
+            - heat_pump_heating_coil_type:
+                SingleSpeedDXHeatPump:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:DX:SingleSpeed: *CoilHeatingDXSingleSpeedSuperObject
+                    - *CoilHeatingDXSingleSpeedCommonObjects
+                  Transitions: *CoilHeatingDXSingleSpeedCommonTransitions
+            - *ZoneCommonBuildPathActionsObjectsFanOnOff
+            - supplemental_heating_coil_type: &ZonePTHPBuildPathActionsSupplementalHeatingCoilType
+                Electric:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Electric:
+                        Fields:
+                          <<: *CoilHeatingElectricFields
+                          name: '{} Supp Heating Coil'
+                          air_inlet_node_name: '{} Supp Heating Coil Inlet'
+                          air_outlet_node_name: '{} Supp Heating Coil Outlet'
+                        Connectors:
+                          AirLoop: *ConnectorsAirLoop
+                Gas:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Fuel:
+                        Fields:
+                          <<: *CoilHeatingFuelFields
+                          name: '{} Supp Heating Coil'
+                          air_inlet_node_name: '{} Supp Heating Coil Inlet'
+                          air_outlet_node_name: '{} Supp Heating Coil Outlet'
+                        Connectors:
+                          AirLoop: *ConnectorsAirLoop
+                Steam: # todo_eo: needs build out when steam option is made
+        BaseObjects:
+          Objects:
+            - *ZoneCommonBaseObjectsObjects
+          Transitions:
+            - *SizingZoneCommonTransitions
+            - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
+        TemplateObjects:
+          <<: *ZoneCommonTemplateObjects
+          dedicated_outdoor_air_system_name:
+            None:
+              Objects:
+                - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+                # todo: replace with pthp
+                - ZoneHVAC:PackagedTerminalHeatPump: *ZoneHVACPackagedTerminalHeatPumpFields
+              Transitions:
+                - *ZoneHVACCommonZoneEquipmentTransitions
+      IdealLoadsAirSystem:
+        BaseObjects:
+          Objects:
+            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
+            - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentList
+        TemplateObjects:
+          outdoor_air_method:
+            None:
+              Objects:
+                - Sizing:Zone: *SizingZone
+                - ZoneHVAC:IdealLoadsAirSystem: *ZoneHVACIdealLoadsAirSystemFields
+              Transitions:
+                - *SizingZoneCommonTransitionsIdealLoads
+            Flow/Person:
+              Objects:
+                - Sizing:Zone:
+                    <<: *SizingZone
+                    design_specification_outdoor_air_object_name:
+                      ^DesignSpecification:Outdoor.*: key
+                - DesignSpecification:OutdoorAir: *DesignSpecificationOutdoorAir
+                - ZoneHVAC:IdealLoadsAirSystem:
+                    <<: *ZoneHVACIdealLoadsAirSystemFields
+                    design_specification_outdoor_air_object_name:
+                      DesignSpecification:OutdoorAir: key
+                    outdoor_air_inlet_node_name: '{} Outdoor Air Inlet'
+              Transitions:
+                - *SizingZoneCommonTransitionsIdealLoads
+            DetailedSpecification:
+              Objects:
+                - Sizing:Zone:
+                    <<: *SizingZone
+                    design_specification_outdoor_air_object_name: '{design_specification_outdoor_air_object_name}'
+                - ZoneHVAC:IdealLoadsAirSystem:
+                    <<: *ZoneHVACIdealLoadsAirSystemFields
+                    outdoor_air_inlet_node_name: '{} Outdoor Air Inlet'
+                    design_specification_outdoor_air_object_name: '{design_specification_outdoor_air_object_name}'
+              Transitions:
+                - *SizingZoneCommonTransitionsIdealLoads
+          humidification_control_type:
+            Humidistat:
+              Objects:
+                - ZoneControl:Humidistat:
+                    name: '{} Humidification Humidistat'
+                    dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
+                    humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidification_setpoint}'
+                    zone_name: '{}'
       Unitary:
         BaseObjects:
           Objects:
@@ -1865,14 +2932,14 @@ OptionTree:
             - OutdoorAir:Mixer: *OutdoorAirMixerSuperObject
           Actions:
             Common:
-              CoolingCoilFirst:
-                Objects: &SystemCommonBuildPathActionsCommonCoolingCoilFirst
+              CoolingCoilAfterMixer:
+                Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
                   - cooling_coil_type:
                       ChilledWater:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilFirstChilledWater
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerChilledWater
                           - *CoilCoolingWaterCommonObjects
                           - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
                           - Controller:WaterCoil:
@@ -1882,47 +2949,83 @@ OptionTree:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilFirstSingleSpeedDX
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDX
                           - *CoilCoolingDXSingleSpeedCommonObjects
                           - Coil:Cooling:DX:SingleSpeed: *CoilCoolingDXSingleSpeedSuperObject
+                        Transitions: *CoilCoolingDXSingleSpeedCommonTransitions
                       TwoSpeedDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilFirstTwoSpeedDX
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDX
                           - Coil:Cooling:DX:TwoSpeed: *CoilCoolingDXTwoSpeedSuperObject
                           - CoilSystem:Cooling:DX: *CoilSystemCoolingDXSuperObject
                           - *CoilCoolingDXTwoSpeedCommonObjects
                         Transitions:
                           - *CoilCoolingDXTwoSpeedCommonTransitions
+                      TwoStageHumidityControlDX:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDX
+                          - *CoilCoolingDXTwoStageWithHumidityControlModeCommonObjects
+                          - Coil:Cooling:DX:TwoStageWithHumidityControlMode: *CoilCoolingDXTwoStageWithHumidityControlModeSuperObject
+                          - CoilSystem:Cooling:DX:
+                              Fields:
+                                <<: *CoilSystemCoolingDXFields
+                                dehumidification_control_type: '{dehumidification_control_type}'
+                                run_on_latent_load: 'Yes'
+                                use_outdoor_air_dx_cooling_coil: 'Yes'
+                              Connectors:
+                                AirLoop: False
+                        Transitions:
+                          - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
+                      MultiSpeedDX:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDX
+                          - Coil:Cooling:DX:MultiSpeed: *CoilCoolingDXMultiSpeedSuperObject
+                          - *CoilCoolingDXMultiSpeedCommonObjects
+                        Transitions: *CoilCoolingDXMultiSpeedCommonTransitions
+                      SingleSpeedDXWaterCooled:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooled
+                          - Coil:Cooling:WaterToAirHeatPump:EquationFit: *CoilCoolingWatertoAirHeatPumpEquationFitSuperObject
+                          - *CoilCoolingWaterToAirHeatPumpEquationFitCommonObjects
+                          - *CoilCoolingWaterToAirHeatPumpCommonObjects
               CoolingCoilLast:
                 Objects: &SystemCommonBuildPathActionsCommonCoolingCoilLast
                   - cooling_coil_type:
                       ChilledWater:
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilFirstChilledWater
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerChilledWater
                       SingleSpeedDX:
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilFirstSingleSpeedDX
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDX
                       TwoSpeedDX:
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilFirstTwoSpeedDX
-            CoolingCoilLast:
-              - cooling_coil_type:
-                  ChilledWater:
-                    Location: -1
-                    ActionType: Insert
-                    Objects:
-                      - *CoilCoolingWaterCommonObjects
-                      - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
-                      - Controller:WaterCoil:
-                          <<: *ControllerWaterCoil
-                          name: '{} Cooling Coil Controller'
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDX
+                      TwoStageHumidityControlDX:
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDX
+                      MultiSpeedDX:
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDX
+                      SingleSpeedDXWaterCooled:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooled
             Base: &SystemCommonBuildPathActions
-              - heating_coil_type:
+              - heating_coil_type: &SystemCommonBuildPathActionsHeatingCoilType
                   Electric:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
@@ -1945,9 +3048,28 @@ OptionTree:
                     ActionType: Insert
                     Objects:
                       - *CoilHeatingFuelCommonObjects
-                      - Coil:Heating:Fuel: *CoilHeatingFuelSuperObject
+                      - Coil:Heating:Fuel: *CoilHeatingFuelNoParentObjectSuperObject
+                    Transitions:
+                      - *CoilHeatingFuelCommonTransitions
                     Mappings:
                       - *CoilHeatingFuelCommonMappings
+                  SingleSpeedDXHeatPump: &SystemCommonBuildPathActionsHeatingCoilTypeSingleSpeedDXHeatPump
+                    ObjectReference: OutdoorAir:Mixer
+                    Location: After
+                    ActionType: Insert
+                    Objects:
+                      - Coil:Heating:DX:SingleSpeed: *CoilHeatingDXSingleSpeedSuperObject
+                      - *CoilHeatingDXSingleSpeedCommonObjects
+                    Transitions: *CoilHeatingDXSingleSpeedCommonTransitions
+                  SingleSpeedDXHeatPumpAirSource: *SystemCommonBuildPathActionsHeatingCoilTypeSingleSpeedDXHeatPump
+                  SingleSpeedDXHeatPumpWaterSource:
+                    ObjectReference: OutdoorAir:Mixer
+                    Location: After
+                    ActionType: Insert
+                    Objects:
+                      - Coil:Heating:WaterToAirHeatPump:EquationFit: *CoilHeatingWaterToAirHeatPumpEquationFitSuperObject
+                      - *CoilHeatingWaterToAirHeatPumpEquationFitCommonObjects
+                    Transitions: *CoilHeatingWaterToAirHeatPumpEquationFitCommonTransitions
               # multiple steps needed for heat recovery because new OutdoorAir:Mixer is needed
               - heat_recovery_type:
                   Enthalpy:
@@ -1991,6 +3113,7 @@ OptionTree:
                     Transitions: *FanCommonTransitionsSupply
                     Mappings: *FanCommonMappingsVariableVolume
               - return_fan:
+                  'No':
                   'Yes': # Quotes necessary to prevent boolean conversion
                     Location: 0
                     ActionType: Insert
@@ -2004,7 +3127,7 @@ OptionTree:
                             pressure_rise: 500 # override base fan default
                           Connectors: *FanConstantVolumeConnectors
                     Transitions: *FanCommonTransitionsReturn
-            OnOff: &SystemCommonBuildPathActionOnOff
+            OnOff: &SystemCommonBuildPathActionFanOnOff
               - supply_fan_placement:
                   None: &SystemCommonBuildPathActionsOnOffSupplyFanPlacementNone
                     ObjectReference: OutdoorAir:Mixer
@@ -2021,6 +3144,7 @@ OptionTree:
                       - Fan:OnOff: *FanOnOffSuperObject
                     Transitions: *FanCommonTransitionsSupply
               - return_fan:
+                  'No':
                   'Yes': # Quotes necessary to prevent boolean conversion
                     Location: 0
                     ActionType: Insert
@@ -2069,31 +3193,28 @@ OptionTree:
                     Mappings: *FanCommonMappingsVariableVolume
         BaseObjects:
           Objects:
-            Base: &SystemCommonBaseObjectsObjects
-              - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
+            Base:
             ConstantVolume:
               Base: &SystemCommonBaseObjectsConstantVolume
-                - *SystemCommonBaseObjectsObjects
                 - OutdoorAir:NodeList: *OutdoorAirNodeListFields
                 - Controller:OutdoorAir: *ControllerOutdoorAir
                 - Sizing:System: *SizingSystemConstantVolume
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
+                - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirEconomizer
             DediicatedOutdoorAir:
               Base: &SystemCommonBaseObjectsDedicatedOutdoorAir
-                - *SystemCommonBaseObjectsObjects
-                - OutdoorAir:NodeList: *OutdoorAirNodeListWithHeatRecoveryFields
-                - Controller:OutdoorAir:
-                    <<: *ControllerOutdoorAirWithHeatRecovery
-                    economizer_control_action_type: MinimumFlowWithBypass
-                    economizer_control_type: DifferentialEnthalpy
-                    economizer_minimum_limit_dry_bulb_temperature: '{heating_coil_design_setpoint}'
                 - Sizing:System: *SizingSystemDedicatedOutdoorAir
-                - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
-                - SetpointManager:MixedAir: *SetpointManagerMixedAirEconomizer
+                - NodeList:
+                    name: '{} Cooling Setpoint Nodes'
+                    nodes:
+                      - node_name:
+                          BuildPathReference:
+                            Location: Coil:Cooling.*
+                            ValueLocation: Outlet
             VAV:
               Base: &SystemCommonBaseObjectsVariableVolume
-                - *SystemCommonBaseObjectsObjects
+                - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                 - Controller:OutdoorAir:
                     <<: *ControllerOutdoorAir
                 - OutdoorAir:NodeList: *OutdoorAirNodeListFields
@@ -2142,6 +3263,12 @@ OptionTree:
               FixedSetpoint:
                 Objects:
                   - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
+              FixedSetpointWithDehumidification: # Created via descriptor in expand_objects.py
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledCooling
+                      setpoint_node_or_nodelist_name:
+                        NodeList: key
               Warmest:
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
@@ -2152,17 +3279,46 @@ OptionTree:
               FixedSetpoint:
                 Objects:
                   - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
+              FixedSetpointWithDehumidification: # Created via descriptor in expand_objects.py
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledHeating
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: Coil:Heating.*
+                          ValueLocation: Outlet
               OutdoorAirTemperatureReset:
                 Objects:
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHeating
           DOAS: &SystemCommonTemplateObjectsDOAS
+            dehumidification_control_type:
+              None:
+                Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirEconomizer
+              Multimode:
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledDehumidification
+                      name: '{} Dehumidification Setpoint Manager'
             heat_recovery_type:
+              None:
+                Objects:
+                  - Controller:OutdoorAir: *ControllerOutdoorAir
+                  - OutdoorAir:NodeList: *OutdoorAirNodeListFields
               Enthalpy:
                 Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                   - SetpointManager:MixedAir:
                       <<: *SetpointManagerMixedAirHeating
                       name: '{} Heat Recovery Air Temp Manager'
                       setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
+                  - Controller:OutdoorAir:
+                      <<: *ControllerOutdoorAirWithHeatRecovery
+                      economizer_control_action_type: MinimumFlowWithBypass
+                      economizer_control_type: DifferentialEnthalpy
+                      economizer_minimum_limit_dry_bulb_temperature: '{heating_coil_design_setpoint}'
+                  - OutdoorAir:NodeList: *OutdoorAirNodeListWithHeatRecoveryFields
           VAV: &SystemCommonTemplateObjectsVAV
             cooling_coil_setpoint_reset_type:
               None:
@@ -2177,7 +3333,7 @@ OptionTree:
             Objects: *SystemCommonBuildPathObjects
           Actions:
             - *SystemCommonBuildPathActions
-            - *SystemCommonBuildPathActionsCommonCoolingCoilFirst
+            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsConstantVolume
         BaseObjects:
           Objects: *SystemCommonBaseObjectsConstantVolume
@@ -2197,7 +3353,7 @@ OptionTree:
               - *AvailabilityManagerScheduledCommonTransitions
           Actions:
             - *SystemCommonBuildPathActions
-            - *SystemCommonBuildPathActionsCommonCoolingCoilFirst
+            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - supply_fan_placement:
                 None: &SystemCommonBuildPathActionsSupplyFanPlacementNone
                   Location: -1
@@ -2218,13 +3374,6 @@ OptionTree:
         BaseObjects:
           Objects:
             - *SystemCommonBaseObjectsDedicatedOutdoorAir
-            - NodeList:
-                name: '{} Cooling Setpoint Nodes'
-                nodes:
-                  - node_name:
-                      BuildPathReference:
-                        Location: Coil:Cooling.*
-                        ValueLocation: Outlet
           Transitions:
             - *SystemCommonTransitions
             - *SizingSystemCommonTransitions
@@ -2238,7 +3387,7 @@ OptionTree:
             Objects: *SystemCommonBuildPathObjects
           Actions:
             - *SystemCommonBuildPathActions
-            - *SystemCommonBuildPathActionsCommonCoolingCoilFirst
+            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsVariableVolume
         BaseObjects:
           Objects: *SystemCommonBaseObjectsVariableVolume
@@ -2252,9 +3401,16 @@ OptionTree:
             Objects:
               - *SystemCommonBuildPathObjects
           Actions:
-            - *SystemCommonBuildPathActions
+            - heating_coil_type:
+                <<: *SystemCommonBuildPathActionsHeatingCoilType
+                Gas: # Override existing Gas option with different Coil:Heating:Fuel object
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
+                  Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasObjects
+                  Mappings: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasMappings
             - *SystemCommonBuildPathActionsCommonCoolingCoilLast
-            - *SystemCommonBuildPathActionOnOff
+            - *SystemCommonBuildPathActionFanOnOff
             - airloop_hvac_unitary_object_type:
                 Furnace:HeatCool:
                   ObjectReference: OutdoorAir:Mixer
@@ -2263,7 +3419,8 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:Unitary:Furnace:HeatCool: *AirLoopHVACUnitaryHeatCoolSuperObject
-        BaseObjects:
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
+        BaseObjects: &SystemUnitaryBaseObjects
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Controller:OutdoorAir:
@@ -2288,15 +3445,65 @@ OptionTree:
             - Sizing:System:
                 cooling_design_supply_air_temperature: central_cooling_design_supply_air_temperature
                 heating_design_supply_air_temperature: central_heating_design_supply_air_temperature
-        TemplateObjects:
-          <<: *SystemCommonTemplateObjects
+        TemplateObjects: *SystemCommonTemplateObjects
+      UnitaryHeatPump:
+        AirToAir:
+          BuildPath:
+            BaseObjects:
+              Objects:
+                - *SystemCommonBuildPathObjects
+            Actions:
+              - heat_pump_heating_coil_type: *SystemCommonBuildPathActionsHeatingCoilType
+              - supplemental_heating_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
+              - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
+              - *SystemCommonBuildPathActionFanOnOff
+              - airloop_hvac_unitary_object_type:
+                  HeatPump:AirToAirWithSupplemental:
+                    ObjectReference: OutdoorAir:Mixer
+                    ActionType: Insert
+                    Location: After
+                    Objects:
+                      # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                      - AirLoopHVAC:UnitaryHeatPump:AirToAir: *AirLoopHVACUnitaryHeatPumpAirToAirWithSupplementalSuperObject
+                    Transitions: *AirLoopHVACUnitaryCommonTransitions
+          BaseObjects: *SystemUnitaryBaseObjects
+          TemplateObjects: *SystemCommonTemplateObjects
+      UnitarySystem:
+        BuildPath:
+          BaseObjects:
+            Objects:
+              - *SystemCommonBuildPathObjects
+          Actions:
+            - heating_coil_type: *SystemCommonBuildPathActionsHeatingCoilType
+            - supplemental_heating_or_reheat_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
+            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
+            - *SystemCommonBuildPathActionFanOnOff
+            - airloop_hvac_unitary_object_type:
+                HeatPump:AirToAir:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemSuperObject
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
+                HeatPump:AirToAirWithSupplemental:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemWithSupplementalSuperObject
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
+        BaseObjects: *SystemUnitaryBaseObjects
+        TemplateObjects: *SystemCommonTemplateObjects
       VAV:
         BuildPath:
           BaseObjects:
             Objects: *SystemCommonBuildPathObjects
           Actions:
             - *SystemCommonBuildPathActions
-            - *SystemCommonBuildPathActionsCommonCoolingCoilFirst
+            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsVariableVolume
         BaseObjects:
           Objects: *SystemCommonBaseObjectsVariableVolume
@@ -2378,10 +3585,6 @@ OptionTree:
                     component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
         ChilledWaterLoop:
           Objects: &PlantCommonObjectsChilledWaterLoop
-            - AvailabilityManager:LowTemperatureTurnOff:
-                name: '{} Availability Low Temp TurnOff'
-                sensor_node_name: '{} Outside Air Sensor'
-                temperature: '{chilled_water_design_setpoint}'
             - OutdoorAir:Node:
                 name: '{} Outside Air Sensor'
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
@@ -2408,12 +3611,19 @@ OptionTree:
                 - *BoilerHotWaterCommonObjects
               Transitions:
                 - *BoilerHotWaterCommonTransitions
+            CondensingHotWaterBoiler:
+              Objects:
+                - Boiler:HotWater: *BoilerHotWaterCondensingBoilerFields
+                - *BoilerHotWaterCondensingBoilerCommonObjects
+              Transitions:
+                - *BoilerHotWaterCommonTransitions
       ChilledWaterLoop:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
             - *PlantCommonObjectsChilledWaterLoop
             - Sizing:Plant: *SizingPlantChilledWater
+          Transitions: *SizingPlantCommonTransitions
         TemplateObjects: # todo_eo: Secondary options need to have PlantLoop common_pipe_simulation changed to CommonPipe
           chilled_water_pump_configuration:
             ConstantPrimaryNoSecondary:
@@ -2439,6 +3649,13 @@ OptionTree:
             OutdoorAirTemperatureReset:
               Objects:
                 - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetChilledWater
+          minimum_outdoor_dry_bulb_temperature:
+            AnyValue:
+              Objects:
+                - AvailabilityManager:LowTemperatureTurnOff:
+                    name: '{} Availability Low Temp TurnOff'
+                    sensor_node_name: '{} Outside Air Sensor'
+                    temperature: '{minimum_outdoor_dry_bulb_temperature}'
       Chiller:
         BaseObjects:
         TemplateObjects:
@@ -2469,6 +3686,7 @@ OptionTree:
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadCondenserWater
             - CondenserEquipmentOperationSchemes: *CondenserEquipmentOperationSchemesCondenserLoad
             - CondenserLoop: *CondenserLoopFields
+          Transitions: *SizingPlantCommonTransitions
       Tower:
         BaseObjects:
         TemplateObjects:
@@ -2479,6 +3697,16 @@ OptionTree:
                 - OutdoorAir:Node:
                     name: *OutdoorAirInletNodes
                 - *CoolingTowerCommonObjects
+              Transitions: *CoolingTowerSingleSpeedCommonTransitions
+              Mappings: *CoolingTowerSingleSpeedCommonMappings
+            TwoSpeed:
+              Objects:
+                - CoolingTower:TwoSpeed: *CoolingTowerTwoSpeed
+                - OutdoorAir:Node:
+                    name: *OutdoorAirInletNodes
+                - *CoolingTowerCommonObjects
+              Transitions: *CoolingTowerTwoSpeedCommonTransitions
+              Mappings: *CoolingTowerTwoSpeedCommonMappings
       HotWaterLoop:
         BaseObjects:
           Objects:
@@ -2487,8 +3715,8 @@ OptionTree:
             - Sizing:Plant: *SizingPlantHotWater
             - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadHotWater
             - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesHeatingLoad
-            - PlantLoop:
-                <<: *PlantLoopHotWaterFields
+            - PlantLoop: *PlantLoopHotWaterFields
+          Transitions: *SizingPlantCommonTransitions
         TemplateObjects:
           hot_water_pump_configuration:
             None: &PlantHotWaterLoopTemplateObjectsHotWaterPumpConfigurationNone
@@ -2512,7 +3740,28 @@ OptionTree:
               Objects:
                 - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHotWater
       MixedWaterLoop:
-
+        BaseObjects:
+          Objects:
+            - *PlantCommonPlantLoopBase
+            - *PlantCommonPlantLoopNoSecondary
+            - Sizing:Plant: *SizingPlantMixedWater
+            # Custom naming needed for two PlantEquipmentOperation objects and PlantEquipmentOperationSchemes
+            - PlantEquipmentOperation:CoolingLoad:
+                <<: *PlantEquipmentOperationCoolingLoadChilledWater
+                name: '{} Cool Operation All Hours'
+            - PlantEquipmentOperation:HeatingLoad:
+                <<: *PlantEquipmentOperationHeatingLoadHotWater
+                name: '{} Heat Operation All Hours'
+            - PlantEquipmentOperationSchemes:
+                <<: *PlantEquipmentOperationSchemesHeatingLoad
+                control_scheme_1_name: '{} Cool Operation All Hours'
+                control_scheme_1_object_type: PlantEquipmentOperation:CoolingLoad
+                control_scheme_1_schedule_name: HVACTemplate-Always1
+                control_scheme_2_name: '{} Heat Operation All Hours'
+                control_scheme_2_object_type: PlantEquipmentOperation:HeatingLoad
+                control_scheme_2_schedule_name: HVACTemplate-Always1
+            - PlantLoop: *PlantLoopMixedWaterFields
+          Transitions: *SizingPlantCommonTransitions
 # Notes
 # Compact schedules can be created on their own via specialized structure
 #  - Schedule:Compact:

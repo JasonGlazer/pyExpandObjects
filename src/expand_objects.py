@@ -143,6 +143,21 @@ class ExpandObjects(EPJSON):
         self.epjson = {}
         return
 
+    def rename_attribute(self, old_attribute, new_attribute):
+        """
+        Change attribute name to commonize variables
+
+        :param old_attribute: old attribute name
+        :param new_attribute: new attribute name
+        :return: None.  Old attribute is deleted and new attribute created in class
+        """
+        if hasattr(self, old_attribute):
+            self.logger.info('{} renamed to {}'.format(old_attribute, new_attribute))
+            setattr(self, new_attribute, getattr(self, old_attribute))
+            # Possibly make this optional
+            delattr(self, old_attribute)
+        return
+
     def _flatten_list(
             self,
             nested_list: list,
@@ -190,11 +205,11 @@ class ExpandObjects(EPJSON):
                 else:
                     structure_key_list = list(structure.keys())
                     for skl in structure_key_list:
-                        if skl == 'AnyString':
-                            if re.match(r'\w+', key) and key != 'None':
-                                structure = structure['AnyString']
+                        if skl == 'AnyValue':
+                            if re.match(r'\w+', str(key)) and str(key) != 'None':
+                                structure = structure['AnyValue']
                         else:
-                            if re.match(skl, key):
+                            if skl == str(key):
                                 structure = structure[skl]
         except KeyError:
             raise PyExpandObjectsTypeError('YAML structure does not exist for hierarchy: {}'.format(
@@ -235,6 +250,7 @@ class ExpandObjects(EPJSON):
 
         :return: epJSON dictionary with unresolved complex inputs
         """
+        self.logger.info('Processing option tree: {}'.format(structure_hierarchy))
         option_tree = self._get_option_tree(structure_hierarchy=structure_hierarchy)
         options = option_tree.keys()
         option_tree_dictionary = {}
@@ -257,14 +273,17 @@ class ExpandObjects(EPJSON):
                 object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
         if 'TemplateObjects' in options and option_tree['TemplateObjects']:
             try:
+                template_applied = None
+                template_field_processing = None
                 for template_field, template_tree in option_tree['TemplateObjects'].items():
+                    template_field_processing = template_field
                     for field_option, objects in template_tree.items():
                         # check if field option is 'None' and if object doesn't exist in the class, or if
                         #   the fields match
-                        if (field_option == 'None' and not hasattr(self, template_field)) or \
+                        if (field_option == 'None' and getattr(self, template_field, 'None') == 'None') or \
                                 (getattr(self, template_field, None) and (
-                                    re.match(field_option, getattr(self, template_field)) or (
-                                        field_option == 'AnyString' and re.match(r'\w+', getattr(self, template_field))))):
+                                    field_option == str(getattr(self, template_field)) or (
+                                        field_option == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
                             option_tree_leaf = self._get_option_tree_leaf(
                                 option_tree=option_tree,
                                 leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])
@@ -273,10 +292,17 @@ class ExpandObjects(EPJSON):
                                 super_dictionary=option_tree_dictionary,
                                 object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
                             # Only one field option should be applied, so break after it is successful
+                            template_applied = True
                             break
             except (AttributeError, KeyError):
                 raise PyExpandObjectsYamlStructureException('TemplateObjects section for system type {} is invalid in '
                                                             'yaml file.'.format(self.template_type))
+            if not template_applied:
+                raise PyExpandObjectsYamlStructureException('A template option was not applied for template field {} '
+                                                            'and option {}: {}'.format(
+                                                                template_field_processing,
+                                                                getattr(self, template_field_processing, None),
+                                                                option_tree['TemplateObjects']))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -398,7 +424,7 @@ class ExpandObjects(EPJSON):
                                 # if the object reference in the mapping dictionary matches the object, apply the map
                                 if re.match(object_type_reference, object_type):
                                     for map_option, sub_dictionary in mapping_dictionary.items():
-                                        if (map_option == 'None' and not hasattr(self, mapping_field)) or \
+                                        if (map_option == 'None' and getattr(self, mapping_field, 'None') == 'None') or \
                                                 hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
                                             for field, val in sub_dictionary.items():
                                                 try:
@@ -553,13 +579,19 @@ class ExpandObjects(EPJSON):
                         structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                         insert_values=[always_val, ]
                     )
-                # Try to convert formatted value to correct type
-                num_rgx = re.match(r'^[-\d\.]+$', formatted_value)
-                if num_rgx:
-                    if '.' in formatted_value:
-                        formatted_value = float(formatted_value)
-                    else:
-                        formatted_value = int(formatted_value)
+                # Try to evaluate the string, in case it is a mathematical expression.
+                #  If the value is 'None' then pass it along without evaluation so it stays as a string.
+                if str(formatted_value) != 'None':
+                    try:
+                        formatted_value = eval(formatted_value)
+                    except (NameError, SyntaxError):
+                        # Try to convert formatted value to correct type if it was not evaluated
+                        num_rgx = re.match(r'^[-\d\.]+$', formatted_value)
+                        if num_rgx:
+                            if '.' in formatted_value:
+                                formatted_value = float(formatted_value)
+                            else:
+                                formatted_value = int(formatted_value)
                 yield {"field": field_name, "value": formatted_value}
         elif isinstance(input_value, dict):
             # unpack the referenced object type and the lookup instructions
@@ -965,21 +997,34 @@ class ExpandObjects(EPJSON):
             # flatten action list due to yaml formatting
             actions = self._flatten_list(actions)
             for action in actions:
+                action_applied = None
+                template_field_processing = None
                 try:
                     for template_field, action_structure in action.items():
+                        template_field_processing = template_field
+                        if getattr(self, template_field, 'None') == 'None':
+                            action_applied = True
                         for template_value, action_instructions in action_structure.items():
                             # check if the option tree template value matches a class template field.
                             # If the template value is 'None' in the yaml, then perform the operation if the class
                             # attribute is missing or None.
-                            if (template_value == 'None' and not hasattr(self, template_field)) or \
+                            if (template_value == 'None' and getattr(self, template_field, 'None') == 'None') or \
                                     (getattr(self, template_field, None) and (
-                                        re.match(template_value, getattr(self, template_field)) or (
-                                            template_value == 'AnyString' and re.match(r'\w+', getattr(self, template_field))))):
-                                build_path = self._apply_build_path_action(
-                                    build_path=build_path,
-                                    action_instructions=action_instructions)
+                                        template_value == str(getattr(self, template_field)) or (
+                                            template_value == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
+                                if action_instructions:
+                                    build_path = self._apply_build_path_action(
+                                        build_path=build_path,
+                                        action_instructions=action_instructions)
+                                action_applied = True
                 except (AttributeError, KeyError):
                     raise PyExpandObjectsYamlStructureException("Action is incorrectly formatted: {}".format(action))
+                if not action_applied:
+                    raise PyExpandObjectsYamlStructureException('A build path action was not applied for template field {} '
+                                                                'and option {}: {}'.format(
+                                                                    template_field_processing,
+                                                                    getattr(self, template_field_processing, None),
+                                                                    action))
         # Format the created build path
         object_list = self._connect_and_convert_build_path_to_object_list(build_path)
         return object_list
@@ -1011,7 +1056,7 @@ class ExpandObjects(EPJSON):
         if insert_values:
             formatted_data_lines = [
                 {j: float(k.format(float(*insert_values)))}
-                if re.match(r'.*{.*f}', k, re.IGNORECASE) else {j: k}
+                if re.match(r'.*{}', k, re.IGNORECASE) else {j: k}
                 for i in structure_object['data'] for j, k in i.items()]
         else:
             formatted_data_lines = [{j: k} for i in structure_object for j, k in i.items()]
@@ -1108,6 +1153,7 @@ class ExpandThermostat(ExpandObjects):
         Perform all template expansion operations and return the class to the parent calling function.
         :return: Class object with epJSON dictionary as class attribute
         """
+        self.logger.info('Processing Thermostat: {}'.format(self.unique_name))
         self._create_and_set_schedules()
         self._create_thermostat_setpoints()
         return self
@@ -1169,6 +1215,7 @@ class ExpandZone(ExpandObjects):
         Process zone template
         :return: Class object with epJSON dictionary as class attribute
         """
+        self.logger.info('Processing Zone: {}'.format(self.unique_name))
         self._create_objects()
         return self
 
@@ -1181,16 +1228,26 @@ class AirLoopHVACUnitaryObjectType:
         return obj._airloop_hvac_unitary_object_type
 
     def __set__(self, obj, value):
-        (_, template_structure), = value.items()
-        (_, template_fields), = template_structure.items()
-        cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else True
-        heating_coil_type = None
-        if template_fields.get('heating_coil_type', 'None') in ['Gas', 'Electric']:
-            heating_coil_type = 'Furnace'
-        if cooling_coil_type and heating_coil_type == 'Furnace':
+        (template_type, template_structure), = value.items()
+        (template_name, template_fields), = template_structure.items()
+        cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
+            template_fields.get('cooling_coil_type')
+        heating_coil_type = None if template_fields.get('heating_coil_type', 'None') == 'None' else \
+            template_fields.get('heating_coil_type')
+        if not heating_coil_type:
+            heating_coil_type = None if template_fields.get('heat_pump_heating_coil_type') == 'None' else \
+                template_fields.get('heat_pump_heating_coil_type')
+        supplemental_heating_type = None if template_fields.get('supplemental_heating_or_reheat_coil_type', 'None') == \
+            'None' else True
+        if template_type == 'HVACTemplate:System:Unitary' and cooling_coil_type and heating_coil_type:
             obj._airloop_hvac_unitary_object_type = 'Furnace:HeatCool'
-        if not cooling_coil_type and not heating_coil_type:
-            obj._airloop_hvac_unitary_object_type = None
+        elif template_type == 'HVACTemplate:System:UnitaryHeatPump:AirToAir':
+            obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
+        elif template_type == 'HVACTemplate:System:UnitarySystem':
+            if cooling_coil_type and heating_coil_type and not supplemental_heating_type:
+                obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAir'
+            elif cooling_coil_type and heating_coil_type and supplemental_heating_type:
+                obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
         return
 
 
@@ -1213,6 +1270,50 @@ class AirLoopHVACObjectType:
         return
 
 
+class ModifyCoolingCoilSetpointControlType:
+    """
+    Modify cooling_coil_setpoint_control_type based on other template attributes for YAML TemplateOptions lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._cooling_coil_setpoint_control_type
+
+    def __set__(self, obj, value):
+        # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
+        #  the template
+        if isinstance(value, str):
+            obj._cooling_coil_setpoint_control_type = value
+        else:
+            (_, template_structure), = value.items()
+            (_, template_fields), = template_structure.items()
+            dehumidification_status = True if template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+            cooling_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
+            if dehumidification_status:
+                obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, 'WithDehumidification'])
+        return
+
+
+class ModifyHeatingCoilSetpointControlType:
+    """
+    Modify heating_coil_setpoint_control_type based on other template attributes for YAML TemplateOptions lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._heating_coil_setpoint_control_type
+
+    def __set__(self, obj, value):
+        # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
+        #  the template
+        if isinstance(value, str):
+            obj._heating_coil_setpoint_control_type = value
+        else:
+            (_, template_structure), = value.items()
+            (_, template_fields), = template_structure.items()
+            dehumidification_status = True if template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+            heating_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
+            if dehumidification_status:
+                obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, 'WithDehumidification'])
+        return
+
+
 class ExpandSystem(ExpandObjects):
     """
     System expansion operations
@@ -1220,19 +1321,21 @@ class ExpandSystem(ExpandObjects):
 
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
     airloop_hvac_object_type = AirLoopHVACObjectType()
+    cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
+    heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
 
     def __init__(self, template):
         super().__init__(template=template)
-        # map cooling_coil_design_setpoint variants to common value and remove original
-        if hasattr(self, 'cooling_coil_design_setpoint_temperature'):
-            self.logger.info('cooling_coil_design_setpoint_temperature renamed to cooling_coil_design_setpoint')
-            self.cooling_coil_design_setpoint = getattr(self, 'cooling_coil_design_setpoint_temperature')
-            # Might not be totally necessary for this
-            delattr(self, 'cooling_coil_design_setpoint_temperature')
+        # map variable variants to common value and remove original
+        self.rename_attribute('cooling_coil_design_setpoint_temperature', 'cooling_coil_design_setpoint')
+        self.rename_attribute('economizer_upper_temperature_limit', 'economizer_maximum_limit_dry_bulb_temperature')
+        self.rename_attribute('economizer_lower_temperature_limit', 'economizer_minimum_limit_dry_bulb_temperature')
         self.unique_name = self.template_name
         self.build_path = None
         self.airloop_hvac_unitary_object_type = template
         self.airloop_hvac_object_type = template
+        self.cooling_coil_setpoint_control_type = template
+        self.heating_coil_setpoint_control_type = template
         return
 
     def _create_controller_list_from_epjson(self, epjson: dict = None, build_path: list = None) -> dict:
@@ -1468,6 +1571,7 @@ class ExpandSystem(ExpandObjects):
         :return: build path
         """
         # todo_eo: move this to YAML file
+        # todo_eo: Coil:Heating:.* will remove the heating coil and supplemental heating coil, might be an issue
         equipment_lookup = (
             (
                 ['HVACTemplate:System:Unitary', ],
@@ -1479,7 +1583,25 @@ class ExpandSystem(ExpandObjects):
                     ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
                     ('Fan:.*', True))),
             (
-                ['HVACTemplate:System:PackagedVAV', ],
+                ['HVACTemplate:System:UnitarySystem', ],
+                'AirLoopHVAC:Unitary*',
+                {'Inlet': 'air_inlet_node_name',
+                 'Outlet': 'air_outlet_node_name'},
+                (
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
+                    ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
+                    ('Fan:.*', True))),
+            (
+                ['HVACTemplate:System:UnitaryHeatPump:AirToAir', ],
+                'AirLoopHVAC:UnitaryHeatPump.*',
+                {'Inlet': 'air_inlet_node_name',
+                 'Outlet': 'air_outlet_node_name'},
+                (
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
+                    ('Coil:Heating.*', None if getattr(self, 'heat_pump_heating_coil_type', 'None') == 'None' else True),
+                    ('Fan:.*', True))),
+            (
+                ['HVACTemplate:System:PackagedVAV', 'HVACTemplate:System:DedicatedOutdoorAir'],
                 'CoilSystem:Cooling.*',
                 {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
                  'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
@@ -1505,39 +1627,39 @@ class ExpandSystem(ExpandObjects):
                         #  This is not included in the YAML object to keep the object from connecting to its neighbors
                         #  before this point.
                         equipment_object[super_object_type]['Connectors'][loop_type] = equipment_connectors
-                # make check if no equipment was found
-                if not equipment_object:
-                    raise PyExpandObjectsException("No special equipment objects detected in {} build process: {}"
-                                                   .format(self.unique_name, build_path))
-                try:
-                    (_, equipment_object_keys), = equipment_object.items()
-                    if {'Fields', 'Connectors'} != set(equipment_object_keys.keys()):
-                        raise ValueError
-                except ValueError:
-                    raise PyExpandObjectsException("Equipment is improperly formatted, must be a super"
-                                                   "object. system: {} object: {}"
-                                                   .format(self.unique_name, equipment_object))
-                # Iterate through list and remove objects that match the check list
-                parsed_build_path = []
-                removed_items = 0
-                for super_object in copy.deepcopy(build_path):
-                    (super_object_type, super_object_structure), = super_object.items()
-                    keep_object = True
-                    for object_reference, object_presence in object_check_list:
-                        if re.match(object_reference, super_object_type) and object_presence:
-                            keep_object = None
+                # make check if equipment object was found.  If not, return original build path
+                if equipment_object:
+                    try:
+                        (_, equipment_object_keys), = equipment_object.items()
+                        if {'Fields', 'Connectors'} != set(equipment_object_keys.keys()):
+                            raise ValueError
+                    except ValueError:
+                        raise PyExpandObjectsException("Equipment is improperly formatted, must be a super"
+                                                       "object. system: {} object: {}"
+                                                       .format(self.unique_name, equipment_object))
+                    # Iterate through list and remove objects that match the check list
+                    parsed_build_path = []
+                    removed_items = 0
+                    for super_object in copy.deepcopy(build_path):
+                        (super_object_type, super_object_structure), = super_object.items()
+                        keep_object = True
+                        for object_reference, object_presence in object_check_list:
+                            if re.match(object_reference, super_object_type) and object_presence:
+                                keep_object = None
+                                removed_items += 1
+                        if keep_object:
+                            parsed_build_path.append(super_object)
+                        # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the
+                        # removed_items so it isn't called again
+                        if removed_items == len(object_check_list):
+                            parsed_build_path.append(equipment_object)
                             removed_items += 1
-                    if keep_object:
-                        parsed_build_path.append(super_object)
-                    # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the
-                    # removed_items so it isn't called again
-                    if removed_items == len(object_check_list):
-                        parsed_build_path.append(equipment_object)
-                        removed_items += 1
-                if removed_items < sum(1 for i, j in object_check_list if j):
-                    raise PyExpandObjectsException("Equipment modification process failed to remove all objects "
-                                                   "for system {}".format(self.unique_name))
-                return parsed_build_path
+                    if removed_items < sum(1 for i, j in object_check_list if j):
+                        raise PyExpandObjectsException("Equipment modification process failed to remove all objects "
+                                                       "for system {}".format(self.unique_name))
+                    return parsed_build_path
+                else:
+                    return build_path
         # if no matches are made, return original build_path
         return build_path
 
@@ -1567,7 +1689,7 @@ class ExpandSystem(ExpandObjects):
         build_path = self._modify_build_path_for_outside_air_system(
             epjson=epjson,
             build_path=copy.deepcopy(build_path))
-        # Edit build path for AirLoopHVAC:Unitary equipment
+        # Edit build path for special equipment
         build_path = self._modify_build_path_for_equipment(
             build_path=copy.deepcopy(build_path))
         components = []
@@ -1611,6 +1733,7 @@ class ExpandSystem(ExpandObjects):
         Process system template
         :return: class object with epJSON dictionary as class attribute
         """
+        self.logger.info('Processing System: {}'.format(self.unique_name))
         self._create_objects()
         self._create_outdoor_air_equipment_list_from_build_path()
         self._create_availability_manager_assignment_list()
@@ -1634,6 +1757,7 @@ class ExpandPlantLoop(ExpandObjects):
         Process plant loop template
         :return: class object with epJSON dictionary as class attribute
         """
+        self.logger.info('Processing PlantLoop: {}'.format(self.unique_name))
         self._create_objects()
         self._create_availability_manager_assignment_list()
         return self
@@ -1725,5 +1849,6 @@ class ExpandPlantEquipment(ExpandObjects):
         Process plant loop template
         :return: class object with epJSON dictionary as class attribute
         """
+        self.logger.info('Processing Plant Equipment: {}'.format(self.unique_name))
         self._create_objects()
         return self
