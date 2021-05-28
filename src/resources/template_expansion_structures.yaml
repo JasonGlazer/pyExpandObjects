@@ -439,7 +439,7 @@ Objects:
                 coefficient5_y_2: -1.40464e-06
                 coefficient6_x_y: -0.00153624
                 maximum_value_of_x: 1.0
-                maximum_value_of_y": 85.0
+                maximum_value_of_y: 85.0
                 minimum_value_of_x: 0.1
                 minimum_value_of_y: 30.0
         Fields: &BoilerHotWaterCondensingBoilerFields
@@ -1012,31 +1012,33 @@ Objects:
             type_of_analysis: DetailedAnalysis # set by legacy, not reachable by template, not default
             water_inlet_node_name: '{} Cooling Coil Chw Inlet' # required by schema
             water_outlet_node_name: '{} Cooling Coil Chw Outlet' # required by schema
-          Connectors: &CoilCoolingWaterConnectors
+          Connectors:
             AirLoop: *ConnectorsAirLoop
         DetailedGeometry:
           Fields:
             << : *CoilCoolingWaterFields
           Connectors:
-            << : *CoilCoolingWaterConnectors
+            AirLoop: *ConnectorsAirLoop
       WaterToAirHeatPump:
+        Common:
+          Objects: &CoilCoolingWaterToAirHeatPumpCommonObjects
+            - Branch:
+                name: '{} WaterSource Cooling Condenser Branch'
+                components:
+                  - component_inlet_node_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: water_inlet_node_name
+                    component_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: key
+                    component_object_type:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: self
+                    component_outlet_node_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: water_outlet_node_name
         EquationFit:
           Common:
             Objects: &CoilCoolingWaterToAirHeatPumpEquationFitCommonObjects
-              - Branch:
-                  name: '{} WaterSource Cooling Condenser Branch'
-                  components:
-                    - component_inlet_node_name:
-                        ^Coil:Cooling:WaterToAirHeatPump.*: water_inlet_node_name
-                      component_name:
-                        ^Coil:Cooling:WaterToAirHeatPump.*: key
-                      component_object_type:
-                        ^Coil:Cooling:WaterToAirHeatPump.*: self
-                      component_outlet_node_name:
-                        ^Coil:Cooling:WaterToAirHeatPump.*: water_outlet_node_name
               - Curve:QuadLinear:
                   name: '{} WAHP ClgPowCurve'
-                  coefficient1_constant": -3.205409884
+                  coefficient1_constant: -3.205409884
                   coefficient2_w: -0.976409399
                   coefficient3_x: 3.97892546
                   coefficient4_y: 0.938181818
@@ -1099,7 +1101,8 @@ Objects:
               total_cooling_capacity_curve_name: '{} WAHP ClgTotCapCurve'
               water_inlet_node_name: '{} Cooling Water Inlet' # required by schema
               water_outlet_node_name: '{} Cooling Water Outlet' # required by schema
-            Connectors: *CoilCoolingWaterConnectors
+            Connectors:
+              AirLoop: *ConnectorsAirLoop
     Heating:
       Common:
         Transitions: &CoilHeatingCommonTransitions
@@ -1276,6 +1279,71 @@ Objects:
           rated_outlet_water_temperature: 71.1 # set by legacy, default but simulations unstable when omitted
         Connectors:
           AirLoop: *ConnectorsAirLoop
+      WaterToAirHeatPump:
+        Common:
+          Objects: &CoilHeatingWaterToAirHeatPumpCommonObjects
+            - Branch:
+                name: '{} WaterSource Cooling Condenser Branch'
+                components:
+                  - component_inlet_node_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: water_inlet_node_name
+                    component_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: key
+                    component_object_type:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: self
+                    component_outlet_node_name:
+                      ^Coil:Cooling:WaterToAirHeatPump.*: water_outlet_node_name
+        EquationFit:
+          Common:
+            Objects: &CoilHeatingWaterToAirHeatPumpEquationFitCommonObjects
+              - Curve:QuadLinear:
+                  name: '{} WAHP ClgPowCurve'
+                  coefficient1_constant: -3.205409884
+                  coefficient2_w: -0.976409399
+                  coefficient3_x: 3.97892546
+                  coefficient4_y: 0.938181818
+                  coefficient5_z: 0.0
+                  maximum_value_of_w: 100.0
+                  maximum_value_of_x: 100.0
+                  maximum_value_of_y: 100.0
+                  maximum_value_of_z: 100.0
+                  minimum_value_of_w: -100.0
+                  minimum_value_of_x: -100.0
+                  minimum_value_of_y: -100.0
+                  minimum_value_of_z: -100.0
+              - Curve:QuadLinear:
+                  name: '{} WAHP HtgPowCurve'
+                  coefficient1_constant: -2.176941116
+                  coefficient2_w: 0.832114286
+                  coefficient3_x: 1.570743399
+                  coefficient4_y: 0.690793651
+                  coefficient5_z: 0.0
+                  maximum_value_of_w: 100.0
+                  maximum_value_of_x: 100.0
+                  maximum_value_of_y: 100.0
+                  maximum_value_of_z: 100.0
+                  minimum_value_of_w: -100.0
+                  minimum_value_of_x: -100.0
+                  minimum_value_of_y: -100.0
+                  minimum_value_of_z: -100.0
+            Transitions: &CoilHeatingWaterToAirHeatPumpEquationFitCommonTransitions
+              - Coil:Heating:WaterToAirHeatPump:EquationFit:
+                  heating_coil_gross_rated_capacity: gross_rated_heating_capacity
+                  heating_supply_air_flow_rate: rated_air_flow_rate
+          Base: &CoilHeatingWaterToAirHeatPumpEquationFitSuperObject
+            Fields:
+              name: '{} Heating Coil'
+              <<: *CoilCoolingCommonFields
+              gross_rated_heating_capacity: Autosize
+              gross_rated_heating_cop: '{heat_pump_heating_coil_gross_rated_cop}'
+              heating_capacity_curve_name: '{} WAHP HtgCapCurve'
+              heating_power_consumption_curve_name: '{} WAHP HtgPowCurve'
+              rated_air_flow_rate: Autosize
+              rated_water_flow_rate: Autosize
+              water_inlet_node_name: '{} Heating Water Inlet' # required by schema
+              water_outlet_node_name: '{} Heating Water Outlet' # required by schema
+            Connectors:
+              AirLoop: *ConnectorsAirLoop
   CoilSystem:
     Cooling:
       DX:
@@ -2927,6 +2995,7 @@ OptionTree:
                         Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooled
                           - Coil:Cooling:WaterToAirHeatPump:EquationFit: *CoilCoolingWatertoAirHeatPumpEquationFitSuperObject
                           - *CoilCoolingWaterToAirHeatPumpEquationFitCommonObjects
+                          - *CoilCoolingWaterToAirHeatPumpCommonObjects
               CoolingCoilLast:
                 Objects: &SystemCommonBuildPathActionsCommonCoolingCoilLast
                   - cooling_coil_type:
@@ -2993,6 +3062,14 @@ OptionTree:
                       - *CoilHeatingDXSingleSpeedCommonObjects
                     Transitions: *CoilHeatingDXSingleSpeedCommonTransitions
                   SingleSpeedDXHeatPumpAirSource: *SystemCommonBuildPathActionsHeatingCoilTypeSingleSpeedDXHeatPump
+                  SingleSpeedDXHeatPumpWaterSource:
+                    ObjectReference: OutdoorAir:Mixer
+                    Location: After
+                    ActionType: Insert
+                    Objects:
+                      - Coil:Heating:WaterToAirHeatPump:EquationFit: *CoilHeatingWaterToAirHeatPumpEquationFitSuperObject
+                      - *CoilHeatingWaterToAirHeatPumpEquationFitCommonObjects
+                    Transitions: *CoilHeatingWaterToAirHeatPumpEquationFitCommonTransitions
               # multiple steps needed for heat recovery because new OutdoorAir:Mixer is needed
               - heat_recovery_type:
                   Enthalpy:

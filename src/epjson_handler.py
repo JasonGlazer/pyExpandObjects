@@ -252,19 +252,19 @@ class EPJSON(Logger):
                 self.merge_epjson(
                     super_dictionary=epjson_object,
                     object_dictionary={object_type: object_structure})
-                self.logger.info('Validating {} Objects'.format(object_type))
-            try:
-                file_validation = self.schema.is_valid(epjson_object)
-                if not file_validation:
-                    # if the schema validation fails for the epJSON object, write out specific errors that occurred.
-                    self.logger.error("epJSON object does not meet schema format")
-                    for err in self.schema.iter_errors(epjson_object):
-                        self.logger.error(err.message)
-                    raise PyExpandObjectsSchemaError("Schema Format is invalid")
-                else:
-                    continue
-            except Exception as e:
-                raise PyExpandObjectsSchemaError("epJSON validation failed: {}".format(str(e)))
+                try:
+                    file_validation = self.schema.is_valid(epjson_object)
+                    if not file_validation:
+                        self.logger.info('Validation for {} objects failed'.format(object_type))
+                        # if the schema validation fails for the epJSON object, write out specific errors that occurred.
+                        self.logger.error("epJSON object does not meet schema format")
+                        for err in self.schema.iter_errors(epjson_object):
+                            self.logger.error(err.message)
+                        raise PyExpandObjectsSchemaError("Schema Format is invalid")
+                    else:
+                        continue
+                except Exception as e:
+                    raise PyExpandObjectsSchemaError("epJSON validation failed: {}".format(str(e)))
         return epjson
 
     def _validate_epjson(self, input_epjson):
@@ -293,9 +293,9 @@ class EPJSON(Logger):
                     self.merge_epjson(
                         super_dictionary=epjson_object,
                         object_dictionary={object_type: object_structure})
-                    self.logger.info('Validating {} Objects'.format(object_type))
                     file_validation = self.schema.is_valid(epjson_object)
                     if not file_validation:
+                        self.logger.info('Validation for {} objects failed'.format(object_type))
                         # if the schema validation fails for the epJSON object, write out specific errors that occurred.
                         self.logger.error("Input file does not meet schema format")
                         for err in self.schema.iter_errors(input_epjson):

@@ -15,3 +15,7 @@ __author__ = "John Grando"
 # todo_eo: deepcopy source dictionaries when they are not modified later, and use it for better error messages
 # todo_eo: create check for empty connectors, connectorlists, etc. in systems and plants.
 # todo_eo: should program gracefully exit on error or stop processing with terminal output
+
+# todo_eo: For documentation, note that objects in build_path without Fields/Connectors as keys will be parsed and
+#  directly inserted into epjson.  Objects that have Connectors: AirLoop: False will be kept in place and no connections
+#  will be made
