@@ -1257,6 +1257,28 @@ class AirLoopHVACUnitaryObjectType:
         return
 
 
+class AirLoopHVACUnitaryFanTypeAndPlacement:
+    """
+    Set a class attribute to select the appropriate fan type and placement from TemplateOptions in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._airloop_hvac_unitary_fan_type_and_placement
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (template_name, template_fields), = template_structure.items()
+        supply_fan_placement = 'BlowThrough' if template_fields.get('supply_fan_placement', 'None') == 'None' else \
+            template_fields.get('supply_fan_placement')
+        cooling_coil_type = 'Base' if template_fields.get('cooling_coil_type', 'None') == 'None' else \
+            template_fields.get('cooling_coil_type')
+        if cooling_coil_type == 'MultiSpeedDX':
+            supply_fan_type = 'VariableVolume'
+        else:
+            supply_fan_type = 'Base'
+        obj._airloop_hvac_unitary_fan_type_and_placement = ''.join([supply_fan_type, supply_fan_placement])
+        return
+
+
 class AirLoopHVACObjectType:
     """
     Set a class attribute to select the appropriate AirLoopHVAC type from TemplateOptions in the YAML lookup.
@@ -1327,6 +1349,7 @@ class ExpandSystem(ExpandObjects):
 
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
     airloop_hvac_object_type = AirLoopHVACObjectType()
+    airloop_hvac_unitary_fan_type_and_placement= AirLoopHVACUnitaryFanTypeAndPlacement()
     cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
     heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
 
@@ -1340,6 +1363,7 @@ class ExpandSystem(ExpandObjects):
         self.build_path = None
         self.airloop_hvac_unitary_object_type = template
         self.airloop_hvac_object_type = template
+        self.airloop_hvac_unitary_fan_type_and_placement= template
         self.cooling_coil_setpoint_control_type = template
         self.heating_coil_setpoint_control_type = template
         return
