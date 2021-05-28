@@ -1259,11 +1259,11 @@ class AirLoopHVACObjectType:
         return obj._airloop_hvac_object_type
 
     def __set__(self, obj, value):
-        (_, template_structure), = value.items()
+        (template_type, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
-        cooling_coil_type = True if 'water' in template_fields.get('cooling_coil_type', 'None').lower() else False
-        heating_coil_type = True if 'water' in template_fields.get('heating_coil_type', 'None').lower() else False
-        if cooling_coil_type or heating_coil_type:
+        cooling_coil_type = True if 'chilledwater' == template_fields.get('cooling_coil_type', 'None').lower() else False
+        heating_coil_type = True if 'hotwater' == template_fields.get('heating_coil_type', 'None').lower() else False
+        if not re.match(r'HVACTemplate:System:Unitary.*', template_type) and (cooling_coil_type or heating_coil_type):
             obj._airloop_hvac_object_type = 'Water'
         else:
             obj._airloop_hvac_object_type = 'Base'

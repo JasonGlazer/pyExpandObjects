@@ -283,6 +283,9 @@ class EPJSON(Logger):
             else:
                 raise PyExpandObjectsTypeError("input epJSON is not a dictionary object")
         try:
+            # Building ang GlobalGeometryRules are required objects. Retrieve those objects and one by one verify
+            # epJSON object types such that when an error is kicked, the logging statement can identify
+            # where it came from
             building_object = input_epjson.get('Building')
             global_geometry_rules_object = input_epjson.get('GlobalGeometryRules')
             if not building_object or not global_geometry_rules_object:

@@ -227,10 +227,8 @@ Objects:
           Connectors:
             AirLoop: False
     UnitarySystem:
-      Base: &AirLoopHVACUnitarySystemSuperObject
-        Fields:
-          name: '{} Unitary System'
-          <<: *AirLoopHVACUnitaryCommonFields
+      Common:
+        Objects: &AirLoopHVACUnitarySystemCommonObjects
           air_inlet_node_name:
             BuildPathReference:
               Location: OutdoorAir:Mixer
@@ -239,6 +237,7 @@ Objects:
             BuildPathReference:
               Location: -1
               ValueLocation: Outlet
+          control_type: '{control_type}'
           controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
           supply_fan_name:
             BuildPathReference:
@@ -249,21 +248,18 @@ Objects:
               Location: Fan:.*
               ValueLocation: self
           supply_air_fan_operating_mode_schedule_name: '{supply_air_fan_operating_mode_schedule_name}'
+      Base: &AirLoopHVACUnitarySystemSuperObject
+        Fields:
+          name: '{} Unitary System'
+          <<: *AirLoopHVACUnitaryCommonFields
+          <<: *AirLoopHVACUnitarySystemCommonObjects
         Connectors:
           AirLoop: False
       WithSupplemental: &AirLoopHVACUnitarySystemWithSupplementalSuperObject
         Fields:
           name: '{} Heat Pump'
           <<: *AirLoopHVACUnitaryCommonFields
-          air_inlet_node_name:
-            BuildPathReference:
-              Location: OutdoorAir:Mixer
-              ValueLocation: Outlet
-          air_outlet_node_name:
-            BuildPathReference:
-              Location: -1
-              ValueLocation: Outlet
-          controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
+          <<: *AirLoopHVACUnitarySystemCommonObjects
           supplemental_heating_coil_name:
             BuildPathReference:
               Location: Coil:Heating.*
@@ -274,15 +270,6 @@ Objects:
               Location: Coil:Heating.*
               Occurrence: -1
               ValueLocation: self
-          supply_fan_name:
-            BuildPathReference:
-              Location: Fan:.*
-              ValueLocation: key
-          supply_fan_object_type:
-            BuildPathReference:
-              Location: Fan:.*
-              ValueLocation: self
-          supply_air_fan_operating_mode_schedule_name: '{supply_air_fan_operating_mode_schedule_name}'
         Connectors:
           AirLoop: False
   AirTerminal:
@@ -446,7 +433,7 @@ Objects:
           name: '{}'
           <<: *BoilerHotWaterCommonFields
           efficiency_curve_temperature_evaluation_variable: EnteringBoiler # set by legacy, no default
-          normalized_boiler_efficiency_curve_name": '{} Condensing Boiler Efficiency Curve'
+          normalized_boiler_efficiency_curve_name: '{} Condensing Boiler Efficiency Curve'
   Chiller:
     Electric:
       Common:
@@ -1468,13 +1455,14 @@ Objects:
     SingleSpeed:
       Common:
         Transitions: &CoolingTowerSingleSpeedCommonTransitions
-          - CoolingTower:TwoSpeed:
+          - CoolingTower:SingleSpeed:
               free_convection_capacity: free_convection_capacity
               high_speed_fan_power: design_fan_power
         Mappings: &CoolingTowerSingleSpeedCommonMappings
-          - free_convection_capacity:
-              Autosize:
-                free_convection_capacity: Autocalculate
+          - CoolingTower:SingleSpeed:
+              free_convection_capacity:
+                Autosize:
+                  free_convection_capacity: Autocalculate
       Base:
         Fields: &CoolingTowerSingleSpeed
           name: '{}'
@@ -1492,12 +1480,13 @@ Objects:
               low_speed_fan_powe": low_fan_speed_fan_power
               low_speed_nominal_capacity: low_speed_nominal_capacity
         Mappings: &CoolingTowerTwoSpeedCommonMappings
-          - free_convection_capacity:
-              Autosize:
-                free_convection_capacity: Autocalculate
-          - low_speed_nominal_capacity:
-              Autosize:
-                low_speed_nominal_capacity: Autocalculate
+          - CoolingTower:TwoSpeed:
+              free_convection_capacity:
+                Autosize:
+                  free_convection_nominal_capacity: Autocalculate
+              low_speed_nominal_capacity:
+                Autosize:
+                  low_speed_nominal_capacity: Autocalculate
       Base:
         Fields: &CoolingTowerTwoSpeed
           name: '{}'
@@ -3762,6 +3751,20 @@ OptionTree:
                 control_scheme_2_schedule_name: HVACTemplate-Always1
             - PlantLoop: *PlantLoopMixedWaterFields
           Transitions: *SizingPlantCommonTransitions
+        TemplateObjects:
+          water_pump_configuration:
+            ConstantFlow:
+              Objects:
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    design_pump_head: '{water_pump_rated_head}'
+                - Branch: *PumpBranchConstantSpeedSupplyInlet
+            VariableFlow:
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    design_pump_head: '{water_pump_rated_head}'
+                - Branch: *PumpBranchVariableSpeedSupplyInlet
 # Notes
 # Compact schedules can be created on their own via specialized structure
 #  - Schedule:Compact:
