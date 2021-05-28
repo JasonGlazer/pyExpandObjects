@@ -757,10 +757,14 @@ class ExpandObjects(EPJSON):
         epjson_from_option_tree = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         # Always use merge_epjson to store objects in self.epjson in case objects have already been stored to
         # that dictionary during processing
+        # For this processing, two resolve_objects need to be called.  First is a self reference, then the second
+        # is a reference for any epjson objects created to the base attribute.
+        resolved_inputs = self.resolve_objects(epjson_from_option_tree)
+        resolved_inputs = self.resolve_objects(resolved_inputs, reference_epjson=epjson)
         self.merge_epjson(
             super_dictionary=epjson,
-            object_dictionary=self.resolve_objects(epjson_from_option_tree))
-        return self.resolve_objects(epjson_from_option_tree)
+            object_dictionary=resolved_inputs)
+        return resolved_inputs
 
     def _parse_build_path(self, object_list, epjson=None):
         """
@@ -786,7 +790,7 @@ class ExpandObjects(EPJSON):
                     epjson_objects = self.yaml_list_to_epjson_dictionaries(object_list)
                     epjson_resolved_object = self.resolve_objects(epjson=epjson_object, reference_epjson=epjson_objects)
                     self.merge_epjson(
-                        super_dictionary=self.epjson,
+                        super_dictionary=epjson,
                         object_dictionary=epjson_resolved_object
                     )
                 else:
@@ -1244,7 +1248,9 @@ class AirLoopHVACUnitaryObjectType:
         elif template_type == 'HVACTemplate:System:UnitaryHeatPump:AirToAir':
             obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
         elif template_type == 'HVACTemplate:System:UnitarySystem':
-            if cooling_coil_type and heating_coil_type and not supplemental_heating_type:
+            if cooling_coil_type == 'MultiSpeedDX' and heating_coil_type and not supplemental_heating_type:
+                obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirMultiSpeedDX'
+            elif cooling_coil_type and heating_coil_type and not supplemental_heating_type:
                 obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAir'
             elif cooling_coil_type and heating_coil_type and supplemental_heating_type:
                 obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
@@ -1259,11 +1265,11 @@ class AirLoopHVACObjectType:
         return obj._airloop_hvac_object_type
 
     def __set__(self, obj, value):
-        (_, template_structure), = value.items()
+        (template_type, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
-        cooling_coil_type = True if 'water' in template_fields.get('cooling_coil_type', 'None').lower() else False
-        heating_coil_type = True if 'water' in template_fields.get('heating_coil_type', 'None').lower() else False
-        if cooling_coil_type or heating_coil_type:
+        cooling_coil_type = True if 'chilledwater' == template_fields.get('cooling_coil_type', 'None').lower() else False
+        heating_coil_type = True if 'hotwater' == template_fields.get('heating_coil_type', 'None').lower() else False
+        if not re.match(r'HVACTemplate:System:Unitary.*', template_type) and (cooling_coil_type or heating_coil_type):
             obj._airloop_hvac_object_type = 'Water'
         else:
             obj._airloop_hvac_object_type = 'Base'
