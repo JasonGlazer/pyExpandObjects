@@ -1854,12 +1854,31 @@ class RetrievePlantEquipmentLoop:
         return
 
 
+class ChillerAndCondenserType:
+    """
+    Set a class attribute to select the appropriate fan type and placement from TemplateOptions in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._chiller_and_condenser_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (template_name, template_fields), = template_structure.items()
+        if template_type == 'HVACTemplate:Plant:Chiller':
+            chiller_type = template_fields.get('chiller_type', 'None')
+            condenser_type = 'WaterCooled' if template_fields.get('condenser_type', 'None') == 'None' else \
+                template_fields.get('condenser_type')
+            obj._chiller_and_condenser_type = ''.join([chiller_type, condenser_type])
+        return
+
+
 class ExpandPlantEquipment(ExpandObjects):
     """
     Plant Equipment operations
     """
 
     template_plant_loop_type = RetrievePlantEquipmentLoop()
+    chiller_and_condenser_type = ChillerAndCondenserType()
 
     def __init__(self, template, plant_loop_class_objects=None):
         """
@@ -1872,6 +1891,7 @@ class ExpandPlantEquipment(ExpandObjects):
         self.unique_name = self.template_name
         plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}
+        self.chiller_and_condenser_type = template
         return
 
     def run(self):

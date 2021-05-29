@@ -672,22 +672,33 @@ class HVACTemplate(EPJSON):
         eo = ExpandObjects()
         eo.unique_name = getattr(plant_loop_class_object, 'template_name')
         if 'hotwater' in plant_loop_class_object.template_type.lower() or \
-                'chilledwater' in plant_loop_class_object.template_type.lower() or \
-                'mixedwater' in plant_loop_class_object.template_type.lower():
+                'chilledwater' in plant_loop_class_object.template_type.lower():
             list_dictionary = \
                 eo.get_structure(structure_hierarchy=['AutoCreated', 'PlantLoop', 'PlantEquipmentList'])
             list_dictionary['equipment'] = equipment
-            equipment_list_dictionary = {'PlantEquipmentList': list_dictionary}
+            equipment_list_dictionary = [{'PlantEquipmentList': list_dictionary}, ]
+        elif 'mixedwater' in plant_loop_class_object.template_type.lower():
+            heating_equipment = [i for i in equipment if re.match(r'Boiler:.*', i['equipment_object_type'])]
+            heating_list_dictionary = \
+                eo.get_structure(structure_hierarchy=['AutoCreated', 'PlantLoop', 'PlantEquipmentListMixedWaterHeating'])
+            heating_list_dictionary['equipment'] = heating_equipment
+            cooling_equipment = [i for i in equipment if re.match(r'CoolingTower:.*', i['equipment_object_type'])]
+            cooling_list_dictionary = \
+                eo.get_structure(structure_hierarchy=['AutoCreated', 'PlantLoop', 'PlantEquipmentListMixedWaterCooling'])
+            cooling_list_dictionary['equipment'] = cooling_equipment
+            equipment_list_dictionary = [
+                {'PlantEquipmentList': cooling_list_dictionary},
+                {'PlantEquipmentList': heating_list_dictionary}]
         elif 'condenserwater' in plant_loop_class_object.template_type.lower():
             list_dictionary = \
                 eo.get_structure(structure_hierarchy=['AutoCreated', 'PlantLoop', 'CondenserEquipmentList'])
             list_dictionary['equipment'] = equipment
-            equipment_list_dictionary = {'CondenserEquipmentList': list_dictionary}
+            equipment_list_dictionary = [{'CondenserEquipmentList': list_dictionary}, ]
         else:
             raise InvalidTemplateException('an invalid loop type was specified when creating plant loop connections: {}'
                                            .format(plant_loop_class_object.template_type))
         equipment_list_formatted_dictionary = eo.yaml_list_to_epjson_dictionaries(
-            yaml_list=[equipment_list_dictionary, ])
+            yaml_list=equipment_list_dictionary)
         resolved_path_dictionary = eo.resolve_objects(epjson=equipment_list_formatted_dictionary)
         # save output to class epsjon
         self.merge_epjson(
