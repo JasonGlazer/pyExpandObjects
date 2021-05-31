@@ -237,7 +237,10 @@ class HVACTemplate(EPJSON):
                 try:
                     (zone_equipment_type, zone_equipment_structure), = zone_equipment.items()
                     (zone_equipment_name, zone_equipment_fields), = zone_equipment_structure.items()
-                    outlet_node_name = zone_equipment_fields['air_inlet_node_name']
+                    if zone_equipment_type == 'AirTerminal:SingleDuct:SeriesPIU:Reheat':
+                        outlet_node_name = zone_equipment_fields['supply_air_inlet_node_name']
+                    else:
+                        outlet_node_name = zone_equipment_fields['air_inlet_node_name']
                 except (KeyError, AttributeError, ValueError):
                     raise InvalidTemplateException('Search for zone equipment from Supply Path creation failed for '
                                                    'outlet node.  system {}, zone {}, zone equipment {}'

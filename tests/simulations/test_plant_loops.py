@@ -214,7 +214,7 @@ class TestSimulationSimplePlantLoop(BaseSimulationTest):
                 super_dictionary=output_epjson,
                 object_dictionary=merge_dictionary)
         # Rename connection objects due to naming discrepancies from old program to new
-        output_epjson['PlantEquipmentOperation:CoolingLoad']['Chilled Water Loop ChW All Hours']['range_1_equipment_list_name'] = \
+        output_epjson['PlantEquipmentOperation:CoolingLoad']['Chilled Water Loop ChW Operation All Hours']['range_1_equipment_list_name'] = \
             "Chilled Water Loop All Chillers"
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,
@@ -271,7 +271,7 @@ class TestSimulationSimplePlantLoop(BaseSimulationTest):
                 super_dictionary=output_epjson,
                 object_dictionary=merge_dictionary)
         # Rename connection objects due to naming discrepancies from old program to new
-        output_epjson['PlantEquipmentOperation:HeatingLoad']['Hot Water Loop HW All Hours']['range_1_equipment_list_name'] = \
+        output_epjson['PlantEquipmentOperation:HeatingLoad']['Hot Water Loop HW Operation All Hours']['range_1_equipment_list_name'] = \
             "Hot Water Loop All Equipment"
         test_input_file_path = self.write_file_for_testing(
             epjson=output_epjson,

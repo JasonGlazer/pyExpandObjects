@@ -323,6 +323,32 @@ Objects:
               <<: *AirTerminalSingleDuctCommonFields
               <<: *AirTerminalSingleDuctCommonFieldsReheat
               <<: *AirTerminalSingleDuctCommonFieldsReheatWater
+      SeriesPIU:
+        Reheat:
+          Common:
+            Transitions: &AirTerminalSingleDuctSeriesPIUReheatCommonTransitions
+              - AirTerminal:SingleDuct:SeriesPIU:Reheat:
+                  primary_supply_air_maximum_flow_rate: maximum_primary_air_flow_rate
+                  secondary_supply_air_maximum_flow_rate:
+          Base:
+            Fields: &AirTerminalSingleDuctSeriesPIUReheatFields
+              name: '{} Series PIU Reheat'
+              fan_name:
+                Fan:*: air_inlet_node_name
+              maximum_air_flow_rate: Autosize
+              maximum_hot_water_or_steam_flow_rate: Autosize
+              maximum_primary_air_flow_rate: Autosize
+              minimum_primary_air_flow_fraction: Autosize
+              outlet_node_name: *ZoneSupplyInlet
+              reheat_coil_air_inlet_node_name:
+                Fan:.*: air_outlet_node_name
+              reheat_coil_name:
+                Coil:Heating.*: key
+              reheat_coil_object_type:
+                Coil:Heating.*: self
+              secondary_air_inlet_node_name: *ZoneReturn
+              supply_air_inlet_node_name: *ZoneEquipInlet
+              zone_mixer_name: '{} Mixer'
       VAV:
         Common:
           Fields:
@@ -330,7 +356,7 @@ Objects:
               <<: *AirTerminalSingleDuctCommonFields
               constant_minimum_air_flow_fraction: '{constant_minimum_air_flow_fraction}'
               fixed_minimum_air_flow_rate: '{fixed_minimum_air_flow_rate}'
-              maximum_air_flow_rate: '{supply_air_maximum_flow_rate}'
+              maximum_air_flow_rate: Autosize
               minimum_air_flow_fraction_schedule_name: '{minimum_air_flow_fraction_schedule_name}'
               zone_minimum_air_flow_input_method: '{zone_minimum_air_flow_input_method}'
             Reheat: &AirTerminalSingleDuctVAVCommonFieldsReheat
@@ -2738,6 +2764,20 @@ OptionTree:
                   Transitions:
                     - *AirTerminalSingleDuctVAVCommonTransitions
                     - *AirTerminalSingleDuctVAVHeatAndCoolReheatCommonTransitions
+            FanPowered: &ZoneCommonTemplateObjectsVAVFanPowered
+              flow_type:
+                Series:
+                  Objects:
+                    - AirTerminal:SingleDuct:SeriesPIU:Reheat: *AirTerminalSingleDuctSeriesPIUReheatFields
+                  Transitions:
+                    - *AirTerminalSingleDuctSeriesPIUReheatCommonTransitions
+              reheat_coil_type:
+                HotWater:
+                  Objects:
+                    - Coil:Heating:Water: *CoilHeatingWaterFields
+                    - Branch: *CoilHeatingWaterCommonObjectsBranch
+                  Transitions:
+                    - *AirTerminalSingleDuctVAVCommonTransitions
       BaseboardHeat: # Common objects not used since HVACTemplate:Zone:BaseboardHeat does not use air paths and these
                      # objects are also secondary equipment in other templates.
         BaseObjects:
@@ -2964,6 +3004,13 @@ OptionTree:
           Mappings: *SizingZoneCommonMappings
         TemplateObjects: *ZoneCommonTemplateObjects
       VAV:
+        BaseObjects:
+          Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
+          Transitions: *SizingZoneCommonTransitions
+          Mappings: *SizingZoneCommonMappings
+        TemplateObjects:
+          <<: *ZoneCommonTemplateObjects
+          <<: *ZoneCommonTemplateObjectsVAV
         HeatAndCool:
           BaseObjects:
             Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
@@ -2972,13 +3019,20 @@ OptionTree:
           TemplateObjects:
             <<: *ZoneCommonTemplateObjects
             <<: *ZoneCommonTemplateObjectsVAVHeatAndCool
-        BaseObjects:
-          Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
-          Transitions: *SizingZoneCommonTransitions
+        FanPowered:
+          BaseObjects:
+            Objects:
+              - *ZoneCommonBaseObjectsObjects
+              - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
+              - ZoneHVAC:AirDistributionUnit:
+                  <<: *ZoneHVACAirDistributionUnit
+                  air_distribution_unit_outlet_node_name:
+                    ^AirTerminal:.*: outlet_node_name
+            Transitions: *SizingZoneCommonTransitions
           Mappings: *SizingZoneCommonMappings
-        TemplateObjects:
-          <<: *ZoneCommonTemplateObjects
-          <<: *ZoneCommonTemplateObjectsVAV
+          TemplateObjects:
+            <<: *ZoneCommonTemplateObjects
+            <<: *ZoneCommonTemplateObjectsVAVFanPowered
     System:
       Common:
         BuildPath:
@@ -3625,19 +3679,23 @@ OptionTree:
             - *SizingSystemCommonTransitions
         TemplateObjects: *SystemCommonTemplateObjects
       VAV:
-        BuildPath:
+        BuildPath: &SystemVAVBuildPath
           BaseObjects:
             Objects: *SystemCommonBuildPathObjects
           Actions:
             - *SystemCommonBuildPathActions
             - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsVariableVolumeFan
-        BaseObjects:
+        BaseObjects: &SystemVAVBaseObjects
           Objects: *SystemCommonBaseObjectsVariableVolume
           Transitions: *SystemCommonTransitions
-        TemplateObjects:
+        TemplateObjects: &SystemVAVTemplateObjects
           <<: *SystemCommonTemplateObjects
           <<: *SystemCommonTemplateObjectsVAV
+        FanPowered:
+          BuildPath: *SystemVAVBuildPath
+          BaseObjects: *SystemVAVBaseObjects
+          TemplateObjects: *SystemVAVTemplateObjects
     Plant:
       Common:
         PlantLoop:
