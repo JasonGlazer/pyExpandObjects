@@ -1916,10 +1916,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                     "cooling_coil_type": "ChilledWater",
                     "heating_coil_type": "HotWater",
                     'zone_name': 'test_zone'}}})
-        ez.epjson = {
-            'ZoneHVAC:FourPipeFanCoil': {
-                'Test Fan Coil': {
-                    'field_1': 'val_1'}}}
         ez._create_objects()
         self.assertEqual(
             'test_zone Fan Coil',
@@ -1934,11 +1930,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                     "heating_coil_type": "HotWater",
                     'zone_name': 'test_zone',
                     'baseboard_heating_type': 'HotWater'}}})
-        ez.epjson = {
-            'ZoneHVAC:FourPipeFanCoil': {
-                'Test Fan Coil': {}},
-            'ZoneHVAC:Baseboard:RadiantConvective:Water': {
-                'Test Baseboard': {}}}
         ez._create_objects()
         self.assertEqual(
             'test_zone Baseboard Heat',
@@ -1953,11 +1944,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                     "heating_coil_type": "HotWater",
                     'zone_name': 'test_zone',
                     'dedicated_outdoor_air_system_name': 'DOAS'}}})
-        ez.epjson = {
-            'ZoneHVAC:FourPipeFanCoil': {
-                'Test Fan Coil': {}},
-            'ZoneHVAC:Baseboard:RadiantConvective:Water': {
-                'Test Baseboard': {}}}
         ez._create_objects()
         self.assertEqual(
             'test_zone DOAS ATU',
@@ -1973,11 +1959,6 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                     'zone_name': 'test_zone',
                     'baseboard_heating_type': 'HotWater',
                     'dedicated_outdoor_air_system_name': 'DOAS'}}})
-        ez.epjson = {
-            'ZoneHVAC:FourPipeFanCoil': {
-                'Test Fan Coil': {}},
-            'ZoneHVAC:Baseboard:RadiantConvective:Water': {
-                'Test Baseboard': {}}}
         ez._create_objects()
         self.assertEqual(
             'test_zone DOAS ATU',

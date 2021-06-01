@@ -723,7 +723,7 @@ class ExpandObjects(EPJSON):
                             # use the zero comparison to specifically pass that number.  The 'is not None' clause is
                             # not used here as this is more strict.
                             if isinstance(ig['value'], dict):
-                                raise PyExpandObjectsYamlStructureException('commplex input was not processed for '
+                                raise PyExpandObjectsYamlStructureException('complex input was not processed for '
                                                                             'object {}. Complex input: {}, output value'
                                                                             ' {}'.format(object_name, field_name,
                                                                                          field_value))
@@ -757,10 +757,15 @@ class ExpandObjects(EPJSON):
         epjson_from_option_tree = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         # Always use merge_epjson to store objects in self.epjson in case objects have already been stored to
         # that dictionary during processing
-        # For this processing, two resolve_objects need to be called.  First is a self reference, then the second
-        # is a reference for any epjson objects created to the base attribute.
-        resolved_inputs = self.resolve_objects(epjson_from_option_tree)
-        resolved_inputs = self.resolve_objects(resolved_inputs, reference_epjson=epjson)
+        # For this processing, a temporary dictinoary needs to be made that merges the base epjson and the epjson
+        # created from the option tree.  This is necessary such that a complex reference can find any epjson object that
+        # was created.
+        tmp_epjson = copy.deepcopy(epjson)
+        self.merge_epjson(
+            super_dictionary=tmp_epjson,
+            object_dictionary=copy.deepcopy(epjson_from_option_tree)
+        )
+        resolved_inputs = self.resolve_objects(epjson_from_option_tree, reference_epjson=tmp_epjson)
         self.merge_epjson(
             super_dictionary=epjson,
             object_dictionary=resolved_inputs)
@@ -1086,10 +1091,11 @@ class ExpandThermostat(ExpandObjects):
     Thermostat expansion operations
     """
 
-    def __init__(self, template):
+    def __init__(self, template, epjson=None):
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
         self.unique_name = self.template_name
+        self.epjson = epjson or self.epjson
         return
 
     def _create_and_set_schedules(self):
@@ -1202,7 +1208,7 @@ class ExpandZone(ExpandObjects):
 
     zone_hvac_equipmentlist_object_type = ZonevacEquipmentListOjectType()
 
-    def __init__(self, template):
+    def __init__(self, template, epjson=None):
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
         try:
@@ -1212,6 +1218,7 @@ class ExpandZone(ExpandObjects):
         except AttributeError:
             raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
         self.zone_hvac_equipmentlist_object_type = template
+        self.epjson = epjson or self.epjson
         return
 
     def run(self):
@@ -1353,13 +1360,14 @@ class ExpandSystem(ExpandObjects):
     cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
     heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
 
-    def __init__(self, template):
+    def __init__(self, template, epjson=None):
         super().__init__(template=template)
         # map variable variants to common value and remove original
         self.rename_attribute('cooling_coil_design_setpoint_temperature', 'cooling_coil_design_setpoint')
         self.rename_attribute('economizer_upper_temperature_limit', 'economizer_maximum_limit_dry_bulb_temperature')
         self.rename_attribute('economizer_lower_temperature_limit', 'economizer_minimum_limit_dry_bulb_temperature')
         self.unique_name = self.template_name
+        self.epjson = epjson or self.epjson
         self.build_path = None
         self.airloop_hvac_unitary_object_type = template
         self.airloop_hvac_object_type = template
@@ -1777,9 +1785,10 @@ class ExpandPlantLoop(ExpandObjects):
     """
     Plant loop expansion operations
     """
-    def __init__(self, template):
+    def __init__(self, template, epjson=None):
         super().__init__(template=template)
         self.unique_name = self.template_name
+        self.epjson = epjson or self.epjson
         return
 
     def run(self):
@@ -1880,7 +1889,7 @@ class ExpandPlantEquipment(ExpandObjects):
     template_plant_loop_type = RetrievePlantEquipmentLoop()
     chiller_and_condenser_type = ChillerAndCondenserType()
 
-    def __init__(self, template, plant_loop_class_objects=None):
+    def __init__(self, template, plant_loop_class_objects=None, epjson=None):
         """
         Initialize class
 
@@ -1892,6 +1901,7 @@ class ExpandPlantEquipment(ExpandObjects):
         plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}
         self.chiller_and_condenser_type = template
+        self.epjson = epjson or self.epjson
         return
 
     def run(self):

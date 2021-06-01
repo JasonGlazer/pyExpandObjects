@@ -82,7 +82,46 @@ class HVACTemplate(EPJSON):
                         super_dictionary=self.templates_plant_loops,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
-                elif re.match('^HVACTemplate:Plant:(Chiller|Tower|Boiler)(ObjectReference)*$', object_type):
+                elif re.match('^HVACTemplate:Plant:(Chiller|Tower|Boiler)(:ObjectReference)*$', object_type):
+                    # for plant equipment object references, add the referenced object to epjson for complex input resolution
+                    #  later on.  For chiller objects, also identify condenser type and make it a template attribute.
+                    if object_type == 'HVACTemplate:Plant:Chiller:ObjectReference':
+                        try:
+                            (object_name, object_fields), = object_structure.items()
+                            reference_object_structure = epjson[object_fields['chiller_object_type']]
+                            for reference_object_name, reference_object_fields in reference_object_structure.items():
+                                if reference_object_name == object_fields['chiller_name']:
+                                    try:
+                                        object_structure[object_name]['condenser_type'] = reference_object_fields['condenser_type']
+                                    except (KeyError, AttributeError):
+                                        object_structure['condenser_type'] = 'WaterCooled'
+                                    object_structure[object_name]['epjson'] = {object_fields['chiller_object_type']: reference_object_structure}
+                                    break
+                        except (KeyError, AttributeError):
+                            raise InvalidTemplateException('HVACTemplate:Plant:Chiller:ObjectReference object is incorrectly formatted '
+                                                           '{}'.format(object_structure))
+                    elif object_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
+                        try:
+                            (object_name, object_fields), = object_structure.items()
+                            reference_object_structure = epjson[object_fields['boiler_object_type']]
+                            for reference_object_name, reference_object_fields in reference_object_structure.items():
+                                if reference_object_name == object_fields['boiler_name']:
+                                    object_structure[object_name]['epjson'] = {object_fields['boiler_object_type']: reference_object_structure}
+                                    break
+                        except (KeyError, AttributeError):
+                            raise InvalidTemplateException('HVACTemplate:Plant:Boiler:ObjectReference object is incorrectly formatted '
+                                                           '{}'.format(object_structure))
+                    elif object_type == 'HVACTemplate:Plant:Tower:ObjectReference':
+                        try:
+                            (object_name, object_fields), = object_structure.items()
+                            reference_object_structure = epjson[object_fields['cooling_tower_object_type']]
+                            for reference_object_name, reference_object_fields in reference_object_structure.items():
+                                if reference_object_name == object_fields['cooling_tower_name']:
+                                    object_structure[object_name]['epjson'] = {object_fields['cooling_tower_object_type']: reference_object_structure}
+                                    break
+                        except (KeyError, AttributeError):
+                            raise InvalidTemplateException('HVACTemplate:Plant:Tower:ObjectReference object is incorrectly formatted '
+                                                           '{}'.format(object_structure))
                     self.merge_epjson(
                         super_dictionary=self.templates_plant_equipment,
                         object_dictionary={object_type: object_structure},
@@ -114,8 +153,9 @@ class HVACTemplate(EPJSON):
         templates = self.epjson_genexp(templates)
         for template in templates:
             (_, template_structure), = template.items()
-            (template_name, _), = template_structure.items()
-            expanded_template = expand_class(template=template, **kwargs).run()
+            (template_name, template_fields), = template_structure.items()
+            external_epjson_objects = template_fields.pop('epjson', None)
+            expanded_template = expand_class(template=template, epjson=external_epjson_objects, **kwargs).run()
             expanded_template_dictionary[template_name] = expanded_template
         return expanded_template_dictionary
 

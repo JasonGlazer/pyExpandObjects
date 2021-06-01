@@ -98,13 +98,17 @@ class TestSimulationsFullSystem(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneVAVFanPowered")
     def test_5_zone_vav_fan_powered(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVFanPowered.idf')
-        # Warnings turned off due to ExpandObjects warning about boilers with MixedWater and HotWater loops
-        # todo_eo: look into this and other warnings to duplicate
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneVAVWaterCooled")
     def test_5_zone_vav_water_cooled(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled.idf')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneVAVWaterCooled-ObjectReference")
+    def test_5_zone_vav_water_cooled_object_reference(self):
+        base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled-ObjectReference.idf')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
