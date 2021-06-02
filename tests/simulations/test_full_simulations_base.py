@@ -112,3 +112,9 @@ class TestSimulationsFullSystem(BaseSimulationTest):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled-ObjectReference.idf')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneWaterToAirHeatPumpTowerBoiler")
+    def test_5_zone_water_to_air_heat_pump_tower_boiler(self):
+        base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneWaterToAirHeatPumpTowerBoiler.idf')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return

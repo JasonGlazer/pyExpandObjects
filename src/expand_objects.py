@@ -1356,7 +1356,7 @@ class ExpandSystem(ExpandObjects):
 
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
     airloop_hvac_object_type = AirLoopHVACObjectType()
-    airloop_hvac_unitary_fan_type_and_placement= AirLoopHVACUnitaryFanTypeAndPlacement()
+    airloop_hvac_unitary_fan_type_and_placement = AirLoopHVACUnitaryFanTypeAndPlacement()
     cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
     heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
 
@@ -1371,7 +1371,7 @@ class ExpandSystem(ExpandObjects):
         self.build_path = None
         self.airloop_hvac_unitary_object_type = template
         self.airloop_hvac_object_type = template
-        self.airloop_hvac_unitary_fan_type_and_placement= template
+        self.airloop_hvac_unitary_fan_type_and_placement = template
         self.cooling_coil_setpoint_control_type = template
         self.heating_coil_setpoint_control_type = template
         return
@@ -1850,7 +1850,8 @@ class RetrievePlantEquipmentLoop:
                 if pl in plant_loops:
                     # Special handling for Tower object
                     (template_type, _), = value['template'].items()
-                    if template_type == 'HVACTemplate:Plant:Tower' and pl == 'ChilledWaterLoop':
+                    if template_type in ['HVACTemplate:Plant:Tower', 'HVACTemplate:Plant:Tower:ObjectReference'] \
+                            and pl == 'ChilledWaterLoop':
                         obj._template_plant_loop_type = 'CondenserWaterLoop'
                     else:
                         obj._template_plant_loop_type = pl

@@ -368,7 +368,8 @@ class HVACTemplate(EPJSON):
         # get each loop type specified in the existing plant loop class objects
         plant_loops = [getattr(pl, 'template_type').lower() for pl in expanded_plant_loops.values()]
         # create condenser water loop for water cooled condensers
-        if getattr(plant_equipment_class_object, 'template_type', None).lower() == 'hvactemplate:plant:chiller' \
+        if getattr(plant_equipment_class_object, 'template_type', None).lower() in \
+                ['hvactemplate:plant:chiller', 'hvactemplate:plant:chiller:objectreference'] \
                 and getattr(plant_equipment_class_object, 'condenser_type', None).lower() == 'watercooled' \
                 and 'hvactemplate:plant:condenserwaterloop' not in plant_loops:
             # try to get the chilled water loop attributes to transition to condenser water
@@ -480,7 +481,8 @@ class HVACTemplate(EPJSON):
             # Special handling for chillers with condenser water and chilled water branches
             # todo_eo: find a better way to separate the branches instead of searching for chw or cnd in the branch
             #  names.  It may be unreliable with future user inputs.
-            if pe.template_type == 'HVACTemplate:Plant:Chiller' and getattr(pe, 'condenser_type', None) == 'WaterCooled':
+            if pe.template_type in ['HVACTemplate:Plant:Chiller', 'HVACTemplate:Plant:Chiller:ObjectReference'] \
+                    and getattr(pe, 'condenser_type', None) == 'WaterCooled':
                 for branch_name, branch_structure in branch_objects.items():
                     if 'chilledwater' in plant_loop_class_object.template_type.lower() and 'chw' in branch_name.lower():
                         branch_dictionary.update({branch_name: branch_objects[branch_name]})
@@ -697,6 +699,12 @@ class HVACTemplate(EPJSON):
         supply_branches_with_priority = []
         for sb in supply_branches.values():
             for equipment_name, equipment_objects in expanded_plant_equipment.items():
+                if equipment_objects.template_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
+                    equipment_name = equipment_objects.boiler_name
+                elif equipment_objects.template_type == 'HVACTemplate:Plant:Chiller:ObjectReference':
+                    equipment_name = equipment_objects.chiller_name
+                elif equipment_objects.template_type == 'HVACTemplate:Plant:Tower:ObjectReference':
+                    equipment_name = equipment_objects.cooling_tower_name
                 if sb['components'][0]['component_name'] == equipment_name:
                     equipment_epjson = equipment_objects.epjson[
                         sb['components'][0]['component_object_type']][sb['components'][0]['component_name']]

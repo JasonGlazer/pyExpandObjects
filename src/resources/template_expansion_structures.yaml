@@ -3910,6 +3910,12 @@ OptionTree:
           TemplateObjects:
             condenser_type:
               AirCooled:
+                Objects:
+                  - OutdoorAir:NodeList:
+                      name: '{} Outdoor Air NodeList'
+                      nodes:
+                        - node_or_nodelist_name:
+                            Chiller:.*: condenser_inlet_node_name
               WaterCooled:
                 Objects:
                   - Branch: *ChillerElectricCommonCondenserWaterObjectsBranch
