@@ -80,6 +80,10 @@ GlobalNames:
   Zone:
     EquipInlet: &ZoneEquipInlet
       '{} Zone Equip Inlet'
+    EquipHotInlet: &ZoneEquipHotInlet
+      '{} Zone Equip Hot Inlet'
+    EquipColdInlet: &ZoneEquipColdInlet
+      '{} Zone Equip Cold Inlet'
     SupplyInlet: &ZoneSupplyInlet
       '{} Supply Inlet'
     Return: &ZoneReturn
@@ -409,6 +413,15 @@ Objects:
             Fields: &AirTerminalSingleDuctVAVReheatHotWater
               <<: *AirTerminalSingleDuctVAVReheat
               <<: *AirTerminalSingleDuctCommonFieldsReheatWater
+    DualDuct:
+      ConstantVolume:
+        Base:
+          Fields: &AirTerminalDualDuctConstantVolumeFields
+            name: '{} Dual Duct'
+            air_outlet_node_name: *ZoneSupplyInlet
+            cold_air_inlet_node_name: *ZoneEquipColdInlet
+            hot_air_inlet_node_name: *ZoneEquipHotInlet
+            maximum_air_flow_rate: Autosize
   AvailabilityManager:
     NightCycle:
       Base:
@@ -2838,6 +2851,15 @@ OptionTree:
                 - Branch:
                     <<: *CoilHeatingWaterCommonObjectsBranch
                     name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
+      DualDuct:
+        BaseObjects:
+          Objects:
+            - *ZoneCommonBaseObjectsObjectsAirTerminal
+            - AirTerminal:DualDuct:ConstantVolume: *AirTerminalDualDuctConstantVolumeFields
+          Transitions: *SizingZoneCommonTransitions
+          Mappings: *SizingZoneCommonMappings
+        TemplateObjects:
+          <<: *ZoneCommonTemplateObjects
       FanCoil:
         BuildPath:
           BaseObjects:
