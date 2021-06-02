@@ -1139,6 +1139,7 @@ Objects:
           Transitions: &CoilCoolingWaterToAirHeatPumpEquationFitCommonTransitions
             - Coil:Cooling:WaterToAirHeatPump:EquationFit:
                 dx_cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
+                cooling_coil_gross_rated_cop: gross_rated_cooling_cop
                 cooling_supply_air_flow_rate: rated_air_flow_rate
           Base: &CoilCoolingWatertoAirHeatPumpEquationFitSuperObject
             Fields:
@@ -2131,7 +2132,7 @@ Objects:
         Fields: &SizingPlantMixedWater
           <<: *SizingPlantCommonFields
           design_loop_exit_temperature: '{high_temperature_design_setpoint}'
-          loop_design_temperature_difference: '{loop_design_delta_temperature}'
+          loop_design_temperature_difference: 5.6
           loop_type: Condenser
   UnitarySystemPerformance:
     Multispeed:
@@ -2263,9 +2264,9 @@ Objects:
         name: '{} Equipment'
         equipment:
           - zone_equipment_object_type:
-              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|IdealLoads).*: self
+              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|IdealLoads|WaterToAir).*: self
             zone_equipment_name:
-              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|IdealLoads).*: key
+              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|IdealLoads|WaterToAir).*: key
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
       WithDOAS: &ZoneHVACEquipmentListWithDOAS
@@ -2276,9 +2277,9 @@ Objects:
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
           - zone_equipment_object_type:
-              ^ZoneHVAC:(FourPipe.*|PackagedTerminal.*): self
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: self
             zone_equipment_name:
-              ^ZoneHVAC:(FourPipe.*|PackagedTerminal.*): key
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: key
             zone_equipment_cooling_sequence: 2
             zone_equipment_heating_or_no_load_sequence: 2
       Baseboard: &ZoneHVACEquipmentListBaseBoard
@@ -2294,9 +2295,9 @@ Objects:
         <<: *ZoneHVACEquipmentList
         equipment:
           - zone_equipment_object_type:
-              ^ZoneHVAC:(AirDistribution|FourPipe).*: self
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: self
             zone_equipment_name:
-              ^ZoneHVAC:(AirDistribution|FourPipe).*: key
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: key
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
           - zone_equipment_object_type:
@@ -2313,9 +2314,9 @@ Objects:
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
           - zone_equipment_object_type:
-              ^ZoneHVAC:FourPipe.*: self
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: self
             zone_equipment_name:
-              ^ZoneHVAC:FourPipe.*: key
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: key
             zone_equipment_cooling_sequence: 2
             zone_equipment_heating_or_no_load_  sequence: 2
           - zone_equipment_object_type:
@@ -2360,7 +2361,7 @@ Objects:
           maximum_hot_water_flow_rate: Autosize # set by legacy, not reachable from template, no object default, required by schema
           maximum_outdoor_air_flow_rate: Autosize # set by legacy, unreachable from template, required by schema
           maximum_supply_air_flow_rate: Autosize # set by template default, no object default, required by schema
-    ZoneHVAC:IdealLoadsAirSystem:
+    IdealLoadsAirSystem:
       Base:
         Fields: &ZoneHVACIdealLoadsAirSystemFields
           name: '{} Ideal Loads Air System'
@@ -2417,6 +2418,15 @@ Objects:
               Occurrence: -1
               ValueLocation: self
           supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always0
+    WaterToAirHeatPump:
+      Base:
+        Fields: &ZoneHVACWaterToAirHeatPumpFields
+          <<: *ZoneHVACPackagedTerminalHeatPumpFields
+          name: '{} WAHP'
+          maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: 20.0 # set by legacy, not default
+          outdoor_dry_bulb_temperature_sensor_node_name:
+            OutdoorAir:Mixer: outdoor_air_stream_node_name
+
 AutoCreated:
   PlantLoop:
     BranchList:
@@ -3059,6 +3069,45 @@ OptionTree:
           TemplateObjects:
             <<: *ZoneCommonTemplateObjects
             <<: *ZoneCommonTemplateObjectsVAVFanPowered
+      WaterToAirHeatPump:
+        BuildPath:
+          BaseObjects:
+            Objects:
+              - *ZoneCommonBuildPathBaseObjectsObjects
+            Transitions:
+              - *FanCommonTransitionsSystemModel
+          Actions:
+            - heat_pump_heating_coil_type:
+                Coil:Heating:WaterToAirHeatPump:EquationFit:
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:WaterToAirHeatPump:EquationFit: *CoilHeatingWaterToAirHeatPumpEquationFitSuperObject
+                    - *CoilHeatingWaterToAirHeatPumpEquationFitCommonObjects
+                    - *CoilHeatingWaterToAirHeatPumpCommonObjects
+                  Transitions: *CoilHeatingWaterToAirHeatPumpEquationFitCommonTransitions
+            - cooling_coil_type:
+                Coil:Cooling:WaterToAirHeatPump:EquationFit:
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Cooling:WaterToAirHeatPump:EquationFit: *CoilCoolingWatertoAirHeatPumpEquationFitSuperObject
+                    - *CoilCoolingWaterToAirHeatPumpEquationFitCommonObjects
+                    - *CoilCoolingWaterToAirHeatPumpCommonObjects
+                  Transitions: *CoilCoolingWaterToAirHeatPumpEquationFitCommonTransitions
+            - *ZoneCommonBuildPathActionsObjectsFanOnOff
+            - supplemental_heating_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
+        BaseObjects:
+          Objects:
+            - ZoneHVAC:WaterToAirHeatPump: *ZoneHVACWaterToAirHeatPumpFields
+            - *ZoneCommonBaseObjectsObjects
+            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+          Transitions: *SizingZoneCommonTransitions
+          Mappings: *SizingZoneCommonMappings
+        TemplateObjects:
+          <<: *ZoneCommonTemplateObjects
     System:
       Common:
         BuildPath:
@@ -4011,7 +4060,8 @@ OptionTree:
                 control_scheme_2_schedule_name: HVACTemplate-Always1
             - PlantLoop: *PlantLoopMixedWaterFields
             - SetpointManager:Scheduled:DualSetpoint: *SetpointManagerScheduledDualSetpoint
-          Transitions: *SizingPlantCommonTransitions
+          Transitions:
+            - *SizingPlantCommonTransitions
         TemplateObjects:
           water_pump_configuration:
             ConstantFlow:
