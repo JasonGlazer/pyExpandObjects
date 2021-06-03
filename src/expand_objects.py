@@ -1000,6 +1000,9 @@ class ExpandObjects(EPJSON):
             option_tree=option_tree,
             leaf_path=['BaseObjects', ])
         build_path = self._apply_transitions(build_path_leaf)
+        # if the build path from base objects is empty, it comes back as a dictionary.  Therefore, it needs to be
+        # explicity changed to a list
+        build_path = build_path if bool(build_path) else []
         # Get the list actions to perform on a build bath, based on template inputs, and process them in order
         actions = option_tree.pop('Actions', None)
         if actions:
@@ -1772,6 +1775,27 @@ class ExpandSystem(ExpandObjects):
         :return: class object with epJSON dictionary as class attribute
         """
         self.logger.info('Processing System: {}'.format(self.unique_name))
+        if self.template_type == 'HVACTemplate:System:DualDuct':
+            for duct_type, duct_field_name in (
+                    ('ColdDuct', 'cold_duct'),
+                    ('HotDuct', 'hot_duct')):
+                # Make a copy of the class object and split to cold/hot class objects
+                duct_system_class_object = copy.deepcopy(self)
+                duct_system_class_object.template_type = ':'.join(['HVACTemplate:System:DualDuct', duct_type])
+                # rename hot/cold duct to typical names now that their type is identified by the class
+                for attribute in [i for i in vars(duct_system_class_object).keys() if i.startswith(duct_field_name)]:
+                    setattr(duct_system_class_object, attribute.replace('cold_duct_', ''), getattr(duct_system_class_object, attribute))
+                structure_hierarchy = duct_system_class_object.template_type.split(':')
+                epjson_from_option_tree = duct_system_class_object._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
+                self.merge_epjson(
+                    super_dictionary=self.epjson,
+                    object_dictionary=duct_system_class_object.epjson)
+                self.merge_epjson(
+                    super_dictionary=self.epjson,
+                    object_dictionary=epjson_from_option_tree)
+            # rename main branch for processing
+            for attribute in [i for i in vars(self).keys() if i.startswith(duct_field_name)]:
+                setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))
         self._create_objects()
         self._create_outdoor_air_equipment_list_from_build_path()
         self._create_availability_manager_assignment_list()

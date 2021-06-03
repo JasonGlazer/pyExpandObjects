@@ -1897,6 +1897,19 @@ Objects:
             outdoor_low_temperature: '{chilled_water_reset_outdoor_dry_bulb_low}' # required by schema
             setpoint_at_outdoor_high_temperature: '{chilled_water_setpoint_at_outdoor_dry_bulb_high}' # required by schema
             setpoint_at_outdoor_low_temperature: '{chilled_water_setpoint_at_outdoor_dry_bulb_low}' # required by schema
+      Coolign:
+        Base:
+          Fields: &SetpointManagerOutdoorAirResetCooling
+            <<: *SetpointManagerOutdoorAirReset
+            name: '{} Cooling Supply Air Temp Manager'
+            outdoor_high_temperature: '{cooling_coil_reset_outdoor_dry_bulb_high}'
+            outdoor_low_temperature: '{cooling_coil_reset_outdoor_dry_bulb_low}'
+            setpoint_at_outdoor_high_temperature: '{cooling_coil_setpoint_at_outdoor_dry_bulb_high}'
+            setpoint_at_outdoor_low_temperature: '{cooling_coil_setpoint_at_outdoor_dry_bulb_low}'
+            setpoint_node_or_nodelist_name:
+              BuildPathReference:
+                Location: -1
+                ValueLocation: Outlet
       Heating:
         Base:
           Fields: &SetpointManagerOutdoorAirResetHeating
@@ -3230,19 +3243,19 @@ OptionTree:
                         Location: -1
                         ActionType: Insert
                         Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooled
-            Base: &SystemCommonBuildPathActions
-              - heating_coil_type: &SystemCommonBuildPathActionsHeatingCoilType
+            Base: &SystemCommonBuildPathActionsHeatingCoilAfterMixer
+              - heating_coil_type: &SystemCommonBuildPathActionsHeatingCoilTypeAfterMixer
                   Electric:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
                     ActionType: Insert
-                    Objects:
+                    Objects: &SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerElectric
                       - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
                   HotWater:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
                     ActionType: Insert
-                    Objects:
+                    Objects: &SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerHotWater
                       - Coil:Heating:Water: *CoilHeatingWaterSuperObject
                       - Controller:WaterCoil:
                           <<: *ControllerWaterCoil
@@ -3252,7 +3265,7 @@ OptionTree:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
                     ActionType: Insert
-                    Objects:
+                    Objects: &SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerGas
                       - *CoilHeatingFuelCommonObjects
                       - Coil:Heating:Fuel: *CoilHeatingFuelNoParentObjectSuperObject
                     Transitions:
@@ -3263,7 +3276,7 @@ OptionTree:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
                     ActionType: Insert
-                    Objects:
+                    Objects: &SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerSingleSpeedDXHeatPump
                       - Coil:Heating:DX:SingleSpeed: *CoilHeatingDXSingleSpeedSuperObject
                       - *CoilHeatingDXSingleSpeedCommonObjects
                     Transitions: *CoilHeatingDXSingleSpeedCommonTransitions
@@ -3272,11 +3285,12 @@ OptionTree:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
                     ActionType: Insert
-                    Objects:
+                    Objects: &SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerSingleSpeedDXHeatPumpWaterSource
                       - Coil:Heating:WaterToAirHeatPump:EquationFit: *CoilHeatingWaterToAirHeatPumpEquationFitSuperObject
                       - *CoilHeatingWaterToAirHeatPumpEquationFitCommonObjects
                       - *CoilHeatingWaterToAirHeatPumpCommonObjects
                     Transitions: *CoilHeatingWaterToAirHeatPumpEquationFitCommonTransitions
+            HeatRecovery: &SystemCommonBuildPathActionsHeatRecovery
               # multiple steps needed for heat recovery because new OutdoorAir:Mixer is needed
               - heat_recovery_type:
                   Enthalpy:
@@ -3301,8 +3315,37 @@ OptionTree:
                           Fields: *HeatExchangerAirToAirSensibleAndLatentFields
                           Connectors:
                             AirLoop: False
+            HeatingCoilLast:
+              Objects: &SystemCommonBuildPathActionsCommonHeatingCoilLast
+                - heating_coil_type:
+                    Electric:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: -1
+                      ActionType: Insert
+                      Objects: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerElectric
+                    HotWater:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: -1
+                      ActionType: Insert
+                      Objects: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerHotWater
+                    Gas:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: -1
+                      ActionType: Insert
+                      Objects: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerGas
+                    SingleSpeedDXHeatPump: &SystemCommonBuildPathActionsHeatingCoilLatSingleSpeedDXHeatPump
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: -1
+                      ActionType: Insert
+                      Objects: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerSingleSpeedDXHeatPump
+                    SingleSpeedDXHeatPumpAirSource: *SystemCommonBuildPathActionsHeatingCoilLatSingleSpeedDXHeatPump
+                    SingleSpeedDXHeatPumpWaterSource:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: -1
+                      ActionType: Insert
+                      Objects: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerSingleSpeedDXHeatPumpWaterSource
             ConstantVolume: &SystemCommonBuildPathActionsConstantVolume
-              - supply_fan_placement:
+              - supply_fan_placement: &SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
                   None: &SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacementNone
                     Location: -1
                     ActionType: Insert
@@ -3463,7 +3506,7 @@ OptionTree:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACWater
           ConstantVolume: &SystemCommonTemplateObjectsConstantVolume
-            cooling_coil_setpoint_control_type:
+            cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
               ControlZone:
                 Objects:
                   - SetpointManager:SingleZone:Cooling: *SetpointManagerSingleZoneCooling
@@ -3479,7 +3522,10 @@ OptionTree:
               Warmest:
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
-            heating_coil_setpoint_control_type:
+              OutdoorAirTemperatureReset:
+                Objects:
+                  - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetCooling
+            heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
               ControlZone:
                 Objects:
                   - SetpointManager:SingleZone:Heating: *SetpointManagerSingleZoneHeating
@@ -3539,7 +3585,8 @@ OptionTree:
           BaseObjects:
             Objects: *SystemCommonBuildPathObjects
           Actions:
-            - *SystemCommonBuildPathActions
+            - *SystemCommonBuildPathActionsHeatingCoilAfterMixer
+            - *SystemCommonBuildPathActionsHeatRecovery
             - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsConstantVolume
         BaseObjects:
@@ -3559,7 +3606,8 @@ OptionTree:
             Transitions:
               - *AvailabilityManagerScheduledCommonTransitions
           Actions:
-            - *SystemCommonBuildPathActions
+            - *SystemCommonBuildPathActionsHeatingCoilAfterMixer
+            - *SystemCommonBuildPathActionsHeatRecovery
             - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - supply_fan_placement:
                 None: &SystemCommonBuildPathActionsSupplyFanPlacementNone
@@ -3588,12 +3636,59 @@ OptionTree:
           <<: *SystemCommonTemplateObjects
           <<: *SystemCommonTemplateObjectsDOAS
           <<: *SystemCommonTemplateObjectsConstantVolume
+      DualDuct:
+        BuildPath:
+          BaseObjects:
+            Objects: *SystemCommonBuildPathObjects
+          Actions:
+            - *SystemCommonBuildPathActionsHeatingCoilAfterMixer
+            - *SystemCommonBuildPathActionsHeatRecovery
+            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
+            - *SystemCommonBuildPathActionsConstantVolume
+        BaseObjects:
+          Objects: *SystemCommonBaseObjectsConstantVolume
+          Transitions:
+            - *SystemCommonTransitions
+            - *SizingSystemCommonTransitions
+        TemplateObjects:
+          <<: *SystemCommonTemplateObjects
+          <<: *SystemCommonTemplateObjectsConstantVolume
+        ColdDuct:
+          BuildPath:
+            BaseObjects:
+            Actions:
+              - *SystemCommonBuildPathActionsCommonCoolingCoilLast
+              - supply_fan_placement: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
+          BaseObjects:
+            Objects:
+              - SetpointManager:MixedAir: *SetpointManagerMixedAirCoolingSystemNodelist
+              - NodeList:
+                  name: *SystemMixedAirNodelistName
+                  nodes:
+                    - node_name:
+                        ^Coil:Cooling:.*: air_outlet_node_name
+                    - node_name:
+                        ^OutdoorAir:Mixer: mixed_air_node_name
+          TemplateObjects:
+            cooling_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
+        HotDuct:
+          BuildPath:
+            BaseObjects:
+            Actions:
+              - *SystemCommonBuildPathActionsCommonHeatingCoilLast
+              - supply_fan_placement: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
+          BaseObjects:
+            Objects:
+              - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
+          TemplateObjects:
+            heating_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
       PackagedVAV:
         BuildPath:
           BaseObjects:
             Objects: *SystemCommonBuildPathObjects
           Actions:
-            - *SystemCommonBuildPathActions
+            - *SystemCommonBuildPathActionsHeatingCoilAfterMixer
+            - *SystemCommonBuildPathActionsHeatRecovery
             - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsVariableVolumeFan
         BaseObjects:
@@ -3609,7 +3704,7 @@ OptionTree:
               - *SystemCommonBuildPathObjects
           Actions:
             - heating_coil_type:
-                <<: *SystemCommonBuildPathActionsHeatingCoilType
+                <<: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixer
                 Gas: # Override existing Gas option with different Coil:Heating:Fuel object
                   ObjectReference: OutdoorAir:Mixer
                   Location: After
@@ -3658,7 +3753,7 @@ OptionTree:
               Objects:
                 - *SystemCommonBuildPathObjects
             Actions:
-              - heat_pump_heating_coil_type: *SystemCommonBuildPathActionsHeatingCoilType
+              - heat_pump_heating_coil_type: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixer
               - supplemental_heating_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
               - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
               - *SystemCommonBuildPathActionFanOnOff
@@ -3684,7 +3779,7 @@ OptionTree:
               - *SystemCommonBuildPathObjects
           Actions:
             - heating_coil_type:
-                <<: *SystemCommonBuildPathActionsHeatingCoilType
+                <<: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixer
                 HotWater: # Override with no Controller:Watercoil
                   ObjectReference: OutdoorAir:Mixer
                   Location: After
@@ -3780,7 +3875,8 @@ OptionTree:
           BaseObjects:
             Objects: *SystemCommonBuildPathObjects
           Actions:
-            - *SystemCommonBuildPathActions
+            - *SystemCommonBuildPathActionsHeatingCoilAfterMixer
+            - *SystemCommonBuildPathActionsHeatRecovery
             - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsVariableVolumeFan
         BaseObjects:
