@@ -1379,7 +1379,11 @@ class ExpandSystem(ExpandObjects):
         self.heating_coil_setpoint_control_type = template
         return
 
-    def _create_controller_list_from_epjson(self, epjson: dict = None, build_path: list = None) -> dict:
+    def _create_controller_list_from_epjson(
+            self,
+            epjson: dict = None,
+            build_path: list = None,
+            controller_list: tuple = ('Controller:WaterCoil', 'Controller:OutdoorAir')) -> dict:
         """
         Create AirLoopHVAC:ControllerList objects from epJSON dictionary
         These list objects are separated from the OptionTree build operations because they will vary based on the
@@ -1388,6 +1392,7 @@ class ExpandSystem(ExpandObjects):
 
         :param epjson: system epJSON formatted dictionary
         :param build_path: List of epJSON super objects in build path order
+        :param controller_list: List of controllers to be included in search
         :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
             input epJSON object.
         """
@@ -1404,7 +1409,7 @@ class ExpandSystem(ExpandObjects):
                 (object_name, object_fields), = resovled_epjson_object[super_object_type].items()
                 actuator_list.append(object_fields['water_inlet_node_name'])
         object_list = []
-        for controller_type in ['Controller:WaterCoil', 'Controller:OutdoorAir']:
+        for controller_type in controller_list:
             controller_objects = epjson.get(controller_type)
             if controller_objects:
                 airloop_hvac_controllerlist_object = \
@@ -1777,29 +1782,34 @@ class ExpandSystem(ExpandObjects):
         self.logger.info('Processing System: {}'.format(self.unique_name))
         if self.template_type == 'HVACTemplate:System:DualDuct':
             for duct_type, duct_field_name in (
-                    ('ColdDuct', 'cold_duct'),
-                    ('HotDuct', 'hot_duct')):
-                # Make a copy of the class object and split to cold/hot class objects
+                    ('HotDuct', 'hot_duct'),
+                    ('ColdDuct', 'cold_duct')):
+                # Make a copy of the class object and split to cold/hot class objects.
+                # Clear epjson and build_path from inherited class
                 duct_system_class_object = copy.deepcopy(self)
+                duct_system_class_object.epjson = {}
+                duct_system_class_object.build_path = []
                 duct_system_class_object.template_type = ':'.join(['HVACTemplate:System:DualDuct', duct_type])
                 # rename hot/cold duct to typical names now that their type is identified by the class
                 for attribute in [i for i in vars(duct_system_class_object).keys() if i.startswith(duct_field_name)]:
                     setattr(duct_system_class_object, attribute.replace('cold_duct_', ''), getattr(duct_system_class_object, attribute))
-                structure_hierarchy = duct_system_class_object.template_type.split(':')
-                epjson_from_option_tree = duct_system_class_object._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
+                duct_system_class_object._create_objects()
+                # Create controller list.
+                # todo_eo: object getting overwritten in each loop iteration
+                duct_system_class_object._create_controller_list_from_epjson(controller_list=('Controller:WaterCoil', ))
                 self.merge_epjson(
                     super_dictionary=self.epjson,
                     object_dictionary=duct_system_class_object.epjson)
-                self.merge_epjson(
-                    super_dictionary=self.epjson,
-                    object_dictionary=epjson_from_option_tree)
             # rename main branch for processing
             for attribute in [i for i in vars(self).keys() if i.startswith(duct_field_name)]:
                 setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))
         self._create_objects()
         self._create_outdoor_air_equipment_list_from_build_path()
         self._create_availability_manager_assignment_list()
-        self._create_controller_list_from_epjson()
+        if self.template_type == 'HVACTemplate:System:DualDuct':
+            self._create_controller_list_from_epjson(controller_list=('Controller:OutdoorAir', ))
+        else:
+            self._create_controller_list_from_epjson()
         self._create_outdoor_air_system()
         self._create_branch_and_branchlist_from_build_path()
         return self

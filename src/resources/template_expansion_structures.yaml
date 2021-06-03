@@ -69,6 +69,8 @@ GlobalNames:
       '{} Branches'
     MixedAirNodelistName: &SystemMixedAirNodelistName
       '{} Mixed Air Nodes'
+    MixedAirOutlet: &SystemMixedAirOutlet
+      '{} Mixed Air Outlet'
     ReliefAirOutlet: &ReliefAirOutlet
       '{} Relief Air Outlet'
     ReturnAirOutlet: &ReturnAirOutlet
@@ -1701,7 +1703,7 @@ Objects:
       Mixer: &OutdoorAirMixerSuperObject
         Fields: &OutdoorAirMixerFields
           name: '{} OA Mixing Box' # required by schema
-          mixed_air_node_name: '{} Mixed Air Outlet' # required by schema
+          mixed_air_node_name: *SystemMixedAirOutlet # required by schema
           outdoor_air_stream_node_name: '{} Outside Air Inlet' # required by schema
           relief_air_stream_node_name: *ReliefAirOutlet # required by schema
           return_air_stream_node_name: *AirLoopInlet # required by schema
@@ -3480,8 +3482,6 @@ OptionTree:
                           ^OutdoorAir:Mixer: mixed_air_node_name
           Transitions:
             Base: &SystemCommonTransitions
-              - ^AirloopHVAC$:
-                  supply_fan_maximum_flow_rate: design_supply_air_flow_rate
               - Controller:OutdoorAir:
                   economizer_lockout: lockout_type
                   economizer_type: economizer_control_type
@@ -3502,9 +3502,15 @@ OptionTree:
               Base:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVAC
+                Transitions:
+                  - ^AirloopHVAC$:
+                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
               Water:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACWater
+                Transitions:
+                  - ^AirloopHVAC$:
+                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
           ConstantVolume: &SystemCommonTemplateObjectsConstantVolume
             cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
               ControlZone:
@@ -3641,18 +3647,18 @@ OptionTree:
           BaseObjects:
             Objects: *SystemCommonBuildPathObjects
           Actions:
-            - *SystemCommonBuildPathActionsHeatingCoilAfterMixer
             - *SystemCommonBuildPathActionsHeatRecovery
-            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsConstantVolume
         BaseObjects:
-          Objects: *SystemCommonBaseObjectsConstantVolume
+          Objects:
+            - OutdoorAir:NodeList: *OutdoorAirNodeListFields
+            - Controller:OutdoorAir: *ControllerOutdoorAir
+            - Sizing:System: *SizingSystemConstantVolume
           Transitions:
             - *SystemCommonTransitions
             - *SizingSystemCommonTransitions
         TemplateObjects:
           <<: *SystemCommonTemplateObjects
-          <<: *SystemCommonTemplateObjectsConstantVolume
         ColdDuct:
           BuildPath:
             BaseObjects:
@@ -3667,8 +3673,7 @@ OptionTree:
                   nodes:
                     - node_name:
                         ^Coil:Cooling:.*: air_outlet_node_name
-                    - node_name:
-                        ^OutdoorAir:Mixer: mixed_air_node_name
+                    - node_name: *SystemMixedAirOutlet
           TemplateObjects:
             cooling_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
         HotDuct:

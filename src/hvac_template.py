@@ -262,8 +262,6 @@ class HVACTemplate(EPJSON):
         """
         zone_system_template_field_name = \
             self._get_zone_template_field_from_system_type(template_type=system_class_object.template_type)
-        zone_splitters = []
-        zone_mixers = []
         # iterate over inlet node name types.  For DualDuct, this is two entries (hot/cold).  For all other systems,
         # this is a single value
         if system_class_object.template_type == 'HVACTemplate:System:DualDuct':
@@ -339,6 +337,7 @@ class HVACTemplate(EPJSON):
                                   eo.get_structure(structure_hierarchy=[
                                       'AutoCreated', 'System', 'AirLoopHVAC', 'SupplyPath', 'Base'])}
             # Rename objects if multi-inlet node system is used
+            # todo_eo: this can probably be removed it the unique name is changed on object creations
             if system_class_object.template_type == 'HVACTemplate:System:DualDuct':
                 (_, supply_object_fields), = supply_object.items()
                 (_, supply_path_object_fields), = supply_path_object.items()

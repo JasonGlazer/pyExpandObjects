@@ -220,13 +220,13 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             expanded_zones[unique_name] = ez
-        output = self.hvac_template._create_system_path_connection_objects(
+        self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
             expanded_zones=expanded_zones)
         self.assertEqual(
             {'AirLoopHVAC:ZoneSplitter': 1, 'AirLoopHVAC:ZoneMixer': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
-            eo.summarize_epjson(output)
+            eo.summarize_epjson(self.hvac_template.epjson)
         )
         return
 
@@ -250,13 +250,13 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             expanded_zones[unique_name] = ez
-        output = self.hvac_template._create_system_path_connection_objects(
+        self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
             expanded_zones=expanded_zones)
         self.assertEqual(
             {'AirLoopHVAC:SupplyPlenum': 1, 'AirLoopHVAC:ZoneMixer': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
-            eo.summarize_epjson(output)
+            eo.summarize_epjson(self.hvac_template.epjson)
         )
         return
 
@@ -280,13 +280,13 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             expanded_zones[unique_name] = ez
-        output = self.hvac_template._create_system_path_connection_objects(
+        self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
             expanded_zones=expanded_zones)
         self.assertEqual(
             {'AirLoopHVAC:ZoneSplitter': 1, 'AirLoopHVAC:ReturnPlenum': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
-            eo.summarize_epjson(output)
+            eo.summarize_epjson(self.hvac_template.epjson)
         )
         return
 
@@ -311,13 +311,13 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             expanded_zones[unique_name] = ez
-        output = self.hvac_template._create_system_path_connection_objects(
+        self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
             expanded_zones=expanded_zones)
         self.assertEqual(
             {'AirLoopHVAC:SupplyPlenum': 1, 'AirLoopHVAC:ReturnPlenum': 1,
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
-            eo.summarize_epjson(output)
+            eo.summarize_epjson(self.hvac_template.epjson)
         )
         return
 
