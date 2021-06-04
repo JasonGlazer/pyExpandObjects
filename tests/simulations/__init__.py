@@ -8,6 +8,7 @@ import os
 from argparse import Namespace
 import traceback
 import pandas as pd
+import numpy as np
 
 from src.epjson_handler import EPJSON
 from src.main import main
@@ -347,7 +348,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     total_energy_outputs[i],
                     how='left',
                     on=['Date/Time', 'variable'])
-                test_df['diff'] = abs(test_df['value_x'] - test_df['value_y']) / test_df['value_x']
+                test_df['diff'] = abs(test_df['value_x'] - test_df['value_y']) / np.maximum(1, test_df['value_x'])
                 # Filter out low percentage differences
                 test_filtered_df = test_df.loc[test_df['diff'] > 0.01].copy()
                 test_filtered_df.rename(columns={

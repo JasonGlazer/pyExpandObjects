@@ -723,7 +723,7 @@ class ExpandObjects(EPJSON):
                             # use the zero comparison to specifically pass that number.  The 'is not None' clause is
                             # not used here as this is more strict.
                             if isinstance(ig['value'], dict):
-                                raise PyExpandObjectsYamlStructureException('commplex input was not processed for '
+                                raise PyExpandObjectsYamlStructureException('complex input was not processed for '
                                                                             'object {}. Complex input: {}, output value'
                                                                             ' {}'.format(object_name, field_name,
                                                                                          field_value))
@@ -757,10 +757,15 @@ class ExpandObjects(EPJSON):
         epjson_from_option_tree = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         # Always use merge_epjson to store objects in self.epjson in case objects have already been stored to
         # that dictionary during processing
-        # For this processing, two resolve_objects need to be called.  First is a self reference, then the second
-        # is a reference for any epjson objects created to the base attribute.
-        resolved_inputs = self.resolve_objects(epjson_from_option_tree)
-        resolved_inputs = self.resolve_objects(resolved_inputs, reference_epjson=epjson)
+        # For this processing, a temporary dictinoary needs to be made that merges the base epjson and the epjson
+        # created from the option tree.  This is necessary such that a complex reference can find any epjson object that
+        # was created.
+        tmp_epjson = copy.deepcopy(epjson)
+        self.merge_epjson(
+            super_dictionary=tmp_epjson,
+            object_dictionary=copy.deepcopy(epjson_from_option_tree)
+        )
+        resolved_inputs = self.resolve_objects(epjson_from_option_tree, reference_epjson=tmp_epjson)
         self.merge_epjson(
             super_dictionary=epjson,
             object_dictionary=resolved_inputs)
@@ -995,6 +1000,9 @@ class ExpandObjects(EPJSON):
             option_tree=option_tree,
             leaf_path=['BaseObjects', ])
         build_path = self._apply_transitions(build_path_leaf)
+        # if the build path from base objects is empty, it comes back as a dictionary.  Therefore, it needs to be
+        # explicity changed to a list
+        build_path = build_path if bool(build_path) else []
         # Get the list actions to perform on a build bath, based on template inputs, and process them in order
         actions = option_tree.pop('Actions', None)
         if actions:
@@ -1086,10 +1094,11 @@ class ExpandThermostat(ExpandObjects):
     Thermostat expansion operations
     """
 
-    def __init__(self, template):
+    def __init__(self, template, epjson=None):
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
         self.unique_name = self.template_name
+        self.epjson = epjson or self.epjson
         return
 
     def _create_and_set_schedules(self):
@@ -1202,7 +1211,7 @@ class ExpandZone(ExpandObjects):
 
     zone_hvac_equipmentlist_object_type = ZonevacEquipmentListOjectType()
 
-    def __init__(self, template):
+    def __init__(self, template, epjson=None):
         # fill/create class attributes values with template inputs
         super().__init__(template=template)
         try:
@@ -1212,6 +1221,7 @@ class ExpandZone(ExpandObjects):
         except AttributeError:
             raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
         self.zone_hvac_equipmentlist_object_type = template
+        self.epjson = epjson or self.epjson
         return
 
     def run(self):
@@ -1254,6 +1264,28 @@ class AirLoopHVACUnitaryObjectType:
                 obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAir'
             elif cooling_coil_type and heating_coil_type and supplemental_heating_type:
                 obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
+        return
+
+
+class AirLoopHVACUnitaryFanTypeAndPlacement:
+    """
+    Set a class attribute to select the appropriate fan type and placement from TemplateOptions in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._airloop_hvac_unitary_fan_type_and_placement
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (template_name, template_fields), = template_structure.items()
+        supply_fan_placement = 'BlowThrough' if template_fields.get('supply_fan_placement', 'None') == 'None' else \
+            template_fields.get('supply_fan_placement')
+        cooling_coil_type = 'Base' if template_fields.get('cooling_coil_type', 'None') == 'None' else \
+            template_fields.get('cooling_coil_type')
+        if cooling_coil_type == 'MultiSpeedDX':
+            supply_fan_type = 'VariableVolume'
+        else:
+            supply_fan_type = 'Base'
+        obj._airloop_hvac_unitary_fan_type_and_placement = ''.join([supply_fan_type, supply_fan_placement])
         return
 
 
@@ -1327,24 +1359,31 @@ class ExpandSystem(ExpandObjects):
 
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
     airloop_hvac_object_type = AirLoopHVACObjectType()
+    airloop_hvac_unitary_fan_type_and_placement = AirLoopHVACUnitaryFanTypeAndPlacement()
     cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
     heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
 
-    def __init__(self, template):
+    def __init__(self, template, epjson=None):
         super().__init__(template=template)
         # map variable variants to common value and remove original
         self.rename_attribute('cooling_coil_design_setpoint_temperature', 'cooling_coil_design_setpoint')
         self.rename_attribute('economizer_upper_temperature_limit', 'economizer_maximum_limit_dry_bulb_temperature')
         self.rename_attribute('economizer_lower_temperature_limit', 'economizer_minimum_limit_dry_bulb_temperature')
         self.unique_name = self.template_name
+        self.epjson = epjson or self.epjson
         self.build_path = None
         self.airloop_hvac_unitary_object_type = template
         self.airloop_hvac_object_type = template
+        self.airloop_hvac_unitary_fan_type_and_placement = template
         self.cooling_coil_setpoint_control_type = template
         self.heating_coil_setpoint_control_type = template
         return
 
-    def _create_controller_list_from_epjson(self, epjson: dict = None, build_path: list = None) -> dict:
+    def _create_controller_list_from_epjson(
+            self,
+            epjson: dict = None,
+            build_path: list = None,
+            controller_list: tuple = ('Controller:WaterCoil', 'Controller:OutdoorAir')) -> dict:
         """
         Create AirLoopHVAC:ControllerList objects from epJSON dictionary
         These list objects are separated from the OptionTree build operations because they will vary based on the
@@ -1353,6 +1392,7 @@ class ExpandSystem(ExpandObjects):
 
         :param epjson: system epJSON formatted dictionary
         :param build_path: List of epJSON super objects in build path order
+        :param controller_list: List of controllers to be included in search
         :return: epJSON formatted AirLoopHVAC:ControllerList objects.  These objects are also stored back to the
             input epJSON object.
         """
@@ -1369,7 +1409,7 @@ class ExpandSystem(ExpandObjects):
                 (object_name, object_fields), = resovled_epjson_object[super_object_type].items()
                 actuator_list.append(object_fields['water_inlet_node_name'])
         object_list = []
-        for controller_type in ['Controller:WaterCoil', 'Controller:OutdoorAir']:
+        for controller_type in controller_list:
             controller_objects = epjson.get(controller_type)
             if controller_objects:
                 airloop_hvac_controllerlist_object = \
@@ -1740,10 +1780,36 @@ class ExpandSystem(ExpandObjects):
         :return: class object with epJSON dictionary as class attribute
         """
         self.logger.info('Processing System: {}'.format(self.unique_name))
+        if self.template_type == 'HVACTemplate:System:DualDuct':
+            for duct_type, duct_field_name in (
+                    ('HotDuct', 'hot_duct'),
+                    ('ColdDuct', 'cold_duct')):
+                # Make a copy of the class object and split to cold/hot class objects.
+                # Clear epjson and build_path from inherited class
+                duct_system_class_object = copy.deepcopy(self)
+                duct_system_class_object.epjson = {}
+                duct_system_class_object.build_path = []
+                duct_system_class_object.template_type = ':'.join(['HVACTemplate:System:DualDuct', duct_type])
+                # rename hot/cold duct to typical names now that their type is identified by the class
+                for attribute in [i for i in vars(duct_system_class_object).keys() if i.startswith(duct_field_name)]:
+                    setattr(duct_system_class_object, attribute.replace('cold_duct_', ''), getattr(duct_system_class_object, attribute))
+                duct_system_class_object._create_objects()
+                # Create controller list.
+                # todo_eo: object getting overwritten in each loop iteration
+                duct_system_class_object._create_controller_list_from_epjson(controller_list=('Controller:WaterCoil', ))
+                self.merge_epjson(
+                    super_dictionary=self.epjson,
+                    object_dictionary=duct_system_class_object.epjson)
+            # rename main branch for processing
+            for attribute in [i for i in vars(self).keys() if i.startswith(duct_field_name)]:
+                setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))
         self._create_objects()
         self._create_outdoor_air_equipment_list_from_build_path()
         self._create_availability_manager_assignment_list()
-        self._create_controller_list_from_epjson()
+        if self.template_type == 'HVACTemplate:System:DualDuct':
+            self._create_controller_list_from_epjson(controller_list=('Controller:OutdoorAir', ))
+        else:
+            self._create_controller_list_from_epjson()
         self._create_outdoor_air_system()
         self._create_branch_and_branchlist_from_build_path()
         return self
@@ -1753,9 +1819,10 @@ class ExpandPlantLoop(ExpandObjects):
     """
     Plant loop expansion operations
     """
-    def __init__(self, template):
+    def __init__(self, template, epjson=None):
         super().__init__(template=template)
         self.unique_name = self.template_name
+        self.epjson = epjson or self.epjson
         return
 
     def run(self):
@@ -1817,7 +1884,8 @@ class RetrievePlantEquipmentLoop:
                 if pl in plant_loops:
                     # Special handling for Tower object
                     (template_type, _), = value['template'].items()
-                    if template_type == 'HVACTemplate:Plant:Tower' and pl == 'ChilledWaterLoop':
+                    if template_type in ['HVACTemplate:Plant:Tower', 'HVACTemplate:Plant:Tower:ObjectReference'] \
+                            and pl == 'ChilledWaterLoop':
                         obj._template_plant_loop_type = 'CondenserWaterLoop'
                     else:
                         obj._template_plant_loop_type = pl
@@ -1830,14 +1898,33 @@ class RetrievePlantEquipmentLoop:
         return
 
 
+class ChillerAndCondenserType:
+    """
+    Set a class attribute to select the appropriate fan type and placement from TemplateOptions in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._chiller_and_condenser_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (template_name, template_fields), = template_structure.items()
+        if template_type == 'HVACTemplate:Plant:Chiller':
+            chiller_type = template_fields.get('chiller_type', 'None')
+            condenser_type = 'WaterCooled' if template_fields.get('condenser_type', 'None') == 'None' else \
+                template_fields.get('condenser_type')
+            obj._chiller_and_condenser_type = ''.join([chiller_type, condenser_type])
+        return
+
+
 class ExpandPlantEquipment(ExpandObjects):
     """
     Plant Equipment operations
     """
 
     template_plant_loop_type = RetrievePlantEquipmentLoop()
+    chiller_and_condenser_type = ChillerAndCondenserType()
 
-    def __init__(self, template, plant_loop_class_objects=None):
+    def __init__(self, template, plant_loop_class_objects=None, epjson=None):
         """
         Initialize class
 
@@ -1848,6 +1935,8 @@ class ExpandPlantEquipment(ExpandObjects):
         self.unique_name = self.template_name
         plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}
+        self.chiller_and_condenser_type = template
+        self.epjson = epjson or self.epjson
         return
 
     def run(self):
