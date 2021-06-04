@@ -369,7 +369,8 @@ class HVACTemplate(EPJSON):
             return_object['nodes'] = zone_mixers
             return_object = {'AirLoopHVAC:ZoneMixer': return_object}
         # Add Path objects
-        return_path_object = {'AirLoopHVAC:ReturnPath':
+        return_path_object = {
+            'AirLoopHVAC:ReturnPath':
             eo.get_structure(structure_hierarchy=[
                 'AutoCreated', 'System', 'AirLoopHVAC', 'ReturnPath', 'Base'])}
         path_dictionary = eo.yaml_list_to_epjson_dictionaries(
