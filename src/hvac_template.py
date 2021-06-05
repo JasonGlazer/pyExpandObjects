@@ -337,15 +337,17 @@ class HVACTemplate(EPJSON):
                                   eo.get_structure(structure_hierarchy=[
                                       'AutoCreated', 'System', 'AirLoopHVAC', 'SupplyPath', 'Base'])}
             # Rename objects if multi-inlet node system is used
-            # todo_eo: this can probably be removed it the unique name is changed on object creations
+            # todo_eo: this can possibly be removed it the unique name is changed on object creations
             if system_class_object.template_type == 'HVACTemplate:System:DualDuct':
                 (_, supply_object_fields), = supply_object.items()
                 (_, supply_path_object_fields), = supply_path_object.items()
                 if inlet_node.startswith('cold_air'):
                     supply_object_fields['name'] = supply_object_fields['name'].replace('{}', '{} Cold')
+                    supply_object_fields['inlet_node_name'] = supply_object_fields['inlet_node_name'].replace('{}', '{} Cold')
                     supply_path_object_fields['name'] = supply_path_object_fields['name'].replace('{}', '{} Cold')
                 if inlet_node.startswith('hot_air'):
                     supply_object_fields['name'] = supply_object_fields['name'].replace('{}', '{} Hot')
+                    supply_object_fields['inlet_node_name'] = supply_object_fields['inlet_node_name'].replace('{}', '{} Hot')
                     supply_path_object_fields['name'] = supply_path_object_fields['name'].replace('{}', '{} Hot')
             path_dictionary = eo.yaml_list_to_epjson_dictionaries(
                 yaml_list=[supply_object, supply_path_object])
@@ -559,8 +561,12 @@ class HVACTemplate(EPJSON):
             for co in class_object.values():
                 branch_objects = copy.deepcopy(co.epjson.get('Branch', {}))
                 for branch_name, branch_structure in branch_objects.items():
+                    # the regex check for 'main branch' is to avoid DualDuct main branches from accidentally being
+                    # included since they have coil objects in them as well.  They typical main branch is never accidentally
+                    # caught because the coil objects are never in the 0th position.
                     for br in branch_rgx:
-                        if re.match(br, branch_structure['components'][0]['component_object_type']):
+                        if re.match(br, branch_structure['components'][0]['component_object_type']) and not \
+                                re.match('.*main branch$', branch_name.lower()):
                             branch_dictionary.update({branch_name: branch_objects[branch_name]})
         if branch_dictionary:
             return {'Branch': branch_dictionary}

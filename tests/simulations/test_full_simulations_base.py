@@ -27,7 +27,8 @@ class TestSimulationsFullSystem(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneDualDuct")
     def test_5_zone_dual_duct(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneDualDuct.idf')
-        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        # Warnings turned off due to naming mismatch of output variables.
+        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneFanCoil")
@@ -110,6 +111,12 @@ class TestSimulationsFullSystem(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneVAVWaterCooled-ObjectReference")
     def test_5_zone_vav_water_cooled_object_reference(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled-ObjectReference.idf')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneVRF")
+    def test_5_zone_vrf(self):
+        base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVRF.idf')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
 

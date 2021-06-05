@@ -67,6 +67,8 @@ GlobalNames:
       '{} Air Loop Inlet'
     BranchList: &BranchList
       '{} Branches'
+    Connectors: &SystemConnectors
+      '{} Connectors'
     MixedAirNodelistName: &SystemMixedAirNodelistName
       '{} Mixed Air Nodes'
     MixedAirOutlet: &SystemMixedAirOutlet
@@ -75,8 +77,12 @@ GlobalNames:
       '{} Relief Air Outlet'
     ReturnAirOutlet: &ReturnAirOutlet
       '{} Return Air Outlet'
-    SupplyPathInlet: &SystemSupplyPathInletName
+    SupplyPathInlet: &SystemSupplyPathInlet
       '{} Supply Path Inlet'
+    SupplyPathInletNodeList: &SystemSupplyPathInletNodeList
+      '{} Supply Path Inlets'
+    SupplySideOutletNodeList: &SystemSupplySideOutletNodeList
+      '{} Supply Side Outlets'
     WaterControllers: &AirLoopHVACWaterControllers
       '{} Controllers'
   Zone:
@@ -130,7 +136,7 @@ Objects:
         name: '{}'
         availability_manager_list_name: *AvailabilityManagerAssignmentList
         branch_list_name: *BranchList
-        demand_side_inlet_node_names: *SystemSupplyPathInletName
+        demand_side_inlet_node_names: *SystemSupplyPathInlet
         demand_side_outlet_node_name: *ReturnAirOutlet
         design_supply_air_flow_rate: Autosize # template default, not object default
         supply_side_inlet_node_name: *AirLoopInlet
@@ -138,10 +144,26 @@ Objects:
           BuildPathReference:
             Location: -1
             ValueLocation: Outlet
+    DualDuct:
+      Base:
+        Fields: &AirLoopHVACDualDuct
+          <<: *AirLoopHVAC
+          connector_list_name: *SystemConnectors
+          demand_side_inlet_node_names: *SystemSupplyPathInletNodeList
+          supply_side_outlet_node_names: *SystemSupplySideOutletNodeList
     Water:
-      Fields: &AirLoopHVACWater
-        <<: *AirLoopHVAC
-        controller_list_name: *AirLoopHVACWaterControllers
+      Base:
+        Fields: &AirLoopHVACWater
+          <<: *AirLoopHVAC
+          controller_list_name: *AirLoopHVACWaterControllers
+      DualDuct:
+        Base:
+          Fields: &AirLoopHVACWaterDualDuct
+            <<: *AirLoopHVAC
+            connector_list_name: *SystemConnectors
+            controller_list_name: *AirLoopHVACWaterControllers
+            demand_side_inlet_node_names: *SystemSupplyPathInletNodeList
+            supply_side_outlet_node_names: *SystemSupplySideOutletNodeList
     Unitary:
       Common:
         Transitions: &AirLoopHVACUnitaryCommonTransitions
@@ -1698,6 +1720,20 @@ Objects:
             supply_air_inlet_node_name: *OutdoorAirInletNodes
             supply_air_outlet_node_name: '{} Heat Recovery Supply Outlet'
             supply_air_outlet_temperature_control: 'Yes' # set by legacy, not default
+  Humidifier:
+    Steam:
+      Electric:
+        Base: &HumidifierSteamElectricSuperObject
+          Fields:
+            name: '{} Humidifier'
+            air_inlet_node_name: '{} Heating Coil Outlet'
+            air_outlet_node_name: '{} Humidifier Outlet'
+            rated_capacity: '{humidifier_rated_capacity}'
+            rated_fan_power: 0
+            rated_power: '{humidifier_rated_electric_power}'
+            standby_power: 0
+          Connectors:
+            AirLoop: *ConnectorsAirLoop
   OutdoorAir:
     Base:
       Mixer: &OutdoorAirMixerSuperObject
@@ -1879,7 +1915,7 @@ Objects:
           Fields: &SetpointManagerMixedAirHeating
             <<: *SetpointManagerMixedAir
             name: '{} Heating Coil Air Temp Manager'
-            reference_setpoint_node_name: *SystemSupplyPathInletName # required by schema
+            reference_setpoint_node_name: *SystemSupplyPathInlet # required by schema
             setpoint_node_or_nodelist_name: # required by schema
               BuildPathReference:
                 Location: Coil:Heating.*
@@ -1921,7 +1957,7 @@ Objects:
             outdoor_low_temperature: '{heating_coil_reset_outdoor_dry_bulb_low}'
             setpoint_at_outdoor_high_temperature: '{heating_coil_setpoint_at_outdoor_dry_bulb_high}'
             setpoint_at_outdoor_low_temperature: '{heating_coil_setpoint_at_outdoor_dry_bulb_low}'
-            setpoint_node_or_nodelist_name: *SystemSupplyPathInletName
+            setpoint_node_or_nodelist_name: *SystemSupplyPathInlet
       HotWater:
         Base:
           Fields: &SetpointManagerOutdoorAirResetHotWater
@@ -1963,7 +1999,7 @@ Objects:
           Fields: &SetpointManagerScheduledHeating
               <<: *SetpointManagerScheduled
               name: '{} Heating Supply Air Temp Manager'
-              setpoint_node_or_nodelist_name: *SystemSupplyPathInletName
+              setpoint_node_or_nodelist_name: *SystemSupplyPathInlet
               schedule_name: 'HVACTemplate-Always{heating_coil_design_setpoint}'
       HotWater:
         Base:
@@ -1999,7 +2035,7 @@ Objects:
             control_zone_name: '{heating_coil_control_zone_name}'
             maximum_supply_air_temperature: '{heating_coil_design_setpoint}'
             minimum_supply_air_temperature: 11.8 # set by legacy, not default, not reachable from template
-            setpoint_node_or_nodelist_name: *SystemSupplyPathInletName
+            setpoint_node_or_nodelist_name: *SystemSupplyPathInlet
             zone_inlet_node_name: '{heating_coil_control_zone_name} Supply Inlet' # todo_eo doesn't use global naming but should
             zone_node_name: '{heating_coil_control_zone_name} Zone Air Node' # todo_eo: doesn't use global naming but should
     Warmest:
@@ -2563,7 +2599,7 @@ AutoCreated:
       SupplyPlenum:
         Base:
           name: '{} Supply Plenum'
-          inlet_node_name: *SystemSupplyPathInletName
+          inlet_node_name: *SystemSupplyPathInlet
           zone_name: '{supply_plenum_name}'
           zone_node_name: '{supply_plenum_name} Zone Air Node'
       ZoneMixer:
@@ -2573,7 +2609,7 @@ AutoCreated:
       ZoneSplitter:
         Base:
           name: '{} Zone Splitter'
-          inlet_node_name: *SystemSupplyPathInletName
+          inlet_node_name: *SystemSupplyPathInlet
     AvailabilityManagerAssignmentList:
       Base:
         name: *AvailabilityManagerAssignmentList
@@ -2585,7 +2621,16 @@ AutoCreated:
         name: '{} Branches'
         branches:
           - branch_name: '{} Main Branch'
-
+      DualDuct:
+        name: '{} Branches'
+        branches:
+          - branch_name: '{} Main Branch'
+          - branch_name: '{} HotDuct Main Branch'
+          - branch_name: '{} ColdDuct Main Branch'
+    NodeList:
+      Base:
+      SupplySideOutlet:
+        name: *SystemSupplySideOutletNodeList
 OptionTree:
   HVACTemplate:
     Zone:
@@ -3364,7 +3409,7 @@ OptionTree:
                       - Fan:ConstantVolume: *FanConstantVolumeSuperObject
                     Transitions: *FanCommonTransitionsSupply
                     Mappings: *FanCommonMappingsVariableVolume
-              - return_fan:
+              - return_fan: &SystemCommonBuildPathActionsConstantVolumeReturnFan
                   'No':
                   'Yes': # Quotes necessary to prevent boolean conversion
                     Location: 0
@@ -3505,9 +3550,22 @@ OptionTree:
                 Transitions:
                   - ^AirloopHVAC$:
                       supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+              DualDuct:
+                Objects:
+                  - AirLoopHVAC: *AirLoopHVACDualDuct
+                Transitions:
+                  - ^AirloopHVAC$:
+                      # todo_eo: this needs to be changed, for water as well
+                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
               Water:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACWater
+                Transitions:
+                  - ^AirloopHVAC$:
+                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+              WaterDualDuct:
+                Objects:
+                  - AirLoopHVAC: *AirLoopHVACWaterDualDuct
                 Transitions:
                   - ^AirloopHVAC$:
                       supply_fan_maximum_flow_rate: design_supply_air_flow_rate
@@ -3549,6 +3607,43 @@ OptionTree:
               OutdoorAirTemperatureReset:
                 Objects:
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHeating
+          HeatingCoilSetpointControlTypeHeatingOutlet:
+            heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlTypeHeatingOutet
+              ControlZone:
+                Objects:
+                  - SetpointManager:SingleZone:Heating:
+                      <<: *SetpointManagerSingleZoneHeating
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: Coil:Heating:.*
+                          Occurrence: -1
+                          ValueLocation: Outlet
+              FixedSetpoint:
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledHeating
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: Coil:Heating:.*
+                          Occurrence: -1
+                          ValueLocation: Outlet
+              FixedSetpointWithDehumidification: # Created via descriptor in expand_objects.py
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledHeating
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: Coil:Heating.*
+                          ValueLocation: Outlet
+              OutdoorAirTemperatureReset:
+                Objects:
+                  - SetpointManager:OutdoorAirReset:
+                      <<: *SetpointManagerOutdoorAirResetHeating
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: Coil:Heating:.*
+                          Occurrence: -1
+                          ValueLocation: Outlet
           DOAS: &SystemCommonTemplateObjectsDOAS
             dehumidification_control_type:
               None:
@@ -3645,15 +3740,38 @@ OptionTree:
       DualDuct:
         BuildPath:
           BaseObjects:
-            Objects: *SystemCommonBuildPathObjects
+            Objects:
+              - *SystemCommonBuildPathObjects
           Actions:
             - *SystemCommonBuildPathActionsHeatRecovery
-            - *SystemCommonBuildPathActionsConstantVolume
+            - return_fan: *SystemCommonBuildPathActionsConstantVolumeReturnFan
         BaseObjects:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Controller:OutdoorAir: *ControllerOutdoorAir
             - Sizing:System: *SizingSystemConstantVolume
+            # supply_side_outlet_node_names created in Python due to issues with multiple build paths
+            - NodeList:
+                name: *SystemSupplyPathInletNodeList
+                nodes:
+                  - node_name: '{} Hot Supply Path Inlet'
+                  - node_name: '{} Cold Supply Path Inlet'
+            - ConnectorList:
+                name: *SystemConnectors
+                connector_1_name: '{} Duct Splitter'
+                connector_1_object_type: Connector:Splitter
+            - Connector:Splitter:
+                name: '{} Duct Splitter'
+                branches:
+                  - outlet_branch_name: '{} HotDuct Main Branch'
+                  - outlet_branch_name: '{} ColdDuct Main Branch'
+                inlet_branch_name: '{} Main Branch'
+            - NodeList:
+                name: '{} ColdDuct Mixed Air Nodes'
+                nodes:
+                  - node_name:
+                      ^Coil:Cooling.*: air_outlet_node_name
+                  - node_name: *SystemMixedAirOutlet
           Transitions:
             - *SystemCommonTransitions
             - *SizingSystemCommonTransitions
@@ -3668,12 +3786,6 @@ OptionTree:
           BaseObjects:
             Objects:
               - SetpointManager:MixedAir: *SetpointManagerMixedAirCoolingSystemNodelist
-              - NodeList:
-                  name: *SystemMixedAirNodelistName
-                  nodes:
-                    - node_name:
-                        ^Coil:Cooling:.*: air_outlet_node_name
-                    - node_name: *SystemMixedAirOutlet
           TemplateObjects:
             cooling_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
         HotDuct:
@@ -3681,12 +3793,39 @@ OptionTree:
             BaseObjects:
             Actions:
               - *SystemCommonBuildPathActionsCommonHeatingCoilLast
-              - supply_fan_placement: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
+              - humidifier_type:
+                  ElectricSteam:
+                    Location: -1
+                    ActionType: Insert
+                    Objects:
+                      - Humidifier:Steam:Electric: *HumidifierSteamElectricSuperObject
+              - supply_fan_placement:
+                  <<: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
+                  BlowThrough:
+                    Location: 0
+                    ActionType: Insert
+                    Objects:
+                      - Fan:ConstantVolume: *FanConstantVolumeSuperObject
+                    Transitions: *FanCommonTransitionsSupply
+                    Mappings: *FanCommonMappingsVariableVolume
           BaseObjects:
-            Objects:
-              - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
           TemplateObjects:
-            heating_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
+            heating_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlTypeHeatingOutet
+            humidifier_type:
+              ElectricSteam:
+                Objects:
+                  - SetpointManager:SingleZone:Humidity:Minimum:
+                      name: '{} Humidification Setpoint Manager'
+                      control_zone_air_node_name: '{humidifier_control_zone_name} Zone Air Node'
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: Humidifier:Steam:Electric
+                          ValueLocation: Outlet
+                  - ZoneControl:Humidistat:
+                      name: '{} Humidification Humidistat'
+                      dehumidifying_relative_humidity_setpoint_schedule_name: HVACTemplate-Always100
+                      humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_relative_humidity_setpoint}'
+                      zone_name: '{humidifier_control_zone_name}'
       PackagedVAV:
         BuildPath:
           BaseObjects:
