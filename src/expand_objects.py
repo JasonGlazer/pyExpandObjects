@@ -1792,6 +1792,65 @@ class ExpandSystem(ExpandObjects):
             object_dictionary=self.resolve_objects(epjson=branch_and_branchlist_objects))
         return self.resolve_objects(epjson=branch_and_branchlist_objects)
 
+    def _dual_duct_custom_edits(self):
+        """
+        Perform customized edits to typical ExpandSystem process for HVACTemplate:DualDuct
+        :return: None. class attributes modified
+        """
+        # a temporary build path needs to be made which is a concatenation of the hot and cold build paths.
+        # This object is used to create the WaterCoil controllers since they need to reference all coils in a single
+        # build path to create a single object.
+        tmp_build_path = []
+        tmp_out_node_list = []
+        # Run ExpandSystem._create_objects() for each duct type as well as some additional modifiers
+        for duct_type, duct_field_name in (
+                ('HotDuct', 'hot_duct'),
+                ('ColdDuct', 'cold_duct')):
+            # Make a copy of the class object and split to cold/hot class objects.
+            # Clear epjson and build_path from inherited class
+            duct_system_class_object = copy.deepcopy(self)
+            duct_system_class_object.epjson = {}
+            duct_system_class_object.build_path = []
+            duct_system_class_object.template_type = ':'.join(['HVACTemplate:System:DualDuct', duct_type])
+            duct_system_class_object.unique_name = ' '.join([duct_system_class_object.unique_name, duct_type])
+            # rename hot/cold duct to typical names now that their type is identified by the class
+            for attribute in [i for i in vars(duct_system_class_object).keys() if i.startswith(duct_field_name)]:
+                setattr(
+                    duct_system_class_object,
+                    attribute.replace(''.join([duct_field_name, '_']), ''),
+                    getattr(duct_system_class_object, attribute))
+            duct_system_class_object._create_objects()
+            tmp_build_path.extend(duct_system_class_object.build_path)
+            duct_system_class_object._create_branch_and_branchlist_from_build_path(
+                include_branchlist=False,
+                modify_build_path=False)
+            self.merge_epjson(
+                super_dictionary=self.epjson,
+                object_dictionary=duct_system_class_object.epjson)
+            # get last out node from build path
+            last_build_path_object = duct_system_class_object.build_path[-1]
+            (_, super_object), = last_build_path_object.items()
+            tmp_out_node_list.append(
+                super_object['Fields'][super_object['Connectors']['AirLoop']['Outlet']].format(duct_system_class_object.unique_name))
+        # Create supply side outlet nodelist
+        supply_side_nodelist = self.get_structure(
+            structure_hierarchy=['AutoCreated', 'System', 'NodeList', 'SupplySideOutlet'])
+        supply_side_nodelist['nodes'] = [{"node_name": out_node} for out_node in tmp_out_node_list]
+        supply_side_nodelist_object = self.yaml_list_to_epjson_dictionaries([{'NodeList': supply_side_nodelist}, ])
+        self.merge_epjson(
+            super_dictionary=self.epjson,
+            object_dictionary=supply_side_nodelist_object)
+        # Create ControllerList for just the Controller:WaterCoil objects, which are in the hot/cold class objects of
+        # a dual duct system.
+        self._create_controller_list_from_epjson(
+            controller_list=('Controller:WaterCoil', ),
+            build_path=tmp_build_path,
+            epjson=self.epjson)
+        # rename main branch for regular processing
+        for attribute in [i for i in vars(self).keys() if i.startswith(duct_field_name)]:
+            setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))
+        return
+
     def run(self):
         """
         Process system template
@@ -1799,56 +1858,7 @@ class ExpandSystem(ExpandObjects):
         """
         self.logger.info('Processing System: {}'.format(self.unique_name))
         if self.template_type == 'HVACTemplate:System:DualDuct':
-            # a temporary build path needs to be made which is a concatenation of the hot and cold build paths.
-            # This object is used to create the WaterCoil controllers since they need to reference all coils in a single
-            # build path to create a single object.
-            tmp_build_path = []
-            tmp_out_node_list = []
-            for duct_type, duct_field_name in (
-                    ('HotDuct', 'hot_duct'),
-                    ('ColdDuct', 'cold_duct')):
-                # Make a copy of the class object and split to cold/hot class objects.
-                # Clear epjson and build_path from inherited class
-                duct_system_class_object = copy.deepcopy(self)
-                duct_system_class_object.epjson = {}
-                duct_system_class_object.build_path = []
-                duct_system_class_object.template_type = ':'.join(['HVACTemplate:System:DualDuct', duct_type])
-                duct_system_class_object.unique_name = ' '.join([duct_system_class_object.unique_name, duct_type])
-                # rename hot/cold duct to typical names now that their type is identified by the class
-                for attribute in [i for i in vars(duct_system_class_object).keys() if i.startswith(duct_field_name)]:
-                    setattr(
-                        duct_system_class_object,
-                        attribute.replace(''.join([duct_field_name,'_']), ''),
-                        getattr(duct_system_class_object, attribute))
-                duct_system_class_object._create_objects()
-                tmp_build_path.extend(duct_system_class_object.build_path)
-                duct_system_class_object._create_branch_and_branchlist_from_build_path(include_branchlist=False, modify_build_path=False)
-                self.merge_epjson(
-                    super_dictionary=self.epjson,
-                    object_dictionary=duct_system_class_object.epjson)
-                # get last out node from build path
-                last_build_path_object = duct_system_class_object.build_path[-1]
-                (_, super_object), = last_build_path_object.items()
-                tmp_out_node_list.append(
-                    super_object['Fields'][super_object['Connectors']['AirLoop']['Outlet']]
-                        .format(duct_system_class_object.unique_name))
-            # Create supply side outlet nodelist
-            supply_side_nodelist = self.get_structure(
-                structure_hierarchy=['AutoCreated', 'System', 'NodeList', 'SupplySideOutlet'])
-            supply_side_nodelist['nodes'] = [{"node_name": out_node} for out_node in tmp_out_node_list]
-            supply_side_nodelist_object = self.yaml_list_to_epjson_dictionaries([{'NodeList': supply_side_nodelist}, ])
-            self.merge_epjson(
-                super_dictionary=self.epjson,
-                object_dictionary=supply_side_nodelist_object)
-            # Create ControllerList for just the Controller:WaterCoil objects, which are in the hot/cold class objects of
-            # a dual duct system.
-            self._create_controller_list_from_epjson(
-                controller_list=('Controller:WaterCoil', ),
-                build_path=tmp_build_path,
-                epjson=self.epjson)
-            # rename main branch for processing
-            for attribute in [i for i in vars(self).keys() if i.startswith(duct_field_name)]:
-                setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))
+            self._dual_duct_custom_edits()
         self._create_objects()
         self._create_outdoor_air_equipment_list_from_build_path()
         self._create_availability_manager_assignment_list()
