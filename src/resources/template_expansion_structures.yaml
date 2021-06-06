@@ -130,6 +130,183 @@ Objects:
               - field: For AllDays
               - field: Until 24:00
               - field: '{}'
+  AirConditioner:
+    VariableRefrigerantFlow:
+      Common:
+        Objects:
+          - Curve:Cubic:
+              name: '{} VRFCoolCapFTBoundary'
+              coefficient1_constant: 25.73473775
+              coefficient2_x: -0.03150043
+              coefficient3_x_2: -0.01416595
+              coefficient4_x_3: 0
+              input_unit_type_for_x: Temperature
+              maximum_value_of_x: 30
+              minimum_value_of_x: 11
+              output_unit_type: Temperature
+          - Curve:Biquadratic:
+              name: '{} VRFCoolCapFTHi'
+              coefficient1_constant: 0.6861551
+              coefficient2_x: 0.0207869
+              coefficient3_x_2: 0.0005445
+              coefficient4_y: -0.0016098
+              coefficient5_y_2: -6.254e-07
+              coefficient6_x_y: -0.000339
+              input_unit_type_for_x: Temperature
+              input_unit_type_for_y: Temperature
+              maximum_value_of_x: 24
+              maximum_value_of_y: 43
+              minimum_value_of_x: 15
+              minimum_value_of_y: 16
+              output_unit_type: Dimensionless
+          - Curve:Biquadratic:
+              name: '{} VRFCoolCapFT'
+              coefficient1_constant: 0.576856477
+              coefficient2_x: 0.017450222
+              coefficient3_x_2: 0.00058326
+              coefficient4_y: 1.15563e-07
+              coefficient5_y_2: 7.61504e-09
+              coefficient6_x_y: -1.1503e-08
+              input_unit_type_for_x: Temperature
+              input_unit_type_for_y: Temperature
+              maximum_value_of_x: 24
+              maximum_value_of_y: 23
+              minimum_value_of_x: 15
+              minimum_value_of_y: -5
+              output_unit_type: Dimensionless
+          - Curve:Linear:
+              name: '{} CoolingCombRatio'
+              coefficient1_constant: 0.618055
+              coefficient2_x: 0.381945
+              input_unit_type_for_x: Dimensionless
+              maximum_curve_output: 1.2
+              maximum_value_of_x: 1.5
+              minimum_curve_output: 1.0
+              minimum_value_of_x: 1.0
+              output_unit_type: Dimensionless
+          - Curve:Cubic:
+              name: '{} VRFCoolEIRFTBoundary'
+              coefficient1_constant: 25.73473775
+              coefficient2_x: -0.03150043
+              coefficient3_x_2: -0.01416595
+              coefficient4_x_3: 0
+              input_unit_type_for_x: Temperature
+              maximum_value_of_x: 24
+              minimum_value_of_x: 15
+              output_unit_type: Temperature
+          - Curve:Quadratic:
+              name: '{} CoolingEIRHiPLR'
+              coefficient1_constant: 1.0
+              coefficient2_x: 0.0
+              coefficient3_x_2: 0.0
+              input_unit_type_for_x: Dimensionless
+              maximum_value_of_x: 1.5
+              minimum_value_of_x: 1.0
+              output_unit_type: Dimensionless
+          - Curve:Biquadratic:
+              name: '{} VRFCoolEIRFTHi'
+              coefficient1_constant: 0.18293171
+              coefficient2_x: 0.01635442
+              coefficient3_x_2: -0.0003505
+              coefficient4_y: 0.02375694
+              coefficient5_y_2: 0.00017854
+              coefficient6_x_y: -0.0006177
+              input_unit_type_for_x: Temperature
+              input_unit_type_for_y: Temperature
+              maximum_value_of_x: 24
+              maximum_value_of_y: 43
+              minimum_value_of_x: 15
+              minimum_value_of_y: 16
+              output_unit_type: Dimensionless
+          - Curve:Cubic:
+              name: '{} CoolingEIRLowPLR'
+              coefficient1_constant: 0.4628123
+              coefficient2_x: -1.0402406
+              coefficient3_x_2: 2.17491
+              coefficient4_x_3: -0.5974817
+              input_unit_type_for_x: Temperature
+              maximum_value_of_x: 1
+              minimum_value_of_x: 0
+              output_unit_type: Temperature
+          - Curve:Biquadratic:
+              name: '{} VRFCoolEIRFT'
+              coefficient1_constant: 0.989010541
+              coefficient2_x: -0.02347967
+              coefficient3_x_2: 0.000199711
+              coefficient4_y: 0.005968336
+              coefficient5_y_2: -1.0289e-07
+              coefficient6_x_y: -0.00015686
+              input_unit_type_for_x: Temperature
+              input_unit_type_for_y: Temperature
+              maximum_value_of_x: 24
+              maximum_value_of_y: 23
+              minimum_value_of_x: 15
+              minimum_value_of_y: -5
+              output_unit_type: Dimensionless
+      Base:
+        Fields:
+          name: '{} VRF Heat Pump'
+          basin_heater_setpoint_temperature: '{basin_heater_setpoint_temperature}'
+          condenser_inlet_node_name: '{} Condenser Inlet Node'
+          condenser_outlet_node_name: '{} Condenser Outlet Node'
+          condenser_type: '{condenser_type}'
+          cooling_capacity_ratio_boundary_curve_name: '{} VRFCoolCapFTBoundary'
+          cooling_capacity_ratio_modifier_function_of_high_temperature_curve_name: '{} VRFCoolCapFTHi'
+          cooling_capacity_ratio_modifier_function_of_low_temperature_curve_name: '{} VRFCoolCapFT'
+          cooling_combination_ratio_correction_factor_curve_name: '{} CoolingCombRatio'
+          cooling_energy_input_ratio_boundary_curve_name: '{} VRFCoolEIRFTBoundary'
+          cooling_energy_input_ratio_modifier_function_of_high_part_load_ratio_curve_name: '{} CoolingEIRHiPLR'
+          cooling_energy_input_ratio_modifier_function_of_high_temperature_curve_name: '{} VRFCoolEIRFTHi'
+          cooling_energy_input_ratio_modifier_function_of_low_part_load_ratio_curve_name: '{} CoolingEIRLowPLR'
+          cooling_energy_input_ratio_modifier_function_of_low_temperature_curve_name: '{} VRFCoolEIRFT'
+#          "cooling_part_load_fraction_correlation_curve_name": "VRF Sys 1 Water Source VRFCPLFFPLR",
+#          "crankcase_heater_power_per_compressor": 33,
+#          "defrost_control": "Timed",
+#          "defrost_strategy": "Resistive",
+#          "defrost_time_period_fraction": 0.058333,
+#          "equivalent_piping_length_used_for_piping_correction_factor_in_cooling_mode": 30,
+#          "equivalent_piping_length_used_for_piping_correction_factor_in_heating_mode": 30,
+#          "evaporative_condenser_air_flow_rate": "Autosize",
+#          "evaporative_condenser_effectiveness": 0.9,
+#          "evaporative_condenser_pump_rated_power_consumption": 0,
+#          "fuel_type": "Electricity",
+#          "gross_rated_cooling_cop": 3.3,
+#          "gross_rated_heating_capacity": "Autosize",
+#          "gross_rated_heating_cop": 3.4,
+#          "gross_rated_total_cooling_capacity": "Autosize",
+#          "heat_pump_waste_heat_recovery": "No",
+#          "heat_recovery_cooling_capacity_time_constant": 0.45,
+#          "heat_recovery_heating_capacity_time_constant": 0.45,
+#          "heating_capacity_ratio_boundary_curve_name": "VRF Sys 1 Water Source VRFHeatCapFTBoundary",
+#          "heating_capacity_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatCapFTHi",
+#          "heating_capacity_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatCapFT",
+#          "heating_combination_ratio_correction_factor_curve_name": "VRF Sys 1 Water Source HeatingCombRatio",
+#          "heating_energy_input_ratio_boundary_curve_name": "VRF Sys 1 Water Source VRFHeatEIRFTBoundary",
+#          "heating_energy_input_ratio_modifier_function_of_high_part_load_ratio_curve_name": "VRF Sys 1 Water Source HeatingEIRHiPLR",
+#          "heating_energy_input_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatEIRFTHi",
+#          "heating_energy_input_ratio_modifier_function_of_low_part_load_ratio_curve_name": "VRF Sys 1 Water Source HeatingEIRLowPLR",
+#          "heating_energy_input_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatEIRFT",
+#          "heating_part_load_fraction_correlation_curve_name": "VRF Sys 1 Water Source VRFCPLFFPLR",
+#          "heating_performance_curve_outdoor_temperature_type": "DryBulbTemperature",
+#          "master_thermostat_priority_control_type": "LoadPriority",
+#          "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater": 5,
+#          "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
+#          "maximum_outdoor_temperature_in_cooling_mode": 43,
+#          "maximum_outdoor_temperature_in_heat_recovery_mode": 45,
+#          "maximum_outdoor_temperature_in_heating_mode": 30,
+#          "minimum_heat_pump_part_load_ratio": 0.25,
+#          "minimum_outdoor_temperature_in_cooling_mode": -6,
+#          "minimum_outdoor_temperature_in_heat_recovery_mode": -15,
+#          "minimum_outdoor_temperature_in_heating_mode": -20,
+#          "number_of_compressors": 2,
+#          "piping_correction_factor_for_height_in_cooling_mode_coefficient": -0.000386,
+#          "piping_correction_factor_for_length_in_cooling_mode_curve_name": "VRF Sys 1 Water Source CoolingLengthCorrectionFactor",
+#          "rated_heating_capacity_sizing_ratio": 1,
+#          "ratio_of_compressor_size_to_total_compressor_capacity": 0.5,
+#          "resistive_defrost_heater_capacity": "Autosize",
+#          "vertical_height_used_for_piping_correction_factor": 10,
+#          "water_condenser_volume_flow_rate": "Autosize",
+#          "zone_terminal_unit_list_name": "VRF Sys 1 Water SourceTU List"
   AirLoopHVAC:
     Base:
       Fields: &AirLoopHVAC
@@ -1080,6 +1257,47 @@ Objects:
               number_of_enhanced_dehumidification_modes: 1
             Connectors:
               AirLoop: *ConnectorsAirLoop
+        VariableRefrigerantFlow:
+          Common:
+            Objects: &CoilCoolingDXVariableRefrigerantFlowCommonObjects
+              - Curve:Quadratic:
+                  name: '{} VRF Cooling Coil Cap-FF'
+                  coefficient1_constant: 0.8
+                  coefficient2_x: 0.2
+                  coefficient3_x_2: 0
+                  maximum_value_of_x: 1.5
+                  minimum_value_of_x: 0.5
+              - Curve:Cubic:
+                  name: '{} VRF Cooling Coil Cap-FT'
+                  coefficient1_constant: 0.504547273506488
+                  coefficient2_x: 0.0288891279198444
+                  coefficient3_x_2: -1.0819418650677e-05
+                  coefficient4_x_3: 1.01359395177008e-05
+                  input_unit_type_for_x: Temperature
+                  maximum_curve_output: 1.5
+                  maximum_value_of_x: 50.0
+                  minimum_curve_output: 0.5
+                  minimum_value_of_x: 0.0
+                  output_unit_type: Dimensionless
+            Transitions: &CoilCoolingDXVariableRefrigerantFlowCommonTransitions
+              - Coil:Cooling:DX:VariableRefrigerantFlow:
+                  cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
+                  cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
+                  cooling_supply_air_flow_rate: rated_air_flow_rate
+          Base: &CoilCoolingDXVariableRefrigerantFlowSuperObject
+            Fields:
+              name: '{} VRF Cooling Coil'
+              coil_air_inlet_node: '{} VRF Cooling Coil Inlet'
+              coil_air_outlet_node: '{} VRF Cooling Coil Outlet'
+              cooling_capacity_modifier_curve_function_of_flow_fraction_name: '{} VRF Cooling Coil Cap-FF'
+              "cooling_capacity_ratio_modifier_function_of_temperature_curve_name": '{} VRF Cooling Coil Cap-FT'
+              gross_rated_sensible_heat_ratio: Autosize
+              gross_rated_total_cooling_capacity: Autosize
+              rated_air_flow_rate: Autosize
+            Connectors:
+              AirLoop:
+                Inlet: coil_air_inlet_node
+                Outlet: coil_air_outlet_node
       Water:
         Common:
           Objects: &CoilCoolingWaterCommonObjects
@@ -1291,6 +1509,45 @@ Objects:
               resistive_defrost_heater_capacity: Autosize # set by legacy, not default
             Connectors:
               AirLoop: *ConnectorsAirLoop
+        VariableRefrigerantFlow:
+          Common:
+            Objects: &CoilHeatingDXVariableRefrigerantFlowCommonObjects
+              - Curve:Quadratic:
+                  name: '{} VRF Heating Coil Cap-FF'
+                  coefficient1_constant: 0.8
+                  coefficient2_x: 0.2
+                  coefficient3_x_2: 0
+                  maximum_value_of_x: 1.5
+                  minimum_value_of_x: 0.5
+              - Curve:Cubic:
+                  name: '{} VRF Heating Coil Cap-FT'
+                  coefficient1_constant: -0.390708928227928
+                  coefficient2_x: 0.261815023760162
+                  coefficient3_x_2: -0.0130431603151873
+                  coefficient4_x_3: 0.000178131745997821
+                  input_unit_type_for_x: Temperature
+                  maximum_curve_output: 1.5
+                  maximum_value_of_x: 50.0
+                  minimum_curve_output: 0.5
+                  minimum_value_of_x: 0.0
+                  output_unit_type: Dimensionless
+            Transitions: &CoilHeatingDXVariableRefrigerantFlowCommonTransitions
+              - Coil:Heating:DX:VariableRefrigerantFlow:
+                  heat_pump_heating_coil_gross_rated_capacity: gross_rated_heating_capacity
+                  heating_supply_air_flow_rate: rated_air_flow_rate
+          Base: &CoilHeatingDXVariableRefrigerantFlowSuperObject
+            Fields:
+              name: '{} VRF Heating Coil'
+              coil_air_inlet_node: '{} VRF Heating Coil Inlet'
+              coil_air_outlet_node: '{} VRF Heating Coil Outlet'
+              gross_rated_heating_capacity: Autosize
+              heating_capacity_modifier_function_of_flow_fraction_curve_name: '{} VRF Heating Coil Cap-FF'
+              heating_capacity_ratio_modifier_function_of_temperature_curve_name: '{} VRF Heating Coil Cap-FT'
+              rated_air_flow_rate: Autosize
+            Connectors:
+              AirLoop:
+                Inlet: coil_air_inlet_node
+                Outlet: coil_air_outlet_node
       Fuel:
         Common:
           Objects: &CoilHeatingFuelCommonObjects
@@ -2232,7 +2489,7 @@ Objects:
     Common:
       ZoneEquipment:
         Transitions: &ZoneHVACCommonZoneEquipmentTransitions
-          - ZoneHVAC:PackagedTerminal:
+          - ZoneHVAC:.*:
               cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
               heating_supply_air_flow_rate: heating_supply_air_flow_rate
               supply_fan_operating_mode_schedule_name: supply_air_fan_operating_mode_schedule_name
@@ -2447,10 +2704,8 @@ Objects:
           sensible_heat_recovery_effectiveness: '{sensible_heat_recovery_effectiveness}'
           zone_supply_air_node_name: *ZoneSupplyInlet
     PackagedTerminalAirConditioner:
-      Base:
-        Fields: &ZoneHVACPackagedTerminalAirConditionerFields
-          name: '{} PTAC'
-          <<: *ZoneHVACCommonZoneEquipmentFields
+      Common:
+        Fields: &ZoneHVACPackagedTerminalAirconditionerCommonFields
           cooling_outdoor_air_flow_rate: Autosize
           cooling_supply_air_flow_rate: Autosize
           fan_placement: '{supply_fan_placement}'
@@ -2458,19 +2713,19 @@ Objects:
           heating_supply_air_flow_rate: Autosize
           no_load_outdoor_air_flow_rate: Autosize
           supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always0
+      Base:
+        Fields: &ZoneHVACPackagedTerminalAirConditionerFields
+          name: '{} PTAC'
+          <<: *ZoneHVACCommonZoneEquipmentFields
+          <<: *ZoneHVACPackagedTerminalAirconditionerCommonFields
     PackagedTerminalHeatPump:
       Base:
         Fields: &ZoneHVACPackagedTerminalHeatPumpFields
           name: '{} PTHP'
           <<: *ZoneHVACCommonZoneEquipmentFields
-          cooling_outdoor_air_flow_rate: Autosize
-          cooling_supply_air_flow_rate: Autosize
-          fan_placement: '{supply_fan_placement}'
-          heating_outdoor_air_flow_rate: Autosize
-          heating_supply_air_flow_rate: Autosize
+          <<: *ZoneHVACPackagedTerminalAirconditionerCommonFields
           maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: '{supplemental_heating_coil_maximum_outdoor_dry_bulb_temperature}'
           maximum_supply_air_temperature_from_supplemental_heater: Autosize
-          no_load_outdoor_air_flow_rate: Autosize
           supplemental_heating_coil_name:
             BuildPathReference:
               Location: Coil:Heating.*
@@ -2481,7 +2736,57 @@ Objects:
               Location: Coil:Heating.*
               Occurrence: -1
               ValueLocation: self
-          supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always0
+    TerminalUnit:
+      VariableRefrigerantFlow:
+        Common:
+          Transitions: &ZoneHVACTerminalUnitVariableRefrigerantFlowCommonTransitions
+            - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow:
+                no_cooling_supply_air_flow_rate: no_cooling_supply_air_flow_rate
+                no_heating_supply_air_flow_rate: no_heating_supply_air_flow_rate
+        Base:
+          Fields: &ZoneHVACTerminalUnitVariableRefrigerantFlowFields
+            name: '{} VRF Terminal Unit'
+            <<: *ZoneHVACPackagedTerminalAirconditionerCommonFields
+            cooling_coil_object_name:
+              BuildPathReference:
+                Location: Coil:Cooling.*
+                ValueLocation: key
+            cooling_coil_object_type:
+              BuildPathReference:
+                Location: Coil:Cooling.*
+                ValueLocation: self
+            heating_coil_object_name:
+              BuildPathReference:
+                Location: Coil:Heating.*
+                ValueLocation: key
+            heating_coil_object_type:
+              BuildPathReference:
+                Location: Coil:Heating.*
+                ValueLocation: self
+            no_cooling_supply_air_flow_rate: Autosize
+            no_heating_supply_air_flow_rate: Autosize
+            outside_air_mixer_object_name:
+              BuildPathReference:
+                Location: OutdoorAir:Mixer
+                ValueLocation: key
+            outside_air_mixer_object_type:
+              BuildPathReference:
+                Location: OutdoorAir:Mixer
+                ValueLocation: key
+            supply_air_fan_object_name:
+              BuildPathReference:
+                Location: Fan:.*
+                ValueLocation: key
+            supply_air_fan_object_type:
+              BuildPathReference:
+                Location: Fan:.*
+                ValueLocation: key
+            supply_air_fan_placement: '{supply_air_fan_placement}'
+            terminal_unit_air_inlet_node_name: *ZoneReturn
+            terminal_unit_air_outlet_node_name:
+              BuildPathReference:
+                Location: -1
+                ValueLocation: Outlet
     WaterToAirHeatPump:
       Base:
         Fields: &ZoneHVACWaterToAirHeatPumpFields
@@ -2675,6 +2980,14 @@ OptionTree:
                         - *CoilHeatingFuelCommonTransitions
                       Mappings: &ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasMappings
                         - *CoilHeatingFuelCommonMappings
+                    VariableRefrigerantFlowDX:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects: &ZoneCommonBuildPathActionsObjectsHeatingCoilTypeVariableRefrigerantFlowDXObjects
+                        - Coil:Heating:DX:VariableRefrigerantFlow: *CoilHeatingDXVariableRefrigerantFlowSuperObject
+                        - *CoilHeatingDXVariableRefrigerantFlowCommonObjects
+                      Transitions: *CoilHeatingDXVariableRefrigerantFlowCommonTransitions
                 - cooling_coil_type:
                     ChilledWater:
                       ObjectReference: Fan:.*
@@ -2693,8 +3006,16 @@ OptionTree:
                         - Coil:Cooling:DX:SingleSpeed: *CoilCoolingDXSingleSpeedSuperObject
                         - *CoilCoolingDXSingleSpeedCommonObjects
                       Transitions: *CoilCoolingDXSingleSpeedCommonTransitions
+                    VariableRefrigerantFlowDX:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects: &ZoneCommonBuildPathActionsObjectsCoolingCoilTypeVariableRefrigerantFlowDXObjects
+                        - Coil:Cooling:DX:VariableRefrigerantFlow: *CoilCoolingDXVariableRefrigerantFlowSuperObject
+                        - *CoilCoolingDXVariableRefrigerantFlowCommonObjects
+                      Transitions: *CoilCoolingDXVariableRefrigerantFlowCommonTransitions
               AfterMixer: &ZoneCommonBuildPathActionsObjectsAfterMixer
-                - heating_coil_type:
+                - heating_coil_type: &ZoneCommonBuildPathActionsObjectsAfterMixerHeatingCoilType
                     Electric:
                       ObjectReference: OutdoorAir:Mixer
                       Location: After
@@ -2713,7 +3034,12 @@ OptionTree:
                       Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeHotWaterObjects
                       Transitions:
                         - *CoilHeatingCommonTransitions
-                - cooling_coil_type:
+                    VariableRefrigerantFlowDX:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeVariableRefrigerantFlowDXObjects
+                - cooling_coil_type: &ZoneCommonBuildPathActionsObjectsAfterMixerCoolingCoilType
                     ChilledWater:
                       ObjectReference: OutdoorAir:Mixer
                       Location: After
@@ -2724,6 +3050,11 @@ OptionTree:
                       Location: After
                       ActionType: Insert
                       Objects: *ZoneCommonBuildPathActionsObjectsCoolingCoilTypeSingleSpeedDXObjects
+                    VariableRefrigerantFlowDX:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsCoolingCoilTypeVariableRefrigerantFlowDXObjects
               FanOnOff: &ZoneCommonBuildPathActionsObjectsFanOnOff
                 - supply_fan_placement:
                     None: &ZoneCommonBuildPathActionsObjectsFanOnOffNone
@@ -3046,7 +3377,6 @@ OptionTree:
             None:
               Objects:
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
-                # todo: replace with pthp
                 - ZoneHVAC:PackagedTerminalHeatPump: *ZoneHVACPackagedTerminalHeatPumpFields
               Transitions:
                 - *ZoneHVACCommonZoneEquipmentTransitions
@@ -3151,6 +3481,35 @@ OptionTree:
           TemplateObjects:
             <<: *ZoneCommonTemplateObjects
             <<: *ZoneCommonTemplateObjectsVAVFanPowered
+      VRF:
+        BuildPath:
+          BaseObjects:
+            Objects:
+              - *ZoneCommonBuildPathBaseObjectsObjects
+          Actions:
+            - heat_pump_heating_coil_type: *ZoneCommonBuildPathActionsObjectsAfterMixerHeatingCoilType
+            - cooling_coil_type: *ZoneCommonBuildPathActionsObjectsAfterMixerCoolingCoilType
+            - *ZoneCommonBuildPathActionsObjectsFanOnOff
+        BaseObjects:
+        TemplateObjects:
+          dedicated_outdoor_air_system_name:
+            None:
+              Objects:
+                - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+                - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow: *ZoneHVACTerminalUnitVariableRefrigerantFlowFields
+              Transitions:
+                - *ZoneHVACCommonZoneEquipmentTransitions
+                - *ZoneHVACTerminalUnitVariableRefrigerantFlowCommonTransitions
+            AnyValue:
+              Objects:
+                - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
+                - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow:
+                    <<: *ZoneHVACTerminalUnitVariableRefrigerantFlowFields
+                    cooling_outdoor_air_flow_rate: 0.0
+                    heating_outdoor_air_flow_rate: 0.0
+                    no_load_outdoor_air_flow_rate: 0.0
+              Transitions:
+                - *ZoneHVACCommonZoneEquipmentTransitions
       WaterToAirHeatPump:
         BuildPath:
           BaseObjects:
@@ -4029,6 +4388,8 @@ OptionTree:
         TemplateObjects:
           <<: *SystemCommonTemplateObjects
           <<: *SystemCommonTemplateObjectsVAV
+      VRF:
+
     Plant:
       Common:
         PlantLoop:
