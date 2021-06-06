@@ -243,6 +243,148 @@ Objects:
               minimum_value_of_x: 15
               minimum_value_of_y: -5
               output_unit_type: Dimensionless
+          - Curve:Quadratic:
+              name: '{} VRFCPLFFPLR'
+              coefficient1_constant: 0.85
+              coefficient2_x: 0.15
+              coefficient3_x_2: 0.0
+              input_unit_type_for_x: Dimensionless
+              maximum_curve_output: 1.0
+              maximum_value_of_x: 1.0
+              minimum_curve_output: 0.85
+              minimum_value_of_x: 0.0
+              output_unit_type: Dimensionless
+          - Curve:Cubic:
+              name: '{} VRFHeatCapFTBoundary'
+              coefficient1_constant: -7.6000882
+              coefficient2_x: 3.05090016
+              coefficient3_x_2: -0.1162844
+              coefficient4_x_3: 0.0
+              input_unit_type_for_x: Temperature
+              maximum_value_of_x: 27
+              minimum_value_of_x: 15
+              output_unit_type: Temperature
+          - Curve:Biquadratic:
+              name: '{} VRFHeatCapFTHi'
+              coefficient1_constant: 1.161134821
+              coefficient2_x: 0.027478868
+              coefficient3_x_2: -0.00168795
+              coefficient4_y: 0.001783378
+              coefficient5_y_2: 2.03208e-06
+              coefficient6_x_y: -6.8969e-05
+              input_unit_type_for_x: Temperature
+              input_unit_type_for_y: Temperature
+              maximum_value_of_x: 27
+              maximum_value_of_y: 15
+              minimum_value_of_x: 15
+              minimum_value_of_y: -10
+              output_unit_type: Dimensionless
+          - Curve:Biquadratic:
+              name: '{} VRFHeatCapFT'
+              coefficient1_constant: 1.014599599
+              coefficient2_x: -0.002506703
+              coefficient3_x_2: -0.000141599
+              coefficient4_y: 0.026931595
+              coefficient5_y_2: 1.83538e-06
+              coefficient6_x_y: -0.000358147
+              input_unit_type_for_x: Temperature
+              input_unit_type_for_y: Temperature
+              maximum_value_of_x: 27
+              maximum_value_of_y: 15
+              minimum_value_of_x: 15
+              minimum_value_of_y: -20
+              output_unit_type: Dimensionless
+          - Curve:Linear:
+              name: '{} HeatingCombRatio'
+              coefficient1_constant: 0.96034
+              coefficient2_x: 0.03966
+              input_unit_type_for_x: Dimensionless
+              maximum_curve_output: 1.023
+              maximum_value_of_x: 1.5
+              minimum_curve_output: 1.0
+              minimum_value_of_x: 1.0
+              output_unit_type: Dimensionless
+          - Curve:Cubic:
+              name: '{} VRFHeatEIRFTBoundary'
+              coefficient1_constant: -7.6000882
+              coefficient2_x: 3.05090016
+              coefficient3_x_2: -0.1162844
+              coefficient4_x_3: 0.0
+              input_unit_type_for_x: Temperature
+              maximum_curve_output: 15
+              maximum_value_of_x: 27
+              minimum_curve_output: -20
+              minimum_value_of_x: 15
+              output_unit_type: Temperature
+          - Curve:Quadratic:
+              name: '{} HeatingEIRHiPLR'
+              coefficient1_constant: 2.4294355
+              coefficient2_x: -2.235887
+              coefficient3_x_2: 0.8064516
+              input_unit_type_for_x: Dimensionless
+              maximum_value_of_x: 1.5
+              minimum_value_of_x: 1.0
+              output_unit_type: Dimensionless
+          - Curve:Biquadratic:
+              name: '{} VRFHeatEIRFTHi'
+              coefficient1_constant: 2.504005146
+              coefficient2_x: -0.05736767
+              coefficient3_x_2: 4.07336e-05
+              coefficient4_y: -0.12959669
+              coefficient5_y_2: 0.00135839
+              coefficient6_x_y: 0.00317047
+              input_unit_type_for_x: Temperature
+              input_unit_type_for_y: Temperature
+              maximum_value_of_x: 27
+              maximum_value_of_y: 15
+              minimum_value_of_x: 15
+              minimum_value_of_y: -10
+              output_unit_type: Dimensionless
+          - Curve:Cubic:
+              name: '{} HeatingEIRLowPLR'
+              coefficient1_constant: 0.1400093
+              coefficient2_x: 0.6415002
+              coefficient3_x_2: 0.1339047
+              coefficient4_x_3: 0.0845859
+              input_unit_type_for_x: Dimensionless
+              maximum_value_of_x: 1
+              minimum_value_of_x: 0
+              output_unit_type: Dimensionless
+          - Curve:Biquadratic:
+              name: '{} VRFHeatEIRFT'
+              coefficient1_constant: 0.87465501
+              coefficient2_x: -0.01319754
+              coefficient3_x_2: 0.00110307
+              coefficient4_y: -0.0133118
+              coefficient5_y_2: 0.00089017
+              coefficient6_x_y: -0.00012766
+              input_unit_type_for_x: Temperature
+              input_unit_type_for_y: Temperature
+              maximum_value_of_x: 27
+              maximum_value_of_y: 12
+              minimum_value_of_x: 15
+              minimum_value_of_y: -20
+              output_unit_type: Dimensionless
+          - Curve:Biquadratic:
+              name: '{} CoolingLengthCorrectionFactor'
+              coefficient1_constant: 1.0693794
+              coefficient2_x: -0.0014951
+              coefficient3_x_2: 2.56e-06
+              coefficient4_y: -0.1151104
+              coefficient5_y_2: 0.0511169
+              coefficient6_x_y: -0.0004369
+              input_unit_type_for_x: Distance
+              input_unit_type_for_y: Dimensionless
+              maximum_value_of_x: 175
+              maximum_value_of_y: 1.5
+              minimum_value_of_x: 8
+              minimum_value_of_y: 0.5
+              output_unit_type: Dimensionless
+        Transitions:
+          # todo_eo: need to recheck all template defaults and set where appropriate
+          - AirConditioner:VariableRefrigerantFlow:
+              gross_rated_heating_capacity: gross_rated_heating_capacity
+              gross_rated_total_cooling_capacity: gross_rated_total_cooling_capacity
       Base:
         Fields:
           name: '{} VRF Heat Pump'
@@ -259,54 +401,54 @@ Objects:
           cooling_energy_input_ratio_modifier_function_of_high_temperature_curve_name: '{} VRFCoolEIRFTHi'
           cooling_energy_input_ratio_modifier_function_of_low_part_load_ratio_curve_name: '{} CoolingEIRLowPLR'
           cooling_energy_input_ratio_modifier_function_of_low_temperature_curve_name: '{} VRFCoolEIRFT'
-#          "cooling_part_load_fraction_correlation_curve_name": "VRF Sys 1 Water Source VRFCPLFFPLR",
-#          "crankcase_heater_power_per_compressor": 33,
-#          "defrost_control": "Timed",
-#          "defrost_strategy": "Resistive",
-#          "defrost_time_period_fraction": 0.058333,
-#          "equivalent_piping_length_used_for_piping_correction_factor_in_cooling_mode": 30,
-#          "equivalent_piping_length_used_for_piping_correction_factor_in_heating_mode": 30,
-#          "evaporative_condenser_air_flow_rate": "Autosize",
-#          "evaporative_condenser_effectiveness": 0.9,
-#          "evaporative_condenser_pump_rated_power_consumption": 0,
-#          "fuel_type": "Electricity",
-#          "gross_rated_cooling_cop": 3.3,
-#          "gross_rated_heating_capacity": "Autosize",
-#          "gross_rated_heating_cop": 3.4,
-#          "gross_rated_total_cooling_capacity": "Autosize",
-#          "heat_pump_waste_heat_recovery": "No",
-#          "heat_recovery_cooling_capacity_time_constant": 0.45,
-#          "heat_recovery_heating_capacity_time_constant": 0.45,
-#          "heating_capacity_ratio_boundary_curve_name": "VRF Sys 1 Water Source VRFHeatCapFTBoundary",
-#          "heating_capacity_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatCapFTHi",
-#          "heating_capacity_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatCapFT",
-#          "heating_combination_ratio_correction_factor_curve_name": "VRF Sys 1 Water Source HeatingCombRatio",
-#          "heating_energy_input_ratio_boundary_curve_name": "VRF Sys 1 Water Source VRFHeatEIRFTBoundary",
-#          "heating_energy_input_ratio_modifier_function_of_high_part_load_ratio_curve_name": "VRF Sys 1 Water Source HeatingEIRHiPLR",
-#          "heating_energy_input_ratio_modifier_function_of_high_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatEIRFTHi",
-#          "heating_energy_input_ratio_modifier_function_of_low_part_load_ratio_curve_name": "VRF Sys 1 Water Source HeatingEIRLowPLR",
-#          "heating_energy_input_ratio_modifier_function_of_low_temperature_curve_name": "VRF Sys 1 Water Source VRFHeatEIRFT",
-#          "heating_part_load_fraction_correlation_curve_name": "VRF Sys 1 Water Source VRFCPLFFPLR",
-#          "heating_performance_curve_outdoor_temperature_type": "DryBulbTemperature",
-#          "master_thermostat_priority_control_type": "LoadPriority",
-#          "maximum_outdoor_dry_bulb_temperature_for_crankcase_heater": 5,
-#          "maximum_outdoor_dry_bulb_temperature_for_defrost_operation": 5,
-#          "maximum_outdoor_temperature_in_cooling_mode": 43,
-#          "maximum_outdoor_temperature_in_heat_recovery_mode": 45,
-#          "maximum_outdoor_temperature_in_heating_mode": 30,
-#          "minimum_heat_pump_part_load_ratio": 0.25,
-#          "minimum_outdoor_temperature_in_cooling_mode": -6,
-#          "minimum_outdoor_temperature_in_heat_recovery_mode": -15,
-#          "minimum_outdoor_temperature_in_heating_mode": -20,
-#          "number_of_compressors": 2,
-#          "piping_correction_factor_for_height_in_cooling_mode_coefficient": -0.000386,
-#          "piping_correction_factor_for_length_in_cooling_mode_curve_name": "VRF Sys 1 Water Source CoolingLengthCorrectionFactor",
-#          "rated_heating_capacity_sizing_ratio": 1,
-#          "ratio_of_compressor_size_to_total_compressor_capacity": 0.5,
-#          "resistive_defrost_heater_capacity": "Autosize",
-#          "vertical_height_used_for_piping_correction_factor": 10,
-#          "water_condenser_volume_flow_rate": "Autosize",
-#          "zone_terminal_unit_list_name": "VRF Sys 1 Water SourceTU List"
+          cooling_part_load_fraction_correlation_curve_name: '{} VRFCPLFFPLR'
+          crankcase_heater_power_per_compressor: '{crankcase_heater_power_per_compressor}'
+          defrost_control: '{defrost_control}'
+          defrost_strategy: '{defrost_strategy}'
+          defrost_time_period_fraction: '{defrost_time_period_fraction}'
+          equivalent_piping_length_used_for_piping_correction_factor_in_cooling_mode: '{equivalent_piping_length_used_for_piping_correction_factor_in_cooling_mode}'
+          equivalent_piping_length_used_for_piping_correction_factor_in_heating_mode: '{equivalent_piping_length_used_for_piping_correction_factor_in_heating_mode}'
+          evaporative_condenser_air_flow_rate: '{evaporative_condenser_air_flow_rate}'
+          evaporative_condenser_effectiveness: '{evaporative_condenser_effectiveness}'
+          fuel_type: '{fuel_type}'
+          gross_rated_cooling_cop: '{gross_rated_cooling_cop}'
+          gross_rated_heating_capacity: Autosize
+          gross_rated_heating_cop: '{gross_rated_heating_cop}'
+          gross_rated_total_cooling_capacity: Autosize
+          heat_pump_waste_heat_recovery: '{heat_pump_waste_heat_recovery}'
+          heat_recovery_cooling_capacity_time_constant: 0.45 # set by legacy, not default
+          heat_recovery_heating_capacity_time_constant: 0.45 # set by legacy, not default
+          heating_capacity_ratio_boundary_curve_name: '{} VRFHeatCapFTBoundary'
+          heating_capacity_ratio_modifier_function_of_high_temperature_curve_name: '{} VRFHeatCapFTHi'
+          heating_capacity_ratio_modifier_function_of_low_temperature_curve_name: '{} VRFHeatCapFT'
+          heating_combination_ratio_correction_factor_curve_name: '{} HeatingCombRatio'
+          heating_energy_input_ratio_boundary_curve_name: '{} VRFHeatEIRFTBoundary'
+          heating_energy_input_ratio_modifier_function_of_high_part_load_ratio_curve_name: '{} HeatingEIRHiPLR'
+          heating_energy_input_ratio_modifier_function_of_high_temperature_curve_name: '{} VRFHeatEIRFTHi'
+          heating_energy_input_ratio_modifier_function_of_low_part_load_ratio_curve_name: '{} HeatingEIRLowPLR'
+          heating_energy_input_ratio_modifier_function_of_low_temperature_curve_name: '{} VRFHeatEIRFT'
+          heating_part_load_fraction_correlation_curve_name: '{} VRFCPLFFPLR'
+          heating_performance_curve_outdoor_temperature_type: DryBulbTemperature # set by legacy, not default
+          master_thermostat_priority_control_type: '{master_thermostat_priority_control_type}'
+          maximum_outdoor_dry_bulb_temperature_for_crankcase_heater: '{maximum_outdoor_dry_bulb_temperature_for_crankcase_heater}'
+          maximum_outdoor_dry_bulb_temperature_for_defrost_operation: '{maximum_outdoor_dry_bulb_temperature_for_defrost_operation}'
+          maximum_outdoor_temperature_in_cooling_mode: '{maximum_outdoor_temperature_in_cooling_mode}'
+          maximum_outdoor_temperature_in_heat_recovery_mode: '{maximum_outdoor_temperature_in_heat_recovery_mode}'
+          maximum_outdoor_temperature_in_heating_mode: '{maximum_outdoor_temperature_in_heating_mode}'
+          # todo_eo: this was hard-coded to 0.25 despite having an input in the template, discuss with team
+          minimum_heat_pump_part_load_ratio: '{minimum_heat_pump_part_load_ratio}'
+          minimum_outdoor_temperature_in_cooling_mode: '{minimum_outdoor_temperature_in_cooling_mode}'
+          minimum_outdoor_temperature_in_heat_recovery_mode: '{minimum_outdoor_temperature_in_heat_recovery_mode}'
+          minimum_outdoor_temperature_in_heating_mode: '{minimum_outdoor_temperature_in_heating_mode}'
+          number_of_compressors: '{number_of_compressors}'
+          piping_correction_factor_for_height_in_cooling_mode_coefficient: -0.000386 # set by legacy, not default
+          piping_correction_factor_for_length_in_cooling_mode_curve_name: '{} CoolingLengthCorrectionFactor'
+          rated_heating_capacity_sizing_ratio: '{rated_heating_capacity_sizing_ratio}'
+          ratio_of_compressor_size_to_total_compressor_capacity: '{ratio_of_compressor_size_to_total_compressor_capacity}'
+          resistive_defrost_heater_capacity: '{resistive_defrost_heater_capacity}'
+          vertical_height_used_for_piping_correction_factor: '{vertical_height_used_for_piping_correction_factor}'
+          water_condenser_volume_flow_rate: '{water_condenser_volume_flow_rate}'
+          zone_terminal_unit_list_name": '{} TU List'
   AirLoopHVAC:
     Base:
       Fields: &AirLoopHVAC
