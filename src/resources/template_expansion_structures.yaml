@@ -133,7 +133,7 @@ Objects:
   AirConditioner:
     VariableRefrigerantFlow:
       Common:
-        Objects:
+        Objects: &AirConditionerVariableRefrigerantFlowCommonObjects
           - Curve:Cubic:
               name: '{} VRFCoolCapFTBoundary'
               coefficient1_constant: 25.73473775
@@ -428,7 +428,6 @@ Objects:
           heating_energy_input_ratio_modifier_function_of_low_part_load_ratio_curve_name: '{} HeatingEIRLowPLR'
           heating_energy_input_ratio_modifier_function_of_low_temperature_curve_name: '{} VRFHeatEIRFT'
           heating_part_load_fraction_correlation_curve_name: '{} VRFCPLFFPLR'
-          heating_performance_curve_outdoor_temperature_type: DryBulbTemperature # set by legacy, not default
           master_thermostat_priority_control_type: '{master_thermostat_priority_control_type}'
           maximum_outdoor_dry_bulb_temperature_for_crankcase_heater: '{maximum_outdoor_dry_bulb_temperature_for_crankcase_heater}'
           maximum_outdoor_dry_bulb_temperature_for_defrost_operation: '{maximum_outdoor_dry_bulb_temperature_for_defrost_operation}'
@@ -448,7 +447,11 @@ Objects:
           resistive_defrost_heater_capacity: '{resistive_defrost_heater_capacity}'
           vertical_height_used_for_piping_correction_factor: '{vertical_height_used_for_piping_correction_factor}'
           water_condenser_volume_flow_rate: '{water_condenser_volume_flow_rate}'
-          zone_terminal_unit_list_name": '{} TU List'
+          zone_name_for_master_thermostat_location: '{zone_name_for_master_thermostat_location}'
+          zone_terminal_unit_list_name: '{} TU List'
+      WaterSource: &AirConditionerVariableRefrigerantFlowWaterSourceFields
+        <<: *AirConditionerVariableRefrigerantFlowFields
+        heating_performance_curve_outdoor_temperature_type: DryBulbTemperature # set by legacy, not default
   AirLoopHVAC:
     Base:
       Fields: &AirLoopHVAC
@@ -2727,9 +2730,9 @@ Objects:
         name: '{} Equipment'
         equipment:
           - zone_equipment_object_type:
-              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|IdealLoads|WaterToAir).*: self
+              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|IdealLoads|TerminalUnit|WaterToAir).*: self
             zone_equipment_name:
-              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|IdealLoads|WaterToAir).*: key
+              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|IdealLoads|TerminalUnit|WaterToAir).*: key
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
       WithDOAS: &ZoneHVACEquipmentListWithDOAS
@@ -2758,9 +2761,9 @@ Objects:
         <<: *ZoneHVACEquipmentList
         equipment:
           - zone_equipment_object_type:
-              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: self
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|TerminalUnit|WaterToAir).*: self
             zone_equipment_name:
-              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: key
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|TerminalUnit|WaterToAir).*: key
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
           - zone_equipment_object_type:
@@ -2777,9 +2780,9 @@ Objects:
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
           - zone_equipment_object_type:
-              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: self
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|TerminalUnit|WaterToAir).*: self
             zone_equipment_name:
-              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: key
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|TerminalUnit|WaterToAir).*: key
             zone_equipment_cooling_sequence: 2
             zone_equipment_heating_or_no_load_  sequence: 2
           - zone_equipment_object_type:
@@ -2914,7 +2917,7 @@ Objects:
             outside_air_mixer_object_type:
               BuildPathReference:
                 Location: OutdoorAir:Mixer
-                ValueLocation: key
+                ValueLocation: self
             supply_air_fan_object_name:
               BuildPathReference:
                 Location: Fan:.*
@@ -2922,7 +2925,7 @@ Objects:
             supply_air_fan_object_type:
               BuildPathReference:
                 Location: Fan:.*
-                ValueLocation: key
+                ValueLocation: self
             supply_air_fan_placement: '{supply_air_fan_placement}'
             terminal_unit_air_inlet_node_name: *ZoneReturn
             terminal_unit_air_outlet_node_name:
@@ -3078,6 +3081,11 @@ AutoCreated:
       Base:
       SupplySideOutlet:
         name: *SystemSupplySideOutletNodeList
+    ZoneTerminalUnitList:
+      Base:
+        name: '{} ZoneTerminalUnitList'
+        zone_terminal_unit_list_name: '{} TU List' #todo_eo: globalize this value
+
 OptionTree:
   HVACTemplate:
     Zone:
@@ -3212,7 +3220,7 @@ OptionTree:
                       Transitions:
                         - *FanCommonTransitionsSupply
                     DrawThrough: *ZoneCommonBuildPathActionsObjectsFanOnOffNone
-                    BlowThrough:
+                    BlowThrough: &ZoneCommonBuildPathActionsObjectsFanOnOffBlowThrough
                       ObjectReference: OutdoorAir:Mixer
                       Location: After
                       ActionType: Insert
@@ -3631,27 +3639,20 @@ OptionTree:
           Actions:
             - heat_pump_heating_coil_type: *ZoneCommonBuildPathActionsObjectsAfterMixerHeatingCoilType
             - cooling_coil_type: *ZoneCommonBuildPathActionsObjectsAfterMixerCoolingCoilType
-            - *ZoneCommonBuildPathActionsObjectsFanOnOff
+            - supply_air_fan_placement: # todo_eo: combine to supply_fan_placement in descriptors to reduce code here
+                None: *ZoneCommonBuildPathActionsObjectsFanOnOffNone
+                DrawThrough: *ZoneCommonBuildPathActionsObjectsFanOnOffNone
+                BlowThrough: *ZoneCommonBuildPathActionsObjectsFanOnOffBlowThrough
         BaseObjects:
+          Objects:
+            - *ZoneCommonBaseObjectsObjects
+            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+            - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow: *ZoneHVACTerminalUnitVariableRefrigerantFlowFields
+          Transitions:
+            - *ZoneHVACCommonZoneEquipmentTransitions
+            - *ZoneHVACTerminalUnitVariableRefrigerantFlowCommonTransitions
         TemplateObjects:
-          dedicated_outdoor_air_system_name:
-            None:
-              Objects:
-                - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
-                - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow: *ZoneHVACTerminalUnitVariableRefrigerantFlowFields
-              Transitions:
-                - *ZoneHVACCommonZoneEquipmentTransitions
-                - *ZoneHVACTerminalUnitVariableRefrigerantFlowCommonTransitions
-            AnyValue:
-              Objects:
-                - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
-                - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow:
-                    <<: *ZoneHVACTerminalUnitVariableRefrigerantFlowFields
-                    cooling_outdoor_air_flow_rate: 0.0
-                    heating_outdoor_air_flow_rate: 0.0
-                    no_load_outdoor_air_flow_rate: 0.0
-              Transitions:
-                - *ZoneHVACCommonZoneEquipmentTransitions
+          <<: *ZoneCommonTemplateObjects
       WaterToAirHeatPump:
         BuildPath:
           BaseObjects:
@@ -4532,16 +4533,18 @@ OptionTree:
           <<: *SystemCommonTemplateObjectsVAV
       VRF:
         BaseObjects:
-          Objects:
-            - AirConditioner:VariableRefrigerantFlow: *AirConditionerVariableRefrigerantFlowFields
         TemplateObjects:
           condenser_type:
             AirCooled:
               Objects:
+                - *AirConditionerVariableRefrigerantFlowCommonObjects
+                - AirConditioner:VariableRefrigerantFlow: *AirConditionerVariableRefrigerantFlowFields
                 - OutdoorAir:Node:
                     name: '{} Condenser Inlet Node'
             WaterCooled:
               Objects:
+                - *AirConditionerVariableRefrigerantFlowCommonObjects
+                - AirConditioner:VariableRefrigerantFlow: *AirConditionerVariableRefrigerantFlowWaterSourceFields
                 - Branch:
                     name: '{} VRF Condenser Branch'
                     components:

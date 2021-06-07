@@ -384,6 +384,50 @@ class HVACTemplate(EPJSON):
             object_dictionary=resolved_path_dictionary)
         return resolved_path_dictionary
 
+    def _create_system_vrf_path_connection_objects(self, system_class_object, expanded_zones):
+        """
+        Create objects connecting VRF system to zone objects.
+
+        :param system_class_object: Expanded HVACTemplate:System:.* class object
+        :param expanded_zones: dictionary of ExpandZone objects
+        :return: system supply air connection objects.  AirLoopHVAC:SupplyPath object and either
+            AirLoopHVAC:SupplyPlenum or AirLoopHVAC:ZoneSplitter object as well ass AirLoopHVAC:ReturnPath and either
+            AirLoopHVAC:ReturnPlenum or AirLoopHVAC:ZoneMixer.
+        """
+        # create ExpandObjects class object to use some yaml and epjson functions
+        eo = ExpandObjects()
+        eo.unique_name = getattr(system_class_object, 'template_name')
+        vrf_object_name_list = []
+        zone_system_template_field_name = \
+            self._get_zone_template_field_from_system_type(template_type=system_class_object.template_type)
+        for _, ez in expanded_zones.items():
+            if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
+                try:
+                    vrf_object = ez.epjson['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']
+                    (vrf_object_name, _), = vrf_object.items()
+                except (KeyError, AttributeError):
+                    raise InvalidTemplateException("VRF zone template {} expanded with no "
+                                                   "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow object".format(ez.unique_name))
+                except ValueError:
+                    raise InvalidTemplateException('ZoneHVAC:TerminalUnit:VariableRefrigerantFlow '
+                                                   'object incorrectly formatted: {}'
+                                                   .format(ez.epjson.get('ZoneHVAC:TerminalUnit:VariableRefrigerantFlow', 'None')))
+                vrf_object_name_list.append({'zone_terminal_unit_name': vrf_object_name})
+        if vrf_object_name_list:
+            vrf_terminal_object = eo.get_structure(structure_hierarchy=[
+                'AutoCreated', 'System', 'ZoneTerminalUnitList', 'Base'])
+            vrf_terminal_object['terminal_units'] = vrf_object_name_list
+            path_dictionary = eo.yaml_list_to_epjson_dictionaries(
+                yaml_list=[{'ZoneTerminalUnitList': vrf_terminal_object}, ])
+            resolved_path_dictionary = eo.resolve_objects(epjson=path_dictionary)
+            # save output to class epsjon
+            self.merge_epjson(
+                super_dictionary=self.epjson,
+                object_dictionary=resolved_path_dictionary)
+        else:
+            raise InvalidTemplateException('Failed to create VRF terminal unit list for {}'.format(system_class_object.template_name))
+        return
+
     def _create_templates_from_plant_equipment(self, plant_equipment_class_object, expanded_plant_loops):
         """
         Create plant and platn equipment loop templates from ExpandPlantEquipment object attributes.
@@ -543,13 +587,13 @@ class HVACTemplate(EPJSON):
         :return: epJSON formatted dictionary of branch objects
         """
         # create list of regex matches for the given loop
-        # todo_eo: object searching regex need to be expanded.
+        # todo_eo: object searching regex need to be expanded and/or optimized
         if 'chilledwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:Cooling:Water($|:DetailedGeometry)+', ]
         elif 'hotwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:Heating:Water($|:DetailedGeometry)+', '^ZoneHVAC:Baseboard.*Water']
         elif 'mixedwater' in plant_loop_class_object.template_type.lower():
-            branch_rgx = ['^Coil:.*HeatPump.*', ]
+            branch_rgx = ['^Coil:.*HeatPump.*', '^AirConditioner:VariableRefrigerantFlow$']
         elif 'condenserwater' in plant_loop_class_object.template_type.lower():
             return None
         else:
@@ -890,26 +934,12 @@ class HVACTemplate(EPJSON):
             self._create_zonecontrol_thermostat(zone_class_object=zone_class_object)
         self.logger.info('##### Building System-Zone Connections #####')
         for _, system_class_object in self.expanded_systems.items():
+            # VRF systems do not connect via air paths, and need a separate function.
             if system_class_object.template_type == 'HVACTemplate:System:VRF':
-                vrf_object_name_list = []
-                zone_system_template_field_name = \
-                    self._get_zone_template_field_from_system_type(template_type=system_class_object.template_type)
-                for _, ez in self.expanded_zones.items():
-                    if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
-                        try:
-                            vrf_object = ez.epjson['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']
-                            (vrf_object_name, _), = vrf_object.items()
-                        except (KeyError, AttributeError):
-                            raise InvalidTemplateException("VRF zone template {} expanded with no "
-                                                           "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow object".format(ez.unique_name))
-                        except ValueError:
-                            raise InvalidTemplateException('ZoneHVAC:TerminalUnit:VariableRefrigerantFlow object incorrectly '
-                                                           'formatted: {}'.format(vrf_object))
-                        vrf_object_name_list.append(vrf_object_name)
-                print(vrf_object_name_list)
                 # todo_eo: pick up vrf system build out from here
-                import sys
-                sys.exit()
+                self._create_system_vrf_path_connection_objects(
+                    system_class_object=system_class_object,
+                    expanded_zones=self.expanded_zones)
             else:
                 self._create_system_path_connection_objects(
                     system_class_object=system_class_object,
