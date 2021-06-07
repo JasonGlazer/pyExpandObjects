@@ -386,7 +386,7 @@ Objects:
               gross_rated_heating_capacity: gross_rated_heating_capacity
               gross_rated_total_cooling_capacity: gross_rated_total_cooling_capacity
       Base:
-        Fields:
+        Fields: &AirConditionerVariableRefrigerantFlowFields
           name: '{} VRF Heat Pump'
           basin_heater_setpoint_temperature: '{basin_heater_setpoint_temperature}'
           condenser_inlet_node_name: '{} Condenser Inlet Node'
@@ -4531,7 +4531,28 @@ OptionTree:
           <<: *SystemCommonTemplateObjects
           <<: *SystemCommonTemplateObjectsVAV
       VRF:
-
+        BaseObjects:
+          Objects:
+            - AirConditioner:VariableRefrigerantFlow: *AirConditionerVariableRefrigerantFlowFields
+        TemplateObjects:
+          condenser_type:
+            AirCooled:
+              Objects:
+                - OutdoorAir:Node:
+                    name: '{} Condenser Inlet Node'
+            WaterCooled:
+              Objects:
+                - Branch:
+                    name: '{} VRF Condenser Branch'
+                    components:
+                      - component_inlet_node_name:
+                          AirConditioner:VariableRefrigerantFlow: condenser_inlet_node_name
+                        component_name:
+                          AirConditioner:VariableRefrigerantFlow: key
+                        component_object_type:
+                          AirConditioner:VariableRefrigerantFlow: self
+                        component_outlet_node_name:
+                          AirConditioner:VariableRefrigerantFlow: condenser_outlet_node_name
     Plant:
       Common:
         PlantLoop:

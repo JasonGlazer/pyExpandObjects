@@ -890,9 +890,30 @@ class HVACTemplate(EPJSON):
             self._create_zonecontrol_thermostat(zone_class_object=zone_class_object)
         self.logger.info('##### Building System-Zone Connections #####')
         for _, system_class_object in self.expanded_systems.items():
-            self._create_system_path_connection_objects(
-                system_class_object=system_class_object,
-                expanded_zones=self.expanded_zones)
+            if system_class_object.template_type == 'HVACTemplate:System:VRF':
+                vrf_object_name_list = []
+                zone_system_template_field_name = \
+                    self._get_zone_template_field_from_system_type(template_type=system_class_object.template_type)
+                for _, ez in self.expanded_zones.items():
+                    if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
+                        try:
+                            vrf_object = ez.epjson['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']
+                            (vrf_object_name, _), = vrf_object.items()
+                        except (KeyError, AttributeError):
+                            raise InvalidTemplateException("VRF zone template {} expanded with no "
+                                                           "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow object".format(ez.unique_name))
+                        except ValueError:
+                            raise InvalidTemplateException('ZoneHVAC:TerminalUnit:VariableRefrigerantFlow object incorrectly '
+                                                           'formatted: {}'.format(vrf_object))
+                        vrf_object_name_list.append(vrf_object_name)
+                print(vrf_object_name_list)
+                # todo_eo: pick up vrf system build out from here
+                import sys
+                sys.exit()
+            else:
+                self._create_system_path_connection_objects(
+                    system_class_object=system_class_object,
+                    expanded_zones=self.expanded_zones)
         self.logger.info('##### Processing Plant Loops #####')
         self.expanded_plant_loops = self._expand_templates(
             templates=self.templates_plant_loops,

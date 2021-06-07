@@ -1860,14 +1860,17 @@ class ExpandSystem(ExpandObjects):
         if self.template_type == 'HVACTemplate:System:DualDuct':
             self._dual_duct_custom_edits()
         self._create_objects()
-        self._create_outdoor_air_equipment_list_from_build_path()
+        if self.template_type != 'HVACTemplate:System:VRF':
+            self._create_outdoor_air_equipment_list_from_build_path()
         self._create_availability_manager_assignment_list()
-        if self.template_type == 'HVACTemplate:System:DualDuct':
-            self._create_controller_list_from_epjson(controller_list=('Controller:OutdoorAir', ))
-        else:
-            self._create_controller_list_from_epjson()
-        self._create_outdoor_air_system()
-        self._create_branch_and_branchlist_from_build_path()
+        # If a build path is not created, then no additional objects need to be created as well.
+        if self.build_path:
+            if self.template_type == 'HVACTemplate:System:DualDuct':
+                self._create_controller_list_from_epjson(controller_list=('Controller:OutdoorAir', ))
+            else:
+                self._create_controller_list_from_epjson()
+            self._create_outdoor_air_system()
+            self._create_branch_and_branchlist_from_build_path()
         return self
 
 
