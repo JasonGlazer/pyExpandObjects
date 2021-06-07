@@ -380,11 +380,13 @@ Objects:
               minimum_value_of_x: 8
               minimum_value_of_y: 0.5
               output_unit_type: Dimensionless
-        Transitions:
+        Transitions: &AirConditionerVariableRefrigerantFlowCommonTransitions
           # todo_eo: need to recheck all template defaults and set where appropriate
           - AirConditioner:VariableRefrigerantFlow:
               gross_rated_heating_capacity: gross_rated_heating_capacity
               gross_rated_total_cooling_capacity: gross_rated_total_cooling_capacity
+              # todo_eo: this was hard-coded to 0.25 despite having an input in the template, discuss with team
+#              minimum_heat_pump_part_load_ratio: minimum_heat_pump_part_load_ratio
       Base:
         Fields: &AirConditionerVariableRefrigerantFlowFields
           name: '{} VRF Heat Pump'
@@ -435,7 +437,7 @@ Objects:
           maximum_outdoor_temperature_in_heat_recovery_mode: '{maximum_outdoor_temperature_in_heat_recovery_mode}'
           maximum_outdoor_temperature_in_heating_mode: '{maximum_outdoor_temperature_in_heating_mode}'
           # todo_eo: this was hard-coded to 0.25 despite having an input in the template, discuss with team
-          minimum_heat_pump_part_load_ratio: '{minimum_heat_pump_part_load_ratio}'
+          minimum_heat_pump_part_load_ratio: 0.25
           minimum_outdoor_temperature_in_cooling_mode: '{minimum_outdoor_temperature_in_cooling_mode}'
           minimum_outdoor_temperature_in_heat_recovery_mode: '{minimum_outdoor_temperature_in_heat_recovery_mode}'
           minimum_outdoor_temperature_in_heating_mode: '{minimum_outdoor_temperature_in_heating_mode}'
@@ -3651,6 +3653,7 @@ OptionTree:
           Transitions:
             - *ZoneHVACCommonZoneEquipmentTransitions
             - *ZoneHVACTerminalUnitVariableRefrigerantFlowCommonTransitions
+            - *SizingZoneCommonTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjects
       WaterToAirHeatPump:
@@ -4541,6 +4544,7 @@ OptionTree:
                 - AirConditioner:VariableRefrigerantFlow: *AirConditionerVariableRefrigerantFlowFields
                 - OutdoorAir:Node:
                     name: '{} Condenser Inlet Node'
+              Transitions: *AirConditionerVariableRefrigerantFlowCommonTransitions
             WaterCooled:
               Objects:
                 - *AirConditionerVariableRefrigerantFlowCommonObjects
@@ -4556,6 +4560,7 @@ OptionTree:
                           AirConditioner:VariableRefrigerantFlow: self
                         component_outlet_node_name:
                           AirConditioner:VariableRefrigerantFlow: condenser_outlet_node_name
+              Transitions: *AirConditionerVariableRefrigerantFlowCommonTransitions
     Plant:
       Common:
         PlantLoop:
