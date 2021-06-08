@@ -81,7 +81,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         :return: idf file name
         """
         epjson_file_path = self.write_file_for_testing(epjson=epjson, file_name=file_name, sub_directory=sub_directory)
-        idf_file_path = self.convert_file(epjson_file_path)
+        idf_file_path = self.convert_file(file_location=epjson_file_path)
         return idf_file_path
 
     @staticmethod

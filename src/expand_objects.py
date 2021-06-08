@@ -136,6 +136,9 @@ class ExpandObjects(EPJSON):
                         setattr(self, template_field, template_structure[template_field])
                 else:
                     setattr(self, template_field, template_structure[template_field])
+                print('-------------')
+                print(template_field)
+                print(getattr(self, template_field))
         else:
             self.template_type = None
             self.template_name = None
@@ -380,6 +383,11 @@ class ExpandObjects(EPJSON):
                             for object_type, _ in tree_object.items():
                                 # if the object reference matches the object, apply the transition
                                 if re.match(object_type_reference, object_type):
+                                    if object_type == 'Sizing:Zone':
+                                        print('-------------')
+                                        print(object_type)
+                                        print(template_field)
+                                        print(getattr(self, template_field, None))
                                     # if the object_field is a dictionary, then the value is a formatted string to
                                     # apply with the template_field.  Otherwise, just try to get the value from the
                                     # template field, which is stored as a class attribute (on class initialization).

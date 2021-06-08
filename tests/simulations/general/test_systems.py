@@ -161,7 +161,7 @@ mock_system_template = {
     }
 }
 
-test_dir = Path(__file__).parent.parent
+test_dir = Path(__file__).parent.parent.parent
 
 
 class TestSimulationSimpleSystem(BaseSimulationTest):

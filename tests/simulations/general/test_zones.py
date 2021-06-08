@@ -38,7 +38,7 @@ mock_zone_template = {
     }
 }
 
-test_dir = Path(__file__).parent.parent
+test_dir = Path(__file__).parent.parent.parent
 
 
 class TestSimulationSimpleZone(BaseSimulationTest):

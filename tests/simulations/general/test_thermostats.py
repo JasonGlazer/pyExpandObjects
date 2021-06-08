@@ -5,7 +5,7 @@ from tests.simulations import BaseSimulationTest
 from src.epjson_handler import EPJSON
 from src.hvac_template import HVACTemplate
 
-test_dir = Path(__file__).parent.parent
+test_dir = Path(__file__).parent.parent.parent
 
 
 class TestSimulationSimpleThermostat(BaseSimulationTest):

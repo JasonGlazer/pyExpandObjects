@@ -6,7 +6,7 @@ from src.hvac_template import HVACTemplate
 from src.epjson_handler import EPJSON
 from src.expand_objects import ExpandPlantLoop
 
-test_dir = Path(__file__).parent.parent
+test_dir = Path(__file__).parent.parent.parent
 
 mock_chw_plant_loop_template = {
     "HVACTemplate:Plant:ChilledWaterLoop": {
