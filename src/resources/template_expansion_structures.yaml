@@ -3379,7 +3379,6 @@ OptionTree:
                      # objects are also secondary equipment in other templates.
         BaseObjects:
           Objects:
-            - Sizing:Zone: *SizingZone
             - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFields
           Transitions:
             - *SizingZoneCommonTransitions
@@ -3399,9 +3398,11 @@ OptionTree:
           dedicated_outdoor_air_system_name:
             None:
               Objects:
+                - Sizing:Zone: *SizingZone
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFields
             AnyValue:
               Objects:
+                - *ZoneCommonBaseObjectsObjects
                 - AirTerminal:SingleDuct:VAV:NoReheat:
                     <<: *AirTerminalSingleDuctVAVNoReheatFields
                     name: '{} DOAS Air Terminal'

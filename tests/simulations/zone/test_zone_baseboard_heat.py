@@ -138,10 +138,31 @@ class TestSimulationsZoneBaseboardHeat(BaseSimulationTest):
     def test_dedicated_outdoor_air_system_name(self):
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
-            object_dictionary=doas_objects
-        )
+            object_dictionary=doas_objects)
         self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
             'HVACTemplate:Zone:BaseboardHeat 1']['dedicated_outdoor_air_system_name'] = 'DOAS'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:BaseboardHeat:outdoor_air_method_flow_per_person")
+    def test_baseboard_outdoor_air_method_flow_per_person(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=doas_objects)
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
+            'HVACTemplate:Zone:BaseboardHeat 1']['dedicated_outdoor_air_system_name'] = 'DOAS'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
+            'HVACTemplate:Zone:BaseboardHeat 1']['outdoor_air_method'] = 'Flow/Zone'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
+            'HVACTemplate:Zone:BaseboardHeat 1']['outdoor_air_flow_rate_per_person'] = 0.01
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Flow/Zone',
+            epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_method'])
+        self.assertEqual(
+            0.01,
+            epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_flow_per_person'])
         return
