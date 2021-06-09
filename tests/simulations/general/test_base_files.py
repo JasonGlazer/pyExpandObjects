@@ -5,14 +5,14 @@ from tests.simulations import BaseSimulationTest
 test_dir = Path(__file__).parent.parent
 
 
-class TestSimulationsFullSystem(BaseSimulationTest):
+class TestSimulationsSystemVAV(BaseSimulationTest):
     def setUp(self):
         return
 
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneBaseboardHeat")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:return_fan")
     def test_5_zone_baseboard_heat(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneBaseboardHeat.idf')
         self.perform_full_comparison(base_idf_file_path=base_file_path)

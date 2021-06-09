@@ -2695,6 +2695,18 @@ Objects:
           air_terminal_name:
             ^AirTerminal:.*: key
     Baseboard:
+      Common:
+        Transitions: &ZoneHVACBaseboardCommonTransitions
+          - ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$:
+              baseboard_heating_capacity: heating_design_capacity
+
+      Convective:
+        Electric:
+          Base:
+            Fields: &ZoneHVACBaseboardConvectiveElectricFields
+              name: '{} Baseboard Heat'
+              availability_schedule_name: '{baseboard_heating_availability_schedule_name}'
+              fraction_of_radiant_energy_incident_on_people: 0.0 # set by legacy, no object default, not reachable from template
       RadiantConvective:
         Water:
           Common:
@@ -2703,30 +2715,24 @@ Objects:
                   name: '{} Baseboard Heat Hw Branch'
                   components:
                     - component_inlet_node_name:
-                        ^ZoneHVAC:Baseboard:RadiantConvective:Water$: inlet_node_name
+                        ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: inlet_node_name
                       component_name:
-                        ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+                        ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: key
                       component_object_type:
-                        ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+                        ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: self
                       component_outlet_node_name:
-                        ^ZoneHVAC:Baseboard:RadiantConvective:Water$: outlet_node_name
-            Transitions: &ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
-              - ^ZoneHVAC:Baseboard:RadiantConvective:Water$:
-                  baseboard_heating_capacity: heating_design_capacity
-          Base:
-            Fields: &ZoneHVACBaseboardRadiantConvectiveWaterFields
-              name: '{} Baseboard Heat'
-              availability_schedule_name: '{system_availability_schedule_name}'
-              design_object:
-                ZoneHVAC:Baseboard:RadiantConvective:Water:Design: key
-              fraction_of_radiant_energy_incident_on_people: 0.0 # set by legacy, no object default, not reachable from template
-              inlet_node_name: '{} Baseboard HW Inlet'
-              maximum_water_flow_rate: Autosize # set by legacy, no object default, not reachable from template, required by schema
-              outlet_node_name: '{} Baseboard HW Outlet'
+                        ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: outlet_node_name
           Design:
-            Fields: &ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
+            Fields: &ZoneHVACBaseboardRadiantConvectiveDesignFields
               name: '{} Baseboard Heat Design Object'
               fraction_radiant: 0.0
+          Water: &ZoneHVACBaseboardRadiantConvectiveWaterFields
+            <<: *ZoneHVACBaseboardConvectiveElectricFields
+            design_object:
+              ZoneHVAC:Baseboard:RadiantConvective:Water:Design: key
+            inlet_node_name: '{} Baseboard HW Inlet'
+            maximum_water_flow_rate: Autosize # set by legacy, no object default, not reachable from template, required by schema
+            outlet_node_name: '{} Baseboard HW Outlet'
     EquipmentList:
       Base: &ZoneHVACEquipmentList
         name: '{} Equipment'
@@ -2754,11 +2760,24 @@ Objects:
         <<: *ZoneHVACEquipmentList
         equipment:
           - zone_equipment_object_type:
-              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+              ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: self
             zone_equipment_name:
-              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+              ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: key
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
+      BaseboardWithDOAS: &ZoneHVACEquipmentListBaseBoardWithDOAS
+        <<: *ZoneHVACEquipmentList
+        equipment:
+          - zone_equipment_object_type: ZoneHVAC:AirDistributionUnit
+            zone_equipment_name: '{} DOAS ATU'
+            zone_equipment_cooling_sequence: 1
+            zone_equipment_heating_or_no_load_sequence: 1
+          - zone_equipment_object_type:
+              ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: self
+            zone_equipment_name:
+              ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: key
+            zone_equipment_cooling_sequence: 2
+            zone_equipment_heating_or_no_load_sequence: 2
       WithBaseboard: &ZoneHVACEquipmentListWithBaseboard
         <<: *ZoneHVACEquipmentList
         equipment:
@@ -2769,9 +2788,9 @@ Objects:
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
           - zone_equipment_object_type:
-              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+              ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: self
             zone_equipment_name:
-              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+              ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: key
             zone_equipment_cooling_sequence: 2
             zone_equipment_heating_or_no_load_sequence: 2
       WithDOASAndBaseboard: &ZoneHVACEquipmentListWithDOASAndBaseboard
@@ -2788,9 +2807,9 @@ Objects:
             zone_equipment_cooling_sequence: 2
             zone_equipment_heating_or_no_load_  sequence: 2
           - zone_equipment_object_type:
-              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: self
+              ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: self
             zone_equipment_name:
-              ^ZoneHVAC:Baseboard:RadiantConvective:Water$: key
+              ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$: key
             zone_equipment_cooling_sequence: 3
             zone_equipment_heating_or_no_load_sequence: 3
     EquipmentConnections:
@@ -3251,8 +3270,8 @@ OptionTree:
               HotWater:
                 Objects:
                   - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
-                  - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
-                Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
+                  - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveDesignFields
+                Transitions: *ZoneHVACBaseboardCommonTransitions
             zone_hvac_equipmentlist_object_type: &ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType # Created as a descriptor in ExpandZone
               Base:
                 Objects:
@@ -3260,6 +3279,9 @@ OptionTree:
               Baseboard:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseBoard
+              BaseboardWithDOAS:
+                Objects:
+                  - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListBaseBoardWithDOAS
               WithDOAS:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithDOAS
@@ -3358,6 +3380,7 @@ OptionTree:
         BaseObjects:
           Objects:
             - Sizing:Zone: *SizingZone
+            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFields
           Transitions:
             - *SizingZoneCommonTransitions
         TemplateObjects:
@@ -3366,10 +3389,31 @@ OptionTree:
             HotWater:
               Objects:
                 - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
-                - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveWaterDesignFields
+                - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveDesignFields
                 - *ZoneHVACBaseboardRadiantConvectiveWaterCommonObjects
+              Transitions: *ZoneHVACBaseboardCommonTransitions
+            Electric:
+              Objects:
+                - ZoneHVAC:Baseboard:Convective:Electric: *ZoneHVACBaseboardConvectiveElectricFields
+              Transitions: *ZoneHVACBaseboardCommonTransitions
+          dedicated_outdoor_air_system_name:
+            None:
+              Objects:
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFields
-              Transitions: *ZoneHVACBaseboardRadiantConvectiveWaterCommonTransitions
+            AnyValue:
+              Objects:
+                - AirTerminal:SingleDuct:VAV:NoReheat:
+                    <<: *AirTerminalSingleDuctVAVNoReheatFields
+                    name: '{} DOAS Air Terminal'
+                    air_outlet_node_name: '{} DOAS Supply Inlet'
+                    constant_minimum_air_flow_fraction: 1.0
+                    zone_minimum_air_flow_input_method: Constant
+                - ZoneHVAC:AirDistributionUnit:
+                    <<: *ZoneHVACAirDistributionUnit
+                    name: '{} DOAS ATU'
+                - ZoneHVAC:EquipmentConnections:
+                    <<: *ZoneHVACEquipmentConnectionsFields
+                    zone_air_inlet_node_or_nodelist_name: '{} DOAS Supply Inlet'
       ConstantVolume:
         BaseObjects:
           Objects:

@@ -391,11 +391,12 @@ class ExpandObjects(EPJSON):
                                             object_value = getattr(self, template_field)
                                     except AttributeError:
                                         object_value = None
-                                        self.logger.info("A template value was attempted to be applied "
-                                                         "to an object field but the template "
-                                                         "field was not present in template object. "
-                                                         "object: {}, object fieled: {}, template field: {}"
-                                                         .format(object_type, object_field, template_field))
+                                        # todo_eo: may not be necessary, overly used
+                                        # self.logger.info("A template value was attempted to be applied "
+                                        #                  "to an object field but the template "
+                                        #                  "field was not present in template object. "
+                                        #                  "object: {}, object fieled: {}, template field: {}"
+                                        #                  .format(object_type, object_field, template_field))
                                     if object_value:
                                         # On a match and valid value, apply the field.
                                         # If the object is a 'super' object used in a
@@ -1183,15 +1184,15 @@ class ZonevacEquipmentListOjectType:
         (template_type, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
         # Check for doas reference
-        doas_equipment = None
-        if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None':
-            doas_equipment = True
+        doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
         # Check for baseboard reference
         baseboard_equipment = None
-        if template_fields.get('baseboard_heating_type', 'None') != 'None':
-            baseboard_equipment = True
+        baseboard_equipment = True if template_fields.get('baseboard_heating_type', 'None') != 'None' else False
         if doas_equipment and baseboard_equipment:
-            obj._zone_hvac_equipmentlist_object_type = 'WithDOASAndBaseboard'
+            if template_type == 'HVACTemplate:Zone:BaseboardHeat':
+                obj._zone_hvac_equipmentlist_object_type = 'BaseboardWithDOAS'
+            else:
+                obj._zone_hvac_equipmentlist_object_type = 'WithDOASAndBaseboard'
         elif doas_equipment:
             obj._zone_hvac_equipmentlist_object_type = 'WithDOAS'
         elif baseboard_equipment:
