@@ -1205,12 +1205,99 @@ class ZonevacEquipmentListOjectType:
         return
 
 
+class DesignSpecificationOutsideAirObjectStatus:
+    """
+    Set a class attribute to select the appropriate DesignSpecification:OutdoorAir from TemplateOptions in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._design_specification_outdoor_air_object_status
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        # Check for doas reference
+        doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
+        dsoa_object = template_fields.get('design_specification_outdoor_air_object_name') \
+            if template_fields.get('design_specification_outdoor_air_object_name', 'None') != 'None' else False
+        if doas_equipment and not dsoa_object:
+            obj._design_specification_outdoor_air_object_status= 'IncludeDSOA'
+        elif doas_equipment:
+            obj._design_specification_outdoor_air_object_status= 'DOASOnly'
+        return
+
+
+class DesignSpecificationZoneAirDistributionObjectStatus:
+    """
+    Set a class attribute to select the appropriate DesignSpecification:ZoneAirDistribution from TemplateOptions
+    in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._design_specification_zone_air_distribution_object_status
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        # Check for doas reference
+        doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
+        dzad_object = template_fields.get('design_specification_zone_air_distribution_object_name') \
+            if template_fields.get('design_specification_zone_air_distribution_object_name', 'None') != 'None' else False
+        if doas_equipment and not dzad_object:
+            obj._design_specification_zone_air_distribution_object_status = 'IncludeDZAD'
+        elif doas_equipment:
+            obj._design_specification_zone_air_distribution_object_status = 'DOASOnly'
+        return
+
+
+class HeatingDesignAirFlowMethod:
+    """
+    Set a class attribute to set heating_design_air_flow_method for transitions in the YAML lookup.
+    If the supply_air_maximum_flow_rate has been set to a value, then the heating_design_air_flow_method
+    field in Sizing:Zone should be 'Flow/Zone' with this value as the flow rate.
+    """
+    def __get__(self, obj, owner):
+        return obj._heating_design_air_flow_method
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        # Check for doas reference
+        supply_air_maximum_flow_rate = template_fields.get('supply_air_maximum_flow_rate', 'None')
+        if isinstance(supply_air_maximum_flow_rate, (int, float)):
+            obj._heating_design_air_flow_method = 'Flow/Zone'
+            setattr(obj, 'heating_design_air_flow_rate', supply_air_maximum_flow_rate)
+        return
+
+
+class CoolingDesignAirFlowMethod:
+    """
+    Set a class attribute to set cooling_design_air_flow_method for transitions in the YAML lookup.
+    If the supply_air_maximum_flow_rate has been set to a value, then the cooling_design_air_flow_method
+    field in Sizing:Zone should be 'Flow/Zone' with this value as the flow rate.
+    """
+    def __get__(self, obj, owner):
+        return obj._cooling_design_air_flow_method
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        # Check for doas reference
+        supply_air_maximum_flow_rate = template_fields.get('supply_air_maximum_flow_rate', 'None')
+        if isinstance(supply_air_maximum_flow_rate, (int, float)):
+            obj._cooling_design_air_flow_method = 'Flow/Zone'
+            setattr(obj, 'cooling_design_air_flow_rate', supply_air_maximum_flow_rate)
+        return
+
+
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
     """
 
     zone_hvac_equipmentlist_object_type = ZonevacEquipmentListOjectType()
+    design_specification_outdoor_air_object_status= DesignSpecificationOutsideAirObjectStatus()
+    design_specification_zone_air_distribution_object_status = DesignSpecificationZoneAirDistributionObjectStatus()
+    heating_design_air_flow_method = HeatingDesignAirFlowMethod()
+    cooling_design_air_flow_method = CoolingDesignAirFlowMethod()
 
     def __init__(self, template, epjson=None):
         # fill/create class attributes values with template inputs
@@ -1222,6 +1309,10 @@ class ExpandZone(ExpandObjects):
         except AttributeError:
             raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
         self.zone_hvac_equipmentlist_object_type = template
+        self.design_specification_outdoor_air_object_status = template
+        self.design_specification_zone_air_distribution_object_status = template
+        self.heating_design_air_flow_method = template
+        self.cooling_design_air_flow_method = template
         self.epjson = epjson or self.epjson
         return
 

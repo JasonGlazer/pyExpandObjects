@@ -936,7 +936,6 @@ class HVACTemplate(EPJSON):
         for _, system_class_object in self.expanded_systems.items():
             # VRF systems do not connect via air paths, and need a separate function.
             if system_class_object.template_type == 'HVACTemplate:System:VRF':
-                # todo_eo: pick up vrf system build out from here
                 self._create_system_vrf_path_connection_objects(
                     system_class_object=system_class_object,
                     expanded_zones=self.expanded_zones)
@@ -982,8 +981,7 @@ class HVACTemplate(EPJSON):
         for merge_dictionary in merge_list:
             self.merge_epjson(
                 super_dictionary=output_epjson,
-                object_dictionary=merge_dictionary
-            )
+                object_dictionary=merge_dictionary)
         # Use this for file debugging
         # import json
         # with open('test.epJSON', 'w') as base_file:

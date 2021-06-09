@@ -650,6 +650,9 @@ Objects:
   AirTerminal:
     SingleDuct:
       Common:
+        Transitions: &AirTerminalSingleDuctCommonTransitions
+          - AirTerminal:SingleDuct.*:
+              supply_air_maximum_flow_rate: maximum_air_flow_rate
         Fields:
           Base: &AirTerminalSingleDuctCommonFields
             air_inlet_node_name: *ZoneEquipInlet # required by schema
@@ -2501,6 +2504,10 @@ Objects:
                 minimum_cooling_supply_air_temperature: zone_cooling_design_supply_air_temperature
                 maximum_heating_supply_air_humidity_ratio: zone_heating_design_supply_air_humidity_ratio
                 maximum_heating_supply_air_temperature: zone_heating_design_supply_air_temperature
+          DesignSpecification: &SizingZoneCommonTransitionsDesignSpecification
+            - Sizing:Zone:
+                design_specification_outdoor_air_object_name: design_specification_outdoor_air_object_name
+                design_specification_zone_air_distribution_object_name: design_specification_zone_air_distribution_object_name
       Base:
         Fields: &SizingZone
           name: '{} Sizing Zone'
@@ -3383,7 +3390,6 @@ OptionTree:
           Transitions:
             - *SizingZoneCommonTransitions
         TemplateObjects:
-          zone_hvac_equipmentlist_object_type: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           baseboard_heating_type:
             HotWater:
               Objects:
@@ -3402,7 +3408,7 @@ OptionTree:
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFields
             AnyValue:
               Objects:
-                - *ZoneCommonBaseObjectsObjects
+                - Sizing:Zone: *SizingZoneOA
                 - AirTerminal:SingleDuct:VAV:NoReheat:
                     <<: *AirTerminalSingleDuctVAVNoReheatFields
                     name: '{} DOAS Air Terminal'
@@ -3415,11 +3421,27 @@ OptionTree:
                 - ZoneHVAC:EquipmentConnections:
                     <<: *ZoneHVACEquipmentConnectionsFields
                     zone_air_inlet_node_or_nodelist_name: '{} DOAS Supply Inlet'
+              Transitions: *SizingZoneCommonTransitionsDesignSpecification
+          design_specification_outdoor_air_object_status:
+            IncludeDSOA:
+              Objects:
+                - DesignSpecification:OutdoorAir: *DesignSpecificationOutdoorAir
+          design_specification_zone_air_distribution_object_status:
+            IncludeDZAD:
+              Objects:
+                - DesignSpecification:ZoneAirDistribution: *DesignSpecificationZoneAirDistribution
+          zone_hvac_equipmentlist_object_type: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
       ConstantVolume:
         BaseObjects:
           Objects:
             - *ZoneCommonBaseObjectsObjectsAirTerminal
-          Transitions: *SizingZoneCommonTransitions
+          Transitions:
+            - *SizingZoneCommonTransitions
+            - Sizing:Zone: # fields created by descriptors in ExpandZone
+                heating_design_air_flow_method: heating_design_air_flow_method
+                heating_design_air_flow_rate: heating_design_air_flow_rate
+                cooling_design_air_flow_method: cooling_design_air_flow_method
+                cooling_design_air_flow_rate: cooling_design_air_flow_rate
           Mappings: *SizingZoneCommonMappings
         TemplateObjects:
           <<: *ZoneCommonTemplateObjects
@@ -3427,6 +3449,7 @@ OptionTree:
             None:
               Objects:
                 - AirTerminal:SingleDuct:ConstantVolume:NoReheat: *AirTerminalSingleDuctConstantVolumeNoReheat
+              Transitions: *AirTerminalSingleDuctCommonTransitions
             HotWater:
               Objects:
                 - AirTerminal:SingleDuct:ConstantVolume:Reheat: *AirTerminalSingleDuctConstantVolumeReheat
@@ -3439,6 +3462,7 @@ OptionTree:
                 - Branch:
                     <<: *CoilHeatingWaterCommonObjectsBranch
                     name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
+              Transitions: *AirTerminalSingleDuctCommonTransitions
       DualDuct:
         BaseObjects:
           Objects:
@@ -3949,7 +3973,6 @@ OptionTree:
                     Objects:
                       - Fan:ConstantVolume: *FanConstantVolumeSuperObject
                     Transitions: *FanCommonTransitionsSupply
-                    Mappings: *FanCommonMappingsVariableVolume
                   DrawThrough: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacementNone
                   BlowThrough:
                     ObjectReference: OutdoorAir:Mixer
@@ -3958,7 +3981,6 @@ OptionTree:
                     Objects:
                       - Fan:ConstantVolume: *FanConstantVolumeSuperObject
                     Transitions: *FanCommonTransitionsSupply
-                    Mappings: *FanCommonMappingsVariableVolume
               - return_fan: &SystemCommonBuildPathActionsConstantVolumeReturnFan
                   'No':
                   'Yes': # Quotes necessary to prevent boolean conversion
