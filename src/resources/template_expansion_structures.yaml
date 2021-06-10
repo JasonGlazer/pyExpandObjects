@@ -677,7 +677,6 @@ Objects:
               name: '{} CV Reheat'
               <<: *AirTerminalSingleDuctCommonFields
               <<: *AirTerminalSingleDuctCommonFieldsReheat
-              <<: *AirTerminalSingleDuctCommonFieldsReheatWater
       SeriesPIU:
         Reheat:
           Common:
@@ -3452,9 +3451,21 @@ OptionTree:
               Objects:
                 - AirTerminal:SingleDuct:ConstantVolume:NoReheat: *AirTerminalSingleDuctConstantVolumeNoReheat
               Transitions: *AirTerminalSingleDuctCommonTransitions
-            HotWater:
+            Electric:
               Objects:
                 - AirTerminal:SingleDuct:ConstantVolume:Reheat: *AirTerminalSingleDuctConstantVolumeReheat
+                - Coil:Heating:Electric:
+                    <<: *CoilHeatingElectricFields
+                    name: '{} Reheat Coil'
+                    air_inlet_node_name: *ZoneEquipInlet
+                    air_outlet_node_name: '{} Supply Inlet'
+                    availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+              Transitions: *AirTerminalSingleDuctCommonTransitions
+            HotWater:
+              Objects:
+                - AirTerminal:SingleDuct:ConstantVolume:Reheat:
+                    <<: *AirTerminalSingleDuctConstantVolumeReheat
+                    <<: *AirTerminalSingleDuctCommonFieldsReheatWater
                 - Coil:Heating:Water:
                     <<: *CoilHeatingWaterFields
                     name: '{} Reheat Coil'

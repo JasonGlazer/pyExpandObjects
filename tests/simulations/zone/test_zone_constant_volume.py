@@ -134,3 +134,24 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['DesignSpecification:OutdoorAir'].get('SPACE1-1 SZ DSOA Custom Object'))
         self.assertIsNotNone(epjson_output['DesignSpecification:ZoneAirDistribution'].get('SPACE1-1 SZ DSZAD Custom Object'))
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:reheat_coil_type_none")
+    def test_reheat_coil_type_none(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'reheat_coil_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ConstantVolume:NoReheat']['SPACE1-1 CV'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:reheat_coil_type_electric")
+    def test_reheat_coil_type_electric(self):
+        # todo_eo: legacy fails on this option.
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'reheat_coil_type'] = 'Electric'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ConstantVolume:Reheat']['SPACE1-1 CV'])
+        return

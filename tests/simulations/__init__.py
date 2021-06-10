@@ -143,10 +143,6 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
-            print('test')
-            print(result.stdout)
-            print('test2')
-            print(result.stderr)
         else:
             result = subprocess.run(
                 [
@@ -231,6 +227,20 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         finished_statuses = []
         for file_path in epjson_files:
             # move files from previous runs, rm is too dangerous
+            try:
+                os.rename(
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.eso'),
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.eso')
+                )
+            except FileNotFoundError:
+                pass
+            try:
+                os.rename(
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.mtr'),
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.mtr')
+                )
+            except FileNotFoundError:
+                pass
             try:
                 os.rename(
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'),
