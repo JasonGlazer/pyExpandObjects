@@ -1309,7 +1309,7 @@ class ExpandZone(ExpandObjects):
     """
 
     zone_hvac_equipmentlist_object_type = ZonevacEquipmentListOjectType()
-    design_specification_outdoor_air_object_status= DesignSpecificationOutsideAirObjectStatus()
+    design_specification_outdoor_air_object_status = DesignSpecificationOutsideAirObjectStatus()
     design_specification_zone_air_distribution_object_status = DesignSpecificationZoneAirDistributionObjectStatus()
     heating_design_air_flow_method = HeatingDesignAirFlowMethod()
     cooling_design_air_flow_method = CoolingDesignAirFlowMethod()
