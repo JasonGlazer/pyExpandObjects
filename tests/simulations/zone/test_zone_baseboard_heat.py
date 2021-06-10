@@ -89,13 +89,13 @@ doas_objects = {
 
 design_specification_objects = {
     "DesignSpecification:OutdoorAir": {
-        "SPACE1-1 SZ DSOA": {
+        "SPACE1-1 SZ DSOA Custom Object": {
             "outdoor_air_flow_per_zone": 0.01,
             "outdoor_air_method": "Flow/Zone"
         }
     },
     "DesignSpecification:ZoneAirDistribution": {
-        "SPACE1-1 SZ DSZAD": {}
+        "SPACE1-1 SZ DSZAD Custom Object": {}
     }
 }
 
@@ -124,7 +124,7 @@ class TestSimulationsZoneBaseboardHeat(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:BaseboardHeat:baseboard_heating_type_electric")
-    def test_baseboard_heating_type_electric(self):
+    def test_heating_type_electric(self):
         self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1']['baseboard_heating_type'] = 'Electric'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
@@ -135,9 +135,9 @@ class TestSimulationsZoneBaseboardHeat(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:BaseboardHeat:baseboard_heating_availability_schedule_name")
-    def test_baseboard_heating_availability_schedule_name(self):
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['baseboard_heating_availability_schedule_name'] = 'OCCUPY-1'
+    def test_heating_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'baseboard_heating_availability_schedule_name'] = 'OCCUPY-1'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
@@ -151,29 +151,29 @@ class TestSimulationsZoneBaseboardHeat(BaseSimulationTest):
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=doas_objects)
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['dedicated_outdoor_air_system_name'] = 'DOAS'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'dedicated_outdoor_air_system_name'] = 'DOAS'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:BaseboardHeat:outdoor_air_method_flow_per_person")
-    def test_baseboard_outdoor_air_method_flow_per_person(self):
+    def test_outdoor_air_method_flow_per_person(self):
         # DOAS must be specified for OA options
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=doas_objects)
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['dedicated_outdoor_air_system_name'] = 'DOAS'
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['outdoor_air_method'] = 'Flow/Zone'
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['outdoor_air_flow_rate_per_person'] = 0.01
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'dedicated_outdoor_air_system_name'] = 'DOAS'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'outdoor_air_method'] = 'Flow/Person'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'outdoor_air_flow_rate_per_person'] = 0.01
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            'Flow/Zone',
+            'Flow/Person',
             epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_method'])
         self.assertEqual(
             0.01,
@@ -181,17 +181,17 @@ class TestSimulationsZoneBaseboardHeat(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:BaseboardHeat:outdoor_air_method_flow_per_area")
-    def test_baseboard_outdoor_air_method_flow_per_area(self):
+    def test_outdoor_air_method_flow_per_area(self):
         # DOAS must be specified for OA options
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=doas_objects)
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['dedicated_outdoor_air_system_name'] = 'DOAS'
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['outdoor_air_method'] = 'Flow/Area'
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['outdoor_air_flow_rate_per_zone_floor_area'] = 0.0014
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'dedicated_outdoor_air_system_name'] = 'DOAS'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'outdoor_air_method'] = 'Flow/Area'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'outdoor_air_flow_rate_per_zone_floor_area'] = 0.0014
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
@@ -204,17 +204,17 @@ class TestSimulationsZoneBaseboardHeat(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:BaseboardHeat:outdoor_air_method_flow_per_zone")
-    def test_baseboard_outdoor_air_method_flow_per_zone(self):
+    def test_outdoor_air_method_flow_per_zone(self):
         # DOAS must be specified for OA options
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=doas_objects)
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['dedicated_outdoor_air_system_name'] = 'DOAS'
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['outdoor_air_method'] = 'Flow/Zone'
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['outdoor_air_flow_rate_per_zone'] = 0.01
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'dedicated_outdoor_air_system_name'] = 'DOAS'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'outdoor_air_method'] = 'Flow/Zone'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'outdoor_air_flow_rate_per_zone'] = 0.01
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
@@ -230,20 +230,22 @@ class TestSimulationsZoneBaseboardHeat(BaseSimulationTest):
     #  make a note of this in the testing logs
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:BaseboardHeat:outdoor_air_method_detailed_specification")
-    def test_baseboard_outdoor_air_method_detailed_specification(self):
+    def test_outdoor_air_method_detailed_specification(self):
         # DOAS must be specified for OA options
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=dict(**doas_objects, **design_specification_objects))
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['dedicated_outdoor_air_system_name'] = 'DOAS'
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['outdoor_air_method'] = 'DetailedSpecification'
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['design_specification_outdoor_air_object_name'] = 'SPACE1-1 SZ DSOA'
-        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'][
-            'HVACTemplate:Zone:BaseboardHeat 1']['design_specification_zone_air_distribution_object_name'] = 'SPACE1-1 SZ DSZAD'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'dedicated_outdoor_air_system_name'] = 'DOAS'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'outdoor_air_method'] = 'DetailedSpecification'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'design_specification_outdoor_air_object_name'] = 'SPACE1-1 SZ DSOA Custom Object'
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1'][
+            'design_specification_zone_air_distribution_object_name'] = 'SPACE1-1 SZ DSZAD Custom Object'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['DesignSpecification:OutdoorAir'].get('SPACE1-1 SZ DSOA Custom Object'))
+        self.assertIsNotNone(epjson_output['DesignSpecification:ZoneAirDistribution'].get('SPACE1-1 SZ DSZAD Custom Object'))
         return

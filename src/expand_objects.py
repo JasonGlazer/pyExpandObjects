@@ -1216,13 +1216,20 @@ class DesignSpecificationOutsideAirObjectStatus:
         (template_type, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
         # Check for doas reference
+        outdoor_air_method = template_fields.get('outdoor_air_method') \
+            if template_fields.get('outdoor_air_method', 'None') != 'None' else False
         doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
         dsoa_object = template_fields.get('design_specification_outdoor_air_object_name') \
             if template_fields.get('design_specification_outdoor_air_object_name', 'None') != 'None' else False
-        if doas_equipment and not dsoa_object:
-            obj._design_specification_outdoor_air_object_status= 'IncludeDSOA'
-        elif doas_equipment:
-            obj._design_specification_outdoor_air_object_status= 'DOASOnly'
+        if template_type == 'HVACTemplate:Zone:BaseboardHeat':
+            if doas_equipment and outdoor_air_method != 'DetailedSpecification':
+                obj._design_specification_outdoor_air_object_status = 'IncludeDSOA'
+        else:
+            if outdoor_air_method != 'DetailedSpecification':
+                obj._design_specification_outdoor_air_object_status = 'IncludeDSOA'
+        # Remove an input DSOA object name if it's not going to be used
+        if getattr(obj, '_design_specification_outdoor_air_object_status', None) == 'IncludeDSOA' and dsoa_object:
+            delattr(obj, 'design_specification_zone_air_distribution_object_name')
         return
 
 
@@ -1238,13 +1245,21 @@ class DesignSpecificationZoneAirDistributionObjectStatus:
         (template_type, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
         # Check for doas reference
+        outdoor_air_method = template_fields.get('outdoor_air_method') \
+            if template_fields.get('outdoor_air_method', 'None') != 'None' else False
         doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
         dzad_object = template_fields.get('design_specification_zone_air_distribution_object_name') \
             if template_fields.get('design_specification_zone_air_distribution_object_name', 'None') != 'None' else False
-        if doas_equipment and not dzad_object:
-            obj._design_specification_zone_air_distribution_object_status = 'IncludeDZAD'
-        elif doas_equipment:
-            obj._design_specification_zone_air_distribution_object_status = 'DOASOnly'
+        # BaseboardHeat requires DOAS to be activated in addition to DetailedSpecification option selected
+        if template_type == 'HVACTemplate:Zone:BaseboardHeat':
+            if doas_equipment and outdoor_air_method != 'DetailedSpecification':
+                obj._design_specification_zone_air_distribution_object_status = 'IncludeDZAD'
+        else:
+            if outdoor_air_method != 'DetailedSpecification':
+                obj._design_specification_zone_air_distribution_object_status = 'IncludeDZAD'
+        # Remove an input DZAD object name if it's not going to be used
+        if getattr(obj, '_design_specification_zone_air_distribution_object_status', None) == 'IncludeDZAD' and dzad_object:
+            delattr(obj, 'design_specification_zone_air_distribution_object_name')
         return
 
 
