@@ -653,6 +653,7 @@ Objects:
         Transitions: &AirTerminalSingleDuctCommonTransitions
           - AirTerminal:SingleDuct.*:
               supply_air_maximum_flow_rate: maximum_air_flow_rate
+              maximum_reheat_air_temperature: maximum_reheat_air_temperature
         Fields:
           Base: &AirTerminalSingleDuctCommonFields
             air_inlet_node_name: *ZoneEquipInlet # required by schema
@@ -3461,6 +3462,16 @@ OptionTree:
                     air_outlet_node_name: '{} Supply Inlet'
                     availability_schedule_name: '{reheat_coil_availability_schedule_name}'
               Transitions: *AirTerminalSingleDuctCommonTransitions
+            Gas:
+              Objects:
+                - AirTerminal:SingleDuct:ConstantVolume:Reheat: *AirTerminalSingleDuctConstantVolumeReheat
+                - Coil:Heating:Fuel:
+                    <<: *CoilHeatingFuelFields
+                    name: '{} Reheat Coil'
+                    air_inlet_node_name: *ZoneEquipInlet
+                    air_outlet_node_name: '{} Supply Inlet'
+                    availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+              Transitions: *AirTerminalSingleDuctCommonTransitions
             HotWater:
               Objects:
                 - AirTerminal:SingleDuct:ConstantVolume:Reheat:
@@ -3476,6 +3487,16 @@ OptionTree:
                     <<: *CoilHeatingWaterCommonObjectsBranch
                     name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
               Transitions: *AirTerminalSingleDuctCommonTransitions
+          supply_plenum_name:
+            AnyValue:
+              Objects:
+                - AirLoopHVAC:SupplyPlenum:
+                    name: '{} Supply Plenum'
+                    inlet_node_name: '{} Plenum Inlet'
+                    nodes:
+                      - outlet_node_name: *ZoneEquipInlet
+                    zone_name: '{supply_plenum_name}'
+                    zone_node_name: '{supply_plenum_name} Zone Air Node'
       DualDuct:
         BaseObjects:
           Objects:

@@ -219,6 +219,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).template_vav_system_name = 'VAV Sys 1'
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
+            del ez.supply_plenum_name
             expanded_zones[unique_name] = ez
         self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
@@ -249,6 +250,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).template_vav_system_name = 'VAV Sys 1'
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
+            del ez.supply_plenum_name
             expanded_zones[unique_name] = ez
         self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
@@ -279,6 +281,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).template_vav_system_name = 'VAV Sys 1'
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
+            del ez.supply_plenum_name
             expanded_zones[unique_name] = ez
         self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
@@ -310,6 +313,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).template_vav_system_name = 'VAV Sys 1'
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
+            del ez.supply_plenum_name
             expanded_zones[unique_name] = ez
         self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
@@ -342,6 +346,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).template_vav_system_name = 'VAV Sys 1'
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
+            del ez.supply_plenum_name
             expanded_zones[unique_name] = ez
         with self.assertRaisesRegex(InvalidTemplateException, 'Search for zone equipment'):
             self.hvac_template._create_system_path_connection_objects(
@@ -370,6 +375,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             ez.template_vav_system_name = 'VAV Sys 1'
             ez.zone_name = unique_name
             ez.unique_name = unique_name
+            del ez.supply_plenum_name
             expanded_zones[unique_name] = ez
         with self.assertRaisesRegex(InvalidTemplateException, 'Search for ZoneHVAC:EquipmentConnections'):
             self.hvac_template._create_system_path_connection_objects(

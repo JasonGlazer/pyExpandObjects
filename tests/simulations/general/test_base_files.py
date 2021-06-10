@@ -12,7 +12,7 @@ class TestSimulationsSystemVAV(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:return_fan")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneBaseboardHeat")
     def test_5_zone_baseboard_heat(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneBaseboardHeat.idf')
         self.perform_full_comparison(base_idf_file_path=base_file_path)

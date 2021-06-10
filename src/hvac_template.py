@@ -276,18 +276,29 @@ class HVACTemplate(EPJSON):
         for inlet_node in inlet_nodes:
             zone_splitters = []
             zone_mixers = []
+            zone_supply_plenums = []
             for _, ez in expanded_zones.items():
                 if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
-                    # todo_eo: Only AirTerminal has been used for this test when all zone equipment objects should be
-                    #  included.  Check zonehvac_or_air_terminal_equipment_object_type in the schema for a list of valid
-                    #  objects to construct a better regex.
-                    zone_equipment = self.get_epjson_objects(
-                        epjson=ez.epjson,
-                        object_type_regexp=r'^AirTerminal:.*')
+                    if getattr(ez, 'supply_plenum_name', None):
+                        try:
+                            zone_equipment = {'AirLoopHVAC:SupplyPlenum': ez.epjson['AirLoopHVAC:SupplyPlenum']}
+                        except (KeyError, AttributeError):
+                            raise InvalidTemplateException('supply_plenum_name indicated for zone template {} but '
+                                                           'AirLoopHVAC:SupplyPlenum was not created'.format(ez.unique_name))
+                    else:
+                        zone_equipment = self.get_epjson_objects(
+                            epjson=ez.epjson,
+                            object_type_regexp=r'^AirTerminal:.*')
                     try:
                         (zone_equipment_type, zone_equipment_structure), = zone_equipment.items()
                         (zone_equipment_name, zone_equipment_fields), = zone_equipment_structure.items()
-                        if zone_equipment_type == 'AirTerminal:SingleDuct:SeriesPIU:Reheat':
+                        if zone_equipment_type == 'AirLoopHVAC:SupplyPlenum':
+                            outlet_node_name = zone_equipment_fields['inlet_node_name']
+                            zone_supply_plenums.append({
+                                'component_name': zone_equipment_name,
+                                'component_object_type': zone_equipment_type
+                            })
+                        elif zone_equipment_type == 'AirTerminal:SingleDuct:SeriesPIU:Reheat':
                             # Raise error if inlet node name is overridden for multi-inlet node systems (DualDuct)
                             if len(inlet_nodes) > 1:
                                 raise InvalidTemplateException('AirTerminal:SingleDuct:SeriesPIU:Reheat is being referenced '
@@ -336,6 +347,10 @@ class HVACTemplate(EPJSON):
             supply_path_object = {'AirLoopHVAC:SupplyPath':
                                   eo.get_structure(structure_hierarchy=[
                                       'AutoCreated', 'System', 'AirLoopHVAC', 'SupplyPath', 'Base'])}
+            # add zone supply plenums if they were created
+            if zone_supply_plenums:
+                (_, supply_path_object_fields), = supply_path_object.items()
+                supply_path_object_fields['components'].extend(zone_supply_plenums)
             # Rename objects if multi-inlet node system is used
             # todo_eo: this can possibly be removed it the unique name is changed on object creations
             if system_class_object.template_type == 'HVACTemplate:System:DualDuct':

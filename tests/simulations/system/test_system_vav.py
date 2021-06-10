@@ -6,7 +6,7 @@ from src.epjson_handler import EPJSON
 test_dir = Path(__file__).parent.parent.parent
 
 
-class TestSimulationsFullSystem(BaseSimulationTest):
+class TestSimulationsSystemVAV(BaseSimulationTest):
     def setUp(self):
         self.ej = EPJSON()
         base_idf_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled.idf')
@@ -18,7 +18,7 @@ class TestSimulationsFullSystem(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Full:System:HVACTemplate:System:VAV:Return Fan")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:Return Fan")
     def test_return_fan(self):
         self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1']['return_fan'] = 'Yes'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
