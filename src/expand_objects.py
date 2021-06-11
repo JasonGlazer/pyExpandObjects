@@ -1173,7 +1173,7 @@ class ExpandThermostat(ExpandObjects):
         return self
 
 
-class ZonevacEquipmentListOjectType:
+class ZonevacEquipmentListObjectType:
     """
     Set a class attribute to select the appropriate ZoneHVAC:EquipmentList from TemplateOptions in the YAML lookup.
     """
@@ -1308,7 +1308,7 @@ class ExpandZone(ExpandObjects):
     Zone expansion operations
     """
 
-    zone_hvac_equipmentlist_object_type = ZonevacEquipmentListOjectType()
+    zone_hvac_equipmentlist_object_type = ZonevacEquipmentListObjectType()
     design_specification_outdoor_air_object_status = DesignSpecificationOutsideAirObjectStatus()
     design_specification_zone_air_distribution_object_status = DesignSpecificationZoneAirDistributionObjectStatus()
     heating_design_air_flow_method = HeatingDesignAirFlowMethod()

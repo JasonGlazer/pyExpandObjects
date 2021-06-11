@@ -30,8 +30,8 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:supply_air_maximum_flow_rate_no_reheat")
-    def test_supply_air_maximum_flow_rate_no_reheat(self):
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:supply_air_maximum_flow_rate")
+    def test_supply_air_maximum_flow_rate(self):
         # todo_eo: AirTerminal:SingleDuct:ConstantVolume:NoReheat maximum_air_flow_rate is not set in legacy with these
         #  inputs which is causing the discrepancy.
         self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1']['supply_air_maximum_flow_rate'] = 0.1
@@ -142,7 +142,7 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ConstantVolume:NoReheat']['SPACE1-1 CV'])
+        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ConstantVolume:NoReheat'].get('SPACE1-1 CV'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:reheat_coil_type_electric")
@@ -153,7 +153,7 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ConstantVolume:Reheat']['SPACE1-1 CV Reheat'])
+        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ConstantVolume:Reheat'].get('SPACE1-1 CV Reheat'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:reheat_coil_type_gas")
@@ -164,12 +164,11 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ConstantVolume:Reheat']['SPACE1-1 CV Reheat'])
+        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ConstantVolume:Reheat'].get('SPACE1-1 CV Reheat'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:reheat_coil_availability_schedule_name")
     def test_reheat_coil_availability_schedule_name(self):
-        # todo_eo: legacy fails on this option.
         self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
             'reheat_coil_type'] = 'HotWater'
         self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
@@ -213,5 +212,79 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output['AirLoopHVAC:SupplyPlenum']['SPACE1-1 Supply Plenum'])
+        self.assertIsNotNone(epjson_output['AirLoopHVAC:SupplyPlenum'].get('SPACE1-1 Supply Plenum'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:return_plenum_name")
+    def test_return_plenum_name(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'return_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['AirLoopHVAC:ReturnPlenum'].get('SPACE1-1 Return Plenum'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:baseboard_heating_type_hot_water")
+    def test_baseboard_heating_type_hot_water(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water'].get('SPACE1-1 Baseboard Heat'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:baseboard_heating_type_electric")
+    def test_baseboard_heating_type_electric(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'baseboard_heating_type'] = 'Electric'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['ZoneHVAC:Baseboard:Convective:Electric'].get('SPACE1-1 Baseboard Heat'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:baseboard_heating_availability_schedule_name")
+    def test_baseboard_heating_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'baseboard_heating_availability_schedule_name'] = 'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water']['SPACE1-1 Baseboard Heat']['availability_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:baseboard_heating_capacity")
+    def test_baseboard_heating_capacity(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'baseboard_heating_capacity'] = 200
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            200,
+            epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water']['SPACE1-1 Baseboard Heat']['heating_design_capacity'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:"
+                                              "zone_cooling_design_supply_air_temperature_input_method_"
+                                              "system_supply_air_temperature")
+    def test_zone_cooling_design_supply_air_temperature_input_method(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'cooling_coil_design_setpoint_temperature'] = 13.0
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = "SystemSupplyAirTemperature"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            13.0,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature'])
         return

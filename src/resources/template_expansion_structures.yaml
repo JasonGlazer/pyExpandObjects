@@ -106,12 +106,16 @@ SystemToZoneMappings:
         zone_field: zone_cooling_design_supply_air_temperature
   - zone_cooling_design_supply_air_temperature_input_method:
       SystemSupplyAirTemperature:
-        system_value: SupplyAirTemperature
-        zone_field: zone_cooling_design_supply_air_temperature_input_method
-  - zone_cooling_design_supply_air_temperature_input_method':
-      SystemSupplyAirTemperature:
         system_field: cooling_coil_design_setpoint
         zone_field: zone_cooling_design_supply_air_temperature
+  - zone_cooling_design_supply_air_temperature_input_method: # todo_eo this can be removed if cooling coil variables are combined
+      SystemSupplyAirTemperature:
+        system_field: cooling_coil_design_setpoint_temperature
+        zone_field: zone_cooling_design_supply_air_temperature
+  - zone_cooling_design_supply_air_temperature_input_method: # This has to be last or it will mess up the key lookup
+      SystemSupplyAirTemperature:
+        system_value: SupplyAirTemperature
+        zone_field: zone_cooling_design_supply_air_temperature_input_method
 
 Objects:
   Common:
@@ -2702,13 +2706,13 @@ Objects:
         Transitions: &ZoneHVACBaseboardCommonTransitions
           - ^ZoneHVAC:Baseboard:(RadiantConvective:Water|Convective:Electric)$:
               baseboard_heating_capacity: heating_design_capacity
-
       Convective:
         Electric:
           Base:
             Fields: &ZoneHVACBaseboardConvectiveElectricFields
               name: '{} Baseboard Heat'
               availability_schedule_name: '{baseboard_heating_availability_schedule_name}'
+              heating_design_capacity: Autosize
               fraction_of_radiant_energy_incident_on_people: 0.0 # set by legacy, no object default, not reachable from template
       RadiantConvective:
         Water:
@@ -2785,9 +2789,9 @@ Objects:
         <<: *ZoneHVACEquipmentList
         equipment:
           - zone_equipment_object_type:
-              ^ZoneHVAC:(FourPipe|PackagedTerminal|TerminalUnit|WaterToAir).*: self
+              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|TerminalUnit|WaterToAir).*: self
             zone_equipment_name:
-              ^ZoneHVAC:(FourPipe|PackagedTerminal|TerminalUnit|WaterToAir).*: key
+              ^ZoneHVAC:(AirDistribution|FourPipe|PackagedTerminal|TerminalUnit|WaterToAir).*: key
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
           - zone_equipment_object_type:
@@ -3268,14 +3272,29 @@ OptionTree:
               - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
               - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
         TemplateObjects:
-          Base: &ZoneCommonTemplateObjects
+          Baseboard: &ZoneCommonTemplateObjectsBaseboardHeatingType
             baseboard_heating_type:
               HotWater:
                 Objects:
                   - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
                   - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveDesignFields
+                  - *ZoneHVACBaseboardRadiantConvectiveWaterCommonObjects
                 Transitions: *ZoneHVACBaseboardCommonTransitions
-            zone_hvac_equipmentlist_object_type: &ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType # Created as a descriptor in ExpandZone
+              Electric:
+                Objects:
+                  - ZoneHVAC:Baseboard:Convective:Electric: *ZoneHVACBaseboardConvectiveElectricFields
+                Transitions: *ZoneHVACBaseboardCommonTransitions
+          DesignSpecification: &ZoneCommonTemplateObjectsDesignSpecification
+            design_specification_outdoor_air_object_status:
+              IncludeDSOA:
+                Objects:
+                  - DesignSpecification:OutdoorAir: *DesignSpecificationOutdoorAir
+            design_specification_zone_air_distribution_object_status:
+              IncludeDZAD:
+                Objects:
+                  - DesignSpecification:ZoneAirDistribution: *DesignSpecificationZoneAirDistribution
+          ZoneHVACEquipmentListObjectType: &ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+            zone_hvac_equipmentlist_object_type: # Created as a descriptor in ExpandZone
               Base:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentList
@@ -3294,16 +3313,6 @@ OptionTree:
               WithBaseboard:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
-          DesignSpecification:
-            Base: &ZoneCommonTemplateObjectsDesignSpecification
-              design_specification_outdoor_air_object_status:
-                IncludeDSOA:
-                  Objects:
-                    - DesignSpecification:OutdoorAir: *DesignSpecificationOutdoorAir
-              design_specification_zone_air_distribution_object_status:
-                IncludeDZAD:
-                  Objects:
-                    - DesignSpecification:ZoneAirDistribution: *DesignSpecificationZoneAirDistribution
           DOAS:
             Base:
               dedicated_outdoor_air_system_name:
@@ -3396,17 +3405,8 @@ OptionTree:
           Transitions:
             - *SizingZoneCommonTransitions
         TemplateObjects:
-          baseboard_heating_type:
-            HotWater:
-              Objects:
-                - ZoneHVAC:Baseboard:RadiantConvective:Water: *ZoneHVACBaseboardRadiantConvectiveWaterFields
-                - ZoneHVAC:Baseboard:RadiantConvective:Water:Design: *ZoneHVACBaseboardRadiantConvectiveDesignFields
-                - *ZoneHVACBaseboardRadiantConvectiveWaterCommonObjects
-              Transitions: *ZoneHVACBaseboardCommonTransitions
-            Electric:
-              Objects:
-                - ZoneHVAC:Baseboard:Convective:Electric: *ZoneHVACBaseboardConvectiveElectricFields
-              Transitions: *ZoneHVACBaseboardCommonTransitions
+          <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+          <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
           dedicated_outdoor_air_system_name:
             None:
               Objects:
@@ -3429,7 +3429,6 @@ OptionTree:
                     zone_air_inlet_node_or_nodelist_name: '{} DOAS Supply Inlet'
               Transitions: *SizingZoneCommonTransitions
           <<: *ZoneCommonTemplateObjectsDesignSpecification
-          zone_hvac_equipmentlist_object_type: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
       ConstantVolume:
         BaseObjects:
           Objects:
@@ -3445,7 +3444,8 @@ OptionTree:
                 cooling_design_air_flow_rate: cooling_design_air_flow_rate
           Mappings: *SizingZoneCommonMappings
         TemplateObjects:
-          <<: *ZoneCommonTemplateObjects
+          <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+          <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
           <<: *ZoneCommonTemplateObjectsDesignSpecification
           reheat_coil_type:
             None:
@@ -3494,9 +3494,21 @@ OptionTree:
                     name: '{} Supply Plenum'
                     inlet_node_name: '{} Plenum Inlet'
                     nodes:
-                      - outlet_node_name: *ZoneEquipInlet
+                      - outlet_node_name:
+                          AirTerminal.*: air_inlet_node_name
                     zone_name: '{supply_plenum_name}'
                     zone_node_name: '{supply_plenum_name} Zone Air Node'
+          return_plenum_name:
+            AnyValue:
+              Objects:
+                - AirLoopHVAC:ReturnPlenum:
+                    name: '{} Return Plenum'
+                    nodes:
+                      - inlet_node_name:
+                          ZoneHVAC:EquipmentConnections: zone_return_air_node_or_nodelist_name
+                    outlet_node_name: '{} Plenum Outlet'
+                    zone_name: '{return_plenum_name}'
+                    zone_node_name: '{return_plenum_name} Zone Air Node'
       DualDuct:
         BaseObjects:
           Objects:
@@ -3505,7 +3517,7 @@ OptionTree:
           Transitions: *SizingZoneCommonTransitions
           Mappings: *SizingZoneCommonMappings
         TemplateObjects:
-          <<: *ZoneCommonTemplateObjects
+          <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
       FanCoil:
         BuildPath:
           BaseObjects:
@@ -3526,7 +3538,8 @@ OptionTree:
             - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
             - *ZoneHVACFourPipeFanCoilCommonTransitions
         TemplateObjects:
-          <<: *ZoneCommonTemplateObjects
+          <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+          <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
           dedicated_outdoor_air_system_name:
             None:
               Objects:
@@ -3556,7 +3569,7 @@ OptionTree:
             - *SizingZoneCommonTransitions
             - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
         TemplateObjects:
-          <<: *ZoneCommonTemplateObjects
+          <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           dedicated_outdoor_air_system_name:
             None:
               Objects:
@@ -3627,7 +3640,7 @@ OptionTree:
             - *SizingZoneCommonTransitions
             - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
         TemplateObjects:
-          <<: *ZoneCommonTemplateObjects
+          <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           dedicated_outdoor_air_system_name:
             None:
               Objects:
@@ -3688,14 +3701,14 @@ OptionTree:
             - AirTerminal:SingleDuct:ConstantVolume:NoReheat: *AirTerminalSingleDuctConstantVolumeNoReheat
           Transitions: *SizingZoneCommonTransitions
           Mappings: *SizingZoneCommonMappings
-        TemplateObjects: *ZoneCommonTemplateObjects
+        TemplateObjects: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
       VAV:
         BaseObjects:
           Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
           Transitions: *SizingZoneCommonTransitions
           Mappings: *SizingZoneCommonMappings
         TemplateObjects:
-          <<: *ZoneCommonTemplateObjects
+          <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           <<: *ZoneCommonTemplateObjectsVAV
         HeatAndCool:
           BaseObjects:
@@ -3703,7 +3716,7 @@ OptionTree:
             Transitions: *SizingZoneCommonTransitions
             Mappings: *SizingZoneCommonMappings
           TemplateObjects:
-            <<: *ZoneCommonTemplateObjects
+            <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
             <<: *ZoneCommonTemplateObjectsVAVHeatAndCool
         FanPowered:
           BuildPath:
@@ -3734,7 +3747,7 @@ OptionTree:
             Transitions: *SizingZoneCommonTransitions
           Mappings: *SizingZoneCommonMappings
           TemplateObjects:
-            <<: *ZoneCommonTemplateObjects
+            <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
             <<: *ZoneCommonTemplateObjectsVAVFanPowered
       VRF:
         BuildPath:
@@ -3758,7 +3771,7 @@ OptionTree:
             - *ZoneHVACTerminalUnitVariableRefrigerantFlowCommonTransitions
             - *SizingZoneCommonTransitions
         TemplateObjects:
-          <<: *ZoneCommonTemplateObjects
+          <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
       WaterToAirHeatPump:
         BuildPath:
           BaseObjects:
@@ -3797,7 +3810,7 @@ OptionTree:
           Transitions: *SizingZoneCommonTransitions
           Mappings: *SizingZoneCommonMappings
         TemplateObjects:
-          <<: *ZoneCommonTemplateObjects
+          <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
     System:
       Common:
         BuildPath:

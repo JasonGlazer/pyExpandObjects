@@ -273,6 +273,7 @@ class HVACTemplate(EPJSON):
         eo.unique_name = getattr(system_class_object, 'template_name')
         # iterate over expanded zones and if the system reference field exists, and is for the referenced system,
         # append them in the splitter and mixer lists
+        zone_return_plenums = []
         for inlet_node in inlet_nodes:
             zone_splitters = []
             zone_mixers = []
@@ -281,44 +282,65 @@ class HVACTemplate(EPJSON):
                 if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
                     if getattr(ez, 'supply_plenum_name', None):
                         try:
-                            zone_equipment = {'AirLoopHVAC:SupplyPlenum': ez.epjson['AirLoopHVAC:SupplyPlenum']}
+                            zone_supply_equipment = {'AirLoopHVAC:SupplyPlenum': ez.epjson['AirLoopHVAC:SupplyPlenum']}
                         except (KeyError, AttributeError):
                             raise InvalidTemplateException('supply_plenum_name indicated for zone template {} but '
                                                            'AirLoopHVAC:SupplyPlenum was not created'.format(ez.unique_name))
                     else:
-                        zone_equipment = self.get_epjson_objects(
+                        zone_supply_equipment = self.get_epjson_objects(
                             epjson=ez.epjson,
                             object_type_regexp=r'^AirTerminal:.*')
                     try:
-                        (zone_equipment_type, zone_equipment_structure), = zone_equipment.items()
-                        (zone_equipment_name, zone_equipment_fields), = zone_equipment_structure.items()
-                        if zone_equipment_type == 'AirLoopHVAC:SupplyPlenum':
-                            outlet_node_name = zone_equipment_fields['inlet_node_name']
+                        (zone_supply_equipment_type, zone_supply_equipment_structure), = zone_supply_equipment.items()
+                        (zone_supply_equipment_name, zone_supply_equipment_fields), = zone_supply_equipment_structure.items()
+                        if zone_supply_equipment_type == 'AirLoopHVAC:SupplyPlenum':
+                            outlet_node_name = zone_supply_equipment_fields['inlet_node_name']
                             zone_supply_plenums.append({
-                                'component_name': zone_equipment_name,
-                                'component_object_type': zone_equipment_type
+                                'component_name': zone_supply_equipment_name,
+                                'component_object_type': zone_supply_equipment_type
                             })
-                        elif zone_equipment_type == 'AirTerminal:SingleDuct:SeriesPIU:Reheat':
+                        elif zone_supply_equipment_type == 'AirTerminal:SingleDuct:SeriesPIU:Reheat':
                             # Raise error if inlet node name is overridden for multi-inlet node systems (DualDuct)
                             if len(inlet_nodes) > 1:
                                 raise InvalidTemplateException('AirTerminal:SingleDuct:SeriesPIU:Reheat is being referenced '
                                                                'by an invalid system {}'.format(system_class_object.template_type))
-                            outlet_node_name = zone_equipment_fields['supply_air_inlet_node_name']
+                            outlet_node_name = zone_supply_equipment_fields['supply_air_inlet_node_name']
                         else:
-                            outlet_node_name = zone_equipment_fields[inlet_node]
+                            outlet_node_name = zone_supply_equipment_fields[inlet_node]
                     except (KeyError, AttributeError, ValueError):
                         raise InvalidTemplateException('Search for zone equipment from Supply Path creation failed for '
                                                        'outlet node.  system {}, zone {}, zone equipment {}'
                                                        .format(system_class_object.template_name, ez.unique_name,
-                                                               zone_equipment))
+                                                               zone_supply_equipment))
+                    if getattr(ez, 'return_plenum_name', None):
+                        try:
+                            zone_return_equipment = {'AirLoopHVAC:ReturnPlenum': ez.epjson['AirLoopHVAC:ReturnPlenum']}
+                        except (KeyError, AttributeError):
+                            raise InvalidTemplateException('return_plenum_name indicated for zone template {} but '
+                                                           'AirLoopHVAC:ReturnPlenum was not created'.format(ez.unique_name))
+                    else:
+                        try:
+                            zone_return_equipment = {'ZoneHVAC:EquipmentConnections': ez.epjson['ZoneHVAC:EquipmentConnections']}
+                        except (KeyError, AttributeError, ValueError):
+                            raise InvalidTemplateException('Search for ZoneHVAC:EquipmentConnections object from Supply '
+                                                           'Path creation failed for inlet node.  system {}, zone {}'
+                                                           .format(system_class_object.template_name, ez.unique_name))
                     try:
-                        (zone_equipment_connection_name, zone_equipment_connection_fields), = \
-                            ez.epjson['ZoneHVAC:EquipmentConnections'].items()
-                        inlet_node_name = zone_equipment_connection_fields['zone_return_air_node_or_nodelist_name']
+                        (zone_return_equipment_type, zone_return_equipment_structure), = zone_return_equipment.items()
+                        (zone_return_equipment_name, zone_return_equipment_fields), = zone_return_equipment_structure.items()
+                        if zone_return_equipment_type == 'AirLoopHVAC:ReturnPlenum':
+                            inlet_node_name = zone_return_equipment_fields['outlet_node_name']
+                            zone_return_plenums.append({
+                                'component_name': zone_return_equipment_name,
+                                'component_object_type': zone_return_equipment_type
+                            })
+                        else:
+                            inlet_node_name = zone_return_equipment_fields['zone_return_air_node_or_nodelist_name']
                     except (KeyError, AttributeError, ValueError):
-                        raise InvalidTemplateException('Search for ZoneHVAC:EquipmentConnections object from Supply '
-                                                       'Path creation failed for inlet node.  system {}, zone {}'
-                                                       .format(system_class_object.template_name, ez.unique_name))
+                        raise InvalidTemplateException('Search for zone equipment from Return Path creation failed for '
+                                                       'inlet node.  system {}, zone {}, zone equipment {}'
+                                                       .format(system_class_object.template_name, ez.unique_name,
+                                                               zone_return_equipment))
                     zone_splitters.append(
                         {
                             "outlet_node_name": outlet_node_name
@@ -390,6 +412,10 @@ class HVACTemplate(EPJSON):
             'AirLoopHVAC:ReturnPath':
             eo.get_structure(structure_hierarchy=[
                 'AutoCreated', 'System', 'AirLoopHVAC', 'ReturnPath', 'Base'])}
+        # add zone return plenums if they were created
+        if zone_return_plenums:
+            (_, supply_path_object_fields), = return_path_object.items()
+            supply_path_object_fields['components'].insert(0, *zone_return_plenums)
         path_dictionary = eo.yaml_list_to_epjson_dictionaries(
             yaml_list=[return_object, return_path_object])
         resolved_path_dictionary = eo.resolve_objects(epjson=path_dictionary)
@@ -891,13 +917,14 @@ class HVACTemplate(EPJSON):
                                     if template_fields.get(zone_field, None) == val:
                                         # if system_field is a key, then map the system field to the zone field.
                                         # if system_value is a key, then use the direct map value
-                                        if value_map.get('system_field'):
+                                        if value_map.get('system_field') and system_fields.get(value_map['system_field']):
                                             try:
                                                 template_fields[value_map['zone_field']] = \
                                                     system_fields[value_map['system_field']]
                                             except (ValueError, KeyError):
-                                                self.logger.info('System field does not have a value for zone'
-                                                                 'field: {}'.format(value_map))
+                                                print('error')
+                                                self.logger.info('Zone field {} does not exist for mapping'
+                                                                 'values: {}'.format(value_map['zone_field'], value_map))
                                         elif value_map.get('system_value'):
                                             try:
                                                 template_fields[value_map['zone_field']] = \
