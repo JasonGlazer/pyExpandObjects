@@ -276,18 +276,29 @@ class HVACTemplate(EPJSON):
         for inlet_node in inlet_nodes:
             zone_splitters = []
             zone_mixers = []
+            zone_supply_plenums = []
             for _, ez in expanded_zones.items():
                 if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
-                    # todo_eo: Only AirTerminal has been used for this test when all zone equipment objects should be
-                    #  included.  Check zonehvac_or_air_terminal_equipment_object_type in the schema for a list of valid
-                    #  objects to construct a better regex.
-                    zone_equipment = self.get_epjson_objects(
-                        epjson=ez.epjson,
-                        object_type_regexp=r'^AirTerminal:.*')
+                    if getattr(ez, 'supply_plenum_name', None):
+                        try:
+                            zone_equipment = {'AirLoopHVAC:SupplyPlenum': ez.epjson['AirLoopHVAC:SupplyPlenum']}
+                        except (KeyError, AttributeError):
+                            raise InvalidTemplateException('supply_plenum_name indicated for zone template {} but '
+                                                           'AirLoopHVAC:SupplyPlenum was not created'.format(ez.unique_name))
+                    else:
+                        zone_equipment = self.get_epjson_objects(
+                            epjson=ez.epjson,
+                            object_type_regexp=r'^AirTerminal:.*')
                     try:
                         (zone_equipment_type, zone_equipment_structure), = zone_equipment.items()
                         (zone_equipment_name, zone_equipment_fields), = zone_equipment_structure.items()
-                        if zone_equipment_type == 'AirTerminal:SingleDuct:SeriesPIU:Reheat':
+                        if zone_equipment_type == 'AirLoopHVAC:SupplyPlenum':
+                            outlet_node_name = zone_equipment_fields['inlet_node_name']
+                            zone_supply_plenums.append({
+                                'component_name': zone_equipment_name,
+                                'component_object_type': zone_equipment_type
+                            })
+                        elif zone_equipment_type == 'AirTerminal:SingleDuct:SeriesPIU:Reheat':
                             # Raise error if inlet node name is overridden for multi-inlet node systems (DualDuct)
                             if len(inlet_nodes) > 1:
                                 raise InvalidTemplateException('AirTerminal:SingleDuct:SeriesPIU:Reheat is being referenced '
@@ -336,16 +347,22 @@ class HVACTemplate(EPJSON):
             supply_path_object = {'AirLoopHVAC:SupplyPath':
                                   eo.get_structure(structure_hierarchy=[
                                       'AutoCreated', 'System', 'AirLoopHVAC', 'SupplyPath', 'Base'])}
+            # add zone supply plenums if they were created
+            if zone_supply_plenums:
+                (_, supply_path_object_fields), = supply_path_object.items()
+                supply_path_object_fields['components'].extend(zone_supply_plenums)
             # Rename objects if multi-inlet node system is used
-            # todo_eo: this can probably be removed it the unique name is changed on object creations
+            # todo_eo: this can possibly be removed it the unique name is changed on object creations
             if system_class_object.template_type == 'HVACTemplate:System:DualDuct':
                 (_, supply_object_fields), = supply_object.items()
                 (_, supply_path_object_fields), = supply_path_object.items()
                 if inlet_node.startswith('cold_air'):
                     supply_object_fields['name'] = supply_object_fields['name'].replace('{}', '{} Cold')
+                    supply_object_fields['inlet_node_name'] = supply_object_fields['inlet_node_name'].replace('{}', '{} Cold')
                     supply_path_object_fields['name'] = supply_path_object_fields['name'].replace('{}', '{} Cold')
                 if inlet_node.startswith('hot_air'):
                     supply_object_fields['name'] = supply_object_fields['name'].replace('{}', '{} Hot')
+                    supply_object_fields['inlet_node_name'] = supply_object_fields['inlet_node_name'].replace('{}', '{} Hot')
                     supply_path_object_fields['name'] = supply_path_object_fields['name'].replace('{}', '{} Hot')
             path_dictionary = eo.yaml_list_to_epjson_dictionaries(
                 yaml_list=[supply_object, supply_path_object])
@@ -381,6 +398,50 @@ class HVACTemplate(EPJSON):
             super_dictionary=self.epjson,
             object_dictionary=resolved_path_dictionary)
         return resolved_path_dictionary
+
+    def _create_system_vrf_path_connection_objects(self, system_class_object, expanded_zones):
+        """
+        Create objects connecting VRF system to zone objects.
+
+        :param system_class_object: Expanded HVACTemplate:System:.* class object
+        :param expanded_zones: dictionary of ExpandZone objects
+        :return: system supply air connection objects.  AirLoopHVAC:SupplyPath object and either
+            AirLoopHVAC:SupplyPlenum or AirLoopHVAC:ZoneSplitter object as well ass AirLoopHVAC:ReturnPath and either
+            AirLoopHVAC:ReturnPlenum or AirLoopHVAC:ZoneMixer.
+        """
+        # create ExpandObjects class object to use some yaml and epjson functions
+        eo = ExpandObjects()
+        eo.unique_name = getattr(system_class_object, 'template_name')
+        vrf_object_name_list = []
+        zone_system_template_field_name = \
+            self._get_zone_template_field_from_system_type(template_type=system_class_object.template_type)
+        for _, ez in expanded_zones.items():
+            if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
+                try:
+                    vrf_object = ez.epjson['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']
+                    (vrf_object_name, _), = vrf_object.items()
+                except (KeyError, AttributeError):
+                    raise InvalidTemplateException("VRF zone template {} expanded with no "
+                                                   "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow object".format(ez.unique_name))
+                except ValueError:
+                    raise InvalidTemplateException('ZoneHVAC:TerminalUnit:VariableRefrigerantFlow '
+                                                   'object incorrectly formatted: {}'
+                                                   .format(ez.epjson.get('ZoneHVAC:TerminalUnit:VariableRefrigerantFlow', 'None')))
+                vrf_object_name_list.append({'zone_terminal_unit_name': vrf_object_name})
+        if vrf_object_name_list:
+            vrf_terminal_object = eo.get_structure(structure_hierarchy=[
+                'AutoCreated', 'System', 'ZoneTerminalUnitList', 'Base'])
+            vrf_terminal_object['terminal_units'] = vrf_object_name_list
+            path_dictionary = eo.yaml_list_to_epjson_dictionaries(
+                yaml_list=[{'ZoneTerminalUnitList': vrf_terminal_object}, ])
+            resolved_path_dictionary = eo.resolve_objects(epjson=path_dictionary)
+            # save output to class epsjon
+            self.merge_epjson(
+                super_dictionary=self.epjson,
+                object_dictionary=resolved_path_dictionary)
+        else:
+            raise InvalidTemplateException('Failed to create VRF terminal unit list for {}'.format(system_class_object.template_name))
+        return
 
     def _create_templates_from_plant_equipment(self, plant_equipment_class_object, expanded_plant_loops):
         """
@@ -541,13 +602,13 @@ class HVACTemplate(EPJSON):
         :return: epJSON formatted dictionary of branch objects
         """
         # create list of regex matches for the given loop
-        # todo_eo: object searching regex need to be expanded.
+        # todo_eo: object searching regex need to be expanded and/or optimized
         if 'chilledwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:Cooling:Water($|:DetailedGeometry)+', ]
         elif 'hotwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:Heating:Water($|:DetailedGeometry)+', '^ZoneHVAC:Baseboard.*Water']
         elif 'mixedwater' in plant_loop_class_object.template_type.lower():
-            branch_rgx = ['^Coil:.*HeatPump.*', ]
+            branch_rgx = ['^Coil:.*HeatPump.*', '^AirConditioner:VariableRefrigerantFlow$']
         elif 'condenserwater' in plant_loop_class_object.template_type.lower():
             return None
         else:
@@ -559,8 +620,12 @@ class HVACTemplate(EPJSON):
             for co in class_object.values():
                 branch_objects = copy.deepcopy(co.epjson.get('Branch', {}))
                 for branch_name, branch_structure in branch_objects.items():
+                    # the regex check for 'main branch' is to avoid DualDuct main branches from accidentally being
+                    # included since they have coil objects in them as well.  They typical main branch is never accidentally
+                    # caught because the coil objects are never in the 0th position.
                     for br in branch_rgx:
-                        if re.match(br, branch_structure['components'][0]['component_object_type']):
+                        if re.match(br, branch_structure['components'][0]['component_object_type']) and not \
+                                re.match('.*main branch$', branch_name.lower()):
                             branch_dictionary.update({branch_name: branch_objects[branch_name]})
         if branch_dictionary:
             return {'Branch': branch_dictionary}
@@ -884,9 +949,15 @@ class HVACTemplate(EPJSON):
             self._create_zonecontrol_thermostat(zone_class_object=zone_class_object)
         self.logger.info('##### Building System-Zone Connections #####')
         for _, system_class_object in self.expanded_systems.items():
-            self._create_system_path_connection_objects(
-                system_class_object=system_class_object,
-                expanded_zones=self.expanded_zones)
+            # VRF systems do not connect via air paths, and need a separate function.
+            if system_class_object.template_type == 'HVACTemplate:System:VRF':
+                self._create_system_vrf_path_connection_objects(
+                    system_class_object=system_class_object,
+                    expanded_zones=self.expanded_zones)
+            else:
+                self._create_system_path_connection_objects(
+                    system_class_object=system_class_object,
+                    expanded_zones=self.expanded_zones)
         self.logger.info('##### Processing Plant Loops #####')
         self.expanded_plant_loops = self._expand_templates(
             templates=self.templates_plant_loops,
@@ -925,8 +996,7 @@ class HVACTemplate(EPJSON):
         for merge_dictionary in merge_list:
             self.merge_epjson(
                 super_dictionary=output_epjson,
-                object_dictionary=merge_dictionary
-            )
+                object_dictionary=merge_dictionary)
         # Use this for file debugging
         # import json
         # with open('test.epJSON', 'w') as base_file:

@@ -440,29 +440,30 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual('val_1', output['Object:1']['test_name']['field_1'])
         return
 
-    def test_warning_on_bad_apply_transitions(self):
-        # make a bad template reference
-        bad_mock_zone_option_tree = mock_zone_option_tree
-        bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Transitions'] = [
-            {
-                "ZoneHVAC:AirDistributionUnit": {
-                    "template_bad_field": "object_test_field"
-                }
-            }
-        ]
-        eo = ExpandObjects(
-            template=mock_zone_template,
-            expansion_structure=bad_mock_zone_option_tree)
-        structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
-        option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
-        option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
-        eo._apply_transitions(option_tree_leaf)
-        # Logger (Parent class of ExpandObjects) keeps logs in self.stream
-        self.assertIn(
-            'A template value was attempted to be applied',
-            eo.stream.getvalue()
-        )
-        return
+    # Commented out because error statement was getting over used
+    # def test_warning_on_bad_apply_transitions(self):
+    #     # make a bad template reference
+    #     bad_mock_zone_option_tree = mock_zone_option_tree
+    #     bad_mock_zone_option_tree['OptionTree']['Zone']['VAV']['BaseObjects']['Transitions'] = [
+    #         {
+    #             "ZoneHVAC:AirDistributionUnit": {
+    #                 "template_bad_field": "object_test_field"
+    #             }
+    #         }
+    #     ]
+    #     eo = ExpandObjects(
+    #         template=mock_zone_template,
+    #         expansion_structure=bad_mock_zone_option_tree)
+    #     structure_hierarchy = ['OptionTree', 'Zone', 'VAV']
+    #     option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
+    #     option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
+    #     eo._apply_transitions(option_tree_leaf)
+    #     # Logger (Parent class of ExpandObjects) keeps logs in self.stream
+    #     self.assertIn(
+    #         'A template value was attempted to be applied',
+    #         eo.stream.getvalue()
+    #     )
+    #     return
 
     def test_error_on_bad_object(self):
         # make a bad template reference

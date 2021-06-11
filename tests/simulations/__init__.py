@@ -81,7 +81,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         :return: idf file name
         """
         epjson_file_path = self.write_file_for_testing(epjson=epjson, file_name=file_name, sub_directory=sub_directory)
-        idf_file_path = self.convert_file(epjson_file_path)
+        idf_file_path = self.convert_file(file_location=epjson_file_path)
         return idf_file_path
 
     @staticmethod
@@ -119,12 +119,11 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         return os.path.basename(file_location).replace('.idf', 'Expanded.idf')
 
     @staticmethod
-    def convert_file(file_location, working_dir=str(test_dir / '..' / 'simulation' / 'test')):
+    def convert_file(file_location):
         """
         Convert idf to epJSON and vice versa.
         converted file in alternative format is created in same directory as base file
         :param file_location: Path or string reference to file location
-        :param working_dir: directory to use as working directory for subprocess
         :return: file path to converted file
         """
         # convert to Path if a string is passed
@@ -134,28 +133,29 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         # ConvertWithHVACTemplate.exe is v9.4, so only use it when necessary
         # todo_eo: ask for updated version of ConvertWithHVACTemplate.exe
         if 'expanded' in os.path.basename(file_location).lower():
-            subprocess.run(
+            result = subprocess.run(
                 [
                     'wine',
                     '../ConvertInputFormat.exe',
                     os.path.basename(file_location)
                 ],
-                cwd=working_dir,
+                cwd=os.path.dirname(file_location),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
         else:
-            subprocess.run(
+            result = subprocess.run(
                 [
                     'wine',
-                    '../ConvertInputFormatWithHVACTemplate.exe',
-                    '-t',
+                    '../ConvertInputFormatIgnoreVersion.exe',
                     os.path.basename(file_location)
                 ],
-                cwd=working_dir,
+                cwd=os.path.dirname(file_location),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
+        print('Conversion message output: {}'.format(result.stdout))
+        print('Conversion error output: {}'.format(result.stderr))
         if file_location.suffix == '.epJSON':
             return file_location.with_suffix('.idf')
         elif file_location.suffix == '.idf':
@@ -163,6 +163,15 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         else:
             print('File has incorrect extension {}'.format(file_location))
             sys.exit()
+
+    @staticmethod
+    def _copy_to_test_directory(base_file_path):
+        base_copy_file_path = test_dir.joinpath('..', 'simulation', 'test', 'hvactemplate_copy_input.idf')
+        with open(base_file_path, 'r') as f1, \
+                open(base_copy_file_path, 'w') as f2:
+            for line in f1:
+                f2.write(line)
+        return base_copy_file_path
 
     def perform_full_comparison(self, base_idf_file_path, warning_check=True):
         """
@@ -175,7 +184,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         # move file to testing directory manually, shutil does not work reliably for some reason
         base_idf_test_file_path = test_dir.joinpath('..', 'simulation', 'test', 'base_input.idf')
         with open(base_idf_file_path, 'r') as f1, \
-                open(base_idf_test_file_path , 'w') as f2:
+                open(base_idf_test_file_path, 'w') as f2:
             for line in f1:
                 f2.write(line)
         # convert to epJSON for test simulation input
@@ -218,6 +227,20 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         finished_statuses = []
         for file_path in epjson_files:
             # move files from previous runs, rm is too dangerous
+            try:
+                os.rename(
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.eso'),
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.eso')
+                )
+            except FileNotFoundError:
+                pass
+            try:
+                os.rename(
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.mtr'),
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.mtr')
+                )
+            except FileNotFoundError:
+                pass
             try:
                 os.rename(
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'),

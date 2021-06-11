@@ -391,11 +391,12 @@ class ExpandObjects(EPJSON):
                                             object_value = getattr(self, template_field)
                                     except AttributeError:
                                         object_value = None
-                                        self.logger.info("A template value was attempted to be applied "
-                                                         "to an object field but the template "
-                                                         "field was not present in template object. "
-                                                         "object: {}, object fieled: {}, template field: {}"
-                                                         .format(object_type, object_field, template_field))
+                                        # todo_eo: may not be necessary, overly used
+                                        # self.logger.info("A template value was attempted to be applied "
+                                        #                  "to an object field but the template "
+                                        #                  "field was not present in template object. "
+                                        #                  "object: {}, object fieled: {}, template field: {}"
+                                        #                  .format(object_type, object_field, template_field))
                                     if object_value:
                                         # On a match and valid value, apply the field.
                                         # If the object is a 'super' object used in a
@@ -1183,15 +1184,15 @@ class ZonevacEquipmentListOjectType:
         (template_type, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
         # Check for doas reference
-        doas_equipment = None
-        if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None':
-            doas_equipment = True
+        doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
         # Check for baseboard reference
         baseboard_equipment = None
-        if template_fields.get('baseboard_heating_type', 'None') != 'None':
-            baseboard_equipment = True
+        baseboard_equipment = True if template_fields.get('baseboard_heating_type', 'None') != 'None' else False
         if doas_equipment and baseboard_equipment:
-            obj._zone_hvac_equipmentlist_object_type = 'WithDOASAndBaseboard'
+            if template_type == 'HVACTemplate:Zone:BaseboardHeat':
+                obj._zone_hvac_equipmentlist_object_type = 'BaseboardWithDOAS'
+            else:
+                obj._zone_hvac_equipmentlist_object_type = 'WithDOASAndBaseboard'
         elif doas_equipment:
             obj._zone_hvac_equipmentlist_object_type = 'WithDOAS'
         elif baseboard_equipment:
@@ -1204,12 +1205,114 @@ class ZonevacEquipmentListOjectType:
         return
 
 
+class DesignSpecificationOutsideAirObjectStatus:
+    """
+    Set a class attribute to select the appropriate DesignSpecification:OutdoorAir from TemplateOptions in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._design_specification_outdoor_air_object_status
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        # Check for doas reference
+        outdoor_air_method = template_fields.get('outdoor_air_method') \
+            if template_fields.get('outdoor_air_method', 'None') != 'None' else False
+        doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
+        dsoa_object = template_fields.get('design_specification_outdoor_air_object_name') \
+            if template_fields.get('design_specification_outdoor_air_object_name', 'None') != 'None' else False
+        if template_type == 'HVACTemplate:Zone:BaseboardHeat':
+            if doas_equipment and outdoor_air_method != 'DetailedSpecification':
+                obj._design_specification_outdoor_air_object_status = 'IncludeDSOA'
+        else:
+            if outdoor_air_method != 'DetailedSpecification':
+                obj._design_specification_outdoor_air_object_status = 'IncludeDSOA'
+        # Remove an input DSOA object name if it's not going to be used
+        if getattr(obj, '_design_specification_outdoor_air_object_status', None) == 'IncludeDSOA' and dsoa_object:
+            delattr(obj, 'design_specification_zone_air_distribution_object_name')
+        return
+
+
+class DesignSpecificationZoneAirDistributionObjectStatus:
+    """
+    Set a class attribute to select the appropriate DesignSpecification:ZoneAirDistribution from TemplateOptions
+    in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._design_specification_zone_air_distribution_object_status
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        # Check for doas reference
+        outdoor_air_method = template_fields.get('outdoor_air_method') \
+            if template_fields.get('outdoor_air_method', 'None') != 'None' else False
+        doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
+        dzad_object = template_fields.get('design_specification_zone_air_distribution_object_name') \
+            if template_fields.get('design_specification_zone_air_distribution_object_name', 'None') != 'None' else False
+        # BaseboardHeat requires DOAS to be activated in addition to DetailedSpecification option selected
+        if template_type == 'HVACTemplate:Zone:BaseboardHeat':
+            if doas_equipment and outdoor_air_method != 'DetailedSpecification':
+                obj._design_specification_zone_air_distribution_object_status = 'IncludeDZAD'
+        else:
+            if outdoor_air_method != 'DetailedSpecification':
+                obj._design_specification_zone_air_distribution_object_status = 'IncludeDZAD'
+        # Remove an input DZAD object name if it's not going to be used
+        if getattr(obj, '_design_specification_zone_air_distribution_object_status', None) == 'IncludeDZAD' and dzad_object:
+            delattr(obj, 'design_specification_zone_air_distribution_object_name')
+        return
+
+
+class HeatingDesignAirFlowMethod:
+    """
+    Set a class attribute to set heating_design_air_flow_method for transitions in the YAML lookup.
+    If the supply_air_maximum_flow_rate has been set to a value, then the heating_design_air_flow_method
+    field in Sizing:Zone should be 'Flow/Zone' with this value as the flow rate.
+    """
+    def __get__(self, obj, owner):
+        return obj._heating_design_air_flow_method
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        # Check for doas reference
+        supply_air_maximum_flow_rate = template_fields.get('supply_air_maximum_flow_rate', 'None')
+        if isinstance(supply_air_maximum_flow_rate, (int, float)):
+            obj._heating_design_air_flow_method = 'Flow/Zone'
+            setattr(obj, 'heating_design_air_flow_rate', supply_air_maximum_flow_rate)
+        return
+
+
+class CoolingDesignAirFlowMethod:
+    """
+    Set a class attribute to set cooling_design_air_flow_method for transitions in the YAML lookup.
+    If the supply_air_maximum_flow_rate has been set to a value, then the cooling_design_air_flow_method
+    field in Sizing:Zone should be 'Flow/Zone' with this value as the flow rate.
+    """
+    def __get__(self, obj, owner):
+        return obj._cooling_design_air_flow_method
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        # Check for doas reference
+        supply_air_maximum_flow_rate = template_fields.get('supply_air_maximum_flow_rate', 'None')
+        if isinstance(supply_air_maximum_flow_rate, (int, float)):
+            obj._cooling_design_air_flow_method = 'Flow/Zone'
+            setattr(obj, 'cooling_design_air_flow_rate', supply_air_maximum_flow_rate)
+        return
+
+
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
     """
 
     zone_hvac_equipmentlist_object_type = ZonevacEquipmentListOjectType()
+    design_specification_outdoor_air_object_status = DesignSpecificationOutsideAirObjectStatus()
+    design_specification_zone_air_distribution_object_status = DesignSpecificationZoneAirDistributionObjectStatus()
+    heating_design_air_flow_method = HeatingDesignAirFlowMethod()
+    cooling_design_air_flow_method = CoolingDesignAirFlowMethod()
 
     def __init__(self, template, epjson=None):
         # fill/create class attributes values with template inputs
@@ -1221,6 +1324,10 @@ class ExpandZone(ExpandObjects):
         except AttributeError:
             raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
         self.zone_hvac_equipmentlist_object_type = template
+        self.design_specification_outdoor_air_object_status = template
+        self.design_specification_zone_air_distribution_object_status = template
+        self.heating_design_air_flow_method = template
+        self.cooling_design_air_flow_method = template
         self.epjson = epjson or self.epjson
         return
 
@@ -1301,7 +1408,12 @@ class AirLoopHVACObjectType:
         (_, template_fields), = template_structure.items()
         cooling_coil_type = True if 'chilledwater' == template_fields.get('cooling_coil_type', 'None').lower() else False
         heating_coil_type = True if 'hotwater' == template_fields.get('heating_coil_type', 'None').lower() else False
-        if not re.match(r'HVACTemplate:System:Unitary.*', template_type) and (cooling_coil_type or heating_coil_type):
+        if template_type == 'HVACTemplate:System:DualDuct':
+            if cooling_coil_type or heating_coil_type:
+                obj._airloop_hvac_object_type = 'WaterDualDuct'
+            else:
+                obj._airloop_hvac_object_type = 'DualDuct'
+        elif not re.match(r'HVACTemplate:System:Unitary.*', template_type) and (cooling_coil_type or heating_coil_type):
             obj._airloop_hvac_object_type = 'Water'
         else:
             obj._airloop_hvac_object_type = 'Base'
@@ -1420,7 +1532,9 @@ class ExpandSystem(ExpandObjects):
                     for object_name, object_structure in controller_objects.items():
                         # For water coils, try to get the index of the actuator from the list and use that to set
                         #  the order.  Raise a ValueError if no match is found
-                        if controller_type == 'Controller:WaterCoil':
+                        # This does not work for dual duct systems, so the controllers are just taken in order because
+                        # they are extended to a single list in that specific order.
+                        if controller_type == 'Controller:WaterCoil' and self.template_type != 'HVACTemplate:System:DualDuct':
                             object_id = actuator_list.index(object_structure['actuator_node_name']) + 1
                         else:
                             object_id += 1
@@ -1713,7 +1827,9 @@ class ExpandSystem(ExpandObjects):
             self,
             build_path: list = None,
             loop_type: str = 'AirLoop',
-            epjson: dict = None):
+            epjson: dict = None,
+            include_branchlist: bool = True,
+            modify_build_path: bool = True):
         """
         Create Branch and BranchList objects from system build path
         These objects are separated from the OptionTree build operations because they vary based on the final build
@@ -1723,6 +1839,8 @@ class ExpandSystem(ExpandObjects):
         :param build_path: system build path
         :param loop_type: string descriptor of the loop type, AirLoop by default
         :param epjson: epJSON dictionary
+        :param include_branchlist: boolean flag to create branchlist or not
+        :param modify_build_path: boolean flag to modify build path for outdoor air system
         :return: epJSON formatted Branch and BranchList objects.  These objects are also stored back to the
             input epJSON object.
         """
@@ -1732,9 +1850,10 @@ class ExpandSystem(ExpandObjects):
         if not build_path:
             raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
         # Edit build path for AirLoopHVAC:OutdoorAirSystem
-        build_path = self._modify_build_path_for_outside_air_system(
-            epjson=epjson,
-            build_path=copy.deepcopy(build_path))
+        if modify_build_path:
+            build_path = self._modify_build_path_for_outside_air_system(
+                epjson=epjson,
+                build_path=copy.deepcopy(build_path))
         # Edit build path for special equipment
         build_path = self._modify_build_path_for_equipment(
             build_path=copy.deepcopy(build_path))
@@ -1764,15 +1883,80 @@ class ExpandSystem(ExpandObjects):
         branch = {
             "Branch": branch_fields
         }
-        branchlist_fields = self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'BranchList', 'Base'])
-        branchlist = {
-            "BranchList": branchlist_fields
-        }
-        branch_and_branchlist_objects = self.yaml_list_to_epjson_dictionaries([branch, branchlist])
+        if include_branchlist:
+            if self.template_type == 'HVACTemplate:System:DualDuct':
+                branchlist_fields = self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'BranchList', 'DualDuct'])
+            else:
+                branchlist_fields = self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'BranchList', 'Base'])
+            branchlist = {
+                "BranchList": branchlist_fields
+            }
+            branch_and_branchlist_objects = self.yaml_list_to_epjson_dictionaries([branch, branchlist])
+        else:
+            branch_and_branchlist_objects = self.yaml_list_to_epjson_dictionaries([branch, ])
         self.merge_epjson(
             super_dictionary=epjson,
             object_dictionary=self.resolve_objects(epjson=branch_and_branchlist_objects))
         return self.resolve_objects(epjson=branch_and_branchlist_objects)
+
+    def _dual_duct_custom_edits(self):
+        """
+        Perform customized edits to typical ExpandSystem process for HVACTemplate:DualDuct
+        :return: None. class attributes modified
+        """
+        # a temporary build path needs to be made which is a concatenation of the hot and cold build paths.
+        # This object is used to create the WaterCoil controllers since they need to reference all coils in a single
+        # build path to create a single object.
+        tmp_build_path = []
+        tmp_out_node_list = []
+        # Run ExpandSystem._create_objects() for each duct type as well as some additional modifiers
+        for duct_type, duct_field_name in (
+                ('HotDuct', 'hot_duct'),
+                ('ColdDuct', 'cold_duct')):
+            # Make a copy of the class object and split to cold/hot class objects.
+            # Clear epjson and build_path from inherited class
+            duct_system_class_object = copy.deepcopy(self)
+            duct_system_class_object.epjson = {}
+            duct_system_class_object.build_path = []
+            duct_system_class_object.template_type = ':'.join(['HVACTemplate:System:DualDuct', duct_type])
+            duct_system_class_object.unique_name = ' '.join([duct_system_class_object.unique_name, duct_type])
+            # rename hot/cold duct to typical names now that their type is identified by the class
+            for attribute in [i for i in vars(duct_system_class_object).keys() if i.startswith(duct_field_name)]:
+                setattr(
+                    duct_system_class_object,
+                    attribute.replace(''.join([duct_field_name, '_']), ''),
+                    getattr(duct_system_class_object, attribute))
+            duct_system_class_object._create_objects()
+            tmp_build_path.extend(duct_system_class_object.build_path)
+            duct_system_class_object._create_branch_and_branchlist_from_build_path(
+                include_branchlist=False,
+                modify_build_path=False)
+            self.merge_epjson(
+                super_dictionary=self.epjson,
+                object_dictionary=duct_system_class_object.epjson)
+            # get last out node from build path
+            last_build_path_object = duct_system_class_object.build_path[-1]
+            (_, super_object), = last_build_path_object.items()
+            tmp_out_node_list.append(
+                super_object['Fields'][super_object['Connectors']['AirLoop']['Outlet']].format(duct_system_class_object.unique_name))
+        # Create supply side outlet nodelist
+        supply_side_nodelist = self.get_structure(
+            structure_hierarchy=['AutoCreated', 'System', 'NodeList', 'SupplySideOutlet'])
+        supply_side_nodelist['nodes'] = [{"node_name": out_node} for out_node in tmp_out_node_list]
+        supply_side_nodelist_object = self.yaml_list_to_epjson_dictionaries([{'NodeList': supply_side_nodelist}, ])
+        self.merge_epjson(
+            super_dictionary=self.epjson,
+            object_dictionary=supply_side_nodelist_object)
+        # Create ControllerList for just the Controller:WaterCoil objects, which are in the hot/cold class objects of
+        # a dual duct system.
+        self._create_controller_list_from_epjson(
+            controller_list=('Controller:WaterCoil', ),
+            build_path=tmp_build_path,
+            epjson=self.epjson)
+        # rename main branch for regular processing
+        for attribute in [i for i in vars(self).keys() if i.startswith(duct_field_name)]:
+            setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))
+        return
 
     def run(self):
         """
@@ -1781,37 +1965,19 @@ class ExpandSystem(ExpandObjects):
         """
         self.logger.info('Processing System: {}'.format(self.unique_name))
         if self.template_type == 'HVACTemplate:System:DualDuct':
-            for duct_type, duct_field_name in (
-                    ('HotDuct', 'hot_duct'),
-                    ('ColdDuct', 'cold_duct')):
-                # Make a copy of the class object and split to cold/hot class objects.
-                # Clear epjson and build_path from inherited class
-                duct_system_class_object = copy.deepcopy(self)
-                duct_system_class_object.epjson = {}
-                duct_system_class_object.build_path = []
-                duct_system_class_object.template_type = ':'.join(['HVACTemplate:System:DualDuct', duct_type])
-                # rename hot/cold duct to typical names now that their type is identified by the class
-                for attribute in [i for i in vars(duct_system_class_object).keys() if i.startswith(duct_field_name)]:
-                    setattr(duct_system_class_object, attribute.replace('cold_duct_', ''), getattr(duct_system_class_object, attribute))
-                duct_system_class_object._create_objects()
-                # Create controller list.
-                # todo_eo: object getting overwritten in each loop iteration
-                duct_system_class_object._create_controller_list_from_epjson(controller_list=('Controller:WaterCoil', ))
-                self.merge_epjson(
-                    super_dictionary=self.epjson,
-                    object_dictionary=duct_system_class_object.epjson)
-            # rename main branch for processing
-            for attribute in [i for i in vars(self).keys() if i.startswith(duct_field_name)]:
-                setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))
+            self._dual_duct_custom_edits()
         self._create_objects()
-        self._create_outdoor_air_equipment_list_from_build_path()
+        if self.template_type != 'HVACTemplate:System:VRF':
+            self._create_outdoor_air_equipment_list_from_build_path()
         self._create_availability_manager_assignment_list()
-        if self.template_type == 'HVACTemplate:System:DualDuct':
-            self._create_controller_list_from_epjson(controller_list=('Controller:OutdoorAir', ))
-        else:
-            self._create_controller_list_from_epjson()
-        self._create_outdoor_air_system()
-        self._create_branch_and_branchlist_from_build_path()
+        # If a build path is not created, then no additional objects need to be created as well.
+        if self.build_path:
+            if self.template_type == 'HVACTemplate:System:DualDuct':
+                self._create_controller_list_from_epjson(controller_list=('Controller:OutdoorAir', ))
+            else:
+                self._create_controller_list_from_epjson()
+            self._create_outdoor_air_system()
+            self._create_branch_and_branchlist_from_build_path()
         return self
 
 
