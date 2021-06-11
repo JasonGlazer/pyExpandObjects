@@ -769,6 +769,9 @@ Objects:
               <<: *AirTerminalSingleDuctVAVReheat
               <<: *AirTerminalSingleDuctCommonFieldsReheatWater
     DualDuct:
+      Transitions: &AirTerminalDualDuctCommonTransitions
+        - AirTerminal:DualDuct.*:
+            supply_air_maximum_flow_rate: maximum_air_flow_rate
       ConstantVolume:
         Base:
           Fields: &AirTerminalDualDuctConstantVolumeFields
@@ -2500,6 +2503,10 @@ Objects:
                 zone_heating_design_supply_air_temperature: zone_heating_design_supply_air_temperature
                 zone_heating_design_supply_air_temperature_difference: zone_heating_design_supply_air_temperature_difference
                 zone_heating_sizing_factor: zone_heating_sizing_factor
+                heating_design_air_flow_method: heating_design_air_flow_method # variable created by descriptor in ExpandZone
+                heating_design_air_flow_rate: heating_design_air_flow_rate # variable created by descriptor in ExpandZone
+                cooling_design_air_flow_method: cooling_design_air_flow_method # variable created by descriptor in ExpandZone
+                cooling_design_air_flow_rate: cooling_design_air_flow_rate # variable created by descriptor in ExpandZone
           Alt: &SizingZoneCommonTransitionsAlt
             - Sizing:Zone:
                 cooling_coil_design_setpoint: zone_cooling_design_supply_air_temperature
@@ -3437,11 +3444,6 @@ OptionTree:
             - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
           Transitions:
             - *SizingZoneCommonTransitions
-            - Sizing:Zone: # fields created by descriptors in ExpandZone
-                heating_design_air_flow_method: heating_design_air_flow_method
-                heating_design_air_flow_rate: heating_design_air_flow_rate
-                cooling_design_air_flow_method: cooling_design_air_flow_method
-                cooling_design_air_flow_rate: cooling_design_air_flow_rate
           Mappings: *SizingZoneCommonMappings
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
@@ -3514,7 +3516,9 @@ OptionTree:
           Objects:
             - *ZoneCommonBaseObjectsObjectsAirTerminal
             - AirTerminal:DualDuct:ConstantVolume: *AirTerminalDualDuctConstantVolumeFields
-          Transitions: *SizingZoneCommonTransitions
+          Transitions:
+            - *SizingZoneCommonTransitions
+            - *AirTerminalDualDuctCommonTransitions
           Mappings: *SizingZoneCommonMappings
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType

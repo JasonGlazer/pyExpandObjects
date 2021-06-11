@@ -276,7 +276,7 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:"
                                               "zone_cooling_design_supply_air_temperature_input_method_"
                                               "system_supply_air_temperature")
-    def test_zone_cooling_design_supply_air_temperature_input_method(self):
+    def test_zone_cooling_design_supply_air_temperature_input_method_system_supply_air_temperature(self):
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'cooling_coil_design_setpoint_temperature'] = 13.0
         self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
@@ -287,4 +287,68 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
         self.assertEqual(
             13.0,
             epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:"
+                                              "zone_cooling_design_supply_air_temperature_input_method_"
+                                              "supply_air_temperature")
+    def test_zone_cooling_design_supply_air_temperature_input_method_supply_air_temperature(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'zone_cooling_design_supply_air_temperature'] = 13.0
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = "SupplyAirTemperature"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            13.0,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:"
+                                              "zone_cooling_design_supply_air_temperature_input_method_"
+                                              "temperature_difference")
+    def test_zone_cooling_design_supply_air_temperature_input_method_temperature_difference(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'zone_cooling_design_supply_air_temperature_difference'] = 11.5
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = "TemperatureDifference"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            11.5,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature_difference'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:"
+                                              "zone_heating_design_supply_air_temperature_input_method_"
+                                              "supply_air_temperature")
+    def test_zone_heating_design_supply_air_temperature_input_method_supply_air_temperature(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'zone_heating_design_supply_air_temperature'] = 51
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'zone_heating_design_supply_air_temperature_input_method'] = "SupplyAirTemperature"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            51,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_heating_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:"
+                                              "zone_heating_design_supply_air_temperature_input_method_"
+                                              "temperature_difference")
+    def test_zone_heating_design_supply_air_temperature_input_method_temperature_difference(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'zone_heating_design_supply_air_temperature_difference'] = 31
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
+            'zone_heating_design_supply_air_temperature_input_method'] = "TemperatureDifference"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            31,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_heating_design_supply_air_temperature_difference'])
         return
