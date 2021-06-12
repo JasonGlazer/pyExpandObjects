@@ -104,18 +104,26 @@ SystemToZoneMappings:
       SystemSupplyAirTemperature:
         system_field: cooling_design_supply_air_temperature
         zone_field: zone_cooling_design_supply_air_temperature
+  - zone_heating_design_supply_air_temperature_input_method:
+      SystemSupplyAirTemperature:
+        system_field: heating_design_supply_air_temperature
+        zone_field: zone_heating_design_supply_air_temperature
   - zone_cooling_design_supply_air_temperature_input_method:
       SystemSupplyAirTemperature:
         system_field: cooling_coil_design_setpoint
         zone_field: zone_cooling_design_supply_air_temperature
-  - zone_cooling_design_supply_air_temperature_input_method: # todo_eo this can be removed if cooling coil variables are combined
+  - zone_heating_design_supply_air_temperature_input_method:
+      SystemSupplyAirTemperature:
+        system_field: heating_coil_design_setpoint
+        zone_field: zone_heating_design_supply_air_temperature
+  - zone_cooling_design_supply_air_temperature_input_method:
       SystemSupplyAirTemperature:
         system_field: cooling_coil_design_setpoint_temperature
         zone_field: zone_cooling_design_supply_air_temperature
-  - zone_cooling_design_supply_air_temperature_input_method: # This has to be last or it will mess up the key lookup
+  - zone_heating_design_supply_air_temperature_input_method:
       SystemSupplyAirTemperature:
-        system_value: SupplyAirTemperature
-        zone_field: zone_cooling_design_supply_air_temperature_input_method
+        system_field: heating_coil_design_setpoint_temperature
+        zone_field: zone_heating_design_supply_air_temperature
 
 Objects:
   Common:
@@ -2478,14 +2486,6 @@ Objects:
   Sizing:
     Zone:
       Common:
-        Mappings: &SizingZoneCommonMappings
-          - Sizing:Zone:
-              zone_cooling_design_supply_air_temperature_input_method:
-                SystemSupplyAirTemperature: # todo_eo: the system cooling design setpoint needs to be mapped to zone supplyairtemperature
-                  zone_cooling_design_supply_air_temperature_input_method: SupplyAirTemperature
-              zone_heating_design_supply_air_temperature_input_method:
-                SystemSupplyAirTemperature: # todo_eo: the system cooling design setpoint needs to be mapped to zone supplyairtemperature
-                  zone_heating_design_supply_air_temperature_input_method: SupplyAirTemperature
         Transitions:
           Base: &SizingZoneCommonTransitions
             - Sizing:Zone:
@@ -3444,7 +3444,6 @@ OptionTree:
             - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
           Transitions:
             - *SizingZoneCommonTransitions
-          Mappings: *SizingZoneCommonMappings
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
@@ -3514,14 +3513,16 @@ OptionTree:
       DualDuct:
         BaseObjects:
           Objects:
-            - *ZoneCommonBaseObjectsObjectsAirTerminal
+            - Sizing:Zone: *SizingZoneOA
+            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
+            - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
             - AirTerminal:DualDuct:ConstantVolume: *AirTerminalDualDuctConstantVolumeFields
           Transitions:
             - *SizingZoneCommonTransitions
             - *AirTerminalDualDuctCommonTransitions
-          Mappings: *SizingZoneCommonMappings
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+          <<: *ZoneCommonTemplateObjectsDesignSpecification
       FanCoil:
         BuildPath:
           BaseObjects:
@@ -3704,13 +3705,11 @@ OptionTree:
             - *ZoneCommonBaseObjectsObjectsAirTerminal
             - AirTerminal:SingleDuct:ConstantVolume:NoReheat: *AirTerminalSingleDuctConstantVolumeNoReheat
           Transitions: *SizingZoneCommonTransitions
-          Mappings: *SizingZoneCommonMappings
         TemplateObjects: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
       VAV:
         BaseObjects:
           Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
           Transitions: *SizingZoneCommonTransitions
-          Mappings: *SizingZoneCommonMappings
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           <<: *ZoneCommonTemplateObjectsVAV
@@ -3718,7 +3717,6 @@ OptionTree:
           BaseObjects:
             Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
             Transitions: *SizingZoneCommonTransitions
-            Mappings: *SizingZoneCommonMappings
           TemplateObjects:
             <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
             <<: *ZoneCommonTemplateObjectsVAVHeatAndCool
@@ -3749,7 +3747,6 @@ OptionTree:
                   air_distribution_unit_outlet_node_name:
                     ^AirTerminal:.*: outlet_node_name
             Transitions: *SizingZoneCommonTransitions
-          Mappings: *SizingZoneCommonMappings
           TemplateObjects:
             <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
             <<: *ZoneCommonTemplateObjectsVAVFanPowered
@@ -3812,7 +3809,6 @@ OptionTree:
             - *ZoneCommonBaseObjectsObjects
             - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
           Transitions: *SizingZoneCommonTransitions
-          Mappings: *SizingZoneCommonMappings
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
     System:

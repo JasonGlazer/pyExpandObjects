@@ -915,22 +915,15 @@ class HVACTemplate(EPJSON):
                             for zone_field, mapping_instructions in mi.items():
                                 for val, value_map in mapping_instructions.items():
                                     if template_fields.get(zone_field, None) == val:
-                                        # if system_field is a key, then map the system field to the zone field.
-                                        # if system_value is a key, then use the direct map value
                                         if value_map.get('system_field') and system_fields.get(value_map['system_field']):
                                             try:
                                                 template_fields[value_map['zone_field']] = \
                                                     system_fields[value_map['system_field']]
+                                                if val == 'SystemSupplyAirTemperature':
+                                                    template_fields[zone_field] = 'SupplyAirTemperature'
                                             except (ValueError, KeyError):
-                                                print('error')
                                                 self.logger.info('Zone field {} does not exist for mapping'
                                                                  'values: {}'.format(value_map['zone_field'], value_map))
-                                        elif value_map.get('system_value'):
-                                            try:
-                                                template_fields[value_map['zone_field']] = \
-                                                    value_map['system_value']
-                                            except (ValueError, KeyError):
-                                                self.logger.info('Zone field mapping error {}'.format(value_map))
         except ValueError:
             raise InvalidTemplateException("Mapping of system to zone variables failed. zone_template: {}, "
                                            "system template: {}".format(template_fields, system_templates))

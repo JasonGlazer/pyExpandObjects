@@ -1221,6 +1221,10 @@ class DesignSpecificationOutsideAirObjectStatus:
         doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
         dsoa_object = template_fields.get('design_specification_outdoor_air_object_name') \
             if template_fields.get('design_specification_outdoor_air_object_name', 'None') != 'None' else False
+        # dual duct uses different naming, so try that if first attempt was not set.
+        if not dsoa_object:
+            dsoa_object = template_fields.get('design_specification_outdoor_air_object_name_for_sizing') \
+                if template_fields.get('design_specification_outdoor_air_object_name_for_sizing', 'None') != 'None' else False
         if template_type == 'HVACTemplate:Zone:BaseboardHeat':
             if doas_equipment and outdoor_air_method != 'DetailedSpecification':
                 obj._design_specification_outdoor_air_object_status = 'IncludeDSOA'
