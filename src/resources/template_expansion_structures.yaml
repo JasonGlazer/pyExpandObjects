@@ -3320,6 +3320,18 @@ OptionTree:
               WithBaseboard:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
+          ReturnPlenum: &ZoneCommonTemplateObjectsReturnPlenum
+            return_plenum_name:
+              AnyValue:
+                Objects:
+                  - AirLoopHVAC:ReturnPlenum:
+                      name: '{} Return Plenum'
+                      nodes:
+                        - inlet_node_name:
+                            ZoneHVAC:EquipmentConnections: zone_return_air_node_or_nodelist_name
+                      outlet_node_name: '{} Plenum Outlet'
+                      zone_name: '{return_plenum_name}'
+                      zone_node_name: '{return_plenum_name} Zone Air Node'
           DOAS:
             Base:
               dedicated_outdoor_air_system_name:
@@ -3499,17 +3511,7 @@ OptionTree:
                           AirTerminal.*: air_inlet_node_name
                     zone_name: '{supply_plenum_name}'
                     zone_node_name: '{supply_plenum_name} Zone Air Node'
-          return_plenum_name:
-            AnyValue:
-              Objects:
-                - AirLoopHVAC:ReturnPlenum:
-                    name: '{} Return Plenum'
-                    nodes:
-                      - inlet_node_name:
-                          ZoneHVAC:EquipmentConnections: zone_return_air_node_or_nodelist_name
-                    outlet_node_name: '{} Plenum Outlet'
-                    zone_name: '{return_plenum_name}'
-                    zone_node_name: '{return_plenum_name} Zone Air Node'
+          <<: *ZoneCommonTemplateObjectsReturnPlenum
       DualDuct:
         BaseObjects:
           Objects:
@@ -3522,7 +3524,31 @@ OptionTree:
             - *AirTerminalDualDuctCommonTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+          <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
           <<: *ZoneCommonTemplateObjectsDesignSpecification
+          cold_supply_plenum_name:
+            AnyValue:
+              Objects:
+                - AirLoopHVAC:SupplyPlenum:
+                    name: '{} Cold Supply Plenum'
+                    inlet_node_name: '{} Cold Plenum Inlet'
+                    nodes:
+                      - outlet_node_name:
+                          AirTerminal.*: cold_air_inlet_node_name
+                    zone_name: '{cold_supply_plenum_name}'
+                    zone_node_name: '{cold_supply_plenum_name} Zone Air Node'
+          hot_supply_plenum_name:
+            AnyValue:
+              Objects:
+                - AirLoopHVAC:SupplyPlenum:
+                    name: '{} Hot Supply Plenum'
+                    inlet_node_name: '{} Hot Plenum Inlet'
+                    nodes:
+                      - outlet_node_name:
+                          AirTerminal.*: hot_air_inlet_node_name
+                    zone_name: '{hot_supply_plenum_name}'
+                    zone_node_name: '{hot_supply_plenum_name} Zone Air Node'
+          <<: *ZoneCommonTemplateObjectsReturnPlenum
       FanCoil:
         BuildPath:
           BaseObjects:

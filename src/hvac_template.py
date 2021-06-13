@@ -280,7 +280,9 @@ class HVACTemplate(EPJSON):
             zone_supply_plenums = []
             for _, ez in expanded_zones.items():
                 if getattr(ez, zone_system_template_field_name, None) == system_class_object.template_name:
-                    if getattr(ez, 'supply_plenum_name', None):
+                    if getattr(ez, 'supply_plenum_name', None) or (
+                            getattr(ez, 'cold_supply_plenum_name', None) and inlet_node == 'cold_air_inlet_node_name') or (
+                            getattr(ez, 'hot_supply_plenum_name', None) and inlet_node == 'hot_air_inlet_node_name'):
                         try:
                             zone_supply_equipment = {'AirLoopHVAC:SupplyPlenum': ez.epjson['AirLoopHVAC:SupplyPlenum']}
                         except (KeyError, AttributeError):
@@ -293,6 +295,7 @@ class HVACTemplate(EPJSON):
                     try:
                         (zone_supply_equipment_type, zone_supply_equipment_structure), = zone_supply_equipment.items()
                         (zone_supply_equipment_name, zone_supply_equipment_fields), = zone_supply_equipment_structure.items()
+
                         if zone_supply_equipment_type == 'AirLoopHVAC:SupplyPlenum':
                             outlet_node_name = zone_supply_equipment_fields['inlet_node_name']
                             zone_supply_plenums.append({
@@ -415,7 +418,8 @@ class HVACTemplate(EPJSON):
         # add zone return plenums if they were created
         if zone_return_plenums:
             (_, supply_path_object_fields), = return_path_object.items()
-            supply_path_object_fields['components'].insert(0, *zone_return_plenums)
+            # only take the first item, subsequent items are only duplicates from dualduct zone templates
+            supply_path_object_fields['components'].insert(0, zone_return_plenums[0])
         path_dictionary = eo.yaml_list_to_epjson_dictionaries(
             yaml_list=[return_object, return_path_object])
         resolved_path_dictionary = eo.resolve_objects(epjson=path_dictionary)

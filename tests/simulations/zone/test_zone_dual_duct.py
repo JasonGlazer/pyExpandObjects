@@ -117,7 +117,7 @@ class TestSimulationsZoneDualDuct(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_flow_per_zone_floor_area'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:outdoor_air_method_flow_per_zone")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:outdoor_air_method_flow_per_zone")
     def test_outdoor_air_method_flow_per_zone(self):
         self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
             'outdoor_air_method'] = 'Flow/Zone'
@@ -134,7 +134,7 @@ class TestSimulationsZoneDualDuct(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_flow_per_zone'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:outdoor_air_method_detailed_specification")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:outdoor_air_method_detailed_specification")
     def test_outdoor_air_method_detailed_specification(self):
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
@@ -150,4 +150,179 @@ class TestSimulationsZoneDualDuct(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(epjson_output['DesignSpecification:OutdoorAir'].get('SPACE1-1 SZ DSOA Custom Object'))
         self.assertIsNotNone(epjson_output['DesignSpecification:ZoneAirDistribution'].get('SPACE1-1 SZ DSZAD Custom Object'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:outdoor_air_method_detailed_specification")
+    def test_design_specification_outdoor_air_object_name_for_control(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=design_specification_objects)
+        # todo_eo: it is unclear what changes should be triggered for this option
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'design_specification_outdoor_air_object_name_for_control'] = 'SPACE1-1 SZ DSOA Custom Object'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['DesignSpecification:OutdoorAir'].get('SPACE1-1 SZ DSOA Custom Object'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:cold_supply_plenum_name")
+    def test_cold_supply_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'].pop('return_plenum_name')
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'cold_supply_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['AirLoopHVAC:SupplyPlenum'].get('SPACE1-1 Cold Supply Plenum'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:hot_supply_plenum_name")
+    def test_hot_supply_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'].pop('return_plenum_name')
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'hot_supply_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['AirLoopHVAC:SupplyPlenum'].get('SPACE1-1 Hot Supply Plenum'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:return_plenum_name")
+    def test_return_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'].pop('return_plenum_name')
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'return_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['AirLoopHVAC:ReturnPlenum'].get('SPACE1-1 Return Plenum'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:baseboard_heating_type_hot_water")
+    def test_baseboard_heating_type_hot_water(self):
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water'].get('SPACE1-1 Baseboard Heat'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:baseboard_heating_type_electric")
+    def test_baseboard_heating_type_electric(self):
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'baseboard_heating_type'] = 'Electric'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['ZoneHVAC:Baseboard:Convective:Electric'].get('SPACE1-1 Baseboard Heat'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:baseboard_heating_availability_schedule_name")
+    def test_baseboard_heating_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'baseboard_heating_availability_schedule_name'] = 'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water']['SPACE1-1 Baseboard Heat']['availability_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:baseboard_heating_capacity")
+    def test_baseboard_heating_capacity(self):
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'baseboard_heating_capacity'] = 200
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            200,
+            epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water']['SPACE1-1 Baseboard Heat']['heating_design_capacity'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:"
+                                              "zone_cooling_design_supply_air_temperature_input_method_"
+                                              "system_supply_air_temperature")
+    def test_zone_cooling_design_supply_air_temperature_input_method_system_supply_air_temperature(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'cooling_coil_design_setpoint_temperature'] = 13.0
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = "SystemSupplyAirTemperature"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            13.0,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:"
+                                              "zone_cooling_design_supply_air_temperature_input_method_"
+                                              "supply_air_temperature")
+    def test_zone_cooling_design_supply_air_temperature_input_method_supply_air_temperature(self):
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'zone_cooling_design_supply_air_temperature'] = 13.0
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = "SupplyAirTemperature"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            13.0,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:"
+                                              "zone_cooling_design_supply_air_temperature_input_method_"
+                                              "temperature_difference")
+    def test_zone_cooling_design_supply_air_temperature_input_method_temperature_difference(self):
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'zone_cooling_design_supply_air_temperature_difference'] = 11.5
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = "TemperatureDifference"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            11.5,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature_difference'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:"
+                                              "zone_heating_design_supply_air_temperature_input_method_"
+                                              "supply_air_temperature")
+    def test_zone_heating_design_supply_air_temperature_input_method_supply_air_temperature(self):
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'zone_heating_design_supply_air_temperature'] = 51
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'zone_heating_design_supply_air_temperature_input_method'] = "SupplyAirTemperature"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            51,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_heating_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:"
+                                              "zone_heating_design_supply_air_temperature_input_method_"
+                                              "temperature_difference")
+    def test_zone_heating_design_supply_air_temperature_input_method_temperature_difference(self):
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'zone_heating_design_supply_air_temperature_difference'] = 31
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'zone_heating_design_supply_air_temperature_input_method'] = "TemperatureDifference"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            31,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_heating_design_supply_air_temperature_difference'])
         return
