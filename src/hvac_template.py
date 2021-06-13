@@ -274,7 +274,7 @@ class HVACTemplate(EPJSON):
         # iterate over expanded zones and if the system reference field exists, and is for the referenced system,
         # append them in the splitter and mixer lists
         zone_return_plenums = []
-        for inlet_node in inlet_nodes:
+        for node_idx, inlet_node in enumerate(inlet_nodes):
             zone_splitters = []
             zone_mixers = []
             zone_supply_plenums = []
@@ -333,10 +333,12 @@ class HVACTemplate(EPJSON):
                         (zone_return_equipment_name, zone_return_equipment_fields), = zone_return_equipment_structure.items()
                         if zone_return_equipment_type == 'AirLoopHVAC:ReturnPlenum':
                             inlet_node_name = zone_return_equipment_fields['outlet_node_name']
-                            zone_return_plenums.append({
-                                'component_name': zone_return_equipment_name,
-                                'component_object_type': zone_return_equipment_type
-                            })
+                            # use node_idx to prevent multiple zone_return_plenum objects from being created in dualduct zones
+                            if node_idx == 0:
+                                zone_return_plenums.append({
+                                    'component_name': zone_return_equipment_name,
+                                    'component_object_type': zone_return_equipment_type
+                                })
                         else:
                             inlet_node_name = zone_return_equipment_fields['zone_return_air_node_or_nodelist_name']
                     except (KeyError, AttributeError, ValueError):
@@ -417,9 +419,9 @@ class HVACTemplate(EPJSON):
                 'AutoCreated', 'System', 'AirLoopHVAC', 'ReturnPath', 'Base'])}
         # add zone return plenums if they were created
         if zone_return_plenums:
-            (_, supply_path_object_fields), = return_path_object.items()
+            (_, return_path_object_fields), = return_path_object.items()
             # only take the first item, subsequent items are only duplicates from dualduct zone templates
-            supply_path_object_fields['components'].insert(0, zone_return_plenums[0])
+            return_path_object_fields['components'] = zone_return_plenums + return_path_object_fields['components']
         path_dictionary = eo.yaml_list_to_epjson_dictionaries(
             yaml_list=[return_object, return_path_object])
         resolved_path_dictionary = eo.resolve_objects(epjson=path_dictionary)

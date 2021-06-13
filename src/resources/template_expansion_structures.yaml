@@ -1486,7 +1486,7 @@ Objects:
             water_outlet_node_name: '{} Cooling Coil Chw Outlet' # required by schema
           Connectors:
             AirLoop: *ConnectorsAirLoop
-        DetailedGeometry:
+        DetailedGeometry: &CoolingCoilWaterDetailedGeometrySuperObject
           Fields:
             << : *CoilCoolingWaterFields
           Connectors:
@@ -2062,20 +2062,20 @@ Objects:
               supply_fan_delta_pressure: design_pressure_rise
               supply_fan_motor_efficiency: motor_efficiency
               supply_fan_total_efficiency: fan_total_efficiency
-              supply_fan_motor_airstream_fraction: motor_in_airstream_fraction
+              supply_fan_motor_in_air_stream_fraction: motor_in_airstream_fraction
         Supply: &FanCommonTransitionsSupply
           - Fan:.*:
               fan_delta_pressure: pressure_rise
               supply_fan_delta_pressure: pressure_rise
               supply_fan_maximum_flow_rate: maximum_flow_rate
-              supply_fan_motor_airstream_fraction: motor_in_airstream_fraction
+              supply_fan_motor_in_air_stream_fraction: motor_in_airstream_fraction
               supply_fan_motor_efficiency: motor_efficiency
               supply_fan_total_efficiency: fan_total_efficiency
         Return: &FanCommonTransitionsReturn
           - Fan:.*:
               return_fan_delta_pressure: pressure_rise
               return_fan_maximum_flow_rate: maximum_flow_rate
-              return_fan_motor_airstream_fraction: motor_in_airstream_fraction
+              return_fan_motor_in_air_stream_fraction: motor_in_airstream_fraction
               return_fan_motor_efficiency: motor_efficiency
               return_fan_total_efficiency: fan_total_efficiency
     Base:
@@ -3183,6 +3183,13 @@ OptionTree:
                         - *CoilCoolingWaterCommonObjects
                       Transitions:
                         - *CoilCoolingCommonTransitions
+                    ChilledWaterDetailedFlatModel:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects: &ZoneCommonBuildPathActionsObjectsCoolingCoilTypeChilledWaterDetailedFlatModelObjects
+                        - Coil:Cooling:Water:DetailedGeometry: *CoolingCoilWaterDetailedGeometrySuperObject
+                        - *CoilCoolingWaterCommonObjects
                     SingleSpeedDX:
                       ObjectReference: Fan:.*
                       Location: After
@@ -3230,6 +3237,11 @@ OptionTree:
                       Location: After
                       ActionType: Insert
                       Objects: *ZoneCommonBuildPathActionsObjectsCoolingCoilTypeChilledWaterObjects
+                    ChilledWaterDetailedFlatModel:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsCoolingCoilTypeChilledWaterDetailedFlatModelObjects
                     SingleSpeedDX:
                       ObjectReference: OutdoorAir:Mixer
                       Location: After
@@ -3563,13 +3575,14 @@ OptionTree:
               - *ZoneCommonBuildPathActionsObjectsAfterFan
         BaseObjects:
           Objects:
-            - *ZoneCommonBaseObjectsObjects
+            - Sizing:Zone: *SizingZoneOA
           Transitions:
             - *SizingZoneCommonTransitions
             - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
             - *ZoneHVACFourPipeFanCoilCommonTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+          <<: *ZoneCommonTemplateObjectsDesignSpecification
           <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
           dedicated_outdoor_air_system_name:
             None:
