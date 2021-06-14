@@ -17,6 +17,50 @@ design_specification_objects = {
     }
 }
 
+doas_objects = {
+    "HVACTemplate:System:DedicatedOutdoorAir": {
+        "DOAS": {
+            "air_outlet_type": "DirectIntoZone",
+            "cooling_coil_design_setpoint": 12.8,
+            "cooling_coil_reset_outdoor_dry_bulb_high": 23.3,
+            "cooling_coil_reset_outdoor_dry_bulb_low": 15.6,
+            "cooling_coil_setpoint_at_outdoor_dry_bulb_high": 12.8,
+            "cooling_coil_setpoint_at_outdoor_dry_bulb_low": 15.6,
+            "cooling_coil_setpoint_control_type": "FixedSetpoint",
+            "cooling_coil_type": "ChilledWater",
+            "dehumidification_control_type": "None",
+            "dehumidification_setpoint": 0.00924,
+            "dx_cooling_coil_gross_rated_cop": 3,
+            "dx_cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+            "dx_cooling_coil_gross_rated_total_capacity": "Autosize",
+            "gas_heating_coil_efficiency": 0.8,
+            "heat_recovery_frost_control_type": "MinimumExhaustTemperature",
+            "heat_recovery_heat_exchanger_type": "Plate",
+            "heat_recovery_latent_effectiveness": 0.65,
+            "heat_recovery_sensible_effectiveness": 0.7,
+            "heat_recovery_type": "Enthalpy",
+            "heating_coil_design_setpoint": 12.2,
+            "heating_coil_reset_outdoor_dry_bulb_high": 12.2,
+            "heating_coil_reset_outdoor_dry_bulb_low": 7.8,
+            "heating_coil_setpoint_at_outdoor_dry_bulb_high": 12.2,
+            "heating_coil_setpoint_at_outdoor_dry_bulb_low": 15,
+            "heating_coil_setpoint_control_type": "FixedSetpoint",
+            "heating_coil_type": "HotWater",
+            "humidifier_constant_setpoint": 0.003,
+            "humidifier_rated_capacity": 1e-06,
+            "humidifier_rated_electric_power": 2690,
+            "humidifier_type": "None",
+            "supply_fan_delta_pressure": 1000,
+            "supply_fan_flow_rate": "Autosize",
+            "supply_fan_motor_efficiency": 0.9,
+            "supply_fan_motor_in_air_stream_fraction": 1,
+            "supply_fan_placement": "DrawThrough",
+            "supply_fan_total_efficiency": 0.7,
+            "system_availability_schedule_name": "OCCUPY-1"
+        }
+    }
+}
+
 
 class TestSimulationsZoneFanCoil(BaseSimulationTest):
     def setUp(self):
@@ -201,3 +245,101 @@ class TestSimulationsZoneFanCoil(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['Coil:Cooling:Water:DetailedGeometry'].get('SPACE1-1 Cooling Coil'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:cooling_coil_type_heat_exchanger_assisted_chilled_water")
+    def test_cooling_coil_type_heat_exchanger_assisted_chilled_water(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['cooling_coil_type'] = \
+            'HeatExchangerAssistedChilledWater'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['CoilSystem:Cooling:Water:HeatExchangerAssisted'].get('SPACE1-1 Heat Exchanger Assisted Cooling Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('SPACE1-1 Cooling Coil Heat Exchanger'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:cooling_coil_availability_schedule_name")
+    def test_cooling_coil_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['cooling_coil_availability_schedule_name'] = 'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Coil:Cooling:Water']['SPACE1-1 Cooling Coil']['availability_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:cooling_coil_design_setpoint")
+    def test_cooling_coil_design_setpoint(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['cooling_coil_design_setpoint'] = 13
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            13,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:heating_coil_type_electric")
+    def test_heating_coil_type_electric(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['heating_coil_type'] = 'Electric'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Coil:Heating:Electric'].get('SPACE1-1 Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:heating_coil_availability_schedule_name")
+    def test_heating_coil_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['heating_coil_availability_schedule_name'] = 'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Coil:Heating:Water']['SPACE1-1 Heating Coil']['availability_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:dedicated_outdoor_air_system_name")
+    def test_dedicated_outdoor_air_system_name(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=doas_objects)
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['dedicated_outdoor_air_system_name'] = 'DOAS'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['AirLoopHVAC'].get('DOAS'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil"
+                                              "zone_cooling_design_supply_air_temperature_input_method_"
+                                              "supply_air_temperature")
+    def test_zone_cooling_design_supply_air_temperature_input_method_supply_air_temperature(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1'][
+            'cooling_coil_design_setpoint'] = 13.0
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = "SupplyAirTemperature"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            13.0,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:"
+                                              "zone_cooling_design_supply_air_temperature_input_method_"
+                                              "temperature_difference")
+    def test_zone_cooling_design_supply_air_temperature_input_method_temperature_difference(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1'][
+            'zone_cooling_design_supply_air_temperature_difference'] = 11.5
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = "TemperatureDifference"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            11.5,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature_difference'])
+        return

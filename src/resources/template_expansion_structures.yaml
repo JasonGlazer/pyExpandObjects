@@ -970,13 +970,11 @@ Objects:
   Coil:
     Cooling:
       Common:
-        Transitions: &CoilCoolingCommonTransitions
-          - ^Coil:Cooling:Water($|:DetailedGeometry)+:
-              cooling_coil_availability_schedule_name: availability_schedule_name
         Fields: &CoilCoolingCommonFields
           name: '{} Cooling Coil'
           air_inlet_node_name: '{} Cooling Coil Inlet' # required by schema
           air_outlet_node_name: '{} Cooling Coil Outlet' # required by schema
+          availability_schedule_name: '{cooling_coil_availability_schedule_name}'
       DX:
         SingleSpeed:
           Common:
@@ -1579,13 +1577,11 @@ Objects:
               AirLoop: *ConnectorsAirLoop
     Heating:
       Common:
-        Transitions: &CoilHeatingCommonTransitions
-          - ^Coil:Cooling:Heating.*:
-              heating_coil_availability_schedule_name: availability_schedule_name
         Fields: &CoilHeatingCommonFields
           name: '{} Heating Coil'
           air_inlet_node_name: '{} Heating Coil Inlet' # required by schema
           air_outlet_node_name: '{} Heating Coil Outlet' # required by schema
+          availability_schedule_name: '{heating_coil_availability_schedule_name}'
         Connectors:
           AirLoop: *ConnectorsAirLoop
         Electric:
@@ -1878,7 +1874,10 @@ Objects:
         Base:
           Fields: &CoilSystemCoolingWaterFields
             name: '{} Heat Exchanger Assisted Cooling Coil'
-            <<: *CoilSystemCoolingCommonFields
+            cooling_coil_name:
+              Coil:Cooling.*: key
+            cooling_coil_object_type:
+              Coil:Cooling.*: self
             heat_exchanger_name:
               HeatExchanger.*: key
             heat_exchanger_object_type:
@@ -2158,19 +2157,16 @@ Objects:
           Base: &HeatExchangerAirToAirSensibleAndLatentCoolingCoilSuperObject
             Fields:
               name: '{} Cooling Coil Heat Exchanger'
-              economizer_lockout: No # set by legacy, not default
+              economizer_lockout: 'No' # set by legacy, not default
               exhaust_air_inlet_node_name: '{} HX Exhaust Inlet'
-              exhaust_air_outlet_node_name:
-                BuildPathReference:
-                  Location: Coil:Cooling.*
-                  ValueLocation: Outlet
-                nominal_supply_air_flow_rate: Autosize # set by legacy, no default, required by schema
-                sensible_effectiveness_at_75_cooling_air_flow: 0.75 # set by legacy, not default
-                sensible_effectiveness_at_75_heating_air_flow: 0.75 # set by legacy, not default
-                sensible_effectiveness_at_100_cooling_air_flow: 0.7 # set by legacy, not default
-                sensible_effectiveness_at_100_heating_air_flow: 0.7 # set by legacy, not default
-                supply_air_inlet_node_name: '{} HX Supply Inlet'
-                supply_air_outlet_node_name: '{} HX Supply Outlet'
+              exhaust_air_outlet_node_name: '{} Cooling Coil Outlet'
+              nominal_supply_air_flow_rate: Autosize # set by legacy, no default, required by schema
+              sensible_effectiveness_at_75_cooling_air_flow: 0.75 # set by legacy, not default
+              sensible_effectiveness_at_75_heating_air_flow: 0.75 # set by legacy, not default
+              sensible_effectiveness_at_100_cooling_air_flow: 0.7 # set by legacy, not default
+              sensible_effectiveness_at_100_heating_air_flow: 0.7 # set by legacy, not default
+              supply_air_inlet_node_name: '{} HX Supply Inlet'
+              supply_air_outlet_node_name: '{} HX Supply Outlet'
             Connectors:
               AirLoop:
                 Inlet: supply_air_inlet_node_name
@@ -2889,14 +2885,18 @@ Objects:
           - ZoneHVAC:FourPipeFanCoil:
               cooling_coil_type:
                 HeatExchangerAssistedChilledWater:
-                  cooling_coil_type: CoilSystem:Cooling:Water:HeatExchangerAssisted
+                  cooling_coil_object_type: CoilSystem:Cooling:Water:HeatExchangerAssisted
                   cooling_coil_name:
-                    CoilSystem:Cooling:Water:HeatExchangerAssisted: key
+                    CoilSystem.*: key
 
       Base:
         Fields: &ZoneHVACFourPipeFanCoil
           name: '{} Fan Coil'
           <<: *ZoneHVACCommonZoneEquipmentFields
+          cooling_coil_object_type:
+            Coil:Cooling.*: self
+          cooling_coil_name:
+            Coil:Cooling.*: key
           availability_schedule_name: '{system_availability_schedule_name}'
           capacity_control_method: ConstantFanVariableFlow # set by legacy, no default
           maximum_cold_water_flow_rate: Autosize # set by legacy, not reachable from template, no object default, required by schema
@@ -3193,8 +3193,6 @@ OptionTree:
                       Objects: &ZoneCommonBuildPathActionsObjectsHeatingCoilTypeHotWaterObjects
                         - Coil:Heating:Water: *CoilHeatingWaterSuperObject
                         - *CoilHeatingWaterCommonObjects
-                      Transitions:
-                        - *CoilHeatingCommonTransitions
                     Gas:
                       ObjectReference: Fan:.*
                       Location: After
@@ -3222,8 +3220,6 @@ OptionTree:
                       Objects: &ZoneCommonBuildPathActionsObjectsCoolingCoilTypeChilledWaterObjects
                         - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
                         - *CoilCoolingWaterCommonObjects
-                      Transitions:
-                        - *CoilCoolingCommonTransitions
                     ChilledWaterDetailedFlatModel:
                       ObjectReference: Fan:.*
                       Location: After
@@ -3231,6 +3227,19 @@ OptionTree:
                       Objects: &ZoneCommonBuildPathActionsObjectsCoolingCoilTypeChilledWaterDetailedFlatModelObjects
                         - Coil:Cooling:Water:DetailedGeometry: *CoolingCoilWaterDetailedGeometrySuperObject
                         - *CoilCoolingWaterCommonObjects
+                    HeatExchangerAssistedChilledWater:
+                      ObjectReference: Fan:.*
+                      Location: After
+                      ActionType: Insert
+                      Objects: &ZoneCommonBuildPathActionsObjectsCoolingCoilTypeChilledWaterHeatExchangerAssistedChilledWaterObjects
+                        # In this option, the heatexchanger is the super object and the cooling coil is a regular object
+                        - CoilSystem:Cooling:Water:HeatExchangerAssisted: *CoilSystemCoolingWaterFields
+                        - Coil:Cooling:Water:
+                            <<: *CoilCoolingWaterFields
+                            air_inlet_node_name: '{} HX Supply Outlet'
+                            air_outlet_node_name: '{} HX Exhaust Inlet'
+                        - *CoilCoolingWaterCommonObjects
+                        - HeatExchanger:AirToAir:SensibleAndLatent: *HeatExchangerAirToAirSensibleAndLatentCoolingCoilSuperObject
                     SingleSpeedDX:
                       ObjectReference: Fan:.*
                       Location: After
@@ -3265,8 +3274,6 @@ OptionTree:
                       Location: After
                       ActionType: Insert
                       Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeHotWaterObjects
-                      Transitions:
-                        - *CoilHeatingCommonTransitions
                     VariableRefrigerantFlowDX:
                       ObjectReference: OutdoorAir:Mixer
                       Location: After
@@ -3283,6 +3290,11 @@ OptionTree:
                       Location: After
                       ActionType: Insert
                       Objects: *ZoneCommonBuildPathActionsObjectsCoolingCoilTypeChilledWaterDetailedFlatModelObjects
+                    HeatExchangerAssistedChilledWater:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: After
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsCoolingCoilTypeChilledWaterHeatExchangerAssistedChilledWaterObjects
                     SingleSpeedDX:
                       ObjectReference: OutdoorAir:Mixer
                       Location: After
@@ -3620,7 +3632,6 @@ OptionTree:
           Transitions:
             - *SizingZoneCommonTransitions
             - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
-#            - *ZoneHVACFourPipeFanCoilCommonTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           <<: *ZoneCommonTemplateObjectsDesignSpecification
