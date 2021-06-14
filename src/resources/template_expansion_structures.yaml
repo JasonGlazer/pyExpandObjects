@@ -1840,20 +1840,23 @@ Objects:
               AirLoop: *ConnectorsAirLoop
   CoilSystem:
     Cooling:
+      Common:
+        Fields: &CoilSystemCoolingCommonFields
+          cooling_coil_name:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: -1
+              ValueLocation: key
+          cooling_coil_object_type:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: -1
+              ValueLocation: self
       DX:
         Base: &CoilSystemCoolingDXSuperObject
           Fields: &CoilSystemCoolingDXFields
             name: '{} Cooling System'
-            cooling_coil_name:
-              BuildPathReference:
-                Location: Coil:Cooling:DX.*
-                Occurrence: -1
-                ValueLocation: key
-            cooling_coil_object_type:
-              BuildPathReference:
-                Location: Coil:Cooling:DX.*
-                Occurrence: -1
-                ValueLocation: self
+            <<: *CoilSystemCoolingCommonFields
             dx_cooling_coil_system_inlet_node_name:
               BuildPathReference:
                 Location: Coil:Cooling:DX.*
@@ -1871,6 +1874,15 @@ Objects:
                 ValueLocation: Outlet
           Connectors:
             AirLoop: False
+      Water:
+        Base:
+          Fields: &CoilSystemCoolingWaterFields
+            name: '{} Heat Exchanger Assisted Cooling Coil'
+            <<: *CoilSystemCoolingCommonFields
+            heat_exchanger_name:
+              HeatExchanger.*: key
+            heat_exchanger_object_type:
+              HeatExchanger.*: self
   Controller:
     OutdoorAir:
       Base:
@@ -2142,6 +2154,27 @@ Objects:
             supply_air_inlet_node_name: *OutdoorAirInletNodes
             supply_air_outlet_node_name: '{} Heat Recovery Supply Outlet'
             supply_air_outlet_temperature_control: 'Yes' # set by legacy, not default
+        CoolingCoil:
+          Base: &HeatExchangerAirToAirSensibleAndLatentCoolingCoilSuperObject
+            Fields:
+              name: '{} Cooling Coil Heat Exchanger'
+              economizer_lockout: No # set by legacy, not default
+              exhaust_air_inlet_node_name: '{} HX Exhaust Inlet'
+              exhaust_air_outlet_node_name:
+                BuildPathReference:
+                  Location: Coil:Cooling.*
+                  ValueLocation: Outlet
+                nominal_supply_air_flow_rate: Autosize # set by legacy, no default, required by schema
+                sensible_effectiveness_at_75_cooling_air_flow: 0.75 # set by legacy, not default
+                sensible_effectiveness_at_75_heating_air_flow: 0.75 # set by legacy, not default
+                sensible_effectiveness_at_100_cooling_air_flow: 0.7 # set by legacy, not default
+                sensible_effectiveness_at_100_heating_air_flow: 0.7 # set by legacy, not default
+                supply_air_inlet_node_name: '{} HX Supply Inlet'
+                supply_air_outlet_node_name: '{} HX Supply Outlet'
+            Connectors:
+              AirLoop:
+                Inlet: supply_air_inlet_node_name
+                Outlet: exhaust_air_outlet_node_name
   Humidifier:
     Steam:
       Electric:
@@ -2852,6 +2885,14 @@ Objects:
         Transitions: &ZoneHVACFourPipeFanCoilCommonTransitions
           - ZoneHVAC:FourPipeFanCoil:
               supply_air_maximum_flow_rate: maximum_supply_air_flow_rate
+        Mappings: &ZoneHVACFourPipeFanCoilCommonMappings
+          - ZoneHVAC:FourPipeFanCoil:
+              cooling_coil_type:
+                HeatExchangerAssistedChilledWater:
+                  cooling_coil_type: CoilSystem:Cooling:Water:HeatExchangerAssisted
+                  cooling_coil_name:
+                    CoilSystem:Cooling:Water:HeatExchangerAssisted: key
+
       Base:
         Fields: &ZoneHVACFourPipeFanCoil
           name: '{} Fan Coil'
@@ -3579,7 +3620,7 @@ OptionTree:
           Transitions:
             - *SizingZoneCommonTransitions
             - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
-            - *ZoneHVACFourPipeFanCoilCommonTransitions
+#            - *ZoneHVACFourPipeFanCoilCommonTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           <<: *ZoneCommonTemplateObjectsDesignSpecification
@@ -3589,6 +3630,8 @@ OptionTree:
               Objects:
                 - ZoneHVAC:FourPipeFanCoil: *ZoneHVACFourPipeFanCoil
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+              Transitiions: *ZoneHVACFourPipeFanCoilCommonTransitions
+              Mappings: *ZoneHVACFourPipeFanCoilCommonMappings
             AnyValue:
               Objects:
                 - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
@@ -3596,6 +3639,8 @@ OptionTree:
                     <<: *ZoneHVACFourPipeFanCoil
                     capacity_control_method: CyclingFan
                     maximum_outdoor_air_flow_rate: 0.0
+              Transitiions: *ZoneHVACFourPipeFanCoilCommonTransitions
+              Mappings: *ZoneHVACFourPipeFanCoilCommonMappings
       PTAC:
         BuildPath:
           BaseObjects:

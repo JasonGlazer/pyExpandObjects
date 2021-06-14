@@ -5,7 +5,7 @@ from tests.simulations import BaseSimulationTest
 test_dir = Path(__file__).parent.parent.parent
 
 
-class TestSimulationsSystemBase(BaseSimulationTest):
+class TestSimulationsBase(BaseSimulationTest):
     def setUp(self):
         return
 
