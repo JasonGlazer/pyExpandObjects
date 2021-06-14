@@ -343,3 +343,95 @@ class TestSimulationsZoneFanCoil(BaseSimulationTest):
             11.5,
             epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature_difference'])
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:capacity_control_method")
+    def test_capacity_control_method(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['capacity_control_method'] = 'CyclingFan'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'CyclingFan',
+            epjson_output['ZoneHVAC:FourPipeFanCoil']['SPACE1-1 Fan Coil']['capacity_control_method'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:low_speed_supply_air_flow_ratio")
+    def test_low_speed_supply_air_flow_ratio(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['low_speed_supply_air_flow_ratio'] = 0.4
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.4,
+            epjson_output['ZoneHVAC:FourPipeFanCoil']['SPACE1-1 Fan Coil']['low_speed_supply_air_flow_ratio'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:medium_speed_supply_air_flow_ratio")
+    def test_medium_speed_supply_air_flow_ratio(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['medium_speed_supply_air_flow_ratio'] = 0.7
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.7,
+            epjson_output['ZoneHVAC:FourPipeFanCoil']['SPACE1-1 Fan Coil']['medium_speed_supply_air_flow_ratio'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:outdoor_air_schedule_name")
+    def test_outdoor_air_schedule_name(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['outdoor_air_schedule_name'] = 'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['ZoneHVAC:FourPipeFanCoil']['SPACE1-1 Fan Coil']['outdoor_air_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:baseboard_heating_type_hot_water")
+    def test_baseboard_heating_type_hot_water(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water'].get('SPACE1-1 Baseboard Heat'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:baseboard_heating_type_electric")
+    def test_baseboard_heating_type_electric(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1'][
+            'baseboard_heating_type'] = 'Electric'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['ZoneHVAC:Baseboard:Convective:Electric'].get('SPACE1-1 Baseboard Heat'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:baseboard_heating_availability_schedule_name")
+    def test_baseboard_heating_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1'][
+            'baseboard_heating_availability_schedule_name'] = 'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water']['SPACE1-1 Baseboard Heat']['availability_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:baseboard_heating_capacity")
+    def test_baseboard_heating_capacity(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1'][
+            'baseboard_heating_capacity'] = 200
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            200,
+            epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water']['SPACE1-1 Baseboard Heat']['heating_design_capacity'])
+        return

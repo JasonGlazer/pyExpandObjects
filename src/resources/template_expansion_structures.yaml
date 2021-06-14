@@ -2881,6 +2881,10 @@ Objects:
         Transitions: &ZoneHVACFourPipeFanCoilCommonTransitions
           - ZoneHVAC:FourPipeFanCoil:
               supply_air_maximum_flow_rate: maximum_supply_air_flow_rate
+              capacity_control_method: capacity_control_method
+              low_speed_supply_air_flow_ratio: low_speed_supply_air_flow_ratio
+              medium_speed_supply_air_flow_ratio: medium_speed_supply_air_flow_ratio
+              outdoor_air_schedule_name: outdoor_air_schedule_name
         Mappings: &ZoneHVACFourPipeFanCoilCommonMappings
           - ZoneHVAC:FourPipeFanCoil:
               cooling_coil_type:
@@ -2888,7 +2892,6 @@ Objects:
                   cooling_coil_object_type: CoilSystem:Cooling:Water:HeatExchangerAssisted
                   cooling_coil_name:
                     CoilSystem.*: key
-
       Base:
         Fields: &ZoneHVACFourPipeFanCoil
           name: '{} Fan Coil'
@@ -3641,7 +3644,7 @@ OptionTree:
               Objects:
                 - ZoneHVAC:FourPipeFanCoil: *ZoneHVACFourPipeFanCoil
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
-              Transitiions: *ZoneHVACFourPipeFanCoilCommonTransitions
+              Transitions: *ZoneHVACFourPipeFanCoilCommonTransitions
               Mappings: *ZoneHVACFourPipeFanCoilCommonMappings
             AnyValue:
               Objects:
@@ -3650,7 +3653,7 @@ OptionTree:
                     <<: *ZoneHVACFourPipeFanCoil
                     capacity_control_method: CyclingFan
                     maximum_outdoor_air_flow_rate: 0.0
-              Transitiions: *ZoneHVACFourPipeFanCoilCommonTransitions
+              Transitions: *ZoneHVACFourPipeFanCoilCommonTransitions
               Mappings: *ZoneHVACFourPipeFanCoilCommonMappings
       PTAC:
         BuildPath:
