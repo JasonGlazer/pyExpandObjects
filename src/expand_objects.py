@@ -1186,7 +1186,7 @@ class ZonevacEquipmentListObjectType:
         # Check for doas reference
         doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
         # Check for baseboard reference
-        baseboard_equipment = None
+        # baseboard_equipment = None
         baseboard_equipment = True if template_fields.get('baseboard_heating_type', 'None') != 'None' else False
         if doas_equipment and baseboard_equipment:
             if template_type == 'HVACTemplate:Zone:BaseboardHeat':
@@ -1281,9 +1281,13 @@ class HeatingDesignAirFlowMethod:
         (_, template_fields), = template_structure.items()
         # Check for doas reference
         supply_air_maximum_flow_rate = template_fields.get('supply_air_maximum_flow_rate', 'None')
+        heating_supply_air_flow_rate = template_fields.get('heating_supply_air_flow_rate', 'None')
         if isinstance(supply_air_maximum_flow_rate, (int, float)):
             obj._heating_design_air_flow_method = 'Flow/Zone'
             setattr(obj, 'heating_design_air_flow_rate', supply_air_maximum_flow_rate)
+        elif isinstance(heating_supply_air_flow_rate, (int, float)):
+            obj._heating_design_air_flow_method = 'Flow/Zone'
+            setattr(obj, 'heating_design_air_flow_rate', heating_supply_air_flow_rate)
         return
 
 
@@ -1301,9 +1305,13 @@ class CoolingDesignAirFlowMethod:
         (_, template_fields), = template_structure.items()
         # Check for doas reference
         supply_air_maximum_flow_rate = template_fields.get('supply_air_maximum_flow_rate', 'None')
+        cooling_supply_air_flow_rate = template_fields.get('cooling_supply_air_flow_rate', 'None')
         if isinstance(supply_air_maximum_flow_rate, (int, float)):
             obj._cooling_design_air_flow_method = 'Flow/Zone'
             setattr(obj, 'cooling_design_air_flow_rate', supply_air_maximum_flow_rate)
+        elif isinstance(cooling_supply_air_flow_rate, (int, float)):
+            obj._cooling_design_air_flow_method = 'Flow/Zone'
+            setattr(obj, 'cooling_design_air_flow_rate', cooling_supply_air_flow_rate)
         return
 
 
