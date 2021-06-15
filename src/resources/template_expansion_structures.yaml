@@ -2920,11 +2920,14 @@ Objects:
       Base:
         Fields: &ZoneHVACIdealLoadsAirSystemFields
           name: '{} Ideal Loads Air System'
+          availability_schedule_name: '{system_availability_schedule_name}'
           cooling_limit: '{cooling_limit}'
           cooling_sensible_heat_ratio: '{cooling_sensible_heat_ratio}'
+          cooling_availability_schedule_name: '{cooling_availability_schedule_name}'
           dehumidification_control_type: '{dehumidification_control_type}'
           demand_controlled_ventilation_type: '{demand_controlled_ventilation_type}'
           heat_recovery_type: '{heat_recovery_type}'
+          heating_availability_schedule_name: '{heating_availability_schedule_name}'
           heating_limit: '{heating_limit}'
           humidification_control_type: '{humidification_control_type}'
           latent_heat_recovery_effectiveness: '{latent_heat_recovery_effectiveness}'
@@ -2932,6 +2935,8 @@ Objects:
           maximum_heating_air_flow_rate: '{maximum_heating_air_flow_rate}'
           maximum_heating_supply_air_humidity_ratio: '{maximum_heating_supply_air_humidity_ratio}'
           maximum_heating_supply_air_temperature: '{maximum_heating_supply_air_temperature}'
+          maximum_sensible_heating_capacity: '{maximum_sensible_heating_capacity}'
+          maximum_total_cooling_capacity: '{maximum_total_cooling_capacity}'
           minimum_cooling_supply_air_humidity_ratio: '{minimum_cooling_supply_air_humidity_ratio}'
           minimum_cooling_supply_air_temperature: '{minimum_cooling_supply_air_temperature}'
           outdoor_air_economizer_type: '{outdoor_air_economizer_type}'
@@ -2944,7 +2949,7 @@ Objects:
               capacity_control_method:
                 SingleZoneVAV:
                   supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always1
-        Transitions: &ZoneHVACPackagedTerminalAirconditionerCommonTransitions
+        Transitions: &ZoneHVACPackagedTerminalAirConditionerCommonTransitions
           - ZoneHVAC:PackagedTerminalAirConditioner:
               cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
               heating_supply_air_flow_rate: heating_supply_air_flow_rate
@@ -2967,6 +2972,11 @@ Objects:
           <<: *ZoneHVACPackagedTerminalAirconditionerCommonFields
     PackagedTerminalHeatPump:
       Common:
+        Mappings: &ZoneHVACPackagedTerminalHeatPumpCommonMappings
+          - ZoneHVAC:PackagedTerminalHeatPump:
+              capacity_control_method:
+                SingleZoneVAV:
+                  supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always1
         Transitions: &ZoneHVACPackagedTerminalHeatPumpCommonTransitions
           - ZoneHVAC:PackagedTerminalHeatPump:
               cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
@@ -3695,6 +3705,54 @@ OptionTree:
                     maximum_outdoor_air_flow_rate: 0.0
               Transitions: *ZoneHVACFourPipeFanCoilCommonTransitions
               Mappings: *ZoneHVACFourPipeFanCoilCommonMappings
+      IdealLoadsAirSystem:
+        BaseObjects:
+          Objects:
+            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
+            - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentList
+        TemplateObjects:
+          outdoor_air_method:
+            None:
+              Objects:
+                - Sizing:Zone: *SizingZone
+                - ZoneHVAC:IdealLoadsAirSystem: *ZoneHVACIdealLoadsAirSystemFields
+              Transitions:
+                - *SizingZoneCommonTransitionsIdealLoads
+            Flow/Person: &ZoneIdealLoadsAirSystemTemplateObjectsOutdoorAirMethodFlowPerPerson
+              Objects:
+                - Sizing:Zone:
+                    <<: *SizingZone
+                    design_specification_outdoor_air_object_name:
+                      ^DesignSpecification:Outdoor.*: key
+                - DesignSpecification:OutdoorAir: *DesignSpecificationOutdoorAir
+                - ZoneHVAC:IdealLoadsAirSystem:
+                    <<: *ZoneHVACIdealLoadsAirSystemFields
+                    design_specification_outdoor_air_object_name:
+                      DesignSpecification:OutdoorAir: key
+                    outdoor_air_inlet_node_name: '{} Outdoor Air Inlet'
+              Transitions:
+                - *SizingZoneCommonTransitionsIdealLoads
+            Flow/Area: *ZoneIdealLoadsAirSystemTemplateObjectsOutdoorAirMethodFlowPerPerson
+            Flow/Zone: *ZoneIdealLoadsAirSystemTemplateObjectsOutdoorAirMethodFlowPerPerson
+            DetailedSpecification:
+              Objects:
+                - Sizing:Zone:
+                    <<: *SizingZone
+                    design_specification_outdoor_air_object_name: '{design_specification_outdoor_air_object_name}'
+                - ZoneHVAC:IdealLoadsAirSystem:
+                    <<: *ZoneHVACIdealLoadsAirSystemFields
+                    outdoor_air_inlet_node_name: '{} Outdoor Air Inlet'
+                    design_specification_outdoor_air_object_name: '{design_specification_outdoor_air_object_name}'
+              Transitions:
+                - *SizingZoneCommonTransitionsIdealLoads
+          humidistat_object_type:
+            IncludeHumidistat:
+              Objects:
+                - ZoneControl:Humidistat:
+                    name: '{} Humidification Humidistat'
+                    dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
+                    humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidification_setpoint}'
+                    zone_name: '{}'
       PTAC:
         BuildPath:
           BaseObjects:
@@ -3720,7 +3778,7 @@ OptionTree:
                 - ZoneHVAC:PackagedTerminalAirConditioner: *ZoneHVACPackagedTerminalAirConditionerFields
               Transitions:
                 - *ZoneHVACCommonZoneEquipmentTransitions
-                - *ZoneHVACPackagedTerminalAirconditionerCommonTransitions
+                - *ZoneHVACPackagedTerminalAirConditionerCommonTransitions
               Mappings: *ZoneHVACPackagedTerminalAirconditionerCommonMappings
             AnyValue:
               Objects:
@@ -3732,8 +3790,10 @@ OptionTree:
                     no_load_outdoor_air_flow_rate: 0.0
               Transitions:
                 - *ZoneHVACCommonZoneEquipmentTransitions
-                - *ZoneHVACPackagedTerminalAirconditionerCommonTransitions
-                - AirTerminal:SingleDuct.*: # todo_eo Maybe this value should get merged with supply_air_maximum_flow_rate if not set
+                - *ZoneHVACPackagedTerminalAirConditionerCommonTransitions
+                - AirTerminal:SingleDuct.*:
+                    # todo_eo Maybe this value should get merged with supply_air_maximum_flow_rate if not set
+                    #   This is to size the DOAS AirTerminal object
                     cooling_supply_air_flow_rate: maximum_air_flow_rate
               Mappings: *ZoneHVACPackagedTerminalAirconditionerCommonMappings
       PTHP:
@@ -3766,6 +3826,10 @@ OptionTree:
                           availability_schedule_name: '{supplemental_heating_coil_availability_schedule_name}'
                         Connectors:
                           AirLoop: *ConnectorsAirLoop
+                  Transitions:
+                    - Coil:Heating:Electric:
+                        supplemental_heating_coil_capacity: nominal_capacity
+                        supplemental_heating_or_reheat_coil_capacity: nominal_capacity
                 Gas:
                   Location: -1
                   ActionType: Insert
@@ -3778,11 +3842,17 @@ OptionTree:
                           air_outlet_node_name: '{} Supp Heating Coil Outlet'
                           part_load_fraction_correlation_curve_name: '{} Supp Heating Coil PLF-FPLR'
                           availability_schedule_name: '{supplemental_heating_coil_availability_schedule_name}'
+                          burner_efficiency: '{supplemental_gas_heating_coil_efficiency}'
+                          parasitic_electric_load: '{supplemental_gas_heating_coil_parasitic_electric_load}'
                         Connectors:
                           AirLoop: *ConnectorsAirLoop
                     - Curve:Cubic:
                         <<: *CoilHeatingFuelCommonObjectsPLFFPLRCurve
                         name: '{} Supp Heating Coil PLF-FPLR'
+                  Transitions:
+                    - Coil:Heating:Fuel:
+                        supplemental_heating_coil_capacity: nominal_capacity
+                        supplemental_heating_or_reheat_coil_capacity: nominal_capacity
                 HotWater:
                   Location: -1
                   ActionType: Insert
@@ -3797,6 +3867,10 @@ OptionTree:
                         Connectors:
                           AirLoop: *ConnectorsAirLoop
                     - *CoilHeatingWaterCommonObjects
+                  Transitions:
+                    - Coil:Heating:Water:
+                        supplemental_heating_coil_capacity: rated_capacity
+                        supplemental_heating_or_reheat_coil_capacity: nominal_capacity
         BaseObjects:
           Objects:
             - Sizing:Zone: *SizingZoneOA
@@ -3806,6 +3880,7 @@ OptionTree:
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           <<: *ZoneCommonTemplateObjectsDesignSpecification
+          <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
           dedicated_outdoor_air_system_name:
             None:
               Objects:
@@ -3814,58 +3889,31 @@ OptionTree:
               Transitions:
                 - *ZoneHVACCommonZoneEquipmentTransitions
                 - *ZoneHVACPackagedTerminalHeatPumpCommonTransitions
-      IdealLoadsAirSystem:
-        BaseObjects:
-          Objects:
-            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
-            - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentList
-        TemplateObjects:
-          outdoor_air_method:
-            None:
+              Mappings: *ZoneHVACPackagedTerminalHeatPumpCommonMappings
+            AnyValue:
               Objects:
-                - Sizing:Zone: *SizingZone
-                - ZoneHVAC:IdealLoadsAirSystem: *ZoneHVACIdealLoadsAirSystemFields
+                - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
+                - ZoneHVAC:PackagedTerminalHeatPump:
+                    <<: *ZoneHVACPackagedTerminalHeatPumpFields
+                    cooling_outdoor_air_flow_rate: 0.0
+                    heating_outdoor_air_flow_rate: 0.0
+                    no_load_outdoor_air_flow_rate: 0.0
               Transitions:
-                - *SizingZoneCommonTransitionsIdealLoads
-            Flow/Person:
-              Objects:
-                - Sizing:Zone:
-                    <<: *SizingZone
-                    design_specification_outdoor_air_object_name:
-                      ^DesignSpecification:Outdoor.*: key
-                - DesignSpecification:OutdoorAir: *DesignSpecificationOutdoorAir
-                - ZoneHVAC:IdealLoadsAirSystem:
-                    <<: *ZoneHVACIdealLoadsAirSystemFields
-                    design_specification_outdoor_air_object_name:
-                      DesignSpecification:OutdoorAir: key
-                    outdoor_air_inlet_node_name: '{} Outdoor Air Inlet'
-              Transitions:
-                - *SizingZoneCommonTransitionsIdealLoads
-            DetailedSpecification:
-              Objects:
-                - Sizing:Zone:
-                    <<: *SizingZone
-                    design_specification_outdoor_air_object_name: '{design_specification_outdoor_air_object_name}'
-                - ZoneHVAC:IdealLoadsAirSystem:
-                    <<: *ZoneHVACIdealLoadsAirSystemFields
-                    outdoor_air_inlet_node_name: '{} Outdoor Air Inlet'
-                    design_specification_outdoor_air_object_name: '{design_specification_outdoor_air_object_name}'
-              Transitions:
-                - *SizingZoneCommonTransitionsIdealLoads
-          humidification_control_type:
-            Humidistat:
-              Objects:
-                - ZoneControl:Humidistat:
-                    name: '{} Humidification Humidistat'
-                    dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
-                    humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidification_setpoint}'
-                    zone_name: '{}'
+                - *ZoneHVACCommonZoneEquipmentTransitions
+                - *ZoneHVACPackagedTerminalHeatPumpCommonTransitions
+                - AirTerminal:SingleDuct.*:
+                    # todo_eo Maybe this value should get merged with supply_air_maximum_flow_rate if not set
+                    #   This is to size the DOAS AirTerminal object
+                    cooling_supply_air_flow_rate: maximum_air_flow_rate
+              Mappings: *ZoneHVACPackagedTerminalHeatPumpCommonMappings
       Unitary:
         BaseObjects:
           Objects:
             - *ZoneCommonBaseObjectsObjectsAirTerminal
             - AirTerminal:SingleDuct:ConstantVolume:NoReheat: *AirTerminalSingleDuctConstantVolumeNoReheat
-          Transitions: *SizingZoneCommonTransitions
+          Transitions:
+            - *SizingZoneCommonTransitions
+            - *AirTerminalSingleDuctCommonTransitions
         TemplateObjects: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
       VAV:
         BaseObjects:

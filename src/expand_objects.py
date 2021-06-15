@@ -1315,6 +1315,32 @@ class CoolingDesignAirFlowMethod:
         return
 
 
+class HumidistatObjectType:
+    """
+    Set a class attribute, humidistat_object_type, for TemplateObjects in the YAML lookup.
+    Also set the dehumidification and humidification values to a default if not provided
+    """
+    def __get__(self, obj, owner):
+        return obj._humidistat_object_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        dehumidification_control_type = template_fields.get('dehumidification_control_type') if \
+            template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+        humidification_control_type = template_fields.get('humidification_control_type') if \
+            template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+        dehumidification_setpoint = template_fields.get('dehumidification_setpoint') if \
+            template_fields.get('dehumidification_setpoint', 'None') != 'None' else False
+        humidification_setpoint = template_fields.get('humidification_setpoint') if \
+            template_fields.get('humidification_setpoint', 'None') != 'None' else False
+        if dehumidification_control_type == 'Humidistat' or humidification_control_type == 'Humidistat':
+            obj._humidistat_object_type = 'IncludeHumidistat'
+            setattr(obj, 'dehumidification_setpoint', dehumidification_setpoint or 100)
+            setattr(obj, 'humidification_setpoint', humidification_setpoint or 0)
+        return
+
+
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
@@ -1325,6 +1351,7 @@ class ExpandZone(ExpandObjects):
     design_specification_zone_air_distribution_object_status = DesignSpecificationZoneAirDistributionObjectStatus()
     heating_design_air_flow_method = HeatingDesignAirFlowMethod()
     cooling_design_air_flow_method = CoolingDesignAirFlowMethod()
+    humidistat_object_type = HumidistatObjectType()
 
     def __init__(self, template, epjson=None):
         # fill/create class attributes values with template inputs
@@ -1340,6 +1367,7 @@ class ExpandZone(ExpandObjects):
         self.design_specification_zone_air_distribution_object_status = template
         self.heating_design_air_flow_method = template
         self.cooling_design_air_flow_method = template
+        self.humidistat_object_type = template
         self.epjson = epjson or self.epjson
         return
 
