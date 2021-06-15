@@ -1586,9 +1586,10 @@ Objects:
           AirLoop: *ConnectorsAirLoop
       Electric:
         Common:
-          Transitions: &CoilHeatingElectricCommonTransitions
-            - Coil:Heating:Electric:
-                heating_coil_capacity: nominal_capacity
+          Transitions:
+            Base: &CoilHeatingElectricCommonTransitions
+              - Coil:Heating:Electric:
+                  heating_coil_capacity: nominal_capacity
         Base: &CoilHeatingElectricSuperObject
           Fields: &CoilHeatingElectricFields
             <<: *CoilHeatingCommonFields
@@ -1652,6 +1653,7 @@ Objects:
             Transitions: &CoilHeatingDXSingleSpeedCommonTransitions
               - Coil:Heating:DX:SingleSpeed:
                   heating_supply_air_flow_rate: rated_air_flow_rate
+                  heat_pump_heating_coil_availability_schedule_name: availability_schedule_name
                   heat_pump_heating_coil_rated_cop: gross_rated_heating_cop # todo_eo: could be combined into one variable
                   heat_pump_heating_coil_gross_rated_capacity: gross_rated_heating_capacity
           Base: &CoilHeatingDXSingleSpeedSuperObject
@@ -1669,6 +1671,7 @@ Objects:
               heating_capacity_function_of_temperature_curve_name: '{} Heating Coil Cap-FT'
               maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation: 0 # set by legacy, not default
               minimum_outdoor_dry_bulb_temperature_for_compressor_operation: '{heat_pump_heating_minimum_outdoor_dry_bulb_temperature}'
+              maximum_outdoor_dry_bulb_temperature_for_defrost_operation: '{heat_pump_defrost_maximum_outdoor_dry_bulb_temperature}'
               part_load_fraction_correlation_curve_name: '{} Heating Coil PLF'
               rated_air_flow_rate: Autosize # set by legacy, no defaut, required by schema
               resistive_defrost_heater_capacity: Autosize # set by legacy, not default
@@ -1716,7 +1719,7 @@ Objects:
       Fuel:
         Common:
           Objects: &CoilHeatingFuelCommonObjects
-            - Curve:Cubic:
+            - Curve:Cubic: &CoilHeatingFuelCommonObjectsPLFFPLRCurve
                 name: '{} Heating Coil PLF-FPLR'
                 coefficient1_constant: 0.8
                 coefficient2_x: 0.2
@@ -2963,6 +2966,13 @@ Objects:
           <<: *ZoneHVACCommonZoneEquipmentFields
           <<: *ZoneHVACPackagedTerminalAirconditionerCommonFields
     PackagedTerminalHeatPump:
+      Common:
+        Transitions: &ZoneHVACPackagedTerminalHeatPumpCommonTransitions
+          - ZoneHVAC:PackagedTerminalHeatPump:
+              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
+              heating_supply_air_flow_rate: heating_supply_air_flow_rate
+              no_load_supply_air_flow_rate: no_load_supply_air_flow_rate
+              system_availability_schedule_name: availability_schedule_name
       Base:
         Fields: &ZoneHVACPackagedTerminalHeatPumpFields
           name: '{} PTHP'
@@ -3731,8 +3741,6 @@ OptionTree:
           BaseObjects:
             Objects:
               - *ZoneCommonBuildPathBaseObjectsObjects
-            Transitions:
-              - *FanCommonTransitionsSystemModel
           Actions:
             - *ZoneCommonBuildPathActionsObjectsAfterMixer
             - heat_pump_heating_coil_type:
@@ -3755,6 +3763,7 @@ OptionTree:
                           name: '{} Supp Heating Coil'
                           air_inlet_node_name: '{} Supp Heating Coil Inlet'
                           air_outlet_node_name: '{} Supp Heating Coil Outlet'
+                          availability_schedule_name: '{supplemental_heating_coil_availability_schedule_name}'
                         Connectors:
                           AirLoop: *ConnectorsAirLoop
                 Gas:
@@ -3767,17 +3776,36 @@ OptionTree:
                           name: '{} Supp Heating Coil'
                           air_inlet_node_name: '{} Supp Heating Coil Inlet'
                           air_outlet_node_name: '{} Supp Heating Coil Outlet'
+                          part_load_fraction_correlation_curve_name: '{} Supp Heating Coil PLF-FPLR'
+                          availability_schedule_name: '{supplemental_heating_coil_availability_schedule_name}'
                         Connectors:
                           AirLoop: *ConnectorsAirLoop
-                Steam: # todo_eo: needs build out when steam option is made
+                    - Curve:Cubic:
+                        <<: *CoilHeatingFuelCommonObjectsPLFFPLRCurve
+                        name: '{} Supp Heating Coil PLF-FPLR'
+                HotWater:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Water:
+                        Fields:
+                          <<: *CoilHeatingWaterFields
+                          name: '{} Supp Heating Coil'
+                          air_inlet_node_name: '{} Supp Heating Coil Inlet'
+                          air_outlet_node_name: '{} Supp Heating Coil Outlet'
+                          availability_schedule_name: '{supplemental_heating_coil_availability_schedule_name}'
+                        Connectors:
+                          AirLoop: *ConnectorsAirLoop
+                    - *CoilHeatingWaterCommonObjects
         BaseObjects:
           Objects:
-            - *ZoneCommonBaseObjectsObjects
+            - Sizing:Zone: *SizingZoneOA
           Transitions:
             - *SizingZoneCommonTransitions
             - *SizingZoneCommonTransitionsAlt # Override base template transitions with alternate naming template transitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+          <<: *ZoneCommonTemplateObjectsDesignSpecification
           dedicated_outdoor_air_system_name:
             None:
               Objects:
@@ -3785,6 +3813,7 @@ OptionTree:
                 - ZoneHVAC:PackagedTerminalHeatPump: *ZoneHVACPackagedTerminalHeatPumpFields
               Transitions:
                 - *ZoneHVACCommonZoneEquipmentTransitions
+                - *ZoneHVACPackagedTerminalHeatPumpCommonTransitions
       IdealLoadsAirSystem:
         BaseObjects:
           Objects:

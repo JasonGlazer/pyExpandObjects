@@ -90,7 +90,7 @@ class TestSimulationsZonePTAC(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:PTAC:cooling_supply_air_flow_rate")
     def test_heating_supply_air_flow_rate(self):
         # todo_eo: ZoneHVAC:EquipmentConnections and ZoneHVAC:PackagedTerminalAirConditioner heating_supply_air_flow_rate
-        #  are not set in legacy with these inputs which is causing the discrepancy.
+        #  are not set in legacy with these inputs which can cause discrepancy.
         self.base_epjson['HVACTemplate:Zone:PTAC']['HVACTemplate:Zone:PTAC 1']['heating_supply_air_flow_rate'] = 0.1
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
@@ -296,7 +296,7 @@ class TestSimulationsZonePTAC(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:PTAC:cooling_coil_gross_rated_sensible_heat_ratio")
-    def test_cooling_coil_gross_rated_total_capacity(self):
+    def test_cooling_coil_gross_rated_sensible_heat_ratio(self):
         self.base_epjson['HVACTemplate:Zone:PTAC']['HVACTemplate:Zone:PTAC 1']['cooling_coil_gross_rated_sensible_heat_ratio'] = 0.65
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
