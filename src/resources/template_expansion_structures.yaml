@@ -743,6 +743,9 @@ Objects:
             Reheat: &AirTerminalSingleDuctVAVCommonFieldsReheat
               damper_air_outlet_node_name: '{} Damper Outlet' # required by schema
               damper_heating_action: Reverse # template default, not object default
+              maximum_flow_per_zone_floor_area_during_reheat: '{maximum_flow_per_zone_floor_area_during_reheat}'
+              maximum_flow_fraction_during_reheat: '{maximum_flow_fraction_during_reheat}'
+              maximum_reheat_air_temperature: '{maximum_reheat_air_temperature}'
           Transitions: &AirTerminalSingleDuctVAVCommonTransitions
             - AirTerminal:.*:
                 supply_air_maximum_flow_rate: maximum_air_flow_rate
@@ -3411,11 +3414,11 @@ OptionTree:
                 Transitions: *ZoneHVACBaseboardCommonTransitions
           DesignSpecification: &ZoneCommonTemplateObjectsDesignSpecification
             design_specification_outdoor_air_object_status:
-              IncludeDSOA:
+              IncludeDSOA: # Created via descriptors in ExpandZone
                 Objects:
                   - DesignSpecification:OutdoorAir: *DesignSpecificationOutdoorAir
             design_specification_zone_air_distribution_object_status:
-              IncludeDZAD:
+              IncludeDZAD: # Created via descriptors in ExpandZone
                 Objects:
                   - DesignSpecification:ZoneAirDistribution: *DesignSpecificationZoneAirDistribution
           ZoneHVACEquipmentListObjectType: &ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
@@ -3438,6 +3441,18 @@ OptionTree:
               WithBaseboard:
                 Objects:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
+          SupplyPlenum: &ZoneCommonTemplateObjectsSupplyPlenum
+            supply_plenum_name:
+              AnyValue:
+                Objects:
+                  - AirLoopHVAC:SupplyPlenum:
+                      name: '{} Supply Plenum'
+                      inlet_node_name: '{} Plenum Inlet'
+                      nodes:
+                        - outlet_node_name:
+                            AirTerminal.*: air_inlet_node_name
+                      zone_name: '{supply_plenum_name}'
+                      zone_node_name: '{supply_plenum_name} Zone Air Node'
           ReturnPlenum: &ZoneCommonTemplateObjectsReturnPlenum
             return_plenum_name:
               AnyValue:
@@ -3480,8 +3495,28 @@ OptionTree:
                         zone_air_exhaust_node_or_nodelist_name: *ZoneReturn
                         zone_air_inlet_node_or_nodelist_name: '{} Inlets'
           VAV:
-            Base: &ZoneCommonTemplateObjectsVAV
+            Reheat: &ZoneCommonTemplateObjectsVAVReheat
               reheat_coil_type:
+                None:
+                  Objects:
+                    - AirTerminal:SingleDuct:VAV:NoReheat: *AirTerminalSingleDuctVAVNoReheatFields
+                  Transitions: *AirTerminalSingleDuctVAVCommonTransitions
+                Gas:
+                  Objects:
+                    - AirTerminal:SingleDuct:VAV:Reheat: *AirTerminalSingleDuctVAVReheat
+                    - Coil:Heating:Fuel:
+                        <<: *CoilHeatingFuelFields
+                        name: '{} Reheat Coil'
+                        air_inlet_node_name:
+                          AirTerminal:SingleDuct:.*: damper_air_outlet_node_name
+                        air_outlet_node_name:
+                          AirTerminal:SingleDuct:.*: air_outlet_node_name
+                        availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                        part_load_fraction_correlation_curve_name: '{} Reheat Coil PLF-FPLR'
+                    - Curve:Cubic:
+                        <<: *CoilHeatingFuelCommonObjectsPLFFPLRCurve
+                        name: '{} Reheat Coil PLF-FPLR'
+                  Transitions: *AirTerminalSingleDuctVAVCommonTransitions
                 HotWater:
                   Objects:
                     - AirTerminal:SingleDuct:VAV:Reheat: *AirTerminalSingleDuctVAVReheatHotWater
@@ -3496,8 +3531,7 @@ OptionTree:
                     - Branch:
                         <<: *CoilHeatingWaterCommonObjectsBranch
                         name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
-                  Transitions:
-                    - *AirTerminalSingleDuctVAVCommonTransitions
+                  Transitions: *AirTerminalSingleDuctVAVCommonTransitions
                 Electric:
                   Objects:
                     - AirTerminal:SingleDuct:VAV:Reheat: *AirTerminalSingleDuctVAVReheat
@@ -3509,8 +3543,7 @@ OptionTree:
                         air_outlet_node_name:
                           AirTerminal:SingleDuct:.*: air_outlet_node_name
                         availability_schedule_name: '{reheat_coil_availability_schedule_name}'
-                  Transitions:
-                    - *AirTerminalSingleDuctVAVCommonTransitions
+                  Transitions: *AirTerminalSingleDuctVAVCommonTransitions
             HeatAndCool: &ZoneCommonTemplateObjectsVAVHeatAndCool
               reheat_coil_type:
                 Electric:
@@ -3602,6 +3635,10 @@ OptionTree:
                     air_inlet_node_name: *ZoneEquipInlet
                     air_outlet_node_name: '{} Supply Inlet'
                     availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                    part_load_fraction_correlation_curve_name: '{} Reheat Coil PLF-FPLR'
+                - Curve:Cubic:
+                    <<: *CoilHeatingFuelCommonObjectsPLFFPLRCurve
+                    name: '{} Reheat Coil PLF-FPLR'
               Transitions: *AirTerminalSingleDuctCommonTransitions
             HotWater:
               Objects:
@@ -3618,17 +3655,7 @@ OptionTree:
                     <<: *CoilHeatingWaterCommonObjectsBranch
                     name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
               Transitions: *AirTerminalSingleDuctCommonTransitions
-          supply_plenum_name:
-            AnyValue:
-              Objects:
-                - AirLoopHVAC:SupplyPlenum:
-                    name: '{} Supply Plenum'
-                    inlet_node_name: '{} Plenum Inlet'
-                    nodes:
-                      - outlet_node_name:
-                          AirTerminal.*: air_inlet_node_name
-                    zone_name: '{supply_plenum_name}'
-                    zone_node_name: '{supply_plenum_name} Zone Air Node'
+          <<: *ZoneCommonTemplateObjectsSupplyPlenum
           <<: *ZoneCommonTemplateObjectsReturnPlenum
       DualDuct:
         BaseObjects:
@@ -3746,7 +3773,7 @@ OptionTree:
               Transitions:
                 - *SizingZoneCommonTransitionsIdealLoads
           humidistat_object_type:
-            IncludeHumidistat:
+            IncludeHumidistat: # Created via descriptors in ExpandZone
               Objects:
                 - ZoneControl:Humidistat:
                     name: '{} Humidification Humidistat'
@@ -3909,19 +3936,33 @@ OptionTree:
       Unitary:
         BaseObjects:
           Objects:
-            - *ZoneCommonBaseObjectsObjectsAirTerminal
+            - Sizing:Zone: *SizingZoneOA
+            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
+            - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
             - AirTerminal:SingleDuct:ConstantVolume:NoReheat: *AirTerminalSingleDuctConstantVolumeNoReheat
           Transitions:
             - *SizingZoneCommonTransitions
             - *AirTerminalSingleDuctCommonTransitions
-        TemplateObjects: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+        TemplateObjects:
+          <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+          <<: *ZoneCommonTemplateObjectsDesignSpecification
+          <<: *ZoneCommonTemplateObjectsSupplyPlenum
+          <<: *ZoneCommonTemplateObjectsReturnPlenum
+          <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
       VAV:
         BaseObjects:
-          Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
+          Objects:
+            - Sizing:Zone: *SizingZoneOA
+            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
+            - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
           Transitions: *SizingZoneCommonTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
-          <<: *ZoneCommonTemplateObjectsVAV
+          <<: *ZoneCommonTemplateObjectsVAVReheat
+          <<: *ZoneCommonTemplateObjectsDesignSpecification
+          <<: *ZoneCommonTemplateObjectsSupplyPlenum
+          <<: *ZoneCommonTemplateObjectsReturnPlenum
+          <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
         HeatAndCool:
           BaseObjects:
             Objects: *ZoneCommonBaseObjectsObjectsAirTerminal

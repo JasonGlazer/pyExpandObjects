@@ -181,18 +181,6 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
             epjson_output['Coil:Heating:Water']['SPACE1-1 Reheat Coil']['availability_schedule_name'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:reheat_coil_availability_schedule_name")
-    def test_reheat_coil_availability_schedule_name(self):
-        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
-            'reheat_coil_availability_schedule_name'] = 'OCCUPY-1'
-        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertEqual(
-            'OCCUPY-1',
-            epjson_output['Coil:Heating:Water']['SPACE1-1 Reheat Coil']['availability_schedule_name'])
-        return
-
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:maximum_reheat_air_temperature")
     def test_maximum_reheat_air_temperature(self):
         self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
