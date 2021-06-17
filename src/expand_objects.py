@@ -1368,6 +1368,34 @@ class FanPoweredReheatType:
         return
 
 
+class VRFType:
+    """
+    Create a new class attribute, vrf_type, for TemplateObjects in the YAML lookup for FanPowered zone objects.
+    """
+    def __get__(self, obj, owner):
+        return obj._vrf_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        if template_type == 'HVACTemplate:Zone:VRF':
+            doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
+            cooling_coil_type = template_fields.get('cooling_coil_type') if \
+                template_fields.get('cooling_coil_type', 'None') != 'None' else False
+            heat_pump_heating_coil_type = template_fields.get('heat_pump_heating_coil_type') if \
+                template_fields.get('heat_pump_heating_coil_type', 'None') != 'None' else False
+            if cooling_coil_type and heat_pump_heating_coil_type:
+                obj._vrf_type = 'HeatAndCool'
+            elif cooling_coil_type:
+                obj._vrf_type = 'CoolOnly'
+            elif heat_pump_heating_coil_type:
+                obj._vrf_type = 'HeatOnly'
+            if getattr(obj, '_vrf_type', None):
+                if doas_equipment:
+                    obj._vrf_type = ''.join([obj._vrf_type, 'WithDOAS'])
+        return
+
+
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
@@ -1380,6 +1408,7 @@ class ExpandZone(ExpandObjects):
     cooling_design_air_flow_method = CoolingDesignAirFlowMethod()
     humidistat_object_type = HumidistatObjectType()
     fan_powered_reheat_type = FanPoweredReheatType()
+    vrf_type = VRFType()
 
     def __init__(self, template, epjson=None):
         # fill/create class attributes values with template inputs
@@ -1397,6 +1426,7 @@ class ExpandZone(ExpandObjects):
         self.cooling_design_air_flow_method = template
         self.humidistat_object_type = template
         self.fan_powered_reheat_type = template
+        self.vrf_type = template
         self.epjson = epjson or self.epjson
         return
 

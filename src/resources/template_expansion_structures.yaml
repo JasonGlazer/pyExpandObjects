@@ -1508,10 +1508,11 @@ Objects:
           Base: &CoilCoolingDXVariableRefrigerantFlowSuperObject
             Fields:
               name: '{} VRF Cooling Coil'
+              availability_schedule_name: '{cooling_coil_availability_schedule_name}'
               coil_air_inlet_node: '{} VRF Cooling Coil Inlet'
               coil_air_outlet_node: '{} VRF Cooling Coil Outlet'
               cooling_capacity_modifier_curve_function_of_flow_fraction_name: '{} VRF Cooling Coil Cap-FF'
-              "cooling_capacity_ratio_modifier_function_of_temperature_curve_name": '{} VRF Cooling Coil Cap-FT'
+              cooling_capacity_ratio_modifier_function_of_temperature_curve_name: '{} VRF Cooling Coil Cap-FT'
               gross_rated_sensible_heat_ratio: Autosize
               gross_rated_total_cooling_capacity: Autosize
               rated_air_flow_rate: Autosize
@@ -1764,6 +1765,7 @@ Objects:
           Base: &CoilHeatingDXVariableRefrigerantFlowSuperObject
             Fields:
               name: '{} VRF Heating Coil'
+              availability_schedule: '{heat_pump_heating_coil_availability_schedule_name}'
               coil_air_inlet_node: '{} VRF Heating Coil Inlet'
               coil_air_outlet_node: '{} VRF Heating Coil Outlet'
               gross_rated_heating_capacity: Autosize
@@ -2867,9 +2869,9 @@ Objects:
             zone_equipment_cooling_sequence: 1
             zone_equipment_heating_or_no_load_sequence: 1
           - zone_equipment_object_type:
-              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: self
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|TerminalUnit|WaterToAir).*: self
             zone_equipment_name:
-              ^ZoneHVAC:(FourPipe|PackagedTerminal|WaterToAir).*: key
+              ^ZoneHVAC:(FourPipe|PackagedTerminal|TerminalUnit|WaterToAir).*: key
             zone_equipment_cooling_sequence: 2
             zone_equipment_heating_or_no_load_sequence: 2
       Baseboard: &ZoneHVACEquipmentListBaseBoard
@@ -3074,24 +3076,13 @@ Objects:
           Fields: &ZoneHVACTerminalUnitVariableRefrigerantFlowFields
             name: '{} VRF Terminal Unit'
             <<: *ZoneHVACPackagedTerminalAirconditionerCommonFields
-            cooling_coil_object_name:
-              BuildPathReference:
-                Location: Coil:Cooling.*
-                ValueLocation: key
-            cooling_coil_object_type:
-              BuildPathReference:
-                Location: Coil:Cooling.*
-                ValueLocation: self
-            heating_coil_object_name:
-              BuildPathReference:
-                Location: Coil:Heating.*
-                ValueLocation: key
-            heating_coil_object_type:
-              BuildPathReference:
-                Location: Coil:Heating.*
-                ValueLocation: self
-            no_cooling_supply_air_flow_rate: Autosize
-            no_heating_supply_air_flow_rate: Autosize
+            cooling_outdoor_air_flow_rate: '{cooling_outdoor_air_flow_rate}'
+            cooling_supply_air_flow_rate: '{cooling_supply_air_flow_rate}'
+            heating_outdoor_air_flow_rate: '{heating_outdoor_air_flow_rate}'
+            heating_supply_air_flow_rate: '{heating_supply_air_flow_rate}'
+            no_cooling_supply_air_flow_rate: '{no_cooling_supply_air_flow_rate}'
+            no_heating_supply_air_flow_rate: '{no_heating_supply_air_flow_rate}'
+            no_load_outdoor_air_flow_rate: '{no_load_outdoor_air_flow_rate}'
             outside_air_mixer_object_name:
               BuildPathReference:
                 Location: OutdoorAir:Mixer
@@ -3108,12 +3099,15 @@ Objects:
               BuildPathReference:
                 Location: Fan:.*
                 ValueLocation: self
+            rated_heating_capacity_sizing_ratio: '{rated_total_heating_capacity_sizing_ratio}'
             supply_air_fan_placement: '{supply_air_fan_placement}'
+            supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
             terminal_unit_air_inlet_node_name: *ZoneReturn
             terminal_unit_air_outlet_node_name:
               BuildPathReference:
                 Location: -1
                 ValueLocation: Outlet
+            terminal_unit_availability_schedule: '{system_availability_schedule_name}'
     WaterToAirHeatPump:
       Base:
         Fields: &ZoneHVACWaterToAirHeatPumpFields
@@ -3481,10 +3475,6 @@ OptionTree:
               - DesignSpecification:OutdoorAir: *DesignSpecificationOutdoorAir
               - DesignSpecification:ZoneAirDistribution: *DesignSpecificationZoneAirDistribution
               - Sizing:Zone: *SizingZoneOA
-            AirTerminal: &ZoneCommonBaseObjectsObjectsAirTerminal
-              - *ZoneCommonBaseObjectsObjects
-              - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
-              - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
         TemplateObjects:
           Baseboard: &ZoneCommonTemplateObjectsBaseboardHeatingType
             baseboard_heating_type:
@@ -4284,15 +4274,91 @@ OptionTree:
                 BlowThrough: *ZoneCommonBuildPathActionsObjectsFanOnOffBlowThrough
         BaseObjects:
           Objects:
-            - *ZoneCommonBaseObjectsObjects
-            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
-            - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow: *ZoneHVACTerminalUnitVariableRefrigerantFlowFields
+            - Sizing:Zone: *SizingZoneOA
           Transitions:
-            - *ZoneHVACCommonZoneEquipmentTransitions
             - *ZoneHVACTerminalUnitVariableRefrigerantFlowCommonTransitions
             - *SizingZoneCommonTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+          <<: *ZoneCommonTemplateObjectsDesignSpecification
+          vrf_type:
+            CoolOnly:
+              Objects:
+                - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow: &ZoneVRFTemplateObjectsVRFTypeCoolOnly
+                    <<: *ZoneHVACTerminalUnitVariableRefrigerantFlowFields
+                    cooling_coil_object_name:
+                      BuildPathReference:
+                        Location: Coil:Cooling.*
+                        ValueLocation: key
+                    cooling_coil_object_type:
+                      BuildPathReference:
+                        Location: Coil:Cooling.*
+                        ValueLocation: self
+            CoolOnlyWithDOAS:
+              Objects:
+                - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow:
+                    <<: *ZoneVRFTemplateObjectsVRFTypeCoolOnly
+                    cooling_outdoor_air_flow_rate: 0.0
+                    no_load_outdoor_air_flow_rate: 0.0
+            HeatOnly:
+              Objects:
+                - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow: &ZoneVRFTemplateObjectsVRFTypeHeatOnly
+                    <<: *ZoneHVACTerminalUnitVariableRefrigerantFlowFields
+                    heating_coil_object_name:
+                      BuildPathReference:
+                        Location: Coil:Heating.*
+                        ValueLocation: key
+                    heating_coil_object_type:
+                      BuildPathReference:
+                        Location: Coil:Heating.*
+                        ValueLocation: self
+            HeatOnlyDOAS:
+              Objects:
+                - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow:
+                    <<: *ZoneVRFTemplateObjectsVRFTypeHeatOnly
+                    heating_outdoor_air_flow_rate: 0.0
+                    no_load_outdoor_air_flow_rate: 0.0
+            HeatAndCool:
+              Objects:
+                - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow: &ZoneVRFTemplateObjectsVRFTypeHeatAndCool
+                    <<: *ZoneHVACTerminalUnitVariableRefrigerantFlowFields
+                    cooling_coil_object_name:
+                      BuildPathReference:
+                        Location: Coil:Cooling.*
+                        ValueLocation: key
+                    cooling_coil_object_type:
+                      BuildPathReference:
+                        Location: Coil:Cooling.*
+                        ValueLocation: self
+                    heating_coil_object_name:
+                      BuildPathReference:
+                        Location: Coil:Heating.*
+                        ValueLocation: key
+                    heating_coil_object_type:
+                      BuildPathReference:
+                        Location: Coil:Heating.*
+                        ValueLocation: self
+            HeatAndCoolWithDOAS:
+              Objects:
+                - ZoneHVAC:TerminalUnit:VariableRefrigerantFlow:
+                    <<: *ZoneVRFTemplateObjectsVRFTypeHeatAndCool
+                    cooling_outdoor_air_flow_rate: 0.0
+                    heating_outdoor_air_flow_rate: 0.0
+                    no_load_outdoor_air_flow_rate: 0.0
+          dedicated_outdoor_air_system_name:
+            None:
+              Objects:
+                - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+              Transitions: *ZoneHVACCommonZoneEquipmentTransitions
+            AnyValue:
+              Objects:
+                - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
+              Transitions:
+                - *ZoneHVACCommonZoneEquipmentTransitions
+                - AirTerminal:SingleDuct.*:
+                    # todo_eo Maybe this value should get merged with supply_air_maximum_flow_rate if not set
+                    #   This is to size the DOAS AirTerminal object
+                    cooling_supply_air_flow_rate: maximum_air_flow_rate
       WaterToAirHeatPump:
         BuildPath:
           BaseObjects:
