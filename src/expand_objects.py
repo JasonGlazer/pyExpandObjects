@@ -454,21 +454,21 @@ class ExpandObjects(EPJSON):
         """
         output_dictionary = {}
         for transitioned_object in yaml_list:
-            try:
-                (transitioned_object_type, transitioned_object_structure), = copy.deepcopy(transitioned_object).items()
-                # get the dictionary nested in 'Fields' for super objects
-                if transitioned_object_structure.get('Fields'):
-                    object_name = transitioned_object_structure['Fields'].pop('name').format(self.unique_name)
-                    transitioned_object_structure = transitioned_object_structure['Fields']
-                else:
-                    object_name = transitioned_object_structure.pop('name').format(self.unique_name)
-                self.merge_epjson(
-                    super_dictionary=output_dictionary,
-                    object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}}
-                )
-            except (TypeError, KeyError, ValueError):
-                raise PyExpandObjectsYamlStructureException(
-                    "YAML object is incorrectly formatted: {}".format(transitioned_object))
+            if transitioned_object:
+                try:
+                    (transitioned_object_type, transitioned_object_structure), = copy.deepcopy(transitioned_object).items()
+                    # get the dictionary nested in 'Fields' for super objects
+                    if transitioned_object_structure.get('Fields'):
+                        object_name = transitioned_object_structure['Fields'].pop('name').format(self.unique_name)
+                        transitioned_object_structure = transitioned_object_structure['Fields']
+                    else:
+                        object_name = transitioned_object_structure.pop('name').format(self.unique_name)
+                    self.merge_epjson(
+                        super_dictionary=output_dictionary,
+                        object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}})
+                except (TypeError, KeyError, ValueError):
+                    raise PyExpandObjectsYamlStructureException(
+                        "YAML object is incorrectly formatted: {}".format(transitioned_object))
         return output_dictionary
 
     @staticmethod
@@ -939,8 +939,9 @@ class ExpandObjects(EPJSON):
                     else:
                         # After the first object, the inlet node name is changed to the previous object's outlet node
                         # name.  Then the outlet node variable is reset.
-                        super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
-                        out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                        if connectors[loop_type]['Inlet']:
+                            super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
+                            out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
                 object_list.append({super_object_type: super_object_structure['Fields']})
                 formatted_build_path.append({super_object_type: super_object_structure})
             except (AttributeError, KeyError):
@@ -1232,7 +1233,8 @@ class DesignSpecificationOutsideAirObjectStatus:
             if outdoor_air_method != 'DetailedSpecification':
                 obj._design_specification_outdoor_air_object_status = 'IncludeDSOA'
         # Remove an input DSOA object name if it's not going to be used
-        if getattr(obj, '_design_specification_outdoor_air_object_status', None) == 'IncludeDSOA' and dsoa_object:
+        if getattr(obj, '_design_specification_outdoor_air_object_status', None) == 'IncludeDSOA' and dsoa_object \
+                and hasattr(obj, 'design_specification_zone_air_distribution_object_name'):
             delattr(obj, 'design_specification_zone_air_distribution_object_name')
         return
 
@@ -1305,10 +1307,14 @@ class CoolingDesignAirFlowMethod:
         (_, template_fields), = template_structure.items()
         # Check for doas reference
         supply_air_maximum_flow_rate = template_fields.get('supply_air_maximum_flow_rate', 'None')
+        primary_supply_air_maximum_flow_rate = template_fields.get('primary_supply_air_maximum_flow_rate', 'None')
         cooling_supply_air_flow_rate = template_fields.get('cooling_supply_air_flow_rate', 'None')
         if isinstance(supply_air_maximum_flow_rate, (int, float)):
             obj._cooling_design_air_flow_method = 'Flow/Zone'
             setattr(obj, 'cooling_design_air_flow_rate', supply_air_maximum_flow_rate)
+        elif isinstance(primary_supply_air_maximum_flow_rate, (int, float)):
+            obj._cooling_design_air_flow_method = 'Flow/Zone'
+            setattr(obj, 'cooling_design_air_flow_rate', primary_supply_air_maximum_flow_rate)
         elif isinstance(cooling_supply_air_flow_rate, (int, float)):
             obj._cooling_design_air_flow_method = 'Flow/Zone'
             setattr(obj, 'cooling_design_air_flow_rate', cooling_supply_air_flow_rate)
@@ -1341,6 +1347,27 @@ class HumidistatObjectType:
         return
 
 
+class FanPoweredReheatType:
+    """
+    Create a new class attribute from reheat_coil_type, for TemplateObjects in the YAML lookup for FanPowered zone objects.
+    If the system flow_type is parallel then reheat_coil_type_parallel is set.  For series, reheat_coil_type_series is set.
+    """
+    def __get__(self, obj, owner):
+        return obj._fan_powered_reheat_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        if template_type == 'HVACTemplate:Zone:VAV:FanPowered':
+            if template_fields.get('flow_type') in ['Series', 'SeriesFromPlenum']:
+                obj._fan_powered_reheat_type = 'Series'
+                setattr(obj, 'reheat_coil_type_series', template_fields.get('reheat_coil_type'))
+            elif template_fields.get('flow_type') in ['Parallel', 'ParallelFromPlenum']:
+                obj._fan_powered_reheat_type = 'Parallel'
+                setattr(obj, 'reheat_coil_type_parallel', template_fields.get('reheat_coil_type'))
+        return
+
+
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
@@ -1352,6 +1379,7 @@ class ExpandZone(ExpandObjects):
     heating_design_air_flow_method = HeatingDesignAirFlowMethod()
     cooling_design_air_flow_method = CoolingDesignAirFlowMethod()
     humidistat_object_type = HumidistatObjectType()
+    fan_powered_reheat_type = FanPoweredReheatType()
 
     def __init__(self, template, epjson=None):
         # fill/create class attributes values with template inputs
@@ -1368,6 +1396,7 @@ class ExpandZone(ExpandObjects):
         self.heating_design_air_flow_method = template
         self.cooling_design_air_flow_method = template
         self.humidistat_object_type = template
+        self.fan_powered_reheat_type = template
         self.epjson = epjson or self.epjson
         return
 

@@ -690,12 +690,55 @@ Objects:
               name: '{} CV Reheat'
               <<: *AirTerminalSingleDuctCommonFields
               <<: *AirTerminalSingleDuctCommonFieldsReheat
+      ParallelPIU:
+        Reheat:
+          Common:
+            Transitions: &AirTerminalSingleDuctParallelPIUReheatCommonTransitions
+              - AirTerminal:SingleDuct:ParallelPIU:Reheat:
+                  parallel_fan_on_flow_fraction: fan_on_flow_fraction
+                  primary_supply_air_maximum_flow_rate: maximum_primary_air_flow_rate
+                  primary_supply_air_minimum_flow_fraction: minimum_primary_air_flow_fraction
+                  secondary_supply_air_maximum_flow_rate: maximum_secondary_air_flow_rate
+          Base:
+            Fields: &AirTerminalSingleDuctParallelPIUReheatFields
+              name: '{} Parallel PIU Reheat'
+              fan_name:
+                BuildPathReference:
+                  Location: Fan:.*
+                  ValueLocation: key
+              fan_on_flow_fraction: Autosize
+              maximum_hot_water_or_steam_flow_rate: Autosize # unstable results if not included
+              outlet_node_name:
+                BuildPathReference:
+                  Location: -1
+                  ValueLocation: Outlet
+              primary_supply_air_maximum_flow_rate: Autosize # template default
+              reheat_coil_air_inlet_node_name:
+                BuildPathReference:
+                  Location: AirLoopHVAC:ZoneMixer
+                  ValueLocation: Outlet
+              reheat_coil_name:
+                BuildPathReference:
+                  Location: Coil:Heating.*
+                  ValueLocation: key
+              reheat_coil_object_type:
+                BuildPathReference:
+                  Location: Coil:Heating.*
+                  ValueLocation: self
+              secondary_air_inlet_node_name: *ZoneReturn
+              supply_air_inlet_node_name: *ZoneEquipInlet
+              secondary_supply_air_maximum_flow_rate: Autosize # template default
+              zone_mixer_name:
+                BuildPathReference:
+                  Location: AirLoopHVAC:ZoneMixer
+                  ValueLocation: key
       SeriesPIU:
         Reheat:
           Common:
             Transitions: &AirTerminalSingleDuctSeriesPIUReheatCommonTransitions
               - AirTerminal:SingleDuct:SeriesPIU:Reheat:
                   primary_supply_air_maximum_flow_rate: maximum_primary_air_flow_rate
+                  primary_supply_air_minimum_flow_fraction: minimum_primary_air_flow_fraction
                   secondary_supply_air_maximum_flow_rate: maximum_air_flow_rate
           Base:
             Fields: &AirTerminalSingleDuctSeriesPIUReheatFields
@@ -751,11 +794,18 @@ Objects:
                 supply_air_maximum_flow_rate: maximum_air_flow_rate
                 damper_heating_action: damper_heating_action
         HeatAndCool:
+          Common:
+            Transitions: &AirTerminalSingleDuctVAVHeatAndCoolCommonTransitions
+              - AirTerminal:.*:
+                  constant_minimum_air_flow_fraction: zone_minimum_air_flow_fraction
+                  maximum_reheat_air_temperature: maximum_reheat_air_temperature
+          NoReheat:
+            Base:
+              Fields: &AirTerminalSingleDuctVAVHeatAndCoolNoReheatFields
+                name: '{} VAV NoReheat'
+                <<: *AirTerminalSingleDuctCommonFields
+                zone_minimum_air_flow_fraction: 0.2 # required by schema, no default, template default
           Reheat:
-            Common:
-              Transitions: &AirTerminalSingleDuctVAVHeatAndCoolReheatCommonTransitions
-                - AirTerminal:.*:
-                    constant_minimum_air_flow_fraction: zone_minimum_air_flow_fraction
             Base:
               Fields: &AirTerminalSingleDuctVAVHeatAndCoolReheatFields
                 name: '{} VAV Reheat'
@@ -763,6 +813,11 @@ Objects:
                 <<: *AirTerminalSingleDuctCommonFieldsReheat
                 damper_air_outlet_node_name: '{} Damper Outlet' # required by schema
                 zone_minimum_air_flow_fraction: 0.2
+          ReheatWater:
+            Base:
+              Fields: &AirTerminalSingleDuctVAVHeatAndCoolReheatWaterFields
+                <<: *AirTerminalSingleDuctVAVHeatAndCoolReheatFields
+                <<: *AirTerminalSingleDuctCommonFieldsReheatWater
         NoReheat:
           Base:
             Fields: &AirTerminalSingleDuctVAVNoReheatFields
@@ -2102,6 +2157,11 @@ Objects:
               return_fan_motor_in_air_stream_fraction: motor_in_airstream_fraction
               return_fan_motor_efficiency: motor_efficiency
               return_fan_total_efficiency: fan_total_efficiency
+        PIU: &FanCommonTransitionsPIU
+          - Fan:.*:
+              fan_total_efficiency: fan_total_efficiency
+              fan_motor_efficiency: motor_efficiency
+              zone_piu_fan_schedule_name: availability_schedule_name
     Base:
       Fields: &FanFields
         name: '{} Supply Fan'
@@ -3361,6 +3421,32 @@ OptionTree:
                       ActionType: Insert
                       Objects: *ZoneCommonBuildPathActionsObjectsCoolingCoilTypeVariableRefrigerantFlowDXObjects
                       Transitions: *ZoneCommonBuildPathActionsObjectsCoolingCoilTypeVariableRefrigerantFlowDXTransitions
+              Last:
+                - heating_coil_type: &ZoneCommonBuildPathActionsObjectsLastHeatingCoilType
+                    Electric:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: -1
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeElectricObjects
+                      Transitions: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeElectricTransitions
+                    Gas:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: -1
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasObjects
+                      Transitions: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasTransitions
+                      Mappings: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasMappings
+                    HotWater:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: -1
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeHotWaterObjects
+                    VariableRefrigerantFlowDX:
+                      ObjectReference: OutdoorAir:Mixer
+                      Location: -1
+                      ActionType: Insert
+                      Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeVariableRefrigerantFlowDXObjects
+                      Transitions: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeVariableRefrigerantFlowDXTransitions
               FanOnOff: &ZoneCommonBuildPathActionsObjectsFanOnOff
                 - supply_fan_placement:
                     None: &ZoneCommonBuildPathActionsObjectsFanOnOffNone
@@ -3501,6 +3587,18 @@ OptionTree:
                   Objects:
                     - AirTerminal:SingleDuct:VAV:NoReheat: *AirTerminalSingleDuctVAVNoReheatFields
                   Transitions: *AirTerminalSingleDuctVAVCommonTransitions
+                Electric:
+                  Objects:
+                    - AirTerminal:SingleDuct:VAV:Reheat: *AirTerminalSingleDuctVAVReheat
+                    - Coil:Heating:Electric:
+                        <<: *CoilHeatingElectricFields
+                        name: '{} Reheat Coil'
+                        air_inlet_node_name:
+                          AirTerminal:SingleDuct:.*: damper_air_outlet_node_name
+                        air_outlet_node_name:
+                          AirTerminal:SingleDuct:.*: air_outlet_node_name
+                        availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                  Transitions: *AirTerminalSingleDuctVAVCommonTransitions
                 Gas:
                   Objects:
                     - AirTerminal:SingleDuct:VAV:Reheat: *AirTerminalSingleDuctVAVReheat
@@ -3532,20 +3630,14 @@ OptionTree:
                         <<: *CoilHeatingWaterCommonObjectsBranch
                         name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
                   Transitions: *AirTerminalSingleDuctVAVCommonTransitions
-                Electric:
-                  Objects:
-                    - AirTerminal:SingleDuct:VAV:Reheat: *AirTerminalSingleDuctVAVReheat
-                    - Coil:Heating:Electric:
-                        <<: *CoilHeatingElectricFields
-                        name: '{} Reheat Coil'
-                        air_inlet_node_name:
-                          AirTerminal:SingleDuct:.*: damper_air_outlet_node_name
-                        air_outlet_node_name:
-                          AirTerminal:SingleDuct:.*: air_outlet_node_name
-                        availability_schedule_name: '{reheat_coil_availability_schedule_name}'
-                  Transitions: *AirTerminalSingleDuctVAVCommonTransitions
             HeatAndCool: &ZoneCommonTemplateObjectsVAVHeatAndCool
               reheat_coil_type:
+                None:
+                  Objects:
+                    - AirTerminal:SingleDuct:VAV:HeatAndCool:NoReheat: *AirTerminalSingleDuctVAVHeatAndCoolNoReheatFields
+                  Transitions:
+                    - *AirTerminalSingleDuctVAVCommonTransitions
+                    - *AirTerminalSingleDuctVAVHeatAndCoolCommonTransitions
                 Electric:
                   Objects:
                     - AirTerminal:SingleDuct:VAV:HeatAndCool:Reheat: *AirTerminalSingleDuctVAVHeatAndCoolReheatFields
@@ -3559,14 +3651,74 @@ OptionTree:
                         availability_schedule_name: '{reheat_coil_availability_schedule_name}'
                   Transitions:
                     - *AirTerminalSingleDuctVAVCommonTransitions
-                    - *AirTerminalSingleDuctVAVHeatAndCoolReheatCommonTransitions
+                    - *AirTerminalSingleDuctVAVHeatAndCoolCommonTransitions
+                Gas:
+                  Objects:
+                    - AirTerminal:SingleDuct:VAV:HeatAndCool:Reheat: *AirTerminalSingleDuctVAVHeatAndCoolReheatFields
+                    - Coil:Heating:Fuel:
+                        <<: *CoilHeatingFuelFields
+                        name: '{} Reheat Coil'
+                        air_inlet_node_name:
+                          AirTerminal:SingleDuct:.*: damper_air_outlet_node_name
+                        air_outlet_node_name:
+                          AirTerminal:SingleDuct:.*: air_outlet_node_name
+                        availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                        part_load_fraction_correlation_curve_name: '{} Reheat Coil PLF-FPLR'
+                    - Curve:Cubic:
+                        <<: *CoilHeatingFuelCommonObjectsPLFFPLRCurve
+                        name: '{} Reheat Coil PLF-FPLR'
+                  Transitions:
+                    - *AirTerminalSingleDuctVAVCommonTransitions
+                    - *AirTerminalSingleDuctVAVHeatAndCoolCommonTransitions
+                HotWater:
+                  Objects:
+                    - AirTerminal:SingleDuct:VAV:HeatAndCool:Reheat: *AirTerminalSingleDuctVAVHeatAndCoolReheatWaterFields
+                    - Coil:Heating:Water:
+                        <<: *CoilHeatingWaterFields
+                        name: '{} Reheat Coil'
+                        air_inlet_node_name:
+                          AirTerminal:SingleDuct:.*: damper_air_outlet_node_name
+                        air_outlet_node_name:
+                          AirTerminal:SingleDuct:.*: air_outlet_node_name
+                        availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                    - Branch:
+                        <<: *CoilHeatingWaterCommonObjectsBranch
+                        name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
+                  Transitions:
+                    - *AirTerminalSingleDuctVAVCommonTransitions
+                    - *AirTerminalSingleDuctVAVHeatAndCoolCommonTransitions
             FanPowered: &ZoneCommonTemplateObjectsVAVFanPowered
               flow_type:
+                Parallel:
+                  Objects:
+                    - AirTerminal:SingleDuct:ParallelPIU:Reheat: *AirTerminalSingleDuctParallelPIUReheatFields
+                    - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+                  Transitions: *AirTerminalSingleDuctParallelPIUReheatCommonTransitions
+                ParallelFromPlenum:
+                  Objects:
+                    - AirTerminal:SingleDuct:ParallelPIU:Reheat: *AirTerminalSingleDuctParallelPIUReheatFields
+                    - ZoneHVAC:EquipmentConnections:
+                        <<: *ZoneHVACEquipmentConnectionsFields
+                        zone_air_inlet_node_or_nodelist_name:
+                          BuildPathReference:
+                            Location: -1
+                            ValueLocation: Outlet
+                  Transitions: *AirTerminalSingleDuctParallelPIUReheatCommonTransitions
                 Series:
                   Objects:
                     - AirTerminal:SingleDuct:SeriesPIU:Reheat: *AirTerminalSingleDuctSeriesPIUReheatFields
-                  Transitions:
-                    - *AirTerminalSingleDuctSeriesPIUReheatCommonTransitions
+                    - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+                  Transitions: *AirTerminalSingleDuctSeriesPIUReheatCommonTransitions
+                SeriesFromPlenum:
+                  Objects:
+                    - AirTerminal:SingleDuct:SeriesPIU:Reheat: *AirTerminalSingleDuctSeriesPIUReheatFields
+                    - ZoneHVAC:EquipmentConnections:
+                        <<: *ZoneHVACEquipmentConnectionsFields
+                        zone_air_inlet_node_or_nodelist_name:
+                          BuildPathReference:
+                            Location: -1
+                            ValueLocation: Outlet
+                  Transitions: *AirTerminalSingleDuctSeriesPIUReheatCommonTransitions
       BaseboardHeat: # Common objects not used since HVACTemplate:Zone:BaseboardHeat does not use air paths and these
                      # objects are also secondary equipment in other templates.
         BaseObjects:
@@ -3965,33 +4117,137 @@ OptionTree:
           <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
         HeatAndCool:
           BaseObjects:
-            Objects: *ZoneCommonBaseObjectsObjectsAirTerminal
+            Objects:
+              - Sizing:Zone: *SizingZoneOA
+              - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
+              - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
             Transitions: *SizingZoneCommonTransitions
           TemplateObjects:
             <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
             <<: *ZoneCommonTemplateObjectsVAVHeatAndCool
+            <<: *ZoneCommonTemplateObjectsDesignSpecification
+            <<: *ZoneCommonTemplateObjectsSupplyPlenum
+            <<: *ZoneCommonTemplateObjectsReturnPlenum
+            <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
         FanPowered:
           BuildPath:
             BaseObjects:
-              Objects:
-                - AirLoopHVAC:ZoneMixer:
-                    Fields:
-                      name: '{} PIU Mixer'
-                      nodes:
-                        - inlet_node_name: *ZoneEquipInlet
-                        - inlet_node_name: *ZoneReturn
-                      outlet_node_name: '{} PIU Mixer Outlet'
-                    Connectors:
-                      AirLoop:
-                        Outlet: outlet_node_name
-                - Fan:ConstantVolume: *FanConstantVolumeSuperObject
-              Transitions: *FanCommonTransitionsSupply
             Actions:
-              - reheat_coil_type: *ZoneCommonBuildPathObjectsAfterFanHeatingCoilType
+              - flow_type:
+                  Series: &ZoneVAVFanPoweredBuildPathActionsFlowTypeSeries
+                    Location: 0
+                    ActionType: Insert
+                    Objects:
+                      - AirLoopHVAC:ZoneMixer:
+                          Fields:
+                            name: '{} PIU Mixer'
+                            nodes:
+                              - inlet_node_name: *ZoneEquipInlet
+                              - inlet_node_name: *ZoneReturn
+                            outlet_node_name: '{} PIU Mixer Outlet'
+                          Connectors:
+                            AirLoop:
+                              Inlet: False
+                              Outlet: outlet_node_name
+                      - Fan:ConstantVolume: *FanConstantVolumeSuperObject
+                    Transitions:
+                      - *FanCommonTransitionsSupply
+                      - *FanCommonTransitionsPIU
+                  SeriesFromPlenum: *ZoneVAVFanPoweredBuildPathActionsFlowTypeSeries
+                  Parallel: &ZoneVAVFanPoweredBuildPathActionsFlowTypeParallel
+                    Location: 0
+                    ActionType: Insert
+                    Objects:
+                      - Fan:ConstantVolume:
+                          Fields:
+                            <<: *FanConstantVolumeFields
+                            air_inlet_node_name: *ZoneReturn
+                          Connectors:
+                            AirLoop: False
+                      - AirLoopHVAC:ZoneMixer:
+                          Fields:
+                            name: '{} PIU Mixer'
+                            nodes:
+                              - inlet_node_name: *ZoneEquipInlet
+                              - inlet_node_name: '{} Supply Fan Outlet'
+                            outlet_node_name: '{} PIU Mixer Outlet'
+                          Connectors:
+                            AirLoop:
+                              Inlet: False
+                              Outlet: outlet_node_name
+                    Transitions:
+                      - *FanCommonTransitionsSupply
+                      - *FanCommonTransitionsPIU
+                  ParallelFromPlenum: *ZoneVAVFanPoweredBuildPathActionsFlowTypeParallel
+              - reheat_coil_type_series: # descriptors split up reheat_coil_type to add PIU type
+                  Electric:
+                    ObjectReference: Fan:.*
+                    Location: After
+                    ActionType: Insert
+                    Objects: &ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesElectricObjects
+                      - Coil:Heating:Electric:
+                          Fields:
+                            <<: *CoilHeatingElectricFields
+                            name: '{} Reheat Coil'
+                            availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                          Connectors:
+                            AirLoop: *ConnectorsAirLoop
+                    Transitions: &ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesElectricTransitions
+                      - *CoilHeatingElectricCommonTransitions
+                  HotWater:
+                    ObjectReference: Fan:.*
+                    Location: After
+                    ActionType: Insert
+                    Objects: &ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesHotWaterObjects
+                      - Coil:Heating:Water:
+                          Fields:
+                            <<: *CoilHeatingWaterFields
+                            name: '{} Reheat Coil'
+                            availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                          Connectors:
+                            AirLoop: *ConnectorsAirLoop
+                      - *CoilHeatingWaterCommonObjects
+                  Gas:
+                    ObjectReference: Fan:.*
+                    Location: After
+                    ActionType: Insert
+                    Objects: &ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesGasObjects
+                      - *CoilHeatingFuelCommonObjects
+                      - Coil:Heating:Fuel:
+                          Fields:
+                            <<: *CoilHeatingFuelFields
+                            name: '{} Reheat Coil'
+                            availability_schedule_name: '{reheat_coil_availability_schedule_name}'
+                            part_load_fraction_correlation_curve_name: '{} Reheat Coil PLF-FPLR'
+                          Connectors:
+                            AirLoop: *ConnectorsAirLoop
+                      - Curve:Cubic:
+                          <<: *CoilHeatingFuelCommonObjectsPLFFPLRCurve
+                          name: '{} Reheat Coil PLF-FPLR'
+                    Transitions: &ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesGasTransitions
+                      - *CoilHeatingFuelCommonTransitions
+                    Mappings: &ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesGasMappings
+                      - *CoilHeatingFuelCommonMappings
+              - reheat_coil_type_parallel: # descriptors split up reheat_coil_type to add PIU type
+                  Electric:
+                    Location: -1
+                    ActionType: Insert
+                    Objects: *ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesElectricObjects
+                    Transitions: *ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesElectricTransitions
+                  HotWater:
+                    Location: -1
+                    ActionType: Insert
+                    Objects: *ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesHotWaterObjects
+                  Gas:
+                    Location: -1
+                    ActionType: Insert
+                    Objects: *ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesGasObjects
+                    Transitions: *ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesGasTransitions
+                    Mappings: *ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesGasMappings
           BaseObjects:
             Objects:
-              - *ZoneCommonBaseObjectsObjects
-              - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+              - Sizing:Zone: *SizingZoneOA
+              - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
               - ZoneHVAC:AirDistributionUnit:
                   <<: *ZoneHVACAirDistributionUnit
                   air_distribution_unit_outlet_node_name:
@@ -4000,6 +4256,20 @@ OptionTree:
           TemplateObjects:
             <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
             <<: *ZoneCommonTemplateObjectsVAVFanPowered
+            <<: *ZoneCommonTemplateObjectsDesignSpecification
+            supply_plenum_name:
+              AnyValue:
+                Objects:
+                  - AirLoopHVAC:SupplyPlenum:
+                      name: '{} Supply Plenum'
+                      inlet_node_name: '{} Plenum Inlet'
+                      nodes:
+                        - outlet_node_name:
+                            AirTerminal.*: supply_air_inlet_node_name
+                      zone_name: '{supply_plenum_name}'
+                      zone_node_name: '{supply_plenum_name} Zone Air Node'
+            <<: *ZoneCommonTemplateObjectsReturnPlenum
+            <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
       VRF:
         BuildPath:
           BaseObjects:
@@ -4404,9 +4674,10 @@ OptionTree:
         TemplateObjects:
           Base: &SystemCommonTemplateObjects
             night_cycle_control:
-              CycleOnAny:
+              CycleOnAny: &SystemCommonTemplateObjectsNightCycleControlCycleOnAny
                 Objects:
                   - AvailabilityManager:NightCycle: *AvailabilityManagerNightCycle
+              CycleOnAnyZoneFansOnly: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
               StayOff:
                 Objects:
                   - AvailabilityManager:NightCycle:
