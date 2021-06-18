@@ -386,10 +386,15 @@ class ExpandObjects(EPJSON):
                                     try:
                                         if isinstance(object_field, dict):
                                             (object_field, object_val), = object_field.items()
-                                            object_value = object_val.format(getattr(self, template_field))
+                                            # Try to perform numeric evaluation if operators are present
+                                            if any(i in ['*', '+', '/'] for i in object_val):
+                                                # Add '0.' for accessing class object attributes
+                                                object_value = eval(object_val.replace('{', '{0.').format(self))
+                                            else:
+                                                object_value = object_val.format(getattr(self, template_field))
                                         else:
                                             object_value = getattr(self, template_field)
-                                    except AttributeError:
+                                    except (AttributeError, KeyError, NameError):
                                         object_value = None
                                         # todo_eo: may not be necessary, overly used
                                         # self.logger.info("A template value was attempted to be applied "

@@ -17,6 +17,32 @@ design_specification_objects = {
     }
 }
 
+hot_water_loop_objects = {
+    "HVACTemplate:Plant:Boiler": {
+        "Main HW Boiler": {
+            "boiler_type": "HotWaterBoiler",
+            "capacity": "Autosize",
+            "efficiency": 0.8,
+            "fuel_type": "NaturalGas",
+            "priority": "1"
+        }
+    },
+    "HVACTemplate:Plant:HotWaterLoop": {
+        "Hot Water Loop": {
+            "hot_water_design_setpoint": 82,
+            "hot_water_plant_operation_scheme_type": "Default",
+            "hot_water_pump_configuration": "ConstantFlow",
+            "hot_water_pump_rated_head": 179352,
+            "hot_water_reset_outdoor_dry_bulb_high": 10,
+            "hot_water_reset_outdoor_dry_bulb_low": -6.7,
+            "hot_water_setpoint_at_outdoor_dry_bulb_high": 65.6,
+            "hot_water_setpoint_at_outdoor_dry_bulb_low": 82.2,
+            "hot_water_setpoint_reset_type": "OutdoorAirTemperatureReset",
+            "pump_control_type": "Intermittent"
+        }
+    }
+}
+
 doas_objects = {
     "HVACTemplate:System:DedicatedOutdoorAir": {
         "DOAS": {
@@ -60,6 +86,7 @@ doas_objects = {
         }
     }
 }
+
 
 class TestSimulationsZoneVRF(BaseSimulationTest):
     def setUp(self):
@@ -484,4 +511,150 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(epjson_output['AirLoopHVAC'].get('DOAS'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:"
+                                              "zone_cooling_design_supply_air_temperature_input_method_"
+                                              "supply_air_temperature")
+    def test_zone_cooling_design_supply_air_temperature_input_method_supply_air_temperature(self):
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'zone_cooling_design_supply_air_temperature'] = 13.0
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = "SupplyAirTemperature"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            13.0,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:"
+                                              "zone_cooling_design_supply_air_temperature_input_method_"
+                                              "temperature_difference")
+    def test_zone_cooling_design_supply_air_temperature_input_method_temperature_difference(self):
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'zone_cooling_design_supply_air_temperature_difference'] = 11.5
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = "TemperatureDifference"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            11.5,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_cooling_design_supply_air_temperature_difference'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:"
+                                              "zone_heating_design_supply_air_temperature_input_method_"
+                                              "supply_air_temperature")
+    def test_zone_heating_design_supply_air_temperature_input_method_supply_air_temperature(self):
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'zone_heating_design_supply_air_temperature'] = 51
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'zone_heating_design_supply_air_temperature_input_method'] = "SupplyAirTemperature"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            51,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_heating_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:"
+                                              "zone_heating_design_supply_air_temperature_input_method_"
+                                              "temperature_difference")
+    def test_zone_heating_design_supply_air_temperature_input_method_temperature_difference(self):
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'zone_heating_design_supply_air_temperature_difference'] = 31
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'zone_heating_design_supply_air_temperature_input_method'] = "TemperatureDifference"
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            31,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_heating_design_supply_air_temperature_difference'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:baseboard_heating_type_hot_water")
+    def test_baseboard_heating_type_hot_water(self):
+        # todo_eo: Legacy fails when a HVACTemplate:Plant:HotWaterLoop and HVACTemplate:Plant:Boiler are
+        #  included in the same file as HVACTemplate:PLant:MixedWaterLoop and existing HVACTemplate:Plant:Boiler.
+        #  The PlantEquipmentList for the MixedWaterLoop includes the HW boiler.
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=hot_water_loop_objects)
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler'][
+            'template_plant_loop_type'] = 'MixedWater'
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water'].get('SPACE1-1 Baseboard Heat'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:baseboard_heating_type_electric")
+    def test_baseboard_heating_type_electric(self):
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'baseboard_heating_type'] = 'Electric'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['ZoneHVAC:Baseboard:Convective:Electric'].get('SPACE1-1 Baseboard Heat'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:baseboard_heating_availability_schedule_name")
+    def test_baseboard_heating_availability_schedule_name(self):
+        # todo_eo: Legacy fails when a HVACTemplate:Plant:HotWaterLoop and HVACTemplate:Plant:Boiler are
+        #  included in the same file as HVACTemplate:PLant:MixedWaterLoop and existing HVACTemplate:Plant:Boiler.
+        #  The PlantEquipmentList for the MixedWaterLoop includes the HW boiler.
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=hot_water_loop_objects)
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'baseboard_heating_availability_schedule_name'] = 'OCCUPY-1'
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 2'][
+            'baseboard_heating_type'] = 'Electric'
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 2'][
+            'baseboard_heating_availability_schedule_name'] = 'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water']['SPACE1-1 Baseboard Heat']['availability_schedule_name'])
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['ZoneHVAC:Baseboard:Convective:Electric']['SPACE2-1 Baseboard Heat']['availability_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:baseboard_heating_capacity")
+    def test_baseboard_heating_capacity(self):
+        # todo_eo: Legacy fails when a HVACTemplate:Plant:HotWaterLoop and HVACTemplate:Plant:Boiler are
+        #  included in the same file as HVACTemplate:PLant:MixedWaterLoop and existing HVACTemplate:Plant:Boiler.
+        #  The PlantEquipmentList for the MixedWaterLoop includes the HW boiler.
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=hot_water_loop_objects)
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'baseboard_heating_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
+            'baseboard_heating_capacity'] = 200
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 2'][
+            'baseboard_heating_type'] = 'Electric'
+        self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 2'][
+            'baseboard_heating_capacity'] = 200
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            200,
+            epjson_output['ZoneHVAC:Baseboard:RadiantConvective:Water']['SPACE1-1 Baseboard Heat']['heating_design_capacity'])
+        self.assertEqual(
+            200,
+            epjson_output['ZoneHVAC:Baseboard:Convective:Electric']['SPACE2-1 Baseboard Heat']['heating_design_capacity'])
         return

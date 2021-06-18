@@ -1268,13 +1268,6 @@ Objects:
                   minimum_value_of_x: 0
                   minimum_value_of_y: 0
                   output_unit_type: Dimensionless
-              - Curve:Quadratic:
-                  name: '{} Cool Coil PLF'
-                  coefficient1_constant: 0.85
-                  coefficient2_x: 0.15
-                  coefficient3_x_2: 0
-                  maximum_value_of_x: 1
-                  minimum_value_of_x: 0
               - Curve:Biquadratic:
                   name: '{} Cool Coil Cap-FT'
                   coefficient1_constant: 0.476428
@@ -1615,9 +1608,12 @@ Objects:
                   minimum_value_of_z: -100.0
           Transitions: &CoilCoolingWaterToAirHeatPumpEquationFitCommonTransitions
             - Coil:Cooling:WaterToAirHeatPump:EquationFit:
-                dx_cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
+                cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
                 cooling_coil_gross_rated_cop: gross_rated_cooling_cop
+                cooling_coil_gross_rated_sensible_heat_ratio: # todo_eo: document this behavior, rarely used.
+                  gross_rated_sensible_cooling_capacity: '{cooling_coil_gross_rated_total_capacity} * {cooling_coil_gross_rated_sensible_heat_ratio}'
                 cooling_supply_air_flow_rate: rated_air_flow_rate
+                dx_cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
           Base: &CoilCoolingWatertoAirHeatPumpEquationFitSuperObject
             Fields:
               <<: *CoilCoolingCommonFields
@@ -3109,10 +3105,18 @@ Objects:
                 ValueLocation: Outlet
             terminal_unit_availability_schedule: '{system_availability_schedule_name}'
     WaterToAirHeatPump:
+      Common:
+        Transitions: &ZoneHVACWaterToAirHeatPumpCommonTransitions
+          - ZoneHVAC:WaterToAirHeatPump:
+              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
+              heating_supply_air_flow_rate: heating_supply_air_flow_rate
+              no_load_supply_air_flow_rate: no_load_supply_air_flow_rate
+              supply_fan_operating_mode_schedule_name: supply_air_fan_operating_mode_schedule_name
       Base:
         Fields: &ZoneHVACWaterToAirHeatPumpFields
           <<: *ZoneHVACPackagedTerminalHeatPumpFields
           name: '{} WAHP'
+          availability_schedule_name: '{system_availability_schedule_name}'
           maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: 20.0 # set by legacy, not default
           outdoor_dry_bulb_temperature_sensor_node_name:
             OutdoorAir:Mixer: outdoor_air_stream_node_name
@@ -3711,11 +3715,6 @@ OptionTree:
                   Transitions: *AirTerminalSingleDuctSeriesPIUReheatCommonTransitions
       BaseboardHeat: # Common objects not used since HVACTemplate:Zone:BaseboardHeat does not use air paths and these
                      # objects are also secondary equipment in other templates.
-        BaseObjects:
-          Objects:
-            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFields
-          Transitions:
-            - *SizingZoneCommonTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
@@ -4237,7 +4236,6 @@ OptionTree:
           BaseObjects:
             Objects:
               - Sizing:Zone: *SizingZoneOA
-              - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
               - ZoneHVAC:AirDistributionUnit:
                   <<: *ZoneHVACAirDistributionUnit
                   air_distribution_unit_outlet_node_name:
@@ -4281,6 +4279,7 @@ OptionTree:
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           <<: *ZoneCommonTemplateObjectsDesignSpecification
+          <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
           vrf_type:
             CoolOnly:
               Objects:
@@ -4391,12 +4390,35 @@ OptionTree:
             - supplemental_heating_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
         BaseObjects:
           Objects:
-            - ZoneHVAC:WaterToAirHeatPump: *ZoneHVACWaterToAirHeatPumpFields
-            - *ZoneCommonBaseObjectsObjects
-            - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
-          Transitions: *SizingZoneCommonTransitions
+            - Sizing:Zone: *SizingZoneOA
+          Transitions:
+            - *SizingZoneCommonTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
+          <<: *ZoneCommonTemplateObjectsDesignSpecification
+          dedicated_outdoor_air_system_name:
+            None:
+              Objects:
+                - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
+                - ZoneHVAC:WaterToAirHeatPump: *ZoneHVACWaterToAirHeatPumpFields
+              Transitions:
+                - *ZoneHVACCommonZoneEquipmentTransitions
+                - *ZoneHVACWaterToAirHeatPumpCommonTransitions
+            AnyValue:
+              Objects:
+                - ZoneHVAC:WaterToAirHeatPump:
+                    <<: *ZoneHVACWaterToAirHeatPumpFields
+                    cooling_outdoor_air_flow_rate: 0.0
+                    heating_outdoor_air_flow_rate: 0.0
+                    no_load_outdoor_air_flow_rate: 0.0
+                - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
+              Transitions:
+                - *ZoneHVACCommonZoneEquipmentTransitions
+                - *ZoneHVACWaterToAirHeatPumpCommonTransitions
+                - AirTerminal:SingleDuct.*:
+                    # todo_eo Maybe this value should get merged with supply_air_maximum_flow_rate if not set
+                    #   This is to size the DOAS AirTerminal object
+                    cooling_supply_air_flow_rate: maximum_air_flow_rate
     System:
       Common:
         BuildPath:
@@ -5437,16 +5459,6 @@ OptionTree:
                           Chiller:.*: condenser_inlet_node_name
               Transitions:
                 - *ChillerElectricEIRCommonTransitions
-          condenser_type:
-            WaterCooled:
-              Objects: *ChillerElectricCommonCondenserWaterObjects
-            AirCooled:
-              Objects:
-                - OutdoorAir:NodeList:
-                    name: '{} Outdoor Air NodeList'
-                    nodes:
-                      - node_or_nodelist_name:
-                          Chiller:.*: condenser_inlet_node_name
         ObjectReference:
           BaseObjects:
             Objects:

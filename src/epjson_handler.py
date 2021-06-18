@@ -37,7 +37,7 @@ class EPJSON(Logger):
     def merge_epjson(
             super_dictionary: dict,
             object_dictionary: dict,
-            unique_name_override: bool = True,
+            unique_name_override: bool = False,
             unique_name_fail: bool = True):
         """
         Merge a high level formatted dictionary with a sub-dictionary, both in epJSON format
@@ -67,6 +67,10 @@ class EPJSON(Logger):
                                         object_name,
                                         re.IGNORECASE) and object_type.lower() == 'schedule:compact'
                             ):
+                                from pprint import pprint
+                                pprint(super_dictionary[object_type], width=200)
+                                print('-------------------')
+                                pprint(object_dictionary[object_type])
                                 raise UniqueNameException("Unique name {} already exists in object {}".format(
                                     object_name,
                                     object_type
