@@ -15,6 +15,7 @@ from src.main import main
 from tests import BaseTest
 
 test_dir = Path(__file__).parent.parent
+weather_file = 'USA_IL_Chicago-OHare.Intl.AP.725300_TMY3.epw'
 
 
 class BaseSimulationTest(BaseTest, unittest.TestCase):
@@ -272,7 +273,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                             str(test_dir / '..' / 'simulation' / 'test'),
                             '-x',
                             '-w',
-                            str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
+                            str(test_dir / '..' / 'simulation' / 'WeatherData' / weather_file),
                             str(file_path)
                         ]
                     )
@@ -283,7 +284,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                             '-d',
                             str(test_dir / '..' / 'simulation' / 'test'),
                             '-w',
-                            str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
+                            str(test_dir / '..' / 'simulation' / 'WeatherData' / weather_file),
                             str(file_path)
                         ]
                     )
@@ -304,7 +305,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                             str(test_dir / '..' / 'simulation' / 'test'),
                             '-x',
                             '-w',
-                            str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
+                            str(test_dir / '..' / 'simulation' / 'WeatherData' / weather_file),
                             file_path
                         ]
                     )
@@ -316,7 +317,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                             '-d',
                             str(test_dir / '..' / 'simulation' / 'test'),
                             '-w',
-                            str(test_dir / '..' / 'simulation' / 'WeatherData' / 'USA_CO_Golden-NREL.724666_TMY3.epw'),
+                            str(test_dir / '..' / 'simulation' / 'WeatherData' / weather_file),
                             file_path
                         ]
                     )

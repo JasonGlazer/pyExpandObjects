@@ -386,10 +386,15 @@ class ExpandObjects(EPJSON):
                                     try:
                                         if isinstance(object_field, dict):
                                             (object_field, object_val), = object_field.items()
-                                            object_value = object_val.format(getattr(self, template_field))
+                                            # Try to perform numeric evaluation if operators are present
+                                            if any(i in ['*', '+', '/'] for i in object_val):
+                                                # Add '0.' for accessing class object attributes
+                                                object_value = eval(object_val.replace('{', '{0.').format(self))
+                                            else:
+                                                object_value = object_val.format(getattr(self, template_field))
                                         else:
                                             object_value = getattr(self, template_field)
-                                    except AttributeError:
+                                    except (AttributeError, KeyError, NameError):
                                         object_value = None
                                         # todo_eo: may not be necessary, overly used
                                         # self.logger.info("A template value was attempted to be applied "
@@ -454,21 +459,21 @@ class ExpandObjects(EPJSON):
         """
         output_dictionary = {}
         for transitioned_object in yaml_list:
-            try:
-                (transitioned_object_type, transitioned_object_structure), = copy.deepcopy(transitioned_object).items()
-                # get the dictionary nested in 'Fields' for super objects
-                if transitioned_object_structure.get('Fields'):
-                    object_name = transitioned_object_structure['Fields'].pop('name').format(self.unique_name)
-                    transitioned_object_structure = transitioned_object_structure['Fields']
-                else:
-                    object_name = transitioned_object_structure.pop('name').format(self.unique_name)
-                self.merge_epjson(
-                    super_dictionary=output_dictionary,
-                    object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}}
-                )
-            except (TypeError, KeyError, ValueError):
-                raise PyExpandObjectsYamlStructureException(
-                    "YAML object is incorrectly formatted: {}".format(transitioned_object))
+            if transitioned_object:
+                try:
+                    (transitioned_object_type, transitioned_object_structure), = copy.deepcopy(transitioned_object).items()
+                    # get the dictionary nested in 'Fields' for super objects
+                    if transitioned_object_structure.get('Fields'):
+                        object_name = transitioned_object_structure['Fields'].pop('name').format(self.unique_name)
+                        transitioned_object_structure = transitioned_object_structure['Fields']
+                    else:
+                        object_name = transitioned_object_structure.pop('name').format(self.unique_name)
+                    self.merge_epjson(
+                        super_dictionary=output_dictionary,
+                        object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}})
+                except (TypeError, KeyError, ValueError):
+                    raise PyExpandObjectsYamlStructureException(
+                        "YAML object is incorrectly formatted: {}".format(transitioned_object))
         return output_dictionary
 
     @staticmethod
@@ -939,8 +944,9 @@ class ExpandObjects(EPJSON):
                     else:
                         # After the first object, the inlet node name is changed to the previous object's outlet node
                         # name.  Then the outlet node variable is reset.
-                        super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
-                        out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
+                        if connectors[loop_type]['Inlet']:
+                            super_object_structure['Fields'][connectors[loop_type]['Inlet']] = out_node
+                            out_node = super_object_structure['Fields'][connectors[loop_type]['Outlet']]
                 object_list.append({super_object_type: super_object_structure['Fields']})
                 formatted_build_path.append({super_object_type: super_object_structure})
             except (AttributeError, KeyError):
@@ -1173,7 +1179,7 @@ class ExpandThermostat(ExpandObjects):
         return self
 
 
-class ZonevacEquipmentListOjectType:
+class ZonevacEquipmentListObjectType:
     """
     Set a class attribute to select the appropriate ZoneHVAC:EquipmentList from TemplateOptions in the YAML lookup.
     """
@@ -1186,7 +1192,7 @@ class ZonevacEquipmentListOjectType:
         # Check for doas reference
         doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
         # Check for baseboard reference
-        baseboard_equipment = None
+        # baseboard_equipment = None
         baseboard_equipment = True if template_fields.get('baseboard_heating_type', 'None') != 'None' else False
         if doas_equipment and baseboard_equipment:
             if template_type == 'HVACTemplate:Zone:BaseboardHeat':
@@ -1221,6 +1227,10 @@ class DesignSpecificationOutsideAirObjectStatus:
         doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
         dsoa_object = template_fields.get('design_specification_outdoor_air_object_name') \
             if template_fields.get('design_specification_outdoor_air_object_name', 'None') != 'None' else False
+        # dual duct uses different naming, so try that if first attempt was not set.
+        if not dsoa_object:
+            dsoa_object = template_fields.get('design_specification_outdoor_air_object_name_for_sizing') \
+                if template_fields.get('design_specification_outdoor_air_object_name_for_sizing', 'None') != 'None' else False
         if template_type == 'HVACTemplate:Zone:BaseboardHeat':
             if doas_equipment and outdoor_air_method != 'DetailedSpecification':
                 obj._design_specification_outdoor_air_object_status = 'IncludeDSOA'
@@ -1228,7 +1238,8 @@ class DesignSpecificationOutsideAirObjectStatus:
             if outdoor_air_method != 'DetailedSpecification':
                 obj._design_specification_outdoor_air_object_status = 'IncludeDSOA'
         # Remove an input DSOA object name if it's not going to be used
-        if getattr(obj, '_design_specification_outdoor_air_object_status', None) == 'IncludeDSOA' and dsoa_object:
+        if getattr(obj, '_design_specification_outdoor_air_object_status', None) == 'IncludeDSOA' and dsoa_object \
+                and hasattr(obj, 'design_specification_zone_air_distribution_object_name'):
             delattr(obj, 'design_specification_zone_air_distribution_object_name')
         return
 
@@ -1277,9 +1288,13 @@ class HeatingDesignAirFlowMethod:
         (_, template_fields), = template_structure.items()
         # Check for doas reference
         supply_air_maximum_flow_rate = template_fields.get('supply_air_maximum_flow_rate', 'None')
+        heating_supply_air_flow_rate = template_fields.get('heating_supply_air_flow_rate', 'None')
         if isinstance(supply_air_maximum_flow_rate, (int, float)):
             obj._heating_design_air_flow_method = 'Flow/Zone'
             setattr(obj, 'heating_design_air_flow_rate', supply_air_maximum_flow_rate)
+        elif isinstance(heating_supply_air_flow_rate, (int, float)):
+            obj._heating_design_air_flow_method = 'Flow/Zone'
+            setattr(obj, 'heating_design_air_flow_rate', heating_supply_air_flow_rate)
         return
 
 
@@ -1297,9 +1312,92 @@ class CoolingDesignAirFlowMethod:
         (_, template_fields), = template_structure.items()
         # Check for doas reference
         supply_air_maximum_flow_rate = template_fields.get('supply_air_maximum_flow_rate', 'None')
+        primary_supply_air_maximum_flow_rate = template_fields.get('primary_supply_air_maximum_flow_rate', 'None')
+        cooling_supply_air_flow_rate = template_fields.get('cooling_supply_air_flow_rate', 'None')
         if isinstance(supply_air_maximum_flow_rate, (int, float)):
             obj._cooling_design_air_flow_method = 'Flow/Zone'
             setattr(obj, 'cooling_design_air_flow_rate', supply_air_maximum_flow_rate)
+        elif isinstance(primary_supply_air_maximum_flow_rate, (int, float)):
+            obj._cooling_design_air_flow_method = 'Flow/Zone'
+            setattr(obj, 'cooling_design_air_flow_rate', primary_supply_air_maximum_flow_rate)
+        elif isinstance(cooling_supply_air_flow_rate, (int, float)):
+            obj._cooling_design_air_flow_method = 'Flow/Zone'
+            setattr(obj, 'cooling_design_air_flow_rate', cooling_supply_air_flow_rate)
+        return
+
+
+class HumidistatObjectType:
+    """
+    Set a class attribute, humidistat_object_type, for TemplateObjects in the YAML lookup.
+    Also set the dehumidification and humidification values to a default if not provided
+    """
+    def __get__(self, obj, owner):
+        return obj._humidistat_object_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        dehumidification_control_type = template_fields.get('dehumidification_control_type') if \
+            template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+        humidification_control_type = template_fields.get('humidification_control_type') if \
+            template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+        dehumidification_setpoint = template_fields.get('dehumidification_setpoint') if \
+            template_fields.get('dehumidification_setpoint', 'None') != 'None' else False
+        humidification_setpoint = template_fields.get('humidification_setpoint') if \
+            template_fields.get('humidification_setpoint', 'None') != 'None' else False
+        if dehumidification_control_type == 'Humidistat' or humidification_control_type == 'Humidistat':
+            obj._humidistat_object_type = 'IncludeHumidistat'
+            setattr(obj, 'dehumidification_setpoint', dehumidification_setpoint or 100)
+            setattr(obj, 'humidification_setpoint', humidification_setpoint or 0)
+        return
+
+
+class FanPoweredReheatType:
+    """
+    Create a new class attribute from reheat_coil_type, for TemplateObjects in the YAML lookup for FanPowered zone objects.
+    If the system flow_type is parallel then reheat_coil_type_parallel is set.  For series, reheat_coil_type_series is set.
+    """
+    def __get__(self, obj, owner):
+        return obj._fan_powered_reheat_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        if template_type == 'HVACTemplate:Zone:VAV:FanPowered':
+            if template_fields.get('flow_type') in ['Series', 'SeriesFromPlenum']:
+                obj._fan_powered_reheat_type = 'Series'
+                setattr(obj, 'reheat_coil_type_series', template_fields.get('reheat_coil_type'))
+            elif template_fields.get('flow_type') in ['Parallel', 'ParallelFromPlenum']:
+                obj._fan_powered_reheat_type = 'Parallel'
+                setattr(obj, 'reheat_coil_type_parallel', template_fields.get('reheat_coil_type'))
+        return
+
+
+class VRFType:
+    """
+    Create a new class attribute, vrf_type, for TemplateObjects in the YAML lookup for FanPowered zone objects.
+    """
+    def __get__(self, obj, owner):
+        return obj._vrf_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        if template_type == 'HVACTemplate:Zone:VRF':
+            doas_equipment = True if template_fields.get('dedicated_outdoor_air_system_name', 'None') != 'None' else False
+            cooling_coil_type = template_fields.get('cooling_coil_type') if \
+                template_fields.get('cooling_coil_type', 'None') != 'None' else False
+            heat_pump_heating_coil_type = template_fields.get('heat_pump_heating_coil_type') if \
+                template_fields.get('heat_pump_heating_coil_type', 'None') != 'None' else False
+            if cooling_coil_type and heat_pump_heating_coil_type:
+                obj._vrf_type = 'HeatAndCool'
+            elif cooling_coil_type:
+                obj._vrf_type = 'CoolOnly'
+            elif heat_pump_heating_coil_type:
+                obj._vrf_type = 'HeatOnly'
+            if getattr(obj, '_vrf_type', None):
+                if doas_equipment:
+                    obj._vrf_type = ''.join([obj._vrf_type, 'WithDOAS'])
         return
 
 
@@ -1308,11 +1406,14 @@ class ExpandZone(ExpandObjects):
     Zone expansion operations
     """
 
-    zone_hvac_equipmentlist_object_type = ZonevacEquipmentListOjectType()
+    zone_hvac_equipmentlist_object_type = ZonevacEquipmentListObjectType()
     design_specification_outdoor_air_object_status = DesignSpecificationOutsideAirObjectStatus()
     design_specification_zone_air_distribution_object_status = DesignSpecificationZoneAirDistributionObjectStatus()
     heating_design_air_flow_method = HeatingDesignAirFlowMethod()
     cooling_design_air_flow_method = CoolingDesignAirFlowMethod()
+    humidistat_object_type = HumidistatObjectType()
+    fan_powered_reheat_type = FanPoweredReheatType()
+    vrf_type = VRFType()
 
     def __init__(self, template, epjson=None):
         # fill/create class attributes values with template inputs
@@ -1328,6 +1429,9 @@ class ExpandZone(ExpandObjects):
         self.design_specification_zone_air_distribution_object_status = template
         self.heating_design_air_flow_method = template
         self.cooling_design_air_flow_method = template
+        self.humidistat_object_type = template
+        self.fan_powered_reheat_type = template
+        self.vrf_type = template
         self.epjson = epjson or self.epjson
         return
 

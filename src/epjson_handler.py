@@ -37,7 +37,7 @@ class EPJSON(Logger):
     def merge_epjson(
             super_dictionary: dict,
             object_dictionary: dict,
-            unique_name_override: bool = True,
+            unique_name_override: bool = False,
             unique_name_fail: bool = True):
         """
         Merge a high level formatted dictionary with a sub-dictionary, both in epJSON format

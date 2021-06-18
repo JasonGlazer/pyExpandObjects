@@ -220,6 +220,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             del ez.supply_plenum_name
+            del ez.return_plenum_name
             expanded_zones[unique_name] = ez
         self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
@@ -251,6 +252,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             del ez.supply_plenum_name
+            del ez.return_plenum_name
             expanded_zones[unique_name] = ez
         self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
@@ -282,6 +284,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             del ez.supply_plenum_name
+            del ez.return_plenum_name
             expanded_zones[unique_name] = ez
         self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
@@ -314,6 +317,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             type(ez).zone_name = unique_name
             type(ez).unique_name = unique_name
             del ez.supply_plenum_name
+            del ez.return_plenum_name
             expanded_zones[unique_name] = ez
         self.hvac_template._create_system_path_connection_objects(
             system_class_object=es,
@@ -376,6 +380,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             ez.zone_name = unique_name
             ez.unique_name = unique_name
             del ez.supply_plenum_name
+            del ez.return_plenum_name
             expanded_zones[unique_name] = ez
         with self.assertRaisesRegex(InvalidTemplateException, 'Search for ZoneHVAC:EquipmentConnections'):
             self.hvac_template._create_system_path_connection_objects(
