@@ -15,25 +15,25 @@ doas_objects = {
             "cooling_coil_setpoint_at_outdoor_dry_bulb_high": 12.8,
             "cooling_coil_setpoint_at_outdoor_dry_bulb_low": 15.6,
             "cooling_coil_setpoint_control_type": "FixedSetpoint",
-            "cooling_coil_type": "ChilledWater",
-            "dehumidification_control_type": "None",
+            "cooling_coil_type": "TwoStageHumidityControlDX",
+            "dehumidification_control_type": "Multimode",
             "dehumidification_setpoint": 0.00924,
             "dx_cooling_coil_gross_rated_cop": 3,
             "dx_cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
             "dx_cooling_coil_gross_rated_total_capacity": "Autosize",
             "gas_heating_coil_efficiency": 0.8,
-            "heat_recovery_frost_control_type": "MinimumExhaustTemperature",
+            "heat_recovery_frost_control_type": "None",
             "heat_recovery_heat_exchanger_type": "Plate",
             "heat_recovery_latent_effectiveness": 0.65,
             "heat_recovery_sensible_effectiveness": 0.7,
-            "heat_recovery_type": "Enthalpy",
+            "heat_recovery_type": "None",
             "heating_coil_design_setpoint": 12.2,
             "heating_coil_reset_outdoor_dry_bulb_high": 12.2,
             "heating_coil_reset_outdoor_dry_bulb_low": 7.8,
             "heating_coil_setpoint_at_outdoor_dry_bulb_high": 12.2,
             "heating_coil_setpoint_at_outdoor_dry_bulb_low": 15,
             "heating_coil_setpoint_control_type": "FixedSetpoint",
-            "heating_coil_type": "HotWater",
+            "heating_coil_type": "Gas",
             "humidifier_constant_setpoint": 0.003,
             "humidifier_rated_capacity": 1e-06,
             "humidifier_rated_electric_power": 2690,
@@ -42,47 +42,9 @@ doas_objects = {
             "supply_fan_flow_rate": "Autosize",
             "supply_fan_motor_efficiency": 0.9,
             "supply_fan_motor_in_air_stream_fraction": 1,
-            "supply_fan_placement": "DrawThrough",
+            "supply_fan_placement": "BlowThrough",
             "supply_fan_total_efficiency": 0.7,
             "system_availability_schedule_name": "OCCUPY-1"
-        }
-    },
-    "HVACTemplate:Plant:ChilledWaterLoop": {
-        "Chilled Water Loop": {
-            "chilled_water_design_setpoint": 7.22,
-            "chilled_water_pump_configuration": "ConstantPrimaryNoSecondary",
-            "chilled_water_reset_outdoor_dry_bulb_high": 26.7,
-            "chilled_water_reset_outdoor_dry_bulb_low": 15.6,
-            "chilled_water_setpoint_at_outdoor_dry_bulb_high": 6.7,
-            "chilled_water_setpoint_at_outdoor_dry_bulb_low": 12.2,
-            "chilled_water_setpoint_reset_type": "OutdoorAirTemperatureReset",
-            "chiller_plant_operation_scheme_type": "Default",
-            "condenser_plant_operation_scheme_type": "Default",
-            "condenser_water_design_setpoint": 29.4,
-            "condenser_water_pump_rated_head": 179352,
-            "primary_chilled_water_pump_rated_head": 179352,
-            "pump_control_type": "Intermittent",
-            "secondary_chilled_water_pump_rated_head": 179352
-        }
-    },
-    "HVACTemplate:Plant:Chiller": {
-        "Main Chiller": {
-            "capacity": "Autosize",
-            "chiller_type": "ElectricReciprocatingChiller",
-            "condenser_type": "WaterCooled",
-            "nominal_cop": 3.2,
-            "priority": "1"
-        }
-    },
-    "HVACTemplate:Plant:Tower": {
-        "Main Tower": {
-            "free_convection_capacity": "Autosize",
-            "high_speed_fan_power": "Autosize",
-            "high_speed_nominal_capacity": "Autosize",
-            "low_speed_fan_power": "Autosize",
-            "low_speed_nominal_capacity": "Autosize",
-            "priority": "1",
-            "tower_type": "SingleSpeed"
         }
     }
 }
