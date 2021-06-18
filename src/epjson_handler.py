@@ -67,10 +67,6 @@ class EPJSON(Logger):
                                         object_name,
                                         re.IGNORECASE) and object_type.lower() == 'schedule:compact'
                             ):
-                                from pprint import pprint
-                                pprint(super_dictionary[object_type], width=200)
-                                print('-------------------')
-                                pprint(object_dictionary[object_type])
                                 raise UniqueNameException("Unique name {} already exists in object {}".format(
                                     object_name,
                                     object_type
