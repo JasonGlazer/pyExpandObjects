@@ -33,7 +33,7 @@ class ExpansionStructureLocation:
                     raise PyExpandObjectsTypeError('File extension does not match yaml type: {}'.format(value))
                 else:
                     if yaml_file:
-                        parsed_value = yaml_file
+                        parsed_value = copy.deepcopy(yaml_file)
                     else:
                         with open(value, 'r') as f:
                             # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
