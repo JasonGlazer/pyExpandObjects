@@ -4729,8 +4729,6 @@ OptionTree:
                 - OutdoorAir:NodeList: *OutdoorAirNodeListFields
                 - Controller:OutdoorAir: *ControllerOutdoorAir
                 - Sizing:System: *SizingSystemConstantVolume
-                - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
-                - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirEconomizer
             DediicatedOutdoorAir:
               Base: &SystemCommonBaseObjectsDedicatedOutdoorAir
@@ -4805,27 +4803,135 @@ OptionTree:
                       supply_fan_maximum_flow_rate: design_supply_air_flow_rate
           ConstantVolume: &SystemCommonTemplateObjectsConstantVolume
             cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType # created by descriptors
-              ControlZone:
+              ControlZoneBlowThrough:
+                Objects:
+                  - NodeList:
+                      name: '{} Cooling Setpoint Nodes'
+                      nodes:
+                        - node_name:
+                            BuildPathReference:
+                              Location: Coil:Heating.*
+                              Occurrence: -1
+                              ValueLocation: Outlet
+                        - node_name:
+                            BuildPathReference:
+                              Location: Coil:Cooling.*
+                              ValueLocation: Outlet
+                  - SetpointManager:SingleZone:Cooling:
+                      <<: *SetpointManagerSingleZoneCooling
+                      setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
+                Transitions:
+                  - SetpointManager:SingleZone:Cooling:
+                      maximum_supply_air_temperature:
+                        maximum_supply_air_temperature: 'max(18, {heating_coil_design_setpoint}+1)'
+              ControlZoneDrawThrough:
                 Objects:
                   - SetpointManager:SingleZone:Cooling: *SetpointManagerSingleZoneCooling
-              FixedSetpoint:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
+                Transitions:
+                  - SetpointManager:SingleZone:Cooling:
+                      maximum_supply_air_temperature:
+                        maximum_supply_air_temperature: 'max(18, {heating_coil_design_setpoint}+1)'
+              FixedSetpointBlowThrough: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilControlTypeFixedSetpointBlowThrough
                 Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                   - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
+              FixedSetpointDrawThrough: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilControlTypeFixedSetpointBlowThrough
               FixedSetpointWithDehumidification: # Created via descriptor in expand_objects.py
                 Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                   - SetpointManager:Scheduled:
                       <<: *SetpointManagerScheduledCooling
                       setpoint_node_or_nodelist_name:
                         NodeList: key
-              Warmest:
+              OutdoorAirTemperatureResetBlowThrough:
+                Objects:
+                  - NodeList:
+                      name: '{} Cooling Setpoint Nodes'
+                      nodes:
+                        - node_name:
+                            BuildPathReference:
+                              Location: Coil:Heating.*
+                              Occurrence: -1
+                              ValueLocation: Outlet
+                        - node_name:
+                            BuildPathReference:
+                              Location: Coil:Cooling.*
+                              ValueLocation: Outlet
+                  - SetpointManager:OutdoorAirReset:
+                      <<: *SetpointManagerOutdoorAirResetCooling
+                      setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
+              OutdoorAirTemperatureResetDrawThrough:
+                Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
+                  - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetCooling
+              ScheduledBlowThrough:
+                Objects:
+                  - NodeList:
+                      name: '{} Cooling Setpoint Nodes'
+                      nodes:
+                        - node_name:
+                            BuildPathReference:
+                              Location: Coil:Heating.*
+                              Occurrence: -1
+                              ValueLocation: Outlet
+                        - node_name:
+                            BuildPathReference:
+                              Location: Coil:Cooling.*
+                              ValueLocation: Outlet
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduled
+                      name: '{} Cooling Supply Air Temp Manager'
+                      schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint}' # cooling coil attribute renamed in class init.
+                      setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
+              ScheduledDrawThrough:
+                Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduled
+                      name: '{} Cooling Supply Air Temp Manager'
+                      schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint}' # cooling coil attribute renamed in class init.
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: -1
+                          ValueLocation: Outlet
+              WarmestBlowThrough:
+                Objects:
+                  - NodeList:
+                      name: '{} Cooling Setpoint Nodes'
+                      nodes:
+                        - node_name:
+                            BuildPathReference:
+                              Location: Coil:Heating.*
+                              Occurrence: -1
+                              ValueLocation: Outlet
+                        - node_name:
+                            BuildPathReference:
+                              Location: Coil:Cooling.*
+                              ValueLocation: Outlet
+                  - SetpointManager:Warmest:
+                      <<: *SetpointManagerWarmest
+                      setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
+                Transitions:
+                  - SetpointManager:Warmest:
+                      maximum_supply_air_temperature:
+                        maximum_supply_air_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
+              WarmestDrawThrough:
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
-              OutdoorAirTemperatureReset:
-                Objects:
-                  - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetCooling
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
+                Transitions:
+                  - SetpointManager:Warmest:
+                      maximum_supply_air_temperature:
+                        maximum_supply_air_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
             heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
-              ControlZone:
+              ControlZoneBlowThrough:
                 Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
+                  - SetpointManager:SingleZone:Heating: *SetpointManagerSingleZoneHeating
+              ControlZoneDrawThrough:
+                Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                   - SetpointManager:SingleZone:Heating: *SetpointManagerSingleZoneHeating
               FixedSetpoint:
                 Objects:
@@ -4838,8 +4944,12 @@ OptionTree:
                         BuildPathReference:
                           Location: Coil:Heating.*
                           ValueLocation: Outlet
-              OutdoorAirTemperatureReset:
+              OutdoorAirTemperatureResetBlowThrough:
                 Objects:
+                  - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHeating
+              OutdoorAirTemperatureResetDrawThrough:
+                Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHeating
           HeatingCoilSetpointControlTypeHeatingOutlet:
             heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlTypeHeatingOutet
