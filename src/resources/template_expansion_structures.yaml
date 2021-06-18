@@ -1885,6 +1885,7 @@ Objects:
               - Coil:Heating:WaterToAirHeatPump:EquationFit:
                   heating_coil_gross_rated_capacity: gross_rated_heating_capacity
                   heating_supply_air_flow_rate: rated_air_flow_rate
+                  heat_pump_heating_coil_gross_rated_capacity: gross_rated_heating_capacity
           Base: &CoilHeatingWaterToAirHeatPumpEquationFitSuperObject
             Fields:
               name: '{} Heating Coil'
@@ -3117,7 +3118,11 @@ Objects:
           <<: *ZoneHVACPackagedTerminalHeatPumpFields
           name: '{} WAHP'
           availability_schedule_name: '{system_availability_schedule_name}'
+          heat_pump_time_constant: '{heat_pump_time_constant}'
+          fraction_of_on_cycle_power_use: '{fraction_of_on_cycle_power_use}'
+          heat_pump_fan_delay_time: '{heat_pump_fan_delay_time}'
           maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: 20.0 # set by legacy, not default
+          maximum_cycling_rate: '{maximum_cycling_rate}'
           outdoor_dry_bulb_temperature_sensor_node_name:
             OutdoorAir:Mixer: outdoor_air_stream_node_name
 
@@ -4396,6 +4401,7 @@ OptionTree:
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           <<: *ZoneCommonTemplateObjectsDesignSpecification
+          <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
           dedicated_outdoor_air_system_name:
             None:
               Objects:
@@ -4776,29 +4782,29 @@ OptionTree:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVAC
                 Transitions:
-                  - ^AirloopHVAC$:
+                  - AirLoopHVAC:
                       supply_fan_maximum_flow_rate: design_supply_air_flow_rate
               DualDuct:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACDualDuct
                 Transitions:
-                  - ^AirloopHVAC$:
+                  - AirLoopHVAC:
                       # todo_eo: this needs to be changed, for water as well
                       supply_fan_maximum_flow_rate: design_supply_air_flow_rate
               Water:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACWater
                 Transitions:
-                  - ^AirloopHVAC$:
+                  - AirLoopHVAC:
                       supply_fan_maximum_flow_rate: design_supply_air_flow_rate
               WaterDualDuct:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACWaterDualDuct
                 Transitions:
-                  - ^AirloopHVAC$:
+                  - AirLoopHVAC:
                       supply_fan_maximum_flow_rate: design_supply_air_flow_rate
           ConstantVolume: &SystemCommonTemplateObjectsConstantVolume
-            cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
+            cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType # created by descriptors
               ControlZone:
                 Objects:
                   - SetpointManager:SingleZone:Cooling: *SetpointManagerSingleZoneCooling
