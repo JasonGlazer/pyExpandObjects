@@ -5,6 +5,45 @@ from src.epjson_handler import EPJSON
 
 test_dir = Path(__file__).parent.parent.parent
 
+schedule_objects = {
+    "Schedule:Compact": {
+        "Always62": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 62.0
+                }
+            ],
+            "schedule_type_limits_name": "Any Number"
+        },
+        "Always29": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 29.0
+                }
+            ],
+            "schedule_type_limits_name": "Any Number"
+        }
+    }
+}
+
 
 class TestSimulationsSystemConstantVolume(BaseSimulationTest):
     def setUp(self):
@@ -230,7 +269,7 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_blow_"
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_draw_"
                                               "through_cooling_control_zone_no_heating")
     def test_supply_fan_placement_draw_through_cooling_control_zone_no_heating(self):
         # todo_eo: Legacy fails with this option.  Legacy will alter multiple systems if one is set to no heating coil
@@ -273,7 +312,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         return
 
     def test_supply_fan_placement_draw_through_heating_control_fixed_setpoint(self):
-        # todo_eo: pick up from here.
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'supply_fan_placement'] = 'DrawThrough'
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
@@ -281,4 +319,176 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    def test_supply_fan_placement_blow_through_heating_control_fixed_setpoint(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heating_coil_setpoint_control_type'] = 'FixedSetpoint'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        # todo_eo: odd warning coming from legacy but not current program even though they appear to be the same.
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_draw_through_heating_scheduled")
+    def test_supply_fan_placement_draw_through_heating_scheduled(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heating_coil_setpoint_control_type'] = 'Scheduled'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_blow_through_heating_scheduled")
+    def test_supply_fan_placement_blow_through_heating_scheduled(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heating_coil_setpoint_control_type'] = 'Scheduled'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_draw_through_heating_control_zone")
+    def test_supply_fan_placement_draw_through_heating_control_zone(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heating_coil_setpoint_control_type'] = 'ControlZone'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heating_coil_control_zone_name'] = 'SPACE1-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_draw_through_heating_control_zone")
+    def test_supply_fan_placement_blow_through_heating_control_zone(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heating_coil_setpoint_control_type'] = 'ControlZone'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heating_coil_control_zone_name'] = 'SPACE1-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_draw_through"
+                                              "_cooling_warmest_dehumid")
+    def test_supply_fan_placement_draw_through_cooling_warmest_dehumid(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'cooling_coil_setpoint_control_type'] = 'Warmest'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'dehumidification_control_type'] = 'CoolReheat'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'dehumidification_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'dehumidification_relative_humidity_setpoint'] = 62
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'TemperatureAndHumidityRatio',
+            epjson_output['Controller:WaterCoil']['AHU 1 Spaces 1-4 Cooling Coil Controller']['control_variable'])
+        self.assertEqual(
+            'HVACTemplate-Always62.0',
+            epjson_output['ZoneControl:Humidistat']['AHU 1 Spaces 1-4 Dehumidification Humidistat'][
+                'dehumidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_draw_through"
+                                              "_cooling_warmest_humid")
+    def test_supply_fan_placement_draw_through_cooling_warmest_humid(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'cooling_coil_setpoint_control_type'] = 'Warmest'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'humidifier_relative_humidity_setpoint'] = 29
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_draw_through"
+                                              "_cooling_warmest_humid")
+    def test_supply_fan_placement_draw_through_cooling_warmest_humid_schedule(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'cooling_coil_setpoint_control_type'] = 'Warmest'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'humidifier_relative_humidity_setpoint_schedule_name'] = 'Always29'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_draw_through"
+                                              "_cooling_warmest_humid")
+    def test_supply_fan_placement_draw_through_cooling_warmest_humid_and_dehumid(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'cooling_coil_setpoint_control_type'] = 'Warmest'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'dehumidification_control_type'] = 'CoolReheat'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'dehumidification_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'dehumidification_relative_humidity_setpoint'] = 62
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'humidifier_relative_humidity_setpoint'] = 29
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_draw_through"
+                                              "_cooling_warmest_dehumid_schedule")
+    def test_supply_fan_placement_draw_through_cooling_warmest_dehumid_schedule(self):
+        # todo_eo: legacy doesn't map value
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'cooling_coil_setpoint_control_type'] = 'Warmest'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'dehumidification_control_type'] = 'CoolReheat'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'dehumidification_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'dehumidification_relative_humidity_setpoint_schedule_name'] = 'Always62'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'TemperatureAndHumidityRatio',
+            epjson_output['Controller:WaterCoil']['AHU 1 Spaces 1-4 Cooling Coil Controller']['control_variable'])
         return

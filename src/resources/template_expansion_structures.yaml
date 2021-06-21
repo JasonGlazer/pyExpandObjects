@@ -2561,6 +2561,25 @@ Objects:
             setpoint_node_or_nodelist_name: *SystemSupplyPathInlet
             zone_inlet_node_name: '{heating_coil_control_zone_name} Supply Inlet' # todo_eo doesn't use global naming but should
             zone_node_name: '{heating_coil_control_zone_name} Zone Air Node' # todo_eo: doesn't use global naming but should
+      Humidity:
+        Maximum:
+          Base:
+            Fields: &SetpointManagerSingleZoneHumidityMaximum
+              name: '{} Dehumidification Setpoint Manager'
+              control_zone_air_node_name: '{dehumidification_control_zone_name} Zone Air Node'
+              setpoint_node_or_nodelist_name:
+                BuildPathReference:
+                  Location: Coil:Cooling.*
+                  ValueLocation: Outlet
+        Minimum:
+          Base:
+            Fields: &SetpointManagerSingleZoneHumidityMinimum
+              name: '{} Humidification Setpoint Manager'
+              control_zone_air_node_name: '{humidifier_control_zone_name} Zone Air Node'
+              setpoint_node_or_nodelist_name:
+                BuildPathReference:
+                  Location: Humidifier:.*
+                  ValueLocation: Outlet
     Warmest:
       Base:
         Fields: &SetpointManagerWarmest
@@ -2747,6 +2766,11 @@ Objects:
           number_of_speeds_for_cooling: '{number_of_speeds_for_cooling}'
           number_of_speeds_for_heating: '{number_of_speeds_or_stages_for_heating}'
           single_mode_operation: 'No'
+  ZoneControl:
+    Humidistat: &ZoneControlHumidistat
+      name: '{} Humidistat'
+      dehumidifying_relative_humidity_setpoint_schedule_name: HVACTemplate-Always100
+      humidifying_relative_humidity_setpoint_schedule_name: HVACTemplate-Always1
   ZoneHVAC:
     Common:
       ZoneEquipment:
@@ -3922,10 +3946,15 @@ OptionTree:
             IncludeHumidistat: # Created via descriptors in ExpandZone
               Objects:
                 - ZoneControl:Humidistat:
+                    <<: *ZoneControlHumidistat
                     name: '{} Humidification Humidistat'
-                    dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
-                    humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidification_setpoint}'
                     zone_name: '{}'
+              Transitions:
+                - ZoneControl:Humidistat:
+                    dehumidification_setpoint:
+                      dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
+                    humidification_setpoint:
+                      humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidification_setpoint}'
       PTAC:
         BuildPath:
           BaseObjects:
@@ -4445,6 +4474,11 @@ OptionTree:
                           - Controller:WaterCoil:
                               <<: *ControllerWaterCoil
                               name: '{} Cooling Coil Controller'
+                        Mappings:
+                          - Controller:WaterCoil:
+                              dehumidification_control_type:
+                                CoolReheat:
+                                  control_variable: TemperatureAndHumidityRatio
                       SingleSpeedDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
@@ -4802,6 +4836,47 @@ OptionTree:
                   - AirLoopHVAC:
                       supply_fan_maximum_flow_rate: design_supply_air_flow_rate
           ConstantVolume: &SystemCommonTemplateObjectsConstantVolume
+            humidistat_type:
+              Dehumidification:
+                Objects:
+                  - ZoneControl:Humidistat:
+                      <<: *ZoneControlHumidistat
+                      name: '{} Dehumidification Humidistat'
+                      zone_name: '{dehumidification_control_zone_name}'
+                      dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_relative_humidity_setpoint}'
+                Transitions:
+                  - ZoneControl:Humidistat:
+                      dehumidification_relative_humidity_setpoint_schedule_name: dehumidifying_relative_humidity_setpoint_schedule_name
+              Humidification:
+                Objects:
+                  - ZoneControl:Humidistat:
+                      <<: *ZoneControlHumidistat
+                      name: '{} humidification Humidistat'
+                      zone_name: '{humidifier_control_zone_name}'
+                      humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_relative_humidity_setpoint}'
+                Transitions:
+                  - ZoneControl:Humidistat:
+                      humidifier_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
+              DehumidificationAndHumidification:
+                Objects:
+                  - ZoneControl:Humidistat:
+                      <<: *ZoneControlHumidistat
+                      name: '{} Dehumidification Humidistat'
+                      zone_name: '{dehumidification_control_zone_name}'
+                      dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_relative_humidity_setpoint}'
+                      humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_relative_humidity_setpoint}'
+                Transitions:
+                  - ZoneControl:Humidistat:
+                      dehumidification_relative_humidity_setpoint_schedule_name: dehumidifying_relative_humidity_setpoint_schedule_name
+                      humidifier_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
+            dehumidification_control_type:
+              CoolReheat:
+                Objects:
+                  - SetpointManager:SingleZone:Humidity:Maximum: *SetpointManagerSingleZoneHumidityMaximum
+            humidifier_type:
+              ElectricSteam:
+                Objects:
+                  - SetpointManager:SingleZone:Humidity:Minimum: *SetpointManagerSingleZoneHumidityMinimum
             cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType # created by descriptors
               ControlZoneBlowThrough:
                 Objects:
@@ -4837,13 +4912,6 @@ OptionTree:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                   - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
               FixedSetpointDrawThrough: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilControlTypeFixedSetpointBlowThrough
-              FixedSetpointWithDehumidification: # Created via descriptor in expand_objects.py
-                Objects:
-                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
-                  - SetpointManager:Scheduled:
-                      <<: *SetpointManagerScheduledCooling
-                      setpoint_node_or_nodelist_name:
-                        NodeList: key
               OutdoorAirTemperatureResetBlowThrough:
                 Objects:
                   - NodeList:
@@ -4914,36 +4982,41 @@ OptionTree:
                       setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
                 Transitions:
                   - SetpointManager:Warmest:
-                      maximum_supply_air_temperature:
-                        maximum_supply_air_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
+                      maximum_setpoint_temperature:
+                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
               WarmestDrawThrough:
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                 Transitions:
                   - SetpointManager:Warmest:
-                      maximum_supply_air_temperature:
-                        maximum_supply_air_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
-            heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
+                      maximum_setpoint_temperature:
+                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
+            heating_coil_setpoint_control_type:
               ControlZoneBlowThrough:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                   - SetpointManager:SingleZone:Heating: *SetpointManagerSingleZoneHeating
+                Transitions:
+                  - SetpointManager:SingleZone:Heating:
+                      minimum_supply_air_temperature:
+                        minimum_supply_air_temperature: 'min({heating_coil_design_setpoint}-5.2, {cooling_coil_design_setpoint}-1.0)'
               ControlZoneDrawThrough:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                   - SetpointManager:SingleZone:Heating: *SetpointManagerSingleZoneHeating
-              FixedSetpoint:
+                Transitions:
+                  - SetpointManager:SingleZone:Heating:
+                      minimum_supply_air_temperature:
+                        minimum_supply_air_temperature: 'min({heating_coil_design_setpoint}-5.2, {cooling_coil_design_setpoint}-1.0)'
+              FixedSetpointBlowThrough:
                 Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                   - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
-              FixedSetpointWithDehumidification: # Created via descriptor in expand_objects.py
+              FixedSetpointDrawThrough:
                 Objects:
-                  - SetpointManager:Scheduled:
-                      <<: *SetpointManagerScheduledHeating
-                      setpoint_node_or_nodelist_name:
-                        BuildPathReference:
-                          Location: Coil:Heating.*
-                          ValueLocation: Outlet
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
+                  - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
               OutdoorAirTemperatureResetBlowThrough:
                 Objects:
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHeating
@@ -4951,6 +5024,20 @@ OptionTree:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHeating
+              ScheduledBlowThrough:
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledHeating
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: Coil:Heating.*
+                          ValueLocation: Outlet
+              ScheduledDrawThrough:
+                Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledHeating
+                      schedule_name: 'HVACTemplate-Always{heating_coil_design_setpoint}'
           HeatingCoilSetpointControlTypeHeatingOutlet:
             heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlTypeHeatingOutet
               ControlZone:
@@ -4970,14 +5057,6 @@ OptionTree:
                         BuildPathReference:
                           Location: Coil:Heating:.*
                           Occurrence: -1
-                          ValueLocation: Outlet
-              FixedSetpointWithDehumidification: # Created via descriptor in expand_objects.py
-                Objects:
-                  - SetpointManager:Scheduled:
-                      <<: *SetpointManagerScheduledHeating
-                      setpoint_node_or_nodelist_name:
-                        BuildPathReference:
-                          Location: Coil:Heating.*
                           ValueLocation: Outlet
               OutdoorAirTemperatureReset:
                 Objects:
@@ -5034,6 +5113,13 @@ OptionTree:
             - *SystemCommonBuildPathActionsHeatRecovery
             - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsConstantVolume
+            - humidifier_type:
+                ElectricSteam:
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
+                  Objects:
+                    - Humidifier:Steam:Electric: *HumidifierSteamElectricSuperObject
         BaseObjects:
           Objects: *SystemCommonBaseObjectsConstantVolume
           Transitions:

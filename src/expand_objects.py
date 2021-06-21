@@ -1571,7 +1571,8 @@ class ModifyCoolingCoilSetpointControlType:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
                 cooling_setpoint = ''.join([cooling_setpoint, supply_fan_placement])
                 if dehumidification_status:
-                    obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, 'WithDehumidification'])
+                    obj._cooling_coil_setpoint_control_type = cooling_setpoint
+                    # obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, 'WithDehumidification'])
                 else:
                     obj._cooling_coil_setpoint_control_type = cooling_setpoint
         return
@@ -1607,7 +1608,8 @@ class ModifyHeatingCoilSetpointControlType:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
                 heating_setpoint = ''.join([heating_setpoint, supply_fan_placement])
                 if dehumidification_status:
-                    obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, 'WithDehumidification'])
+                    obj._heating_coil_setpoint_control_type = heating_setpoint
+                    # obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, 'WithDehumidification'])
                 else:
                     obj._heating_coil_setpoint_control_type = heating_setpoint
             else:
@@ -1616,6 +1618,29 @@ class ModifyHeatingCoilSetpointControlType:
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
                 elif getattr(obj, 'cooling_coil_design_setpoint', None):
                     setattr(obj, 'heating_coil_design_setpoint', obj.cooling_coil_design_setpoint)
+        return
+
+
+class HumidistatType:
+    """
+    Create class attribute to select Humidistat type based on other template attributes for YAML TemplateOptions lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._humidistat_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        dehumidification = template_fields.get('dehumidification_control_type') if \
+            template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+        humidification = template_fields.get('humidifier_type') if \
+            template_fields.get('humidifier_type', 'None') != 'None' else False
+        if dehumidification and humidification:
+            obj._humidistat_type = 'DehumidificationAndHumidification'
+        elif dehumidification:
+            obj._humidistat_type = 'Dehumidification'
+        elif humidification:
+            obj._humidistat_type = 'Humidification'
         return
 
 
@@ -1629,6 +1654,7 @@ class ExpandSystem(ExpandObjects):
     airloop_hvac_unitary_fan_type_and_placement = AirLoopHVACUnitaryFanTypeAndPlacement()
     cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
     heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
+    humidistat_type = HumidistatType()
 
     def __init__(self, template, epjson=None):
         super().__init__(template=template)
@@ -1644,6 +1670,7 @@ class ExpandSystem(ExpandObjects):
         self.airloop_hvac_unitary_fan_type_and_placement = template
         self.cooling_coil_setpoint_control_type = template
         self.heating_coil_setpoint_control_type = template
+        self.humidistat_type = template
         return
 
     def _create_controller_list_from_epjson(
