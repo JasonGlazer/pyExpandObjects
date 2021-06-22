@@ -1646,6 +1646,26 @@ class HumidistatType:
         return
 
 
+class OutsideAirEquipmentType:
+    """
+    Create class attribute to select OA objects for YAML BuildPath actions.
+    """
+    def __get__(self, obj, owner):
+        return obj._outside_air_equipment_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        preheat_coil_type = ''.join([template_fields.get('preheat_coil_type'), 'Preheat']) if \
+            template_fields.get('preheat_coil_type', 'None') != 'None' else ''
+        heat_recovery_type = ''.join([template_fields.get('heat_recovery_type'), 'HR']) if \
+            template_fields.get('heat_recovery_type', 'None') != 'None' else ''
+        outside_air_equipment = ''.join([preheat_coil_type, heat_recovery_type])
+        if len(outside_air_equipment) > 0:
+            obj._outside_air_equipment_type = outside_air_equipment
+        return
+
+
 class ExpandSystem(ExpandObjects):
     """
     System expansion operations
@@ -1657,6 +1677,7 @@ class ExpandSystem(ExpandObjects):
     cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
     heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
     humidistat_type = HumidistatType()
+    outside_air_equipment_type = OutsideAirEquipmentType()
 
     def __init__(self, template, epjson=None):
         super().__init__(template=template)
@@ -1673,6 +1694,7 @@ class ExpandSystem(ExpandObjects):
         self.cooling_coil_setpoint_control_type = template
         self.heating_coil_setpoint_control_type = template
         self.humidistat_type = template
+        self.outside_air_equipment_type = template
         return
 
     def _create_controller_list_from_epjson(
@@ -1732,7 +1754,6 @@ class ExpandSystem(ExpandObjects):
             if controller_type == 'Controller:WaterCoil':
                 controller_objects = copy.deepcopy(epjson).get(controller_type)
                 for c_name, _ in copy.deepcopy(controller_objects).items():
-                    print(c_name)
                     if re.match(r'.*preheat.*', c_name, re.IGNORECASE):
                         controller_objects.pop(c_name)
             elif controller_type == 'Controller:OutdoorAir':
@@ -1741,11 +1762,6 @@ class ExpandSystem(ExpandObjects):
                 for c_name, c_fields in copy.deepcopy(controller_preheat_check_objects).items():
                     if re.match(r'.*preheat.*', c_name, re.IGNORECASE):
                         controller_objects.update({c_name: c_fields})
-            print('---------------')
-            print(controller_objects)
-            print('---------------')
-            print(actuator_list)
-            print('0000000000000000')
             if controller_objects:
                 airloop_hvac_controllerlist_object = \
                     self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'ControllerList',
@@ -1757,7 +1773,6 @@ class ExpandSystem(ExpandObjects):
                         #  the order.  Raise a ValueError if no match is found
                         # This does not work for dual duct systems, so the controllers are just taken in order because
                         # they are extended to a single list in that specific order.
-                        print(object_structure)
                         if controller_type == 'Controller:WaterCoil' and self.template_type != 'HVACTemplate:System:DualDuct':
                             object_id = actuator_list.index(object_structure['actuator_node_name']) + 1
                         else:
@@ -1809,6 +1824,19 @@ class ExpandSystem(ExpandObjects):
             structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'OutdoorAirSystem', 'EquipmentList', 'Base'])
         # iterate over build path returning every object up to the OutdoorAir:Mixer
         # if return fan is specified skip the first object as long as it is a (return) fan
+        # Put in HR if specified
+        if getattr(self, 'heat_recovery_type', 'None') != 'None':
+            heat_recovery_object = self.get_epjson_objects(
+                epjson=self.epjson,
+                object_type_regexp='HeatExchanger:AirToAir:SensibleAndLatent',
+                object_name_regexp=r'.*heat\s+recovery*')
+            (heat_recovery_object_type, heat_recovery_object_structure), = heat_recovery_object.items()
+            (heat_recovery_object_name, _), = heat_recovery_object_structure.items()
+            oa_equipment_list_dictionary['component_{}_object_type'.format(object_count)] = \
+                heat_recovery_object_type
+            oa_equipment_list_dictionary['component_{}_name'.format(object_count)] = \
+                heat_recovery_object_name
+            object_count += 1
         # Put preheat coil in first if it is specified
         if getattr(self, 'preheat_coil_type', 'None') != 'None':
             preheat_coil_object = self.get_epjson_objects(

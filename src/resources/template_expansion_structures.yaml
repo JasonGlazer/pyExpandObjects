@@ -2707,6 +2707,7 @@ Objects:
                 heating_coil_design_setpoint: central_heating_design_supply_air_temperature
                 heating_design_supply_air_temperature: central_heating_design_supply_air_temperature
                 heating_coil_capacity: heating_design_capacity
+                preheat_coil_design_setpoint: preheat_design_temperature
     Plant:
       Common:
         Fields: &SizingPlantCommonFields
@@ -5166,15 +5167,14 @@ OptionTree:
       ConstantVolume:
         BuildPath:
           BaseObjects:
-#            Objects: *SystemCommonBuildPathObjects
           Actions:
-            - preheat_coil_type:
+            - outside_air_equipment_type:
                 None:
                   Location: 0
                   ActionType: Insert
                   Objects:
                     - OutdoorAir:Mixer: *OutdoorAirMixerSuperObject
-                HotWater:
+                HotWaterPreheat: &ConstantVolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatOAMixer
                   Location: 0
                   ActionType: Insert
                   Objects:
@@ -5183,8 +5183,25 @@ OptionTree:
                           <<: *OutdoorAirMixerFields
                           outdoor_air_stream_node_name: '{} Preheat Coil Outlet'
                         Connectors: *OutdooAirMixerConnectors
+                ElectricPreheat: *ConstantVolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatOAMixer
+                GasPreheat: *ConstantVolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatOAMixer
+                HotWaterPreheatSensibleHR: *ConstantVolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatOAMixer
+                ElectricPreheatSensibleHR: *ConstantVolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatOAMixer
+                GasPreheatSensibleHR: *ConstantVolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatOAMixer
+                HotWaterPreheatEnthalpyHR: *ConstantVolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatOAMixer
+                ElectricPreheatEnthalpyHR: *ConstantVolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatOAMixer
+                GasPreheatEnthalpyHR: *ConstantVolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatOAMixer
+                SensibleHR: &ConstantVolumeBuildPathOutsideAirEquipmenttypeSensibleHROAMixer
+                  Location: 0
+                  ActionType: Insert
+                  Objects:
+                    - OutdoorAir:Mixer:
+                        Fields:
+                          <<: *OutdoorAirMixerFields
+                          outdoor_air_stream_node_name: '{} Heat Recovery Supply Outlet'
+                        Connectors: *OutdooAirMixerConnectors
+                EnthalpyHR: *ConstantVolumeBuildPathOutsideAirEquipmenttypeSensibleHROAMixer
             - *SystemCommonBuildPathActionsHeatingCoilAfterMixer
-            - *SystemCommonBuildPathActionsHeatRecovery
             - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsConstantVolume
             - humidifier_type:
@@ -5194,8 +5211,8 @@ OptionTree:
                   ActionType: Insert
                   Objects:
                     - Humidifier:Steam:Electric: *HumidifierSteamElectricSuperObject
-            - preheat_coil_type:
-                HotWater:
+            - outside_air_equipment_type:
+                HotWaterPreheat:
                   ObjectReference: OutdoorAir:Mixer
                   Location: Before
                   ActionType: Insert
@@ -5205,6 +5222,7 @@ OptionTree:
                         name: '{} Preheat Coil'
                         air_inlet_node_name: *OutdoorAirInletNodes
                         air_outlet_node_name: '{} Preheat Coil Outlet'
+                        availability_schedule_name: '{preheat_coil_availability_schedule_name}'
                         water_inlet_node_name: '{} Preheat Coil Hw Inlet'
                         water_outlet_node_name: '{} Preheat Coil Hw Outlet'
                     - Branch:
@@ -5218,10 +5236,142 @@ OptionTree:
                         name: '{} Preheat Coil Air Temp Manager'
                         schedule_name: 'HVACTemplate-Always{preheat_coil_design_setpoint}'
                         setpoint_node_or_nodelist_name: '{} Preheat Coil Outlet'
+                  Transitions:
+                    - SetpointManager:Scheduled:
+                        preheat_coil_setpoint_schedule_name: schedule_name
+                ElectricPreheat:
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: Before
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Electric:
+                        <<: *CoilHeatingElectricFields
+                        name: '{} Preheat Coil'
+                        air_inlet_node_name: *OutdoorAirInletNodes
+                        air_outlet_node_name: '{} Preheat Coil Outlet'
+                        availability_schedule_name: '{preheat_coil_availability_schedule_name}'
+                        temperature_setpoint_node_name: '{} Preheat Coil Outlet'
+                    - SetpointManager:Scheduled:
+                        <<: *SetpointManager
+                        name: '{} Preheat Coil Air Temp Manager'
+                        schedule_name: 'HVACTemplate-Always{preheat_coil_design_setpoint}'
+                        setpoint_node_or_nodelist_name: '{} Preheat Coil Outlet'
+                  Transitions:
+                    - SetpointManager:Scheduled:
+                        preheat_coil_setpoint_schedule_name: schedule_name
+                GasPreheat:
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: Before
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Fuel:
+                        <<: *CoilHeatingFuelFields
+                        name: '{} Preheat Coil'
+                        air_inlet_node_name: *OutdoorAirInletNodes
+                        air_outlet_node_name: '{} Preheat Coil Outlet'
+                        availability_schedule_name: '{preheat_coil_availability_schedule_name}'
+                        temperature_setpoint_node_name: '{} Preheat Coil Outlet'
+                        part_load_fraction_correlation_curve_name: '{} Preheat Coil PLF-FPLR'
+                    - Curve:Cubic:
+                        name: '{} Preheat Coil PLF-FPLR'
+                        coefficient1_constant: 0.8
+                        coefficient2_x: 0.2
+                        coefficient3_x_2: 0
+                        coefficient4_x_3: 0
+                        maximum_value_of_x: 1
+                        minimum_value_of_x: 0
+                    - SetpointManager:Scheduled:
+                        <<: *SetpointManager
+                        name: '{} Preheat Coil Air Temp Manager'
+                        schedule_name: 'HVACTemplate-Always{preheat_coil_design_setpoint}'
+                        setpoint_node_or_nodelist_name: '{} Preheat Coil Outlet'
+                  Transitions:
+                    - SetpointManager:Scheduled:
+                        preheat_coil_setpoint_schedule_name: schedule_name
+                HotWaterPreheatSensibleHR: &ConstantvolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: Before
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Water:
+                        <<: *CoilHeatingWaterFields
+                        name: '{} Preheat Coil'
+                        air_inlet_node_name: '{} Heat Recovery Supply Outlet'
+                        air_outlet_node_name: '{} Preheat Coil Outlet'
+                        availability_schedule_name: '{preheat_coil_availability_schedule_name}'
+                        water_inlet_node_name: '{} Preheat Coil Hw Inlet'
+                        water_outlet_node_name: '{} Preheat Coil Hw Outlet'
+                    - Branch:
+                        <<: *CoilHeatingWaterCommonObjectsBranch
+                        name: '{} Preheat Coil Hw Branch'
+                    - Controller:WaterCoil:
+                        <<: *ControllerWaterCoil
+                        name: '{} Preheat Coil Controller'
+                    - SetpointManager:Scheduled:
+                        <<: *SetpointManager
+                        name: '{} Preheat Coil Air Temp Manager'
+                        schedule_name: 'HVACTemplate-Always{preheat_coil_design_setpoint}'
+                        setpoint_node_or_nodelist_name: '{} Preheat Coil Outlet'
+                  Transitions:
+                    - SetpointManager:Scheduled:
+                        preheat_coil_setpoint_schedule_name: schedule_name
+                ElectricPreheatSensibleHR: &ConstantvolumeBuildPathOutsideAirEquipmentTypeElectricPreheatSensibleHR
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: Before
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Electric:
+                        <<: *CoilHeatingElectricFields
+                        name: '{} Preheat Coil'
+                        air_inlet_node_name: '{} Heat Recovery Supply Outlet'
+                        air_outlet_node_name: '{} Preheat Coil Outlet'
+                        availability_schedule_name: '{preheat_coil_availability_schedule_name}'
+                        temperature_setpoint_node_name: '{} Preheat Coil Outlet'
+                    - SetpointManager:Scheduled:
+                        <<: *SetpointManager
+                        name: '{} Preheat Coil Air Temp Manager'
+                        schedule_name: 'HVACTemplate-Always{preheat_coil_design_setpoint}'
+                        setpoint_node_or_nodelist_name: '{} Preheat Coil Outlet'
+                  Transitions:
+                    - SetpointManager:Scheduled:
+                        preheat_coil_setpoint_schedule_name: schedule_name
+                GasPreheatSensibleHR: &ConstantvolumeBuildPathOutsideAirEquipmentTypeGasPreheatSensibleHR
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: Before
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Fuel:
+                        <<: *CoilHeatingFuelFields
+                        name: '{} Preheat Coil'
+                        air_inlet_node_name: '{} Heat Recovery Supply Outlet'
+                        air_outlet_node_name: '{} Preheat Coil Outlet'
+                        availability_schedule_name: '{preheat_coil_availability_schedule_name}'
+                        temperature_setpoint_node_name: '{} Preheat Coil Outlet'
+                        part_load_fraction_correlation_curve_name: '{} Preheat Coil PLF-FPLR'
+                    - Curve:Cubic:
+                        name: '{} Preheat Coil PLF-FPLR'
+                        coefficient1_constant: 0.8
+                        coefficient2_x: 0.2
+                        coefficient3_x_2: 0
+                        coefficient4_x_3: 0
+                        maximum_value_of_x: 1
+                        minimum_value_of_x: 0
+                    - SetpointManager:Scheduled:
+                        <<: *SetpointManager
+                        name: '{} Preheat Coil Air Temp Manager'
+                        schedule_name: 'HVACTemplate-Always{preheat_coil_design_setpoint}'
+                        setpoint_node_or_nodelist_name: '{} Preheat Coil Outlet'
+                  Transitions:
+                    - SetpointManager:Scheduled:
+                        preheat_coil_setpoint_schedule_name: schedule_name
+                HotWaterPreheatEnthalpyHR: *ConstantvolumeBuildPathOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
+                ElectricPreheatEnthalpyHR: *ConstantvolumeBuildPathOutsideAirEquipmentTypeElectricPreheatSensibleHR
+                GasPreheatEnthalpyHR: *ConstantvolumeBuildPathOutsideAirEquipmentTypeGasPreheatSensibleHR
+                SensibleHR:
+                EnthalpyHR:
         BaseObjects:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
-            - Controller:OutdoorAir: *ControllerOutdoorAir
             - Sizing:System: *SizingSystemConstantVolume
             - SetpointManager:MixedAir: *SetpointManagerMixedAirEconomizer
           Transitions:
@@ -5230,6 +5380,60 @@ OptionTree:
         TemplateObjects:
           <<: *SystemCommonTemplateObjects
           <<: *SystemCommonTemplateObjectsConstantVolume
+          outside_air_equipment_type:
+            None: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
+              Objects:
+                - Controller:OutdoorAir: *ControllerOutdoorAir
+            HotWaterPreheat: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
+            ElectricPreheat: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
+            GasPreheat: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
+            HotWaterPreheatSensibleHR: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
+              Objects:
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManager
+                    name: '{} Heat Recovery Air Temp Manager'
+                    schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
+                - HeatExchanger:AirToAir:SensibleAndLatent:
+                    <<: *HeatExchangerAirToAirSensibleAndLatentFields
+                    latent_effectiveness_at_75_cooling_air_flow: 0
+                    latent_effectiveness_at_75_heating_air_flow: 0
+                    latent_effectiveness_at_100_cooling_air_flow: 0
+                    latent_effectiveness_at_100_heating_air_flow: 0
+                    nominal_electric_power: 250
+                    sensible_effectiveness_at_75_cooling_air_flow: 0.75
+                    sensible_effectiveness_at_75_heating_air_flow: 0.75
+                    sensible_effectiveness_at_100_cooling_air_flow: 0.7
+                    sensible_effectiveness_at_100_heating_air_flow: 0.7
+                - Controller:OutdoorAir:
+                    <<: *ControllerOutdoorAir
+                    economizer_control_action_type: MinimumFlowWithBypass
+            ElectricPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
+            GasPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
+            HotWaterPreheatEnthalpyHR: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
+              Objects:
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManager
+                    name: '{} Heat Recovery Air Temp Manager'
+                    schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
+                - HeatExchanger:AirToAir:SensibleAndLatent:
+                    <<: *HeatExchangerAirToAirSensibleAndLatentFields
+                    latent_effectiveness_at_75_cooling_air_flow: 0.7
+                    latent_effectiveness_at_75_heating_air_flow: 0.7
+                    latent_effectiveness_at_100_cooling_air_flow: 0.65
+                    latent_effectiveness_at_100_heating_air_flow: 0.65
+                    sensible_effectiveness_at_75_cooling_air_flow: 0.75
+                    sensible_effectiveness_at_75_heating_air_flow: 0.75
+                    sensible_effectiveness_at_100_cooling_air_flow: 0.7
+                    sensible_effectiveness_at_100_heating_air_flow: 0.7
+                - Controller:OutdoorAir:
+                    <<: *ControllerOutdoorAir
+                    economizer_control_action_type: MinimumFlowWithBypass
+            ElectricPreheatEnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
+            GasPreheatEnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
+            SensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
+            EnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
       DedicatedOutdoorAir:
         BuildPath:
           BaseObjects:

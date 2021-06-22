@@ -7,6 +7,23 @@ test_dir = Path(__file__).parent.parent.parent
 
 schedule_objects = {
     "Schedule:Compact": {
+        "Always6.8": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 6.8
+                }
+            ],
+            "schedule_type_limits_name": "Any Number"
+        },
         "Always12.5": {
             "data": [
                 {
@@ -652,12 +669,162 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        # self.assertEqual(
-        #     0.75,
-        #     epjson_output['Coil:Heating:Fuel']['AHU 1 Spaces 1-4 Heating Coil']['burner_efficiency'])
-        # self.assertEqual(
-        #     1,
-        #     epjson_output['Coil:Heating:Fuel']['AHU 1 Spaces 1-4 Heating Coil']['parasitic_electric_load'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_electric")
+    def test_preheat_coil_type_electric(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'Electric'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_electric")
+    def test_preheat_coil_type_gas(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'Gas'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_hot_water"
+                                              "_heat_recovery_sensible")
+    def test_preheat_coil_type_hot_water_heat_recovery_sensible(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_electric"
+                                              "_heat_recovery_sensible")
+    def test_preheat_coil_type_electric_heat_recovery_sensible(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'Electric'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_gas"
+                                              "_heat_recovery_sensible")
+    def test_preheat_coil_type_gas_heat_recovery_sensible(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'Gas'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_hot_water"
+                                              "_heat_recovery_enthalpy")
+    def test_preheat_coil_type_hot_water_heat_recovery_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_electric"
+                                              "_heat_recovery_enthalpy")
+    def test_preheat_coil_type_electric_heat_recovery_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'Electric'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_gas"
+                                              "_heat_recovery_enthalpy")
+    def test_preheat_coil_type_gas_heat_recovery_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'Gas'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_availability_schedule_name")
+    def test_preheat_coil_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_availability_schedule_name'] = 'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Coil:Heating:Water']['AHU 1 Spaces 1-4 Preheat Coil']['availability_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_design_setpoint")
+    def test_preheat_coil_design_setpoint(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_design_setpoint'] = 7.0
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            7.0,
+            epjson_output['Sizing:System']['AHU 1 Spaces 1-4 Sizing System']['preheat_design_temperature'])
+        self.assertEqual(
+            'HVACTemplate-Always7.0',
+            epjson_output['SetpointManager:Scheduled']['AHU 1 Spaces 1-4 Preheat Coil Air Temp Manager']['schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_setpoint_schedule_name")
+    def test_preheat_coil_setpoint_schedule_name(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_setpoint_schedule_name'] = 'Always6.8'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Always6.8',
+            epjson_output['SetpointManager:Scheduled']['AHU 1 Spaces 1-4 Preheat Coil Air Temp Manager']['schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:_heat_recovery_sensible")
+    def test_heat_recovery_sensible(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:_heat_recovery_sensible")
+    def test_heat_recovery_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:dehumidification_control_type")
