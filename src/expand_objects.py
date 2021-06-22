@@ -781,6 +781,8 @@ class ExpandObjects(EPJSON):
         # Get the yaml structure from the template type
         structure_hierarchy = self.template_type.split(':')
         epjson_from_option_tree = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
+        # Remove any dummy objects created during process
+        epjson_from_option_tree.pop('DummyObject', None)
         # Always use merge_epjson to store objects in self.epjson in case objects have already been stored to
         # that dictionary during processing
         # For this processing, a temporary dictinoary needs to be made that merges the base epjson and the epjson
@@ -1696,15 +1698,54 @@ class ExpandSystem(ExpandObjects):
         # Create a list of actuators in stream order.  This will be used to determine the controller list order.
         actuator_list = []
         for bp in build_path:
+            # Get coil objects except for preheat
+            # todo_eo: preheat coil is avoided by name here.  Look into better ways to avoid grabbing it.
             (super_object_type, super_object_structure), = bp.items()
             if re.match(r'Coil:(Cooling|Heating):Water.*', super_object_type):
                 epjson_object = self.yaml_list_to_epjson_dictionaries([bp])
                 resovled_epjson_object = self.resolve_objects(epjson=epjson_object)
                 (object_name, object_fields), = resovled_epjson_object[super_object_type].items()
                 actuator_list.append(object_fields['water_inlet_node_name'])
+            elif super_object_type == 'HeatExchanger:AirToAir:SensibleAndLatent':
+                # if heat exchanger assisted cooling, then the cooling coil object is not in the build path and needs
+                # to be retrieved from the epjson object
+                cooling_coil_object = self.get_epjson_objects(
+                    epjson=self.epjson,
+                    object_type_regexp='Coil:Cooling.*',
+                    object_name_regexp='{} Cooling Coil'.format(self.unique_name))
+                (_, cooling_coil_object_structure), = cooling_coil_object.items()
+                (_, cooling_coil_object_fields), = cooling_coil_object_structure.items()
+                actuator_list.append(cooling_coil_object_fields['water_inlet_node_name'])
+        if getattr(self, 'preheat_coil_type', 'None') == 'HotWater':
+            # if preheat coil is specified, grabe the controller object
+            heating_coil_object = self.get_epjson_objects(
+                epjson=self.epjson,
+                object_type_regexp='Coil:Heating.*',
+                object_name_regexp='.*preheat.*')
+            (_, heating_coil_object_structure), = heating_coil_object.items()
+            (_, heating_coil_object_fields), = heating_coil_object_structure.items()
+            actuator_list.append(heating_coil_object_fields['water_inlet_node_name'])
         object_list = []
         for controller_type in controller_list:
-            controller_objects = epjson.get(controller_type)
+            controller_objects = None
+            # preheat controller needs to go in OA list and be removed from watercoil list
+            if controller_type == 'Controller:WaterCoil':
+                controller_objects = copy.deepcopy(epjson).get(controller_type)
+                for c_name, _ in copy.deepcopy(controller_objects).items():
+                    print(c_name)
+                    if re.match(r'.*preheat.*', c_name, re.IGNORECASE):
+                        controller_objects.pop(c_name)
+            elif controller_type == 'Controller:OutdoorAir':
+                controller_objects = copy.deepcopy(epjson).get(controller_type)
+                controller_preheat_check_objects = copy.deepcopy(epjson).get('Controller:WaterCoil')
+                for c_name, c_fields in copy.deepcopy(controller_preheat_check_objects).items():
+                    if re.match(r'.*preheat.*', c_name, re.IGNORECASE):
+                        controller_objects.update({c_name: c_fields})
+            print('---------------')
+            print(controller_objects)
+            print('---------------')
+            print(actuator_list)
+            print('0000000000000000')
             if controller_objects:
                 airloop_hvac_controllerlist_object = \
                     self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'ControllerList',
@@ -1716,14 +1757,19 @@ class ExpandSystem(ExpandObjects):
                         #  the order.  Raise a ValueError if no match is found
                         # This does not work for dual duct systems, so the controllers are just taken in order because
                         # they are extended to a single list in that specific order.
+                        print(object_structure)
                         if controller_type == 'Controller:WaterCoil' and self.template_type != 'HVACTemplate:System:DualDuct':
                             object_id = actuator_list.index(object_structure['actuator_node_name']) + 1
                         else:
                             object_id += 1
                         airloop_hvac_controllerlist_object['controller_{}_name'.format(object_id)] = \
                             object_name
-                        airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_id)] = \
-                            controller_type
+                        if controller_type == 'Controller:OutdoorAir' and re.match(r'.*preheat.*', object_name, re.IGNORECASE):
+                            airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_id)] = \
+                                'Controller:WaterCoil'
+                        else:
+                            airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_id)] = \
+                                controller_type
                 except ValueError:
                     raise PyExpandObjectsTypeError("Actuator node for water coil object does not match controller "
                                                    "object reference. build_path: {}, controllers: {}"
@@ -1763,6 +1809,19 @@ class ExpandSystem(ExpandObjects):
             structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'OutdoorAirSystem', 'EquipmentList', 'Base'])
         # iterate over build path returning every object up to the OutdoorAir:Mixer
         # if return fan is specified skip the first object as long as it is a (return) fan
+        # Put preheat coil in first if it is specified
+        if getattr(self, 'preheat_coil_type', 'None') != 'None':
+            preheat_coil_object = self.get_epjson_objects(
+                epjson=self.epjson,
+                object_type_regexp='Coil:Heating.*',
+                object_name_regexp='.*preheat.*')
+            (preheat_coil_object_type, preheat_coil_object_structure), = preheat_coil_object.items()
+            (preheat_coil_object_name, _), = preheat_coil_object_structure.items()
+            oa_equipment_list_dictionary['component_{}_object_type'.format(object_count)] = \
+                preheat_coil_object_type
+            oa_equipment_list_dictionary['component_{}_name'.format(object_count)] = \
+                preheat_coil_object_name
+            object_count += 1
         for idx, super_object in enumerate(build_path):
             for super_object_type, super_object_constructor in super_object.items():
                 if getattr(self, 'return_fan', None) == 'Yes' and idx == 0:
@@ -1944,11 +2003,18 @@ class ExpandSystem(ExpandObjects):
                     ('Fan:.*', True))),
             (
                 ['HVACTemplate:System:PackagedVAV', 'HVACTemplate:System:DedicatedOutdoorAir'],
-                'CoilSystem:Cooling.*',
+                'CoilSystem:Cooling:DX.*',
                 {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
                  'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
                 (
-                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), )))
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), )),
+            (
+                ['HVACTemplate:System:ConstantVolume'],
+                'CoilSystem:Cooling:Water.*',
+                {'Inlet': 'air_inlet_node_name',
+                 'Outlet': 'air_outlet_node_name'},
+                (
+                    ('HeatExchanger:AirToAir:SensibleAndLatent', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), )))
         # if build_path is not passed to function, get the class attributes
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
@@ -1969,6 +2035,18 @@ class ExpandSystem(ExpandObjects):
                         #  This is not included in the YAML object to keep the object from connecting to its neighbors
                         #  before this point.
                         equipment_object[super_object_type]['Connectors'][loop_type] = equipment_connectors
+                        # if equipment is a CoilSystem:Cooling:Water then the air node fields need to be added just for
+                        # the build path.  A better solution should be made in the future rather than hard-coding the
+                        # names to the object.
+                        if equipment_regex == 'CoilSystem:Cooling:Water.*':
+                            if getattr(self, 'supply_fan_placement', None) == 'BlowThrough':
+                                equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \
+                                    '{} Supply Fan Outlet'.format(self.unique_name)
+                            else:
+                                equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \
+                                    '{} Mixed Air Outlet'.format(self.unique_name)
+                            equipment_object[super_object_type]['Fields']['air_outlet_node_name'] = \
+                                '{} Cooling Coil HX Unit Outlet'.format(self.unique_name)
                 # make check if equipment object was found.  If not, return original build path
                 if equipment_object:
                     try:
@@ -1979,16 +2057,18 @@ class ExpandSystem(ExpandObjects):
                         raise PyExpandObjectsException("Equipment is improperly formatted, must be a super"
                                                        "object. system: {} object: {}"
                                                        .format(self.unique_name, equipment_object))
-                    # Iterate through list and remove objects that match the check list
+                    # Iterate through list and remove objects that match the check list as well as dummy objects
                     parsed_build_path = []
                     removed_items = 0
                     for super_object in copy.deepcopy(build_path):
                         (super_object_type, super_object_structure), = super_object.items()
                         keep_object = True
                         for object_reference, object_presence in object_check_list:
-                            if re.match(object_reference, super_object_type) and object_presence:
+                            if re.match(object_reference, super_object_type) and object_presence or \
+                                    super_object_type == 'DummyObject':
                                 keep_object = None
-                                removed_items += 1
+                                if super_object_type != 'DummyObject':
+                                    removed_items += 1
                         if keep_object:
                             parsed_build_path.append(super_object)
                         # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the
