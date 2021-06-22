@@ -1753,15 +1753,17 @@ class ExpandSystem(ExpandObjects):
             # preheat controller needs to go in OA list and be removed from watercoil list
             if controller_type == 'Controller:WaterCoil':
                 controller_objects = copy.deepcopy(epjson).get(controller_type)
-                for c_name, _ in copy.deepcopy(controller_objects).items():
-                    if re.match(r'.*preheat.*', c_name, re.IGNORECASE):
-                        controller_objects.pop(c_name)
+                if controller_objects:
+                    for c_name, _ in copy.deepcopy(controller_objects).items():
+                        if re.match(r'.*preheat.*', c_name, re.IGNORECASE):
+                            controller_objects.pop(c_name)
             elif controller_type == 'Controller:OutdoorAir':
                 controller_objects = copy.deepcopy(epjson).get(controller_type)
                 controller_preheat_check_objects = copy.deepcopy(epjson).get('Controller:WaterCoil')
-                for c_name, c_fields in copy.deepcopy(controller_preheat_check_objects).items():
-                    if re.match(r'.*preheat.*', c_name, re.IGNORECASE):
-                        controller_objects.update({c_name: c_fields})
+                if controller_preheat_check_objects:
+                    for c_name, c_fields in copy.deepcopy(controller_preheat_check_objects).items():
+                        if re.match(r'.*preheat.*', c_name, re.IGNORECASE):
+                            controller_objects.update({c_name: c_fields})
             if controller_objects:
                 airloop_hvac_controllerlist_object = \
                     self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'ControllerList',
@@ -1837,7 +1839,7 @@ class ExpandSystem(ExpandObjects):
             oa_equipment_list_dictionary['component_{}_name'.format(object_count)] = \
                 heat_recovery_object_name
             object_count += 1
-        # Put preheat coil in first if it is specified
+        # Put in preheat if it is specified
         if getattr(self, 'preheat_coil_type', 'None') != 'None':
             preheat_coil_object = self.get_epjson_objects(
                 epjson=self.epjson,
