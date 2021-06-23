@@ -396,7 +396,7 @@ class ExpandObjects(EPJSON):
                                             # Try to perform numeric evaluation if operators and formatting brackets
                                             # are present.  regex match is to avoid any operator symbols used in
                                             # variable names, but not intended for evaluation, e.g. HVACTemplate-Always
-                                            if re.match(r'.*[a-zA-Z][-+\\*][a-zA-Z].*', object_val):
+                                            if re.match(r'.*[a-zA-Z][-+/*][a-zA-Z].*', object_val):
                                                 object_value = object_val
                                             elif any(i in ['*', '+', '/', '-'] for i in object_val) and '{' in object_val:
                                                 # Add '0.' for accessing class object attributes
@@ -1532,8 +1532,8 @@ class AirLoopHVACObjectType:
     def __set__(self, obj, value):
         (template_type, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
-        cooling_coil_type = True if 'chilledwater' == template_fields.get('cooling_coil_type', 'None').lower() else False
-        heating_coil_type = True if 'hotwater' == template_fields.get('heating_coil_type', 'None').lower() else False
+        cooling_coil_type = True if 'chilledwater' in template_fields.get('cooling_coil_type', 'None').lower() else False
+        heating_coil_type = True if 'hotwater' in template_fields.get('heating_coil_type', 'None').lower() else False
         if template_type == 'HVACTemplate:System:DualDuct':
             if cooling_coil_type or heating_coil_type:
                 obj._airloop_hvac_object_type = 'WaterDualDuct'
@@ -1564,19 +1564,18 @@ class ModifyCoolingCoilSetpointControlType:
             cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
                 template_fields.get('cooling_coil_type')
             if cooling_coil_type:
-                dehumidification_status = True if template_fields.get('dehumidification_control_type', 'None') != 'None' else False
                 cooling_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
                 if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
                                      'HVACTemplate:System:Unitary']:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
                 else:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
-                cooling_setpoint = ''.join([cooling_setpoint, supply_fan_placement])
-                if dehumidification_status:
-                    obj._cooling_coil_setpoint_control_type = cooling_setpoint
-                    # obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, 'WithDehumidification'])
-                else:
-                    obj._cooling_coil_setpoint_control_type = cooling_setpoint
+                obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, supply_fan_placement])
+                # For DOAS system, the presence of SetpointManager:MixedAir objects change based on
+                # fan placement, so they must be specified separately
+                if template_type == 'HVACTemplate:System:DedicatedOutdoorAir':
+                    if supply_fan_placement == 'DrawThrough':
+                        setattr(obj, 'mixed_air_setpoint_control_type', 'HeatAndCool')
         return
 
 
@@ -1601,19 +1600,13 @@ class ModifyHeatingCoilSetpointControlType:
                 heating_coil_type = None if template_fields.get('heat_pump_heating_coil_type') == 'None' else \
                     template_fields.get('heat_pump_heating_coil_type')
             if heating_coil_type:
-                dehumidification_status = True if template_fields.get('dehumidification_control_type', 'None') != 'None' else False
                 heating_setpoint = template_fields.get('heating_coil_setpoint_control_type', 'FixedSetpoint')
                 if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
                                      'HVACTemplate:System:Unitary']:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
                 else:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
-                heating_setpoint = ''.join([heating_setpoint, supply_fan_placement])
-                if dehumidification_status:
-                    obj._heating_coil_setpoint_control_type = heating_setpoint
-                    # obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, 'WithDehumidification'])
-                else:
-                    obj._heating_coil_setpoint_control_type = heating_setpoint
+                obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, supply_fan_placement])
             else:
                 # Change heating design setpoint if no coil is present
                 if getattr(obj, 'preheat_coil_design_setpoint', None):
@@ -1666,6 +1659,35 @@ class OutsideAirEquipmentType:
         return
 
 
+class ModifyDehumidificationControlType:
+    """
+    Modify dehumidification_control_type based on other template attributes for YAML TemplateOptions lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._dehumidification_control_type
+
+    def __set__(self, obj, value):
+        # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
+        #  the template
+        if isinstance(value, str):
+            obj._dehumidification_control_type = value
+        else:
+            (template_type, template_structure), = value.items()
+            (_, template_fields), = template_structure.items()
+            # modify for DOAS
+            if template_type == 'HVACTemplate:System:DedicatedOutdoorAir':
+                cooling_coil_type = template_fields.get('cooling_coil_type') if \
+                    template_fields.get('cooling_coil_type', 'None') != 'None' else False
+                dehumidification_control_type = template_fields.get('dehumidification_control_type') if \
+                    template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+                if dehumidification_control_type == 'Multimode':
+                    if cooling_coil_type not in ['TwoStageHumidityControlDX', 'HeatExchangerAssistedDX']:
+                        obj._dehumidification_control_type = 'None'
+                    else:
+                        obj._dehumidification_control_type = dehumidification_control_type
+        return
+
+
 class ExpandSystem(ExpandObjects):
     """
     System expansion operations
@@ -1678,6 +1700,7 @@ class ExpandSystem(ExpandObjects):
     heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
     humidistat_type = HumidistatType()
     outside_air_equipment_type = OutsideAirEquipmentType()
+    dehumidification_control_type = ModifyDehumidificationControlType()
 
     def __init__(self, template, epjson=None):
         super().__init__(template=template)
@@ -1695,6 +1718,7 @@ class ExpandSystem(ExpandObjects):
         self.heating_coil_setpoint_control_type = template
         self.humidistat_type = template
         self.outside_air_equipment_type = template
+        self.dehumidification_control_type = template
         return
 
     def _create_controller_list_from_epjson(
@@ -2039,7 +2063,7 @@ class ExpandSystem(ExpandObjects):
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), )),
             (
-                ['HVACTemplate:System:ConstantVolume'],
+                ['HVACTemplate:System:ConstantVolume', 'HVACTemplate:System:DedicatedOutdoorAir'],
                 'CoilSystem:Cooling:Water.*',
                 {'Inlet': 'air_inlet_node_name',
                  'Outlet': 'air_outlet_node_name'},
@@ -2110,8 +2134,6 @@ class ExpandSystem(ExpandObjects):
                         raise PyExpandObjectsException("Equipment modification process failed to remove all objects "
                                                        "for system {}".format(self.unique_name))
                     return parsed_build_path
-                else:
-                    return build_path
         # if no matches are made, return original build_path
         return build_path
 

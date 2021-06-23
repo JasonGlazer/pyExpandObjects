@@ -1188,6 +1188,7 @@ Objects:
               - Coil:Cooling:DX:
                   cooling_coil_gross_rated_total_capacity: high_speed_gross_rated_total_cooling_capacity
                   cooling_coil_gross_rated_sensible_heat_ratio: high_speed_rated_sensible_heat_ratio
+                  dx_cooling_coil_gross_rated_cop: high_speed_gross_rated_cooling_cop
           Base: &CoilCoolingDXTwoSpeedSuperObject
             Fields:
               <<: *CoilCoolingCommonFields
@@ -2149,7 +2150,7 @@ Objects:
           - Fan:.*:
               fan_delta_pressure: pressure_rise
               supply_fan_delta_pressure: pressure_rise
-              supply_fan_maximum_flow_rate: maximum_flow_rate
+              supply_fan_maximum_flow_rate: supply_maximum_flow_rate
               supply_fan_flow_rate: maximum_flow_rate
               supply_fan_motor_in_air_stream_fraction: motor_in_airstream_fraction
               supply_fan_motor_efficiency: motor_efficiency
@@ -2730,6 +2731,17 @@ Objects:
                 heating_design_supply_air_temperature: central_heating_design_supply_air_temperature
                 heating_coil_capacity: heating_design_capacity
                 preheat_coil_design_setpoint: preheat_design_temperature
+                supply_fan_maximum_flow_rate:
+                  cooling_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
+          DedicatedOutdoorAir: &SizingSystemCommonTransitionsDedicatedOutdoorAir
+            - Sizing:System:
+                supply_fan_flow_rate:
+                  cooling_supply_air_flow_rate: '{supply_fan_flow_rate} / 1' # trigger eval() to parse out non numeric
+            - Sizing:System:
+                supply_fan_flow_rate: design_outdoor_air_flow_rate
+            - Sizing:System:
+                supply_fan_flow_rate:
+                  heating_supply_air_flow_rate: '{supply_fan_flow_rate} / 1' # trigger eval() to parse out non numeric
     Plant:
       Common:
         Fields: &SizingPlantCommonFields
@@ -5388,13 +5400,37 @@ OptionTree:
                       <<: *SetpointManagerScheduledCooling
                       setpoint_node_or_nodelist_name:
                         BuildPathReference:
-                          Location: Coil:Cooling.*
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
                           Occurrence: -1
                           ValueLocation: Outlet
                 Transitions:
                   - SetpointManager:Scheduled:
                       cooling_coil_setpoint_schedule_name: schedule_name
-              FixedSetpointDrawThrough: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointBlowThrough
+              FixedSetpointDrawThrough: &SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointDrawThrough
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledCooling
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: -1
+                          ValueLocation: Outlet
+                Transitions:
+                  - SetpointManager:Scheduled:
+                      cooling_coil_setpoint_schedule_name: schedule_name
+              OutdoorAirTemperatureResetBlowThrough:
+                Objects:
+                  - SetpointManager:OutdoorAirReset:
+                      <<: *SetpointManagerOutdoorAirResetCooling
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
+              OutdoorAirTemperatureResetDrawThrough:
+                Objects:
+                  - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetCooling
+              ScheduledBlowThrough: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointBlowThrough
+              ScheduledDrawThrough: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointDrawThrough
             heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilSetpointControlType
               FixedSetpointBlowThrough: &SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilControlTypeFixedSetpointBlowThrough
                 Objects:
@@ -5402,13 +5438,39 @@ OptionTree:
                       <<: *SetpointManagerScheduledHeating
                       setpoint_node_or_nodelist_name:
                         BuildPathReference:
-                          Location: Coil:Heating.*
-                          Occurrence: -1
+                          Location: -1
                           ValueLocation: Outlet
                 Transitions:
                   - SetpointManager:Scheduled:
                       heating_coil_setpoint_schedule_name: schedule_name
-              FixedSetpointDrawThrough: *SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilControlTypeFixedSetpointBlowThrough
+              FixedSetpointDrawThrough: &SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilControlTypeFixedSetpointDrawThrough
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledHeating
+                      setpoint_node_or_nodelist_name: *SystemSupplyPathInlet
+                Transitions:
+                  - SetpointManager:Scheduled:
+                      heating_coil_setpoint_schedule_name: schedule_name
+              OutdoorAirTemperatureResetBlowThrough:
+                Objects:
+                  - SetpointManager:OutdoorAirReset:
+                      <<: *SetpointManagerOutdoorAirResetHeating
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: -1
+                          ValueLocation: Outlet
+              OutdoorAirTemperatureResetDrawThrough:
+                Objects:
+                  - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHeating
+              ScheduledBlowThrough: *SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilControlTypeFixedSetpointBlowThrough
+              ScheduledDrawThrough: *SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilControlTypeFixedSetpointDrawThrough
+            mixed_air_setpoint_control_type: &SystemCommonTemplateObjectsDedicatedOutdoorAirMixedAirSetpointControlType # created by descriptors
+              HeatAndCool:
+                Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
+                  - SetpointManager:MixedAir:
+                      <<: *SetpointManagerMixedAirHeating
+                      reference_setpoint_node_name: *SystemSupplyPathInlet
           HeatingCoilSetpointControlTypeHeatingOutlet:
             heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlTypeHeatingOutet
               ControlZone:
@@ -5509,6 +5571,7 @@ OptionTree:
           Transitions:
             - *SystemCommonTransitions
             - *SizingSystemCommonTransitions
+            - *SizingSystemCommonTransitionsDedicatedOutdoorAir
             - *AvailabilityManagerScheduledCommonTransitions
         TemplateObjects:
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
@@ -5517,6 +5580,7 @@ OptionTree:
           dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
           cooling_coil_setpoint_control_type: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilSetpointControlType
           heating_coil_setpoint_control_type: *SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilSetpointControlType
+          mixed_air_setpoint_control_type: *SystemCommonTemplateObjectsDedicatedOutdoorAirMixedAirSetpointControlType
           outside_air_equipment_type: *SystemCommonTemplateObjectsOutsideAirEquipmentType
       DualDuct:
         BuildPath:
