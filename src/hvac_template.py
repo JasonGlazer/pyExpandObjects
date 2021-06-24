@@ -1050,9 +1050,9 @@ class HVACTemplate(EPJSON):
                 object_dictionary=merge_dictionary,
                 unique_name_override=True)
         # Use this for file debugging
-        # import json
-        # with open('test.epJSON', 'w') as base_file:
-        #     json.dump(output_epjson, base_file, indent=4, sort_keys=True)
+        import json
+        with open('test.epJSON', 'w') as base_file:
+            json.dump(output_epjson, base_file, indent=4, sort_keys=True)
         # Create output format
         output_epjson = {
             "epJSON": output_epjson,

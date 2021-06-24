@@ -522,6 +522,10 @@ class ExpandObjects(EPJSON):
             if isinstance(location, int):
                 super_object = build_path[location]
                 (super_object_type, super_object_structure), = super_object.items()
+                # If the called object is a manipulated super object (Connectors = False) then grab the object before it
+                if not super_object_structure['Connectors'][connector_path]:
+                    super_object = build_path[location - 1]
+                    (super_object_type, super_object_structure), = super_object.items()
             else:
                 # If location is not an integer, assume it is a string and perform a regex match.  Also, check for an
                 # Occurrence key in case the first match is not desired.  A Occurrence of -1 will just keep matching and
@@ -530,13 +534,18 @@ class ExpandObjects(EPJSON):
                 if not isinstance(occurrence, int):
                     raise PyExpandObjectsYamlStructureException('Occurrence key is not an integer: {}'.format(backup_copy))
                 match_count = 0
+                previous_object = {}
                 for super_object in build_path:
                     (super_object_type_check, _), = super_object.items()
                     if re.match(location, super_object_type_check):
                         (super_object_type, super_object_structure), = super_object.items()
+                        # If the called object is a manipulated super object (Connectors = False) then grab the object before it
+                        if not super_object_structure['Connectors'][connector_path]:
+                            (super_object_type, super_object_structure), = previous_object.items()
                         match_count += 1
                         if match_count == occurrence:
                             break
+                    previous_object = super_object
                 if (not match_count >= occurrence and occurrence != -1) or match_count == 0:
                     self.logger.warning(
                         "The number of occurrences in a build path was never reached for "
@@ -605,6 +614,9 @@ class ExpandObjects(EPJSON):
                 # Try to evaluate the string, in case it is a mathematical expression.
                 #  If the value is 'None' then pass it along without evaluation so it stays as a string.
                 if str(formatted_value) != 'None':
+                    # Catch bad attempts at numerical formatting
+                    if re.match(r'Autosize.*or\s+Autosize', formatted_value):
+                        formatted_value = 'Autosize'
                     try:
                         formatted_value = eval(formatted_value)
                     except (NameError, SyntaxError):
@@ -1757,11 +1769,12 @@ class ExpandSystem(ExpandObjects):
                 # to be retrieved from the epjson object
                 cooling_coil_object = self.get_epjson_objects(
                     epjson=self.epjson,
-                    object_type_regexp='Coil:Cooling.*',
+                    object_type_regexp='Coil:Cooling:Water.*',
                     object_name_regexp='{} Cooling Coil'.format(self.unique_name))
-                (_, cooling_coil_object_structure), = cooling_coil_object.items()
-                (_, cooling_coil_object_fields), = cooling_coil_object_structure.items()
-                actuator_list.append(cooling_coil_object_fields['water_inlet_node_name'])
+                if cooling_coil_object:
+                    (_, cooling_coil_object_structure), = cooling_coil_object.items()
+                    (_, cooling_coil_object_fields), = cooling_coil_object_structure.items()
+                    actuator_list.append(cooling_coil_object_fields['water_inlet_node_name'])
         if getattr(self, 'preheat_coil_type', 'None') == 'HotWater':
             # if preheat coil is specified, grabe the controller object
             heating_coil_object = self.get_epjson_objects(
@@ -2036,7 +2049,8 @@ class ExpandSystem(ExpandObjects):
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
                     ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
-                    ('Fan:.*', True))),
+                    ('Fan:.*', True)),
+                []),
             (
                 ['HVACTemplate:System:UnitarySystem', ],
                 'AirLoopHVAC:Unitary*',
@@ -2045,7 +2059,8 @@ class ExpandSystem(ExpandObjects):
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
                     ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
-                    ('Fan:.*', True))),
+                    ('Fan:.*', True)),
+                []),
             (
                 ['HVACTemplate:System:UnitaryHeatPump:AirToAir', ],
                 'AirLoopHVAC:UnitaryHeatPump.*',
@@ -2054,21 +2069,40 @@ class ExpandSystem(ExpandObjects):
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
                     ('Coil:Heating.*', None if getattr(self, 'heat_pump_heating_coil_type', 'None') == 'None' else True),
-                    ('Fan:.*', True))),
+                    ('Fan:.*', True)),
+                []),
             (
-                ['HVACTemplate:System:PackagedVAV', 'HVACTemplate:System:DedicatedOutdoorAir'],
+                ['HVACTemplate:System:PackagedVAV'],
                 'CoilSystem:Cooling:DX.*',
                 {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
                  'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
                 (
-                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), )),
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), ),
+                []),
+            (
+                ['HVACTemplate:System:DedicatedOutdoorAir'],
+                'CoilSystem:Cooling:DX.*',
+                {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
+                 'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
+                (
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), ),
+                ['TwoSpeedDX', 'TwoStageDX', 'TwoStageHumidityControlDX']),
+            (
+                ['HVACTemplate:System:DedicatedOutdoorAir', ],
+                'CoilSystem:Cooling:DX.*',
+                {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
+                 'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
+                (
+                    ('HeatExchanger:AirToAir:SensibleAndLatent', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), ),
+                ['HeatExchangerAssistedDX']),
             (
                 ['HVACTemplate:System:ConstantVolume', 'HVACTemplate:System:DedicatedOutdoorAir'],
                 'CoilSystem:Cooling:Water.*',
                 {'Inlet': 'air_inlet_node_name',
                  'Outlet': 'air_outlet_node_name'},
                 (
-                    ('HeatExchanger:AirToAir:SensibleAndLatent', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), )))
+                    ('HeatExchanger:AirToAir:SensibleAndLatent', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), ),
+                []))
         # if build_path is not passed to function, get the class attributes
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
@@ -2080,10 +2114,13 @@ class ExpandSystem(ExpandObjects):
                 equipment_connectors = el[2]
                 # check for template indicators of objects to remove
                 object_check_list = el[3]
+                cooling_coil_type_check = el[4]
                 # The unitary equipment must be present, and extracted from, the build path
                 for idx, super_object in enumerate(build_path):
                     (super_object_type, _), = super_object.items()
-                    if re.match(equipment_regex, super_object_type):
+                    if re.match(equipment_regex, super_object_type) and \
+                            (not cooling_coil_type_check or
+                             getattr(self, 'cooling_coil_type', 'None') in cooling_coil_type_check):
                         equipment_object = build_path.pop(idx)
                         # set connectors now that it will be included in the build path.
                         #  This is not included in the YAML object to keep the object from connecting to its neighbors
@@ -2092,15 +2129,16 @@ class ExpandSystem(ExpandObjects):
                         # if equipment is a CoilSystem:Cooling:Water then the air node fields need to be added just for
                         # the build path.  A better solution should be made in the future rather than hard-coding the
                         # names to the object.
-                        if equipment_regex == 'CoilSystem:Cooling:Water.*':
-                            if getattr(self, 'supply_fan_placement', None) == 'BlowThrough':
-                                equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \
-                                    '{} Supply Fan Outlet'.format(self.unique_name)
-                            else:
-                                equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \
-                                    '{} Mixed Air Outlet'.format(self.unique_name)
-                            equipment_object[super_object_type]['Fields']['air_outlet_node_name'] = \
-                                '{} Cooling Coil HX Unit Outlet'.format(self.unique_name)
+                        if self.template_type == 'HVACTemplate:System:DedicatedOutdoorAir':
+                            if equipment_regex == 'CoilSystem:Cooling:Water.*':
+                                if getattr(self, 'supply_fan_placement', None) == 'BlowThrough':
+                                    equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \
+                                        '{} Supply Fan Outlet'.format(self.unique_name)
+                                else:
+                                    equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \
+                                        '{} Mixed Air Outlet'.format(self.unique_name)
+                                equipment_object[super_object_type]['Fields']['air_outlet_node_name'] = \
+                                    '{} Cooling Coil HX Unit Outlet'.format(self.unique_name)
                 # make check if equipment object was found.  If not, return original build path
                 if equipment_object:
                     try:
