@@ -588,8 +588,8 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             epjson_output['Coil:Heating:Water']['AHU 1 Spaces 1-4 Heating Coil']['availability_schedule_name'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heating_coil_design_setpoint_temperature")
-    def test_heating_coil_design_setpoint_temperature(self):
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heating_coil_design_setpoint")
+    def test_heating_coil_design_setpoint(self):
         # todo_eo: Zones not receiving updated temperature setpoint from SystemSupplyAirTemperature
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'heating_coil_design_setpoint'] = 16

@@ -75,6 +75,23 @@ hot_water_objects = {
 
 schedule_objects = {
     "Schedule:Compact": {
+        "Always0.003": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 0.003
+                }
+            ],
+            "schedule_type_limits_name": "Any Number"
+        },
         "Always12.5": {
             "data": [
                 {
@@ -88,6 +105,23 @@ schedule_objects = {
                 },
                 {
                     "field": 12.5
+                }
+            ],
+            "schedule_type_limits_name": "Any Number"
+        },
+        "Always15.5": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 15.5
                 }
             ],
             "schedule_type_limits_name": "Any Number"
@@ -573,4 +607,371 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         return
 
-# todo_eo: continue work on dehumidification_control_type modification in descriptors.
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heating_coil_availability_schedule_name")
+    def test_heating_coil_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heating_coil_availability_schedule_name'] = 'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Coil:Heating:Fuel']['DOAS Heating Coil']['availability_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heating_coil_design_setpoint")
+    def test_heating_coil_design_setpoint(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heating_coil_design_setpoint'] = 16
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            16,
+            epjson_output['Sizing:System']['DOAS Sizing System']['central_heating_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heating_coil_setpoint_schedule_name")
+    def test_heating_coil_setpoint_schedule_name(self):
+        # todo_eo: legacy doesn't seem to map the value to anything
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heating_coil_setpoint_schedule_name'] = 'Always15.5'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heating_coil_setpoint_control_type'] = 'FixedSetpoint'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Always15.5',
+            epjson_output['SetpointManager:Scheduled']['AHU 1 Spaces 1-4 Heating Supply Air Temp Manager']['schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heating_coil_outdoor_reset_inputs")
+    def test_heating_coil_outdoor_reset_inputs(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heating_coil_setpoint_control_type'] = 'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heating_coil_setpoint_at_outdoor_dry_bulb_low'] = 14.9
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heating_coil_reset_outdoor_dry_bulb_low'] = 7.7
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heating_coil_setpoint_at_outdoor_dry_bulb_high'] = 12.1
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heating_coil_reset_outdoor_dry_bulb_high'] = 12.2
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            12.2,
+            epjson_output['SetpointManager:OutdoorAirReset']['DOAS Heating Supply Air Temp Manager']['outdoor_high_temperature'])
+        self.assertEqual(
+            12.1,
+            epjson_output['SetpointManager:OutdoorAirReset']['DOAS Heating Supply Air Temp Manager']['setpoint_at_outdoor_high_temperature'])
+        self.assertEqual(
+            7.7,
+            epjson_output['SetpointManager:OutdoorAirReset']['DOAS Heating Supply Air Temp Manager']['outdoor_low_temperature'])
+        self.assertEqual(
+            14.9,
+            epjson_output['SetpointManager:OutdoorAirReset']['DOAS Heating Supply Air Temp Manager']['setpoint_at_outdoor_low_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:gas_heating_coil_inputs")
+    def test_gas_heating_coil_inputs(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heating_coil_type'] = 'Gas'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'gas_heating_coil_efficiency'] = 0.75
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'gas_heating_coil_parasitic_electric_load'] = 1
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.75,
+            epjson_output['Coil:Heating:Fuel']['DOAS Heating Coil']['burner_efficiency'])
+        self.assertEqual(
+            1,
+            epjson_output['Coil:Heating:Fuel']['DOAS Heating Coil']['parasitic_electric_load'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_none")
+    def test_heat_recovery_none(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_sensible")
+    def test_heat_recovery_sensible(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_sensible_draw_through")
+    def test_heat_recovery_sensible_draw_through(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_enthalpy")
+    def test_heat_recovery_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_enthalpy_draw_through")
+    def test_heat_recovery_enthalpy_draw_through(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_effectiveness")
+    def test_heat_recovery_effectiveness(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'sensible_heat_recovery_effectiveness'] = 0.72
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'latent_heat_recovery_effectiveness'] = 0.61
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
+                'sensible_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
+                'sensible_effectiveness_at_75_heating_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
+                'sensible_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
+                'sensible_effectiveness_at_100_heating_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
+                'latent_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
+                'latent_effectiveness_at_75_heating_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
+                'latent_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
+                'latent_effectiveness_at_100_heating_air_flow'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_exchanger_type_plate")
+    def test_heat_recovery_exchanger_type_plate(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_heat_exchanger_type'] = 'Plate'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Plate',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery']['heat_exchanger_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_exchanger_type_rotary")
+    def test_heat_recovery_exchanger_type_rotary(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_heat_exchanger_type'] = 'Rotary'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Rotary',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery']['heat_exchanger_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_frost_control_type_none")
+    def test_heat_recovery_frost_control_type_none(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_frost_control_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'None',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery']['frost_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_frost_control_type"
+                                              "exhaust_air_recirculation")
+    def test_heat_recovery_frost_control_type_exhaust_air_recirculation(self):
+        # todo_eo: with this option the template effectiveness inputs are not mapped, causing discrepancy
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_frost_control_type'] = 'ExhaustAirRecirculation'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'ExhaustAirRecirculation',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery']['frost_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_frost_control_type"
+                                              "exhaust_only")
+    def test_heat_recovery_frost_control_type_exhaust_only(self):
+        # todo_eo: with this option the template effectiveness inputs are not mapped, causing discrepancy
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_frost_control_type'] = 'ExhaustOnly'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'ExhaustOnly',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery']['frost_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_frost_control_type"
+                                              "minimum_exhaust_temperature")
+    def test_heat_recovery_frost_control_type_minimum_exhaust_temperature(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'heat_recovery_frost_control_type'] = 'MinimumExhaustTemperature'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'MinimumExhaustTemperature',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery']['frost_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:dehumidification_control_type_none")
+    def test_dehumidification_control_type_none(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'dehumidification_control_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:dehumidification_control_type_"
+                                              "cool_reheat_heating_coil")
+    def test_dehumidification_control_type_cool_reheat_heating_coil(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'dehumidification_control_type'] = 'CoolReheatHeatingCoil'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:dehumidification_control_type_"
+                                              "cool_reheat_desuperheater")
+    def test_dehumidification_control_type_cool_reheat_desuperheater(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'dehumidification_control_type'] = 'CoolReheatDesuperheater'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:dehumidification_setpoint")
+    def test_dehumidification_setpoint(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'dehumidification_setpoint'] = 0.01
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'HVACTemplate-Always0.01',
+            epjson_output['SetpointManager:Scheduled']['DOAS Dehumidification Setpoint Manager']['schedule_name']
+        )
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:humidifier_type")
+    def test_humidifier_type(self):
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'humidifier_constant_setpoint'] = 0.0029
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('DOAS Humidifier'))
+        self.assertEqual(
+            'HVACTemplate-Always0.0029',
+            epjson_output['SetpointManager:Scheduled']['DOAS Humidification Setpoint Manager']['schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:humidifier_inputs")
+    def test_humidifier_inputs(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'humidifier_availability_schedule_name'] = 'OCCUPY-1'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'humidifier_rated_capacity'] = 1
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'humidifier_rated_electric_power'] = 1000
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'humidifier_setpoint_schedule_name'] = 'Always0.003'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('DOAS Humidifier'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Humidifier:Steam:Electric']['DOAS Humidifier']['availability_schedule_name'])
+        self.assertEqual(
+            1,
+            epjson_output['Humidifier:Steam:Electric']['DOAS Humidifier']['rated_capacity'])
+        self.assertEqual(
+            1000,
+            epjson_output['Humidifier:Steam:Electric']['DOAS Humidifier']['rated_power'])
+        self.assertEqual(
+            'Always0.003',
+            epjson_output['SetpointManager:Scheduled']['DOAS Humidification Setpoint Manager']['schedule_name'])
+        return

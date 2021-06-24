@@ -1583,11 +1583,6 @@ class ModifyCoolingCoilSetpointControlType:
                 else:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
                 obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, supply_fan_placement])
-                # For DOAS system, the presence of SetpointManager:MixedAir objects change based on
-                # fan placement, so they must be specified separately
-                if template_type == 'HVACTemplate:System:DedicatedOutdoorAir':
-                    if supply_fan_placement == 'DrawThrough':
-                        setattr(obj, 'mixed_air_setpoint_control_type', 'HeatAndCool')
         return
 
 
@@ -1661,6 +1656,11 @@ class OutsideAirEquipmentType:
     def __set__(self, obj, value):
         (template_type, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
+        if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
+                             'HVACTemplate:System:Unitary']:
+            supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
+        else:
+            supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
         preheat_coil_type = ''.join([template_fields.get('preheat_coil_type'), 'Preheat']) if \
             template_fields.get('preheat_coil_type', 'None') != 'None' else ''
         heat_recovery_type = ''.join([template_fields.get('heat_recovery_type'), 'HR']) if \
@@ -1668,6 +1668,8 @@ class OutsideAirEquipmentType:
         outside_air_equipment = ''.join([preheat_coil_type, heat_recovery_type])
         if len(outside_air_equipment) > 0:
             obj._outside_air_equipment_type = outside_air_equipment
+            # set attribute for more specific definition
+            setattr(obj, 'outside_air_equipment_type_detailed', ''.join([outside_air_equipment, supply_fan_placement]))
         return
 
 
@@ -1694,6 +1696,11 @@ class ModifyDehumidificationControlType:
                     template_fields.get('dehumidification_control_type', 'None') != 'None' else False
                 if dehumidification_control_type == 'Multimode':
                     if cooling_coil_type not in ['TwoStageHumidityControlDX', 'HeatExchangerAssistedDX']:
+                        obj._dehumidification_control_type = 'None'
+                    else:
+                        obj._dehumidification_control_type = dehumidification_control_type
+                elif dehumidification_control_type == 'CoolReheatDesuperheater':
+                    if cooling_coil_type not in ['TwoSpeedDX', 'TwoStageDX', 'TwoStageHumidityControlDX', 'HeatExchangerAssistedDX']:
                         obj._dehumidification_control_type = 'None'
                     else:
                         obj._dehumidification_control_type = dehumidification_control_type
