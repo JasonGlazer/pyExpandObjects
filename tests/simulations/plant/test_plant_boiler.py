@@ -25,12 +25,60 @@ class TestSimulationsPlantBoiler(BaseSimulationTest):
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(epjson_output.get('Boiler:HotWater'))
+        self.assertEqual(
+            'Main Boiler Efficiency Curve',
+            epjson_output['Boiler:HotWater']['Main Boiler']['normalized_boiler_efficiency_curve_name'])
+        self.assertEqual(
+            'LeavingBoiler',
+            epjson_output['Boiler:HotWater']['Main Boiler']['efficiency_curve_temperature_evaluation_variable'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Plant:Boiler:boiler_type_hot_water_boiler")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Plant:Boiler:boiler_type_district_hot_water")
     def test_boiler_type_district_hot_water(self):
-        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'DistrictWaterBoiler'
+        # todo_eo: Legacy does not appear to map this value to anything.  HotWaterBoiler used.
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'DistrictHotWater'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('DistrictHeating'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Plant:Boiler:boiler_type_condensing_hot_water_boiler")
+    def test_boiler_type_condensing_hot_water_boiler(self):
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'CondensingHotWaterBoiler'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Main Boiler Condensing Boiler Efficiency Curve',
+            epjson_output['Boiler:HotWater']['Main Boiler']['normalized_boiler_efficiency_curve_name'])
+        self.assertEqual(
+            'EnteringBoiler',
+            epjson_output['Boiler:HotWater']['Main Boiler']['efficiency_curve_temperature_evaluation_variable'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Plant:Boiler:hot_water_boiler_efficiency")
+    def test_hot_water_boiler_efficiency(self):
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'HotWaterBoiler'
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['efficiency'] = 0.77
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('Boiler:HotWater'))
+        self.assertEqual(
+            0.77,
+            epjson_output['Boiler:HotWater']['Main Boiler']['nominal_thermal_efficiency'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Plant:Boiler:hot_water_boiler_fuel_type")
+    def test_hot_water_boiler_fuel_type(self):
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'HotWaterBoiler'
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['fuel_type'] = 'Coal'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('Boiler:HotWater'))
+        self.assertEqual(
+            'Coal',
+            epjson_output['Boiler:HotWater']['Main Boiler']['fuel_type'])
         return

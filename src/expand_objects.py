@@ -482,10 +482,12 @@ class ExpandObjects(EPJSON):
                     (transitioned_object_type, transitioned_object_structure), = copy.deepcopy(transitioned_object).items()
                     # get the dictionary nested in 'Fields' for super objects
                     if transitioned_object_structure.get('Fields'):
-                        object_name = transitioned_object_structure['Fields'].pop('name').format(self.unique_name)
+                        object_name = transitioned_object_structure['Fields'].pop('name')
+                        object_name = object_name.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
                         transitioned_object_structure = transitioned_object_structure['Fields']
                     else:
-                        object_name = transitioned_object_structure.pop('name').format(self.unique_name)
+                        object_name = transitioned_object_structure.pop('name')
+                        object_name = object_name.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
                     self.merge_epjson(
                         super_dictionary=output_dictionary,
                         object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}})
@@ -590,19 +592,11 @@ class ExpandObjects(EPJSON):
             # a class attribute).
             # Extract the attribute reference and attempt to apply it.
             formatted_value = None
-            template_field_rgx = re.search(r'.*{(\w+)}.*', input_value)
-            if template_field_rgx:
-                # if class field present, reformat the string to call the class attribute and apply.
-                template_attribute = '0.{}'.format(template_field_rgx.group(1))
-                formatted_string_rgx = re.sub(r'{(\w+)}', '{' + template_attribute + '}', input_value)
-                try:
-                    formatted_value = formatted_string_rgx.format(self)
-                except AttributeError:
-                    # If the class attribute does not exist, yield None as flag to handle in parent process.
-                    yield {'field': field_name, 'value': None}
-            else:
-                # if no class attribute was specified {i.e. {}), just use the unique name.
-                formatted_value = input_value.format(getattr(self, 'unique_name'))
+            try:
+                formatted_value = input_value.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
+            except AttributeError:
+                # If the class attribute does not exist, yield None as flag to handle in parent process.
+                yield {'field': field_name, 'value': None}
             if formatted_value:
                 # if a simple schedule is indicated by name, create it here.  The schedule
                 # is stored to the class epjson attribute.
@@ -695,12 +689,12 @@ class ExpandObjects(EPJSON):
                         else:
                             # attempt to format both the field and value to be returned.
                             if isinstance(field_name, str):
-                                formatted_field_name = field_name.format(self.unique_name)
+                                formatted_field_name = field_name.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
                             else:
                                 formatted_field_name = field_name
                             if isinstance(epjson[object_type][object_name][lookup_instructions], str):
-                                formatted_value = epjson[object_type][object_name][lookup_instructions]\
-                                    .format(self.unique_name)
+                                raw_val = epjson[object_type][object_name][lookup_instructions]
+                                formatted_value = raw_val.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
                             else:
                                 formatted_value = epjson[object_type][object_name][lookup_instructions]
                             yield {"field": formatted_field_name,
@@ -2167,7 +2161,7 @@ class ExpandSystem(ExpandObjects):
                         # if equipment is a CoilSystem:Cooling:Water then the air node fields need to be added just for
                         # the build path.  A better solution should be made in the future rather than hard-coding the
                         # names to the object.
-                        if self.template_type == 'HVACTemplate:System:DedicatedOutdoorAir':
+                        if self.template_type in ['HVACTemplate:System:DedicatedOutdoorAir', 'HVACTemplate:System:ConstantVolume']:
                             if equipment_regex == 'CoilSystem:Cooling:Water.*':
                                 if getattr(self, 'supply_fan_placement', None) == 'BlowThrough':
                                     equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \
@@ -2491,6 +2485,12 @@ class ExpandPlantEquipment(ExpandObjects):
         self.unique_name = self.template_name
         plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}
+        if self.template_plant_loop_type == 'ChilledWaterLoop':
+            self.plant_loop_type_short = 'CHW'
+        elif self.template_plant_loop_type == 'MixedWaterLoop':
+            self.plant_loop_type_short = 'MW'
+        elif self.template_plant_loop_type == 'HotWaterLoop':
+            self.plant_loop_type_short = 'HW'
         self.chiller_and_condenser_type = template
         self.epjson = epjson or self.epjson
         return

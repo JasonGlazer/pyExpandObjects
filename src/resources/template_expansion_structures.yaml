@@ -885,7 +885,7 @@ Objects:
       Common:
         Transitions: &BoilerHotWaterCommonTransitions
           - Boiler:.*:
-              capacity: nominal_capacity
+              capacity: nominal_thermal_capacity
               maximum_part_load_ratio: maximum_part_load_ratio
         Fields: &BoilerHotWaterCommonFields
           boiler_flow_mode: ConstantFlow # set by legacy, not reachable by template, not object default
@@ -6448,22 +6448,33 @@ OptionTree:
       Boiler:
         BaseObjects:
         TemplateObjects:
-          template_plant_loop_type:
-            None: &PlantBoilerTemplateObjectsTemplatePlantLoopTypeNone
-              Objects:
-                - Branch:
-                    <<: *BoilerCommonObjectsBranch
-                    name: '{} Boiler HW Branch'
-            HotWaterLoop: *PlantBoilerTemplateObjectsTemplatePlantLoopTypeNone
-            MixedWaterLoop:
-              Objects:
-                - Branch:
-                    <<: *BoilerCommonObjectsBranch
-                    name: '{} Boiler MW Branch'
           boiler_type:
+            DistrictHotWater:
+              Objects:
+                - DistrictHeating:
+                    name: '{}'
+                    hot_water_inlet_node_name: '{} {plant_loop_type_short} Inlet'
+                    hot_water_outlet_node_name: '{} {plant_loop_type_short} Outlet'
+                    nominal_capacity: 1000000000000000
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          ^DistrictHeating$: self
+                        component_name:
+                          ^DistrictHeating$: key
+                        component_inlet_node_name:
+                          ^DistrictHeating$: hot_water_inlet_node_name
+                        component_outlet_node_name:
+                          ^DistrictHeating$: hot_water_outlet_node_name
+              Transitions:
+                - *BoilerHotWaterCommonTransitions
             HotWaterBoiler:
               Objects:
                 - Boiler:HotWater: *BoilerHotWaterFields
+                - Branch:
+                    <<: *BoilerCommonObjectsBranch
+                    name: '{unique_name} {plant_loop_type_short} Branch'
                 - *BoilerHotWaterCommonObjects
               Transitions:
                 - *BoilerHotWaterCommonTransitions
@@ -6471,6 +6482,9 @@ OptionTree:
               Objects:
                 - Boiler:HotWater: *BoilerHotWaterCondensingBoilerFields
                 - *BoilerHotWaterCondensingBoilerCommonObjects
+                - Branch:
+                    <<: *BoilerCommonObjectsBranch
+                    name: '{unique_name} {plant_loop_type_short} Branch'
               Transitions:
                 - *BoilerHotWaterCommonTransitions
         ObjectReference:
