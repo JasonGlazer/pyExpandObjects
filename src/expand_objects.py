@@ -385,8 +385,8 @@ class ExpandObjects(EPJSON):
                         # iterate over each object from 'Objects' dictionary
                         for tree_object in tree_objects:
                             for object_type, _ in tree_object.items():
-                                # if the object reference matches the object, apply the transition
-                                if re.match(object_type_reference, object_type):
+                                # if the object reference matches the object or 'AnyValue', apply the transition
+                                if re.match(object_type_reference, object_type) or object_type_reference == 'AnyValue':
                                     # if the object_field is a dictionary, then the value is a formatted string to
                                     # apply with the template_field.  Otherwise, just try to get the value from the
                                     # template field, which is stored as a class attribute (on class initialization).
@@ -443,11 +443,13 @@ class ExpandObjects(EPJSON):
                         # iterate over each object from 'Objects' dictionary
                         for tree_object in tree_objects:
                             for object_type, object_fields in tree_object.items():
-                                # if the object reference in the mapping dictionary matches the object, apply the map
+                                # if the object reference in the mapping dictionary matches the object or is
+                                # 'AnyValue' then apply the map
                                 if re.match(object_type_reference, object_type):
                                     for map_option, sub_dictionary in mapping_dictionary.items():
                                         if (map_option == 'None' and getattr(self, mapping_field, 'None') == 'None') or \
-                                                hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
+                                                hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option or \
+                                                map_option == 'AnyValue' and getattr(self, mapping_field, None):
                                             for field, val in sub_dictionary.items():
                                                 try:
                                                     # On a match and valid value, apply the field.
@@ -1576,12 +1578,29 @@ class ModifyCoolingCoilSetpointControlType:
             cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
                 template_fields.get('cooling_coil_type')
             if cooling_coil_type:
-                cooling_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
+                if template_type in ['HVACTemplate:System:ConstantVolume', 'HVACTemplate:System:DualDuct',
+                                     'HVACTemplate:System:DedicatedOutdoorAir']:
+                    cooling_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
+                elif template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV']:
+                    cooling_setpoint = template_fields.get('cooling_coil_setpoint_reset_type', 'None')
+                else:
+                    cooling_setpoint = ''
                 if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
                                      'HVACTemplate:System:Unitary']:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
                 else:
-                    supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
+                    if template_type == 'HVACTemplate:System:DualDuct':
+                        cold_duct_supply_fan_placement = \
+                            template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
+                        hot_duct_supply_fan_placement = \
+                            template_fields.get('hot_duct_supply_fan_placement', 'BlowThrough')
+                        supply_fan_placement = ''
+                        setattr(obj, 'cold_duct_cooling_coil_setpoint_control_type',
+                                ''.join([cooling_setpoint, cold_duct_supply_fan_placement]))
+                        setattr(obj, 'hot_duct_cooling_coil_setpoint_control_type',
+                                ''.join([cooling_setpoint, hot_duct_supply_fan_placement]))
+                    else:
+                        supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
                 obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, supply_fan_placement])
         return
 
@@ -1607,7 +1626,13 @@ class ModifyHeatingCoilSetpointControlType:
                 heating_coil_type = None if template_fields.get('heat_pump_heating_coil_type') == 'None' else \
                     template_fields.get('heat_pump_heating_coil_type')
             if heating_coil_type:
-                heating_setpoint = template_fields.get('heating_coil_setpoint_control_type', 'FixedSetpoint')
+                if template_type in ['HVACTemplate:System:ConstantVolume', 'HVACTemplate:System:DualDuct',
+                                     'HVACTemplate:System:DedicatedOutdoorAir']:
+                    heating_setpoint = template_fields.get('heating_coil_setpoint_control_type', 'FixedSetpoint')
+                elif template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV']:
+                    heating_setpoint = template_fields.get('heating_coil_setpoint_reset_type', 'None')
+                else:
+                    heating_setpoint = ''
                 if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
                                      'HVACTemplate:System:Unitary']:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
@@ -1735,6 +1760,13 @@ class ExpandSystem(ExpandObjects):
         self.airloop_hvac_unitary_fan_type_and_placement = template
         self.cooling_coil_setpoint_control_type = template
         self.heating_coil_setpoint_control_type = template
+        try:
+            self.setpoint_control_type = \
+                ''.join(['Cooling', self.cooling_coil_setpoint_control_type,
+                         'Heating', self.heating_coil_setpoint_control_type])\
+                .replace('BlowThrough', '', 1).replace('DrawThrough', '', 1)
+        except AttributeError:
+            self.setpoint_control_type = None
         self.humidistat_type = template
         self.outside_air_equipment_type = template
         self.dehumidification_control_type = template
