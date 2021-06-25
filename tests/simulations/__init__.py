@@ -237,6 +237,13 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 pass
             try:
                 os.rename(
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl.htm'),
+                    str(test_dir / '..' / 'simulation' / 'test' / 'eplustbl_previous.htm')
+                )
+            except FileNotFoundError:
+                pass
+            try:
+                os.rename(
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.mtr'),
                     str(test_dir / '..' / 'simulation' / 'test' / 'eplusout_previous.mtr')
                 )

@@ -12,6 +12,8 @@ from epjson_handler import EPJSON
 
 source_dir = Path(__file__).parent
 
+yaml_file = None
+
 
 class ExpansionStructureLocation:
     """
@@ -21,6 +23,7 @@ class ExpansionStructureLocation:
         return obj._expansion_structure
 
     def __set__(self, obj, value):
+        global yaml_file
         if isinstance(value, dict):
             parsed_value = value
         elif isinstance(value, str):
@@ -29,10 +32,14 @@ class ExpansionStructureLocation:
                 if not value.endswith(('.yaml', '.yml')):
                     raise PyExpandObjectsTypeError('File extension does not match yaml type: {}'.format(value))
                 else:
-                    with open(value, 'r') as f:
-                        # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
-                        #   With FullLoader there would be more functionality but might not be necessary.
-                        parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
+                    if yaml_file:
+                        parsed_value = copy.deepcopy(yaml_file)
+                    else:
+                        with open(value, 'r') as f:
+                            # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
+                            #   With FullLoader there would be more functionality but might not be necessary.
+                            parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
+                            yaml_file = parsed_value
             else:
                 try:
                     # if the string is not a file, then try to load it directly with SafeLoader.
@@ -378,18 +385,27 @@ class ExpandObjects(EPJSON):
                         # iterate over each object from 'Objects' dictionary
                         for tree_object in tree_objects:
                             for object_type, _ in tree_object.items():
-                                # if the object reference matches the object, apply the transition
-                                if re.match(object_type_reference, object_type):
+                                # if the object reference matches the object or 'AnyValue', apply the transition
+                                if re.match(object_type_reference, object_type) or object_type_reference == 'AnyValue':
                                     # if the object_field is a dictionary, then the value is a formatted string to
                                     # apply with the template_field.  Otherwise, just try to get the value from the
                                     # template field, which is stored as a class attribute (on class initialization).
                                     try:
                                         if isinstance(object_field, dict):
                                             (object_field, object_val), = object_field.items()
-                                            # Try to perform numeric evaluation if operators are present
-                                            if any(i in ['*', '+', '/'] for i in object_val):
+                                            # Try to perform numeric evaluation if operators and formatting brackets
+                                            # are present.  regex match is to avoid any operator symbols used in
+                                            # variable names, but not intended for evaluation, e.g. HVACTemplate-Always
+                                            if re.match(r'.*[a-zA-Z][-+/*][a-zA-Z].*', object_val):
+                                                object_value = object_val
+                                            elif any(i in ['*', '+', '/', '-'] for i in object_val) and '{' in object_val:
                                                 # Add '0.' for accessing class object attributes
-                                                object_value = eval(object_val.replace('{', '{0.').format(self))
+                                                try:
+                                                    object_value = eval(object_val.replace('{', '{0.').format(self))
+                                                except SyntaxError:
+                                                    # if attempt at numerical evaluation fails, just pass the
+                                                    # string directly
+                                                    object_value = object_val
                                             else:
                                                 object_value = object_val.format(getattr(self, template_field))
                                         else:
@@ -427,11 +443,13 @@ class ExpandObjects(EPJSON):
                         # iterate over each object from 'Objects' dictionary
                         for tree_object in tree_objects:
                             for object_type, object_fields in tree_object.items():
-                                # if the object reference in the mapping dictionary matches the object, apply the map
+                                # if the object reference in the mapping dictionary matches the object or is
+                                # 'AnyValue' then apply the map
                                 if re.match(object_type_reference, object_type):
                                     for map_option, sub_dictionary in mapping_dictionary.items():
                                         if (map_option == 'None' and getattr(self, mapping_field, 'None') == 'None') or \
-                                                hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option:
+                                                hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option or \
+                                                map_option == 'AnyValue' and getattr(self, mapping_field, None):
                                             for field, val in sub_dictionary.items():
                                                 try:
                                                     # On a match and valid value, apply the field.
@@ -464,10 +482,12 @@ class ExpandObjects(EPJSON):
                     (transitioned_object_type, transitioned_object_structure), = copy.deepcopy(transitioned_object).items()
                     # get the dictionary nested in 'Fields' for super objects
                     if transitioned_object_structure.get('Fields'):
-                        object_name = transitioned_object_structure['Fields'].pop('name').format(self.unique_name)
+                        object_name = transitioned_object_structure['Fields'].pop('name')
+                        object_name = object_name.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
                         transitioned_object_structure = transitioned_object_structure['Fields']
                     else:
-                        object_name = transitioned_object_structure.pop('name').format(self.unique_name)
+                        object_name = transitioned_object_structure.pop('name')
+                        object_name = object_name.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
                     self.merge_epjson(
                         super_dictionary=output_dictionary,
                         object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}})
@@ -476,8 +496,8 @@ class ExpandObjects(EPJSON):
                         "YAML object is incorrectly formatted: {}".format(transitioned_object))
         return output_dictionary
 
-    @staticmethod
     def _resolve_complex_input_from_build_path(
+            self,
             build_path: list,
             lookup_instructions: dict,
             connector_path: str = 'AirLoop') -> str:
@@ -506,6 +526,10 @@ class ExpandObjects(EPJSON):
             if isinstance(location, int):
                 super_object = build_path[location]
                 (super_object_type, super_object_structure), = super_object.items()
+                # If the called object is a manipulated super object (Connectors = False) then grab the object before it
+                if not super_object_structure['Connectors'][connector_path]:
+                    super_object = build_path[location - 1]
+                    (super_object_type, super_object_structure), = super_object.items()
             else:
                 # If location is not an integer, assume it is a string and perform a regex match.  Also, check for an
                 # Occurrence key in case the first match is not desired.  A Occurrence of -1 will just keep matching and
@@ -514,17 +538,23 @@ class ExpandObjects(EPJSON):
                 if not isinstance(occurrence, int):
                     raise PyExpandObjectsYamlStructureException('Occurrence key is not an integer: {}'.format(backup_copy))
                 match_count = 0
+                previous_object = {}
                 for super_object in build_path:
                     (super_object_type_check, _), = super_object.items()
                     if re.match(location, super_object_type_check):
                         (super_object_type, super_object_structure), = super_object.items()
+                        # If the called object is a manipulated super object (Connectors = False) then grab the object before it
+                        if not super_object_structure['Connectors'][connector_path]:
+                            (super_object_type, super_object_structure), = previous_object.items()
                         match_count += 1
                         if match_count == occurrence:
                             break
+                    previous_object = super_object
                 if (not match_count >= occurrence and occurrence != -1) or match_count == 0:
-                    raise PyExpandObjectsYamlStructureException(
+                    self.logger.warning(
                         "The number of occurrences in a build path was never reached for "
                         "complex reference build path: {}, complex reference: {}".format(build_path, backup_copy))
+                    return None
         except (IndexError, ValueError):
             raise PyExpandObjectsYamlStructureException("Invalid build path or super object: {}".format(build_path))
         if value_location.lower() == 'self':
@@ -562,19 +592,11 @@ class ExpandObjects(EPJSON):
             # a class attribute).
             # Extract the attribute reference and attempt to apply it.
             formatted_value = None
-            template_field_rgx = re.search(r'.*{(\w+)}.*', input_value)
-            if template_field_rgx:
-                # if class field present, reformat the string to call the class attribute and apply.
-                template_attribute = '0.{}'.format(template_field_rgx.group(1))
-                formatted_string_rgx = re.sub(r'{(\w+)}', '{' + template_attribute + '}', input_value)
-                try:
-                    formatted_value = formatted_string_rgx.format(self)
-                except AttributeError:
-                    # If the class attribute does not exist, yield None as flag to handle in parent process.
-                    yield {'field': field_name, 'value': None}
-            else:
-                # if no class attribute was specified {i.e. {}), just use the unique name.
-                formatted_value = input_value.format(getattr(self, 'unique_name'))
+            try:
+                formatted_value = input_value.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
+            except AttributeError:
+                # If the class attribute does not exist, yield None as flag to handle in parent process.
+                yield {'field': field_name, 'value': None}
             if formatted_value:
                 # if a simple schedule is indicated by name, create it here.  The schedule
                 # is stored to the class epjson attribute.
@@ -588,6 +610,9 @@ class ExpandObjects(EPJSON):
                 # Try to evaluate the string, in case it is a mathematical expression.
                 #  If the value is 'None' then pass it along without evaluation so it stays as a string.
                 if str(formatted_value) != 'None':
+                    # Catch bad attempts at numerical formatting
+                    if re.match(r'Autosize.*or\s+Autosize', formatted_value):
+                        formatted_value = 'Autosize'
                     try:
                         formatted_value = eval(formatted_value)
                     except (NameError, SyntaxError):
@@ -664,12 +689,12 @@ class ExpandObjects(EPJSON):
                         else:
                             # attempt to format both the field and value to be returned.
                             if isinstance(field_name, str):
-                                formatted_field_name = field_name.format(self.unique_name)
+                                formatted_field_name = field_name.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
                             else:
                                 formatted_field_name = field_name
                             if isinstance(epjson[object_type][object_name][lookup_instructions], str):
-                                formatted_value = epjson[object_type][object_name][lookup_instructions]\
-                                    .format(self.unique_name)
+                                raw_val = epjson[object_type][object_name][lookup_instructions]
+                                formatted_value = raw_val.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
                             else:
                                 formatted_value = epjson[object_type][object_name][lookup_instructions]
                             yield {"field": formatted_field_name,
@@ -738,6 +763,9 @@ class ExpandObjects(EPJSON):
                             except (TypeError, ValueError):
                                 test_zero = ig['value']
                             if test_zero == 0 or ig['value']:
+                                # drop any None or empty returned values if a list is returned
+                                if isinstance(ig['value'], list):
+                                    ig['value'] = [i for i in ig['value'] if i]
                                 object_fields[ig['field']] = ig['value']
                             else:
                                 object_fields.pop(ig['field'])
@@ -761,6 +789,8 @@ class ExpandObjects(EPJSON):
         # Get the yaml structure from the template type
         structure_hierarchy = self.template_type.split(':')
         epjson_from_option_tree = self._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
+        # Remove any dummy objects created during process
+        epjson_from_option_tree.pop('DummyObject', None)
         # Always use merge_epjson to store objects in self.epjson in case objects have already been stored to
         # that dictionary during processing
         # For this processing, a temporary dictinoary needs to be made that merges the base epjson and the epjson
@@ -1510,8 +1540,8 @@ class AirLoopHVACObjectType:
     def __set__(self, obj, value):
         (template_type, template_structure), = value.items()
         (_, template_fields), = template_structure.items()
-        cooling_coil_type = True if 'chilledwater' == template_fields.get('cooling_coil_type', 'None').lower() else False
-        heating_coil_type = True if 'hotwater' == template_fields.get('heating_coil_type', 'None').lower() else False
+        cooling_coil_type = True if 'chilledwater' in template_fields.get('cooling_coil_type', 'None').lower() else False
+        heating_coil_type = True if 'hotwater' in template_fields.get('heating_coil_type', 'None').lower() else False
         if template_type == 'HVACTemplate:System:DualDuct':
             if cooling_coil_type or heating_coil_type:
                 obj._airloop_hvac_object_type = 'WaterDualDuct'
@@ -1537,12 +1567,35 @@ class ModifyCoolingCoilSetpointControlType:
         if isinstance(value, str):
             obj._cooling_coil_setpoint_control_type = value
         else:
-            (_, template_structure), = value.items()
+            (template_type, template_structure), = value.items()
             (_, template_fields), = template_structure.items()
-            dehumidification_status = True if template_fields.get('dehumidification_control_type', 'None') != 'None' else False
-            cooling_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
-            if dehumidification_status:
-                obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, 'WithDehumidification'])
+            cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
+                template_fields.get('cooling_coil_type')
+            if cooling_coil_type:
+                if template_type in ['HVACTemplate:System:ConstantVolume', 'HVACTemplate:System:DualDuct',
+                                     'HVACTemplate:System:DedicatedOutdoorAir']:
+                    cooling_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
+                elif template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV']:
+                    cooling_setpoint = template_fields.get('cooling_coil_setpoint_reset_type', 'None')
+                else:
+                    cooling_setpoint = ''
+                if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
+                                     'HVACTemplate:System:Unitary']:
+                    supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
+                else:
+                    if template_type == 'HVACTemplate:System:DualDuct':
+                        cold_duct_supply_fan_placement = \
+                            template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
+                        hot_duct_supply_fan_placement = \
+                            template_fields.get('hot_duct_supply_fan_placement', 'BlowThrough')
+                        supply_fan_placement = ''
+                        setattr(obj, 'cold_duct_cooling_coil_setpoint_control_type',
+                                ''.join([cooling_setpoint, cold_duct_supply_fan_placement]))
+                        setattr(obj, 'hot_duct_cooling_coil_setpoint_control_type',
+                                ''.join([cooling_setpoint, hot_duct_supply_fan_placement]))
+                    else:
+                        supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
+                obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, supply_fan_placement])
         return
 
 
@@ -1559,12 +1612,117 @@ class ModifyHeatingCoilSetpointControlType:
         if isinstance(value, str):
             obj._heating_coil_setpoint_control_type = value
         else:
-            (_, template_structure), = value.items()
+            (template_type, template_structure), = value.items()
             (_, template_fields), = template_structure.items()
-            dehumidification_status = True if template_fields.get('dehumidification_control_type', 'None') != 'None' else False
-            heating_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
-            if dehumidification_status:
-                obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, 'WithDehumidification'])
+            heating_coil_type = None if template_fields.get('heating_coil_type', 'None') == 'None' else \
+                template_fields.get('heating_coil_type')
+            if not heating_coil_type:
+                heating_coil_type = None if template_fields.get('heat_pump_heating_coil_type') == 'None' else \
+                    template_fields.get('heat_pump_heating_coil_type')
+            if heating_coil_type:
+                if template_type in ['HVACTemplate:System:ConstantVolume', 'HVACTemplate:System:DualDuct',
+                                     'HVACTemplate:System:DedicatedOutdoorAir']:
+                    heating_setpoint = template_fields.get('heating_coil_setpoint_control_type', 'FixedSetpoint')
+                elif template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV']:
+                    heating_setpoint = template_fields.get('heating_coil_setpoint_reset_type', 'None')
+                else:
+                    heating_setpoint = ''
+                if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
+                                     'HVACTemplate:System:Unitary']:
+                    supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
+                else:
+                    supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
+                obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, supply_fan_placement])
+            else:
+                # Change heating design setpoint if no coil is present
+                if getattr(obj, 'preheat_coil_design_setpoint', None):
+                    setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
+                elif getattr(obj, 'cooling_coil_design_setpoint', None):
+                    setattr(obj, 'heating_coil_design_setpoint', obj.cooling_coil_design_setpoint)
+        return
+
+
+class HumidistatType:
+    """
+    Create class attribute to select Humidistat type based on other template attributes for YAML TemplateOptions lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._humidistat_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        dehumidification = template_fields.get('dehumidification_control_type') if \
+            template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+        humidification = template_fields.get('humidifier_type') if \
+            template_fields.get('humidifier_type', 'None') != 'None' else False
+        if dehumidification and humidification:
+            obj._humidistat_type = 'DehumidificationAndHumidification'
+        elif dehumidification:
+            obj._humidistat_type = 'Dehumidification'
+        elif humidification:
+            obj._humidistat_type = 'Humidification'
+        return
+
+
+class OutsideAirEquipmentType:
+    """
+    Create class attribute to select OA objects for YAML BuildPath actions.
+    """
+    def __get__(self, obj, owner):
+        return obj._outside_air_equipment_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (_, template_fields), = template_structure.items()
+        if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
+                             'HVACTemplate:System:Unitary']:
+            supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
+        else:
+            supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
+        preheat_coil_type = ''.join([template_fields.get('preheat_coil_type'), 'Preheat']) if \
+            template_fields.get('preheat_coil_type', 'None') != 'None' else ''
+        heat_recovery_type = ''.join([template_fields.get('heat_recovery_type'), 'HR']) if \
+            template_fields.get('heat_recovery_type', 'None') != 'None' else ''
+        outside_air_equipment = ''.join([preheat_coil_type, heat_recovery_type])
+        if len(outside_air_equipment) > 0:
+            obj._outside_air_equipment_type = outside_air_equipment
+            # set attribute for more specific definition
+            setattr(obj, 'outside_air_equipment_type_detailed', ''.join([outside_air_equipment, supply_fan_placement]))
+        return
+
+
+class ModifyDehumidificationControlType:
+    """
+    Modify dehumidification_control_type based on other template attributes for YAML TemplateOptions lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._dehumidification_control_type
+
+    def __set__(self, obj, value):
+        # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
+        #  the template
+        if isinstance(value, str):
+            obj._dehumidification_control_type = value
+        else:
+            (template_type, template_structure), = value.items()
+            (_, template_fields), = template_structure.items()
+            # modify for DOAS
+            if template_type == 'HVACTemplate:System:DedicatedOutdoorAir':
+                cooling_coil_type = template_fields.get('cooling_coil_type') if \
+                    template_fields.get('cooling_coil_type', 'None') != 'None' else False
+                dehumidification_control_type = template_fields.get('dehumidification_control_type') if \
+                    template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+                if dehumidification_control_type == 'Multimode':
+                    if cooling_coil_type not in ['TwoStageHumidityControlDX', 'HeatExchangerAssistedDX']:
+                        obj._dehumidification_control_type = 'None'
+                    else:
+                        obj._dehumidification_control_type = dehumidification_control_type
+                elif dehumidification_control_type == 'CoolReheatDesuperheater':
+                    if cooling_coil_type not in ['TwoSpeedDX', 'TwoStageDX', 'TwoStageHumidityControlDX', 'HeatExchangerAssistedDX']:
+                        obj._dehumidification_control_type = 'None'
+                    else:
+                        obj._dehumidification_control_type = dehumidification_control_type
         return
 
 
@@ -1578,6 +1736,9 @@ class ExpandSystem(ExpandObjects):
     airloop_hvac_unitary_fan_type_and_placement = AirLoopHVACUnitaryFanTypeAndPlacement()
     cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
     heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
+    humidistat_type = HumidistatType()
+    outside_air_equipment_type = OutsideAirEquipmentType()
+    dehumidification_control_type = ModifyDehumidificationControlType()
 
     def __init__(self, template, epjson=None):
         super().__init__(template=template)
@@ -1593,6 +1754,16 @@ class ExpandSystem(ExpandObjects):
         self.airloop_hvac_unitary_fan_type_and_placement = template
         self.cooling_coil_setpoint_control_type = template
         self.heating_coil_setpoint_control_type = template
+        try:
+            self.setpoint_control_type = \
+                ''.join(['Cooling', self.cooling_coil_setpoint_control_type,
+                         'Heating', self.heating_coil_setpoint_control_type])\
+                .replace('BlowThrough', '', 1).replace('DrawThrough', '', 1)
+        except AttributeError:
+            self.setpoint_control_type = None
+        self.humidistat_type = template
+        self.outside_air_equipment_type = template
+        self.dehumidification_control_type = template
         return
 
     def _create_controller_list_from_epjson(
@@ -1618,15 +1789,51 @@ class ExpandSystem(ExpandObjects):
         # Create a list of actuators in stream order.  This will be used to determine the controller list order.
         actuator_list = []
         for bp in build_path:
+            # Get coil objects except for preheat
+            # todo_eo: preheat coil is avoided by name here.  Look into better ways to avoid grabbing it.
             (super_object_type, super_object_structure), = bp.items()
             if re.match(r'Coil:(Cooling|Heating):Water.*', super_object_type):
                 epjson_object = self.yaml_list_to_epjson_dictionaries([bp])
                 resovled_epjson_object = self.resolve_objects(epjson=epjson_object)
                 (object_name, object_fields), = resovled_epjson_object[super_object_type].items()
                 actuator_list.append(object_fields['water_inlet_node_name'])
+            elif super_object_type == 'HeatExchanger:AirToAir:SensibleAndLatent':
+                # if heat exchanger assisted cooling, then the cooling coil object is not in the build path and needs
+                # to be retrieved from the epjson object
+                cooling_coil_object = self.get_epjson_objects(
+                    epjson=self.epjson,
+                    object_type_regexp='Coil:Cooling:Water.*',
+                    object_name_regexp='{} Cooling Coil'.format(self.unique_name))
+                if cooling_coil_object:
+                    (_, cooling_coil_object_structure), = cooling_coil_object.items()
+                    (_, cooling_coil_object_fields), = cooling_coil_object_structure.items()
+                    actuator_list.append(cooling_coil_object_fields['water_inlet_node_name'])
+        if getattr(self, 'preheat_coil_type', 'None') == 'HotWater':
+            # if preheat coil is specified, grabe the controller object
+            heating_coil_object = self.get_epjson_objects(
+                epjson=self.epjson,
+                object_type_regexp='Coil:Heating.*',
+                object_name_regexp='.*preheat.*')
+            (_, heating_coil_object_structure), = heating_coil_object.items()
+            (_, heating_coil_object_fields), = heating_coil_object_structure.items()
+            actuator_list.append(heating_coil_object_fields['water_inlet_node_name'])
         object_list = []
         for controller_type in controller_list:
-            controller_objects = epjson.get(controller_type)
+            controller_objects = None
+            # preheat controller needs to go in OA list and be removed from watercoil list
+            if controller_type == 'Controller:WaterCoil':
+                controller_objects = copy.deepcopy(epjson).get(controller_type)
+                if controller_objects:
+                    for c_name, _ in copy.deepcopy(controller_objects).items():
+                        if re.match(r'.*preheat.*', c_name, re.IGNORECASE):
+                            controller_objects.pop(c_name)
+            elif controller_type == 'Controller:OutdoorAir':
+                controller_objects = copy.deepcopy(epjson).get(controller_type)
+                controller_preheat_check_objects = copy.deepcopy(epjson).get('Controller:WaterCoil')
+                if controller_preheat_check_objects:
+                    for c_name, c_fields in copy.deepcopy(controller_preheat_check_objects).items():
+                        if re.match(r'.*preheat.*', c_name, re.IGNORECASE):
+                            controller_objects.update({c_name: c_fields})
             if controller_objects:
                 airloop_hvac_controllerlist_object = \
                     self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'ControllerList',
@@ -1644,8 +1851,12 @@ class ExpandSystem(ExpandObjects):
                             object_id += 1
                         airloop_hvac_controllerlist_object['controller_{}_name'.format(object_id)] = \
                             object_name
-                        airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_id)] = \
-                            controller_type
+                        if controller_type == 'Controller:OutdoorAir' and re.match(r'.*preheat.*', object_name, re.IGNORECASE):
+                            airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_id)] = \
+                                'Controller:WaterCoil'
+                        else:
+                            airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_id)] = \
+                                controller_type
                 except ValueError:
                     raise PyExpandObjectsTypeError("Actuator node for water coil object does not match controller "
                                                    "object reference. build_path: {}, controllers: {}"
@@ -1685,6 +1896,32 @@ class ExpandSystem(ExpandObjects):
             structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'OutdoorAirSystem', 'EquipmentList', 'Base'])
         # iterate over build path returning every object up to the OutdoorAir:Mixer
         # if return fan is specified skip the first object as long as it is a (return) fan
+        # Put in HR if specified
+        if getattr(self, 'heat_recovery_type', 'None') != 'None':
+            heat_recovery_object = self.get_epjson_objects(
+                epjson=self.epjson,
+                object_type_regexp='HeatExchanger:AirToAir:SensibleAndLatent',
+                object_name_regexp=r'.*heat\s+recovery*')
+            (heat_recovery_object_type, heat_recovery_object_structure), = heat_recovery_object.items()
+            (heat_recovery_object_name, _), = heat_recovery_object_structure.items()
+            oa_equipment_list_dictionary['component_{}_object_type'.format(object_count)] = \
+                heat_recovery_object_type
+            oa_equipment_list_dictionary['component_{}_name'.format(object_count)] = \
+                heat_recovery_object_name
+            object_count += 1
+        # Put in preheat if it is specified
+        if getattr(self, 'preheat_coil_type', 'None') != 'None':
+            preheat_coil_object = self.get_epjson_objects(
+                epjson=self.epjson,
+                object_type_regexp='Coil:Heating.*',
+                object_name_regexp='.*preheat.*')
+            (preheat_coil_object_type, preheat_coil_object_structure), = preheat_coil_object.items()
+            (preheat_coil_object_name, _), = preheat_coil_object_structure.items()
+            oa_equipment_list_dictionary['component_{}_object_type'.format(object_count)] = \
+                preheat_coil_object_type
+            oa_equipment_list_dictionary['component_{}_name'.format(object_count)] = \
+                preheat_coil_object_name
+            object_count += 1
         for idx, super_object in enumerate(build_path):
             for super_object_type, super_object_constructor in super_object.items():
                 if getattr(self, 'return_fan', None) == 'Yes' and idx == 0:
@@ -1845,7 +2082,8 @@ class ExpandSystem(ExpandObjects):
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
                     ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
-                    ('Fan:.*', True))),
+                    ('Fan:.*', True)),
+                []),
             (
                 ['HVACTemplate:System:UnitarySystem', ],
                 'AirLoopHVAC:Unitary*',
@@ -1854,7 +2092,8 @@ class ExpandSystem(ExpandObjects):
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
                     ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
-                    ('Fan:.*', True))),
+                    ('Fan:.*', True)),
+                []),
             (
                 ['HVACTemplate:System:UnitaryHeatPump:AirToAir', ],
                 'AirLoopHVAC:UnitaryHeatPump.*',
@@ -1863,14 +2102,40 @@ class ExpandSystem(ExpandObjects):
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
                     ('Coil:Heating.*', None if getattr(self, 'heat_pump_heating_coil_type', 'None') == 'None' else True),
-                    ('Fan:.*', True))),
+                    ('Fan:.*', True)),
+                []),
             (
-                ['HVACTemplate:System:PackagedVAV', 'HVACTemplate:System:DedicatedOutdoorAir'],
-                'CoilSystem:Cooling.*',
+                ['HVACTemplate:System:PackagedVAV'],
+                'CoilSystem:Cooling:DX.*',
                 {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
                  'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
                 (
-                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), )))
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), ),
+                []),
+            (
+                ['HVACTemplate:System:DedicatedOutdoorAir'],
+                'CoilSystem:Cooling:DX.*',
+                {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
+                 'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
+                (
+                    ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), ),
+                ['TwoSpeedDX', 'TwoStageDX', 'TwoStageHumidityControlDX']),
+            (
+                ['HVACTemplate:System:DedicatedOutdoorAir', ],
+                'CoilSystem:Cooling:DX.*',
+                {'Inlet': 'dx_cooling_coil_system_inlet_node_name',
+                 'Outlet': 'dx_cooling_coil_system_outlet_node_name'},
+                (
+                    ('HeatExchanger:AirToAir:SensibleAndLatent', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), ),
+                ['HeatExchangerAssistedDX']),
+            (
+                ['HVACTemplate:System:ConstantVolume', 'HVACTemplate:System:DedicatedOutdoorAir'],
+                'CoilSystem:Cooling:Water.*',
+                {'Inlet': 'air_inlet_node_name',
+                 'Outlet': 'air_outlet_node_name'},
+                (
+                    ('HeatExchanger:AirToAir:SensibleAndLatent', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True), ),
+                []))
         # if build_path is not passed to function, get the class attributes
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
@@ -1882,15 +2147,30 @@ class ExpandSystem(ExpandObjects):
                 equipment_connectors = el[2]
                 # check for template indicators of objects to remove
                 object_check_list = el[3]
+                cooling_coil_type_check = el[4]
                 # The unitary equipment must be present, and extracted from, the build path
                 for idx, super_object in enumerate(build_path):
                     (super_object_type, _), = super_object.items()
-                    if re.match(equipment_regex, super_object_type):
+                    if re.match(equipment_regex, super_object_type) and \
+                            (not cooling_coil_type_check or getattr(self, 'cooling_coil_type', 'None') in cooling_coil_type_check):
                         equipment_object = build_path.pop(idx)
                         # set connectors now that it will be included in the build path.
                         #  This is not included in the YAML object to keep the object from connecting to its neighbors
                         #  before this point.
                         equipment_object[super_object_type]['Connectors'][loop_type] = equipment_connectors
+                        # if equipment is a CoilSystem:Cooling:Water then the air node fields need to be added just for
+                        # the build path.  A better solution should be made in the future rather than hard-coding the
+                        # names to the object.
+                        if self.template_type in ['HVACTemplate:System:DedicatedOutdoorAir', 'HVACTemplate:System:ConstantVolume']:
+                            if equipment_regex == 'CoilSystem:Cooling:Water.*':
+                                if getattr(self, 'supply_fan_placement', None) == 'BlowThrough':
+                                    equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \
+                                        '{} Supply Fan Outlet'.format(self.unique_name)
+                                else:
+                                    equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \
+                                        '{} Mixed Air Outlet'.format(self.unique_name)
+                                equipment_object[super_object_type]['Fields']['air_outlet_node_name'] = \
+                                    '{} Cooling Coil HX Unit Outlet'.format(self.unique_name)
                 # make check if equipment object was found.  If not, return original build path
                 if equipment_object:
                     try:
@@ -1901,16 +2181,18 @@ class ExpandSystem(ExpandObjects):
                         raise PyExpandObjectsException("Equipment is improperly formatted, must be a super"
                                                        "object. system: {} object: {}"
                                                        .format(self.unique_name, equipment_object))
-                    # Iterate through list and remove objects that match the check list
+                    # Iterate through list and remove objects that match the check list as well as dummy objects
                     parsed_build_path = []
                     removed_items = 0
                     for super_object in copy.deepcopy(build_path):
                         (super_object_type, super_object_structure), = super_object.items()
                         keep_object = True
                         for object_reference, object_presence in object_check_list:
-                            if re.match(object_reference, super_object_type) and object_presence:
+                            if re.match(object_reference, super_object_type) and object_presence or \
+                                    super_object_type == 'DummyObject':
                                 keep_object = None
-                                removed_items += 1
+                                if super_object_type != 'DummyObject':
+                                    removed_items += 1
                         if keep_object:
                             parsed_build_path.append(super_object)
                         # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the
@@ -1922,8 +2204,6 @@ class ExpandSystem(ExpandObjects):
                         raise PyExpandObjectsException("Equipment modification process failed to remove all objects "
                                                        "for system {}".format(self.unique_name))
                     return parsed_build_path
-                else:
-                    return build_path
         # if no matches are made, return original build_path
         return build_path
 
@@ -2205,6 +2485,12 @@ class ExpandPlantEquipment(ExpandObjects):
         self.unique_name = self.template_name
         plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}
+        if self.template_plant_loop_type == 'ChilledWaterLoop':
+            self.plant_loop_type_short = 'CHW'
+        elif self.template_plant_loop_type == 'MixedWaterLoop':
+            self.plant_loop_type_short = 'MW'
+        elif self.template_plant_loop_type == 'HotWaterLoop':
+            self.plant_loop_type_short = 'HW'
         self.chiller_and_condenser_type = template
         self.epjson = epjson or self.epjson
         return

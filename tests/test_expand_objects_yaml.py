@@ -1892,7 +1892,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                                     {
                                         "SetpointManager:Scheduled": {
                                             "cooling_coil_design_setpoint": {
-                                                'schedule_name': 'HVACTemplate-Always{}'
+                                                'schedule_name': 'HVACTemplate-Always{cooling_coil_design_setpoint}'
                                             }
                                         }
                                     }
