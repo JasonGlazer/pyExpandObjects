@@ -20,7 +20,7 @@ class TestSimulationsPlantBoiler(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Plant:Boiler:boiler_type_hot_water_boiler")
     def test_boiler_type_hot_water_boiler(self):
-        # self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'HotWaterBoiler'
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'HotWaterBoiler'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))

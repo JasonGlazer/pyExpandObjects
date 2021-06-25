@@ -2158,8 +2158,7 @@ class ExpandSystem(ExpandObjects):
                 for idx, super_object in enumerate(build_path):
                     (super_object_type, _), = super_object.items()
                     if re.match(equipment_regex, super_object_type) and \
-                            (not cooling_coil_type_check or
-                             getattr(self, 'cooling_coil_type', 'None') in cooling_coil_type_check):
+                            (not cooling_coil_type_check or getattr(self, 'cooling_coil_type', 'None') in cooling_coil_type_check):
                         equipment_object = build_path.pop(idx)
                         # set connectors now that it will be included in the build path.
                         #  This is not included in the YAML object to keep the object from connecting to its neighbors
