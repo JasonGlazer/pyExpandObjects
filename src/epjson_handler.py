@@ -13,13 +13,17 @@ this_script_path = Path(__file__).resolve()
 
 class EPJSON(Logger):
     """
-    Handle epjson (and json) specific tasks
+    Handle epJSON and JSON specific tasks
 
     Attributes:
         Validator: schema validator from jsonschema
+
         schema: loaded schema.  Only validated schemas will be loaded.
+
         input_epjson: input epjson file
+
         schema_is_valid: initialized as None.  False if failed, True if passed.
+
         input_epjson_is_valid: initialized as None.  False if failed, True if passed.
     """
 

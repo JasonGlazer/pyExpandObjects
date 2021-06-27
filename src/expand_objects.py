@@ -101,11 +101,17 @@ class ExpandObjects(EPJSON):
 
     Attributes:
         expansion_structure: file or dictionary of expansion structure details (from YAML)
+
         template: epJSON dictionary containing HVACTemplate to expand
+
         template_type: HVACTemplate object type
+
         template_name: HVACTemplate unique name
+
         epjson: dictionary of epSJON objects to write to file
+
         unique_name: unique string used to modify to epJSON object names within the class
+
         HVACTemplate fields are stored as class attributes
     """
 
@@ -255,6 +261,7 @@ class ExpandObjects(EPJSON):
         """
         Return objects from option tree leaves.
 
+        :param structure_hierarchy: list representing structure hierarchy
         :return: epJSON dictionary with unresolved complex inputs
         """
         self.logger.info('Processing option tree: {}'.format(structure_hierarchy))
@@ -472,7 +479,7 @@ class ExpandObjects(EPJSON):
         Convert list of YAML dictionaries into epJSON formatted dictionaries.
 
         YAML dictionaries can either be regular or 'super' objects which contain 'Fields' and 'Connectors'
-        yaml_list: list of yaml objects to be formatted.
+        :param yaml_list: list of yaml objects to be formatted.
         :return: epJSON formatted dictionary
         """
         output_dictionary = {}
@@ -506,6 +513,7 @@ class ExpandObjects(EPJSON):
 
         :param build_path: list of EnergyPlus super objects forming a build path
         :param lookup_instructions: instructions identifying the node location to return
+        :param connector_path: fluid flow type path (AirLoop only available)
         :return: Resolved field value
         """
         # keep a copy for output
@@ -576,10 +584,12 @@ class ExpandObjects(EPJSON):
             build_path: list = None) -> \
             typing.Generator[str, typing.Dict[str, str], None]:
         """
-        Resolve a complex input into a field value
+        Resolve a complex input reference into a field value
 
-        :param epjson: epJSON dictionary of objects
+        :param field_name: object field name
         :param input_value: field value input
+        :param epjson: epJSON dictionary of objects
+        :param build_path: BuildPath to reference for lookup
         :return: resolved field value
         """
         # Try class attributes if variables not defined in function
@@ -781,6 +791,7 @@ class ExpandObjects(EPJSON):
         """
         Create a set of EnergyPlus objects for a given template
 
+        :param epjson: epJSON object to use for merge and reference.
         :return: epJSON dictionary of newly created objects.  The input epJSON dictionary is also modified to include
             the newly created objects
         """
@@ -812,6 +823,7 @@ class ExpandObjects(EPJSON):
         Iterate over build path and check if each object is a super object.  If not, commit the object to the input
         epJSON.  Return a build path of only super objects.
 
+        :param object_list: BuildPath list of objects which may contain mixed combination of regular objects and super objects
         :param epjson: input epJSON dictionary
         :return: build path of only super objects
         """
@@ -945,6 +957,7 @@ class ExpandObjects(EPJSON):
         Connect nodes in build path and convert to list of epJSON formatted objects
 
         :param build_path: build path of EnergyPlus super objects
+        :param loop_type: fluid flow path (only AirLoop available)
         :return: object list of modified super objects.  The build path is also saved as a class attribute for
             future reference
         """
@@ -1028,6 +1041,7 @@ class ExpandObjects(EPJSON):
         information on how one object should connect the previous/next object in the build path list.  A branch of
         connected objects is also produced.
 
+        :param option_tree: OptionTree to use for build instructions
         :return: list of EnergyPlus super objects.  Additional EnergyPlus objects (Branch, Branchlist) that require
             the build path for their creation.
         """
@@ -1434,6 +1448,21 @@ class VRFType:
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
+
+    Attributes from Descriptors:
+        zone_hvac_equipmentlist_object_type
+
+        design_specification_outdoor_air_object_status
+
+        design_specification_zone_air_distribution_object_status
+
+        heating_design_air_flow_method
+
+        cooling_design_air_flow_method
+
+        humidistat_object_type
+
+        fan_powered_reheat_type
     """
 
     zone_hvac_equipmentlist_object_type = ZonevacEquipmentListObjectType()
@@ -1729,6 +1758,25 @@ class ModifyDehumidificationControlType:
 class ExpandSystem(ExpandObjects):
     """
     System expansion operations
+
+    Attributes from Descriptors:
+        airloop_hvac_unitary_object_type
+
+        airloop_hvac_object_type
+
+        airloop_hvac_unitary_fan_type_and_placement
+
+        cooling_coil_setpoint_control_type
+
+        heating_coil_setpoint_control_type
+
+        setpoint_control_type: concatenated string of cooling_coil_setpoint_control_type and heating_coil_setpoint_control_type
+
+        humidistat_type
+
+        outside_air_equipment_type
+
+        dehumidification_control_type
     """
 
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
@@ -2469,6 +2517,12 @@ class ChillerAndCondenserType:
 class ExpandPlantEquipment(ExpandObjects):
     """
     Plant Equipment operations
+
+    Attributes from Descriptors:
+        template_plant_loop_type
+
+        chiller_and_condenser_type
+
     """
 
     template_plant_loop_type = RetrievePlantEquipmentLoop()

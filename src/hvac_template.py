@@ -10,17 +10,21 @@ class HVACTemplate(EPJSON):
     """
     Handle HVACTemplate conversion process and connect created objects together.
 
-    Inheritance:
-    EPJSON <- Logger
-
     Attributes:
         templates: HVACTemplate objects from epJSON file
+
         base_objects: Non-HVACTemplate objects from epJSON file
+
         templates_zones: HVACTemplate:Zone: objects
+
         templates_systems: HVACTemplate:System: objects
+
         templates_plant_equipment: HVACTemplate:Plant equipment objects
+
         templates_plant_loops: HVACTemplate:Plant: loop objects
+
         expanded_*: List of class objects for each template type
+
         epjson: epJSON used to store connection objects
     """
 
@@ -849,19 +853,17 @@ class HVACTemplate(EPJSON):
         # Extract priority from each equipment object referenced by the branch and use it to order the equipment list
         supply_branches_with_priority = []
         for sb in supply_branches.values():
-            for equipment_name, equipment_objects in expanded_plant_equipment.items():
-                if equipment_objects.template_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
-                    equipment_name = equipment_objects.boiler_name
-                elif equipment_objects.template_type == 'HVACTemplate:Plant:Chiller:ObjectReference':
-                    equipment_name = equipment_objects.chiller_name
-                elif equipment_objects.template_type == 'HVACTemplate:Plant:Tower:ObjectReference':
-                    equipment_name = equipment_objects.cooling_tower_name
+            for equipment_name, equipment_class in expanded_plant_equipment.items():
+                if equipment_class.template_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
+                    equipment_name = equipment_class.boiler_name
+                elif equipment_class.template_type == 'HVACTemplate:Plant:Chiller:ObjectReference':
+                    equipment_name = equipment_class.chiller_name
+                elif equipment_class.template_type == 'HVACTemplate:Plant:Tower:ObjectReference':
+                    equipment_name = equipment_class.cooling_tower_name
                 if sb['components'][0]['component_name'] == equipment_name:
-                    equipment_epjson = equipment_objects.epjson[
-                        sb['components'][0]['component_object_type']][sb['components'][0]['component_name']]
                     # make tuple of (object, priority)
                     # if priority isn't set, use infinity to push it to the end when sorted
-                    supply_branches_with_priority.append((sb, equipment_epjson.get('priority', float('inf'))))
+                    supply_branches_with_priority.append((sb, getattr(equipment_class, 'priority', float('inf'))))
         supply_branches_ordered = [
             branch for branch, priority
             in sorted(supply_branches_with_priority, key=lambda s: s[1])]

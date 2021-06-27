@@ -12,7 +12,7 @@ this_script_path = Path(__file__).resolve()
 
 class Logger:
     """
-    General logger setup
+    General logger
     """
 
     def __init__(

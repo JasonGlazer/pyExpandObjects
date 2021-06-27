@@ -49,9 +49,9 @@ def main():
             <!DOCTYPE html>
             <html>
             <head>
-            <title>Test Status</title>
+            <title>Unittest Results</title>
         """)
-        with open(os.path.join(base_project_path, "docs", "_static", "testing_notes.html"), 'r') as f2:
+        with open(os.path.join(base_project_path, "docs", "_static", "testing_base.html"), 'r') as f2:
             notes_data = f2.read()
         f.write(notes_data)
         for section in sections:
@@ -61,14 +61,17 @@ def main():
             </head>
             <body>
         """)
+    with open(os.path.join(base_project_path, "docs", "_static", "simulation_output.html"), 'w') as f:
         # write out all full simulation sections
         f.write("""
             <!DOCTYPE html>
             <html>
             <head>
-            <title>Simulation Status</title>
+            <title>Simulation Test Results</title>
         """)
-    with open(os.path.join(base_project_path, "docs", "_static", "simulation_output.html"), 'w') as f:
+        with open(os.path.join(base_project_path, "docs", "_static", "testing_base.html"), 'r') as f2:
+            notes_data = f2.read()
+        f.write(notes_data)
         for section in sections:
             if section.startswith('Simulation'):
                 f.write(html_text[section])
