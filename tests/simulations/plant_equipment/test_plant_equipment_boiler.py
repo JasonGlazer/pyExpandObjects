@@ -85,6 +85,7 @@ class TestSimulationsPlantEquipmentBoiler(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Boiler:priority")
     def test_priority(self):
+        # todo_eo: discuss with team that priority requires a string and not integer.
         self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'HotWaterBoiler'
         self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['fuel_type'] = 'Coal'
         self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['priority'] = '2'
@@ -108,4 +109,32 @@ class TestSimulationsPlantEquipmentBoiler(BaseSimulationTest):
         self.assertEqual(
             'Second Boiler',
             epjson_output['PlantEquipmentList']['Hot Water Loop All Equipment']['equipment'][0]['equipment_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Boiler:inputs")
+    def test_inputs(self):
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'HotWaterBoiler'
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['sizing_factor'] = 1.1
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['minimum_part_load_ratio'] = 0.1
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['maximum_part_load_ratio'] = 0.9
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['optimum_part_load_ratio'] = 0.75
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['water_outlet_upper_temperature_limit'] = 95
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            1.1,
+            epjson_output['Boiler:HotWater']['Main Boiler']['sizing_factor'])
+        self.assertEqual(
+            0.1,
+            epjson_output['Boiler:HotWater']['Main Boiler']['minimum_part_load_ratio'])
+        self.assertEqual(
+            0.9,
+            epjson_output['Boiler:HotWater']['Main Boiler']['maximum_part_load_ratio'])
+        self.assertEqual(
+            0.75,
+            epjson_output['Boiler:HotWater']['Main Boiler']['optimum_part_load_ratio'])
+        self.assertEqual(
+            95,
+            epjson_output['Boiler:HotWater']['Main Boiler']['water_outlet_upper_temperature_limit'])
         return

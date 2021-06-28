@@ -5770,6 +5770,11 @@ OptionTree:
             None:
               Objects:
                 - Controller:OutdoorAir: *ControllerOutdoorAir
+              Transitions:
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: maximum_outdoor_air_flow_rate
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: minimum_outdoor_air_flow_rate
             EnthalpyHRBlowThrough:
               Objects:
                 - SetpointManager:MixedAir:
@@ -5802,6 +5807,11 @@ OptionTree:
                 - Controller:OutdoorAir:
                     <<: *ControllerOutdoorAir
                     economizer_control_action_type: MinimumFlowWithBypass
+              Transitions:
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: maximum_outdoor_air_flow_rate
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: minimum_outdoor_air_flow_rate
             EnthalpyHRDrawThrough:
               Objects:
                 - SetpointManager:MixedAir:
@@ -5831,6 +5841,11 @@ OptionTree:
                 - Controller:OutdoorAir:
                     <<: *ControllerOutdoorAir
                     economizer_control_action_type: MinimumFlowWithBypass
+              Transitions:
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: maximum_outdoor_air_flow_rate
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: minimum_outdoor_air_flow_rate
             SensibleHRBlowThrough:
               Objects:
                 - SetpointManager:MixedAir:
@@ -5866,6 +5881,11 @@ OptionTree:
                     economizer_control_action_type: MinimumFlowWithBypass
                     economizer_control_type: DifferentialDryBulb
                     economizer_minimum_limit_dry_bulb_temperature: '{heating_coil_design_setpoint}'
+              Transitions:
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: maximum_outdoor_air_flow_rate
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: minimum_outdoor_air_flow_rate
             SensibleHRDrawThrough:
               Objects:
                 - SetpointManager:MixedAir:
@@ -5898,9 +5918,13 @@ OptionTree:
                     economizer_control_action_type: MinimumFlowWithBypass
                     economizer_control_type: DifferentialDryBulb
                     economizer_minimum_limit_dry_bulb_temperature: '{heating_coil_design_setpoint}'
-            Transitions:
-              - *ControllerOutdoorAirCommonTransitions
-              - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+              Transitions:
+                - *ControllerOutdoorAirCommonTransitions
+                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: maximum_outdoor_air_flow_rate
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: minimum_outdoor_air_flow_rate
       DualDuct:
         BuildPath:
           BaseObjects:

@@ -810,6 +810,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         epe = MagicMock()
         epe.template_type = 'HVACTemplate:Plant:Chiller'
         epe.template_plant_loop_type = 'ChilledWater'
+        epe.prirority = 1
         epe.condenser_type = 'WaterCooled'
         epe.epjson = {
             "Chiller:Electric:EIR": {

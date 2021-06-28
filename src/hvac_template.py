@@ -91,38 +91,41 @@ class HVACTemplate(EPJSON):
                     #  later on.  For chiller objects, also identify condenser type and make it a template attribute.
                     if object_type == 'HVACTemplate:Plant:Chiller:ObjectReference':
                         try:
-                            (object_name, object_fields), = object_structure.items()
-                            reference_object_structure = epjson[object_fields['chiller_object_type']]
-                            for reference_object_name, reference_object_fields in reference_object_structure.items():
-                                if reference_object_name == object_fields['chiller_name']:
-                                    try:
-                                        object_structure[object_name]['condenser_type'] = reference_object_fields['condenser_type']
-                                    except (KeyError, AttributeError):
-                                        object_structure['condenser_type'] = 'WaterCooled'
-                                    object_structure[object_name]['epjson'] = {object_fields['chiller_object_type']: reference_object_structure}
-                                    break
+                            for object_name, object_fields in object_structure.items():
+                                reference_object_structure = epjson[object_fields['chiller_object_type']]
+                                for reference_object_name, reference_object_fields in reference_object_structure.items():
+                                    if reference_object_name == object_fields['chiller_name']:
+                                        try:
+                                            object_structure[object_name]['condenser_type'] = reference_object_fields['condenser_type']
+                                        except (KeyError, AttributeError):
+                                            object_structure['condenser_type'] = 'WaterCooled'
+                                        object_structure[object_name]['epjson'] = \
+                                            {object_fields['chiller_object_type']: {reference_object_name: reference_object_fields}}
+                                        break
                         except (KeyError, AttributeError):
                             raise InvalidTemplateException('HVACTemplate:Plant:Chiller:ObjectReference object is incorrectly formatted '
                                                            '{}'.format(object_structure))
                     elif object_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
                         try:
-                            (object_name, object_fields), = object_structure.items()
-                            reference_object_structure = epjson[object_fields['boiler_object_type']]
-                            for reference_object_name, reference_object_fields in reference_object_structure.items():
-                                if reference_object_name == object_fields['boiler_name']:
-                                    object_structure[object_name]['epjson'] = {object_fields['boiler_object_type']: reference_object_structure}
-                                    break
+                            for object_name, object_fields in object_structure.items():
+                                reference_object_structure = epjson[object_fields['boiler_object_type']]
+                                for reference_object_name, reference_object_fields in reference_object_structure.items():
+                                    if reference_object_name == object_fields['boiler_name']:
+                                        object_structure[object_name]['epjson'] = \
+                                            {object_fields['boiler_object_type']: {reference_object_name: reference_object_fields}}
+                                        break
                         except (KeyError, AttributeError):
                             raise InvalidTemplateException('HVACTemplate:Plant:Boiler:ObjectReference object is incorrectly formatted '
                                                            '{}'.format(object_structure))
                     elif object_type == 'HVACTemplate:Plant:Tower:ObjectReference':
                         try:
-                            (object_name, object_fields), = object_structure.items()
-                            reference_object_structure = epjson[object_fields['cooling_tower_object_type']]
-                            for reference_object_name, reference_object_fields in reference_object_structure.items():
-                                if reference_object_name == object_fields['cooling_tower_name']:
-                                    object_structure[object_name]['epjson'] = {object_fields['cooling_tower_object_type']: reference_object_structure}
-                                    break
+                            for object_name, object_fields in object_structure.items():
+                                reference_object_structure = epjson[object_fields['cooling_tower_object_type']]
+                                for reference_object_name, reference_object_fields in reference_object_structure.items():
+                                    if reference_object_name == object_fields['cooling_tower_name']:
+                                        object_structure[object_name]['epjson'] = \
+                                            {object_fields['cooling_tower_object_type']: {reference_object_name: reference_object_fields}}
+                                        break
                         except (KeyError, AttributeError):
                             raise InvalidTemplateException('HVACTemplate:Plant:Tower:ObjectReference object is incorrectly formatted '
                                                            '{}'.format(object_structure))
