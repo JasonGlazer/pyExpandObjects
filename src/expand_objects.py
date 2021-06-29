@@ -1843,8 +1843,8 @@ class ExpandSystem(ExpandObjects):
             preheat_coil_setpoint_schedule_name = getattr(self, 'preheat_coil_setpoint_schedule_name', 'None')
             preheat_coil_design_setpoint = getattr(self, 'preheat_coil_design_setpoint', None)
             if cooling_setpoint_schedule_name == 'None' and cooling_coil_setpoint_reset_type == 'None':
-                if (heating_coil_type != 'None' and heating_setpoint_schedule_name == 'None' and
-                        heating_coil_setpoint_reset_type == 'None'):
+                if heating_coil_type != 'None' and \
+                        heating_setpoint_schedule_name == 'None' and heating_coil_setpoint_reset_type == 'None':
                     if not heating_coil_design_setpoint or not cooling_coil_design_setpoint:
                         self.logger.warning('Warning: Expected cooling and heating design setpoints to be set but '
                                             'one or both are not.')

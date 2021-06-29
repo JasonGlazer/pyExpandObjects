@@ -71,10 +71,12 @@ class HVACTemplate(EPJSON):
                               'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|ConstantVolumn|DualDuct)$',
                               object_type):
                     # todo_eo: Make mapping warning for 'Could not find air handler name referenced in' and tests
+                    #  activate and rewrite test_reject_system_path_objects_bad_system_reference or remove it for this
+                    #  test.
                     for object_name, object_fields in object_structure.items():
                         if object_fields.get('baseboard_heating_type', None) == 'HotWater' and (
-                                not epjson.get('HVACTemplate:Plant:HotWaterLoop') or
-                                not epjson.get('HVACTemplate:Plant:Boiler')):
+                                not epjson.get('HVACTemplate:Plant:HotWaterLoop') or not
+                                epjson.get('HVACTemplate:Plant:Boiler')):
                             self.logger.warning(
                                 'Warning: Both a HVACTemplate:Plant:HotWaterLoop and a HVACTemplate:Plant:Boiler are '
                                 'needed when using hot water baseboards.  Template name: {}'.format(object_name))

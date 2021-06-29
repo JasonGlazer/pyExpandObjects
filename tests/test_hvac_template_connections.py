@@ -388,34 +388,34 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 expanded_zones=expanded_zones)
         return
 
-    def test_reject_system_path_objects_bad_system_reference(self):
-        eo = ExpandObjects()
-        es = ExpandSystem(template={
-            "HVACTemplate:System:VAV": {
-                "VAV Sys 1": {
-                }
-            }
-        })
-        expanded_zones = {}
-        for unique_name in ['SPACE1-1', 'SPACE2-1']:
-            eo.unique_name = unique_name
-            mock_epjson = eo.resolve_objects(epjson=copy.deepcopy(mock_zone_epjson))
-            mock_epjson.pop('ZoneHVAC:EquipmentConnections')
-            ez = MagicMock()
-            ez_epjson = PropertyMock(return_value=mock_epjson)
-            type(ez).epjson = ez_epjson
-            ez.template_type = 'HVACTemplate:Zone:VAV'
-            ez.template_vav_system_name = 'Bad Value'
-            ez.zone_name = unique_name
-            ez.unique_name = unique_name
-            del ez.supply_plenum_name
-            del ez.return_plenum_name
-            expanded_zones[unique_name] = ez
-        with self.assertRaisesRegex(InvalidTemplateException, 'Could not find air handler referenced'):
-            self.hvac_template._create_system_path_connection_objects(
-                system_class_object=es,
-                expanded_zones=expanded_zones)
-        return
+    # def test_reject_system_path_objects_bad_system_reference(self):
+    #     eo = ExpandObjects()
+    #     es = ExpandSystem(template={
+    #         "HVACTemplate:System:VAV": {
+    #             "VAV Sys 1": {
+    #             }
+    #         }
+    #     })
+    #     expanded_zones = {}
+    #     for unique_name in ['SPACE1-1', 'SPACE2-1']:
+    #         eo.unique_name = unique_name
+    #         mock_epjson = eo.resolve_objects(epjson=copy.deepcopy(mock_zone_epjson))
+    #         mock_epjson.pop('ZoneHVAC:EquipmentConnections')
+    #         ez = MagicMock()
+    #         ez_epjson = PropertyMock(return_value=mock_epjson)
+    #         type(ez).epjson = ez_epjson
+    #         ez.template_type = 'HVACTemplate:Zone:VAV'
+    #         ez.template_vav_system_name = 'Bad Value'
+    #         ez.zone_name = unique_name
+    #         ez.unique_name = unique_name
+    #         del ez.supply_plenum_name
+    #         del ez.return_plenum_name
+    #         expanded_zones[unique_name] = ez
+    #     with self.assertRaisesRegex(InvalidTemplateException, 'Could not find air handler referenced'):
+    #         self.hvac_template._create_system_path_connection_objects(
+    #             system_class_object=es,
+    #             expanded_zones=expanded_zones)
+    #     return
 
     def test_plant_equipment_creates_loop_and_equipment_template(self):
         ep = MagicMock()
