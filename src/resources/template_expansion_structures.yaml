@@ -848,6 +848,10 @@ Objects:
             maximum_air_flow_rate: Autosize
   AvailabilityManager:
     NightCycle:
+      Common:
+        Transitions: &AvailabilityManagerNightCycleCommonTransitions
+          - AvailabilityManager:NightCycle:
+              system_availability_schedule_name: fan_schedule_name
       Base:
         Fields: &AvailabilityManagerNightCycle
           name: '{} Availability'
@@ -856,7 +860,7 @@ Objects:
           control_zone_or_zone_list_name: '{night_cycle_control_zone_name}'
           cycling_run_time: 3600 # Indicated to be default, but comparison fails unless explicit
           cycling_run_time_control_type: FixedRunTime # Indicated to be default, but comparison fails unless explicit
-          fan_schedule_name: '{system_availability_schedule_name}' # required by schema
+          fan_schedule_name: HVACTemplate-Always1  # required by schema
           thermostat_tolerance: 0.2 # set by legacy, not template default, not object default
     Scheduled:
       Common:
@@ -5177,6 +5181,7 @@ OptionTree:
               CycleOnAny: &SystemCommonTemplateObjectsNightCycleControlCycleOnAny
                 Objects:
                   - AvailabilityManager:NightCycle: *AvailabilityManagerNightCycle
+                Transitions: *AvailabilityManagerNightCycleCommonTransitions
               CycleOnControlZone: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
               CycleOnAnyZoneFansOnly: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
               StayOff:
@@ -5184,6 +5189,7 @@ OptionTree:
                   - AvailabilityManager:NightCycle:
                       <<: *AvailabilityManagerNightCycle
                       control_type: StayOff
+                Transitions: *AvailabilityManagerNightCycleCommonTransitions
             airloop_hvac_object_type: &SystemCommonTemplateObjectsAirLoopHVACObjectType
               Base:
                 Objects:

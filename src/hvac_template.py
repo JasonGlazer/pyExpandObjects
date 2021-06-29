@@ -70,6 +70,7 @@ class HVACTemplate(EPJSON):
                               'ConstantVolume|BaseboardHeat|FanCoil|IdealLoadsAirSystem|PTAC|PTHP|WaterToAirHeatPump|'
                               'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|ConstantVolumn|DualDuct)$',
                               object_type):
+                    # todo_eo: Make mapping warning for 'Could not find air handler name referenced in' and tests
                     for object_name, object_fields in object_structure.items():
                         if object_fields.get('baseboard_heating_type', None) == 'HotWater' and (
                                 not epjson.get('HVACTemplate:Plant:HotWaterLoop') or
@@ -85,6 +86,29 @@ class HVACTemplate(EPJSON):
                               'VRF|Unitary|UnitaryHeatPump:AirToAir|UnitarySystem|VAV|PackagedVAV|'
                               'ConstantVolume|DualDuct|DedicatedOutdoorAir'
                               ')$', object_type):
+                    # todo_eo: check if NightCycle is set to CycleOnControlZone and zone is specified.
+                    if object_type == 'HVACTemplate:System:Unitary':
+                        for object_name, object_fields in object_structure.items():
+                            if object_fields.get('control_zone_or_thermostat_location_name'):
+                                try:
+                                    zones_served = [
+                                        z_fields.get('zone_name')
+                                        for z_name, z_fields in epjson.get('HVACTemplate:Zone:Unitary').items()]
+                                except AttributeError:
+                                    self.logger.error('Error: No HVACTemplate:Zone:Unitary template objects reference'
+                                                      ' the {} object'.format(object_type))
+                                    zones_served = []
+                                if object_fields.get('control_zone_or_thermostat_location_name') not in zones_served:
+                                    self.logger.error(
+                                        'Error: In {} named {} for the field control_zone_or_thermostat_location_name could '
+                                        'not find a matching HVACTemplate:Zone:Unitary named {}'
+                                        .format(
+                                            object_type,
+                                            object_name,
+                                            object_fields.get('control_zone_or_thermostat_location_name')))
+                            else:
+                                self.logger.error('Error: control_zone_or_thermostat_location_name must be specified '
+                                                  'for {} which is a {}'.format(object_name, object_type))
                     self.merge_epjson(
                         super_dictionary=self.templates_systems,
                         object_dictionary={object_type: object_structure},
@@ -418,12 +442,6 @@ class HVACTemplate(EPJSON):
                                 "node_name": '{} Return'.format(zone_induced_air_node)
                             }
                         )
-                else:
-                    raise InvalidTemplateException(
-                        'Could not find air handler referenced ({}) in {} object with unique name {}'
-                        .format(getattr(ez, zone_system_template_field_name, None),
-                            ez.template_type,
-                            ez.unique_name))
             # create plenums or spliters/mixers, depending on template inputs
             supply_plenum_name = getattr(system_class_object, 'supply_plenum_name', None)
             if supply_plenum_name:

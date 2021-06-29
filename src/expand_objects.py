@@ -1664,7 +1664,25 @@ class ModifyHeatingCoilSetpointControlType:
                 obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, supply_fan_placement])
             else:
                 # Change heating design setpoint if no coil is present
-                if getattr(obj, 'preheat_coil_design_setpoint', None):
+                if getattr(obj, 'preheat_coil_design_setpoint', None) and \
+                        getattr(obj, 'heating_coil_design_setpoint', None) and \
+                        getattr(obj, 'heating_coil_design_setpoint') > getattr(obj, 'preheat_coil_design_setpoint'):
+                    obj.logger.warning(
+                        'Warning:  In {}'
+                        ' the Heating Coil Design Setpoint is greater than the Preheat Coil Design Setpoint,'
+                        ' but Heating Coil Type=None. Using Preheat Coil Design Setpoint for the Sizing:System'
+                        ' Central Heating Design Supply Air Temperature.'.format(template_type))
+                    setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
+                elif getattr(obj, 'preheat_coil_design_setpoint', None) and \
+                        getattr(obj, 'preheat_coil_type', 'None') == 'None':
+                    obj.logger.warning(
+                        'Warning:  In {}'
+                        ' there is no Heating Coil and no Preheat Coil.'
+                        ' The Preheat Coil Design Setpoint will be used for the Sizing:System'
+                        ' Central Heating Design Supply Air Temperature. This will be the inlet air temperature for'
+                        ' sizing reheat coils.')
+                    setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
+                elif getattr(obj, 'preheat_coil_design_setpoint', None):
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
                 elif getattr(obj, 'cooling_coil_design_setpoint', None):
                     setattr(obj, 'heating_coil_design_setpoint', obj.cooling_coil_design_setpoint)
@@ -1812,6 +1830,40 @@ class ExpandSystem(ExpandObjects):
         self.humidistat_type = template
         self.outside_air_equipment_type = template
         self.dehumidification_control_type = template
+        # System Warnings
+        if self.template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV']:
+            cooling_coil_design_setpoint = getattr(self, 'cooling_coil_design_setpoint', None)
+            cooling_setpoint_schedule_name = getattr(self, 'cooling_coil_setpoint_schedule_name', 'None')
+            cooling_coil_setpoint_reset_type = getattr(self, 'cooling_coil_setpoint_reset_type', 'None')
+            heating_coil_type = getattr(self, 'heating_coil_type', 'None')
+            heating_coil_design_setpoint = getattr(self, 'heating_coil_design_setpoint', None)
+            heating_setpoint_schedule_name = getattr(self, 'heating_coil_setpoint_schedule_name', 'None')
+            heating_coil_setpoint_reset_type = getattr(self, 'heating_coil_setpoint_reset_type', 'None')
+            preheat_coil_type = getattr(self, 'preheat_coil_type', 'None')
+            preheat_coil_setpoint_schedule_name = getattr(self, 'preheat_coil_setpoint_schedule_name', 'None')
+            preheat_coil_design_setpoint = getattr(self, 'preheat_coil_design_setpoint', None)
+            if cooling_setpoint_schedule_name == 'None' and cooling_coil_setpoint_reset_type == 'None':
+                if (heating_coil_type != 'None' and heating_setpoint_schedule_name == 'None' and
+                        heating_coil_setpoint_reset_type == 'None'):
+                    if not heating_coil_design_setpoint or not cooling_coil_design_setpoint:
+                        self.logger.warning('Warning: Expected cooling and heating design setpoints to be set but '
+                                            'one or both are not.')
+                    elif heating_coil_design_setpoint > cooling_coil_design_setpoint:
+                        self.logger.warning(
+                            'Warning:  In {}'
+                            ' the Heating Coil Design Setpoint is greater than the Cooling Coil Design Setpoint.'
+                            ' This may cause the heating coil and cooling coil to operate simultaneously.'
+                            ' Check results carefully and adjust controls if needed.'.format(self.template_type))
+                if preheat_coil_type != 'None' and preheat_coil_setpoint_schedule_name == 'None':
+                    if not preheat_coil_design_setpoint or not cooling_coil_design_setpoint:
+                        self.logger.warning('Warning: Expected cooling and preheat design setpoints to be set but '
+                                            'one or both are not.')
+                    elif preheat_coil_design_setpoint > cooling_coil_design_setpoint:
+                        self.logger.warning(
+                            'Warning:  In {}'
+                            ' the Preheat Coil Design Setpoint is greater than the Cooling Coil Design Setpoint.'
+                            ' This may cause the preheat coil and cooling coil to operate simultaneously.'
+                            ' Check results carefully and adjust controls if needed.'.format(self.template_type))
         return
 
     def _create_controller_list_from_epjson(
