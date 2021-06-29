@@ -68,11 +68,54 @@ class HVACTemplate(EPJSON):
                         unique_name_override=False)
                 elif re.match('^HVACTemplate:Zone:('
                               'ConstantVolume|BaseboardHeat|FanCoil|IdealLoadsAirSystem|PTAC|PTHP|WaterToAirHeatPump|'
-                              'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|ConstantVolumn|DualDuct)$',
+                              'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|DualDuct)$',
                               object_type):
-                    # todo_eo: Make mapping warning for 'Could not find air handler name referenced in' and tests
-                    #  activate and rewrite test_reject_system_path_objects_bad_system_reference or remove it for this
-                    #  test.
+                    # set a mapping of zone template type to look up parent system
+                    zone_template_map = {
+                        ('HVACTemplate:Zone:ConstantVolume', ):
+                            (
+                                'template_constant_volume_system_name',
+                                ['HVACTemplate:System:ConstantVolume', ]),
+                        ('HVACTemplate:Zone:BaseboardHeat', 'HVACTemplate:Zone:FanCoil', 'HVACTemplate:Zone:PTAC',
+                         'HVACTemplate:Zone:PTHP', 'HVACTemplate:Zone:WaterToAirHeatPump', 'HVACTemplate:Zone:VRF', ):
+                            (
+                                'dedicated_outdoor_air_system_name',
+                                ['HVACTemplate:System:DedicatedOutdoorAir', ]),
+                        ('HVACTemplate:Zone:Unitary', ):
+                            (
+                                'template_unitary_system_name',
+                                ['HVACTemplate:System:Unitary', 'HVACTemplate:System:UnitaryHeatPump',
+                                 'HVACTemplate:System:UnitaryHeatPumpAirToAir', 'HVACTemplate:System:UnitarySystem']),
+                        ('HVACTemplate:Zone:VAV', 'HVACTemplate:Zone:VAVFanPowered'):
+                            (
+                                'template_vav_system_name',
+                                ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV']),
+                        ('HVACTemplate:Zone:DualDuct', ):
+                            (
+                                'template_dual_duct_system_name',
+                                ['HVACTemplate:System:DualDuct', ]),
+                        ('HVACTemplate:Zone:vrf', ):
+                            (
+                                'template_vrf_system_name',
+                                ['HVACTemplate:System:VRF', ])}
+                    # Check the referenced system against the epjson and issue a warning if it isn't found
+                    system_check_list = [v for k, v in zone_template_map.items() if object_type in k]
+                    if system_check_list:
+                        system_check_list = system_check_list[0]
+                        for object_name, object_fields in object_structure.items():
+                            system_name = object_fields.get(system_check_list[0])
+                            if not system_name and system_check_list[0] == 'dedicated_outdoor_air_system_name':
+                                continue
+                            else:
+                                template_system_name = None
+                                for system_type in system_check_list[1]:
+                                    system_group = epjson.get(system_type)
+                                    if system_group:
+                                        template_system_name = system_group.get(system_name)
+                                        break
+                                if not template_system_name:
+                                    self.logger.error('Error: Could not find air handler name referenced ({}) in '
+                                                      '{} object ({})'.format(system_name, object_type, object_name))
                     for object_name, object_fields in object_structure.items():
                         if object_fields.get('baseboard_heating_type', None) == 'HotWater' and (
                                 not epjson.get('HVACTemplate:Plant:HotWaterLoop') or not

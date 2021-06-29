@@ -39,7 +39,8 @@ def build_parser():  # pragma: no cover
 
 def main(args=None):
     hvt = HVACTemplate(
-        no_schema=args.no_schema)
+        no_schema=args.no_schema,
+        logger_level='DEBUG')
     output = {'outputPreProcessorMessage': ''}
     if isinstance(args.file, str):
         file_suffix_check = args.file.endswith('.epJSON')

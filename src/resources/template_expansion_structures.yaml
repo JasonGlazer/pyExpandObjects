@@ -2172,7 +2172,7 @@ Objects:
           - Fan:.*:
               fan_delta_pressure: pressure_rise
               supply_fan_delta_pressure: pressure_rise
-              supply_fan_maximum_flow_rate: maximum_flow_rate
+#              supply_fan_maximum_flow_rate: maximum_flow_rate # Allow for autosizing even when variable is set
               supply_fan_minimum_flow_rate:
                 fan_power_minimum_air_flow_rate: '{supply_fan_minimum_flow_rate} / 1'
               supply_fan_flow_rate: maximum_flow_rate
@@ -5194,30 +5194,30 @@ OptionTree:
               Base:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVAC
-                Transitions:
-                  - AirLoopHVAC:
-                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
-                      supply_fan_flow_rate: design_supply_air_flow_rate
+#                Transitions: # Allow for autosizing even when variable is set
+#                  - AirLoopHVAC:
+#                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+#                      supply_fan_flow_rate: design_supply_air_flow_rate
               DualDuct:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACDualDuct
-                Transitions:
-                  - AirLoopHVAC:
-                      # todo_eo: this needs to be changed, for water as well
-                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+#                Transitions: # Allow for autosizing even when variable is set
+#                  - AirLoopHVAC:
+#                      # todo_eo: this needs to be changed, for water as well
+#                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
               Water:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACWater
-                Transitions:
-                  - AirLoopHVAC:
-                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
-                      supply_fan_flow_rate: design_supply_air_flow_rate
+#                Transitions: # Allow for autosizing even when variable is set
+#                  - AirLoopHVAC:
+#                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+#                      supply_fan_flow_rate: design_supply_air_flow_rate
               WaterDualDuct:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACWaterDualDuct
-                Transitions:
-                  - AirLoopHVAC:
-                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+#                Transitions: # Allow for autosizing even when variable is set
+#                  - AirLoopHVAC:
+#                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
           ConstantVolume:
             humidistat_type: &SystemCommonTemplateObjectsHumidistatType
               Dehumidification:

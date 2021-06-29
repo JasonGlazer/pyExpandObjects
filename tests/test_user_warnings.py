@@ -356,6 +356,29 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
         self.assertRegex(output['outputPreProcessorMessage'], r'.*You must specify at least one.*')
         return
 
+    def test_zone_equipment_no_system(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:VAV": {
+                        "VAV Zone 1": {
+                            "zone_name": 'SPACE1-1',
+                            'template_vav_system_name': 'Sys 1'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Could not find air handler name referenced')
+        return
+
     def test_baseboard_hot_water_no_supply_equipment(self):
         with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
             json.dump(
