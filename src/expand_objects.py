@@ -561,7 +561,7 @@ class ExpandObjects(EPJSON):
                 if (not match_count >= occurrence and occurrence != -1) or match_count == 0:
                     self.logger.warning(
                         "The number of occurrences in a build path was never reached for "
-                        "complex reference build path: {}, complex reference: {}".format(build_path, backup_copy))
+                        "complex reference.\nbuild path: {}\ncomplex reference: {}".format(build_path, backup_copy))
                     return None
         except (IndexError, ValueError):
             raise PyExpandObjectsYamlStructureException("Invalid build path or super object: {}".format(build_path))

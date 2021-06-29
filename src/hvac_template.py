@@ -30,11 +30,12 @@ class HVACTemplate(EPJSON):
 
     def __init__(
             self,
-            no_schema=False):
+            no_schema=False,
+            logger_level='WARNING'):
         """
         :param no_schema: Boolean flag for skipping schema validation
         """
-        super().__init__(no_schema=no_schema)
+        super().__init__(no_schema=no_schema, logger_level=logger_level)
         self.templates = {}
         self.base_objects = {}
         self.templates_systems = {}
@@ -69,6 +70,13 @@ class HVACTemplate(EPJSON):
                               'ConstantVolume|BaseboardHeat|FanCoil|IdealLoadsAirSystem|PTAC|PTHP|WaterToAirHeatPump|'
                               'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|ConstantVolumn|DualDuct)$',
                               object_type):
+                    for object_name, object_fields in object_structure.items():
+                        if object_fields.get('baseboard_heating_type', None) == 'HotWater' and (
+                                not epjson.get('HVACTemplate:Plant:HotWaterLoop') or
+                                not epjson.get('HVACTemplate:Plant:Boiler')):
+                            self.logger.warning(
+                                'Warning: Both a HVACTemplate:Plant:HotWaterLoop and a HVACTemplate:Plant:Boiler are '
+                                'needed when using hot water baseboards.  Template name: {}'.format(object_name))
                     self.merge_epjson(
                         super_dictionary=self.templates_zones,
                         object_dictionary={object_type: object_structure},
@@ -82,6 +90,40 @@ class HVACTemplate(EPJSON):
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
                 elif re.match('^HVACTemplate:Plant:(ChilledWater|HotWater|MixedWater)Loop$', object_type):
+                    if len(object_structure.keys()) > 1:
+                        self.logger.warning('Warning: Only one {} allowed per file.'.format(object_type))
+                    if object_type == 'HVACTemplate:Plant:HotWaterLoop':
+                        loop_system_list = [
+                            'HVACTemplate:System:VAV', 'HVACTemplate:Zone:FanCoil', 'HVACTemplate:Zone:Unitary',
+                            'HVACTemplate:Zone:PTAC', 'HVACTemplate:Zone:PTHP', 'HVACTemplate:Zone:WaterToAirHeatPump',
+                            'HVACTemplate:System:UnitaryHeatPump:AirToAir', 'HVACTemplate:System:PackagedVAV',
+                            'HVACTemplate:System:DedicatedOutdoorAir', 'HVACTemplate:System:ConstantVolume',
+                            'HVACTemplate:System:DualDuct', 'HVACTemplate:Zone:BaseboardHeat',
+                            'HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:VRF']
+                        if not any(hwlst in loop_system_list for hwlst in epjson.keys()):
+                            self.logger.warning(
+                                'Warning: You must specify at least one {} '
+                                'if a HVACTemplate:Plant:HotWaterLoop is defined.'
+                                .format(' or '.join(loop_system_list)))
+                    if object_type == 'HVACTemplate:Plant:ChilledWaterLoop':
+                        loop_system_list = [
+                            'HVACTemplate:System:VAV', 'HVACTemplate:Zone:FanCoil',
+                            'HVACTemplate:System:DedicatedOutdoorAir', 'HVACTemplate:System:ConstantVolume',
+                            'HVACTemplate:System:DualDuct', 'HVACTemplate:System:UnitarySystem']
+                        if not any(hwlst in loop_system_list for hwlst in epjson.keys()):
+                            self.logger.warning(
+                                'Warning: You must specify at least one {} '
+                                'if a HVACTemplate:Plant:ChilledWaterLoop is defined.'
+                                .format(' or '.join(loop_system_list)))
+                    if object_type == 'HVACTemplate:Plant:MixedWaterLoop':
+                        loop_system_list = [
+                            'HVACTemplate:Zone:WaterToAirHeatPump', 'HVACTemplate:System:VRF',
+                            'HVACTemplate:System:UnitarySystem']
+                        if not any(hwlst in loop_system_list for hwlst in epjson.keys()):
+                            self.logger.warning(
+                                'Warning: You must specify at least one {} '
+                                'if a HVACTemplate:Plant:MixedWaterLoop is defined.'
+                                .format(' or '.join(loop_system_list)))
                     self.merge_epjson(
                         super_dictionary=self.templates_plant_loops,
                         object_dictionary={object_type: object_structure},
@@ -376,6 +418,12 @@ class HVACTemplate(EPJSON):
                                 "node_name": '{} Return'.format(zone_induced_air_node)
                             }
                         )
+                else:
+                    raise InvalidTemplateException(
+                        'Could not find air handler referenced ({}) in {} object with unique name {}'
+                        .format(getattr(ez, zone_system_template_field_name, None),
+                            ez.template_type,
+                            ez.unique_name))
             # create plenums or spliters/mixers, depending on template inputs
             supply_plenum_name = getattr(system_class_object, 'supply_plenum_name', None)
             if supply_plenum_name:

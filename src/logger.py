@@ -19,7 +19,8 @@ class Logger:
             self,
             logging_file_name='logging.conf',
             logger_name='expand_objects_logger',
-            log_file_name='base'):
+            log_file_name='base',
+            logger_level='WARNING'):
         # prevent re-calling same logger handlers once initialized
         # also prevent bad logger name from being called
         global loggers
@@ -55,8 +56,10 @@ class Logger:
                 # if logger_name is not in the config file, default to root
                 if logger_name in logging.root.manager.loggerDict.keys():
                     self.logger = logging.getLogger(logger_name)
+                    self.logger.setLevel(logger_level)
                 else:  # pragma: no cover
                     self.logger = logging.getLogger('root')
+                    self.logger.setLevel(logger_level)
                     self.logger.warning(
                         'Bad logger name passed (%s), continuing with only console logging',
                         logger_name
@@ -67,6 +70,7 @@ class Logger:
                 self.logger = loggers[logger_name]
         except Exception as e:  # pragma: no cover
             self.logger = logging.getLogger('root')
+            self.logger.setLevel(logger_level)
             loggers.update({logger_name: self.logger})
             self.logger.warning(
                 'Logger failed to start %s, continuing with only console logging, error message: %s',
@@ -76,6 +80,8 @@ class Logger:
             # add stream handler for output
             self.stream = stream
             handler = logging.StreamHandler(self.stream)
+            handler.setLevel(logger_level)
             self.logger.addHandler(handler)
+            self.logger.setLevel(logger_level)
             self.logger.stream_flush = self.stream.flush()
         return

@@ -3,6 +3,7 @@ import os
 import pathlib
 
 from hvac_template import HVACTemplate
+from epjson_handler import EPJSON
 import logging
 import json
 
@@ -49,13 +50,15 @@ def main(args=None):
     if file_suffix_check:
         if os.path.exists(args.file):
             hvt.logger.info('Processing %s', args.file)
-            # todo_eo: use try/except to catch any exception from self.run and output self.stream.getvalue() to
-            #  outputPreProcessorMessage for error log and just return output dictionary.
-            hvt_output = hvt.run(input_epjson=args.file)
+            # QA skipped since any unanticipated condition should still get caught and returned to user.
+            try:
+                hvt_output = hvt.run(input_epjson=args.file)
+            except:  # noqa: E722
+                hvt_output = {'outputPreProcessorMessage': hvt.stream.getvalue()}
             # merge hvac template output to output dictionary
             for output_key, output_val in hvt_output.items():
                 if output_key == 'outputPreProcessorMessage':
-                    output['outputPreProcessorMessage'] = r' '.join([
+                    output['outputPreProcessorMessage'] = '\n'.join([
                         output['outputPreProcessorMessage'],
                         hvt_output['outputPreProcessorMessage']])
                 else:
@@ -78,7 +81,14 @@ def main(args=None):
             if output.get('epJSON'):
                 # verify expanded epJSON is valid if schema validation is turned on.
                 if not args.no_schema:
-                    hvt.validate_epjson(epjson=output['epJSON'])
+                    ej = EPJSON(no_schema=False)
+                    try:
+                        ej.epjson_process(epjson_ref=output['epJSON'])
+                    except:  # noqa: E722
+                        output['outputPreProcessorMessage'] = '\n'.join([
+                            output['outputPreProcessorMessage'],
+                            'Error: Output epJSON schema validation failed. See output files for details.\n',
+                            ej.stream.getvalue()])
                 with open(os.path.join(output_directory, expanded_file_name), 'w') as expanded_file:
                     json.dump(output['epJSON'], expanded_file, indent=4, sort_keys=True)
                     output_file_dictionary['expanded'] = os.path.join(output_directory, str(expanded_file_name))
@@ -91,15 +101,20 @@ def main(args=None):
                 with open(os.path.join(output_directory, base_file_name), 'w') as base_file:
                     json.dump(output['epJSON_base'], base_file, indent=4, sort_keys=True)
                     output_file_dictionary['base'] = os.path.join(output_directory, str(base_file_name))
-            hvt.logger.info('Output files written: {}'.format(output_file_dictionary))
+            if not output_file_dictionary:
+                output['outputPreProcessorMessage'] = '\n'.join([
+                    output['outputPreProcessorMessage'],
+                    'Error: No output files written'])
+            else:
+                output['outputPreProcessorMessage'] = r'\n'.join([
+                    output['outputPreProcessorMessage'],
+                    'Output files written: {}'.format(output_file_dictionary)])
             output['output_files'] = output_file_dictionary
         else:
-            hvt.logger.error('File does not exist: %s. file not processed', args.file)
             output['outputPreProcessorMessage'] = r' '.join([
                 output['outputPreProcessorMessage'],
                 'Error: File does not exist: {}.  File not processed'.format(args.file)])
     else:
-        hvt.logger.error('Bad file extension for %s.  File not processed', args.file)
         output['outputPreProcessorMessage'] = r' '.join([
             output['outputPreProcessorMessage'],
             'Error: Bad file extension for {}.  File not processed'.format(args.file)])
