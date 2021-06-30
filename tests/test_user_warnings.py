@@ -943,3 +943,30 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             )
         self.assertRegex(output['outputPreProcessorMessage'], r'Did not find any HVACTemplate:Zone objects connected to')
         return
+
+    def test_tower_not_all_autosize(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    **chilled_water_objects,
+                    'HVACTemplate:Plant:Tower': {
+                        'Tower 1': {
+                            'tower_type': 'SingleSpeed',
+                            'high_speed_nominal_capacity': 'Autosize',
+                            'free_convection_capacity': 200
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'For a SingleSpeed tower the high speed capacity and '
+                                                              r'free convection capacity both need to be specified '
+                                                              r'or set to autosize')
+        return

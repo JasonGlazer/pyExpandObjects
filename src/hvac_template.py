@@ -294,6 +294,19 @@ class HVACTemplate(EPJSON):
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
                 elif re.match('^HVACTemplate:Plant:(Chiller|Tower|Boiler)(:ObjectReference)*$', object_type):
+                    # Check tower inputs
+                    if object_type == 'HVACTemplate:Plant:Tower':
+                        for object_name, object_fields in object_structure.items():
+                            high_speed_nominal_capacity = object_fields.get('high_speed_nominal_capacity', 'Autosize')
+                            free_convection_capacity = object_fields.get('free_convection_capacity', 'Autosize')
+                            if (str(high_speed_nominal_capacity).lower() == 'autosize' and
+                                    str(free_convection_capacity).lower() != 'autosize') or \
+                                    (str(high_speed_nominal_capacity).lower() != 'autosize' and
+                                     str(free_convection_capacity).lower() == 'autosize'):
+                                raise InvalidTemplateException(
+                                    'For a {} tower the high speed capacity and free '
+                                    'convection capacity both need to be specified or set to autosize.'
+                                    .format(object_fields.get('tower_type')))
                     # for plant equipment object references, add the referenced object to epjson for complex input resolution
                     #  later on.  For chiller objects, also identify condenser type and make it a template attribute.
                     if object_type == 'HVACTemplate:Plant:Chiller:ObjectReference':
