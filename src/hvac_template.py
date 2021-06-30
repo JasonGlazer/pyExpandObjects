@@ -137,6 +137,70 @@ class HVACTemplate(EPJSON):
                                     ' the Capacity Control Method is {}'
                                     ' and the zone is served by a dedicated outdoor air system.'
                                     .format(object_type, object_name, object_fields.get('capacity_control_method')))
+                        # IdealLoads input check
+                        if object_type == 'HVACTemplate:Zone:IdealLoadsAirSystem':
+                            heating_limit = object_fields.get('heating_limit')
+                            maximum_heating_air_flow_rate = object_fields.get('maximum_heating_air_flow_rate', '')
+                            maximum_sensible_heating_capacity = \
+                                object_fields.get('maximum_sensible_heating_capacity', '')
+                            cooling_limit = object_fields.get('cooling_limit')
+                            maximum_cooling_air_flow_rate = object_fields.get('maximum_cooling_air_flow_rate', '')
+                            maximum_total_cooling_capacity = \
+                                object_fields.get('maximum_total_heating_capacity', '')
+                            if heating_limit == 'LimitFlowRate' and maximum_heating_air_flow_rate == '':
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({})'
+                                    ' the Heating Limit field is {} but the Maximum Heating Air Flow Rate field is '
+                                    'blank. Enter a value or autosize in this field.'
+                                    .format(object_type, object_name, object_fields.get('heating_limit')))
+                            elif heating_limit == 'LimitCapacity' and maximum_sensible_heating_capacity == '':
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({})'
+                                    ' the Heating Limit field is {} but the Maximum Sensible Heating Capacity field is '
+                                    'blank. Enter a value or autosize in this field.'
+                                    .format(object_type, object_name, object_fields.get('heating_limit')))
+                            elif heating_limit == 'LimitFlowRateAndCapacity' and (
+                                    maximum_heating_air_flow_rate == '' or maximum_sensible_heating_capacity == ''):
+                                msg = []
+                                if maximum_heating_air_flow_rate == '':
+                                    msg.append('the Maximum Heating Air Flow Rate field is blank')
+                                if maximum_sensible_heating_capacity == '':
+                                    msg.append('the Maximum Sensible Heating Capacity field is blank')
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({})'
+                                    ' the Heating Limit field is {} but {}. Enter a value or autosize in this field.'
+                                    .format(
+                                        object_type,
+                                        object_name,
+                                        object_fields.get('heating_limit'),
+                                        ' and '.join(msg)))
+                            if cooling_limit == 'LimitFlowRate' and maximum_cooling_air_flow_rate == '':
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({})'
+                                    ' the Heating Limit field is {} but the Maximum Cooling Air Flow Rate field is '
+                                    'blank. Enter a value or autosize in this field.'
+                                    .format(object_type, object_name, object_fields.get('cooling_limit')))
+                            elif cooling_limit == 'LimitCapacity' and maximum_total_cooling_capacity == '':
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({})'
+                                    ' the Cooling Limit field is {} but the Maximum Total Cooling Capacity field is '
+                                    'blank. Enter a value or autosize in this field.'
+                                    .format(object_type, object_name, object_fields.get('cooling_limit')))
+                            elif cooling_limit == 'LimitFlowRateAndCapacity' and (
+                                    maximum_cooling_air_flow_rate == '' or maximum_total_cooling_capacity == ''):
+                                msg = []
+                                if maximum_cooling_air_flow_rate == '':
+                                    msg.append('the Maximum Cooling Air Flow Rate field is blank')
+                                if maximum_total_cooling_capacity == '':
+                                    msg.append('the Maximum Total Cooling Capacity field is blank')
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({})'
+                                    ' the Cooling Limit field is {} but {}. Enter a value or autosize in this field.'
+                                    .format(
+                                        object_type,
+                                        object_name,
+                                        object_fields.get('cooling_limit'),
+                                        ' and '.join(msg)))
                     self.merge_epjson(
                         super_dictionary=self.templates_zones,
                         object_dictionary={object_type: object_structure},
@@ -309,34 +373,71 @@ class HVACTemplate(EPJSON):
                                     .format(object_fields.get('tower_type')))
                     # for plant equipment object references, add the referenced object to epjson for complex input resolution
                     #  later on.  For chiller objects, also identify condenser type and make it a template attribute.
-                    if object_type == 'HVACTemplate:Plant:Chiller:ObjectReference':
-                        try:
-                            for object_name, object_fields in object_structure.items():
-                                reference_object_structure = epjson[object_fields['chiller_object_type']]
-                                for reference_object_name, reference_object_fields in reference_object_structure.items():
-                                    if reference_object_name == object_fields['chiller_name']:
-                                        try:
-                                            object_structure[object_name]['condenser_type'] = reference_object_fields['condenser_type']
-                                        except (KeyError, AttributeError):
-                                            object_structure['condenser_type'] = 'WaterCooled'
-                                        object_structure[object_name]['epjson'] = \
-                                            {object_fields['chiller_object_type']: {reference_object_name: reference_object_fields}}
-                                        break
-                        except (KeyError, AttributeError):
-                            raise InvalidTemplateException('HVACTemplate:Plant:Chiller:ObjectReference object is incorrectly formatted '
-                                                           '{}'.format(object_structure))
-                    elif object_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
-                        try:
-                            for object_name, object_fields in object_structure.items():
-                                reference_object_structure = epjson[object_fields['boiler_object_type']]
-                                for reference_object_name, reference_object_fields in reference_object_structure.items():
-                                    if reference_object_name == object_fields['boiler_name']:
-                                        object_structure[object_name]['epjson'] = \
-                                            {object_fields['boiler_object_type']: {reference_object_name: reference_object_fields}}
-                                        break
-                        except (KeyError, AttributeError):
-                            raise InvalidTemplateException('HVACTemplate:Plant:Boiler:ObjectReference object is incorrectly formatted '
-                                                           '{}'.format(object_structure))
+                    if object_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
+                        for object_name, object_fields in object_structure.items():
+                            reference_object_structure = epjson.get(object_fields['boiler_object_type'])
+                            if not reference_object_structure:
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({}) Referenced boiler not found: {}'
+                                    .format(object_type, object_name, object_fields))
+                            for reference_object_name, reference_object_fields in reference_object_structure.items():
+                                if reference_object_name == object_fields['boiler_name']:
+                                    if reference_object_fields.get('boiler_water_inlet_node_name', '') in ['', 'None']:
+                                        raise InvalidTemplateException(
+                                            'Error: In {} ({}) Blank Inlet Node Name found in referenced boiler: {}'
+                                            .format(object_type, object_name, object_fields))
+                                    if reference_object_fields.get('boiler_water_outlet_node_name', '') in ['', 'None']:
+                                        raise InvalidTemplateException(
+                                            'Error: In {} ({}) Blank Outlet Node Name found in referenced boiler: {}'
+                                            .format(object_type, object_name, object_fields))
+                                    object_structure[object_name]['epjson'] = \
+                                        {object_fields['boiler_object_type']: {reference_object_name: reference_object_fields}}
+                                    break
+                            if not object_structure[object_name].get('epjson'):
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({}) Referenced boiler not found: {}'
+                                    .format(object_type, object_name, object_fields))
+                    elif object_type == 'HVACTemplate:Plant:Chiller:ObjectReference':
+                        for object_name, object_fields in object_structure.items():
+                            reference_object_structure = epjson.get(object_fields['chiller_object_type'])
+                            if not reference_object_structure:
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({}) Referenced chiller not found: {}'
+                                    .format(object_type, object_name, object_fields))
+                            for reference_object_name, reference_object_fields in reference_object_structure.items():
+                                if reference_object_name == object_fields['chiller_name']:
+                                    if reference_object_fields.get('chilled_water_inlet_node_name', '') in ['', 'None']:
+                                        raise InvalidTemplateException(
+                                            'Error: In {} ({}) Blank chilled water Inlet Node Name found in '
+                                            'referenced chiller: {}'
+                                            .format(object_type, object_name, object_fields))
+                                    if reference_object_fields.get('chilled_water_outlet_node_name', '') in ['', 'None']:
+                                        raise InvalidTemplateException(
+                                            'Error: In {} ({}) Blank chilled water Outlet Node Name found in '
+                                            'referenced chiller: {}'
+                                            .format(object_type, object_name, object_fields))
+                                    try:
+                                        object_structure[object_name]['condenser_type'] = reference_object_fields['condenser_type']
+                                    except (KeyError, AttributeError):
+                                        object_structure[object_name]['condenser_type'] = 'WaterCooled'
+                                    if object_structure[object_name]['condenser_type'] == 'WaterCooled':
+                                        if reference_object_fields.get('condenser_inlet_node_name', '') in ['', 'None']:
+                                            raise InvalidTemplateException(
+                                                'Error: In {} ({}) Blank condenser water Inlet Node Name found in '
+                                                'referenced chiller: {}'
+                                                .format(object_type, object_name, object_fields))
+                                        if reference_object_fields.get('condenser_outlet_node_name', '') in ['', 'None']:
+                                            raise InvalidTemplateException(
+                                                'Error: In {} ({}) Blank condenser water Outlet Node Name found in '
+                                                'referenced chiller: {}'
+                                                .format(object_type, object_name, object_fields))
+                                    object_structure[object_name]['epjson'] = \
+                                        {object_fields['chiller_object_type']: {reference_object_name: reference_object_fields}}
+                                    break
+                            if not object_structure[object_name].get('epjson'):
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({}) Referenced chiller not found: {}'
+                                        .format(object_type, object_name, object_fields))
                     elif object_type == 'HVACTemplate:Plant:Tower:ObjectReference':
                         try:
                             for object_name, object_fields in object_structure.items():
@@ -989,9 +1090,15 @@ class HVACTemplate(EPJSON):
         )
         # check to make sure loops aren't empty
         if not demand_branches or not supply_branches:
-            raise InvalidTemplateException('Demand or supply branches are empty for water loop connectors: Demand: {}, '
-                                           'Supply: {}, Loop {}'.format(demand_branches, supply_branches,
-                                                                        plant_loop_class_object.template_type))
+            msg = []
+            if not demand_branches:
+                msg.append('There is no demand-side equipment connected to this loop.')
+            if not supply_branches:
+                msg.append('There is no supply-side equipment serving this loop.')
+            raise InvalidTemplateException(
+                'Error: in {} ({}). {}'
+                .format(plant_loop_class_object.template_type, plant_loop_class_object.unique_name,
+                        ' '.join(msg)))
         # Use ExpandObjects class for helper functions
         eo = ExpandObjects(logger_level=self.logger_level)
         eo.unique_name = getattr(plant_loop_class_object, 'template_name')

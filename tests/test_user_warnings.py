@@ -92,6 +92,29 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
     def tearDown(self):
         return
 
+    def test_invalid_choice(self):
+        # todo_eo: this only works if schema validation is turned on.  The point of turning it off is to speed up
+        #  the process so no output in that case may be the only option
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:FanCoil": {
+                        "FanCoil 1": {}
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Invalid choice in HVACTemplate:Zone:FanCoil .* '
+                                                              r'is a required property')
+        return
+
     def test_two_hot_water_loop_templates_with_schema(self):
         with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
             json.dump(
@@ -428,6 +451,152 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                 )
             )
         self.assertRegex(output['outputPreProcessorMessage'], r'the Capacity Control Method is')
+        return
+
+    def test_ideal_load_flow_heat_limit_flow(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:IdealLoadsAirSystem": {
+                        "IL 1": {
+                            "zone_name": 'SPACE1-1',
+                            "heating_limit": 'LimitFlowRate'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitFlowRate but the '
+                                                              r'Maximum Heating Air Flow Rate field')
+        return
+
+    def test_ideal_load_flow_cool_limit_flow(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:IdealLoadsAirSystem": {
+                        "IL 1": {
+                            "zone_name": 'SPACE1-1',
+                            "cooling_limit": 'LimitFlowRate'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitFlowRate but the '
+                                                              r'Maximum Cooling Air Flow Rate field')
+        return
+
+    def test_ideal_load_flow_heat_limit_capacity(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:IdealLoadsAirSystem": {
+                        "IL 1": {
+                            "zone_name": 'SPACE1-1',
+                            "heating_limit": 'LimitCapacity'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitCapacity but the '
+                                                              r'Maximum Sensible Heating Capacity field')
+        return
+
+    def test_ideal_load_flow_cool_limit_capacity(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:IdealLoadsAirSystem": {
+                        "IL 1": {
+                            "zone_name": 'SPACE1-1',
+                            "cooling_limit": 'LimitCapacity'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Limit field is LimitCapacity but the '
+                                                              r'Maximum Total Cooling Capacity field')
+        return
+
+    def test_ideal_load_flow_heat_limit_flow_and_capacity(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:IdealLoadsAirSystem": {
+                        "IL 1": {
+                            "zone_name": 'SPACE1-1',
+                            "heating_limit": 'LimitFlowRateAndCapacity'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitFlowRateAndCapacity but '
+                                                              r'the Maximum Heating Air Flow Rate field is blank and '
+                                                              r'the Maximum Sensible Heating Capacity field is blank.')
+        return
+
+    def test_ideal_load_flow_cool_limit_flow_and_capacity(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:IdealLoadsAirSystem": {
+                        "IL 1": {
+                            "zone_name": 'SPACE1-1',
+                            "cooling_limit": 'LimitFlowRateAndCapacity'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Limit field is LimitFlowRateAndCapacity but '
+                                                              r'the Maximum Cooling Air Flow Rate field is blank and '
+                                                              r'the Maximum Total Cooling Capacity field is blank.')
         return
 
     def test_vav_heating_cooling_setpoint_mismatch(self):
@@ -966,7 +1135,384 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'For a SingleSpeed tower the high speed capacity and '
-                                                              r'free convection capacity both need to be specified '
-                                                              r'or set to autosize')
+            self.assertRegex(output['outputPreProcessorMessage'], r'For a SingleSpeed tower the high speed capacity and '
+                                                                  r'free convection capacity both need to be specified '
+                                                                  r'or set to autosize')
+            return
+
+    def test_object_reference_boiler_no_type(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    **chilled_water_objects,
+                    "HVACTemplate:Plant:Boiler:ObjectReference": {
+                        "OR 1": {
+                            'boiler_name': 'Main Boiler',
+                            'boiler_object_type': 'Boiler:HotWater'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'n HVACTemplate:Plant:Boiler:ObjectReference \(OR 1\) '
+                                                              r'Referenced boiler not found')
+        return
+
+    def test_object_reference_boiler_wrong_name(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Boiler:HotWater": {
+                        'Main Boiler': {
+                            'fuel_type': 'Coal',
+                            'nominal_thermal_efficiency': 0.8,
+                            'boiler_water_inlet_node_name': 'HW In',
+                            'boiler_water_outlet_node_name': 'HW Out'
+                        }
+                    },
+                    "HVACTemplate:Plant:Boiler:ObjectReference": {
+                        "OR 1": {
+                            'boiler_name': 'Bad Boiler',
+                            'boiler_object_type': 'Boiler:HotWater'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'HVACTemplate:Plant:Boiler:ObjectReference \(OR 1\) '
+                                                              r'Referenced boiler not found')
+        return
+
+    def test_object_reference_boiler_no_inlet_name(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Boiler:HotWater": {
+                        'Main Boiler': {
+                            'fuel_type': 'Coal',
+                            'nominal_thermal_efficiency': 0.8,
+                            'boiler_water_inlet_node_name': 'None',
+                            'boiler_water_outlet_node_name': 'HW Out'
+                        }
+                    },
+                    "HVACTemplate:Plant:Boiler:ObjectReference": {
+                        "OR 1": {
+                            'boiler_name': 'Main Boiler',
+                            'boiler_object_type': 'Boiler:HotWater'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Inlet Node Name found in referenced boiler: ')
+        return
+
+    def test_object_reference_boiler_no_outlet_name(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Boiler:HotWater": {
+                        'Main Boiler': {
+                            'fuel_type': 'Coal',
+                            'nominal_thermal_efficiency': 0.8,
+                            'boiler_water_inlet_node_name': 'HW In',
+                            'boiler_water_outlet_node_name': ''
+                        }
+                    },
+                    "HVACTemplate:Plant:Boiler:ObjectReference": {
+                        "OR 1": {
+                            'boiler_name': 'Main Boiler',
+                            'boiler_object_type': 'Boiler:HotWater'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Outlet Node Name found in referenced boiler: ')
+        return
+
+    def test_hot_water_loop_no_equipment(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Plant:HotWaterLoop": {
+                        "HWL 1": {
+
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'There is no demand\-side equipment connected to this '
+                                                              r'loop\. There is no supply\-side equipment serving this '
+                                                              r'loop\.')
+        return
+
+    def test_object_reference_chiller_no_type(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Plant:Chiller:ObjectReference": {
+                        "OR 1": {
+                            'chiller_name': 'Main Chiller',
+                            'chiller_object_type': 'Chiller:Electric:EIR'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'n HVACTemplate:Plant:Chiller:ObjectReference \(OR 1\) '
+                                                              r'Referenced chiller not found')
+        return
+
+    def test_object_reference_chiller_wrong_name(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Chiller:Electric:EIR": {
+                        'Main Chiller': {
+                            'reference_capacity': 'Autosize',
+                            'reference_cop': 6.1,
+                            'cooling_capacity_function_of_temperature_curve_name': 'Main Chiller RecipCapFT',
+                            'electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name': 'Main Chiller RecipEIRFPLR',
+                            'electric_input_to_cooling_output_ratio_function_of_temperature_curve_name': 'Main Chiller RecipEIRFT',
+                            'chilled_water_inlet_node_name': 'CHW In',
+                            'chilled_water_outlet_node_name': 'CHW Out'
+                        }
+                    },
+                    "HVACTemplate:Plant:Chiller:ObjectReference": {
+                        "OR 1": {
+                            'chiller_name': 'Bad Chiller',
+                            'chiller_object_type': 'Chiller:Electric:EIR'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'HVACTemplate:Plant:Chiller:ObjectReference \(OR 1\) '
+                                                              r'Referenced chiller not found')
+        return
+
+    def test_object_reference_chiller_no_chw_inlet_name(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Chiller:Electric:EIR": {
+                        'Main Chiller': {
+                            'reference_capacity': 'Autosize',
+                            'reference_cop': 6.1,
+                            'cooling_capacity_function_of_temperature_curve_name': 'Main Chiller RecipCapFT',
+                            'electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name': 'Main Chiller RecipEIRFPLR',
+                            'electric_input_to_cooling_output_ratio_function_of_temperature_curve_name': 'Main Chiller RecipEIRFT',
+                            'chilled_water_inlet_node_name': '',
+                            'chilled_water_outlet_node_name': 'CHW Out'
+                        }
+                    },
+                    "HVACTemplate:Plant:Chiller:ObjectReference": {
+                        "OR 1": {
+                            'chiller_name': 'Main Chiller',
+                            'chiller_object_type': 'Chiller:Electric:EIR'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Blank chilled water Inlet Node Name found in '
+                                                              r'referenced chiller: ')
+        return
+
+    def test_object_reference_chiller_no_chw_outlet_name(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Chiller:Electric:EIR": {
+                        'Main Chiller': {
+                            'reference_capacity': 'Autosize',
+                            'reference_cop': 6.1,
+                            'cooling_capacity_function_of_temperature_curve_name': 'Main Chiller RecipCapFT',
+                            'electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name': 'Main Chiller RecipEIRFPLR',
+                            'electric_input_to_cooling_output_ratio_function_of_temperature_curve_name': 'Main Chiller RecipEIRFT',
+                            'chilled_water_inlet_node_name': 'CHW In',
+                            'chilled_water_outlet_node_name': 'None'
+                        }
+                    },
+                    "HVACTemplate:Plant:Chiller:ObjectReference": {
+                        "OR 1": {
+                            'chiller_name': 'Main Chiller',
+                            'chiller_object_type': 'Chiller:Electric:EIR'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Blank chilled water Outlet Node Name found in '
+                                                              r'referenced chiller: ')
+        return
+
+    def test_object_reference_chiller_no_cw_inlet_name(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Chiller:Electric:EIR": {
+                        'Main Chiller': {
+                            'reference_capacity': 'Autosize',
+                            'reference_cop': 6.1,
+                            'cooling_capacity_function_of_temperature_curve_name': 'Main Chiller RecipCapFT',
+                            'electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name': 'Main Chiller RecipEIRFPLR',
+                            'electric_input_to_cooling_output_ratio_function_of_temperature_curve_name': 'Main Chiller RecipEIRFT',
+                            'chilled_water_inlet_node_name': 'CHW In',
+                            'chilled_water_outlet_node_name': 'CHW Out',
+                            'condenser_outlet_node_name': 'CW Out'
+                        }
+                    },
+                    "HVACTemplate:Plant:Chiller:ObjectReference": {
+                        "OR 1": {
+                            'chiller_name': 'Main Chiller',
+                            'chiller_object_type': 'Chiller:Electric:EIR'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Blank condenser water Inlet Node Name')
+        return
+
+    def test_object_reference_chiller_no_cw_outlet_name(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Chiller:Electric:EIR": {
+                        'Main Chiller': {
+                            'reference_capacity': 'Autosize',
+                            'reference_cop': 6.1,
+                            'cooling_capacity_function_of_temperature_curve_name': 'Main Chiller RecipCapFT',
+                            'electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name': 'Main Chiller RecipEIRFPLR',
+                            'electric_input_to_cooling_output_ratio_function_of_temperature_curve_name': 'Main Chiller RecipEIRFT',
+                            'chilled_water_inlet_node_name': 'CHW In',
+                            'chilled_water_outlet_node_name': 'CHW Out',
+                            'condenser_inlet_node_name': 'CW In'
+                        }
+                    },
+                    "HVACTemplate:Plant:Chiller:ObjectReference": {
+                        "OR 1": {
+                            'chiller_name': 'Main Chiller',
+                            'chiller_object_type': 'Chiller:Electric:EIR'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Blank condenser water Outlet Node Name')
+        return
+
+    def test_object_reference_chiller_air_cooled(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Chiller:Electric:EIR": {
+                        'Main Chiller': {
+                            'reference_capacity': 'Autosize',
+                            'reference_cop': 6.1,
+                            'cooling_capacity_function_of_temperature_curve_name': 'Main Chiller RecipCapFT',
+                            'electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name': 'Main Chiller RecipEIRFPLR',
+                            'electric_input_to_cooling_output_ratio_function_of_temperature_curve_name': 'Main Chiller RecipEIRFT',
+                            'chilled_water_inlet_node_name': 'CHW In',
+                            'chilled_water_outlet_node_name': 'CHW Out',
+                            'condenser_type': 'AirCooled'
+                        }
+                    },
+                    "HVACTemplate:Plant:Chiller:ObjectReference": {
+                        "OR 1": {
+                            'chiller_name': 'Main Chiller',
+                            'chiller_object_type': 'Chiller:Electric:EIR'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertNotRegex(output['outputPreProcessorMessage'], r'Blank condenser water Inlet Node Name')
         return
