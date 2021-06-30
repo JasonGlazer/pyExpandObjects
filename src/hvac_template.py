@@ -36,6 +36,7 @@ class HVACTemplate(EPJSON):
         :param no_schema: Boolean flag for skipping schema validation
         """
         super().__init__(no_schema=no_schema, logger_level=logger_level)
+        self.logger_level = logger_level
         self.templates = {}
         self.base_objects = {}
         self.templates_systems = {}
@@ -85,7 +86,7 @@ class HVACTemplate(EPJSON):
                             (
                                 'template_unitary_system_name',
                                 ['HVACTemplate:System:Unitary', 'HVACTemplate:System:UnitaryHeatPump',
-                                 'HVACTemplate:System:UnitaryHeatPumpAirToAir', 'HVACTemplate:System:UnitarySystem']),
+                                 'HVACTemplate:System:UnitaryHeatPump:AirToAir', 'HVACTemplate:System:UnitarySystem']),
                         ('HVACTemplate:Zone:VAV', 'HVACTemplate:Zone:VAVFanPowered'):
                             (
                                 'template_vav_system_name',
@@ -111,18 +112,31 @@ class HVACTemplate(EPJSON):
                                 for system_type in system_check_list[1]:
                                     system_group = epjson.get(system_type)
                                     if system_group:
-                                        template_system_name = system_group.get(system_name)
-                                        break
+                                        template_system_name = True if system_name in system_group else False
+                                        if template_system_name:
+                                            break
                                 if not template_system_name:
-                                    self.logger.error('Error: Could not find air handler name referenced ({}) in '
-                                                      '{} object ({})'.format(system_name, object_type, object_name))
+                                    raise InvalidTemplateException(
+                                        'Error: Could not find air handler name referenced ({}) in '
+                                        '{} object ({})'.format(system_name, object_type, object_name))
+                    # check fields
                     for object_name, object_fields in object_structure.items():
+                        # check baseboard settings
                         if object_fields.get('baseboard_heating_type', None) == 'HotWater' and (
                                 not epjson.get('HVACTemplate:Plant:HotWaterLoop') or not
                                 epjson.get('HVACTemplate:Plant:Boiler')):
                             self.logger.warning(
                                 'Warning: Both a HVACTemplate:Plant:HotWaterLoop and a HVACTemplate:Plant:Boiler are '
                                 'needed when using hot water baseboards.  Template name: {}'.format(object_name))
+                        # fan coil capacity control with doas
+                        if object_type == 'HVACTemplate:Zone:FanCoil':
+                            if object_fields.get('capacity_control_method') == 'ConstantFanVariableFlow' and \
+                                    object_fields.get('dedicated_outdoor_air_system_name', '') != '':
+                                self.logger.warning(
+                                    'Warning: In {} ({})'
+                                    ' the Capacity Control Method is {}'
+                                    ' and the zone is served by a dedicated outdoor air system.'
+                                    .format(object_type, object_name, object_fields.get('capacity_control_method')))
                     self.merge_epjson(
                         super_dictionary=self.templates_zones,
                         object_dictionary={object_type: object_structure},
@@ -131,29 +145,111 @@ class HVACTemplate(EPJSON):
                               'VRF|Unitary|UnitaryHeatPump:AirToAir|UnitarySystem|VAV|PackagedVAV|'
                               'ConstantVolume|DualDuct|DedicatedOutdoorAir'
                               ')$', object_type):
-                    # todo_eo: check if NightCycle is set to CycleOnControlZone and zone is specified.
-                    if object_type == 'HVACTemplate:System:Unitary':
+                    # check for individual template issues
+                    for object_name, object_fields in object_structure.items():
+                        try:
+                            zone_system_field = self._get_zone_template_field_from_system_type(object_type)
+                        except InvalidTemplateException:
+                            continue
+                        system_names = [
+                            zone_fields.get(zone_system_field) for zone_type, zone_structure in epjson.items()
+                            if re.match(r'HVACTemplate:Zone:.*', zone_type)
+                            for zone_template_name, zone_fields in zone_structure.items()]
+                        if object_name not in system_names:
+                            raise InvalidTemplateException(
+                                'Did not find any HVACTemplate:Zone objects connected to {} ({})'
+                                'There must be at least one zone object which specifies '
+                                'this system as the Template Unitary System Name.'.format(object_type, object_name))
+                        if object_fields.get('night_cycle_control', 'None') == 'CycleOnControlZone' and \
+                                object_fields.get('night_cycle_control_zone_name', 'None') == 'None':
+                            self.logger.warning('Warning: A zone name must be specified when Night Cycle Control is '
+                                                'set to Cycle on Control Zone for {} with unique name {}'
+                                                .format(object_type, object_name))
+                    # check for control zones
+                    if object_type in ['HVACTemplate:System:Unitary', 'HVACTemplate:System:ConstantVolume']:
                         for object_name, object_fields in object_structure.items():
-                            if object_fields.get('control_zone_or_thermostat_location_name'):
-                                try:
-                                    zones_served = [
-                                        z_fields.get('zone_name')
-                                        for z_name, z_fields in epjson.get('HVACTemplate:Zone:Unitary').items()]
-                                except AttributeError:
-                                    self.logger.error('Error: No HVACTemplate:Zone:Unitary template objects reference'
-                                                      ' the {} object'.format(object_type))
-                                    zones_served = []
-                                if object_fields.get('control_zone_or_thermostat_location_name') not in zones_served:
-                                    self.logger.error(
-                                        'Error: In {} named {} for the field control_zone_or_thermostat_location_name could '
-                                        'not find a matching HVACTemplate:Zone:Unitary named {}'
-                                        .format(
-                                            object_type,
-                                            object_name,
-                                            object_fields.get('control_zone_or_thermostat_location_name')))
-                            else:
-                                self.logger.error('Error: control_zone_or_thermostat_location_name must be specified '
-                                                  'for {} which is a {}'.format(object_name, object_type))
+                            try:
+                                zone_system_field = self._get_zone_template_field_from_system_type(object_type)
+                            except InvalidTemplateException:
+                                continue
+                            try:
+                                zones_served = [
+                                    zone_fields.get('zone_name') for zone_type, zone_structure in epjson.items()
+                                    if re.match(r'HVACTemplate:Zone:.*', zone_type)
+                                    for zone_template_name, zone_fields in zone_structure.items()
+                                    if zone_fields.get(zone_system_field) == object_name]
+                            except AttributeError:
+                                raise InvalidTemplateException(
+                                    'Error: No HVACTemplate:Zone:Unitary template objects reference'
+                                    ' the {} object'.format(object_type))
+                            if object_type == 'HVACTemplate:System:Unitary' and \
+                                    object_fields.get('control_zone_or_thermostat_location_name') and \
+                                    object_fields.get('control_zone_or_thermostat_location_name') not in zones_served:
+                                raise InvalidTemplateException(
+                                    'Error: In {} named {} for the field control_zone_or_thermostat_location_name could '
+                                    'not find a matching HVACTemplate:Zone:Unitary named {}'
+                                    .format(
+                                        object_type,
+                                        object_name,
+                                        object_fields.get('control_zone_or_thermostat_location_name')))
+                            elif object_type == 'HVACTemplate:System:Unitary' and \
+                                    not object_fields.get('control_zone_or_thermostat_location_name'):
+                                raise InvalidTemplateException(
+                                    'Error: control_zone_or_thermostat_location_name must '
+                                    'be specified for {} which is a {}'.format(object_name, object_type))
+                            elif object_type == 'HVACTemplate:System:ConstantVolume' and \
+                                    object_fields.get('cooling_coil_control_zone_name') and \
+                                    object_fields.get('cooling_coil_control_zone_name') not in zones_served:
+                                raise InvalidTemplateException(
+                                    'Error: In {} named {} for the field cooling_coil_control_zone_name could '
+                                    'not find a matching HVACTemplate:Zone:Unitary named {}'
+                                    .format(
+                                        object_type,
+                                        object_name,
+                                        object_fields.get('cooling_coil_control_zone_name')))
+                            elif object_type == 'HVACTemplate:System:ConstantVolume' and \
+                                    object_fields.get('heating_coil_control_zone_name') and \
+                                    object_fields.get('heating_coil_control_zone_name') not in zones_served:
+                                raise InvalidTemplateException(
+                                    'Error: In {} named {} for the field heating_coil_control_zone_name could '
+                                    'not find a matching HVACTemplate:Zone:Unitary named {}'
+                                    .format(
+                                        object_type,
+                                        object_name,
+                                        object_fields.get('heating_coil_control_zone_name')))
+                    # check vrf master thermostat referenced zone
+                    if object_type in ['HVACTemplate:System:VRF', ]:
+                        for object_name, object_fields in object_structure.items():
+                            try:
+                                zone_system_field = self._get_zone_template_field_from_system_type(object_type)
+                            except InvalidTemplateException:
+                                continue
+                            try:
+                                zones_served = [
+                                    zone_fields.get('zone_name') for zone_type, zone_structure in epjson.items()
+                                    if re.match(r'HVACTemplate:Zone:.*', zone_type)
+                                    for zone_template_name, zone_fields in zone_structure.items()
+                                    if zone_fields.get(zone_system_field) == object_name]
+                            except AttributeError:
+                                raise InvalidTemplateException('Error: No HVACTemplate:Zone:Unitary template objects reference'
+                                                               ' the {} object'.format(object_type))
+                            if object_fields.get('master_thermostat_priority_control_type') == \
+                                    'MasterThermostatPriority' and \
+                                    object_fields.get('zone_name_for_master_thermostat_location') not in zones_served:
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({}) for the field Zone Name for '
+                                    'Master Thermostat Location could not find a matching '
+                                    'HVACTemplate:Zone:VRF named: {}'
+                                    .format(
+                                        object_type,
+                                        object_name,
+                                        object_fields.get('zone_name_for_master_thermostat_location')))
+                            if object_fields.get('master_thermostat_priority_control_type') == 'Scheduled' and \
+                                    not object_fields.get('thermostat_priority_schedule_name'):
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({}) the Master Thermostat '
+                                    'Priority Control Type = Scheduled, but the Thermostat Priority Schedule Name '
+                                    'is blank.'.format(object_type, object_name))
                     self.merge_epjson(
                         super_dictionary=self.templates_systems,
                         object_dictionary={object_type: object_structure},
@@ -273,7 +369,11 @@ class HVACTemplate(EPJSON):
             (_, template_structure), = template.items()
             (template_name, template_fields), = template_structure.items()
             external_epjson_objects = template_fields.pop('epjson', None)
-            expanded_template = expand_class(template=template, epjson=external_epjson_objects, **kwargs).run()
+            expanded_template = expand_class(
+                template=template,
+                epjson=external_epjson_objects,
+                logger_level=self.logger_level,
+                **kwargs).run()
             expanded_template_dictionary[template_name] = expanded_template
         return expanded_template_dictionary
 
@@ -304,15 +404,15 @@ class HVACTemplate(EPJSON):
             (thermostat_name, _), = thermostat_structure.items()
             # create control schedule based on thermostat type
             if thermostat_type == "ThermostatSetpoint:SingleHeating":
-                control_schedule = ExpandObjects().build_compact_schedule(
+                control_schedule = ExpandObjects(logger_level=self.logger_level).build_compact_schedule(
                     structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=[1, ])
             elif thermostat_type == "ThermostatSetpoint:SingleCooling":
-                control_schedule = ExpandObjects().build_compact_schedule(
+                control_schedule = ExpandObjects(logger_level=self.logger_level).build_compact_schedule(
                     structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=[2, ])
             elif thermostat_type == "ThermostatSetpoint:DualSetpoint":
-                control_schedule = ExpandObjects().build_compact_schedule(
+                control_schedule = ExpandObjects(logger_level=self.logger_level).build_compact_schedule(
                     structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=[4, ])
             else:
@@ -387,7 +487,7 @@ class HVACTemplate(EPJSON):
         else:
             inlet_nodes = ['air_inlet_node_name', ]
         # create ExpandObjects class object to use some yaml and epjson functions
-        eo = ExpandObjects()
+        eo = ExpandObjects(logger_level=self.logger_level)
         eo.unique_name = getattr(system_class_object, 'template_name')
         # iterate over expanded zones and if the system reference field exists, and is for the referenced system,
         # append them in the splitter and mixer lists
@@ -583,7 +683,7 @@ class HVACTemplate(EPJSON):
             AirLoopHVAC:ReturnPlenum or AirLoopHVAC:ZoneMixer.
         """
         # create ExpandObjects class object to use some yaml and epjson functions
-        eo = ExpandObjects()
+        eo = ExpandObjects(logger_level=self.logger_level)
         eo.unique_name = getattr(system_class_object, 'template_name')
         vrf_object_name_list = []
         zone_system_template_field_name = \
@@ -880,7 +980,7 @@ class HVACTemplate(EPJSON):
                                            'Supply: {}, Loop {}'.format(demand_branches, supply_branches,
                                                                         plant_loop_class_object.template_type))
         # Use ExpandObjects class for helper functions
-        eo = ExpandObjects()
+        eo = ExpandObjects(logger_level=self.logger_level)
         eo.unique_name = getattr(plant_loop_class_object, 'template_name')
         # create branchlists
         demand_branchlist = eo.get_structure(
@@ -987,7 +1087,7 @@ class HVACTemplate(EPJSON):
                 'equipment_object_type': sb['components'][0]['component_object_type']
             })
         # use ExpandObjects functions
-        eo = ExpandObjects()
+        eo = ExpandObjects(logger_level=self.logger_level)
         eo.unique_name = getattr(plant_loop_class_object, 'template_name')
         if 'hotwater' in plant_loop_class_object.template_type.lower() or \
                 'chilledwater' in plant_loop_class_object.template_type.lower():
@@ -1040,7 +1140,7 @@ class HVACTemplate(EPJSON):
             'template_vav_system_name',
             'template_vrf_system_name')
         # get system to zone mapping structure
-        eo = ExpandObjects()
+        eo = ExpandObjects(logger_level=self.logger_level)
         mapping_indicators = eo.get_structure(structure_hierarchy=['SystemToZoneMappings'])
         # retrieve system from zone template
         reference_system_name = None

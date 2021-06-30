@@ -203,7 +203,8 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             output = main(
                 Namespace(
                     no_schema=False,
-                    file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' / 'test' / test_pre_input_file_path)))
+                    file=str(test_dir / '..' / 'simulation' / 'ExampleFiles' / 'test' / test_pre_input_file_path),
+                    logger_level='DEBUG'))
             output_epjson = output['epJSON']
             test_input_file_path = self.write_file_for_testing(
                 epjson=output_epjson,

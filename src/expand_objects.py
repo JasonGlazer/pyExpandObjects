@@ -121,8 +121,10 @@ class ExpandObjects(EPJSON):
     def __init__(
             self,
             template=None,
-            expansion_structure=str(source_dir / 'resources' / 'template_expansion_structures.yaml')):
+            expansion_structure=str(source_dir / 'resources' / 'template_expansion_structures.yaml'),
+            logger_level='WARNING'):
         super().__init__()
+        self.logger.setLevel(logger_level)
         self.expansion_structure = expansion_structure
         self.template = template
         if self.template:
@@ -1145,9 +1147,9 @@ class ExpandThermostat(ExpandObjects):
     Thermostat expansion operations
     """
 
-    def __init__(self, template, epjson=None):
+    def __init__(self, template, logger_level='WARNING', epjson=None):
         # fill/create class attributes values with template inputs
-        super().__init__(template=template)
+        super().__init__(template=template, logger_level=logger_level)
         self.unique_name = self.template_name
         self.epjson = epjson or self.epjson
         return
@@ -1474,9 +1476,9 @@ class ExpandZone(ExpandObjects):
     fan_powered_reheat_type = FanPoweredReheatType()
     vrf_type = VRFType()
 
-    def __init__(self, template, epjson=None):
+    def __init__(self, template, logger_level='WARNING', epjson=None):
         # fill/create class attributes values with template inputs
-        super().__init__(template=template)
+        super().__init__(template=template, logger_level=logger_level)
         try:
             self.unique_name = getattr(self, 'zone_name')
             if not self.unique_name:
@@ -1806,8 +1808,8 @@ class ExpandSystem(ExpandObjects):
     outside_air_equipment_type = OutsideAirEquipmentType()
     dehumidification_control_type = ModifyDehumidificationControlType()
 
-    def __init__(self, template, epjson=None):
-        super().__init__(template=template)
+    def __init__(self, template, logger_level='WARNING', epjson=None):
+        super().__init__(template=template, logger_level=logger_level)
         # map variable variants to common value and remove original
         self.rename_attribute('cooling_coil_design_setpoint_temperature', 'cooling_coil_design_setpoint')
         self.rename_attribute('economizer_upper_temperature_limit', 'economizer_maximum_limit_dry_bulb_temperature')
@@ -1831,20 +1833,27 @@ class ExpandSystem(ExpandObjects):
         self.outside_air_equipment_type = template
         self.dehumidification_control_type = template
         # System Warnings
-        if self.template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV']:
+        if self.template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV',
+                                  'HVACTemplate:System:ConstantVolume']:
             cooling_coil_design_setpoint = getattr(self, 'cooling_coil_design_setpoint', None)
+            if not cooling_coil_design_setpoint:
+                getattr(self, 'cooling_coil_design_setpoint_temperature', None)
             cooling_setpoint_schedule_name = getattr(self, 'cooling_coil_setpoint_schedule_name', 'None')
-            cooling_coil_setpoint_reset_type = getattr(self, 'cooling_coil_setpoint_reset_type', 'None')
+            cooling_coil_setpoint_type = getattr(self, 'cooling_coil_setpoint_reset_type', 'None')
+            if cooling_coil_setpoint_type == 'None':
+                getattr(self, 'cooling_coil_setpoint_control_type', 'None')
             heating_coil_type = getattr(self, 'heating_coil_type', 'None')
             heating_coil_design_setpoint = getattr(self, 'heating_coil_design_setpoint', None)
             heating_setpoint_schedule_name = getattr(self, 'heating_coil_setpoint_schedule_name', 'None')
-            heating_coil_setpoint_reset_type = getattr(self, 'heating_coil_setpoint_reset_type', 'None')
+            heating_coil_setpoint_type = getattr(self, 'heating_coil_setpoint_reset_type', 'None')
+            if heating_coil_setpoint_type == 'None':
+                getattr(self, 'heating_coil_setpoint_control_type', 'None')
             preheat_coil_type = getattr(self, 'preheat_coil_type', 'None')
             preheat_coil_setpoint_schedule_name = getattr(self, 'preheat_coil_setpoint_schedule_name', 'None')
             preheat_coil_design_setpoint = getattr(self, 'preheat_coil_design_setpoint', None)
-            if cooling_setpoint_schedule_name == 'None' and cooling_coil_setpoint_reset_type == 'None':
+            if cooling_setpoint_schedule_name == 'None' and cooling_coil_setpoint_type == 'None':
                 if heating_coil_type != 'None' and \
-                        heating_setpoint_schedule_name == 'None' and heating_coil_setpoint_reset_type == 'None':
+                        heating_setpoint_schedule_name == 'None' and heating_coil_setpoint_type == 'None':
                     if not heating_coil_design_setpoint or not cooling_coil_design_setpoint:
                         self.logger.warning('Warning: Expected cooling and heating design setpoints to be set but '
                                             'one or both are not.')
@@ -1864,6 +1873,24 @@ class ExpandSystem(ExpandObjects):
                             ' the Preheat Coil Design Setpoint is greater than the Cooling Coil Design Setpoint.'
                             ' This may cause the preheat coil and cooling coil to operate simultaneously.'
                             ' Check results carefully and adjust controls if needed.'.format(self.template_type))
+        if self.template_type in ['HVACTemplate:System:UnitarySystem', ]:
+            if str(getattr(self, 'dx_cooling_coil_gross_rated_total_capacity', 'Autosize')).lower() == 'autosize' and \
+                    str(getattr(self, 'dx_cooling_coil_gross_rated_sensible_heat_ratio', 'Autosize')).lower() != 'autosize':
+                self.logger.warning(
+                    'Warning:  In {} ({})'
+                    ' the Cooling Coil Rated Capacity is autosized, so the Cooling Coil Gross Rated Sensible Heat Ratio '
+                    ' will also be autosized. The specified value for Cooling Coil Gross Rated Sensible Heat Ratio'
+                    ' will be ignored.  Autosize both or specify values for both.'
+                    .format(self.template_type, self.unique_name))
+                setattr(self, 'dx_cooling_coil_gross_rated_sensible_heat_ratio', 'Autosize')
+            if str(getattr(self, 'dx_cooling_coil_gross_rated_total_capacity', 'Autosize')).lower() != 'autosize' and \
+                    str(getattr(self, 'dx_cooling_coil_gross_rated_sensible_heat_ratio', 'Autosize')).lower() == 'autosize':
+                self.logger.warning(
+                    'Warning:  In {} ({})'
+                    ' the Cooling Coil Rated Capacity will not be used when the Cooling Coil Gross Rated '
+                    'Sensible Heat Ratio is autosized. Autosize both or specify values for both.'
+                    .format(self.template_type, self.unique_name))
+                setattr(self, 'dx_cooling_coil_gross_rated_total_capacity', 'Autosize')
         return
 
     def _create_controller_list_from_epjson(
@@ -2469,8 +2496,8 @@ class ExpandPlantLoop(ExpandObjects):
     """
     Plant loop expansion operations
     """
-    def __init__(self, template, epjson=None):
-        super().__init__(template=template)
+    def __init__(self, template, logger_level='WARNING', epjson=None):
+        super().__init__(template=template, logger_level=logger_level)
         self.unique_name = self.template_name
         self.epjson = epjson or self.epjson
         return
@@ -2580,14 +2607,14 @@ class ExpandPlantEquipment(ExpandObjects):
     template_plant_loop_type = RetrievePlantEquipmentLoop()
     chiller_and_condenser_type = ChillerAndCondenserType()
 
-    def __init__(self, template, plant_loop_class_objects=None, epjson=None):
+    def __init__(self, template, logger_level='WARNING', plant_loop_class_objects=None, epjson=None):
         """
         Initialize class
 
         :param template: HVACTemplate:Plant:(Chiller|Tower|Boiler) objects
         :param plant_loop_class_objects: dictionary of ExpandPlantLoop objects
         """
-        super().__init__(template=template)
+        super().__init__(template=template, logger_level=logger_level)
         self.unique_name = self.template_name
         plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}

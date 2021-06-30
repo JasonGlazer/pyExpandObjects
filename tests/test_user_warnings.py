@@ -403,6 +403,33 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                                                               r'HVACTemplate:Plant:Boiler are needed.*')
         return
 
+    def test_fan_coil_doas_with_constant_fan(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:FanCoil": {
+                        "FanCoil 1": {
+                            "zone_name": 'SPACE1-1',
+                            "capacity_control_method": 'ConstantFanVariableFlow',
+                            'dedicated_outdoor_air_system_name': 'DOAS'
+                        }
+                    },
+                    'HVACTemplate:System:DedicatedOutdoorAir': {
+                        'DOAS': {}
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Capacity Control Method is')
+        return
+
     def test_vav_heating_cooling_setpoint_mismatch(self):
         with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
             json.dump(
@@ -428,13 +455,81 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                                                               r'the Cooling Coil Design Setpoint.')
         return
 
+    def test_cav_heating_cooling_setpoint_mismatch(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:ConstantVolume": {
+                        'CV Zone 1': {
+                            'template_constant_volume_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE2-1'
+                        }
+                    },
+                    "HVACTemplate:System:ConstantVolume": {
+                        "CV Sys 1": {
+                            'cooling_coil_design_setpoint': 12,
+                            "heating_coil_type": 'Electric',
+                            'heating_coil_design_setpoint': 15
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Coil Design Setpoint is greater than '
+                                                              r'the Cooling Coil Design Setpoint.')
+        return
+
     def test_vav_preheating_cooling_setpoint_mismatch(self):
         with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
             json.dump(
                 {
                     **minimum_objects_d,
+                    "HVACTemplate:Zone:VAV": {
+                        'VAV Zone 1': {
+                            'template_vav_system_name': 'VAV Sys 1',
+                            'zone_name': 'SPACE1-1'
+                        }
+                    },
                     "HVACTemplate:System:VAV": {
                         "VAV Sys 1": {
+                            'cooling_coil_design_setpoint': 12,
+                            'preheat_coil_type': 'Electric',
+                            'preheat_coil_design_setpoint': 15
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Preheat Coil Design Setpoint is greater than '
+                                                              r'the Cooling Coil Design Setpoint')
+        return
+
+    def test_cav_preheating_cooling_setpoint_mismatch(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:ConstantVolume": {
+                        'CV Zone 1': {
+                            'template_constant_volume_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE2-1'
+                        }
+                    },
+                    "HVACTemplate:System:ConstantVolume": {
+                        "CV Sys 1": {
                             'cooling_coil_design_setpoint': 12,
                             'preheat_coil_type': 'Electric',
                             'preheat_coil_design_setpoint': 15
@@ -478,11 +573,48 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                                                               r'Preheat Coil Design Setpoint,')
         return
 
+    def test_cav_preheating_override_setpoint(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:ConstantVolume": {
+                        'CV Zone 1': {
+                            'template_constant_volume_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE2-1'
+                        }
+                    },
+                    "HVACTemplate:System:ConstantVolume": {
+                        "CV Sys 1": {
+                            'heating_coil_design_setpoint': 15,
+                            'preheat_coil_type': 'Electric',
+                            'preheat_coil_design_setpoint': 7
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Coil Design Setpoint is greater than the '
+                                                              r'Preheat Coil Design Setpoint,')
+        return
+
     def test_vav_preheating_override_no_preheat_coil_setpoint(self):
         with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
             json.dump(
                 {
                     **minimum_objects_d,
+                    "HVACTemplate:Zone:VAV": {
+                        'VAV Zone 1': {
+                            'template_vav_system_name': 'VAV Sys 1',
+                            'zone_name': 'SPACE1-1'
+                        }
+                    },
                     "HVACTemplate:System:VAV": {
                         "VAV Sys 1": {
                             'preheat_coil_type': 'None',
@@ -506,6 +638,12 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             json.dump(
                 {
                     **minimum_objects_d,
+                    'HVACTemplate:Zone:Unitary': {
+                        'Uniitary Zone 1': {
+                            'template_unitary_system_name': 'Unitary Sys 1',
+                            'zone_name': 'SPACE2-1'
+                        }
+                    },
                     "HVACTemplate:System:Unitary": {
                         "Unitary Sys 1": {
                             'heating_coil_type': 'Electric',
@@ -521,7 +659,127 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'No HVACTemplate:Zone:Unitary template objects reference')
+        self.assertRegex(output['outputPreProcessorMessage'], r'for the field control_zone_or_thermostat_location_name '
+                                                              r'could not find a matching')
+        return
+
+    def test_cav_cooling_control_zone_no_template(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    'HVACTemplate:Zone:ConstantVolume': {
+                        'CV Zone 1': {
+                            'template_constant_volume_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE2-1'
+                        }
+                    },
+                    "HVACTemplate:System:ConstantVolume": {
+                        "CV Sys 1": {
+                            'heating_coil_type': 'Electric',
+                            'cooling_coil_control_zone_name': 'SPACE1-1'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'for the field cooling_coil_control_zone_name '
+                                                              r'could not find a matching')
+        return
+
+    def test_cav_heating_control_zone_no_template(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    'HVACTemplate:Zone:ConstantVolume': {
+                        'CV Zone 1': {
+                            'template_constant_volume_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE2-1'
+                        }
+                    },
+                    "HVACTemplate:System:ConstantVolume": {
+                        "CV Sys 1": {
+                            'heating_coil_type': 'Electric',
+                            'heating_coil_control_zone_name': 'SPACE1-1'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'for the field heating_coil_control_zone_name '
+                                                              r'could not find a matching')
+        return
+
+    def test_vrf_master_thermostat_no_template(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    'HVACTemplate:Zone:VRF': {
+                        'VRF Zone 1': {
+                            'template_vrf_system_name': 'VRF Sys 1',
+                            'zone_name': 'SPACE2-1'
+                        }
+                    },
+                    "HVACTemplate:System:VRF": {
+                        "VRF Sys 1": {
+                            'master_thermostat_priority_control_type': 'MasterThermostatPriority',
+                            'zone_name_for_master_thermostat_location': 'SPACE1-1'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'field Zone Name for Master Thermostat Location could '
+                                                              r'not find a matching')
+        return
+
+    def test_vrf_master_thermostat_scheduled_no_schedule(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    'HVACTemplate:Zone:VRF': {
+                        'VRF Zone 1': {
+                            'template_vrf_system_name': 'VRF Sys 1',
+                            'zone_name': 'SPACE2-1'
+                        }
+                    },
+                    "HVACTemplate:System:VRF": {
+                        "VRF Sys 1": {
+                            'master_thermostat_priority_control_type': 'Scheduled',
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Priority Control Type = Scheduled, but the Thermostat '
+                                                              r'Priority Schedule Name')
         return
 
     def test_unitary_control_zone_bad_template(self):
@@ -554,45 +812,134 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                                                               r'could not find a matching HVACTemplate:Zone:Unitary')
         return
 
-    # def test_night_cycle_control_zone(self):
-    #     with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
-    #         json.dump(
-    #             {
-    #                 **minimum_objects_d,
-    #                 **chilled_water_objects,
-    #                 "HVACTemplate:Thermostat": {
-    #                     "All Zones": {
-    #                         "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
-    #                         "heating_setpoint_schedule_name": "Htg-SetP-Sch"
-    #                     }
-    #                 },
-    #                 "HVACTemplate:Zone:ConstantVolume": {
-    #                     'Unitary Zone 1': {
-    #                         'template_constant_volume_system_name': 'CV Sys 1',
-    #                         "template_thermostat_name": "All Zones",
-    #                         'zone_name': 'SPACE1-1'
-    #                     }
-    #                 },
-    #                 "HVACTemplate:System:ConstantVolume": {
-    #                     "CV Sys 1": {
-    #                         'cooling_coil_type': 'ChilledWater',
-    #                         'cooling_coil_design_setpoint': 12.8,
-    #                         'cooling_coil_setpoint_control_type': 'FixedSetpoint',
-    #                         'heating_coil_type': 'Electric',
-    #                         'heating_coil_setpoint_control_type': 'FixedSetpoint',
-    #                         'heating_coil_design_setpoint': 15,
-    #                         'night_cycle_control': 'CycleOnControlZone'
-    #                     }
-    #                 }
-    #             },
-    #             temp_file)
-    #         temp_file.seek(0)
-    #         output = main(
-    #             Namespace(
-    #                 file=temp_file.name,
-    #                 no_schema=False
-    #             )
-    #         )
-    #     self.assertRegex(output['outputPreProcessorMessage'], r'the field control_zone_or_thermostat_location_name '
-    #                                                           r'could not find a matching HVACTemplate:Zone:Unitary')
-    #     return
+    def test_night_cycle_control_zone(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    **chilled_water_objects,
+                    "HVACTemplate:Thermostat": {
+                        "All Zones": {
+                            "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
+                            "heating_setpoint_schedule_name": "Htg-SetP-Sch"
+                        }
+                    },
+                    "HVACTemplate:Zone:ConstantVolume": {
+                        'Unitary Zone 1': {
+                            'template_constant_volume_system_name': 'CV Sys 1',
+                            "template_thermostat_name": "All Zones",
+                            'zone_name': 'SPACE1-1'
+                        }
+                    },
+                    "HVACTemplate:System:ConstantVolume": {
+                        "CV Sys 1": {
+                            'cooling_coil_type': 'ChilledWater',
+                            'cooling_coil_design_setpoint': 12.8,
+                            'cooling_coil_setpoint_control_type': 'FixedSetpoint',
+                            'heating_coil_type': 'Electric',
+                            'heating_coil_setpoint_control_type': 'FixedSetpoint',
+                            'heating_coil_design_setpoint': 15,
+                            'night_cycle_control': 'CycleOnControlZone'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'A zone name must be specified when Night Cycle Control')
+        return
+
+    def test_unitary_system_dx_cooling_coil_sensible_heat_ratio(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    **chilled_water_objects,
+                    "HVACTemplate:Zone:Unitary": {
+                        'Unitary Zone 1': {
+                            'template_unitary_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE1-1'
+                        }
+                    },
+                    "HVACTemplate:System:UnitarySystem": {
+                        "CV Sys 1": {
+                            'dx_cooling_coil_gross_rated_sensible_heat_ratio': 0.66
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Coil Rated Capacity is autosized, so the '
+                                                              r'Cooling Coil Gross Rated Sensible Heat Ratio')
+        return
+
+    def test_unitary_system_dx_cooling_coil_total_capacity(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    **chilled_water_objects,
+                    "HVACTemplate:Zone:Unitary": {
+                        'Unitary Zone 1': {
+                            'template_unitary_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE1-1'
+                        }
+                    },
+                    "HVACTemplate:System:UnitarySystem": {
+                        "CV Sys 1": {
+                            'dx_cooling_coil_gross_rated_total_capacity': 1000
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'he Cooling Coil Rated Capacity will not be used when '
+                                                              r'the Cooling Coil Gross Rated ')
+        return
+
+    def test_system_with_no_zones(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    **chilled_water_objects,
+                    'HVACTemplate:Zone:Unitary': {
+                        'Zone 1': {
+                            'template_unitary_system_name': 'CV Sys 2',
+                            'zone_name': 'SPACE1-1'}},
+                    "HVACTemplate:System:UnitarySystem": {
+                        "CV Sys 1": {
+                            'dx_cooling_coil_gross_rated_total_capacity': 1000
+                        },
+                        "CV Sys 2": {
+                            'dx_cooling_coil_gross_rated_total_capacity': 1000
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Did not find any HVACTemplate:Zone objects connected to')
+        return

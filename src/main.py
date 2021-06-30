@@ -34,13 +34,23 @@ def build_parser():  # pragma: no cover
         nargs='?',
         help='Specify output directory.  If not provided, input '
     )
+    parser.add_argument(
+        '--logger_level',
+        '-l',
+        const='WARNING',
+        help='Specify logger level.'
+    )
     return parser
 
 
 def main(args=None):
+    if not hasattr(args, 'logger_level'):
+        logger_level = 'WARNING'
+    else:
+        logger_level = args.logger_level
     hvt = HVACTemplate(
         no_schema=args.no_schema,
-        logger_level='DEBUG')
+        logger_level=logger_level)
     output = {'outputPreProcessorMessage': ''}
     if isinstance(args.file, str):
         file_suffix_check = args.file.endswith('.epJSON')
