@@ -1113,33 +1113,6 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
         self.assertRegex(output['outputPreProcessorMessage'], r'Did not find any HVACTemplate:Zone objects connected to')
         return
 
-    def test_tower_not_all_autosize(self):
-        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
-            json.dump(
-                {
-                    **minimum_objects_d,
-                    **chilled_water_objects,
-                    'HVACTemplate:Plant:Tower': {
-                        'Tower 1': {
-                            'tower_type': 'SingleSpeed',
-                            'high_speed_nominal_capacity': 'Autosize',
-                            'free_convection_capacity': 200
-                        }
-                    }
-                },
-                temp_file)
-            temp_file.seek(0)
-            output = main(
-                Namespace(
-                    file=temp_file.name,
-                    no_schema=False
-                )
-            )
-            self.assertRegex(output['outputPreProcessorMessage'], r'For a SingleSpeed tower the high speed capacity and '
-                                                                  r'free convection capacity both need to be specified '
-                                                                  r'or set to autosize')
-            return
-
     def test_object_reference_boiler_no_type(self):
         with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
             json.dump(
@@ -1257,6 +1230,38 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                 )
             )
         self.assertRegex(output['outputPreProcessorMessage'], r'Blank Outlet Node Name found in referenced boiler: ')
+        return
+
+    def test_object_reference_boiler_no_duplicate_name(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Boiler:HotWater": {
+                        'Main Boiler': {
+                            'fuel_type': 'Coal',
+                            'nominal_thermal_efficiency': 0.8,
+                            'boiler_water_inlet_node_name': 'HW In',
+                            'boiler_water_outlet_node_name': 'HW In'
+                        }
+                    },
+                    "HVACTemplate:Plant:Boiler:ObjectReference": {
+                        "OR 1": {
+                            'boiler_name': 'Main Boiler',
+                            'boiler_object_type': 'Boiler:HotWater'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate hot water node name found in '
+                                                              r'referenced boiler')
         return
 
     def test_hot_water_loop_no_equipment(self):
@@ -1482,6 +1487,80 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
         self.assertRegex(output['outputPreProcessorMessage'], r'Blank condenser water Outlet Node Name')
         return
 
+    def test_object_reference_chiller_duplicate_chw_nodes(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Chiller:Electric:EIR": {
+                        'Main Chiller': {
+                            'reference_capacity': 'Autosize',
+                            'reference_cop': 6.1,
+                            'cooling_capacity_function_of_temperature_curve_name': 'Main Chiller RecipCapFT',
+                            'electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name': 'Main Chiller RecipEIRFPLR',
+                            'electric_input_to_cooling_output_ratio_function_of_temperature_curve_name': 'Main Chiller RecipEIRFT',
+                            'chilled_water_inlet_node_name': 'CHW In',
+                            'chilled_water_outlet_node_name': 'CHW In',
+                            'condenser_inlet_node_name': 'CW In',
+                            'condenser_outlet_node_name': 'CW In'
+                        }
+                    },
+                    "HVACTemplate:Plant:Chiller:ObjectReference": {
+                        "OR 1": {
+                            'chiller_name': 'Main Chiller',
+                            'chiller_object_type': 'Chiller:Electric:EIR'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate chilled water node name found in '
+                                                              r'referenced chiller')
+        return
+
+    def test_object_reference_chiller_duplicate_cw_nodes(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "Chiller:Electric:EIR": {
+                        'Main Chiller': {
+                            'reference_capacity': 'Autosize',
+                            'reference_cop': 6.1,
+                            'cooling_capacity_function_of_temperature_curve_name': 'Main Chiller RecipCapFT',
+                            'electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name': 'Main Chiller RecipEIRFPLR',
+                            'electric_input_to_cooling_output_ratio_function_of_temperature_curve_name': 'Main Chiller RecipEIRFT',
+                            'chilled_water_inlet_node_name': 'CHW In',
+                            'chilled_water_outlet_node_name': 'CHW Out',
+                            'condenser_inlet_node_name': 'CW In',
+                            'condenser_outlet_node_name': 'CW In'
+                        }
+                    },
+                    "HVACTemplate:Plant:Chiller:ObjectReference": {
+                        "OR 1": {
+                            'chiller_name': 'Main Chiller',
+                            'chiller_object_type': 'Chiller:Electric:EIR'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate condenser water node name found in '
+                                                              r'referenced chiller')
+        return
+
     def test_object_reference_chiller_air_cooled(self):
         with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
             json.dump(
@@ -1515,4 +1594,453 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                 )
             )
         self.assertNotRegex(output['outputPreProcessorMessage'], r'Blank condenser water Inlet Node Name')
+        return
+
+    def test_tower_not_all_autosize(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    **chilled_water_objects,
+                    'HVACTemplate:Plant:Tower': {
+                        'Tower 1': {
+                            'tower_type': 'SingleSpeed',
+                            'high_speed_nominal_capacity': 'Autosize',
+                            'free_convection_capacity': 200
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'For a SingleSpeed tower the high speed capacity and '
+                                                              r'free convection capacity both need to be specified '
+                                                              r'or set to autosize')
+        return
+
+    def test_object_reference_tower_no_type(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Plant:Tower:ObjectReference": {
+                        "OR 1": {
+                            'cooling_tower_name': 'Main Tower',
+                            'cooling_tower_object_type': 'CoolingTower:SingleSpeed'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'n HVACTemplate:Plant:Tower:ObjectReference \(OR 1\) '
+                                                              r'Referenced tower not found')
+        return
+
+    def test_object_reference_tower_no_inlet(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    'CoolingTower:SingleSpeed': {
+                        'Main Tower': {
+                            'design_air_flow_rate': 'Autosize',
+                            'design_fan_power': 'Autosize',
+                            'water_inlet_node_name': '',
+                            'water_outlet_node_name': 'Out Node'
+                        }
+                    },
+                    "HVACTemplate:Plant:Tower:ObjectReference": {
+                        "OR 1": {
+                            'cooling_tower_name': 'Main Tower',
+                            'cooling_tower_object_type': 'CoolingTower:SingleSpeed'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Inlet Node Name found')
+        return
+
+    def test_object_reference_tower_no_outlet(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    'CoolingTower:SingleSpeed': {
+                        'Main Tower': {
+                            'design_air_flow_rate': 'Autosize',
+                            'design_fan_power': 'Autosize',
+                            'water_inlet_node_name': 'In Node',
+                            'water_outlet_node_name': 'None'
+                        }
+                    },
+                    "HVACTemplate:Plant:Tower:ObjectReference": {
+                        "OR 1": {
+                            'cooling_tower_name': 'Main Tower',
+                            'cooling_tower_object_type': 'CoolingTower:SingleSpeed'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Outlet Node Name found')
+        return
+
+    def test_object_reference_tower_duplicate_nodes(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    'CoolingTower:SingleSpeed': {
+                        'Main Tower': {
+                            'design_air_flow_rate': 'Autosize',
+                            'design_fan_power': 'Autosize',
+                            'water_inlet_node_name': 'In Node',
+                            'water_outlet_node_name': 'In Node'
+                        }
+                    },
+                    "HVACTemplate:Plant:Tower:ObjectReference": {
+                        "OR 1": {
+                            'cooling_tower_name': 'Main Tower',
+                            'cooling_tower_object_type': 'CoolingTower:SingleSpeed'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate node name found')
+        return
+
+    def test_object_reference_chilled_water_loop_no_tower(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Plant:ChilledWaterLoop": {
+                        "Chilled Water Loop": {
+                            "chilled_water_design_setpoint": 7.22,
+                            "chilled_water_pump_configuration": "ConstantPrimaryNoSecondary",
+                            "chilled_water_reset_outdoor_dry_bulb_high": 26.7,
+                            "chilled_water_reset_outdoor_dry_bulb_low": 15.6,
+                            "chilled_water_setpoint_at_outdoor_dry_bulb_high": 6.7,
+                            "chilled_water_setpoint_at_outdoor_dry_bulb_low": 12.2,
+                            "chilled_water_setpoint_reset_type": "None",
+                            "chiller_plant_operation_scheme_type": "Default",
+                            "condenser_plant_operation_scheme_type": "Default",
+                            "condenser_water_design_setpoint": 29.4,
+                            "condenser_water_pump_rated_head": 179352,
+                            "minimum_outdoor_dry_bulb_temperature": 7.22,
+                            "primary_chilled_water_pump_rated_head": 179352,
+                            "pump_control_type": "Intermittent",
+                            "secondary_chilled_water_pump_rated_head": 179352
+                        }
+                    },
+                    "HVACTemplate:Plant:Chiller": {
+                        "Main Chiller": {
+                            "capacity": "Autosize",
+                            "chiller_type": "ElectricReciprocatingChiller",
+                            "condenser_type": "WaterCooled",
+                            "nominal_cop": 3.2,
+                            "priority": "1"
+                        }
+                    },
+                    "HVACTemplate:System:VAV": {
+                        "VAV Sys 1": {
+                            "cooling_coil_design_setpoint": 12.8,
+                            "cooling_coil_setpoint_reset_type": "None",
+                            "cooling_coil_type": "ChilledWater",
+                            "dehumidification_control_type": "None",
+                            "dehumidification_setpoint": 60.0,
+                            "economizer_lockout": "NoLockout",
+                            "economizer_lower_temperature_limit": 4,
+                            "economizer_type": "DifferentialDryBulb",
+                            "economizer_upper_temperature_limit": 19,
+                            "gas_heating_coil_efficiency": 0.8,
+                            "gas_heating_coil_parasitic_electric_load": 0.0,
+                            "gas_preheat_coil_efficiency": 0.8,
+                            "gas_preheat_coil_parasitic_electric_load": 0.0,
+                            "heat_recovery_type": "None",
+                            "heating_coil_design_setpoint": 10.0,
+                            "heating_coil_setpoint_reset_type": "None",
+                            "heating_coil_type": "HotWater",
+                            "humidifier_rated_capacity": 1e-06,
+                            "humidifier_rated_electric_power": 2690.0,
+                            "humidifier_setpoint": 30.0,
+                            "humidifier_type": "None",
+                            "latent_heat_recovery_effectiveness": 0.65,
+                            "maximum_outdoor_air_flow_rate": "Autosize",
+                            "minimum_outdoor_air_control_type": "FixedMinimum",
+                            "minimum_outdoor_air_flow_rate": "Autosize",
+                            "minimum_outdoor_air_schedule_name": "Min OA Sched",
+                            "night_cycle_control": "CycleOnAny",
+                            "preheat_coil_type": "None",
+                            "return_plenum_name": "PLENUM-1",
+                            "sensible_heat_recovery_effectiveness": 0.7,
+                            "sizing_option": "NonCoincident",
+                            "supply_fan_delta_pressure": 600,
+                            "supply_fan_maximum_flow_rate": "Autosize",
+                            "supply_fan_minimum_flow_rate": "Autosize",
+                            "supply_fan_motor_efficiency": 0.9,
+                            "supply_fan_motor_in_air_stream_fraction": 1,
+                            "supply_fan_part_load_power_coefficients": "InletVaneDampers",
+                            "supply_fan_placement": "DrawThrough",
+                            "supply_fan_total_efficiency": 0.7,
+                            "system_availability_schedule_name": "FanAvailSched"
+                        }
+                    },
+                    "HVACTemplate:Zone:VAV": {
+                        "HVACTemplate:Zone:VAV 1": {
+                            "baseboard_heating_capacity": "Autosize",
+                            "baseboard_heating_type": "None",
+                            "constant_minimum_air_flow_fraction": 0.3,
+                            "damper_heating_action": "Reverse",
+                            "outdoor_air_flow_rate_per_person": 0.00944,
+                            "outdoor_air_flow_rate_per_zone": 0.0,
+                            "outdoor_air_flow_rate_per_zone_floor_area": 0.0,
+                            "outdoor_air_method": "Flow/Person",
+                            "reheat_coil_type": "HotWater",
+                            "supply_air_maximum_flow_rate": "Autosize",
+                            "template_thermostat_name": "All Zones",
+                            "template_vav_system_name": "VAV Sys 1",
+                            "zone_cooling_design_supply_air_temperature_input_method": "SystemSupplyAirTemperature",
+                            "zone_heating_design_supply_air_temperature": 50.0,
+                            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+                            "zone_minimum_air_flow_input_method": "Constant",
+                            "zone_name": "SPACE1-1"
+                        }
+                    },
+                    "HVACTemplate:Thermostat": {
+                        "All Zones": {
+                            "cooling_setpoint_schedule_name": "Clg-SetP-Sch",
+                            "heating_setpoint_schedule_name": "Htg-SetP-Sch"
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'in HVACTemplate:Plant:CondenserWaterLoop '
+                                                              r'\(Condenser Water Loop\)\. There is no supply-side '
+                                                              r'equipment serving this loop')
+        return
+
+    def test_wahp_autosize_cooling(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:WaterToAirHeatPump": {
+                        "WAHP 1": {
+                            'zone_name': 'SPACE1-1',
+                            'cooling_coil_gross_rated_total_capacity': 'Autosize',
+                            'cooling_coil_gross_rated_sensible_heat_ratio': 0.65
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Coil Rated Capacity is autosized, so the '
+                                                              r'Cooling Coil Gross Rated Sensible')
+        return
+
+    def test_wahp_autosize_shr(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:WaterToAirHeatPump": {
+                        "WAHP 1": {
+                            'zone_name': 'SPACE1-1',
+                            'cooling_coil_gross_rated_total_capacity': 1000,
+                            'cooling_coil_gross_rated_sensible_heat_ratio': 'Autosize'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Coil Rated Capacity will not be used when '
+                                                              r'the Cooling Coil Gross Rated Sensible Heat Ratio '
+                                                              r'is autosized')
+        return
+
+    def test_hot_water_and_mixed_water_loop(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Plant:HotWaterLoop": {
+                        "Hot Water Loop": {
+                            "hot_water_design_setpoint": 82,
+                            "hot_water_plant_operation_scheme_type": "Default",
+                            "hot_water_pump_configuration": "ConstantFlow",
+                            "hot_water_pump_rated_head": 179352,
+                            "hot_water_reset_outdoor_dry_bulb_high": 10,
+                            "hot_water_reset_outdoor_dry_bulb_low": -6.7,
+                            "hot_water_setpoint_at_outdoor_dry_bulb_high": 65.6,
+                            "hot_water_setpoint_at_outdoor_dry_bulb_low": 82.2,
+                            "hot_water_setpoint_reset_type": "OutdoorAirTemperatureReset",
+                            "pump_control_type": "Intermittent"
+                        }
+                    },
+                    'HVACTemplate:Plant:MixedWaterLoop': {
+                        'MWL 1': {}
+                    },
+                    'HVACTemplate:System:VAV': {
+                        'Sys 1': {}
+                    },
+                    'HVACTemplate:System:VRF': {
+                        'Sys 1': {}
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'VACTemplate:Plant:HotWaterLoop is also present\.  '
+                                                              r'All boilers with blank Template Loop Type field will '
+                                                              r'be connected')
+        return
+
+    def test_doas_humid_control_multimode(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    **chilled_water_objects,
+                    "HVACTemplate:Zone:PTAC": {
+                        'PTAC 1': {
+                            'dedicated_outdoor_air_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE1-1'
+                        }
+                    },
+                    "HVACTemplate:System:DedicatedOutdoorAir": {
+                        "CV Sys 1": {
+                            'cooling_coil_type': 'TwoStageHumidityControlDX',
+                            'dehumidification_control_type': 'Multimode'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Dehumidification Control Type field=Multimode is '
+                                                              r'not applicable for Cooling Coil '
+                                                              r'Type=TwoStageHumidityControlDX')
+        return
+
+    def test_doas_humid_control_no_heating(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    **chilled_water_objects,
+                    "HVACTemplate:Zone:PTAC": {
+                        'PTAC 1': {
+                            'dedicated_outdoor_air_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE1-1'
+                        }
+                    },
+                    "HVACTemplate:System:DedicatedOutdoorAir": {
+                        "CV Sys 1": {
+                            'cooling_coil_type': 'TwoStageHumidityControlDX',
+                            'dehumidification_control_type': 'Multimode'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'there is no heating coil in this system to provide '
+                                                              r'reheat\. Cold supply temps may result')
+        return
+
+    def test_doas_heat_recovery_no_heating(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    **chilled_water_objects,
+                    "HVACTemplate:Zone:PTAC": {
+                        'PTAC 1': {
+                            'dedicated_outdoor_air_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE1-1'
+                        }
+                    },
+                    "HVACTemplate:System:DedicatedOutdoorAir": {
+                        "CV Sys 1": {
+                            'cooling_coil_type': 'TwoStageHumidityControlDX',
+                            'heat_recovery_type': 'Sensible'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'there is heat recovery with no heating coil\. The heat '
+                                                              r'recovery heating mode will be controlled')
         return

@@ -221,7 +221,7 @@ class HVACTemplate(EPJSON):
                             for zone_template_name, zone_fields in zone_structure.items()]
                         if object_name not in system_names:
                             raise InvalidTemplateException(
-                                'Did not find any HVACTemplate:Zone objects connected to {} ({})'
+                                'Error: Did not find any HVACTemplate:Zone objects connected to {} ({})'
                                 'There must be at least one zone object which specifies '
                                 'this system as the Template Unitary System Name.'.format(object_type, object_name))
                         if object_fields.get('night_cycle_control', 'None') == 'CycleOnControlZone' and \
@@ -250,7 +250,7 @@ class HVACTemplate(EPJSON):
                                     object_fields.get('control_zone_or_thermostat_location_name') and \
                                     object_fields.get('control_zone_or_thermostat_location_name') not in zones_served:
                                 raise InvalidTemplateException(
-                                    'Error: In {} named {} for the field control_zone_or_thermostat_location_name could '
+                                    'Error: In {} ({}) for the field control_zone_or_thermostat_location_name could '
                                     'not find a matching HVACTemplate:Zone:Unitary named {}'
                                     .format(
                                         object_type,
@@ -353,6 +353,12 @@ class HVACTemplate(EPJSON):
                                 'Warning: You must specify at least one {} '
                                 'if a HVACTemplate:Plant:MixedWaterLoop is defined.'
                                 .format(' or '.join(loop_system_list)))
+                        if 'HVACTemplate:Plant:HotWaterLoop' in epjson.keys():
+                            self.logger.warning(
+                                'Warning: In {}'
+                                ' an HVACTemplate:Plant:HotWaterLoop is also present.  All boilers with blank Template '
+                                'Loop Type field will be connected to the Hot Water Loop.'
+                                .format(object_type))
                     self.merge_epjson(
                         super_dictionary=self.templates_plant_loops,
                         object_dictionary={object_type: object_structure},
@@ -363,14 +369,14 @@ class HVACTemplate(EPJSON):
                         for object_name, object_fields in object_structure.items():
                             high_speed_nominal_capacity = object_fields.get('high_speed_nominal_capacity', 'Autosize')
                             free_convection_capacity = object_fields.get('free_convection_capacity', 'Autosize')
-                            if (str(high_speed_nominal_capacity).lower() == 'autosize' and
-                                    str(free_convection_capacity).lower() != 'autosize') or \
-                                    (str(high_speed_nominal_capacity).lower() != 'autosize' and
-                                     str(free_convection_capacity).lower() == 'autosize'):
+                            if (str(high_speed_nominal_capacity).lower() == 'autosize' and str(
+                                    free_convection_capacity).lower() != 'autosize') or \
+                                    (str(high_speed_nominal_capacity).lower() != 'autosize' and str(
+                                    free_convection_capacity).lower() == 'autosize'):
                                 raise InvalidTemplateException(
-                                    'For a {} tower the high speed capacity and free '
+                                    'Error: In {} ({}) For a {} tower the high speed capacity and free '
                                     'convection capacity both need to be specified or set to autosize.'
-                                    .format(object_fields.get('tower_type')))
+                                    .format(object_type, object_name, object_fields.get('tower_type')))
                     # for plant equipment object references, add the referenced object to epjson for complex input resolution
                     #  later on.  For chiller objects, also identify condenser type and make it a template attribute.
                     if object_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
@@ -390,6 +396,13 @@ class HVACTemplate(EPJSON):
                                         raise InvalidTemplateException(
                                             'Error: In {} ({}) Blank Outlet Node Name found in referenced boiler: {}'
                                             .format(object_type, object_name, object_fields))
+                                    if reference_object_fields.get('boiler_water_inlet_node_name') == \
+                                            reference_object_fields.get('boiler_water_outlet_node_name'):
+                                        raise InvalidTemplateException(
+                                            'Error: in {} ({}) Duplicate hot water node name found in '
+                                            'referenced boiler. All boiler inlet and outlet node names '
+                                            'must be unique'
+                                            .format(object_type, object_name))
                                     object_structure[object_name]['epjson'] = \
                                         {object_fields['boiler_object_type']: {reference_object_name: reference_object_fields}}
                                     break
@@ -416,6 +429,13 @@ class HVACTemplate(EPJSON):
                                             'Error: In {} ({}) Blank chilled water Outlet Node Name found in '
                                             'referenced chiller: {}'
                                             .format(object_type, object_name, object_fields))
+                                    if reference_object_fields.get('chilled_water_inlet_node_name') == \
+                                            reference_object_fields.get('chilled_water_outlet_node_name'):
+                                        raise InvalidTemplateException(
+                                            'Error: in {} ({}) Duplicate chilled water node name found in '
+                                            'referenced chiller. All chiller inlet and outlet node names '
+                                            'must be unique'
+                                            .format(object_type, object_name))
                                     try:
                                         object_structure[object_name]['condenser_type'] = reference_object_fields['condenser_type']
                                     except (KeyError, AttributeError):
@@ -431,32 +451,59 @@ class HVACTemplate(EPJSON):
                                                 'Error: In {} ({}) Blank condenser water Outlet Node Name found in '
                                                 'referenced chiller: {}'
                                                 .format(object_type, object_name, object_fields))
+                                        if reference_object_fields.get('condenser_inlet_node_name') == \
+                                                reference_object_fields.get('condenser_outlet_node_name'):
+                                            raise InvalidTemplateException(
+                                                'Error: in {} ({}) Duplicate condenser water node name found in '
+                                                'referenced chiller. All chiller inlet and outlet node names '
+                                                'must be unique'
+                                                .format(object_type, object_name))
                                     object_structure[object_name]['epjson'] = \
                                         {object_fields['chiller_object_type']: {reference_object_name: reference_object_fields}}
                                     break
                             if not object_structure[object_name].get('epjson'):
                                 raise InvalidTemplateException(
                                     'Error: In {} ({}) Referenced chiller not found: {}'
-                                        .format(object_type, object_name, object_fields))
+                                    .format(object_type, object_name, object_fields))
                     elif object_type == 'HVACTemplate:Plant:Tower:ObjectReference':
-                        try:
-                            for object_name, object_fields in object_structure.items():
-                                reference_object_structure = epjson[object_fields['cooling_tower_object_type']]
-                                for reference_object_name, reference_object_fields in reference_object_structure.items():
-                                    if reference_object_name == object_fields['cooling_tower_name']:
-                                        object_structure[object_name]['epjson'] = \
-                                            {object_fields['cooling_tower_object_type']: {reference_object_name: reference_object_fields}}
-                                        break
-                        except (KeyError, AttributeError):
-                            raise InvalidTemplateException('HVACTemplate:Plant:Tower:ObjectReference object is incorrectly formatted '
-                                                           '{}'.format(object_structure))
+                        for object_name, object_fields in object_structure.items():
+                            reference_object_structure = epjson.get(object_fields['cooling_tower_object_type'])
+                            if not reference_object_structure:
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({}) Referenced tower not found: {}'
+                                    .format(object_type, object_name, object_fields))
+                            for reference_object_name, reference_object_fields in reference_object_structure.items():
+                                if reference_object_name == object_fields['cooling_tower_name']:
+                                    if reference_object_fields.get('water_inlet_node_name', '') in ['', 'None']:
+                                        raise InvalidTemplateException(
+                                            'Error: In {} ({}) Blank Inlet Node Name found in '
+                                            'referenced chiller: {}'
+                                            .format(object_type, object_name, object_fields))
+                                    if reference_object_fields.get('water_outlet_node_name', '') in ['', 'None']:
+                                        raise InvalidTemplateException(
+                                            'Error: In {} ({}) Blank Outlet Node Name found in '
+                                            'referenced chiller: {}'
+                                            .format(object_type, object_name, object_fields))
+                                    if reference_object_fields.get('water_inlet_node_name') == \
+                                            reference_object_fields.get('water_outlet_node_name'):
+                                        raise InvalidTemplateException(
+                                            'Error: in {} ({}) Duplicate node name found in referenced tower.  '
+                                            'All tower inlet and outlet node names must be unique'
+                                            .format(object_type, object_name))
+                                    object_structure[object_name]['epjson'] = \
+                                        {object_fields['cooling_tower_object_type']: {reference_object_name: reference_object_fields}}
+                                    break
+                            if not object_structure[object_name].get('epjson'):
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({}) Referenced tower not found: {}'
+                                    .format(object_type, object_name, object_fields))
                     self.merge_epjson(
                         super_dictionary=self.templates_plant_equipment,
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
                 else:
                     raise InvalidTemplateException(
-                        'Template object type {} was not recognized'.format(object_type))
+                        'Error: Template object type {} was not recognized'.format(object_type))
                 # store original templates into dictionary
                 self.merge_epjson(
                     super_dictionary=self.templates,
@@ -503,14 +550,19 @@ class HVACTemplate(EPJSON):
         # Retreive the thermostat object
         try:
             thermostat_template_name = getattr(zone_class_object, 'template_thermostat_name')
-            thermostat_object = self.expanded_thermostats[thermostat_template_name]
         except AttributeError:
-            self.logger.warning('Zone template does not reference a thermostat class object: {}'
-                                .format(zone_class_object.unique_name))
-            return
-        except (ValueError, KeyError):
-            raise InvalidTemplateException('Zone template is improperly formatted: {}'
+            raise InvalidTemplateException(
+                'Error: Zone template ({}) does not reference a thermostat class object'
+                .format(zone_class_object.unique_name))
+        except ValueError:
+            raise InvalidTemplateException('Error: Zone template ({}) is improperly formatted.'
                                            .format(zone_class_object.unique_name))
+        try:
+            thermostat_object = self.expanded_thermostats[thermostat_template_name]
+        except (ValueError, KeyError):
+            raise InvalidTemplateException('Error: Thermostat object does not exist ({}) but is reference by '
+                                           'zone template {}'
+                                           .format(thermostat_template_name, zone_class_object.unique_name))
         # Evaluate the thermostat type in the thermostat object and format the output object accordingly
         try:
             zone_name = getattr(zone_class_object, 'zone_name')
@@ -1089,6 +1141,28 @@ class HVACTemplate(EPJSON):
             expanded_zones=expanded_zones
         )
         # check to make sure loops aren't empty
+        if demand_branches:
+            if plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
+                equipment_types = [
+                    (component[0]['component_name'], component[0]['component_object_type']) for
+                    object_name, object_structure in supply_branches.items()
+                    for component in object_structure.values()]
+                chillers = [i for i in equipment_types if re.match(r'Chiller:.*', i[1])]
+                towers = [i for i in equipment_types if re.match(r'CoolingTower:.*', i[1])]
+                # For water-cooled chillers, the tower is in the condenserloop so that needs to be checked instead of
+                #  the chilledwaterloop
+                if 'CondenserWaterLoop' in [
+                    ep_structure.template_plant_loop_type for ep_name, ep_structure in expanded_plant_equipment.items()
+                        if ep_structure.template_type in ['HVACTemplate:Plant:Tower',
+                                                          'HVACTemplate:Plant:Tower:ObjectReference']]:
+                    towers = True
+                if chillers and not towers and 'CondenserWaterLoop' in [
+                        ep_structure.template_plant_loop_type
+                        for ep_name, ep_structure in expanded_plant_equipment.items()]:
+                    raise InvalidTemplateException(
+                        'Error: In {} ({})'
+                        ' there is one or more water cooled chiller(s) but there are no towers serving this loop.'
+                        .format(plant_loop_class_object.template_type, plant_loop_class_object.unique_name))
         if not demand_branches or not supply_branches:
             msg = []
             if not demand_branches:

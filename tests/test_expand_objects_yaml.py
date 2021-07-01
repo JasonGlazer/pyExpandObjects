@@ -1134,7 +1134,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             ]
         }
         eo = ExpandObjects()
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Insert reference value is not'):
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Build path action insert reference value '):
             eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
         return
 
@@ -1160,7 +1160,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             ]
         }
         eo = ExpandObjects()
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'The number of occurrences'):
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'The number of occurrence matches'):
             eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
         return
 
@@ -1186,7 +1186,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         }
         eo = ExpandObjects()
         with self.assertRaisesRegex(
-                PyExpandObjectsYamlStructureException, 'Build Path Action is missing required instructions'):
+                PyExpandObjectsYamlStructureException, 'Build Path action is missing required instructions'):
             eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
         return
 
