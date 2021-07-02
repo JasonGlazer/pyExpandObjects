@@ -664,7 +664,7 @@ Objects:
       Common:
         Transitions: &AirTerminalSingleDuctCommonTransitions
           - AirTerminal:SingleDuct.*:
-              supply_air_maximum_flow_rate: maximum_air_flow_rate
+#              supply_air_maximum_flow_rate: maximum_air_flow_rate # Allow for autosizing even when variable is set
               maximum_reheat_air_temperature: maximum_reheat_air_temperature
         Fields:
           Base: &AirTerminalSingleDuctCommonFields
