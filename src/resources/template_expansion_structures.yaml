@@ -5446,7 +5446,7 @@ OptionTree:
                 Transitions:
                   - SetpointManager:Warmest:
                       maximum_setpoint_temperature:
-                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
+                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+1.0)'
               WarmestDrawThrough:
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
@@ -5454,7 +5454,7 @@ OptionTree:
                 Transitions:
                   - SetpointManager:Warmest:
                       maximum_setpoint_temperature:
-                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
+                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+1.0)'
             heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
               ControlZoneBlowThrough:
                 Objects:

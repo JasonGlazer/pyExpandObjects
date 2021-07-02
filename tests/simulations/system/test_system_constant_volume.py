@@ -141,18 +141,21 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_maximum_flow_rate")
     def test_supply_fan_maximum_flow_rate(self):
-        # todo_eo: legacy does not seem to update Fan:ConstantVolume or AirLoopHVAC
+        # todo_eo: legacy does not seem to update Fan:ConstantVolume or AirLoopHVAC.
+        #  Not clear which object is being sized here.
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4']['supply_fan_maximum_flow_rate'] = 1.01
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        # self.assertEqual(
+        #     1.01,
+        #     epjson_output['Fan:ConstantVolume']['AHU 1 Spaces 1-4 Supply Fan']['maximum_flow_rate'])
+        # self.assertEqual(
+        #     1.01,
+        #     epjson_output['AirLoopHVAC']['AHU 1 Spaces 1-4']['design_supply_air_flow_rate'])
         self.assertEqual(
             1.01,
-            epjson_output['Fan:ConstantVolume']['AHU 1 Spaces 1-4 Supply Fan']['maximum_flow_rate'])
-        self.assertEqual(
-            1.01,
-            epjson_output['AirLoopHVAC']['AHU 1 Spaces 1-4']['design_supply_air_flow_rate'])
-
+            epjson_output['Sizing:System']['AHU 1 Spaces 1-4 Sizing System']['cooling_supply_air_flow_rate'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_total_efficiency")
