@@ -117,8 +117,8 @@ class HVACTemplate(EPJSON):
                                             break
                                 if not template_system_name:
                                     raise InvalidTemplateException(
-                                        'Error: Could not find air handler name referenced ({}) in '
-                                        '{} object ({})'.format(system_name, object_type, object_name))
+                                        'Error: In {} ({}) Could not find air handler name referenced ({})'
+                                        .format(object_type, object_name, system_name))
                     # check fields
                     for object_name, object_fields in object_structure.items():
                         # check baseboard settings
@@ -221,9 +221,10 @@ class HVACTemplate(EPJSON):
                             for zone_template_name, zone_fields in zone_structure.items()]
                         if object_name not in system_names:
                             raise InvalidTemplateException(
-                                'Error: Did not find any HVACTemplate:Zone objects connected to {} ({})'
+                                'Error: In {} ({}) Did not find any HVACTemplate:Zone objects connected to system.'
                                 'There must be at least one zone object which specifies '
-                                'this system as the Template Unitary System Name.'.format(object_type, object_name))
+                                'this system as the Template Unitary System Name.'
+                                .format(object_type, object_name))
                         if object_fields.get('night_cycle_control', 'None') == 'CycleOnControlZone' and \
                                 object_fields.get('night_cycle_control_zone_name', 'None') == 'None':
                             self.logger.warning('Warning: A zone name must be specified when Night Cycle Control is '
@@ -244,8 +245,9 @@ class HVACTemplate(EPJSON):
                                     if zone_fields.get(zone_system_field) == object_name]
                             except AttributeError:
                                 raise InvalidTemplateException(
-                                    'Error: No HVACTemplate:Zone:Unitary template objects reference'
-                                    ' the {} object'.format(object_type))
+                                    'Error: In {} ({}) No HVACTemplate:Zone template objects reference'
+                                    ' the system object'
+                                    .format(object_type, object_name))
                             if object_type == 'HVACTemplate:System:Unitary' and \
                                     object_fields.get('control_zone_or_thermostat_location_name') and \
                                     object_fields.get('control_zone_or_thermostat_location_name') not in zones_served:
@@ -552,8 +554,8 @@ class HVACTemplate(EPJSON):
             thermostat_template_name = getattr(zone_class_object, 'template_thermostat_name')
         except AttributeError:
             raise InvalidTemplateException(
-                'Error: Zone template ({}) does not reference a thermostat class object'
-                .format(zone_class_object.unique_name))
+                'Error: In {} ({}) Zone object does not reference a thermostat class object'
+                .format(zone_class_object.template_type, zone_class_object.unique_name))
         except ValueError:
             raise InvalidTemplateException('Error: Zone template ({}) is improperly formatted.'
                                            .format(zone_class_object.unique_name))
@@ -582,8 +584,8 @@ class HVACTemplate(EPJSON):
                     structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
                     insert_values=[4, ])
             else:
-                raise InvalidTemplateException("Invalid thermostat type set in ExpandThermostat {}"
-                                               .format(thermostat_object.unique_name))
+                raise InvalidTemplateException("Error: {} ({}) Invalid thermostat type set in ExpandThermostat"
+                                               .format(thermostat_type, thermostat_object.unique_name))
             # create zonecontrol object
             (_, schedule_structure), = control_schedule.items()
             (schedule_name, _), = schedule_structure.items()
@@ -604,8 +606,9 @@ class HVACTemplate(EPJSON):
             )
             return dict(control_schedule, **zonecontrol_thermostat)
         except (ValueError, AttributeError, KeyError):
-            raise InvalidTemplateException("HVACTemplate failed to build ZoneControl:Thermostat from zone template "
-                                           "{}".format(zone_class_object.unique_name))  # pragma: no cover - catchall
+            raise InvalidTemplateException(
+                "Error: HVACTemplate failed to build ZoneControl:Thermostat from zone template "
+                "{}".format(zone_class_object.unique_name))  # pragma: no cover - catchall
 
     @staticmethod
     def _get_zone_template_field_from_system_type(template_type):
@@ -628,8 +631,8 @@ class HVACTemplate(EPJSON):
         elif re.match(r'HVACTemplate:System:VRF', template_type):
             zone_system_template_field_name = 'template_vrf_system_name'
         else:
-            raise InvalidTemplateException("Invalid system type passed to supply path creation function: {}"
-                                           .format(template_type))
+            raise InvalidTemplateException(
+                "Error: Invalid system type passed to supply path creation function: {}".format(template_type))
         return zone_system_template_field_name
 
     def _create_system_path_connection_objects(self, system_class_object, expanded_zones):
@@ -675,8 +678,9 @@ class HVACTemplate(EPJSON):
                         try:
                             zone_supply_equipment = {'AirLoopHVAC:SupplyPlenum': ez.epjson['AirLoopHVAC:SupplyPlenum']}
                         except (KeyError, AttributeError):
-                            raise InvalidTemplateException('supply_plenum_name indicated for zone template {} but '
-                                                           'AirLoopHVAC:SupplyPlenum was not created'.format(ez.unique_name))
+                            raise InvalidTemplateException(
+                                'Error: supply_plenum_name indicated for zone template {} but '
+                                'AirLoopHVAC:SupplyPlenum was not created'.format(ez.unique_name))
                     else:
                         zone_supply_equipment = self.get_epjson_objects(
                             epjson=ez.epjson,
@@ -695,29 +699,32 @@ class HVACTemplate(EPJSON):
                                                             'AirTerminal:SingleDuct:ParallelPIU:Reheat']:
                             # Raise error if inlet node name is overridden for multi-inlet node systems (DualDuct)
                             if len(inlet_nodes) > 1:
-                                raise InvalidTemplateException('Series or Parallel PIU is being referenced '
-                                                               'by an invalid system {}'.format(system_class_object.template_type))
+                                raise InvalidTemplateException(
+                                    'Error: Series or Parallel PIU is being referenced '
+                                    'by an invalid system {}'.format(system_class_object.template_type))
                             outlet_node_name = zone_supply_equipment_fields['supply_air_inlet_node_name']
                         else:
                             outlet_node_name = zone_supply_equipment_fields[inlet_node]
                     except (KeyError, AttributeError, ValueError):
-                        raise InvalidTemplateException('Search for zone equipment from Supply Path creation failed for '
-                                                       'outlet node.  system {}, zone {}, zone equipment {}'
-                                                       .format(system_class_object.template_name, ez.unique_name,
-                                                               zone_supply_equipment))
+                        raise InvalidTemplateException(
+                            'Error: Search for zone equipment from Supply Path creation failed for '
+                            'outlet node.  system {}, zone {}, zone equipment {}'
+                            .format(system_class_object.template_name, ez.unique_name, zone_supply_equipment))
                     if getattr(ez, 'return_plenum_name', None):
                         try:
                             zone_return_equipment = {'AirLoopHVAC:ReturnPlenum': ez.epjson['AirLoopHVAC:ReturnPlenum']}
                         except (KeyError, AttributeError):
-                            raise InvalidTemplateException('return_plenum_name indicated for zone template {} but '
-                                                           'AirLoopHVAC:ReturnPlenum was not created'.format(ez.unique_name))
+                            raise InvalidTemplateException(
+                                'Error: return_plenum_name indicated for zone template {} but '
+                                'AirLoopHVAC:ReturnPlenum was not created'.format(ez.unique_name))
                     else:
                         try:
                             zone_return_equipment = {'ZoneHVAC:EquipmentConnections': ez.epjson['ZoneHVAC:EquipmentConnections']}
                         except (KeyError, AttributeError, ValueError):
-                            raise InvalidTemplateException('Search for ZoneHVAC:EquipmentConnections object from Supply '
-                                                           'Path creation failed for inlet node.  system {}, zone {}'
-                                                           .format(system_class_object.template_name, ez.unique_name))
+                            raise InvalidTemplateException(
+                                'Error: Search for ZoneHVAC:EquipmentConnections object from Supply '
+                                'Path creation failed for inlet node.  system {}, zone {}'
+                                .format(system_class_object.template_name, ez.unique_name))
                     try:
                         (zone_return_equipment_type, zone_return_equipment_structure), = zone_return_equipment.items()
                         (zone_return_equipment_name, zone_return_equipment_fields), = zone_return_equipment_structure.items()
@@ -732,10 +739,10 @@ class HVACTemplate(EPJSON):
                         else:
                             inlet_node_name = zone_return_equipment_fields['zone_return_air_node_or_nodelist_name']
                     except (KeyError, AttributeError, ValueError):
-                        raise InvalidTemplateException('Search for zone equipment from Return Path creation failed for '
-                                                       'inlet node.  system {}, zone {}, zone equipment {}'
-                                                       .format(system_class_object.template_name, ez.unique_name,
-                                                               zone_return_equipment))
+                        raise InvalidTemplateException(
+                            'Error: Search for zone equipment from Return Path creation failed for '
+                            'inlet node.  system {}, zone {}, zone equipment {}'
+                            .format(system_class_object.template_name, ez.unique_name, zone_return_equipment))
                     zone_splitters.append(
                         {
                             "outlet_node_name": outlet_node_name
@@ -860,12 +867,13 @@ class HVACTemplate(EPJSON):
                     vrf_object = ez.epjson['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']
                     (vrf_object_name, _), = vrf_object.items()
                 except (KeyError, AttributeError):
-                    raise InvalidTemplateException("VRF zone template {} expanded with no "
-                                                   "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow object".format(ez.unique_name))
+                    raise InvalidTemplateException(
+                        "Error: VRF zone template {} expanded with no "
+                        "ZoneHVAC:TerminalUnit:VariableRefrigerantFlow object".format(ez.unique_name))
                 except ValueError:
-                    raise InvalidTemplateException('ZoneHVAC:TerminalUnit:VariableRefrigerantFlow '
-                                                   'object incorrectly formatted: {}'
-                                                   .format(ez.epjson.get('ZoneHVAC:TerminalUnit:VariableRefrigerantFlow', 'None')))
+                    raise InvalidTemplateException(
+                        'ZoneHVAC:TerminalUnit:VariableRefrigerantFlow object incorrectly formatted: {}'
+                        .format(ez.epjson.get('ZoneHVAC:TerminalUnit:VariableRefrigerantFlow', 'None')))
                 vrf_object_name_list.append({'zone_terminal_unit_name': vrf_object_name})
         if vrf_object_name_list:
             vrf_terminal_object = eo.get_structure(structure_hierarchy=[
@@ -879,7 +887,8 @@ class HVACTemplate(EPJSON):
                 super_dictionary=self.epjson,
                 object_dictionary=resolved_path_dictionary)
         else:
-            raise InvalidTemplateException('Failed to create VRF terminal unit list for {}'.format(system_class_object.template_name))
+            raise InvalidTemplateException(
+                'Error: Failed to create VRF terminal unit list for {}'.format(system_class_object.template_name))
         return
 
     def _create_templates_from_plant_equipment(self, plant_equipment_class_object, expanded_plant_loops):
@@ -967,9 +976,9 @@ class HVACTemplate(EPJSON):
                         if expanded_name not in expanded_plant_loops.keys():
                             expanded_plant_loops[expanded_name] = expanded_object
                 except (AttributeError, ValueError):
-                    InvalidTemplateException('A Plant loop was specified to be created from a plant equipment object '
-                                             '{}, but the process failed to attach the create objects'
-                                             .format(epl_name))
+                    InvalidTemplateException(
+                        'Error: A Plant loop was specified to be created from a plant equipment object '
+                        '{}, but the process failed to attach the created objects'.format(epl_name))
             # if a plant equipment template was created, process it here
             if plant_equipment_template:
                 # add new plant equipment to the templates
@@ -990,9 +999,9 @@ class HVACTemplate(EPJSON):
                         if expanded_name not in expanded_plant_loops.keys():
                             expanded_plant_equipment[expanded_name] = expanded_object
                 except (AttributeError, ValueError):
-                    raise InvalidTemplateException('A Plant equipment was specified to be created from a plant '
-                                                   'equipment object {}, but the process failed to attach the create '
-                                                   'objects'.format(epl_name))
+                    raise InvalidTemplateException(
+                        'Error: A Plant equipment was specified to be created from a plant '
+                        'equipment object {}, but the process failed to attach the create objects'.format(epl_name))
         return
 
     @staticmethod
@@ -1107,8 +1116,8 @@ class HVACTemplate(EPJSON):
                     if re.match(r'Chiller:.*', object_structure['components'][0]['component_object_type']):
                         demand_branches.update({object_name: pebd['Branch'].pop(object_name)})
                 except (AttributeError, KeyError):
-                    raise InvalidTemplateException('Branch object is incorrectly formatted: {}'
-                                                   .format(plant_equipment_branch_dictionary))
+                    raise InvalidTemplateException(
+                        'Error: Branch object is incorrectly formatted: {}'.format(plant_equipment_branch_dictionary))
             supply_branches = pebd['Branch']
         else:
             demand_branches = zone_system_branch_dictionary.get('Branch') if zone_system_branch_dictionary else None
@@ -1207,8 +1216,9 @@ class HVACTemplate(EPJSON):
                     0,
                     {'node_name': supply_branches[branch]['components'][0]['component_outlet_node_name']})
         except (KeyError, AttributeError):
-            raise PyExpandObjectsYamlStructureException('AutoCreated PlantLoop Connector YAML object was '
-                                                        'improperly formatted')
+            raise PyExpandObjectsYamlStructureException(
+                'Error: In {} AutoCreated PlantLoop Connector YAML object was '
+                'improperly formatted'.format(plant_loop_class_object.template_type))
         # add connector list
         demand_connectorlist = eo.get_structure(
             structure_hierarchy=['AutoCreated', 'PlantLoop', 'ConnectorList', 'Demand']
@@ -1307,8 +1317,9 @@ class HVACTemplate(EPJSON):
             list_dictionary['equipment'] = equipment
             equipment_list_dictionary = [{'CondenserEquipmentList': list_dictionary}, ]
         else:
-            raise InvalidTemplateException('an invalid loop type was specified when creating plant loop connections: {}'
-                                           .format(plant_loop_class_object.template_type))
+            raise InvalidTemplateException(
+                'Error: an invalid loop type was specified when creating plant loop connections: {}'
+                .format(plant_loop_class_object.template_type))
         equipment_list_formatted_dictionary = eo.yaml_list_to_epjson_dictionaries(
             yaml_list=equipment_list_dictionary)
         resolved_path_dictionary = eo.resolve_objects(epjson=equipment_list_formatted_dictionary)
@@ -1361,11 +1372,13 @@ class HVACTemplate(EPJSON):
                                                 if val == 'SystemSupplyAirTemperature':
                                                     template_fields[zone_field] = 'SupplyAirTemperature'
                                             except (ValueError, KeyError):
-                                                self.logger.info('Zone field {} does not exist for mapping'
-                                                                 'values: {}'.format(value_map['zone_field'], value_map))
+                                                self.logger.warning(
+                                                    'Zone field {} does not exist for mapping'
+                                                    'values: {}'.format(value_map['zone_field'], value_map))
         except ValueError:
-            raise InvalidTemplateException("Mapping of system to zone variables failed. zone_template: {}, "
-                                           "system template: {}".format(template_fields, system_templates))
+            raise InvalidTemplateException(
+                "Error: Mapping of system to zone variables failed. zone_template: {}, "
+                "system template: {}".format(template_fields, system_templates))
         return
 
     def run(self, input_epjson=None):

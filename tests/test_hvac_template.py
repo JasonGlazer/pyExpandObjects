@@ -234,6 +234,18 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             self.hvac_template.run()
         return
 
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify Bad templates caught")
+    def test_bad_template_name_returns_error(self):
+        self.hvac_template._load_epjson({
+            **minimum_objects_d,
+            "HVACTemplate:Bad:Bad": {
+                "Bad Object": {}
+            }
+        })
+        with self.assertRaisesRegex(InvalidTemplateException, 'Template object type'):
+            self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
+        return
+
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify thermostat class templates created")
     def test_thermostat_templates_have_good_objects(self):
         self.hvac_template._load_epjson({

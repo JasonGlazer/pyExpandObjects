@@ -170,7 +170,19 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 }
             }
         })
-        with self.assertRaises(InvalidTemplateException):
+        with self.assertRaisesRegex(InvalidTemplateException, 'Thermostat object does not exist'):
+            self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
+        return
+
+    def test_exception_create_zonecontrol_thermostat_no_thermostat_reference(self):
+        ez = ExpandZone(template={
+            "HVACTemplate:Zone:VAV": {
+                "HVACTemplate:Zone:VAV 1": {
+                    "zone_name": "TEST ZONE",
+                }
+            }
+        })
+        with self.assertRaisesRegex(InvalidTemplateException, 'Zone object does not reference a thermostat'):
             self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
         return
 
@@ -230,6 +242,60 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
              'AirLoopHVAC:SupplyPath': 1, 'AirLoopHVAC:ReturnPath': 1},
             eo.summarize_epjson(self.hvac_template.epjson)
         )
+        return
+
+    def test_system_path_objects_zone_no_supply_plenum(self):
+        eo = ExpandObjects()
+        es = ExpandSystem(template={
+            "HVACTemplate:System:VAV": {
+                "VAV Sys 1": {
+                }
+            }
+        })
+        expanded_zones = {}
+        for unique_name in ['SPACE1-1', 'SPACE2-1']:
+            eo.unique_name = unique_name
+            mock_epjson = eo.resolve_objects(epjson=copy.deepcopy(mock_zone_epjson))
+            ez = MagicMock()
+            ez_epjson = PropertyMock(return_value=mock_epjson)
+            type(ez).epjson = ez_epjson
+            type(ez).template_vav_system_name = 'VAV Sys 1'
+            type(ez).zone_name = unique_name
+            type(ez).unique_name = unique_name
+            type(ez).supply_plenum_name = 'PLENUM-1'
+            del ez.return_plenum_name
+            expanded_zones[unique_name] = ez
+        with self.assertRaisesRegex(InvalidTemplateException, 'supply_plenum_name indicated for zone template'):
+            self.hvac_template._create_system_path_connection_objects(
+                system_class_object=es,
+                expanded_zones=expanded_zones)
+        return
+
+    def test_system_path_objects_zone_no_return_plenum(self):
+        eo = ExpandObjects()
+        es = ExpandSystem(template={
+            "HVACTemplate:System:VAV": {
+                "VAV Sys 1": {
+                }
+            }
+        })
+        expanded_zones = {}
+        for unique_name in ['SPACE1-1', 'SPACE2-1']:
+            eo.unique_name = unique_name
+            mock_epjson = eo.resolve_objects(epjson=copy.deepcopy(mock_zone_epjson))
+            ez = MagicMock()
+            ez_epjson = PropertyMock(return_value=mock_epjson)
+            type(ez).epjson = ez_epjson
+            type(ez).template_vav_system_name = 'VAV Sys 1'
+            type(ez).zone_name = unique_name
+            type(ez).unique_name = unique_name
+            type(ez).return_plenum_name = 'PLENUM-1'
+            del ez.supply_plenum_name
+            expanded_zones[unique_name] = ez
+        with self.assertRaisesRegex(InvalidTemplateException, 'return_plenum_name indicated for zone template'):
+            self.hvac_template._create_system_path_connection_objects(
+                system_class_object=es,
+                expanded_zones=expanded_zones)
         return
 
     def test_system_path_objects_supply_plenum(self):
@@ -295,6 +361,8 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             eo.summarize_epjson(self.hvac_template.epjson)
         )
         return
+
+    # todo_eo: write tests for successful implementations of supply_plenum_name and return_plenum_name for zones.
 
     def test_system_path_objects_both_plenum(self):
         eo = ExpandObjects()
