@@ -75,7 +75,7 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
         thermostat_template = {"HVACTemplate:Thermostat": {'Thermostat 1': {}}}
         eo = ExpandThermostat(template=thermostat_template)
         eo._create_and_set_schedules()
-        with self.assertRaises(InvalidTemplateException):
+        with self.assertRaisesRegex(InvalidTemplateException, 'No setpoints or schedules provided to object'):
             eo._create_thermostat_setpoints()
         return
 

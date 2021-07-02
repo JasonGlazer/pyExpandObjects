@@ -212,7 +212,8 @@ class ExpandObjects(EPJSON):
             structure = copy.deepcopy(structure or self.expansion_structure)
             if not isinstance(structure_hierarchy, list):
                 raise PyExpandObjectsTypeError(
-                    "Error: Structure hierarchy Input must be a list of structure keys: {}".format(structure_hierarchy))
+                    "Error: In {} ({}) Structure hierarchy input must be a list of structure keys: {}"
+                    .format(self.template_type, self.template_name, structure_hierarchy))
             # iterate over structure hierarchy list. For each item, call the key to the YAML object.  When looking up
             #   TemplateObjects, For the last item get the YAML object's keys and try a regex match.
             for idx, key in enumerate(structure_hierarchy):
@@ -228,8 +229,9 @@ class ExpandObjects(EPJSON):
                             if skl == str(key):
                                 structure = structure[skl]
         except KeyError:
-            raise PyExpandObjectsTypeError('Error: YAML structure does not exist for hierarchy: {}'.format(
-                structure_hierarchy))
+            raise PyExpandObjectsTypeError(
+                'Error: In {} ({}) YAML structure does not exist for hierarchy: {}'
+                .format(self.template_type, self.template_name, structure_hierarchy))
         return structure
 
     def _get_option_tree(
@@ -243,12 +245,14 @@ class ExpandObjects(EPJSON):
         try:
             if not isinstance(structure_hierarchy, list):
                 raise PyExpandObjectsTypeError(
-                    "Error: Structrue Input must be a list of structure keys: {}".format(structure_hierarchy))
+                    "Error: In {} ({}) Structrue input must be a list of structure keys: {}"
+                    .format(self.template_type, self.template_name, structure_hierarchy))
             if structure_hierarchy[0] != 'OptionTree':
                 structure_hierarchy.insert(0, 'OptionTree')
         except TypeError:
             raise PyExpandObjectsTypeError(
-                "Error: Call to YAML object was not a list of structure keys: {}".format(structure_hierarchy))
+                "Error: In {} ({}) Call to YAML object was not a list of structure keys: {}"
+                .format(self.template_type, self.template_name, structure_hierarchy))
         structure = self.get_structure(structure_hierarchy=structure_hierarchy)
         # todo_eo: this restriction is temporarily commented out.  It might not be necessary and too strict
         # Check structure keys.  Return error if there is an unexpected value
@@ -270,18 +274,17 @@ class ExpandObjects(EPJSON):
         """
         self.logger.info('Processing option tree: {}'.format(structure_hierarchy))
         option_tree = self._get_option_tree(structure_hierarchy=structure_hierarchy)
-        options = option_tree.keys()
         option_tree_dictionary = {}
         # todo_eo: this requirement is temporarily commented out, may be too strict
         # if not set(list(options)).issubset({'BaseObjects', 'TemplateObjects', 'BuildPath'}):
         #     raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided in YAML: {}"
         #                                    .format(options))
-        if "BuildPath" in options:
+        if "BuildPath" in option_tree.keys():
             object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
             self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
                 object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
-        if 'BaseObjects' in options:
+        if 'BaseObjects' in option_tree.keys():
             option_tree_leaf = self._get_option_tree_leaf(
                 option_tree=option_tree,
                 leaf_path=['BaseObjects', ])
@@ -289,7 +292,7 @@ class ExpandObjects(EPJSON):
             self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
                 object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
-        if 'TemplateObjects' in options and option_tree['TemplateObjects']:
+        if 'TemplateObjects' in option_tree.keys() and option_tree['TemplateObjects']:
             try:
                 template_applied = None
                 template_field_processing = None
@@ -314,12 +317,14 @@ class ExpandObjects(EPJSON):
                             break
             except (AttributeError, KeyError):
                 raise PyExpandObjectsYamlStructureException(
-                    'Error: TemplateObjects section for system type {} is invalid in '
-                    'yaml file.'.format(self.template_type))
+                    'Error: In {} ({}) TemplateObjects section for system type is invalid in yaml file.'.
+                    format(self.template_type, self.template_name))
             if not template_applied:
                 raise PyExpandObjectsYamlStructureException(
-                    'Error: A template option was not applied for template field {} '
-                    'and option {}: {}'.format(
+                    'Error: In {} ({}) A template option was not applied for template field {} and option {}: {}'
+                    .format(
+                        self.template_type,
+                        self.template_name,
                         template_field_processing,
                         getattr(self, template_field_processing, None),
                         option_tree['TemplateObjects']))
@@ -345,8 +350,9 @@ class ExpandObjects(EPJSON):
             try:
                 objects = self._flatten_list(option_leaf['Objects'])
             except KeyError:
-                raise PyExpandObjectsTypeError(
-                    "Error: Invalid or missing Objects location in YAML file: {}".format(option_tree))
+                raise PyExpandObjectsYamlStructureException(
+                    "Error: In {} ({}) Invalid or missing Objects location in YAML file: {}"
+                    .format(self.template_type, self.template_name, option_tree))
             return {
                 'Objects': objects,
                 'Transitions': transitions,
@@ -392,10 +398,16 @@ class ExpandObjects(EPJSON):
                 for object_type_reference, transition_structure in opt.items():
                     for template_field, object_field in transition_structure.items():
                         # Ensure there is only one object_key and it is 'Objects'
-                        (object_key, tree_objects), = option_tree_leaf.items()
-                        if not object_key == 'Objects':
-                            raise PyExpandObjectsYamlError(
-                                "Error: Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
+                        try:
+                            (object_key, tree_objects), = option_tree_leaf.items()
+                            if not object_key == 'Objects':
+                                raise PyExpandObjectsYamlStructureException(
+                                    "Error: In {} ({}) OptionTree leaf is incorrectly formatted Transition: {}"
+                                    .format(self.template_type, self.template_name, opt))
+                        except ValueError:
+                            raise PyExpandObjectsYamlStructureException(
+                                "Error: In {} ({}) OptionTree leaf is incorrectly formatted Transition: {}"
+                                .format(self.template_type, self.template_name, opt))
                         # iterate over each object from 'Objects' dictionary
                         for tree_object in tree_objects:
                             for object_type, _ in tree_object.items():
@@ -450,10 +462,16 @@ class ExpandObjects(EPJSON):
                 for object_type_reference, mapping_structure in otm.items():
                     for mapping_field, mapping_dictionary in mapping_structure.items():
                         # Ensure there is only one object_key and it is 'Objects'
-                        (object_key, tree_objects), = option_tree_leaf.items()
-                        if not object_key == 'Objects':
-                            raise PyExpandObjectsYamlError(
-                                "Error: Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
+                        try:
+                            (object_key, tree_objects), = option_tree_leaf.items()
+                            if not object_key == 'Objects':
+                                raise PyExpandObjectsYamlStructureException(
+                                    "Error: In {} ({}) OptionTree leaf has incorrectly formatted Mapping: {}"
+                                    .format(self.template_type, self.template_name, otm))
+                        except ValueError:
+                            raise PyExpandObjectsYamlStructureException(
+                                "Error: In {} ({}) OptionTree leaf is incorrectly formatted Mapping: {}"
+                                .format(self.template_type, self.template_name, otm))
                         # iterate over each object from 'Objects' dictionary
                         for tree_object in tree_objects:
                             for object_type, object_fields in tree_object.items():
@@ -508,7 +526,8 @@ class ExpandObjects(EPJSON):
                         object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}})
                 except (TypeError, KeyError, ValueError):
                     raise PyExpandObjectsYamlStructureException(
-                        "Error: YAML object is incorrectly formatted: {}".format(transitioned_object))
+                        "Error: In {} ({}) YAML object is incorrectly formatted: {}"
+                        .format(self.template_type, self.template_name, transitioned_object))
         return output_dictionary
 
     def _resolve_complex_input_from_build_path(
@@ -536,7 +555,9 @@ class ExpandObjects(EPJSON):
             value_location = li.pop('ValueLocation')
         except KeyError:
             raise PyExpandObjectsYamlStructureException(
-                "Error: Build path location reference is invalid.\nbuild path: {}".format(backup_copy))
+                "Error: In {} ({}) Build Path Location or ValueLocation reference is invalid."
+                "\nbuild path: {}\nlookup instructions: {}"
+                .format(self.template_type, self.template_name, build_path, backup_copy))
         try:
             # If location is an integer, then just retrieve the index
             if isinstance(location, int):
@@ -553,7 +574,8 @@ class ExpandObjects(EPJSON):
                 occurrence = li.pop('Occurrence', 1)
                 if not isinstance(occurrence, int):
                     raise PyExpandObjectsYamlStructureException(
-                        'Error: Occurrence key in complex reference is not an integer: {}'.format(backup_copy))
+                        'Error: In {} ({}) Occurrence key in complex reference is not an integer: {}'
+                        .format(self.template_type, self.template_name, backup_copy))
                 match_count = 0
                 previous_object = {}
                 for super_object in build_path:
@@ -569,13 +591,15 @@ class ExpandObjects(EPJSON):
                     previous_object = super_object
                 if (not match_count >= occurrence and occurrence != -1) or match_count == 0:
                     self.logger.warning(
-                        "Warning: The number of occurrence matches in a build path was never reached for "
+                        "Warning: In {} ({}) The number of occurrence matches in a build path was never reached for "
                         "complex reference.  This reference will not be applied."
-                        "\nbuild path: {}\ncomplex reference: {}".format(build_path, backup_copy))
+                        "\nbuild path: {}\ncomplex reference: {}"
+                        .format(self.template_type, self.template_name, build_path, backup_copy))
                     return None
         except (IndexError, ValueError):
             raise PyExpandObjectsYamlStructureException(
-                "Error: Invalid build path or super object: {}".format(build_path))
+                "Error: In {} ({}) Invalid build path or lookup instructions:\nbuild_path: {}\nlookup_instructions: {}"
+                .format(self.template_type, self.template_name, build_path, backup_copy))
         if value_location.lower() == 'self':
             return super_object_type
         elif value_location.lower() == 'key':
@@ -585,15 +609,17 @@ class ExpandObjects(EPJSON):
             return super_object_structure['Fields'][reference_node]
         else:
             raise PyExpandObjectsYamlStructureException(
-                "Error: Invalid complex input for build path lookup:\nlookup: {}\n"
-                "value_location: {}".format(backup_copy, value_location))
+                "Error: In {} ({}) Invalid complex input for Build Path "
+                "Lookup:\nlookup_instructions: {}\nvalue_location: {}"
+                .format(self.template_type, self.template_name, backup_copy, value_location))
 
     def _resolve_complex_input(
             self,
             field_name: str,
             input_value: typing.Union[str, int, float, dict, list],
             epjson: dict = None,
-            build_path: list = None) -> \
+            build_path: list = None,
+            recursions: int = 0) -> \
             typing.Generator[str, typing.Dict[str, str], None]:
         """
         Resolve a complex input reference into a field value
@@ -602,6 +628,8 @@ class ExpandObjects(EPJSON):
         :param input_value: field value input
         :param epjson: epJSON dictionary of objects
         :param build_path: BuildPath to reference for lookup
+        :param recursions: cumulative count of recursive calls so that a cap can be made.  This is a backup in case
+            RecursionError misses an infinite loop.
         :return: resolved field value
         """
         # Try class attributes if variables not defined in function
@@ -652,14 +680,16 @@ class ExpandObjects(EPJSON):
                 (reference_object_type, lookup_instructions), = input_value.items()
             except ValueError:
                 raise PyExpandObjectsYamlStructureException(
-                    'Error: Complex input reference is invalid: {}'.format(input_value))
+                    'Error: In {} ({}) Complex input reference is invalid: {}'
+                    .format(self.template_type, self.template_name, input_value))
             # If the input_value is instructing to use a 'BuildPathReference' then insert the object by build
             # path location
             if reference_object_type.lower() == 'buildpathreference':
                 if not build_path:
                     raise PyExpandObjectsYamlStructureException(
-                        "Error: BuildPath complex input was specified with no build"
-                        " path available: field {}, input {}".format(field_name, input_value))
+                        "Error: In {} ({}) Build Path complex input was specified with no build"
+                        " path available. field {}, input {}"
+                        .format(self.template_type, self.template_name, field_name, input_value))
                 try:
                     # Get the referenced node value
                     extracted_value = self._resolve_complex_input_from_build_path(
@@ -667,20 +697,27 @@ class ExpandObjects(EPJSON):
                         lookup_instructions=lookup_instructions)
                     # Resolve the extracted value with this function.
                     try:
+                        # safeguard in case Recursions exception misses infinite loop
+                        if recursions > 5:
+                            raise PyExpandObjectsYamlStructureException(
+                                "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                                .format(self.template_type, self.template_name, input_value, field_name))
                         complex_generator = self._resolve_complex_input(
                             epjson=epjson,
                             field_name=field_name,
-                            input_value=extracted_value)
+                            input_value=extracted_value,
+                            recursions=recursions + 1)
                         for cg in complex_generator:
                             yield cg
                     except RecursionError:
                         raise PyExpandObjectsYamlStructureException(
-                            "Maximum Recursion limit exceeded when resolving {} for {}"
-                            .format(input_value, field_name))
+                            "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                            .format(self.template_type, self.template_name, input_value, field_name))
                 except (KeyError, PyExpandObjectsYamlStructureException):
                     raise PyExpandObjectsYamlStructureException(
-                        "Error: Object field could not be resolved: input {}, "
-                        "field {}, template name {}".format(input_value, field_name, self.unique_name))
+                        "Error: In {} ({}) Object field could not be resolved: input {}, "
+                        "field {}\nbuild path: {}"
+                        .format(self.template_type, self.template_name, input_value, field_name, build_path))
             else:
                 # If the input_value is an object type reference then try to match it with the EnergyPlus objects in
                 # the super dictionary.
@@ -698,16 +735,22 @@ class ExpandObjects(EPJSON):
                             yield {"field": field_name, "value": object_name}
                         elif isinstance(epjson[object_type][object_name][lookup_instructions], dict):
                             try:
+                                # safeguard in case Recursions exception misses infinite loop
+                                if recursions > 5:
+                                    raise PyExpandObjectsYamlStructureException(
+                                        "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                                        .format(self.template_type, self.template_name, input_value, field_name))
                                 complex_generator = self._resolve_complex_input(
                                     epjson=epjson,
                                     field_name=field_name,
-                                    input_value=epjson[object_type][object_name][lookup_instructions])
+                                    input_value=epjson[object_type][object_name][lookup_instructions],
+                                    recursions=recursions + 1)
                                 for cg in complex_generator:
                                     yield cg
                             except RecursionError:
                                 raise PyExpandObjectsYamlStructureException(
-                                    "Error: Maximum Recursion limit exceeded when resolving {} for {}"
-                                    .format(input_value, field_name))
+                                    "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                                    .format(self.template_type, self.template_name, input_value, field_name))
                         else:
                             # attempt to format both the field and value to be returned.
                             if isinstance(field_name, str):
@@ -724,22 +767,33 @@ class ExpandObjects(EPJSON):
         elif isinstance(input_value, list):
             # When the input is a list, iterate and apply this function recursively to each object.
             try:
+                # safeguard in case Recursions exception misses infinite loop
+                if recursions > 5:
+                    raise PyExpandObjectsYamlStructureException(
+                        "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                        .format(self.template_type, self.template_name, input_value, field_name))
                 tmp_list = []
                 for input_list_item in input_value:
                     tmp_d = {}
                     for input_list_field, input_list_value in input_list_item.items():
+                        # safeguard in case Recursions exception misses infinite loop
+                        if recursions > 5:
+                            raise PyExpandObjectsYamlStructureException(
+                                "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                                .format(self.template_type, self.template_name, input_value, field_name))
                         complex_generator = self._resolve_complex_input(
                             epjson=epjson,
                             field_name=input_list_field,
-                            input_value=input_list_value)
+                            input_value=input_list_value,
+                            recursions=recursions + 1)
                         for cg in complex_generator:
                             tmp_d[cg["field"]] = cg["value"]
                     tmp_list.append(tmp_d)
                 yield {"field": field_name, "value": tmp_list}
             except RecursionError:
                 raise PyExpandObjectsYamlStructureException(
-                    "Error: Maximum Recursion limit exceeded when resolving {} for {}"
-                    .format(input_value, field_name))
+                    "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                    .format(self.template_type, self.template_name, input_value, field_name))
         return
 
     def resolve_objects(self, epjson, reference_epjson=None):
@@ -876,16 +930,17 @@ class ExpandObjects(EPJSON):
         occurrence = action_instructions.pop('Occurrence', 1)
         # Format check inputs for occurrence
         if not isinstance(occurrence, int) or (isinstance(occurrence, int) and occurrence < 0):
-            raise PyExpandObjectsYamlStructureException('Error: Occurrence must be a non-negative integer: {}'
-                                                        .format(occurrence))
+            raise PyExpandObjectsYamlStructureException('Error: In {} ({}) Occurrence must be a non-negative integer: {}'
+                                                        .format(self.template_type, self.template_name, occurrence))
         # backup copy for output
         backup_copy = copy.deepcopy(action_instructions)
         try:
             # Format check inputs for action_type and location
             action_type = action_instructions.pop('ActionType').lower()
             if action_type not in ('insert', 'remove', 'replace'):
-                raise PyExpandObjectsYamlStructureException('Error: Invalid action type requested: {}'
-                                                            .format(action_instructions))
+                raise PyExpandObjectsYamlStructureException(
+                    'Error: In {} ({}) Invalid action type requested: {}'
+                    .format(self.template_type, self.template_name, action_instructions))
             # check 'Location' format and ensure it is the right type and value.
             # if location is an integer then object_reference is not needed because the action will be
             # performed on that index and no object lookup will be required.
@@ -901,11 +956,13 @@ class ExpandObjects(EPJSON):
                 object_reference = None
             else:
                 raise PyExpandObjectsYamlStructureException(
-                    'Error: Build path action insert reference value is not "Before", "After" or an '
-                    'integer: {}'.format(backup_copy))
+                    'Error: In {} ({}) Build path action insert reference value is not "Before", "After" '
+                    'or an integer: {}'
+                    .format(self.template_type, self.template_name, backup_copy))
         except KeyError:
             raise PyExpandObjectsYamlStructureException(
-                "Error: Build Path action is missing required instructions {}. ".format(backup_copy))
+                "Error: In {} ({}) Build Path action is missing required instructions {}."
+                .format(self.template_type, self.template_name, backup_copy))
         # Get the option tree leaf for an action.
         # Remove does not require this step since it just removes objects from the original build path
         if action_type != 'remove':
@@ -953,13 +1010,15 @@ class ExpandObjects(EPJSON):
                                 output_build_path[idx] = object_list
                             else:
                                 raise PyExpandObjectsYamlStructureException(
-                                    "Error: Build Path action could not be performed on build path for an "
-                                    "unknown reason: build path {}, action: {}".format(build_path, action_instructions))
+                                    "Error: In {} ({}) Build Path action could not be performed due to a bad action"
+                                    "statement: build path {}, action: {}"
+                                    .format(self.template_type, self.template_name, build_path, action_instructions))
             # check if the number of matches actually met the occurrence threshold
             if not match_count >= occurrence:
                 raise PyExpandObjectsYamlStructureException(
-                    "Error: The number of occurrence matches in a build path was never reached for "
-                    "an action. build path: {}, action: {}".format(build_path, action_instructions))
+                    "Error: In {} ({}) The number of occurrence matches in a build path was never reached for "
+                    "an action. build path: {}, action: {}"
+                    .format(self.template_type, self.template_name, build_path, action_instructions))
         # flatten build path list before output
         output_build_path = self._flatten_list(output_build_path)
         return output_build_path
@@ -976,8 +1035,9 @@ class ExpandObjects(EPJSON):
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
             raise PyExpandObjectsException(
-                "Error: Build path was not provided nor was it available as a class attribute when connecting and "
-                "converting objects")
+                "Error: In {} ({}) Build path was not provided nor was it available as a class attribute "
+                "when connecting and converting objects"
+                .format(self.template_type, self.template_name))
         # cleanse build path to only contain super objects.  Non super objects are saved to epJSON file
         parsed_build_path = self._parse_build_path(object_list=copy.deepcopy(build_path))
         object_list = []
@@ -988,7 +1048,8 @@ class ExpandObjects(EPJSON):
             connectors = super_object_structure.get('Connectors')
             if not connectors:
                 raise PyExpandObjectsYamlStructureException(
-                    "Error: Referenced super object is missing Connectors key: {}".format(super_object))
+                    "Error: In {} ({}) Referenced super object is missing Connectors key: {}"
+                    .format(self.template_type, self.template_name, super_object))
             try:
                 # if a super object is specified but the Loop Connectors is identified as False, then just
                 #  append it to the build path but don't make a connection.  An example of this is the heat
@@ -1008,8 +1069,8 @@ class ExpandObjects(EPJSON):
                 formatted_build_path.append({super_object_type: super_object_structure})
             except (AttributeError, KeyError):
                 raise PyExpandObjectsYamlStructureException(
-                    "Error: There is a Field/Connector mismatch. Object: {}, connectors: {}"
-                    .format(super_object_structure, connectors))
+                    "Error: In {} ({}) There is a Field/Connector mismatch.\nObject: {}\nconnectors: {}"
+                    .format(self.template_type, self.template_name, super_object_structure, connectors))
         # Save build path to class attribute for later reference.
         self.build_path = formatted_build_path
         return object_list
@@ -1039,8 +1100,9 @@ class ExpandObjects(EPJSON):
                         'availability_manager_name': object_name,
                         'availability_manager_object_type': object_type})
         except AttributeError:
-            raise PyExpandObjectsTypeError("Error: AvailabilityManager object not properly formatted: {}"
-                                           .format(availability_managers))
+            raise PyExpandObjectsTypeError(
+                "Error: In {} ({}) AvailabilityManager object not properly formatted: {}"
+                .format(self.template_type, self.template_name, availability_managers))
         availability_manager_assignment_list_object = self.yaml_list_to_epjson_dictionaries([
             {'AvailabilityManagerAssignmentList': availability_manager_list_object}, ])
         self.merge_epjson(
@@ -1097,11 +1159,14 @@ class ExpandObjects(EPJSON):
                                 action_applied = True
                 except (AttributeError, KeyError):
                     raise PyExpandObjectsYamlStructureException(
-                        "Error: Build Path action is incorrectly formatted: {}".format(action))
+                        "Error: In {} ({}) Build Path action is incorrectly formatted: {}"
+                        .format(self.template_type, self.template_name, action))
                 if not action_applied:
                     raise PyExpandObjectsYamlStructureException(
-                        'Error: A build path action was not applied for template field {} '
+                        'Error: In {} ({}) A build path action was not applied for template field {} '
                         'and option {}: {}'.format(
+                            self.template_type,
+                            self.template_name,
                             template_field_processing,
                             getattr(self, template_field_processing, None),
                             action))
@@ -1221,7 +1286,8 @@ class ExpandThermostat(ExpandObjects):
         else:
             # todo_eo: should the final else case make a floating thermostat or this error?
             raise InvalidTemplateException(
-                'Error: No setpoints or schedules provided to HVACTemplate:Thermostat object: {}'.format(self.unique_name))
+                'Error: In {} ({}) No setpoints or schedules provided to object'
+                .format(self.template_type, self.template_name))
         self.merge_epjson(
             super_dictionary=self.epjson,
             object_dictionary=thermostat_setpoint_object,
@@ -2052,12 +2118,12 @@ class ExpandSystem(ExpandObjects):
                                 controller_type
                 except ValueError:
                     raise PyExpandObjectsTypeError(
-                        "Error: Actuator node for water coil object does not match controller "
+                        "Error: In {} ({}) Actuator node for water coil object does not match controller "
                         "object reference. build_path: {}, controllers: {}"
-                        .format(build_path, controller_objects))
-                except AttributeError:
-                    raise PyExpandObjectsTypeError("Error: Controller object not properly formatted: {}"
-                                                   .format(controller_objects))
+                        .format(self.template_type, self.template_name, build_path, controller_objects))
+                except (AttributeError, KeyError):
+                    raise PyExpandObjectsTypeError("Error: In {} ({}) Controller object not properly formatted: {}"
+                                                   .format(self.template_type, self.template_name, controller_objects))
                 object_list.append({'AirLoopHVAC:ControllerList': airloop_hvac_controllerlist_object})
         controller_epjson = self.yaml_list_to_epjson_dictionaries(object_list)
         self.merge_epjson(
