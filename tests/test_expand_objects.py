@@ -86,9 +86,16 @@ class TestExpandObjects(BaseTest, unittest.TestCase):
         self.assertTrue(name_match)
         return
 
+    def test_exception_with_bad_format(self):
+        structure_hierarchy = {}
+        with self.assertRaisesRegex(TypeError, 'Structure hierarchy input'):
+            eo = ExpandObjects(template=mock_template)
+            eo.get_structure(structure_hierarchy=structure_hierarchy)
+        return
+
     def test_exception_with_bad_structure(self):
         structure_hierarchy = ['Schedule', 'Compact', 'Bad']
-        with self.assertRaises(TypeError):
+        with self.assertRaisesRegex(TypeError, 'YAML structure does not exist'):
             eo = ExpandObjects(template=mock_template)
             eo.get_structure(structure_hierarchy=structure_hierarchy)
         return
