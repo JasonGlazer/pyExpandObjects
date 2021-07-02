@@ -156,6 +156,9 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.assertEqual(
             1.01,
             epjson_output['Sizing:System']['AHU 1 Spaces 1-4 Sizing System']['cooling_supply_air_flow_rate'])
+        self.assertEqual(
+            1.01,
+            epjson_output['Sizing:System']['AHU 1 Spaces 1-4 Sizing System']['heating_supply_air_flow_rate'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_total_efficiency")

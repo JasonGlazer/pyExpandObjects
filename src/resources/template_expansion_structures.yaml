@@ -2420,6 +2420,9 @@ Objects:
                 component_name: '{} Supply Pump' # required by schema
                 component_inlet_node_name: '{} Supply Inlet' # required by schema
                 component_outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
+      Transitions: &PumpCommonTransitions
+        - Pump:.*:
+            pump_control_type: pump_control_type
     Base:
       Fields: &PumpFields
         name: '{} Supply Pump'
@@ -2427,6 +2430,7 @@ Objects:
         outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
         design_power_consumption: Autosize # set by legacy, not reachable from template, no default
         pump_control_type: Intermittent # set by legacy, not reachable from template, no default
+        pump_flow_rate_schedule_name: '{pump_schedule_name}'
       ConstantSpeed:
         Fields: &PumpConstantSpeed
           <<: *PumpFields
@@ -2758,6 +2762,9 @@ Objects:
                 preheat_coil_design_setpoint: preheat_design_temperature
                 supply_fan_maximum_flow_rate:
                   cooling_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
+            - Sizing:System:
+                supply_fan_maximum_flow_rate:
+                  heating_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
           DedicatedOutdoorAir: &SizingSystemCommonTransitionsDedicatedOutdoorAir
             - Sizing:System:
                 supply_fan_flow_rate:
@@ -6469,12 +6476,6 @@ OptionTree:
                     component_name: '{} Demand Inlet Pipe'
                     component_inlet_node_name: *DemandInlet
                     component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
-        ChilledWaterLoop:
-          Objects: &PlantCommonObjectsChilledWaterLoop
-            - OutdoorAir:Node:
-                name: '{} Outside Air Sensor'
-            - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
-            - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesCoolingLoad
       Boiler:
         BaseObjects:
         TemplateObjects:
@@ -6525,10 +6526,17 @@ OptionTree:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
-            - *PlantCommonObjectsChilledWaterLoop
+            - OutdoorAir:Node:
+                name: '{} Outside Air Sensor'
+            - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
             - Sizing:Plant: *SizingPlantChilledWater
           Transitions: *SizingPlantCommonTransitions
         TemplateObjects: # todo_eo: Secondary options need to have PlantLoop common_pipe_simulation changed to CommonPipe
+          chiller_plant_operation_scheme_type:
+            None: &PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
+              Objects:
+                - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesCoolingLoad
+            Default: *PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
           chilled_water_pump_configuration:
             ConstantPrimaryNoSecondary:
               Objects:
@@ -6538,6 +6546,10 @@ OptionTree:
                     <<: *PumpConstantSpeed
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
                 - Branch: *PumpBranchConstantSpeedSupplyInlet
+              Transitions:
+                - *PumpCommonTransitions
+                - ^PlantLoop$:
+                    chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
             VariablePrimaryNoSecondary:
               Objects:
                 - *PlantCommonPlantLoopPrimaryNoSecondary
@@ -6546,6 +6558,7 @@ OptionTree:
                     <<: *PumpVariableSpeed
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
                 - Branch: *PumpBranchVariableSpeedSupplyInlet
+              Transitions: *PumpCommonTransitions
           chilled_water_setpoint_reset_type:
             None:
               Objects:
@@ -6618,7 +6631,9 @@ OptionTree:
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadCondenserWater
             - CondenserEquipmentOperationSchemes: *CondenserEquipmentOperationSchemesCondenserLoad
             - CondenserLoop: *CondenserLoopFields
-          Transitions: *SizingPlantCommonTransitions
+          Transitions:
+            - *SizingPlantCommonTransitions
+            - *PumpCommonTransitions
       Tower:
         BaseObjects:
         TemplateObjects:

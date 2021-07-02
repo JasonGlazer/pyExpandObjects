@@ -918,12 +918,13 @@ class HVACTemplate(EPJSON):
                 in expanded_plant_loops.values()
                 if getattr(pl, 'template_type').lower() == 'hvactemplate:plant:chilledwaterloop']
             cndw_attributes = {}
+            # transfer ChilledWaterLoop attributes to CondenserWaterLoop
             if chw_loop:
                 for cndw_attribute, chw_attribute in zip(
                         ['condenser_water_pump_rated_head', 'condenser_water_design_setpoint',
-                         'condenser_plant_operation_scheme_type'],
+                         'condenser_plant_operation_scheme_type', 'pump_schedule_name', 'pump_control_type'],
                         ['primary_chilled_water_pump_rated_head', 'condenser_water_design_setpoint',
-                         'condenser_plant_operation_scheme_type']):
+                         'condenser_plant_operation_scheme_type', 'pump_schedule_name', 'pump_control_type']):
                     try:
                         cndw_attributes[cndw_attribute] = getattr(chw_loop[0], chw_attribute)
                     except AttributeError:
@@ -1331,7 +1332,19 @@ class HVACTemplate(EPJSON):
 
     def _apply_system_fields_to_zone_template(self, template_fields, system_templates):
         """
-        Set zone attributes based on system templates where appropriate
+        Set zone attributes based on system templates where appropriate.  This function calls a structured object
+        that contains lists of instructions to perform the map.  Each list is structured in the following manner:
+
+            [
+                zone_field_name: { # The zone field to check to apply the action
+                    {
+                        zone_field_value: # The zone field value to trigger the mapping
+                            system_field: system_field_name # The system field that contains the referenced value
+                            zone_field: zone_field_name # The zone field to apply the value
+                    }
+                }
+            ]
+
         :param template_fields: HVACTemplate:Zone fields
         :param system_templates: dictionary of HVACTemplate:System objects
         :return: None.  the zone template is updated in the class attributes

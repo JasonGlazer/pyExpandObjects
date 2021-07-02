@@ -1051,7 +1051,8 @@ class ExpandObjects(EPJSON):
                     "Error: In {} ({}) Referenced super object is missing Connectors key: {}"
                     .format(self.template_type, self.template_name, super_object))
             try:
-                # if a super object is specified but the Loop Connectors is identified as False, then just
+                # if a super object is specified but the Loop Connectors is identified as False
+                # (i.e. {Connectors: {AirLoop: False}}), then just
                 #  append it to the build path but don't make a connection.  An example of this is the heat
                 #  exchanger which connects to the OA node, not the inlet node of the OutdoorAir:Mixer, which is
                 #  the return node
@@ -2334,6 +2335,13 @@ class ExpandSystem(ExpandObjects):
             self, loop_type: str = 'AirLoop', build_path: list = None) -> list:
         """
         Modify input build path to use special equipment objects in the build path, rather than individual components.
+        This function loads a structured tuple that contains a list of instructions:
+
+            0 - HVACTemplate:System for which the instructions are applied
+            1 - Regular expression match of the super object to be manipulated.  This object has a special format to
+                prevent it from being connected in earlier steps {Fields: ..., Connectors: {AirLoop: False}}
+            2 - Connectors to be applied to the object
+            3 - Tuple of objects to be removed from build path.
 
         :param build_path: list of EnergyPlus Super objects
         :return: build path
