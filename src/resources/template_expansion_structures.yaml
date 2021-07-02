@@ -664,7 +664,7 @@ Objects:
       Common:
         Transitions: &AirTerminalSingleDuctCommonTransitions
           - AirTerminal:SingleDuct.*:
-              supply_air_maximum_flow_rate: maximum_air_flow_rate
+#              supply_air_maximum_flow_rate: maximum_air_flow_rate # Allow for autosizing even when variable is set
               maximum_reheat_air_temperature: maximum_reheat_air_temperature
         Fields:
           Base: &AirTerminalSingleDuctCommonFields
@@ -848,6 +848,10 @@ Objects:
             maximum_air_flow_rate: Autosize
   AvailabilityManager:
     NightCycle:
+      Common:
+        Transitions: &AvailabilityManagerNightCycleCommonTransitions
+          - AvailabilityManager:NightCycle:
+              system_availability_schedule_name: fan_schedule_name
       Base:
         Fields: &AvailabilityManagerNightCycle
           name: '{} Availability'
@@ -856,7 +860,7 @@ Objects:
           control_zone_or_zone_list_name: '{night_cycle_control_zone_name}'
           cycling_run_time: 3600 # Indicated to be default, but comparison fails unless explicit
           cycling_run_time_control_type: FixedRunTime # Indicated to be default, but comparison fails unless explicit
-          fan_schedule_name: '{system_availability_schedule_name}' # required by schema
+          fan_schedule_name: HVACTemplate-Always1  # required by schema
           thermostat_tolerance: 0.2 # set by legacy, not template default, not object default
     Scheduled:
       Common:
@@ -2168,7 +2172,7 @@ Objects:
           - Fan:.*:
               fan_delta_pressure: pressure_rise
               supply_fan_delta_pressure: pressure_rise
-              supply_fan_maximum_flow_rate: maximum_flow_rate
+#              supply_fan_maximum_flow_rate: maximum_flow_rate # Allow for autosizing even when variable is set
               supply_fan_minimum_flow_rate:
                 fan_power_minimum_air_flow_rate: '{supply_fan_minimum_flow_rate} / 1'
               supply_fan_flow_rate: maximum_flow_rate
@@ -5177,6 +5181,7 @@ OptionTree:
               CycleOnAny: &SystemCommonTemplateObjectsNightCycleControlCycleOnAny
                 Objects:
                   - AvailabilityManager:NightCycle: *AvailabilityManagerNightCycle
+                Transitions: *AvailabilityManagerNightCycleCommonTransitions
               CycleOnControlZone: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
               CycleOnAnyZoneFansOnly: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
               StayOff:
@@ -5184,34 +5189,35 @@ OptionTree:
                   - AvailabilityManager:NightCycle:
                       <<: *AvailabilityManagerNightCycle
                       control_type: StayOff
+                Transitions: *AvailabilityManagerNightCycleCommonTransitions
             airloop_hvac_object_type: &SystemCommonTemplateObjectsAirLoopHVACObjectType
               Base:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVAC
-                Transitions:
-                  - AirLoopHVAC:
-                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
-                      supply_fan_flow_rate: design_supply_air_flow_rate
+#                Transitions: # Allow for autosizing even when variable is set
+#                  - AirLoopHVAC:
+#                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+#                      supply_fan_flow_rate: design_supply_air_flow_rate
               DualDuct:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACDualDuct
-                Transitions:
-                  - AirLoopHVAC:
-                      # todo_eo: this needs to be changed, for water as well
-                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+#                Transitions: # Allow for autosizing even when variable is set
+#                  - AirLoopHVAC:
+#                      # todo_eo: this needs to be changed, for water as well
+#                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
               Water:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACWater
-                Transitions:
-                  - AirLoopHVAC:
-                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
-                      supply_fan_flow_rate: design_supply_air_flow_rate
+#                Transitions: # Allow for autosizing even when variable is set
+#                  - AirLoopHVAC:
+#                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+#                      supply_fan_flow_rate: design_supply_air_flow_rate
               WaterDualDuct:
                 Objects:
                   - AirLoopHVAC: *AirLoopHVACWaterDualDuct
-                Transitions:
-                  - AirLoopHVAC:
-                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+#                Transitions: # Allow for autosizing even when variable is set
+#                  - AirLoopHVAC:
+#                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
           ConstantVolume:
             humidistat_type: &SystemCommonTemplateObjectsHumidistatType
               Dehumidification:
@@ -5770,6 +5776,11 @@ OptionTree:
             None:
               Objects:
                 - Controller:OutdoorAir: *ControllerOutdoorAir
+              Transitions:
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: maximum_outdoor_air_flow_rate
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: minimum_outdoor_air_flow_rate
             EnthalpyHRBlowThrough:
               Objects:
                 - SetpointManager:MixedAir:
@@ -5802,6 +5813,11 @@ OptionTree:
                 - Controller:OutdoorAir:
                     <<: *ControllerOutdoorAir
                     economizer_control_action_type: MinimumFlowWithBypass
+              Transitions:
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: maximum_outdoor_air_flow_rate
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: minimum_outdoor_air_flow_rate
             EnthalpyHRDrawThrough:
               Objects:
                 - SetpointManager:MixedAir:
@@ -5831,6 +5847,11 @@ OptionTree:
                 - Controller:OutdoorAir:
                     <<: *ControllerOutdoorAir
                     economizer_control_action_type: MinimumFlowWithBypass
+              Transitions:
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: maximum_outdoor_air_flow_rate
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: minimum_outdoor_air_flow_rate
             SensibleHRBlowThrough:
               Objects:
                 - SetpointManager:MixedAir:
@@ -5866,6 +5887,11 @@ OptionTree:
                     economizer_control_action_type: MinimumFlowWithBypass
                     economizer_control_type: DifferentialDryBulb
                     economizer_minimum_limit_dry_bulb_temperature: '{heating_coil_design_setpoint}'
+              Transitions:
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: maximum_outdoor_air_flow_rate
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: minimum_outdoor_air_flow_rate
             SensibleHRDrawThrough:
               Objects:
                 - SetpointManager:MixedAir:
@@ -5898,9 +5924,13 @@ OptionTree:
                     economizer_control_action_type: MinimumFlowWithBypass
                     economizer_control_type: DifferentialDryBulb
                     economizer_minimum_limit_dry_bulb_temperature: '{heating_coil_design_setpoint}'
-            Transitions:
-              - *ControllerOutdoorAirCommonTransitions
-              - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+              Transitions:
+                - *ControllerOutdoorAirCommonTransitions
+                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: maximum_outdoor_air_flow_rate
+                - Controller:OutdoorAir:
+                    supply_fan_flow_rate: minimum_outdoor_air_flow_rate
       DualDuct:
         BuildPath:
           BaseObjects:

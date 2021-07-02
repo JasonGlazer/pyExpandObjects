@@ -150,6 +150,75 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
             controllerlist['AirLoopHVAC:ControllerList']['VAV Sys 1 Controllers']['controller_1_name'])
         return
 
+    def test_create_water_controller_list_from_epjson_bad_reference(self):
+        es = ExpandSystem(template=mock_template)
+        es.build_path = [
+            {
+                'Coil:Cooling:Water': {
+                    'Fields': {
+                        'name': 'Cooling Coil',
+                        'water_inlet_node_name': 'Test Chw Inlet'
+                    }
+                }
+            },
+            {
+                'Coil:Heating:Water': {
+                    'Fields': {
+                        'name': 'Heating Coil',
+                        'water_inlet_node_name': 'Test HW Inlet'
+                    }
+                }
+            }
+        ]
+        es.epjson = {
+            'Controller:WaterCoil': {
+                'test cooling water coil': {
+                    'sensor_node_name': 'Test sensor 1',
+                    'actuator_node_name': 'Bad Inlet'
+                },
+                'test heating water coil': {
+                    'sensor_node_name': 'Test sensonr 2',
+                    'actuator_node_name': 'Test Chw Inlet'
+                }
+            }
+        }
+        with self.assertRaisesRegex(PyExpandObjectsTypeError, 'Actuator node for water coil object does not'):
+            es._create_controller_list_from_epjson()
+        return
+
+    def test_create_water_controller_list_from_epjson_bad_controller(self):
+        es = ExpandSystem(template=mock_template)
+        es.build_path = [
+            {
+                'Coil:Cooling:Water': {
+                    'Fields': {
+                        'name': 'Cooling Coil',
+                        'water_inlet_node_name': 'Test Chw Inlet'
+                    }
+                }
+            },
+            {
+                'Coil:Heating:Water': {
+                    'Fields': {
+                        'name': 'Heating Coil',
+                        'water_inlet_node_name': 'Test HW Inlet'
+                    }
+                }
+            }
+        ]
+        es.epjson = {
+            'Controller:WaterCoil': {
+                'test cooling water coil': {},
+                'test heating water coil': {
+                    'sensor_node_name': 'Test sensonr 2',
+                    'actuator_node_name': 'Test Chw Inlet'
+                }
+            }
+        }
+        with self.assertRaisesRegex(PyExpandObjectsTypeError, 'Controller object not properly formatted'):
+            es._create_controller_list_from_epjson()
+        return
+
     def test_create_outdoor_air_equipment_list_from_epjson(self):
         es = ExpandSystem(template=mock_template)
         temp_mock_build_path = copy.deepcopy(mock_build_path)

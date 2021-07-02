@@ -30,7 +30,7 @@ class ExpansionStructureLocation:
             value_is_path = Path(value)
             if value_is_path.is_file():
                 if not value.endswith(('.yaml', '.yml')):
-                    raise PyExpandObjectsTypeError('File extension does not match yaml type: {}'.format(value))
+                    raise PyExpandObjectsTypeError('Error: File extension does not match yaml type: {}'.format(value))
                 else:
                     if yaml_file:
                         parsed_value = copy.deepcopy(yaml_file)
@@ -46,17 +46,17 @@ class ExpansionStructureLocation:
                     parsed_value = yaml.load(value, Loader=yaml.SafeLoader)
                     # if the parsed value is the same as the input value, it's probably a bad file path
                     if parsed_value == value:
-                        raise PyExpandObjectsFileNotFoundError('File does not exist: {}'.format(value))
+                        raise PyExpandObjectsFileNotFoundError('Error: File does not exist: {}'.format(value))
                 except yaml.YAMLError as exc:
                     if hasattr(exc, 'problem_mark'):
                         mark = exc.problem_mark
-                        raise PyExpandObjectsYamlError("Problem loading yaml at ({}, {})".format(
+                        raise PyExpandObjectsYamlError("Error: Problem loading yaml at ({}, {})".format(
                             mark.line + 1, mark.column + 1))
                     else:  # pragma: no cover
-                        raise PyExpandObjectsYamlError()
+                        raise PyExpandObjectsYamlError('Error: Unknown yaml loading error')
         else:
             raise PyExpandObjectsTypeError(
-                'Template expansion structure reference is not a file path or dictionary: {}'.format(value))
+                'Error: Template expansion structure reference is not a file path or dictionary: {}'.format(value))
         obj._expansion_structure = parsed_value
         return
 
@@ -75,9 +75,9 @@ class VerifyTemplate:
     def __set__(self, obj, value):
         if value:
             if not isinstance(value, dict):
-                raise PyExpandObjectsTypeError('Template must be a dictionary: {}'.format(value))
+                raise PyExpandObjectsTypeError('Error: Template must be a dictionary: {}'.format(value))
             try:
-                # template dictionary should have one template_ype, one key (unique name)
+                # template dictionary should have one template_type, one key (unique name)
                 # and one object as a value (field/value dict)
                 # this assignment below will fail if that is not the case.
                 (template_type, template_structure), = value.items()
@@ -85,11 +85,11 @@ class VerifyTemplate:
                 # ensure object is dictionary
                 if not isinstance(object_structure, dict):
                     raise InvalidTemplateException(
-                        'An invalid object {} was passed as an {} object'.format(value, getattr(self, 'template_type')))
+                        'Error: An invalid object {} was passed as an {} object'.format(value, getattr(self, 'template_type')))
                 obj._template = template_structure
             except (ValueError, AttributeError):
                 raise InvalidTemplateException(
-                    'An invalid object {} failed verification'.format(value))
+                    'Error: An invalid object {} failed verification'.format(value))
         else:
             obj._template = None
         return
@@ -101,11 +101,17 @@ class ExpandObjects(EPJSON):
 
     Attributes:
         expansion_structure: file or dictionary of expansion structure details (from YAML)
+
         template: epJSON dictionary containing HVACTemplate to expand
+
         template_type: HVACTemplate object type
+
         template_name: HVACTemplate unique name
+
         epjson: dictionary of epSJON objects to write to file
+
         unique_name: unique string used to modify to epJSON object names within the class
+
         HVACTemplate fields are stored as class attributes
     """
 
@@ -115,8 +121,10 @@ class ExpandObjects(EPJSON):
     def __init__(
             self,
             template=None,
-            expansion_structure=str(source_dir / 'resources' / 'template_expansion_structures.yaml')):
+            expansion_structure=str(source_dir / 'resources' / 'template_expansion_structures.yaml'),
+            logger_level='WARNING'):
         super().__init__()
+        self.logger.setLevel(logger_level)
         self.expansion_structure = expansion_structure
         self.template = template
         if self.template:
@@ -125,7 +133,7 @@ class ExpandObjects(EPJSON):
                 (template_name, template_structure), = hvac_template_structure.items()
             except ValueError:
                 raise InvalidTemplateException(
-                    'An Invalid object {} failed verification'.format(template))
+                    'Error: An Invalid object {} failed verification'.format(template))
             self.template_type = hvac_template_type
             self.template_name = template_name
             # apply template name and fields as class attributes
@@ -203,7 +211,9 @@ class ExpandObjects(EPJSON):
         try:
             structure = copy.deepcopy(structure or self.expansion_structure)
             if not isinstance(structure_hierarchy, list):
-                raise PyExpandObjectsTypeError("Input must be a list of structure keys: {}".format(structure_hierarchy))
+                raise PyExpandObjectsTypeError(
+                    "Error: In {} ({}) Structure hierarchy input must be a list of structure keys: {}"
+                    .format(self.template_type, self.template_name, structure_hierarchy))
             # iterate over structure hierarchy list. For each item, call the key to the YAML object.  When looking up
             #   TemplateObjects, For the last item get the YAML object's keys and try a regex match.
             for idx, key in enumerate(structure_hierarchy):
@@ -219,8 +229,9 @@ class ExpandObjects(EPJSON):
                             if skl == str(key):
                                 structure = structure[skl]
         except KeyError:
-            raise PyExpandObjectsTypeError('YAML structure does not exist for hierarchy: {}'.format(
-                structure_hierarchy))
+            raise PyExpandObjectsTypeError(
+                'Error: In {} ({}) YAML structure does not exist for hierarchy: {}'
+                .format(self.template_type, self.template_name, structure_hierarchy))
         return structure
 
     def _get_option_tree(
@@ -233,12 +244,15 @@ class ExpandObjects(EPJSON):
         """
         try:
             if not isinstance(structure_hierarchy, list):
-                raise PyExpandObjectsTypeError("Input must be a list of structure keys: {}".format(structure_hierarchy))
+                raise PyExpandObjectsTypeError(
+                    "Error: In {} ({}) Structrue input must be a list of structure keys: {}"
+                    .format(self.template_type, self.template_name, structure_hierarchy))
             if structure_hierarchy[0] != 'OptionTree':
                 structure_hierarchy.insert(0, 'OptionTree')
         except TypeError:
             raise PyExpandObjectsTypeError(
-                "Call to YAML object was not a list of structure keys: {}".format(structure_hierarchy))
+                "Error: In {} ({}) Call to YAML object was not a list of structure keys: {}"
+                .format(self.template_type, self.template_name, structure_hierarchy))
         structure = self.get_structure(structure_hierarchy=structure_hierarchy)
         # todo_eo: this restriction is temporarily commented out.  It might not be necessary and too strict
         # Check structure keys.  Return error if there is an unexpected value
@@ -255,22 +269,22 @@ class ExpandObjects(EPJSON):
         """
         Return objects from option tree leaves.
 
+        :param structure_hierarchy: list representing structure hierarchy
         :return: epJSON dictionary with unresolved complex inputs
         """
         self.logger.info('Processing option tree: {}'.format(structure_hierarchy))
         option_tree = self._get_option_tree(structure_hierarchy=structure_hierarchy)
-        options = option_tree.keys()
         option_tree_dictionary = {}
         # todo_eo: this requirement is temporarily commented out, may be too strict
         # if not set(list(options)).issubset({'BaseObjects', 'TemplateObjects', 'BuildPath'}):
         #     raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided in YAML: {}"
         #                                    .format(options))
-        if "BuildPath" in options:
+        if "BuildPath" in option_tree.keys():
             object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
             self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
                 object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
-        if 'BaseObjects' in options:
+        if 'BaseObjects' in option_tree.keys():
             option_tree_leaf = self._get_option_tree_leaf(
                 option_tree=option_tree,
                 leaf_path=['BaseObjects', ])
@@ -278,7 +292,7 @@ class ExpandObjects(EPJSON):
             self.merge_epjson(
                 super_dictionary=option_tree_dictionary,
                 object_dictionary=self.yaml_list_to_epjson_dictionaries(object_list))
-        if 'TemplateObjects' in options and option_tree['TemplateObjects']:
+        if 'TemplateObjects' in option_tree.keys() and option_tree['TemplateObjects']:
             try:
                 template_applied = None
                 template_field_processing = None
@@ -302,14 +316,18 @@ class ExpandObjects(EPJSON):
                             template_applied = True
                             break
             except (AttributeError, KeyError):
-                raise PyExpandObjectsYamlStructureException('TemplateObjects section for system type {} is invalid in '
-                                                            'yaml file.'.format(self.template_type))
+                raise PyExpandObjectsYamlStructureException(
+                    'Error: In {} ({}) TemplateObjects section for system type is invalid in yaml file.'.
+                    format(self.template_type, self.template_name))
             if not template_applied:
-                raise PyExpandObjectsYamlStructureException('A template option was not applied for template field {} '
-                                                            'and option {}: {}'.format(
-                                                                template_field_processing,
-                                                                getattr(self, template_field_processing, None),
-                                                                option_tree['TemplateObjects']))
+                raise PyExpandObjectsYamlStructureException(
+                    'Error: In {} ({}) A template option was not applied for template field {} and option {}: {}'
+                    .format(
+                        self.template_type,
+                        self.template_name,
+                        template_field_processing,
+                        getattr(self, template_field_processing, None),
+                        option_tree['TemplateObjects']))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -332,7 +350,9 @@ class ExpandObjects(EPJSON):
             try:
                 objects = self._flatten_list(option_leaf['Objects'])
             except KeyError:
-                raise PyExpandObjectsTypeError("Invalid or missing Objects location: {}".format(option_tree))
+                raise PyExpandObjectsYamlStructureException(
+                    "Error: In {} ({}) Invalid or missing Objects location in YAML file: {}"
+                    .format(self.template_type, self.template_name, option_tree))
             return {
                 'Objects': objects,
                 'Transitions': transitions,
@@ -378,10 +398,16 @@ class ExpandObjects(EPJSON):
                 for object_type_reference, transition_structure in opt.items():
                     for template_field, object_field in transition_structure.items():
                         # Ensure there is only one object_key and it is 'Objects'
-                        (object_key, tree_objects), = option_tree_leaf.items()
-                        if not object_key == 'Objects':
-                            raise PyExpandObjectsYamlError(
-                                "Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
+                        try:
+                            (object_key, tree_objects), = option_tree_leaf.items()
+                            if not object_key == 'Objects':
+                                raise PyExpandObjectsYamlStructureException(
+                                    "Error: In {} ({}) OptionTree leaf is incorrectly formatted Transition: {}"
+                                    .format(self.template_type, self.template_name, opt))
+                        except ValueError:
+                            raise PyExpandObjectsYamlStructureException(
+                                "Error: In {} ({}) OptionTree leaf is incorrectly formatted Transition: {}"
+                                .format(self.template_type, self.template_name, opt))
                         # iterate over each object from 'Objects' dictionary
                         for tree_object in tree_objects:
                             for object_type, _ in tree_object.items():
@@ -436,10 +462,16 @@ class ExpandObjects(EPJSON):
                 for object_type_reference, mapping_structure in otm.items():
                     for mapping_field, mapping_dictionary in mapping_structure.items():
                         # Ensure there is only one object_key and it is 'Objects'
-                        (object_key, tree_objects), = option_tree_leaf.items()
-                        if not object_key == 'Objects':
-                            raise PyExpandObjectsYamlError(
-                                "Objects key missing from OptionTree leaf: {}".format(option_tree_leaf))
+                        try:
+                            (object_key, tree_objects), = option_tree_leaf.items()
+                            if not object_key == 'Objects':
+                                raise PyExpandObjectsYamlStructureException(
+                                    "Error: In {} ({}) OptionTree leaf has incorrectly formatted Mapping: {}"
+                                    .format(self.template_type, self.template_name, otm))
+                        except ValueError:
+                            raise PyExpandObjectsYamlStructureException(
+                                "Error: In {} ({}) OptionTree leaf is incorrectly formatted Mapping: {}"
+                                .format(self.template_type, self.template_name, otm))
                         # iterate over each object from 'Objects' dictionary
                         for tree_object in tree_objects:
                             for object_type, object_fields in tree_object.items():
@@ -461,10 +493,11 @@ class ExpandObjects(EPJSON):
                                                     else:
                                                         tree_object[object_type][field] = val
                                                 except AttributeError:
-                                                    self.logger.warning("Template field was attempted to be "
-                                                                        "mapped to object but was not present "
-                                                                        "in template inputs. mapping field: {}, "
-                                                                        "object type: {}".format(field, object_type))
+                                                    self.logger.warning(
+                                                        "Warning: Template field was attempted to be "
+                                                        "mapped to object but was not present "
+                                                        "in template inputs. mapping field: {}, "
+                                                        "object type: {}".format(field, object_type))
         return option_tree_leaf['Objects']
 
     def yaml_list_to_epjson_dictionaries(self, yaml_list: list) -> dict:
@@ -472,7 +505,7 @@ class ExpandObjects(EPJSON):
         Convert list of YAML dictionaries into epJSON formatted dictionaries.
 
         YAML dictionaries can either be regular or 'super' objects which contain 'Fields' and 'Connectors'
-        yaml_list: list of yaml objects to be formatted.
+        :param yaml_list: list of yaml objects to be formatted.
         :return: epJSON formatted dictionary
         """
         output_dictionary = {}
@@ -493,7 +526,8 @@ class ExpandObjects(EPJSON):
                         object_dictionary={transitioned_object_type: {object_name: transitioned_object_structure}})
                 except (TypeError, KeyError, ValueError):
                     raise PyExpandObjectsYamlStructureException(
-                        "YAML object is incorrectly formatted: {}".format(transitioned_object))
+                        "Error: In {} ({}) YAML object is incorrectly formatted: {}"
+                        .format(self.template_type, self.template_name, transitioned_object))
         return output_dictionary
 
     def _resolve_complex_input_from_build_path(
@@ -506,6 +540,7 @@ class ExpandObjects(EPJSON):
 
         :param build_path: list of EnergyPlus super objects forming a build path
         :param lookup_instructions: instructions identifying the node location to return
+        :param connector_path: fluid flow type path (AirLoop only available)
         :return: Resolved field value
         """
         # keep a copy for output
@@ -519,8 +554,10 @@ class ExpandObjects(EPJSON):
             connector_path = connector_path or li.pop('ConnectorPath', None)
             value_location = li.pop('ValueLocation')
         except KeyError:
-            raise PyExpandObjectsYamlStructureException("Build path location reference is invalid: build path {}"
-                                                        .format(backup_copy))
+            raise PyExpandObjectsYamlStructureException(
+                "Error: In {} ({}) Build Path Location or ValueLocation reference is invalid."
+                "\nbuild path: {}\nlookup instructions: {}"
+                .format(self.template_type, self.template_name, build_path, backup_copy))
         try:
             # If location is an integer, then just retrieve the index
             if isinstance(location, int):
@@ -536,7 +573,9 @@ class ExpandObjects(EPJSON):
                 # return the results from the last object match.
                 occurrence = li.pop('Occurrence', 1)
                 if not isinstance(occurrence, int):
-                    raise PyExpandObjectsYamlStructureException('Occurrence key is not an integer: {}'.format(backup_copy))
+                    raise PyExpandObjectsYamlStructureException(
+                        'Error: In {} ({}) Occurrence key in complex reference is not an integer: {}'
+                        .format(self.template_type, self.template_name, backup_copy))
                 match_count = 0
                 previous_object = {}
                 for super_object in build_path:
@@ -552,11 +591,15 @@ class ExpandObjects(EPJSON):
                     previous_object = super_object
                 if (not match_count >= occurrence and occurrence != -1) or match_count == 0:
                     self.logger.warning(
-                        "The number of occurrences in a build path was never reached for "
-                        "complex reference build path: {}, complex reference: {}".format(build_path, backup_copy))
+                        "Warning: In {} ({}) The number of occurrence matches in a build path was never reached for "
+                        "complex reference.  This reference will not be applied."
+                        "\nbuild path: {}\ncomplex reference: {}"
+                        .format(self.template_type, self.template_name, build_path, backup_copy))
                     return None
         except (IndexError, ValueError):
-            raise PyExpandObjectsYamlStructureException("Invalid build path or super object: {}".format(build_path))
+            raise PyExpandObjectsYamlStructureException(
+                "Error: In {} ({}) Invalid build path or lookup instructions:\nbuild_path: {}\nlookup_instructions: {}"
+                .format(self.template_type, self.template_name, build_path, backup_copy))
         if value_location.lower() == 'self':
             return super_object_type
         elif value_location.lower() == 'key':
@@ -565,21 +608,28 @@ class ExpandObjects(EPJSON):
             reference_node = super_object_structure['Connectors'][connector_path][value_location]
             return super_object_structure['Fields'][reference_node]
         else:
-            raise PyExpandObjectsYamlStructureException("Invalid complex input for build path lookup: lookup, {}, "
-                                                        "value_location {}".format(backup_copy, value_location))
+            raise PyExpandObjectsYamlStructureException(
+                "Error: In {} ({}) Invalid complex input for Build Path "
+                "Lookup:\nlookup_instructions: {}\nvalue_location: {}"
+                .format(self.template_type, self.template_name, backup_copy, value_location))
 
     def _resolve_complex_input(
             self,
             field_name: str,
             input_value: typing.Union[str, int, float, dict, list],
             epjson: dict = None,
-            build_path: list = None) -> \
+            build_path: list = None,
+            recursions: int = 0) -> \
             typing.Generator[str, typing.Dict[str, str], None]:
         """
-        Resolve a complex input into a field value
+        Resolve a complex input reference into a field value
 
-        :param epjson: epJSON dictionary of objects
+        :param field_name: object field name
         :param input_value: field value input
+        :param epjson: epJSON dictionary of objects
+        :param build_path: BuildPath to reference for lookup
+        :param recursions: cumulative count of recursive calls so that a cap can be made.  This is a backup in case
+            RecursionError misses an infinite loop.
         :return: resolved field value
         """
         # Try class attributes if variables not defined in function
@@ -629,15 +679,17 @@ class ExpandObjects(EPJSON):
             try:
                 (reference_object_type, lookup_instructions), = input_value.items()
             except ValueError:
-                raise PyExpandObjectsYamlStructureException('Complex input reference is invalid: {}'
-                                                            .format(input_value))
+                raise PyExpandObjectsYamlStructureException(
+                    'Error: In {} ({}) Complex input reference is invalid: {}'
+                    .format(self.template_type, self.template_name, input_value))
             # If the input_value is instructing to use a 'BuildPathReference' then insert the object by build
             # path location
             if reference_object_type.lower() == 'buildpathreference':
                 if not build_path:
-                    raise PyExpandObjectsYamlStructureException("BuildPath complex input was specified with no build"
-                                                                " path available: field {}, input {}"
-                                                                .format(field_name, input_value))
+                    raise PyExpandObjectsYamlStructureException(
+                        "Error: In {} ({}) Build Path complex input was specified with no build"
+                        " path available. field {}, input {}"
+                        .format(self.template_type, self.template_name, field_name, input_value))
                 try:
                     # Get the referenced node value
                     extracted_value = self._resolve_complex_input_from_build_path(
@@ -645,20 +697,27 @@ class ExpandObjects(EPJSON):
                         lookup_instructions=lookup_instructions)
                     # Resolve the extracted value with this function.
                     try:
+                        # safeguard in case Recursions exception misses infinite loop
+                        if recursions > 5:
+                            raise PyExpandObjectsYamlStructureException(
+                                "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                                .format(self.template_type, self.template_name, input_value, field_name))
                         complex_generator = self._resolve_complex_input(
                             epjson=epjson,
                             field_name=field_name,
-                            input_value=extracted_value)
+                            input_value=extracted_value,
+                            recursions=recursions + 1)
                         for cg in complex_generator:
                             yield cg
                     except RecursionError:
                         raise PyExpandObjectsYamlStructureException(
-                            "Maximum Recursion limit exceeded when resolving {} for {}"
-                            .format(input_value, field_name))
+                            "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                            .format(self.template_type, self.template_name, input_value, field_name))
                 except (KeyError, PyExpandObjectsYamlStructureException):
-                    raise PyExpandObjectsYamlStructureException("Object field could not be resolved: input {}, "
-                                                                "field {}, template name {}"
-                                                                .format(input_value, field_name, self.unique_name))
+                    raise PyExpandObjectsYamlStructureException(
+                        "Error: In {} ({}) Object field could not be resolved: input {}, "
+                        "field {}\nbuild path: {}"
+                        .format(self.template_type, self.template_name, input_value, field_name, build_path))
             else:
                 # If the input_value is an object type reference then try to match it with the EnergyPlus objects in
                 # the super dictionary.
@@ -676,16 +735,22 @@ class ExpandObjects(EPJSON):
                             yield {"field": field_name, "value": object_name}
                         elif isinstance(epjson[object_type][object_name][lookup_instructions], dict):
                             try:
+                                # safeguard in case Recursions exception misses infinite loop
+                                if recursions > 5:
+                                    raise PyExpandObjectsYamlStructureException(
+                                        "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                                        .format(self.template_type, self.template_name, input_value, field_name))
                                 complex_generator = self._resolve_complex_input(
                                     epjson=epjson,
                                     field_name=field_name,
-                                    input_value=epjson[object_type][object_name][lookup_instructions])
+                                    input_value=epjson[object_type][object_name][lookup_instructions],
+                                    recursions=recursions + 1)
                                 for cg in complex_generator:
                                     yield cg
                             except RecursionError:
                                 raise PyExpandObjectsYamlStructureException(
-                                    "Maximum Recursion limit exceeded when resolving {} for {}"
-                                    .format(input_value, field_name))
+                                    "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                                    .format(self.template_type, self.template_name, input_value, field_name))
                         else:
                             # attempt to format both the field and value to be returned.
                             if isinstance(field_name, str):
@@ -702,22 +767,33 @@ class ExpandObjects(EPJSON):
         elif isinstance(input_value, list):
             # When the input is a list, iterate and apply this function recursively to each object.
             try:
+                # safeguard in case Recursions exception misses infinite loop
+                if recursions > 5:
+                    raise PyExpandObjectsYamlStructureException(
+                        "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                        .format(self.template_type, self.template_name, input_value, field_name))
                 tmp_list = []
                 for input_list_item in input_value:
                     tmp_d = {}
                     for input_list_field, input_list_value in input_list_item.items():
+                        # safeguard in case Recursions exception misses infinite loop
+                        if recursions > 5:
+                            raise PyExpandObjectsYamlStructureException(
+                                "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                                .format(self.template_type, self.template_name, input_value, field_name))
                         complex_generator = self._resolve_complex_input(
                             epjson=epjson,
                             field_name=input_list_field,
-                            input_value=input_list_value)
+                            input_value=input_list_value,
+                            recursions=recursions + 1)
                         for cg in complex_generator:
                             tmp_d[cg["field"]] = cg["value"]
                     tmp_list.append(tmp_d)
                 yield {"field": field_name, "value": tmp_list}
             except RecursionError:
                 raise PyExpandObjectsYamlStructureException(
-                    "Maximum Recursion limit exceeded when resolving {} for {}"
-                    .format(input_value, field_name))
+                    "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                    .format(self.template_type, self.template_name, input_value, field_name))
         return
 
     def resolve_objects(self, epjson, reference_epjson=None):
@@ -754,10 +830,9 @@ class ExpandObjects(EPJSON):
                             # use the zero comparison to specifically pass that number.  The 'is not None' clause is
                             # not used here as this is more strict.
                             if isinstance(ig['value'], dict):
-                                raise PyExpandObjectsYamlStructureException('complex input was not processed for '
-                                                                            'object {}. Complex input: {}, output value'
-                                                                            ' {}'.format(object_name, field_name,
-                                                                                         field_value))
+                                raise PyExpandObjectsYamlStructureException(
+                                    'complex input was not processed for object {}. Complex input: {}, output value'
+                                    ' {}'.format(object_name, field_name, field_value))
                             try:
                                 test_zero = float(ig['value'])
                             except (TypeError, ValueError):
@@ -781,6 +856,7 @@ class ExpandObjects(EPJSON):
         """
         Create a set of EnergyPlus objects for a given template
 
+        :param epjson: epJSON object to use for merge and reference.
         :return: epJSON dictionary of newly created objects.  The input epJSON dictionary is also modified to include
             the newly created objects
         """
@@ -812,6 +888,7 @@ class ExpandObjects(EPJSON):
         Iterate over build path and check if each object is a super object.  If not, commit the object to the input
         epJSON.  Return a build path of only super objects.
 
+        :param object_list: BuildPath list of objects which may contain mixed combination of regular objects and super objects
         :param epjson: input epJSON dictionary
         :return: build path of only super objects
         """
@@ -853,16 +930,17 @@ class ExpandObjects(EPJSON):
         occurrence = action_instructions.pop('Occurrence', 1)
         # Format check inputs for occurrence
         if not isinstance(occurrence, int) or (isinstance(occurrence, int) and occurrence < 0):
-            raise PyExpandObjectsYamlStructureException('Occurrence must be a non-negative integer: {}'
-                                                        .format(occurrence))
+            raise PyExpandObjectsYamlStructureException('Error: In {} ({}) Occurrence must be a non-negative integer: {}'
+                                                        .format(self.template_type, self.template_name, occurrence))
         # backup copy for output
         backup_copy = copy.deepcopy(action_instructions)
         try:
             # Format check inputs for action_type and location
             action_type = action_instructions.pop('ActionType').lower()
             if action_type not in ('insert', 'remove', 'replace'):
-                raise PyExpandObjectsYamlStructureException('Invalid action type requested: {}'
-                                                            .format(action_instructions))
+                raise PyExpandObjectsYamlStructureException(
+                    'Error: In {} ({}) Invalid action type requested: {}'
+                    .format(self.template_type, self.template_name, action_instructions))
             # check 'Location' format and ensure it is the right type and value.
             # if location is an integer then object_reference is not needed because the action will be
             # performed on that index and no object lookup will be required.
@@ -877,11 +955,14 @@ class ExpandObjects(EPJSON):
                 location = action_instructions.pop('Location')
                 object_reference = None
             else:
-                raise PyExpandObjectsYamlStructureException('Insert reference value is not "Before", "After" or an '
-                                                            'integer: {}'.format(backup_copy))
+                raise PyExpandObjectsYamlStructureException(
+                    'Error: In {} ({}) Build path action insert reference value is not "Before", "After" '
+                    'or an integer: {}'
+                    .format(self.template_type, self.template_name, backup_copy))
         except KeyError:
             raise PyExpandObjectsYamlStructureException(
-                "Build Path Action is missing required instructions {}. ".format(backup_copy))
+                "Error: In {} ({}) Build Path action is missing required instructions {}."
+                .format(self.template_type, self.template_name, backup_copy))
         # Get the option tree leaf for an action.
         # Remove does not require this step since it just removes objects from the original build path
         if action_type != 'remove':
@@ -929,13 +1010,15 @@ class ExpandObjects(EPJSON):
                                 output_build_path[idx] = object_list
                             else:
                                 raise PyExpandObjectsYamlStructureException(
-                                    "Action could not be performed on build path for an "
-                                    "unknown reason: build path {}, action: {}".format(build_path, action_instructions))
+                                    "Error: In {} ({}) Build Path action could not be performed due to a bad action"
+                                    "statement: build path {}, action: {}"
+                                    .format(self.template_type, self.template_name, build_path, action_instructions))
             # check if the number of matches actually met the occurrence threshold
             if not match_count >= occurrence:
                 raise PyExpandObjectsYamlStructureException(
-                    "The number of occurrences in a build path was never reached for "
-                    "an action. build path: {}, action: {}".format(build_path, action_instructions))
+                    "Error: In {} ({}) The number of occurrence matches in a build path was never reached for "
+                    "an action. build path: {}, action: {}"
+                    .format(self.template_type, self.template_name, build_path, action_instructions))
         # flatten build path list before output
         output_build_path = self._flatten_list(output_build_path)
         return output_build_path
@@ -945,12 +1028,16 @@ class ExpandObjects(EPJSON):
         Connect nodes in build path and convert to list of epJSON formatted objects
 
         :param build_path: build path of EnergyPlus super objects
+        :param loop_type: fluid flow path (only AirLoop available)
         :return: object list of modified super objects.  The build path is also saved as a class attribute for
             future reference
         """
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
-            raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+            raise PyExpandObjectsException(
+                "Error: In {} ({}) Build path was not provided nor was it available as a class attribute "
+                "when connecting and converting objects"
+                .format(self.template_type, self.template_name))
         # cleanse build path to only contain super objects.  Non super objects are saved to epJSON file
         parsed_build_path = self._parse_build_path(object_list=copy.deepcopy(build_path))
         object_list = []
@@ -960,8 +1047,9 @@ class ExpandObjects(EPJSON):
             (super_object_type, super_object_structure), = super_object.items()
             connectors = super_object_structure.get('Connectors')
             if not connectors:
-                raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
-                                                            .format(super_object))
+                raise PyExpandObjectsYamlStructureException(
+                    "Error: In {} ({}) Referenced super object is missing Connectors key: {}"
+                    .format(self.template_type, self.template_name, super_object))
             try:
                 # if a super object is specified but the Loop Connectors is identified as False, then just
                 #  append it to the build path but don't make a connection.  An example of this is the heat
@@ -980,8 +1068,9 @@ class ExpandObjects(EPJSON):
                 object_list.append({super_object_type: super_object_structure['Fields']})
                 formatted_build_path.append({super_object_type: super_object_structure})
             except (AttributeError, KeyError):
-                raise PyExpandObjectsYamlStructureException("Field/Connector mismatch. Object: {}, connectors: {}"
-                                                            .format(super_object_structure, connectors))
+                raise PyExpandObjectsYamlStructureException(
+                    "Error: In {} ({}) There is a Field/Connector mismatch.\nObject: {}\nconnectors: {}"
+                    .format(self.template_type, self.template_name, super_object_structure, connectors))
         # Save build path to class attribute for later reference.
         self.build_path = formatted_build_path
         return object_list
@@ -1011,8 +1100,9 @@ class ExpandObjects(EPJSON):
                         'availability_manager_name': object_name,
                         'availability_manager_object_type': object_type})
         except AttributeError:
-            raise PyExpandObjectsTypeError("AvailabilityManager object not properly formatted: {}"
-                                           .format(availability_managers))
+            raise PyExpandObjectsTypeError(
+                "Error: In {} ({}) AvailabilityManager object not properly formatted: {}"
+                .format(self.template_type, self.template_name, availability_managers))
         availability_manager_assignment_list_object = self.yaml_list_to_epjson_dictionaries([
             {'AvailabilityManagerAssignmentList': availability_manager_list_object}, ])
         self.merge_epjson(
@@ -1028,6 +1118,7 @@ class ExpandObjects(EPJSON):
         information on how one object should connect the previous/next object in the build path list.  A branch of
         connected objects is also produced.
 
+        :param option_tree: OptionTree to use for build instructions
         :return: list of EnergyPlus super objects.  Additional EnergyPlus objects (Branch, Branchlist) that require
             the build path for their creation.
         """
@@ -1067,13 +1158,18 @@ class ExpandObjects(EPJSON):
                                         action_instructions=action_instructions)
                                 action_applied = True
                 except (AttributeError, KeyError):
-                    raise PyExpandObjectsYamlStructureException("Action is incorrectly formatted: {}".format(action))
+                    raise PyExpandObjectsYamlStructureException(
+                        "Error: In {} ({}) Build Path action is incorrectly formatted: {}"
+                        .format(self.template_type, self.template_name, action))
                 if not action_applied:
-                    raise PyExpandObjectsYamlStructureException('A build path action was not applied for template field {} '
-                                                                'and option {}: {}'.format(
-                                                                    template_field_processing,
-                                                                    getattr(self, template_field_processing, None),
-                                                                    action))
+                    raise PyExpandObjectsYamlStructureException(
+                        'Error: In {} ({}) A build path action was not applied for template field {} '
+                        'and option {}: {}'.format(
+                            self.template_type,
+                            self.template_name,
+                            template_field_processing,
+                            getattr(self, template_field_processing, None),
+                            action))
         # Format the created build path
         object_list = self._connect_and_convert_build_path_to_object_list(build_path)
         return object_list
@@ -1131,9 +1227,9 @@ class ExpandThermostat(ExpandObjects):
     Thermostat expansion operations
     """
 
-    def __init__(self, template, epjson=None):
+    def __init__(self, template, logger_level='WARNING', epjson=None):
         # fill/create class attributes values with template inputs
-        super().__init__(template=template)
+        super().__init__(template=template, logger_level=logger_level)
         self.unique_name = self.template_name
         self.epjson = epjson or self.epjson
         return
@@ -1190,7 +1286,8 @@ class ExpandThermostat(ExpandObjects):
         else:
             # todo_eo: should the final else case make a floating thermostat or this error?
             raise InvalidTemplateException(
-                'No setpoints or schedules provided to HVACTemplate:Thermostat object: {}'.format(self.unique_name))
+                'Error: In {} ({}) No setpoints or schedules provided to object'
+                .format(self.template_type, self.template_name))
         self.merge_epjson(
             super_dictionary=self.epjson,
             object_dictionary=thermostat_setpoint_object,
@@ -1434,6 +1531,21 @@ class VRFType:
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
+
+    Attributes from Descriptors:
+        zone_hvac_equipmentlist_object_type
+
+        design_specification_outdoor_air_object_status
+
+        design_specification_zone_air_distribution_object_status
+
+        heating_design_air_flow_method
+
+        cooling_design_air_flow_method
+
+        humidistat_object_type
+
+        fan_powered_reheat_type
     """
 
     zone_hvac_equipmentlist_object_type = ZonevacEquipmentListObjectType()
@@ -1445,15 +1557,15 @@ class ExpandZone(ExpandObjects):
     fan_powered_reheat_type = FanPoweredReheatType()
     vrf_type = VRFType()
 
-    def __init__(self, template, epjson=None):
+    def __init__(self, template, logger_level='WARNING', epjson=None):
         # fill/create class attributes values with template inputs
-        super().__init__(template=template)
+        super().__init__(template=template, logger_level=logger_level)
         try:
             self.unique_name = getattr(self, 'zone_name')
             if not self.unique_name:
-                raise InvalidTemplateException("Zone name not provided in template: {}".format(template))
+                raise InvalidTemplateException("Error: Zone name not provided in template: {}".format(template))
         except AttributeError:
-            raise InvalidTemplateException("Zone name not provided in zone template: {}".format(template))
+            raise InvalidTemplateException("Error: Zone name not provided in zone template: {}".format(template))
         self.zone_hvac_equipmentlist_object_type = template
         self.design_specification_outdoor_air_object_status = template
         self.design_specification_zone_air_distribution_object_status = template
@@ -1463,6 +1575,29 @@ class ExpandZone(ExpandObjects):
         self.fan_powered_reheat_type = template
         self.vrf_type = template
         self.epjson = epjson or self.epjson
+        # Zone warnings
+        if self.template_type == 'HVACTemplate:Zone:WaterToAirHeatPump':
+            cooling_coil_gross_rated_total_capacity = \
+                getattr(self, 'cooling_coil_gross_rated_total_capacity', 'Autosize')
+            cooling_coil_gross_rated_sensible_heat_ratio = \
+                getattr(self, 'cooling_coil_gross_rated_sensible_heat_ratio', 'Autosize')
+            if str(cooling_coil_gross_rated_total_capacity).lower() == 'autosize' and \
+                    str(cooling_coil_gross_rated_sensible_heat_ratio).lower() != 'autosize':
+                self.logger.warning(
+                    'Warning:  In {} ({})'
+                    ' the Cooling Coil Rated Capacity is autosized, so the Cooling Coil Gross Rated Sensible Heat Ratio '
+                    ' will also be autosized. The specified value for Cooling Coil Gross Rated Sensible Heat Ratio'
+                    ' will be ignored.  Autosize both or specify values for both.'
+                    .format(self.template_type, self.template_name))
+                setattr(self, 'cooling_coil_gross_rated_sensible_heat_ratio', 'Autosize')
+            if str(cooling_coil_gross_rated_total_capacity).lower() != 'autosize' and \
+                    str(cooling_coil_gross_rated_sensible_heat_ratio).lower() == 'autosize':
+                self.logger.warning(
+                    'Warning:  In {} ({})'
+                    ' the Cooling Coil Rated Capacity will not be used when the Cooling Coil Gross Rated Sensible Heat Ratio'
+                    ' is autosized. Autosize both or specify values for both.'
+                    .format(self.template_type, self.template_name))
+                setattr(self, 'cooling_coil_gross_rated_total_capacity', 'Autosize')
         return
 
     def run(self):
@@ -1635,7 +1770,25 @@ class ModifyHeatingCoilSetpointControlType:
                 obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, supply_fan_placement])
             else:
                 # Change heating design setpoint if no coil is present
-                if getattr(obj, 'preheat_coil_design_setpoint', None):
+                if getattr(obj, 'preheat_coil_design_setpoint', None) and \
+                        getattr(obj, 'heating_coil_design_setpoint', None) and \
+                        getattr(obj, 'heating_coil_design_setpoint') > getattr(obj, 'preheat_coil_design_setpoint'):
+                    obj.logger.warning(
+                        'Warning:  In {}'
+                        ' the Heating Coil Design Setpoint is greater than the Preheat Coil Design Setpoint,'
+                        ' but Heating Coil Type=None. Using Preheat Coil Design Setpoint for the Sizing:System'
+                        ' Central Heating Design Supply Air Temperature.'.format(template_type))
+                    setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
+                elif getattr(obj, 'preheat_coil_design_setpoint', None) and \
+                        getattr(obj, 'preheat_coil_type', 'None') == 'None':
+                    obj.logger.warning(
+                        'Warning:  In {}'
+                        ' there is no Heating Coil and no Preheat Coil.'
+                        ' The Preheat Coil Design Setpoint will be used for the Sizing:System'
+                        ' Central Heating Design Supply Air Temperature. This will be the inlet air temperature for'
+                        ' sizing reheat coils.')
+                    setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
+                elif getattr(obj, 'preheat_coil_design_setpoint', None):
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
                 elif getattr(obj, 'cooling_coil_design_setpoint', None):
                     setattr(obj, 'heating_coil_design_setpoint', obj.cooling_coil_design_setpoint)
@@ -1729,6 +1882,25 @@ class ModifyDehumidificationControlType:
 class ExpandSystem(ExpandObjects):
     """
     System expansion operations
+
+    Attributes from Descriptors:
+        airloop_hvac_unitary_object_type
+
+        airloop_hvac_object_type
+
+        airloop_hvac_unitary_fan_type_and_placement
+
+        cooling_coil_setpoint_control_type
+
+        heating_coil_setpoint_control_type
+
+        setpoint_control_type: concatenated string of cooling_coil_setpoint_control_type and heating_coil_setpoint_control_type
+
+        humidistat_type
+
+        outside_air_equipment_type
+
+        dehumidification_control_type
     """
 
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
@@ -1740,8 +1912,8 @@ class ExpandSystem(ExpandObjects):
     outside_air_equipment_type = OutsideAirEquipmentType()
     dehumidification_control_type = ModifyDehumidificationControlType()
 
-    def __init__(self, template, epjson=None):
-        super().__init__(template=template)
+    def __init__(self, template, logger_level='WARNING', epjson=None):
+        super().__init__(template=template, logger_level=logger_level)
         # map variable variants to common value and remove original
         self.rename_attribute('cooling_coil_design_setpoint_temperature', 'cooling_coil_design_setpoint')
         self.rename_attribute('economizer_upper_temperature_limit', 'economizer_maximum_limit_dry_bulb_temperature')
@@ -1764,6 +1936,93 @@ class ExpandSystem(ExpandObjects):
         self.humidistat_type = template
         self.outside_air_equipment_type = template
         self.dehumidification_control_type = template
+        # System Warnings
+        if self.template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV',
+                                  'HVACTemplate:System:ConstantVolume']:
+            cooling_coil_design_setpoint = getattr(self, 'cooling_coil_design_setpoint', None)
+            if not cooling_coil_design_setpoint:
+                getattr(self, 'cooling_coil_design_setpoint_temperature', None)
+            cooling_setpoint_schedule_name = getattr(self, 'cooling_coil_setpoint_schedule_name', 'None')
+            cooling_coil_setpoint_type = getattr(self, 'cooling_coil_setpoint_reset_type', 'None')
+            if cooling_coil_setpoint_type == 'None':
+                getattr(self, 'cooling_coil_setpoint_control_type', 'None')
+            heating_coil_type = getattr(self, 'heating_coil_type', 'None')
+            heating_coil_design_setpoint = getattr(self, 'heating_coil_design_setpoint', None)
+            heating_setpoint_schedule_name = getattr(self, 'heating_coil_setpoint_schedule_name', 'None')
+            heating_coil_setpoint_type = getattr(self, 'heating_coil_setpoint_reset_type', 'None')
+            if heating_coil_setpoint_type == 'None':
+                getattr(self, 'heating_coil_setpoint_control_type', 'None')
+            preheat_coil_type = getattr(self, 'preheat_coil_type', 'None')
+            preheat_coil_setpoint_schedule_name = getattr(self, 'preheat_coil_setpoint_schedule_name', 'None')
+            preheat_coil_design_setpoint = getattr(self, 'preheat_coil_design_setpoint', None)
+            if cooling_setpoint_schedule_name == 'None' and cooling_coil_setpoint_type == 'None':
+                if heating_coil_type != 'None' and \
+                        heating_setpoint_schedule_name == 'None' and heating_coil_setpoint_type == 'None':
+                    if not heating_coil_design_setpoint or not cooling_coil_design_setpoint:
+                        self.logger.warning('Warning: Expected cooling and heating design setpoints to be set but '
+                                            'one or both are not.')
+                    elif heating_coil_design_setpoint > cooling_coil_design_setpoint:
+                        self.logger.warning(
+                            'Warning:  In {} ({})'
+                            ' the Heating Coil Design Setpoint is greater than the Cooling Coil Design Setpoint.'
+                            ' This may cause the heating coil and cooling coil to operate simultaneously.'
+                            ' Check results carefully and adjust controls if needed.'
+                            .format(self.template_type, self.template_name))
+                if preheat_coil_type != 'None' and preheat_coil_setpoint_schedule_name == 'None':
+                    if not preheat_coil_design_setpoint or not cooling_coil_design_setpoint:
+                        self.logger.warning('Warning: Expected cooling and preheat design setpoints to be set but '
+                                            'one or both are not.')
+                    elif preheat_coil_design_setpoint > cooling_coil_design_setpoint:
+                        self.logger.warning(
+                            'Warning:  In {} ({})'
+                            ' the Preheat Coil Design Setpoint is greater than the Cooling Coil Design Setpoint.'
+                            ' This may cause the preheat coil and cooling coil to operate simultaneously.'
+                            ' Check results carefully and adjust controls if needed.'
+                            .format(self.template_type, self.template_name))
+        if self.template_type in ['HVACTemplate:System:UnitarySystem', ]:
+            if str(getattr(self, 'dx_cooling_coil_gross_rated_total_capacity', 'Autosize')).lower() == 'autosize' and \
+                    str(getattr(self, 'dx_cooling_coil_gross_rated_sensible_heat_ratio', 'Autosize')).lower() != 'autosize':
+                self.logger.warning(
+                    'Warning:  In {} ({})'
+                    ' the Cooling Coil Rated Capacity is autosized, so the Cooling Coil Gross Rated Sensible Heat Ratio '
+                    ' will also be autosized. The specified value for Cooling Coil Gross Rated Sensible Heat Ratio'
+                    ' will be ignored.  Autosize both or specify values for both.'
+                    .format(self.template_type, self.unique_name))
+                setattr(self, 'dx_cooling_coil_gross_rated_sensible_heat_ratio', 'Autosize')
+            if str(getattr(self, 'dx_cooling_coil_gross_rated_total_capacity', 'Autosize')).lower() != 'autosize' and \
+                    str(getattr(self, 'dx_cooling_coil_gross_rated_sensible_heat_ratio', 'Autosize')).lower() == 'autosize':
+                self.logger.warning(
+                    'Warning:  In {} ({})'
+                    ' the Cooling Coil Rated Capacity will not be used when the Cooling Coil Gross Rated '
+                    'Sensible Heat Ratio is autosized. Autosize both or specify values for both.'
+                    .format(self.template_type, self.unique_name))
+                setattr(self, 'dx_cooling_coil_gross_rated_total_capacity', 'Autosize')
+        if self.template_type in ['HVACTemplate:System:DedicatedOutdoorAir', ]:
+            dehumidification_control_type = getattr(self, 'dehumidification_control_type', 'None')
+            cooling_coil_type = getattr(self, 'cooling_coil_type', 'None')
+            heating_coil_type = getattr(self, 'heating_coil_type', 'None')
+            heat_recovery_type = getattr(self, 'heat_recovery_type', 'None')
+            if (dehumidification_control_type == 'Multimode' and cooling_coil_type == 'TwoStageHumidityControlDX') or \
+                    (dehumidification_control_type == 'CoolReheatDesuperheater' and cooling_coil_type == 'TwoSpeedDX'):
+                self.logger.warning(
+                    'Warning: In {} ({})'
+                    ' the Dehumidification Control Type field={}'
+                    ' is not applicable for Cooling Coil Type={}'
+                    '. Dehumidification Control Type reset to None.'
+                    .format(self.template_type, self.unique_name, dehumidification_control_type, cooling_coil_type))
+                setattr(self, 'dehumidification_control_type', 'None')
+            if dehumidification_control_type != 'None' and heating_coil_type == 'None':
+                self.logger.warning(
+                    'Warning: In {} ({})'
+                    ' the Dehumidification Control Type field={}'
+                    ' but there is no heating coil in this system to provide reheat. Cold supply temps may result.'
+                    .format(self.template_type, self.unique_name, dehumidification_control_type))
+            if heat_recovery_type != 'None' and heating_coil_type == 'None':
+                self.logger.warning(
+                    'Warning: In {} ({})'
+                    ' there is heat recovery with no heating coil. The heat recovery heating mode will be'
+                    ' controlled to not exceed the cooling setpoint.'
+                    .format(self.template_type, self.unique_name))
         return
 
     def _create_controller_list_from_epjson(
@@ -1858,12 +2117,13 @@ class ExpandSystem(ExpandObjects):
                             airloop_hvac_controllerlist_object['controller_{}_object_type'.format(object_id)] = \
                                 controller_type
                 except ValueError:
-                    raise PyExpandObjectsTypeError("Actuator node for water coil object does not match controller "
-                                                   "object reference. build_path: {}, controllers: {}"
-                                                   .format(build_path, controller_objects))
-                except AttributeError:
-                    raise PyExpandObjectsTypeError("Controller object not properly formatted: {}"
-                                                   .format(controller_objects))
+                    raise PyExpandObjectsTypeError(
+                        "Error: In {} ({}) Actuator node for water coil object does not match controller "
+                        "object reference. build_path: {}, controllers: {}"
+                        .format(self.template_type, self.template_name, build_path, controller_objects))
+                except (AttributeError, KeyError):
+                    raise PyExpandObjectsTypeError("Error: In {} ({}) Controller object not properly formatted: {}"
+                                                   .format(self.template_type, self.template_name, controller_objects))
                 object_list.append({'AirLoopHVAC:ControllerList': airloop_hvac_controllerlist_object})
         controller_epjson = self.yaml_list_to_epjson_dictionaries(object_list)
         self.merge_epjson(
@@ -1888,7 +2148,9 @@ class ExpandSystem(ExpandObjects):
         epjson = epjson or self.epjson
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
-            raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+            raise PyExpandObjectsException(
+                "Error: Build path was not provided nor was it available as a class attribute when creating an "
+                "AirLoopHVAC:OutdoorAirSystem:EquipmentList")
         # set dictionary and loop variables
         stop_loop = False
         object_count = 1
@@ -1926,8 +2188,9 @@ class ExpandSystem(ExpandObjects):
             for super_object_type, super_object_constructor in super_object.items():
                 if getattr(self, 'return_fan', None) == 'Yes' and idx == 0:
                     if not re.match(r'Fan:.*', super_object_type):
-                        raise PyExpandObjectsException('Return fan specified in template but is not the first object in '
-                                                       'build path: {}'.format(build_path))
+                        raise PyExpandObjectsException(
+                            'Error: Return fan specified in template but is not the first object in '
+                            'build path: {}'.format(build_path))
                     else:
                         continue
                 if stop_loop:
@@ -1967,7 +2230,7 @@ class ExpandSystem(ExpandObjects):
                         oa_controller_list_name = object_name
                         break
         if not oa_controller_list_name:
-            raise PyExpandObjectsException("No outdoor air AirLoopHVAC:ControllerList present in the {} system "
+            raise PyExpandObjectsException("Error: No outdoor air AirLoopHVAC:ControllerList present in the {} system "
                                            "build process, possibly because no Controller:OutdooAir object present "
                                            "in template creation process either.".format(self.unique_name))
         # get outdoor air system equipment list
@@ -1975,14 +2238,14 @@ class ExpandSystem(ExpandObjects):
             oa_system_equipment_list_object = epjson.get('AirLoopHVAC:OutdoorAirSystem:EquipmentList')
             (oa_system_equipment_name, _), = oa_system_equipment_list_object.items()
         except (ValueError, AttributeError):
-            raise PyExpandObjectsException('Only one AirLoopHVAC:OutdoorAirSystem:EquipmentList object is allowed '
-                                           'in {} template build process'.format(self.unique_name))
+            raise PyExpandObjectsException('Error: Only one AirLoopHVAC:OutdoorAirSystem:EquipmentList object '
+                                           'is allowed in {} template build process'.format(self.unique_name))
         # get availability manager list
         try:
             availability_manager_list_object = epjson.get('AvailabilityManagerAssignmentList')
             (availability_manager_name, _), = availability_manager_list_object.items()
         except (ValueError, AttributeError):
-            raise PyExpandObjectsException('Only one AvailabilityManagerAssignmentList object is allowed in '
+            raise PyExpandObjectsException('Error: Only one AvailabilityManagerAssignmentList object is allowed in '
                                            '{} template build process'.format(self.unique_name))
         outdoor_air_system_yaml_object = \
             self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'OutdoorAirSystem', 'Base'])
@@ -2009,12 +2272,14 @@ class ExpandSystem(ExpandObjects):
         epjson = epjson or self.epjson
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
-            raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+            raise PyExpandObjectsException(
+                "Error: Build path was not provided nor was it available as a class attribute when creating "
+                "AirLoopHVAC:OutdoorAirSystem")
         # The first object in the branch must be the AirLoopHVAC:OutdoorAirSystem that must be present in the epjson
         # from previous steps.
         outdoor_air_system = epjson.get('AirLoopHVAC:OutdoorAirSystem')
         if not outdoor_air_system:
-            raise PyExpandObjectsException("No AirLoopHVAC:OutdoorAirSystem detected in {} build process"
+            raise PyExpandObjectsException("Error: No AirLoopHVAC:OutdoorAirSystem detected in {} build process"
                                            .format(self.unique_name))
         # iterate backwards over build_path and insert each object until the OutdoorAir:Mixer is hit.
         # Do first append with OutdoorAirSystem object
@@ -2044,21 +2309,23 @@ class ExpandSystem(ExpandObjects):
                     })
                     break
                 except (AttributeError, KeyError, ValueError):
-                    raise PyExpandObjectsYamlStructureException("Error inserting AirLoopHVAC:OutdoorairSystem into "
-                                                                "build path for system {}: {}"
-                                                                .format(self.unique_name, build_path))
+                    raise PyExpandObjectsYamlStructureException(
+                        "Error: Failed to insert AirLoopHVAC:OutdoorairSystem into build path for system {}: {}"
+                        .format(self.unique_name, build_path))
         # check that the outdoor air system was applied to the build path
         if 'AirLoopHVAC:OutdoorAirSystem' not in [list(i.keys())[0] for i in parsed_build_path]:
-            raise PyExpandObjectsException("AirLoopHVAC:OutdoorAirSystem failed to be applied in {} build path {}"
-                                           .format(self.unique_name, build_path))
+            raise PyExpandObjectsException(
+                "Error: AirLoopHVAC:OutdoorAirSystem failed to be applied in {} build path {}"
+                .format(self.unique_name, build_path))
         # check if a return fan is specified in the template.  If so, then copy the first object, which should be a fan
         # and also should have been skipped by the above process.  Insert the object into the list at the end of the
         # process at position 0
         if getattr(self, 'return_fan', None) == 'Yes':
             (return_fan_type, return_fan_structure), = build_path[0].items()
             if not re.match(r'Fan:.*', return_fan_type):
-                raise PyExpandObjectsException('Return fan was specified in HVACTemplate:System, however, a fan was not '
-                                               'the first object specified in the build path: {}'.format(build_path))
+                raise PyExpandObjectsException(
+                    'Error: Return fan was specified in HVACTemplate:System, however, a fan was not '
+                    'the first object specified in the build path: {}'.format(build_path))
             else:
                 parsed_build_path.insert(0, copy.deepcopy(build_path[0]))
         return parsed_build_path
@@ -2139,7 +2406,9 @@ class ExpandSystem(ExpandObjects):
         # if build_path is not passed to function, get the class attributes
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
-            raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+            raise PyExpandObjectsException(
+                "Error: Build path was not provided nor was it available as a class attribute when modifying build path"
+                " for equipment types")
         equipment_object = None
         for el in equipment_lookup:
             if self.template_type in el[0]:
@@ -2178,9 +2447,9 @@ class ExpandSystem(ExpandObjects):
                         if {'Fields', 'Connectors'} != set(equipment_object_keys.keys()):
                             raise ValueError
                     except ValueError:
-                        raise PyExpandObjectsException("Equipment is improperly formatted, must be a super"
-                                                       "object. system: {} object: {}"
-                                                       .format(self.unique_name, equipment_object))
+                        raise PyExpandObjectsException(
+                            "Error: Equipment is improperly formatted, must be a super object. system: {} object: {}"
+                            .format(self.unique_name, equipment_object))
                     # Iterate through list and remove objects that match the check list as well as dummy objects
                     parsed_build_path = []
                     removed_items = 0
@@ -2201,8 +2470,9 @@ class ExpandSystem(ExpandObjects):
                             parsed_build_path.append(equipment_object)
                             removed_items += 1
                     if removed_items < sum(1 for i, j in object_check_list if j):
-                        raise PyExpandObjectsException("Equipment modification process failed to remove all objects "
-                                                       "for system {}".format(self.unique_name))
+                        raise PyExpandObjectsException(
+                            "Error: Equipment modification process failed to remove all objects "
+                            "for system {}".format(self.unique_name))
                     return parsed_build_path
         # if no matches are made, return original build_path
         return build_path
@@ -2232,7 +2502,9 @@ class ExpandSystem(ExpandObjects):
         epjson = epjson or self.epjson
         build_path = build_path or getattr(self, 'build_path', None)
         if not build_path:
-            raise PyExpandObjectsException("Build path was not provided nor was it available as a class attribute")
+            raise PyExpandObjectsException(
+                "Error: Build path was not provided nor was it available as a class attribute during branch and "
+                "branchlist creation")
         # Edit build path for AirLoopHVAC:OutdoorAirSystem
         if modify_build_path:
             build_path = self._modify_build_path_for_outside_air_system(
@@ -2248,8 +2520,8 @@ class ExpandSystem(ExpandObjects):
             try:
                 connectors = super_object_structure.pop('Connectors')
             except KeyError:
-                raise PyExpandObjectsYamlStructureException("Super object is missing Connectors key: {}"
-                                                            .format(super_object))
+                raise PyExpandObjectsYamlStructureException(
+                    "Error: Super object is missing Connectors key: {}".format(super_object))
             try:
                 component['component_inlet_node_name'] = \
                     super_object_structure['Fields'][connectors[loop_type]['Inlet']]
@@ -2259,9 +2531,9 @@ class ExpandSystem(ExpandObjects):
                 component['component_name'] = super_object_structure['Fields']['name']
                 components.append(component)
             except (AttributeError, KeyError):
-                raise PyExpandObjectsYamlStructureException("Field/Connector mismatch or name not in Fields. "
-                                                            "Object: {}, connectors: {}"
-                                                            .format(super_object_structure, connectors))
+                raise PyExpandObjectsYamlStructureException(
+                    "Error: Field/Connector mismatch or name not in Fields. Object: {}, connectors: {}"
+                    .format(super_object_structure, connectors))
         branch_fields = self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'Branch', 'Base'])
         branch_fields['components'] = components
         branch = {
@@ -2369,8 +2641,8 @@ class ExpandPlantLoop(ExpandObjects):
     """
     Plant loop expansion operations
     """
-    def __init__(self, template, epjson=None):
-        super().__init__(template=template)
+    def __init__(self, template, logger_level='WARNING', epjson=None):
+        super().__init__(template=template, logger_level=logger_level)
         self.unique_name = self.template_name
         self.epjson = epjson or self.epjson
         return
@@ -2428,8 +2700,9 @@ class RetrievePlantEquipmentLoop:
             plant_loops = [i.template_type.split(":")[-1] for i in value.get('plant_loop_class_objects', {}).values()]
             # Check that plant_loops has only unique entries and that it isn't empty
             if not plant_loops or len(list(set(plant_loops))) != len(list(plant_loops)):
-                raise InvalidTemplateException("An invalid number of plant loops were created, either None or there"
-                                               " are duplicates present: {}".format(plant_loops))
+                raise InvalidTemplateException(
+                    "Error: An invalid number of plant loops were created, either None or there"
+                    " are duplicates present: {}".format(plant_loops))
             for pl in template_plant_loop_type_list:
                 if pl in plant_loops:
                     # Special handling for Tower object
@@ -2442,9 +2715,10 @@ class RetrievePlantEquipmentLoop:
                     break
             # verify the field was set to a value
             if not obj._template_plant_loop_type:
-                raise InvalidTemplateException("Plant equipment loop type did not have a corresponding loop to "
-                                               "reference.  Priority list {}, Plant loops {}"
-                                               .format(template_plant_loop_type_list, plant_loops))
+                raise InvalidTemplateException(
+                    "Error: Plant equipment loop type did not have a corresponding loop to "
+                    "reference.  Priority list {}, Plant loops {}"
+                    .format(template_plant_loop_type_list, plant_loops))
         return
 
 
@@ -2469,19 +2743,25 @@ class ChillerAndCondenserType:
 class ExpandPlantEquipment(ExpandObjects):
     """
     Plant Equipment operations
+
+    Attributes from Descriptors:
+        template_plant_loop_type
+
+        chiller_and_condenser_type
+
     """
 
     template_plant_loop_type = RetrievePlantEquipmentLoop()
     chiller_and_condenser_type = ChillerAndCondenserType()
 
-    def __init__(self, template, plant_loop_class_objects=None, epjson=None):
+    def __init__(self, template, logger_level='WARNING', plant_loop_class_objects=None, epjson=None):
         """
         Initialize class
 
         :param template: HVACTemplate:Plant:(Chiller|Tower|Boiler) objects
         :param plant_loop_class_objects: dictionary of ExpandPlantLoop objects
         """
-        super().__init__(template=template)
+        super().__init__(template=template, logger_level=logger_level)
         self.unique_name = self.template_name
         plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}

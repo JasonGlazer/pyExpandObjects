@@ -142,16 +142,17 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_maximum_flow_rate")
     def test_supply_fan_maximum_flow_rate(self):
         # todo_eo: legacy does not seem to update Fan:ConstantVolume or AirLoopHVAC
-        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4']['supply_fan_maximum_flow_rate'] = 2.0
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4']['supply_fan_maximum_flow_rate'] = 1.01
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            2.0,
+            1.01,
             epjson_output['Fan:ConstantVolume']['AHU 1 Spaces 1-4 Supply Fan']['maximum_flow_rate'])
         self.assertEqual(
-            2.0,
+            1.01,
             epjson_output['AirLoopHVAC']['AHU 1 Spaces 1-4']['design_supply_air_flow_rate'])
+
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_total_efficiency")
@@ -518,7 +519,7 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:cooling_coil_design_setpoint_temperature")
     def test_cooling_coil_design_setpoint_temperature(self):
-        # todo_eo: Zones not recieving updated temperature setpoint from SystemSupplyAirTemperature
+        # todo_eo: SetpointManager:Warmest does not seem to correctly be applied
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'cooling_coil_design_setpoint_temperature'] = 13
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -527,6 +528,10 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.assertEqual(
             13,
             epjson_output['Sizing:System']['AHU 1 Spaces 1-4 Sizing System']['central_cooling_design_supply_air_temperature'])
+        self.assertEqual(
+            18.2,
+            epjson_output['SetpointManager:Warmest']['AHU 1 Spaces 1-4 Cooling Supply Air Temp Manager'][
+                'maximum_setpoint_temperature'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:cooling_coil_setpoint_schedule_name")
@@ -590,7 +595,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heating_coil_design_setpoint")
     def test_heating_coil_design_setpoint(self):
-        # todo_eo: Zones not receiving updated temperature setpoint from SystemSupplyAirTemperature
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'heating_coil_design_setpoint'] = 16
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -847,7 +851,7 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:outdoor_air_flow_rates")
     def test_outdoor_air_flow_rates(self):
-        # todo_eo: Sizing:Zone design_outdoor_air_flow_rate is set to minimum even when maximum present
+        # todo_eo: Sizing:System design_outdoor_air_flow_rate is set to minimum even when maximum present
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'maximum_outdoor_air_flow_rate'] = 1.0
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
@@ -1265,7 +1269,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:dehumidification_relative_"
                                               "humidity_setpoint_schedule_name")
     def test_dehumidification_relative_humidity_setpoint_schedule_name(self):
-        # todo_eo: legacy doesn't map schedule_name value
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=schedule_objects)

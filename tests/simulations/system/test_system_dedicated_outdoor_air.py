@@ -156,24 +156,24 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:supply_fan_flow_rate")
     def test_supply_fan_flow_rate(self):
         # todo_eo: AirLoopHVAC not set which is causing discrepancy
-        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS']['supply_fan_flow_rate'] = 2.0
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS']['supply_fan_flow_rate'] = 0.48
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            2.0,
+            0.48,
             epjson_output['Fan:VariableVolume']['DOAS Supply Fan']['maximum_flow_rate'])
         self.assertEqual(
-            2.0,
+            0.48,
             epjson_output['AirLoopHVAC']['DOAS']['design_supply_air_flow_rate'])
         self.assertEqual(
-            2.0,
+            0.48,
             epjson_output['Sizing:System']['DOAS Sizing System']['cooling_supply_air_flow_rate'])
         self.assertEqual(
-            2.0,
+            0.48,
             epjson_output['Sizing:System']['DOAS Sizing System']['design_outdoor_supply_air_flow_rate'])
         self.assertEqual(
-            2.0,
+            0.48,
             epjson_output['Sizing:System']['DOAS Sizing System']['heating_supply_air_flow_rate'])
         return
 

@@ -234,6 +234,18 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             self.hvac_template.run()
         return
 
+    @BaseTest._test_logger(doc_text="HVACTemplate:Verify Bad templates caught")
+    def test_bad_template_name_returns_error(self):
+        self.hvac_template._load_epjson({
+            **minimum_objects_d,
+            "HVACTemplate:Bad:Bad": {
+                "Bad Object": {}
+            }
+        })
+        with self.assertRaisesRegex(InvalidTemplateException, 'Template object type'):
+            self.hvac_template._hvac_template_preprocess(self.hvac_template.input_epjson)
+        return
+
     @BaseTest._test_logger(doc_text="HVACTemplate:Verify thermostat class templates created")
     def test_thermostat_templates_have_good_objects(self):
         self.hvac_template._load_epjson({
@@ -285,6 +297,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     def test_zone_templates_have_good_objects(self):
         self.hvac_template._load_epjson({
             **minimum_objects_d,
+            **mock_system_template,
             "HVACTemplate:Zone:VAV": {
                 "HVACTemplate:Zone:VAV 1": {
                     "baseboard_heating_capacity": "Autosize",
@@ -365,6 +378,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
     def test_system_templates_have_good_objects(self):
         self.hvac_template._load_epjson({
             **minimum_objects_d,
+            **mock_zone_template,
             "HVACTemplate:System:VAV": {
                 "VAV Sys 1": {
                     "cooling_coil_design_setpoint": 12.8,
@@ -407,6 +421,12 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                     "supply_fan_placement": "DrawThrough",
                     "supply_fan_total_efficiency": 0.7,
                     "system_availability_schedule_name": "FanAvailSched"
+                }
+            },
+            'HVACTemplate:Zone:Unitary': {
+                'Unitary Zone 1': {
+                    'template_unitary_system_name': 'Sys 1 Furnace DX Cool SnglSpd',
+                    'zone_name': 'SPACE1-1'
                 }
             },
             "HVACTemplate:System:UnitarySystem": {
@@ -706,24 +726,46 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         self.hvac_template._load_epjson({
             **minimum_objects_d,
             **mock_thermostat_template,
-            **mock_zone_template
+            **mock_zone_template,
+            **mock_system_template
         })
         output = self.hvac_template.run()
         expected_summary = {
+            'AirLoopHVAC': 1,
+            'AirLoopHVAC:ControllerList': 2,
+            'AirLoopHVAC:OutdoorAirSystem': 1,
+            'AirLoopHVAC:OutdoorAirSystem:EquipmentList': 1,
+            'AirLoopHVAC:ReturnPath': 1,
+            'AirLoopHVAC:ReturnPlenum': 1,
+            'AirLoopHVAC:SupplyPath': 1,
+            'AirLoopHVAC:ZoneSplitter': 1,
+            'AirTerminal:SingleDuct:VAV:Reheat': 1,
+            'AvailabilityManager:NightCycle': 1,
+            'AvailabilityManagerAssignmentList': 1,
+            'Branch': 4,
+            'BranchList': 1,
             'Building': 1,
-            'GlobalGeometryRules': 1,
-            'Schedule:Compact': 1,
-            'ZoneControl:Thermostat': 1,
-            'ThermostatSetpoint:DualSetpoint': 1,
-            'ZoneHVAC:AirDistributionUnit': 1,
-            'ZoneHVAC:EquipmentList': 1,
-            'ZoneHVAC:EquipmentConnections': 1,
+            'Coil:Cooling:Water': 1,
+            'Coil:Heating:Water': 2,
+            'Controller:OutdoorAir': 1,
+            'Controller:WaterCoil': 2,
             'DesignSpecification:OutdoorAir': 1,
             'DesignSpecification:ZoneAirDistribution': 1,
+            'Fan:VariableVolume': 1,
+            'GlobalGeometryRules': 1,
+            'NodeList': 1,
+            'OutdoorAir:Mixer': 1,
+            'OutdoorAir:NodeList': 1,
+            'Schedule:Compact': 4,
+            'SetpointManager:MixedAir': 2,
+            'SetpointManager:Scheduled': 2,
+            'Sizing:System': 1,
             'Sizing:Zone': 1,
-            'AirTerminal:SingleDuct:VAV:Reheat': 1,
-            'Coil:Heating:Water': 1,
-            'Branch': 1}
+            'ThermostatSetpoint:DualSetpoint': 1,
+            'ZoneControl:Thermostat': 1,
+            'ZoneHVAC:AirDistributionUnit': 1,
+            'ZoneHVAC:EquipmentConnections': 1,
+            'ZoneHVAC:EquipmentList': 1}
         self.assertDictEqual(expected_summary, self.hvac_template.summarize_epjson(output['epJSON']))
         return
 
@@ -733,6 +775,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         self.hvac_template._load_epjson({
             **minimum_objects_d,
             **mock_thermostat_template,
+            **mock_zone_template,
             **mock_system_template
         })
         output = self.hvac_template.run()
@@ -746,25 +789,33 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 'AirLoopHVAC:ReturnPlenum': 1,
                 'AirLoopHVAC:SupplyPath': 1,
                 'AirLoopHVAC:ZoneSplitter': 1,
+                'AirTerminal:SingleDuct:VAV:Reheat': 1,
                 'AvailabilityManager:NightCycle': 1,
                 'AvailabilityManagerAssignmentList': 1,
-                'Branch': 3,
+                'Branch': 4,
                 'BranchList': 1,
                 'Building': 1,
                 'Coil:Cooling:Water': 1,
-                'Coil:Heating:Water': 1,
+                'Coil:Heating:Water': 2,
                 'Controller:OutdoorAir': 1,
                 'Controller:WaterCoil': 2,
+                'DesignSpecification:OutdoorAir': 1,
+                'DesignSpecification:ZoneAirDistribution': 1,
                 'Fan:VariableVolume': 1,
                 'GlobalGeometryRules': 1,
                 'NodeList': 1,
                 'OutdoorAir:Mixer': 1,
                 'OutdoorAir:NodeList': 1,
-                'Schedule:Compact': 3,
+                'Schedule:Compact': 4,
                 'SetpointManager:MixedAir': 2,
                 'SetpointManager:Scheduled': 2,
                 'Sizing:System': 1,
-                'ThermostatSetpoint:DualSetpoint': 1
+                'Sizing:Zone': 1,
+                'ThermostatSetpoint:DualSetpoint': 1,
+                'ZoneControl:Thermostat': 1,
+                'ZoneHVAC:AirDistributionUnit': 1,
+                'ZoneHVAC:EquipmentConnections': 1,
+                'ZoneHVAC:EquipmentList': 1
             },
             self.hvac_template.summarize_epjson(output['epJSON'])
         )

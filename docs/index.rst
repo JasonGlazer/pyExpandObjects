@@ -6,21 +6,34 @@
 Welcome to EpJSON ExpandObjects's documentation!
 ================================================
 
+Documentation
+*************
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Overview:
 
-   HVACTemplate
    CodeStructureOverview
 
-`Testing Outputs`_
-`Simulation Outputs`_
+.. toctree::
+   :maxdepth: 2
+   :caption: Python Documentation:
+
+   General
+   HVACTemplate
+   ExpandObjects
+
+Testing Reports
+***************
+
+* `Testing Outputs`_
+* `Simulation Outputs`_
 
 .. _Testing Outputs: _static/testing_output.html
 .. _Simulation Outputs: _static/simulation_output.html
 
 Indices and tables
-==================
+******************
 
 * :ref:`genindex`
 * :ref:`modindex`

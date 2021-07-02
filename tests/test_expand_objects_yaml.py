@@ -4,7 +4,7 @@ import copy
 
 from src.expand_objects import ExpandObjects, ExpandZone, ExpandSystem
 from src.expand_objects import PyExpandObjectsTypeError, PyExpandObjectsYamlStructureException, \
-    PyExpandObjectsYamlError
+    PyExpandObjectsYamlError, PyExpandObjectsException
 from . import BaseTest
 
 mock_zone_template = {
@@ -268,7 +268,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             template=mock_zone_template,
             expansion_structure=mock_zone_option_tree)
         structure_hierarchy = 'BadString'
-        with self.assertRaises(PyExpandObjectsTypeError):
+        with self.assertRaisesRegex(PyExpandObjectsTypeError, 'Call to YAML object'):
             eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         return
 
@@ -340,6 +340,17 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertTrue(key_check)
         return
 
+    def test_reject_option_tree_leaf_bad_structure(self):
+        option_tree = {'mock': 'object'}
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        eo.get_structure = MagicMock()
+        eo.get_structure.return_value = {'BadKey': []}
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Invalid or missing Objects'):
+            eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
+        return
+
     def test_option_tree_leaf_multiple_mappings(self):
         eo = ExpandObjects()
         eo.supply_fan_part_load_power_coefficients = 'InletVaneDampers'
@@ -398,6 +409,30 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertEqual(
             'template_test_value',
             transitioned_option_tree_leaf[0]['ZoneHVAC:AirDistributionUnit']['object_test_field'])
+        return
+
+    def test_apply_transitions_bad_transition_structure(self):
+        option_tree_leaf = {
+            'Objects': {'test': 'val'},
+            'BadKey': {'test': 'val'},
+            'Transitions': [{'BadKey': {'bad_obj_ref': 'bad_obj_structure'}}]}
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'OptionTree leaf is incorrectly formatted'):
+            eo._apply_transitions(option_tree_leaf=option_tree_leaf)
+        return
+
+    def test_apply_transitions_bad_mapping_structure(self):
+        option_tree_leaf = {
+            'Objects': {'test': 'val'},
+            'BadKey': {'test': 'val'},
+            'Mappings': [{'BadKey': {'bad_obj_ref': 'bad_obj_structure'}}]}
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'OptionTree leaf is incorrectly formatted'):
+            eo._apply_transitions(option_tree_leaf=option_tree_leaf)
         return
 
     def test_apply_transitions_and_map(self):
@@ -504,7 +539,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         option_tree = eo._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_leaf = eo._get_option_tree_leaf(option_tree=option_tree, leaf_path=['BaseObjects', ])
         object_list = eo._apply_transitions(option_tree_leaf)
-        with self.assertRaises(PyExpandObjectsYamlStructureException):
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'YAML object is incorrectly formatted'):
             eo.yaml_list_to_epjson_dictionaries(object_list)
         return
 
@@ -524,6 +559,29 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
              'ZoneHVAC:EquipmentConnections': 1,
              'ZoneHVAC:EquipmentList': 1}
         )
+        return
+
+    def test_get_option_tree_no_match(self):
+        structure_hierarchy = ['mock', 'object']
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        eo._get_option_tree = MagicMock()
+        eo._get_option_tree.return_value = {'TemplateObjects': {'field_name': {'field_value': 'object_field'}}}
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'template option was not applied for '
+                                                                           'template field'):
+            eo._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
+        return
+
+    def test_get_option_tree_bad_value(self):
+        structure_hierarchy = ['mock', 'object']
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        eo._get_option_tree = MagicMock()
+        eo._get_option_tree.return_value = {'TemplateObjects': ['test', ]}
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'TemplateObjects section for system'):
+            eo._get_option_tree_objects(structure_hierarchy=structure_hierarchy)
         return
 
     def test_complex_inputs_simple(self):
@@ -708,7 +766,8 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandObjects(
             template=mock_zone_template,
             expansion_structure=mock_zone_option_tree)
-        with self.assertRaises(PyExpandObjectsYamlStructureException):
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Maximum Recursion limit exceeded when '
+                                                                           'resolving'):
             output = eo._resolve_complex_input(
                 epjson=test_d,
                 field_name="field_test",
@@ -867,6 +926,301 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         self.assertNotIn('*', eo.epjson)
         return
 
+    def test_complex_inputs_bad_reference_object(self):
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Complex input reference is invalid'):
+            output = eo._resolve_complex_input(
+                epjson={},
+                field_name="field_1",
+                input_value={
+                    "Bad Reference 1": 'val',
+                    "Bad Reference 2": 'val'
+                }
+            )
+            print([i for i in output])
+        return
+
+    def test_complex_inputs_bad_build_path_reference_object(self):
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Build Path complex input was specified '
+                                                                           'with no build path'):
+            output = eo._resolve_complex_input(
+                epjson={},
+                field_name="field_1",
+                input_value={
+                    'BuildPathReference': {}
+                }
+            )
+            print([i for i in output])
+        return
+
+    def test_complex_inputs_bad_build_path_reference_object_instructions(self):
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Object field could not be resolved'):
+            output = eo._resolve_complex_input(
+                epjson={},
+                field_name="field_1",
+                input_value={
+                    'BuildPathReference': {}
+                },
+                build_path=['test', ]
+            )
+            print([i for i in output])
+        return
+
+    def test_complex_inputs_bad_build_path_reference_maximum_recursion(self):
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        eo.build_path = [
+            {
+                "Object1": {
+                    "Fields": {
+                        'field1': {
+                            'BuildPathReference': {
+                                'Location': 1,
+                                'ValueLocation': 'Inlet'
+                            }
+                        }
+                    },
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'field1'
+                        }
+                    }
+                }
+            },
+            {
+                "Object2": {
+                    "Fields": {
+                        'field1': {
+                            'BuildPathReference': {
+                                'Location': 0,
+                                'ValueLocation': 'Inlet'
+                            }
+                        }
+                    },
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'field1'
+                        }
+                    }
+                }
+            }
+        ]
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Object field could not be resolved'):
+            output = eo._resolve_complex_input(
+                epjson={},
+                field_name="field_1",
+                input_value={
+                    'BuildPathReference': {
+                        'Location': 0,
+                        'ValueLocation': 'Inlet'
+                    }
+                }
+            )
+            print([i for i in output])
+        return
+
+    def test_complex_inputs_from_build_path_no_location(self):
+        build_path = [
+            {
+                'Object1': {
+                    "Fields": {
+                        'field1': 'val1',
+                        'field2': 'val1'
+                    },
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'field1',
+                            'Outlet': 'field2'
+                        }
+                    }
+                }
+            }
+        ]
+        lookup_instructions = {}
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Build Path Location or ValueLocation '
+                                                                           'reference is invalid'):
+            eo._resolve_complex_input_from_build_path(build_path=build_path, lookup_instructions=lookup_instructions)
+        return
+
+    def test_complex_inputs_from_build_path_bad_location(self):
+        build_path = [
+            {
+                'Object1': {
+                    "Fields": {
+                        'field1': 'val1',
+                        'field2': 'val1'
+                    },
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'field1',
+                            'Outlet': 'field2'
+                        }
+                    }
+                }
+            }
+        ]
+        lookup_instructions = {
+            "Location": 5,
+            'ValueLocation': 'Inlet'
+        }
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Invalid build path or lookup instructions'):
+            eo._resolve_complex_input_from_build_path(build_path=build_path, lookup_instructions=lookup_instructions)
+        return
+
+    def test_complex_inputs_from_build_path_bad_occurrence(self):
+        build_path = [
+            {
+                'Object1': {
+                    "Fields": {
+                        'field1': 'val1',
+                        'field2': 'val1'
+                    },
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'field1',
+                            'Outlet': 'field2'
+                        }
+                    }
+                }
+            }
+        ]
+        lookup_instructions = {
+            'Location': 'Object1',
+            'ValueLocation': 'Inlet',
+            'Occurrence': 'BadVal'}
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Occurrence key in complex reference is '
+                                                                           'not an integer'):
+            eo._resolve_complex_input_from_build_path(build_path=build_path, lookup_instructions=lookup_instructions)
+        return
+
+    def test_complex_inputs_from_build_path_occurrences_not_reached(self):
+        build_path = [
+            {
+                'Object1': {
+                    "Fields": {
+                        'field1': 'val1',
+                        'field2': 'val1'
+                    },
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'field1',
+                            'Outlet': 'field2'
+                        }
+                    }
+                }
+            }
+        ]
+        lookup_instructions = {
+            'Location': 'Object1',
+            'ValueLocation': 'Inlet',
+            'Occurrence': 2}
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        eo._resolve_complex_input_from_build_path(build_path=build_path, lookup_instructions=lookup_instructions)
+        output = eo.stream.getvalue()
+        self.assertRegex(output, 'The number of occurrence matches')
+        return
+
+    def test_complex_inputs_from_build_path_bad_valuelocation(self):
+        build_path = [
+            {
+                'Object1': {
+                    "Fields": {
+                        'field1': 'val1',
+                        'field2': 'val1'
+                    },
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'field1',
+                            'Outlet': 'field2'
+                        }
+                    }
+                }
+            }
+        ]
+        lookup_instructions = {
+            'Location': 'Object1',
+            'ValueLocation': 'Bad'}
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Invalid complex input for Build Path Lookup'):
+            eo._resolve_complex_input_from_build_path(build_path=build_path, lookup_instructions=lookup_instructions)
+        return
+
+    def test_complex_inputs_from_build_path_by_reference(self):
+        build_path = [
+            {
+                'Object1': {
+                    "Fields": {
+                        'field1': 'val1',
+                        'field2': 'val1'
+                    },
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'field1',
+                            'Outlet': 'field2'
+                        }
+                    }
+                }
+            }
+        ]
+        lookup_instructions = {
+            'Location': 'Object1',
+            'ValueLocation': 'Inlet'}
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        output = eo._resolve_complex_input_from_build_path(build_path=build_path, lookup_instructions=lookup_instructions)
+        self.assertEqual(output, 'val1')
+        return
+
+    def test_complex_inputs_from_build_path_by_location(self):
+        build_path = [
+            {
+                'Object1': {
+                    "Fields": {
+                        'field1': 'val1',
+                        'field2': 'val1'
+                    },
+                    'Connectors': {
+                        'AirLoop': {
+                            'Inlet': 'field1',
+                            'Outlet': 'field2'
+                        }
+                    }
+                }
+            }
+        ]
+        lookup_instructions = {
+            'Location': 0,
+            'ValueLocation': 'Inlet'}
+        eo = ExpandObjects()
+        eo.template_type = 'test type'
+        eo.template_name = 'test name'
+        output = eo._resolve_complex_input_from_build_path(build_path=build_path, lookup_instructions=lookup_instructions)
+        self.assertEqual(output, 'val1')
+        return
+
     def test_field_with_zero_value_processing(self):
         eo = ExpandObjects()
         output = eo.yaml_list_to_epjson_dictionaries([{
@@ -920,6 +1274,42 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             '{} Cooling Coil Outlet',
             object_list[-1]['Fan:VariableVolume']['air_inlet_node_name']
         )
+        return
+
+    def test_build_path_bad_build_path(self):
+        # Note ObjectReference is not needed
+        eo = ExpandSystem(template=mock_system_template)
+        eo._get_option_tree_leaf = MagicMock()
+        eo._get_option_tree_leaf.return_value = {}
+        eo._apply_transitions = MagicMock()
+        eo._apply_transitions.return_value = {}
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Build Path action is incorrectly formatted'):
+            eo._process_build_path(
+                option_tree={'Actions': [{'bad': 'structure'}]})
+        return
+
+    def test_build_path_action_never_applied(self):
+        # Note ObjectReference is not needed
+        eo = ExpandSystem(template=mock_system_template)
+        eo._get_option_tree_leaf = MagicMock()
+        eo._get_option_tree_leaf.return_value = {}
+        eo._apply_transitions = MagicMock()
+        eo._apply_transitions.return_value = {}
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'A build path action was not applied '
+                                                                           'for template field'):
+            eo._process_build_path(
+                option_tree={
+                    'Actions': [
+                        {
+                            'template_field': {
+                                'Location': 'Coil:Cooling.*',
+                                'ActionType': 'Insert',
+                                'Objects': []
+                            }
+                        }
+                    ]
+                }
+            )
         return
 
     def test_build_path_action_insert_by_location(self):
@@ -1134,7 +1524,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             ]
         }
         eo = ExpandObjects()
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Insert reference value is not'):
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Build path action insert reference value '):
             eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
         return
 
@@ -1160,7 +1550,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
             ]
         }
         eo = ExpandObjects()
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'The number of occurrences'):
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'The number of occurrence matches'):
             eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
         return
 
@@ -1186,7 +1576,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         }
         eo = ExpandObjects()
         with self.assertRaisesRegex(
-                PyExpandObjectsYamlStructureException, 'Build Path Action is missing required instructions'):
+                PyExpandObjectsYamlStructureException, 'Build Path action is missing required instructions'):
             eo._apply_build_path_action(build_path=build_path, action_instructions=action_instruction)
         return
 
@@ -1433,6 +1823,51 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
         eo = ExpandObjects()
         output = eo._connect_and_convert_build_path_to_object_list(build_path=build_path)
         self.assertEqual("value_2", output[1]["Object:2"]["field_3"])
+        return
+
+    def test_convert_build_path_no_build_path(self):
+        build_path = []
+        eo = ExpandObjects()
+        with self.assertRaisesRegex(PyExpandObjectsException, 'Build path was not provided nor was it'):
+            eo._connect_and_convert_build_path_to_object_list(build_path=build_path)
+        return
+
+    def test_convert_build_path_no_connectors(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects()
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Referenced super object is missing Connectors key'):
+            eo._connect_and_convert_build_path_to_object_list(build_path=build_path)
+        return
+
+    def test_convert_build_path_bad_connectors(self):
+        build_path = [
+            {
+                "Object:1": {
+                    "Fields": {
+                        "field_1": "value_1",
+                        "field_2": "value_2"
+                    },
+                    "Connectors": {
+                        "AirLoop": {
+                            "Inlet": "field_4",
+                            "Outlet": "field_5"
+                        }
+                    }
+                }
+            }
+        ]
+        eo = ExpandObjects()
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'There is a Field/Connector mismatch'):
+            eo._connect_and_convert_build_path_to_object_list(build_path=build_path)
         return
 
     def test_retrieve_build_path_objects_from_option_tree(self):
@@ -1744,7 +2179,7 @@ class TestExpandObjectsYaml(BaseTest, unittest.TestCase):
                 }
             }
         )
-        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'BuildPath complex input was specified'):
+        with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, 'Build Path complex input was specified'):
             self.assertEqual('template_name Supply Fan Outlet', [i for i in output][0]['value'])
         return
 

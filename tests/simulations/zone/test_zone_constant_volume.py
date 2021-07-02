@@ -32,8 +32,6 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:supply_air_maximum_flow_rate")
     def test_supply_air_maximum_flow_rate(self):
-        # todo_eo: AirTerminal:SingleDuct:ConstantVolume:NoReheat maximum_air_flow_rate is not set in legacy with these
-        #  inputs which is causing the discrepancy.
         self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1']['supply_air_maximum_flow_rate'] = 0.1
         self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1']['reheat_coil_type'] = 'None'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -41,7 +39,10 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.1,
-            epjson_output['AirTerminal:SingleDuct:ConstantVolume:NoReheat']['SPACE1-1 CV']['maximum_air_flow_rate'])
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['cooling_design_air_flow_rate'])
+        self.assertEqual(
+            0.1,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['heating_design_air_flow_rate'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:zone_heating_sizing_factor")
