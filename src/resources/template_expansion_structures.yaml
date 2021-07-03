@@ -2145,7 +2145,11 @@ Objects:
           CommonMappings: &FanCommonMappingsVariableVolume
             - Fan:.*:
                 supply_fan_minimum_flow_rate:
-                  AnyValue:
+                  None:
+                    fan_power_minimum_flow_fraction: 0.25
+                  Autosize:
+                    fan_power_minimum_flow_fraction: 0.25
+                  AnyNumber:
                     fan_power_minimum_flow_rate_input_method: FixedFlowRate
                 supply_fan_part_load_power_coefficients:
                   None: &FanVariableVolumeSupplyPLRCoefficients
@@ -2154,8 +2158,7 @@ Objects:
                     fan_power_coefficient_3: -0.54137364
                     fan_power_coefficient_4: 0.87198823
                     fan_power_coefficient_5: 0
-#                    fan_power_minimum_flow_fraction: 0.25
-#                    fan_power_minimum_flow_rate_input_method: Fraction
+                    fan_power_minimum_flow_rate_input_method: Fraction
                   InletVaneDampers: *FanVariableVolumeSupplyPLRCoefficients
                 return_fan_part_load_power_coefficients:
                   InletVaneDampers:
@@ -2420,6 +2423,13 @@ Objects:
                 component_name: '{} Supply Pump' # required by schema
                 component_inlet_node_name: '{} Supply Inlet' # required by schema
                 component_outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
+        - Branch: &PumpBranchVariableSpeedDemandInlet
+            name: *DemandInletBranch
+            components:
+              - component_object_type: Pump:VariableSpeed # required by schema
+                component_name: '{} Secondary Pump' # required by schema
+                component_inlet_node_name: '{} Demand Inlet' # required by schema
+                component_outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
       Transitions: &PumpCommonTransitions
         - Pump:.*:
             pump_control_type: pump_control_type
@@ -2782,6 +2792,7 @@ Objects:
         Transitions: &SizingPlantCommonTransitions
           - Plant:Sizing:
               loop_design_delta_temperature: loop_design_temperature_difference
+              chilled_water_design_setpoint: design_loop_exit_temperature
       ChilledWater:
         Fields: &SizingPlantChilledWater
           <<: *SizingPlantCommonFields
@@ -6452,18 +6463,6 @@ OptionTree:
                     component_name: '{} Demand Outlet Pipe'
                     component_inlet_node_name: '{} Demand Outlet Pipe Inlet'
                     component_outlet_node_name: '{} Demand Outlet'
-          PrimaryNoSecondary: &PlantCommonPlantLoopPrimaryNoSecondary
-            - Pipe:Adiabatic:
-                name: '{} Demand Inlet Pipe'
-                inlet_node_name: *DemandInlet
-                outlet_node_name: '{} Demand Inlet Pipe Outlet'
-            - Branch:
-                name: *DemandInletBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Demand Inlet Pipe'
-                    component_inlet_node_name: *DemandInlet
-                    component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
           NoSecondary: &PlantCommonPlantLoopNoSecondary
             - Pipe:Adiabatic:
                 name: '{} Demand Inlet Pipe'
@@ -6540,29 +6539,76 @@ OptionTree:
           chilled_water_pump_configuration:
             ConstantPrimaryNoSecondary:
               Objects:
-                - *PlantCommonPlantLoopPrimaryNoSecondary
                 - PlantLoop: *PlantLoopChilledWaterFields
                 - Pump:ConstantSpeed:
                     <<: *PumpConstantSpeed
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
                 - Branch: *PumpBranchConstantSpeedSupplyInlet
+                - Pipe:Adiabatic:
+                    name: '{} Demand Inlet Pipe'
+                    inlet_node_name: *DemandInlet
+                    outlet_node_name: '{} Demand Inlet Pipe Outlet'
+                - Branch:
+                    name: *DemandInletBranch
+                    components:
+                      - component_object_type: Pipe:Adiabatic
+                        component_name: '{} Demand Inlet Pipe'
+                        component_inlet_node_name: *DemandInlet
+                        component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
               Transitions:
                 - *PumpCommonTransitions
                 - ^PlantLoop$:
                     chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
             VariablePrimaryNoSecondary:
               Objects:
-                - *PlantCommonPlantLoopPrimaryNoSecondary
                 - PlantLoop: *PlantLoopChilledWaterFields
                 - Pump:VariableSpeed:
                     <<: *PumpVariableSpeed
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                    design_minimum_flow_rate: 0
                 - Branch: *PumpBranchVariableSpeedSupplyInlet
-              Transitions: *PumpCommonTransitions
+                - Pipe:Adiabatic:
+                    name: '{} Demand Inlet Pipe'
+                    inlet_node_name: *DemandInlet
+                    outlet_node_name: '{} Demand Inlet Pipe Outlet'
+                - Branch:
+                    name: *DemandInletBranch
+                    components:
+                      - component_object_type: Pipe:Adiabatic
+                        component_name: '{} Demand Inlet Pipe'
+                        component_inlet_node_name: *DemandInlet
+                        component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
+              Transitions:
+                - *PumpCommonTransitions
+                - ^PlantLoop$:
+                    chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
+            ConstantPrimaryVariableSecondary:
+              Objects:
+                - PlantLoop:
+                    <<: *PlantLoopChilledWaterFields
+                    common_pipe_simulation: CommonPipe
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                - Branch: *PumpBranchConstantSpeedSupplyInlet
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    name: '{} Secondary Pump'
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+                - Branch: *PumpBranchVariableSpeedDemandInlet
+              Transitions:
+                - *PumpCommonTransitions
+                - ^PlantLoop$:
+                    chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
           chilled_water_setpoint_reset_type:
             None:
               Objects:
                 - SetpointManager:Scheduled: *SetpointManagerScheduledChilledWater
+              Transitions:
+                - SetpointManager:Scheduled:
+                    chilled_water_setpoint_schedule_name: schedule_name
             OutdoorAirTemperatureReset:
               Objects:
                 - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetChilledWater
@@ -6585,6 +6631,11 @@ OptionTree:
                 - *ChillerElectricCommonCondenserWaterObjects
               Transitions:
                 - *ChillerElectricEIRCommonTransitions
+              Mappings:
+                - Chiller.*:
+                    pump_configuration_type:
+                      VariablePrimaryNoSecondary:
+                        chiller_flow_mode: LeavingSetpointModulated
             ElectricReciprocatingChillerAirCooled:
               Objects:
                 - Chiller:Electric:EIR:

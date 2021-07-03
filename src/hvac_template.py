@@ -381,7 +381,7 @@ class HVACTemplate(EPJSON):
                                     .format(object_type, object_name, object_fields.get('tower_type')))
                     # for plant equipment object references, add the referenced object to epjson for complex input resolution
                     #  later on.  For chiller objects, also identify condenser type and make it a template attribute.
-                    if object_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
+                    elif object_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
                         for object_name, object_fields in object_structure.items():
                             reference_object_structure = epjson.get(object_fields['boiler_object_type'])
                             if not reference_object_structure:

@@ -5,6 +5,28 @@ from src.epjson_handler import EPJSON
 
 test_dir = Path(__file__).parent.parent.parent
 
+schedule_objects = {
+    "Schedule:Compact": {
+        "Always7.2": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 7.2
+                }
+            ],
+            "schedule_type_limits_name": "Any Number"
+        }
+    }
+}
+
 
 class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
     def setUp(self):
@@ -109,4 +131,63 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
         self.assertEqual(
             'Continuous',
             epjson_output['Pump:VariableSpeed']['Condenser Water Loop Supply Pump']['pump_control_type'])
+        return
+
+    def test_chilled_water_setpoint_schedule_name(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_setpoint_schedule_name'] = 'Always7.2'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Always7.2',
+            epjson_output['SetpointManager:Scheduled']['Chilled Water Loop Temp Manager']['schedule_name'])
+        return
+
+    def test_chilled_water_design_setpoint(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_design_setpoint'] = 7.1
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'HVACTemplate-Always7.1',
+            epjson_output['SetpointManager:Scheduled']['Chilled Water Loop Temp Manager']['schedule_name'])
+        self.assertEqual(
+            7.1,
+            epjson_output['Sizing:Plant']['Chilled Water Loop Sizing Plant']['design_loop_exit_temperature'])
+        return
+
+    def test_chilled_water_pump_configuration_constant_primary_no_secondary(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'ConstantPrimaryNoSecondary'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Pump:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
+        return
+
+    def test_chilled_water_pump_configuration_variable_primary_no_secondary(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Pump:VariableSpeed'].get('Chilled Water Loop Supply Pump'))
+        self.assertEqual(
+            'LeavingSetpointModulated',
+            epjson_output['Chiller:Electric:EIR']['Main Chiller']['chiller_flow_mode'])
+        return
+
+    def test_chilled_water_pump_configuration_constant_primary_variable_secondary(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Pump:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
+        self.assertIsNotNone(epjson_output['Pump:VariableSpeed'].get('Chilled Water Loop Secondary Pump'))
         return
