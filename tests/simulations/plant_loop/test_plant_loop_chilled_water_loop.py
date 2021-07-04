@@ -378,12 +378,64 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
                 'setpoint_at_outdoor_low_temperature'])
         return
 
-    def test_chilled_water_primary_pump_type(self):
+    def test_chilled_water_primary_pump_type_single_pump(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
-            'primary_pump_type'] = 'SinglePump'
+            'chilled_water_primary_pump_type'] = 'SinglePump'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(
             epjson_output['Pump:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
+        return
+
+    def test_chilled_water_primary_pump_type_two_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'TwoHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
+        self.assertEqual(
+            2,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    def test_chilled_water_primary_pump_type_three_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'ThreeHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
+        self.assertEqual(
+            3,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    def test_chilled_water_primary_pump_type_four_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'FourHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
+        self.assertEqual(
+            4,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    def test_chilled_water_primary_pump_type_five_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'FiveHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
+        self.assertEqual(
+            5,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return

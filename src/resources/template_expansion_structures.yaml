@@ -2237,6 +2237,45 @@ Objects:
         Connectors: &FanVariableVolumeConnectors
           << : *FanConnectors
           pressure_rise: 1000 # set by HVACTemplate:System:VAV template
+  HeaderedPumps:
+    Common:
+      Objects:
+        - Branch: &HeaderedPumpsBranchVariableSpeedSupplyInlet
+            name: *SupplyInletBranch
+            components:
+              - component_object_type: HeaderedPumps:VariableSpeed # required by schema
+                component_name: '{} Supply Pump' # required by schema
+                component_inlet_node_name: '{} Supply Inlet' # required by schema
+                component_outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
+        - Branch: &HeaderedPumpsBranchConstantSpeedSupplyInlet
+            name: *SupplyInletBranch
+            components:
+              - component_object_type: HeaderedPumps:ConstantSpeed # required by schema
+                component_name: '{} Supply Pump' # required by schema
+                component_inlet_node_name: '{} Supply Inlet' # required by schema
+                component_outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
+        - Branch: &HeaderedPumpsBranchVariableSpeedDemandInlet
+            name: *DemandInletBranch
+            components:
+              - component_object_type: HeaderedPumps:VariableSpeed # required by schema
+                component_name: '{} Secondary Pump' # required by schema
+                component_inlet_node_name: '{} Demand Inlet' # required by schema
+                component_outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+      Transitions: &HeaderedPumpsCommonTransitions
+        - Pump:.*:
+            pump_control_type: pump_control_type
+      Base:
+        Fields: &HeaderedPumpsCommonFields
+          name: '{} Supply Pump'
+          inlet_node_name: '{} Supply Inlet' # required by schema
+          outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
+          design_power_consumption: Autosize # set by legacy, not reachable from template, no default
+          pump_control_type: Intermittent # set by legacy, not reachable from template, no default
+          pump_flow_rate_schedule_name: '{pump_schedule_name}'
+    ConstantSpeed:
+      Fields: &HeaderedPumpsConstantSpeed
+        <<: *HeaderedPumpsCommonFields
+        total_design_flow_rate: Autosize
   HeatExchanger:
     AirToAir:
       SensibleAndLatent:
@@ -6545,7 +6584,6 @@ OptionTree:
             ConstantPrimaryNoSecondary:
               Objects:
                 - PlantLoop: *PlantLoopChilledWaterFields
-                - Branch: *PumpBranchConstantSpeedSupplyInlet
                 - Pipe:Adiabatic:
                     name: '{} Demand Inlet Pipe'
                     inlet_node_name: *DemandInlet
@@ -6597,8 +6635,45 @@ OptionTree:
           primary_pump_flow_and_type:
             ConstantSinglePump:
               Objects:
+                - Branch: *PumpBranchConstantSpeedSupplyInlet
                 - Pump:ConstantSpeed:
                     <<: *PumpConstantSpeed
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Transitions:
+                - *PumpCommonTransitions
+            ConstantTwoHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                - HeaderedPumps:ConstantSpeed:
+                    <<: *HeaderedPumpsConstantSpeed
+                    number_of_pumps_in_bank: 2
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Transitions:
+                - *PumpCommonTransitions
+            ConstantThreeHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                - HeaderedPumps:ConstantSpeed:
+                    <<: *HeaderedPumpsConstantSpeed
+                    number_of_pumps_in_bank: 3
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Transitions:
+                - *PumpCommonTransitions
+            ConstantFourHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                - HeaderedPumps:ConstantSpeed:
+                    <<: *HeaderedPumpsConstantSpeed
+                    number_of_pumps_in_bank: 4
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Transitions:
+                - *PumpCommonTransitions
+            ConstantFiveHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                - HeaderedPumps:ConstantSpeed:
+                    <<: *HeaderedPumpsConstantSpeed
+                    number_of_pumps_in_bank: 5
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
               Transitions:
                 - *PumpCommonTransitions
