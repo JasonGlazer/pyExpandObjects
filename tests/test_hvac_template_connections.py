@@ -489,6 +489,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         epc = MagicMock()
         epc.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
         del epc.primary_chilled_water_pump_rated_head
+        del epc.condenser_plant_operation_scheme_type
         expanded_plant_loops = {'Test Hot Water': eph, 'Test Chilled Water': epc}
         epe = MagicMock()
         epe.template_type = 'HVACTemplate:Plant:Chiller'
@@ -534,8 +535,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 'Pipe:Adiabatic': 5,
                 'PlantEquipmentOperation:CoolingLoad': 1,
                 'Pump:VariableSpeed': 1,
-                'Schedule:Compact': 2,
-                'SetpointManager:Scheduled': 1,
+                'Schedule:Compact': 1,
                 'Sizing:Plant': 1
             },
             eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
@@ -547,6 +547,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         epc = MagicMock()
         epc.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
         del epc.primary_chilled_water_pump_rated_head
+        del epc.condenser_plant_operation_scheme_type
         expanded_plant_loops = {'Test Hot Water': eph, 'Test Chilled Water': epc}
         epe = MagicMock()
         epe.template_type = 'HVACTemplate:Plant:Chiller'
@@ -595,8 +596,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
                 'Pipe:Adiabatic': 5,
                 'PlantEquipmentOperation:CoolingLoad': 1,
                 'Pump:VariableSpeed': 1,
-                'Schedule:Compact': 2,
-                'SetpointManager:Scheduled': 1,
+                'Schedule:Compact': 1,
                 'Sizing:Plant': 1
             },
             eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
@@ -607,7 +607,8 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         eph.template_type = 'HVACTemplate:Plant:HotWaterLoop'
         epc = MagicMock()
         epc.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
-        epc.primary_chilled_water_pump_rated_head = 2000
+        epc.condenser_water_pump_rated_head = 2000
+        del epc.condenser_plant_operation_scheme_type
         expanded_plant_loops = {'Test Hot Water': eph, 'Test Chilled Water': epc}
         epe = MagicMock()
         epe.template_type = 'HVACTemplate:Plant:Chiller'
@@ -652,8 +653,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             'Pipe:Adiabatic': 5,
             'PlantEquipmentOperation:CoolingLoad': 1,
             'Pump:VariableSpeed': 1,
-            'Schedule:Compact': 2,
-            'SetpointManager:Scheduled': 1,
+            'Schedule:Compact': 1,
             'Sizing:Plant': 1},
             eo.summarize_epjson(expanded_plant_loops['Condenser Water Loop'].epjson))
         self.assertEqual(

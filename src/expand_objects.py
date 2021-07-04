@@ -36,10 +36,13 @@ class ExpansionStructureLocation:
                         parsed_value = copy.deepcopy(yaml_file)
                     else:
                         with open(value, 'r') as f:
-                            # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
-                            #   With FullLoader there would be more functionality but might not be necessary.
-                            parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
-                            yaml_file = parsed_value
+                            try:
+                                # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
+                                #   With FullLoader there would be more functionality but might not be necessary.
+                                parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
+                                yaml_file = parsed_value
+                            except yaml.YAMLError as err:
+                                raise PyExpandObjectsYamlError('Failed to load YAML:\n{}'.format(err))
             else:
                 try:
                     # if the string is not a file, then try to load it directly with SafeLoader.
@@ -300,6 +303,7 @@ class ExpandObjects(EPJSON):
                 template_applied = None
                 template_field_processing = None
                 for template_field, template_tree in option_tree['TemplateObjects'].items():
+                    template_applied = None
                     template_field_processing = template_field
                     for field_option, objects in template_tree.items():
                         # check if field option is 'None' and if object doesn't exist in the class, or if
@@ -320,19 +324,18 @@ class ExpandObjects(EPJSON):
                             # Only one field option should be applied, so break after it is successful
                             template_applied = True
                             break
+                if not template_applied:
+                    raise PyExpandObjectsYamlStructureException(
+                        'Error: In {} ({}) A template option was not applied for template field {} and option {}'
+                        .format(
+                            self.template_type,
+                            self.template_name,
+                            template_field_processing,
+                            getattr(self, template_field_processing, None)))
             except (AttributeError, KeyError):
                 raise PyExpandObjectsYamlStructureException(
                     'Error: In {} ({}) TemplateObjects section for system type is invalid in yaml file.'.
                     format(self.template_type, self.template_name))
-            if not template_applied:
-                raise PyExpandObjectsYamlStructureException(
-                    'Error: In {} ({}) A template option was not applied for template field {} and option {}: {}'
-                    .format(
-                        self.template_type,
-                        self.template_name,
-                        template_field_processing,
-                        getattr(self, template_field_processing, None),
-                        option_tree['TemplateObjects']))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -1329,7 +1332,7 @@ class ExpandThermostat(ExpandObjects):
 
 class ZonevacEquipmentListObjectType:
     """
-    Set a class attribute to select the appropriate ZoneHVAC:EquipmentList from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate ZoneHVAC:EquipmentList from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._zone_hvac_equipmentlist_object_type
@@ -1361,7 +1364,7 @@ class ZonevacEquipmentListObjectType:
 
 class DesignSpecificationOutsideAirObjectStatus:
     """
-    Set a class attribute to select the appropriate DesignSpecification:OutdoorAir from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate DesignSpecification:OutdoorAir from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._design_specification_outdoor_air_object_status
@@ -1394,7 +1397,7 @@ class DesignSpecificationOutsideAirObjectStatus:
 
 class DesignSpecificationZoneAirDistributionObjectStatus:
     """
-    Set a class attribute to select the appropriate DesignSpecification:ZoneAirDistribution from TemplateOptions
+    Set a class attribute to select the appropriate DesignSpecification:ZoneAirDistribution from TemplateObjects
     in the YAML lookup.
     """
     def __get__(self, obj, owner):
@@ -1633,7 +1636,7 @@ class ExpandZone(ExpandObjects):
 
 class AirLoopHVACUnitaryObjectType:
     """
-    Set a class attribute to select the appropriate unitary equipment type from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate unitary equipment type from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._airloop_hvac_unitary_object_type
@@ -1666,7 +1669,7 @@ class AirLoopHVACUnitaryObjectType:
 
 class AirLoopHVACUnitaryFanTypeAndPlacement:
     """
-    Set a class attribute to select the appropriate fan type and placement from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate fan type and placement from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._airloop_hvac_unitary_fan_type_and_placement
@@ -1688,7 +1691,7 @@ class AirLoopHVACUnitaryFanTypeAndPlacement:
 
 class AirLoopHVACObjectType:
     """
-    Set a class attribute to select the appropriate AirLoopHVAC type from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate AirLoopHVAC type from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._airloop_hvac_object_type
@@ -1712,7 +1715,7 @@ class AirLoopHVACObjectType:
 
 class ModifyCoolingCoilSetpointControlType:
     """
-    Modify cooling_coil_setpoint_control_type based on other template attributes for YAML TemplateOptions lookup.
+    Modify cooling_coil_setpoint_control_type based on other template attributes for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
         return obj._cooling_coil_setpoint_control_type
@@ -1757,7 +1760,7 @@ class ModifyCoolingCoilSetpointControlType:
 
 class ModifyHeatingCoilSetpointControlType:
     """
-    Modify heating_coil_setpoint_control_type based on other template attributes for YAML TemplateOptions lookup.
+    Modify heating_coil_setpoint_control_type based on other template attributes for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
         return obj._heating_coil_setpoint_control_type
@@ -1818,7 +1821,7 @@ class ModifyHeatingCoilSetpointControlType:
 
 class HumidistatType:
     """
-    Create class attribute to select Humidistat type based on other template attributes for YAML TemplateOptions lookup.
+    Create class attribute to select Humidistat type based on other template attributes for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
         return obj._humidistat_type
@@ -1868,7 +1871,7 @@ class OutsideAirEquipmentType:
 
 class ModifyDehumidificationControlType:
     """
-    Modify dehumidification_control_type based on other template attributes for YAML TemplateOptions lookup.
+    Modify dehumidification_control_type based on other template attributes for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
         return obj._dehumidification_control_type
@@ -2665,13 +2668,46 @@ class ExpandSystem(ExpandObjects):
         return self
 
 
+class PrimaryPumpFlowAndType:
+    """
+    Create class attribute, primary_pump_flow_and_type to select the pump flow type, and configuration
+     type for YAML TemplateObjects lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._primary_pump_flow_and_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (template_name, template_fields), = template_structure.items()
+        if template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
+            flow_type = template_fields.get('chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary')
+            flow_rgx_match = re.match(r'(^.*)Primary', flow_type)
+            if flow_rgx_match:
+                flow_type = flow_rgx_match.group(1)
+            else:
+                raise InvalidTemplateException(
+                    'In {} ({}) The chilled_water_pump_configuration value is improperly formatted'
+                    .format(template_type, template_name))
+            configuration_type = template_fields.get('chilled_water_primary_pump_type', 'SinglePump')
+            obj._primary_pump_flow_and_type = ''.join([flow_type, configuration_type])
+        return
+
+
 class ExpandPlantLoop(ExpandObjects):
     """
     Plant loop expansion operations
+
+    Attributes from Descriptors:
+        primary_pump_flow_and_type
+
     """
+
+    primary_pump_flow_and_type = PrimaryPumpFlowAndType()
+
     def __init__(self, template, logger_level='WARNING', epjson=None):
         super().__init__(template=template, logger_level=logger_level)
         self.unique_name = self.template_name
+        self.primary_pump_flow_and_type = template
         self.epjson = epjson or self.epjson
         return
 
@@ -2753,7 +2789,7 @@ class RetrievePlantEquipmentLoop:
 class PumpConfigurationType:
     """
     Set a class attribute pump_configuration_type that reflects the loop attribute of the same name to use in
-    TemplateOptions in the YAML lookup.
+    TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._pump_configuration_type
@@ -2779,7 +2815,7 @@ class PumpConfigurationType:
 
 class ChillerAndCondenserType:
     """
-    Set a class attribute to select the appropriate fan type and placement from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate fan type and placement from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._chiller_and_condenser_type

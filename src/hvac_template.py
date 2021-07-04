@@ -922,9 +922,13 @@ class HVACTemplate(EPJSON):
             if chw_loop:
                 for cndw_attribute, chw_attribute in zip(
                         ['condenser_water_pump_rated_head', 'condenser_water_design_setpoint',
-                         'condenser_plant_operation_scheme_type', 'pump_schedule_name', 'pump_control_type'],
-                        ['primary_chilled_water_pump_rated_head', 'condenser_water_design_setpoint',
-                         'condenser_plant_operation_scheme_type', 'pump_schedule_name', 'pump_control_type']):
+                         'condenser_plant_operation_scheme_type', 'condenser_equipment_operation_schemes_name',
+                         'condenser_water_temperature_control_type', 'condenser_water_setpoint_schedule_name',
+                         'pump_schedule_name', 'pump_control_type'],
+                        ['condenser_water_pump_rated_head', 'condenser_water_design_setpoint',
+                         'condenser_plant_operation_scheme_type', 'condenser_equipment_operation_schemes_name',
+                         'condenser_water_temperature_control_type', 'condenser_water_setpoint_schedule_name',
+                         'pump_schedule_name', 'pump_control_type']):
                     try:
                         cndw_attributes[cndw_attribute] = getattr(chw_loop[0], chw_attribute)
                     except AttributeError:

@@ -2555,11 +2555,6 @@ Objects:
       Base:
         Fields: &SetpointManagerScheduled
           <<: *SetpointManagerOutdoorAirReset
-      ChilledWater:
-        Base:
-          Fields: &SetpointManagerScheduledChilledWater
-            <<: *SetpointManagerScheduled
-            schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
       Cooling:
         Base:
           Fields: &SetpointManagerScheduledCooling
@@ -2792,7 +2787,6 @@ Objects:
         Transitions: &SizingPlantCommonTransitions
           - Plant:Sizing:
               loop_design_delta_temperature: loop_design_temperature_difference
-              chilled_water_design_setpoint: design_loop_exit_temperature
       ChilledWater:
         Fields: &SizingPlantChilledWater
           <<: *SizingPlantCommonFields
@@ -3602,6 +3596,7 @@ OptionTree:
                 Objects:
                   - ZoneHVAC:Baseboard:Convective:Electric: *ZoneHVACBaseboardConvectiveElectricFields
                 Transitions: *ZoneHVACBaseboardCommonTransitions
+              None:
           DesignSpecification: &ZoneCommonTemplateObjectsDesignSpecification
             design_specification_outdoor_air_object_status:
               IncludeDSOA: # Created via descriptors in ExpandZone
@@ -3633,6 +3628,7 @@ OptionTree:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
           SupplyPlenum: &ZoneCommonTemplateObjectsSupplyPlenum
             supply_plenum_name:
+              None:
               AnyValue:
                 Objects:
                   - AirLoopHVAC:SupplyPlenum:
@@ -3645,6 +3641,7 @@ OptionTree:
                       zone_node_name: '{supply_plenum_name} Zone Air Node'
           ReturnPlenum: &ZoneCommonTemplateObjectsReturnPlenum
             return_plenum_name:
+              None:
               AnyValue:
                 Objects:
                   - AirLoopHVAC:ReturnPlenum:
@@ -3923,6 +3920,7 @@ OptionTree:
           <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
           <<: *ZoneCommonTemplateObjectsDesignSpecification
           cold_supply_plenum_name:
+            None:
             AnyValue:
               Objects:
                 - AirLoopHVAC:SupplyPlenum:
@@ -3934,6 +3932,7 @@ OptionTree:
                     zone_name: '{cold_supply_plenum_name}'
                     zone_node_name: '{cold_supply_plenum_name} Zone Air Node'
           hot_supply_plenum_name:
+            None:
             AnyValue:
               Objects:
                 - AirLoopHVAC:SupplyPlenum:
@@ -4024,6 +4023,7 @@ OptionTree:
               Transitions:
                 - *SizingZoneCommonTransitionsIdealLoads
           humidistat_object_type:
+            None:
             IncludeHumidistat: # Created via descriptors in ExpandZone
               Objects:
                 - ZoneControl:Humidistat:
@@ -4361,6 +4361,7 @@ OptionTree:
             <<: *ZoneCommonTemplateObjectsVAVFanPowered
             <<: *ZoneCommonTemplateObjectsDesignSpecification
             supply_plenum_name:
+              None:
               AnyValue:
                 Objects:
                   - AirLoopHVAC:SupplyPlenum:
@@ -6529,20 +6530,21 @@ OptionTree:
                 name: '{} Outside Air Sensor'
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
             - Sizing:Plant: *SizingPlantChilledWater
-          Transitions: *SizingPlantCommonTransitions
+          Transitions:
+          - *SizingPlantCommonTransitions
+          - Sizing:Plant:
+              chilled_water_design_setpoint: design_loop_exit_temperature
         TemplateObjects: # todo_eo: Secondary options need to have PlantLoop common_pipe_simulation changed to CommonPipe
           chiller_plant_operation_scheme_type:
             None: &PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
               Objects:
                 - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesCoolingLoad
             Default: *PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
+            UserDefined:
           chilled_water_pump_configuration:
             ConstantPrimaryNoSecondary:
               Objects:
                 - PlantLoop: *PlantLoopChilledWaterFields
-                - Pump:ConstantSpeed:
-                    <<: *PumpConstantSpeed
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
                 - Branch: *PumpBranchConstantSpeedSupplyInlet
                 - Pipe:Adiabatic:
                     name: '{} Demand Inlet Pipe'
@@ -6556,16 +6558,11 @@ OptionTree:
                         component_inlet_node_name: *DemandInlet
                         component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
               Transitions:
-                - *PumpCommonTransitions
                 - ^PlantLoop$:
                     chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
             VariablePrimaryNoSecondary:
               Objects:
                 - PlantLoop: *PlantLoopChilledWaterFields
-                - Pump:VariableSpeed:
-                    <<: *PumpVariableSpeed
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
-                    design_minimum_flow_rate: 0
                 - Branch: *PumpBranchVariableSpeedSupplyInlet
                 - Pipe:Adiabatic:
                     name: '{} Demand Inlet Pipe'
@@ -6579,7 +6576,6 @@ OptionTree:
                         component_inlet_node_name: *DemandInlet
                         component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
               Transitions:
-                - *PumpCommonTransitions
                 - ^PlantLoop$:
                     chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
             ConstantPrimaryVariableSecondary:
@@ -6587,9 +6583,6 @@ OptionTree:
                 - PlantLoop:
                     <<: *PlantLoopChilledWaterFields
                     common_pipe_simulation: CommonPipe
-                - Pump:ConstantSpeed:
-                    <<: *PumpConstantSpeed
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
                 - Branch: *PumpBranchConstantSpeedSupplyInlet
                 - Pump:VariableSpeed:
                     <<: *PumpVariableSpeed
@@ -6599,13 +6592,30 @@ OptionTree:
                     outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
                 - Branch: *PumpBranchVariableSpeedDemandInlet
               Transitions:
-                - *PumpCommonTransitions
                 - ^PlantLoop$:
                     chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
+          primary_pump_flow_and_type:
+            ConstantSinglePump:
+              Objects:
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Transitions:
+                - *PumpCommonTransitions
+            VariableSinglePump:
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                    design_minimum_flow_rate: 0
+              Transitions:
+                - *PumpCommonTransitions
           chilled_water_setpoint_reset_type:
             None:
               Objects:
-                - SetpointManager:Scheduled: *SetpointManagerScheduledChilledWater
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManagerScheduled
+                    schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
               Transitions:
                 - SetpointManager:Scheduled:
                     chilled_water_setpoint_schedule_name: schedule_name
@@ -6613,6 +6623,7 @@ OptionTree:
               Objects:
                 - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetChilledWater
           minimum_outdoor_dry_bulb_temperature:
+            None:
             AnyValue:
               Objects:
                 - AvailabilityManager:LowTemperatureTurnOff:
@@ -6676,15 +6687,42 @@ OptionTree:
                 design_pump_head: '{condenser_water_pump_rated_head}' # template attribute set in hvac_template.py
             - Branch: *PumpBranchVariableSpeedSupplyInlet
             - Sizing:Plant: *SizingPlantCondenserWater
-            - SetpointManager:Scheduled:
-                <<: *SetpointManagerScheduled
-                schedule_name: HVACTemplate-Always29.4
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadCondenserWater
-            - CondenserEquipmentOperationSchemes: *CondenserEquipmentOperationSchemesCondenserLoad
             - CondenserLoop: *CondenserLoopFields
           Transitions:
             - *SizingPlantCommonTransitions
+            - Sizing:Plant:
+                condenser_water_design_setpoint: design_loop_exit_temperature
             - *PumpCommonTransitions
+            - ^CondenserLoop$:
+                condenser_equipment_operation_schemes_name: condenser_equipment_operation_scheme_name
+        TemplateObjects:
+          condenser_water_temperature_control_type:
+            None: &PlantCondenserWaterLoopTemplateObjectsCondenserWaterTemperatureControlType
+              Objects:
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManagerScheduled
+                    schedule_name: 'HVACTemplate-Always{condenser_water_design_setpoint}'
+              Transitions:
+                - SetpointManager:Scheduled:
+                    condenser_water_setpoint_schedule_name: schedule_name
+            SpecifiedSetpoint: *PlantCondenserWaterLoopTemplateObjectsCondenserWaterTemperatureControlType
+            OutdoorWetBulbTemperature:
+              Objects:
+                - SetpointManager:FollowOutdoorAirTemperature:
+                    <<: *SetpointManager
+                    name: '{} Temp Manager'
+                    maximum_setpoint_temperature: 80
+                    minimum_setpoint_temperature: 5
+                    offset_temperature_difference: 0
+                    reference_temperature_type: OutdoorAirWetBulb
+                    setpoint_node_or_nodelist_name: *SupplySetpointNodes
+          condenser_plant_operation_scheme_type:
+            None: &PlantCondenserWaterLoopTemplateObjectsCondenserPlantOperationSchemeTypeNone
+              Objects:
+                - CondenserEquipmentOperationSchemes: *CondenserEquipmentOperationSchemesCondenserLoad
+            Default: *PlantCondenserWaterLoopTemplateObjectsCondenserPlantOperationSchemeTypeNone
+            UserDefined:
       Tower:
         BaseObjects:
         TemplateObjects:
