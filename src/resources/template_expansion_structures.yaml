@@ -6601,7 +6601,6 @@ OptionTree:
             VariablePrimaryNoSecondary:
               Objects:
                 - PlantLoop: *PlantLoopChilledWaterFields
-                - Branch: *PumpBranchVariableSpeedSupplyInlet
                 - Pipe:Adiabatic:
                     name: '{} Demand Inlet Pipe'
                     inlet_node_name: *DemandInlet
@@ -6621,7 +6620,6 @@ OptionTree:
                 - PlantLoop:
                     <<: *PlantLoopChilledWaterFields
                     common_pipe_simulation: CommonPipe
-                - Branch: *PumpBranchConstantSpeedSupplyInlet
                 - Pump:VariableSpeed:
                     <<: *PumpVariableSpeed
                     name: '{} Secondary Pump'
@@ -6679,6 +6677,7 @@ OptionTree:
                 - *PumpCommonTransitions
             VariableSinglePump:
               Objects:
+                - Branch: *PumpBranchVariableSpeedSupplyInlet
                 - Pump:VariableSpeed:
                     <<: *PumpVariableSpeed
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
