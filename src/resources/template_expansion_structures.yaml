@@ -6532,6 +6532,69 @@ OptionTree:
                     component_name: '{} Demand Inlet Pipe'
                     component_inlet_node_name: *DemandInlet
                     component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
+          PrimaryPumpFlowAndTypePerEquipment:
+            ConstantPumpPerEquipment:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipment
+                - *PlantCommonPlantLoopNoPrimary
+              ConstantSinglePump:
+                Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantSinglePumpObjects
+                  - Branch: *PumpBranchConstantSpeedSupplyInlet
+                  - Pump:ConstantSpeed: *PumpConstantSpeed
+              ConstantTwoHeadered:
+                Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantTwoHeaderedObjects
+                  - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                  - HeaderedPumps:ConstantSpeed:
+                      <<: *HeaderedPumpsConstantSpeed
+                      number_of_pumps_in_bank: 2
+                      design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              ConstantThreeHeadered:
+                Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantThreeHeaderedObjects
+                  - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                  - HeaderedPumps:ConstantSpeed:
+                      <<: *HeaderedPumpsConstantSpeed
+                      number_of_pumps_in_bank: 3
+              ConstantFourHeadered:
+                Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFourHeaderedObjects
+                  - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                  - HeaderedPumps:ConstantSpeed:
+                      <<: *HeaderedPumpsConstantSpeed
+                      number_of_pumps_in_bank: 4
+              ConstantFiveHeadered:
+                Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFiveHeaderedObjects
+                  - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                  - HeaderedPumps:ConstantSpeed:
+                      <<: *HeaderedPumpsConstantSpeed
+                      number_of_pumps_in_bank: 5
+              VariableSinglePump:
+                Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableSinglePumpObjects
+                  - Branch: *PumpBranchVariableSpeedSupplyInlet
+                  - Pump:VariableSpeed:
+                      <<: *PumpVariableSpeed
+                      design_minimum_flow_rate: 0
+              VariableTwoHeaderedPumps:
+                Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableTwoHeaderedObjects
+                  - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                  - HeaderedPumps:VariableSpeed:
+                      <<: *HeaderedPumpsVariableSpeed
+                      number_of_pumps_in_bank: 2
+              VariableThreeHeaderedPumps:
+                Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableThreeHeaderedObjects
+                  - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                  - HeaderedPumps:VariableSpeed:
+                      <<: *HeaderedPumpsVariableSpeed
+                      number_of_pumps_in_bank: 3
+              VariableFourHeaderedPumps:
+                Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFourHeaderedObjects
+                  - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                  - HeaderedPumps:VariableSpeed:
+                      <<: *HeaderedPumpsVariableSpeed
+                      number_of_pumps_in_bank: 4
+              VariableFiveHeaderedPumps:
+                Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFiveHeaderedObjects
+                  - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                  - HeaderedPumps:VariableSpeed:
+                      <<: *HeaderedPumpsVariableSpeed
+                      number_of_pumps_in_bank: 5
       Boiler:
         BaseObjects:
         TemplateObjects:
@@ -6641,99 +6704,70 @@ OptionTree:
                 - ^PlantLoop$:
                     chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
           primary_pump_flow_and_type:
-            ConstantPumpPerChiller: &PlantChilledWaterLoopTemplateObjectsPrimaryPumpFlowAndTypeConstantPumpPerChiller
-              Objects:
-                - *PlantCommonPlantLoopNoPrimary
+            ConstantPumpPerChiller:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipment
             ConstantSinglePump:
-              Objects:
-                - Branch: *PumpBranchConstantSpeedSupplyInlet
-                - Pump:ConstantSpeed:
-                    <<: *PumpConstantSpeed
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantSinglePumpObjects
               Transitions:
                 - *PumpCommonTransitions
+                - Pump.*:
+                    primary_chilled_water_pump_rated_head: design_pump_head
             ConstantTwoHeaderedPumps:
-              Objects:
-                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
-                - HeaderedPumps:ConstantSpeed:
-                    <<: *HeaderedPumpsConstantSpeed
-                    number_of_pumps_in_bank: 2
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantTwoHeaderedObjects
               Transitions:
                 - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
             ConstantThreeHeaderedPumps:
-              Objects:
-                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
-                - HeaderedPumps:ConstantSpeed:
-                    <<: *HeaderedPumpsConstantSpeed
-                    number_of_pumps_in_bank: 3
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantThreeHeaderedObjects
               Transitions:
                 - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
             ConstantFourHeaderedPumps:
-              Objects:
-                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
-                - HeaderedPumps:ConstantSpeed:
-                    <<: *HeaderedPumpsConstantSpeed
-                    number_of_pumps_in_bank: 4
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFourHeaderedObjects
               Transitions:
                 - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
             ConstantFiveHeaderedPumps:
-              Objects:
-                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
-                - HeaderedPumps:ConstantSpeed:
-                    <<: *HeaderedPumpsConstantSpeed
-                    number_of_pumps_in_bank: 5
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFiveHeaderedObjects
               Transitions:
                 - *HeaderedPumpsCommonTransitions
-            VariablePumpPerChiller: *PlantChilledWaterLoopTemplateObjectsPrimaryPumpFlowAndTypeConstantPumpPerChiller
+                - HeaderedPumps:ConstantSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+            VariablePumpPerChiller:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipment
             VariableSinglePump:
-              Objects:
-                - Branch: *PumpBranchVariableSpeedSupplyInlet
-                - Pump:VariableSpeed:
-                    <<: *PumpVariableSpeed
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
-                    design_minimum_flow_rate: 0
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableSinglePumpObjects
               Transitions:
                 - *PumpCommonTransitions
+                - Pump:.*:
+                    primary_chilled_water_pump_rated_head: design_pump_head
             VariableTwoHeaderedPumps:
-              Objects:
-                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
-                - HeaderedPumps:VariableSpeed:
-                    <<: *HeaderedPumpsVariableSpeed
-                    number_of_pumps_in_bank: 2
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableTwoHeaderedObjects
               Transitions:
                 - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
             VariableThreeHeaderedPumps:
-              Objects:
-                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
-                - HeaderedPumps:VariableSpeed:
-                    <<: *HeaderedPumpsVariableSpeed
-                    number_of_pumps_in_bank: 3
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableThreeHeaderedObjects
               Transitions:
                 - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
             VariableFourHeaderedPumps:
-              Objects:
-                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
-                - HeaderedPumps:VariableSpeed:
-                    <<: *HeaderedPumpsVariableSpeed
-                    number_of_pumps_in_bank: 4
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFourHeaderedObjects
               Transitions:
                 - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
             VariableFiveHeaderedPumps:
-              Objects:
-                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
-                - HeaderedPumps:VariableSpeed:
-                    <<: *HeaderedPumpsVariableSpeed
-                    number_of_pumps_in_bank: 5
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFiveHeaderedObjects
               Transitions:
                 - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
           secondary_pump_flow_and_type:
             VariableSinglePump:
               Objects:
@@ -6924,10 +6958,6 @@ OptionTree:
           Objects:
             - *PlantCommonPlantLoopBase
             - *PlantCommonPlantLoopNoSecondary
-            - Pump:VariableSpeed:
-                <<: *PumpVariableSpeed
-                design_pump_head: '{condenser_water_pump_rated_head}' # template attribute set in hvac_template.py
-            - Branch: *PumpBranchVariableSpeedSupplyInlet
             - Sizing:Plant: *SizingPlantCondenserWater
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadCondenserWater
             - CondenserLoop: *CondenserLoopFields
@@ -6965,6 +6995,39 @@ OptionTree:
                 - CondenserEquipmentOperationSchemes: *CondenserEquipmentOperationSchemesCondenserLoad
             Default: *PlantCondenserWaterLoopTemplateObjectsCondenserPlantOperationSchemeTypeNone
             UserDefined:
+          primary_pump_flow_and_type:
+            VariablePumpPerTower:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipment
+            VariableSinglePump:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableSinglePumpObjects
+              Transitions:
+                - *PumpCommonTransitions
+                - Pump.*:
+                    condenser_water_pump_rated_head: design_pump_head
+            VariableTwoHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableTwoHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    condenser_water_pump_rated_head: design_pump_head
+            VariableThreeHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableThreeHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    condenser_water_pump_rated_head: design_pump_head
+            VariableFourHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFourHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    condenser_water_pump_rated_head: design_pump_head
+            VariableFiveHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFiveHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    condenser_water_pump_rated_head: design_pump_head
       Tower:
         BaseObjects:
         TemplateObjects:
@@ -6974,7 +7037,6 @@ OptionTree:
                 - CoolingTower:SingleSpeed: *CoolingTowerSingleSpeed
                 - OutdoorAir:Node:
                     name: *OutdoorAirInletNodes
-                - *CoolingTowerCommonObjects
               Transitions: *CoolingTowerSingleSpeedCommonTransitions
               Mappings: *CoolingTowerSingleSpeedCommonMappings
             TwoSpeed:
@@ -6982,9 +7044,40 @@ OptionTree:
                 - CoolingTower:TwoSpeed: *CoolingTowerTwoSpeed
                 - OutdoorAir:Node:
                     name: *OutdoorAirInletNodes
-                - *CoolingTowerCommonObjects
               Transitions: *CoolingTowerTwoSpeedCommonTransitions
               Mappings: *CoolingTowerTwoSpeedCommonMappings
+          primary_pump_type:
+            None:
+              Objects:
+                - Branch: *CoolingTowerCommonObjectsBranch
+            VariablePumpPerEquipment:
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    name: '{} Branch Pump'
+                    design_pump_head: '{condenser_water_pump_rated_head}'
+                    inlet_node_name: '{} CW Pump Inlet'
+                    outlet_node_name:
+                      CoolingTower.*: water_inlet_node_name
+                - Branch:
+                    name: '{} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          CoolingTower.*: water_inlet_node_name
+                      - component_object_type:
+                          CoolingTower.*: self
+                        component_name:
+                          CoolingTower.*: key
+                        component_inlet_node_name:
+                          CoolingTower.*: water_inlet_node_name
+                        component_outlet_node_name:
+                          CoolingTower.*: water_outlet_node_name
         ObjectReference:
           BaseObjects:
             Objects:
