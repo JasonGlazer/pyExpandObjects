@@ -2679,17 +2679,48 @@ class PrimaryPumpFlowAndType:
     def __set__(self, obj, value):
         (template_type, template_structure), = value.items()
         (template_name, template_fields), = template_structure.items()
+        flow_type = None
+        configuration_type = None
         if template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
             flow_type = template_fields.get('chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary')
+            configuration_type = template_fields.get('chilled_water_primary_pump_type', 'SinglePump')
+        elif template_type == 'HVACTemplate:Plant:CondenserWaterLoop':
+            flow_type = 'VariablePrimary'
+            configuration_type = template_fields.get('condenser_water_pump_type', 'SinglePump')
+        if flow_type and configuration_type:
             flow_rgx_match = re.match(r'(^.*)Primary', flow_type)
+            if flow_rgx_match:
+                flow_type = flow_rgx_match.group(1)
+            else:
+                raise InvalidTemplateException(
+                    'In {} ({}) The primary pump configuration value is improperly formatted'
+                    .format(template_type, template_name))
+            obj._primary_pump_flow_and_type = ''.join([flow_type, configuration_type])
+        return
+
+
+class SecondaryPumpFlowAndType:
+    """
+    Create class attribute, secondary_pump_flow_and_type to select the pump flow type, and configuration
+     type for YAML TemplateObjects lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._secondary_pump_flow_and_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (template_name, template_fields), = template_structure.items()
+        if template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
+            flow_type = template_fields.get('chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary')
+            flow_rgx_match = re.match(r'^.*Primary(.*)Secondary', flow_type)
             if flow_rgx_match:
                 flow_type = flow_rgx_match.group(1)
             else:
                 raise InvalidTemplateException(
                     'In {} ({}) The chilled_water_pump_configuration value is improperly formatted'
                     .format(template_type, template_name))
-            configuration_type = template_fields.get('chilled_water_primary_pump_type', 'SinglePump')
-            obj._primary_pump_flow_and_type = ''.join([flow_type, configuration_type])
+            configuration_type = template_fields.get('chilled_water_secondary_pump_type', 'SinglePump')
+            obj._secondary_pump_flow_and_type = ''.join([flow_type, configuration_type])
         return
 
 
@@ -2699,15 +2730,17 @@ class ExpandPlantLoop(ExpandObjects):
 
     Attributes from Descriptors:
         primary_pump_flow_and_type
-
+        secondary_pump_flow_and_type
     """
 
     primary_pump_flow_and_type = PrimaryPumpFlowAndType()
+    secondary_pump_flow_and_type = SecondaryPumpFlowAndType()
 
     def __init__(self, template, logger_level='WARNING', epjson=None):
         super().__init__(template=template, logger_level=logger_level)
         self.unique_name = self.template_name
         self.primary_pump_flow_and_type = template
+        self.secondary_pump_flow_and_type = template
         self.epjson = epjson or self.epjson
         return
 
@@ -2805,11 +2838,51 @@ class PumpConfigurationType:
                 for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
                 if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop']
             if len(pump_configuration) > 1:
-                self.logger.warning(
+                obj.logger.warning(
                     'In {} ({}) More than one pump configuration was found.  Applying first instance {}'
                     .format(template_type, template_name, pump_configuration[0]))
             if pump_configuration:
                 obj._pump_configuration_type = pump_configuration[0]
+        return
+
+
+class PrimaryPumpType:
+    """
+    Set a class attribute pump_type that reflects the loop attribute primary_pump_type to use in
+    TemplateObjects in the YAML lookup.  This descriptor will only either be None, or 'PumpPerEquipment', since those
+    are the only configurations needed to inform the equipment
+    """
+    def __get__(self, obj, owner):
+        return obj._primary_pump_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value['template'].items()
+        (template_name, _), = template_structure.items()
+        # Check the loop type priority list against the expanded loops and return the first match.
+        if template_type == 'HVACTemplate:Plant:Chiller':
+            # This should return only one instance
+            primary_pump_type = [
+                (
+                    getattr(class_object_structure, 'chilled_water_primary_pump_type'),
+                    getattr(class_object_structure, 'chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary'))
+                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
+                    class_object_structure, 'chilled_water_primary_pump_type', None)]
+            if len(primary_pump_type) > 1:
+                obj.logger.warning(
+                    'In {} ({}) More than one pump type was found.  Applying first instance {}'
+                    .format(template_type, template_name, primary_pump_type[0]))
+            if primary_pump_type:
+                flow_rgx_match = re.match(r'(^.*)Primary', primary_pump_type[0][1])
+                if flow_rgx_match:
+                    flow_type = flow_rgx_match.group(1)
+                else:
+                    raise InvalidTemplateException(
+                        'In {} ({}) The chilled_water_pump_configuration value found in loop class object is '
+                        'improperly formatted'.format(template_type, template_name))
+                primary_pump_type_value = 'PumpPerEquipment' if re.match('^PumpPer.*', primary_pump_type[0][0]) else None
+                if flow_type and primary_pump_type_value:
+                    obj._primary_pump_type = ''.join([flow_type, primary_pump_type_value])
         return
 
 
@@ -2845,6 +2918,7 @@ class ExpandPlantEquipment(ExpandObjects):
     template_plant_loop_type = RetrievePlantEquipmentLoop()
     pump_configuration_type = PumpConfigurationType()
     chiller_and_condenser_type = ChillerAndCondenserType()
+    primary_pump_type = PrimaryPumpType()
 
     def __init__(self, template, logger_level='WARNING', plant_loop_class_objects=None, epjson=None):
         """
@@ -2858,6 +2932,7 @@ class ExpandPlantEquipment(ExpandObjects):
         plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}
         self.pump_configuration_type = {'template': template, **plant_loops}
+        self.primary_pump_type = {'template': template, **plant_loops}
         if self.template_plant_loop_type == 'ChilledWaterLoop':
             self.plant_loop_type_short = 'CHW'
         elif self.template_plant_loop_type == 'MixedWaterLoop':

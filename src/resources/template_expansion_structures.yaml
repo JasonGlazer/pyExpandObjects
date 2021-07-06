@@ -1010,10 +1010,10 @@ Objects:
         Base:
           Fields: &ChillerElectricEIRFields
             name: '{}'
-            chilled_water_inlet_node_name: '{} Chiller ChW Inlet' # required by schema
-            chilled_water_outlet_node_name: '{} Chiller ChW Outlet' # required by schema
-            condenser_inlet_node_name: '{} Chiller Cnd Inlet'
-            condenser_outlet_node_name: '{} Chiller Cnd Outlet'
+            chilled_water_inlet_node_name: '{} ChW Inlet' # required by schema
+            chilled_water_outlet_node_name: '{} ChW Outlet' # required by schema
+            condenser_inlet_node_name: '{} Cnd Inlet'
+            condenser_outlet_node_name: '{} Cnd Outlet'
             chiller_flow_mode: ConstantFlow # set by legacy, not reachable by template, not object default
             condenser_type: '{condenser_type}'
             cooling_capacity_function_of_temperature_curve_name: '{} RecipCapFT' # required by schema
@@ -2272,10 +2272,15 @@ Objects:
           design_power_consumption: Autosize # set by legacy, not reachable from template, no default
           pump_control_type: Intermittent # set by legacy, not reachable from template, no default
           pump_flow_rate_schedule_name: '{pump_schedule_name}'
+          total_design_flow_rate: Autosize # set by legacy, not reachable from template, no default
     ConstantSpeed:
       Fields: &HeaderedPumpsConstantSpeed
         <<: *HeaderedPumpsCommonFields
-        total_design_flow_rate: Autosize
+    VariableSpeed:
+      Fields: &HeaderedPumpsVariableSpeed
+        <<: *HeaderedPumpsCommonFields
+        coefficient_2_of_the_part_load_performance_curve: 0 # set by legacy, not reachable from template, no default
+        coefficient_3_of_the_part_load_performance_curve: 1 # set by legacy, not reachable from template, no default
   HeatExchanger:
     AirToAir:
       SensibleAndLatent:
@@ -6503,6 +6508,18 @@ OptionTree:
                     component_name: '{} Demand Outlet Pipe'
                     component_inlet_node_name: '{} Demand Outlet Pipe Inlet'
                     component_outlet_node_name: '{} Demand Outlet'
+          NoPrimary: &PlantCommonPlantLoopNoPrimary
+            - Pipe:Adiabatic:
+                name: '{} Supply Inlet Pipe'
+                inlet_node_name: *SupplyInlet
+                outlet_node_name: '{} Supply Inlet Pipe Outlet'
+            - Branch:
+                name: *SupplyInletBranch
+                components:
+                  - component_object_type: Pipe:Adiabatic
+                    component_name: '{} Supply Inlet Pipe'
+                    component_inlet_node_name: *SupplyInlet
+                    component_outlet_node_name: '{} Supply Inlet Pipe Outlet'
           NoSecondary: &PlantCommonPlantLoopNoSecondary
             - Pipe:Adiabatic:
                 name: '{} Demand Inlet Pipe'
@@ -6573,7 +6590,7 @@ OptionTree:
           - *SizingPlantCommonTransitions
           - Sizing:Plant:
               chilled_water_design_setpoint: design_loop_exit_temperature
-        TemplateObjects: # todo_eo: Secondary options need to have PlantLoop common_pipe_simulation changed to CommonPipe
+        TemplateObjects:
           chiller_plant_operation_scheme_type:
             None: &PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
               Objects:
@@ -6620,17 +6637,13 @@ OptionTree:
                 - PlantLoop:
                     <<: *PlantLoopChilledWaterFields
                     common_pipe_simulation: CommonPipe
-                - Pump:VariableSpeed:
-                    <<: *PumpVariableSpeed
-                    name: '{} Secondary Pump'
-                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
-                    inlet_node_name: '{} Demand Inlet' # required by schema
-                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
-                - Branch: *PumpBranchVariableSpeedDemandInlet
               Transitions:
                 - ^PlantLoop$:
                     chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
           primary_pump_flow_and_type:
+            ConstantPumpPerChiller: &PlantChilledWaterLoopTemplateObjectsPrimaryPumpFlowAndTypeConstantPumpPerChiller
+              Objects:
+                - *PlantCommonPlantLoopNoPrimary
             ConstantSinglePump:
               Objects:
                 - Branch: *PumpBranchConstantSpeedSupplyInlet
@@ -6647,7 +6660,7 @@ OptionTree:
                     number_of_pumps_in_bank: 2
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
               Transitions:
-                - *PumpCommonTransitions
+                - *HeaderedPumpsCommonTransitions
             ConstantThreeHeaderedPumps:
               Objects:
                 - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
@@ -6656,7 +6669,7 @@ OptionTree:
                     number_of_pumps_in_bank: 3
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
               Transitions:
-                - *PumpCommonTransitions
+                - *HeaderedPumpsCommonTransitions
             ConstantFourHeaderedPumps:
               Objects:
                 - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
@@ -6665,7 +6678,7 @@ OptionTree:
                     number_of_pumps_in_bank: 4
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
               Transitions:
-                - *PumpCommonTransitions
+                - *HeaderedPumpsCommonTransitions
             ConstantFiveHeaderedPumps:
               Objects:
                 - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
@@ -6674,7 +6687,8 @@ OptionTree:
                     number_of_pumps_in_bank: 5
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
               Transitions:
-                - *PumpCommonTransitions
+                - *HeaderedPumpsCommonTransitions
+            VariablePumpPerChiller: *PlantChilledWaterLoopTemplateObjectsPrimaryPumpFlowAndTypeConstantPumpPerChiller
             VariableSinglePump:
               Objects:
                 - Branch: *PumpBranchVariableSpeedSupplyInlet
@@ -6684,6 +6698,102 @@ OptionTree:
                     design_minimum_flow_rate: 0
               Transitions:
                 - *PumpCommonTransitions
+            VariableTwoHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    number_of_pumps_in_bank: 2
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+            VariableThreeHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    number_of_pumps_in_bank: 3
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+            VariableFourHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    number_of_pumps_in_bank: 4
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+            VariableFiveHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    number_of_pumps_in_bank: 5
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+          secondary_pump_flow_and_type:
+            VariableSinglePump:
+              Objects:
+                - Branch: *PumpBranchVariableSpeedDemandInlet
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    name: '{} Secondary Pump'
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+              Transitions:
+                - *PumpCommonTransitions
+            VariableTwoHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedDemandInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    name: '{} Secondary Pump'
+                    number_of_pumps_in_bank: 2
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+            VariableThreeHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedDemandInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    name: '{} Secondary Pump'
+                    number_of_pumps_in_bank: 3
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+            VariableFourHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedDemandInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    name: '{} Secondary Pump'
+                    number_of_pumps_in_bank: 4
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+            VariableFiveHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedDemandInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    name: '{} Secondary Pump'
+                    number_of_pumps_in_bank: 5
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
           chilled_water_setpoint_reset_type:
             None:
               Objects:
@@ -6707,11 +6817,70 @@ OptionTree:
       Chiller:
         BaseObjects:
         TemplateObjects:
+          primary_pump_type:
+            None:
+              Objects:
+                - Branch: *ChillerElectricCommonChilledWaterObjectsBranch
+            ConstantPumpPerEquipment:
+              Objects:
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    name: '{} ChW Branch Pump'
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Chw Pump Inlet'
+                    outlet_node_name:
+                      Chiller.*: chilled_water_inlet_node_name
+                - Branch:
+                    name: '{} ChW Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          Chiller.*: chilled_water_inlet_node_name
+                      - component_object_type:
+                          Chiller.*: self
+                        component_name:
+                          Chiller.*: key
+                        component_inlet_node_name:
+                          Chiller.*: chilled_water_inlet_node_name
+                        component_outlet_node_name:
+                          Chiller.*: chilled_water_outlet_node_name
+            VariablePumpPerEquipment:
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    name: '{} ChW Branch Pump'
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Chw Pump Inlet'
+                    outlet_node_name:
+                      Chiller.*: chilled_water_inlet_node_name
+                - Branch:
+                    name: '{} ChW Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          Chiller.*: chilled_water_inlet_node_name
+                      - component_object_type:
+                          Chiller.*: self
+                        component_name:
+                          Chiller.*: key
+                        component_inlet_node_name:
+                          Chiller.*: chilled_water_inlet_node_name
+                        component_outlet_node_name:
+                          Chiller.*: chilled_water_outlet_node_name
           chiller_and_condenser_type:
             ElectricReciprocatingChillerWaterCooled:
               Objects:
                 - Chiller:Electric:EIR: *ChillerElectricEIRFields
-                - *ChillerElectricCommonChilledWaterObjects
                 - *ChillerElectricEIRCommonObjects
                 - *ChillerElectricCommonCondenserWaterObjects
               Transitions:
@@ -6726,7 +6895,6 @@ OptionTree:
                 - Chiller:Electric:EIR:
                     <<: *ChillerElectricEIRFields
                     condenser_fan_power_ratio: 0.035
-                - *ChillerElectricCommonChilledWaterObjects
                 - *ChillerElectricEIRCommonObjects
                 - OutdoorAir:NodeList:
                     name: '{} Outdoor Air NodeList'

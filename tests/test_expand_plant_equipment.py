@@ -40,6 +40,7 @@ class TestExpandPlantEquipment(BaseTest, unittest.TestCase):
         epl = MagicMock()
         template_type = PropertyMock(return_value='HVACTemplate:Plant:ChilledWaterLoop')
         type(epl).template_type = template_type
+        del epl.chilled_water_primary_pump_type
         expanded_plant_loops = {'Test Loop': epl}
         output = ExpandPlantEquipment(
             template=mock_plant_equipment_template,
@@ -51,6 +52,7 @@ class TestExpandPlantEquipment(BaseTest, unittest.TestCase):
         epl = MagicMock()
         template_type = PropertyMock(return_value='HVACTemplate:Plant:ChilledWaterLoop')
         type(epl).template_type = template_type
+        del epl.chilled_water_primary_pump_type
         expanded_plant_loops = {'Test Loop': epl}
         output = ExpandPlantEquipment(
             template=mock_plant_equipment_template,

@@ -924,11 +924,11 @@ class HVACTemplate(EPJSON):
                         ['condenser_water_pump_rated_head', 'condenser_water_design_setpoint',
                          'condenser_plant_operation_scheme_type', 'condenser_equipment_operation_schemes_name',
                          'condenser_water_temperature_control_type', 'condenser_water_setpoint_schedule_name',
-                         'pump_schedule_name', 'pump_control_type'],
+                         'pump_schedule_name', 'pump_control_type', 'condenser_water_pump_type'],
                         ['condenser_water_pump_rated_head', 'condenser_water_design_setpoint',
                          'condenser_plant_operation_scheme_type', 'condenser_equipment_operation_schemes_name',
                          'condenser_water_temperature_control_type', 'condenser_water_setpoint_schedule_name',
-                         'pump_schedule_name', 'pump_control_type']):
+                         'pump_schedule_name', 'pump_control_type', 'condenser_water_pump_type']):
                     try:
                         cndw_attributes[cndw_attribute] = getattr(chw_loop[0], chw_attribute)
                     except AttributeError:
@@ -1157,10 +1157,16 @@ class HVACTemplate(EPJSON):
         # check to make sure loops aren't empty
         if demand_branches:
             if plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
-                equipment_types = [
-                    (component[0]['component_name'], component[0]['component_object_type']) for
-                    object_name, object_structure in supply_branches.items()
-                    for component in object_structure.values()]
+                try:
+                    equipment_types = [
+                        (component[-1]['component_name'], component[-1]['component_object_type']) for
+                        object_name, object_structure in supply_branches.items()
+                        for component in object_structure.values()]
+                except AttributeError:
+                    raise PyExpandObjectsYamlStructureException(
+                        'Error: In {} ({}) No supply branches found plant loop object'
+                        .format(plant_loop_class_object.template_type, plant_loop_class_object.unique_name))
+
                 chillers = [i for i in equipment_types if re.match(r'Chiller:.*', i[1])]
                 towers = [i for i in equipment_types if re.match(r'CoolingTower:.*', i[1])]
                 # For water-cooled chillers, the tower is in the condenserloop so that needs to be checked instead of
@@ -1217,9 +1223,17 @@ class HVACTemplate(EPJSON):
                 supply_branchlist['branches'].insert(1, {'branch_name': branch})
                 connector_supply_splitter['branches'].insert(0, {'outlet_branch_name': branch})
                 connector_supply_mixer['branches'].insert(0, {'inlet_branch_name': branch})
-                supply_nodelist['nodes'].insert(
-                    0,
-                    {'node_name': supply_branches[branch]['components'][0]['component_outlet_node_name']})
+                # the supply node for the equipment changes based on the pump configuration type (variable vs constant).
+                if plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
+                    if getattr(plant_loop_class_object, 'chilled_water_pump_configuration', '')\
+                            .startswith('VariablePrimary'):
+                        supply_nodelist['nodes'].insert(
+                            0,
+                            {'node_name': supply_branches[branch]['components'][-1]['component_outlet_node_name']})
+                    else:
+                        supply_nodelist['nodes'].insert(
+                            0,
+                            {'node_name': supply_branches[branch]['components'][-1]['component_inlet_node_name']})
         except (KeyError, AttributeError):
             raise PyExpandObjectsYamlStructureException(
                 'Error: In {} AutoCreated PlantLoop Connector YAML object was '
@@ -1283,7 +1297,7 @@ class HVACTemplate(EPJSON):
                     equipment_name = equipment_class.chiller_name
                 elif equipment_class.template_type == 'HVACTemplate:Plant:Tower:ObjectReference':
                     equipment_name = equipment_class.cooling_tower_name
-                if sb['components'][0]['component_name'] == equipment_name:
+                if sb['components'][-1]['component_name'] == equipment_name:
                     # make tuple of (object, priority)
                     # if priority isn't set, use infinity to push it to the end when sorted
                     supply_branches_with_priority.append((sb, getattr(equipment_class, 'priority', float('inf'))))
@@ -1292,8 +1306,8 @@ class HVACTemplate(EPJSON):
             in sorted(supply_branches_with_priority, key=lambda s: s[1])]
         for sb in supply_branches_ordered:
             equipment.append({
-                'equipment_name': sb['components'][0]['component_name'],
-                'equipment_object_type': sb['components'][0]['component_object_type']
+                'equipment_name': sb['components'][-1]['component_name'],
+                'equipment_object_type': sb['components'][-1]['component_object_type']
             })
         # use ExpandObjects functions
         eo = ExpandObjects(logger_level=self.logger_level)

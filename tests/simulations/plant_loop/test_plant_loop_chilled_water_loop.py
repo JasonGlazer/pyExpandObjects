@@ -388,6 +388,50 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pump:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
         return
 
+    def test_chilled_water_primary_pump_type_single_pump_variable(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'SinglePump'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Pump:VariableSpeed'].get('Chilled Water Loop Supply Pump'))
+        return
+
+    def test_chilled_water_primary_pump_type_pump_per_chiller(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'PumpPerChiller'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Main Chiller ChW Branch Pump',
+            epjson_output['Branch']['Main Chiller ChW Branch']['components'][0]['component_name'])
+        self.assertEqual(
+            'Main Chiller',
+            epjson_output['Branch']['Main Chiller ChW Branch']['components'][1]['component_name'])
+        return
+
+    def test_chilled_water_primary_pump_type_pump_per_chiller_variable(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'PumpPerChiller'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Main Chiller ChW Branch Pump',
+            epjson_output['Branch']['Main Chiller ChW Branch']['components'][0]['component_name'])
+        self.assertEqual(
+            'Main Chiller',
+            epjson_output['Branch']['Main Chiller ChW Branch']['components'][1]['component_name'])
+        return
+
     def test_chilled_water_primary_pump_type_two_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_primary_pump_type'] = 'TwoHeaderedPumps'
@@ -400,6 +444,20 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             2,
             epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
+
+    def test_chilled_water_primary_pump_type_two_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'TwoHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Chilled Water Loop Supply Pump'))
+        self.assertEqual(
+            2,
+            epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
 
     def test_chilled_water_primary_pump_type_three_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
@@ -414,6 +472,20 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    def test_chilled_water_primary_pump_type_three_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'ThreeHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Chilled Water Loop Supply Pump'))
+        self.assertEqual(
+            3,
+            epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
+
     def test_chilled_water_primary_pump_type_four_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_primary_pump_type'] = 'FourHeaderedPumps'
@@ -427,6 +499,20 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    def test_chilled_water_primary_pump_type_four_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'FourHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Chilled Water Loop Supply Pump'))
+        self.assertEqual(
+            4,
+            epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
+
     def test_chilled_water_primary_pump_type_five_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_primary_pump_type'] = 'FiveHeaderedPumps'
@@ -438,4 +524,89 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
         self.assertEqual(
             5,
             epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    def test_chilled_water_primary_pump_type_five_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_primary_pump_type'] = 'FiveHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Chilled Water Loop Supply Pump'))
+        self.assertEqual(
+            5,
+            epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    def test_chilled_water_secondary_pump_type_two_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_secondary_pump_type'] = 'TwoHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Chilled Water Loop Secondary Pump'))
+        self.assertEqual(
+            2,
+            epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Secondary Pump']['number_of_pumps_in_bank'])
+        return
+
+    def test_chilled_water_secondary_pump_type_three_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_secondary_pump_type'] = 'ThreeHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Chilled Water Loop Secondary Pump'))
+        self.assertEqual(
+            3,
+            epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Secondary Pump']['number_of_pumps_in_bank'])
+        return
+
+    def test_chilled_water_secondary_pump_type_four_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_secondary_pump_type'] = 'FourHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Chilled Water Loop Secondary Pump'))
+        self.assertEqual(
+            4,
+            epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Secondary Pump']['number_of_pumps_in_bank'])
+        return
+
+    def test_chilled_water_secondary_pump_type_five_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_secondary_pump_type'] = 'FiveHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Chilled Water Loop Secondary Pump'))
+        self.assertEqual(
+            5,
+            epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Secondary Pump']['number_of_pumps_in_bank'])
+        return
+
+    def test_condenser_water_primary_pump_type_single_pump(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'condenser_water_pump_type'] = 'SinglePump'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Pump:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
         return

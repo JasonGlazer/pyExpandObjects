@@ -490,6 +490,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         epc.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
         del epc.primary_chilled_water_pump_rated_head
         del epc.condenser_plant_operation_scheme_type
+        del epc.condenser_water_pump_type
         expanded_plant_loops = {'Test Hot Water': eph, 'Test Chilled Water': epc}
         epe = MagicMock()
         epe.template_type = 'HVACTemplate:Plant:Chiller'
@@ -548,6 +549,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         epc.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
         del epc.primary_chilled_water_pump_rated_head
         del epc.condenser_plant_operation_scheme_type
+        del epc.condenser_water_pump_type
         expanded_plant_loops = {'Test Hot Water': eph, 'Test Chilled Water': epc}
         epe = MagicMock()
         epe.template_type = 'HVACTemplate:Plant:Chiller'
@@ -609,6 +611,7 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         epc.template_type = 'HVACTemplate:Plant:ChilledWaterLoop'
         epc.condenser_water_pump_rated_head = 2000
         del epc.condenser_plant_operation_scheme_type
+        del epc.condenser_water_pump_type
         expanded_plant_loops = {'Test Hot Water': eph, 'Test Chilled Water': epc}
         epe = MagicMock()
         epe.template_type = 'HVACTemplate:Plant:Chiller'
