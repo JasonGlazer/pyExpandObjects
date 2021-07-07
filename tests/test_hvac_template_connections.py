@@ -530,10 +530,10 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         self.assertEqual(
             {
                 'AvailabilityManagerAssignmentList': 1,
-                'Branch': 6,
+                'Branch': 4,
                 'CondenserEquipmentOperationSchemes': 1,
                 'CondenserLoop': 1,
-                'Pipe:Adiabatic': 5,
+                'Pipe:Adiabatic': 3,
                 'PlantEquipmentOperation:CoolingLoad': 1,
                 'Pump:VariableSpeed': 1,
                 'Schedule:Compact': 1,
@@ -592,10 +592,10 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         self.assertEqual(
             {
                 'AvailabilityManagerAssignmentList': 1,
-                'Branch': 6,
+                'Branch': 4,
                 'CondenserEquipmentOperationSchemes': 1,
                 'CondenserLoop': 1,
-                'Pipe:Adiabatic': 5,
+                'Pipe:Adiabatic': 3,
                 'PlantEquipmentOperation:CoolingLoad': 1,
                 'Pump:VariableSpeed': 1,
                 'Schedule:Compact': 1,
@@ -650,10 +650,10 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         eo = ExpandObjects()
         self.assertEqual({
             'AvailabilityManagerAssignmentList': 1,
-            'Branch': 6,
+            'Branch': 4,
             'CondenserLoop': 1,
             'CondenserEquipmentOperationSchemes': 1,
-            'Pipe:Adiabatic': 5,
+            'Pipe:Adiabatic': 3,
             'PlantEquipmentOperation:CoolingLoad': 1,
             'Pump:VariableSpeed': 1,
             'Schedule:Compact': 1,

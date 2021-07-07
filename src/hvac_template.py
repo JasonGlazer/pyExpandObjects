@@ -924,11 +924,15 @@ class HVACTemplate(EPJSON):
                         ['condenser_water_pump_rated_head', 'condenser_water_design_setpoint',
                          'condenser_plant_operation_scheme_type', 'condenser_equipment_operation_schemes_name',
                          'condenser_water_temperature_control_type', 'condenser_water_setpoint_schedule_name',
-                         'pump_schedule_name', 'pump_control_type', 'condenser_water_pump_type'],
+                         'pump_schedule_name', 'pump_control_type', 'condenser_water_pump_type',
+                         'condenser_water_supply_side_bypass_pipe', 'condenser_water_demand_side_bypass_pipe',
+                         'condenser_water_load_distribution_scheme'],
                         ['condenser_water_pump_rated_head', 'condenser_water_design_setpoint',
                          'condenser_plant_operation_scheme_type', 'condenser_equipment_operation_schemes_name',
                          'condenser_water_temperature_control_type', 'condenser_water_setpoint_schedule_name',
-                         'pump_schedule_name', 'pump_control_type', 'condenser_water_pump_type']):
+                         'pump_schedule_name', 'pump_control_type', 'condenser_water_pump_type',
+                         'condenser_water_supply_side_bypass_pipe', 'condenser_water_demand_side_bypass_pipe',
+                         'condenser_water_load_distribution_scheme']):
                     try:
                         cndw_attributes[cndw_attribute] = getattr(chw_loop[0], chw_attribute)
                     except AttributeError:
@@ -1196,20 +1200,51 @@ class HVACTemplate(EPJSON):
         # Use ExpandObjects class for helper functions
         eo = ExpandObjects(logger_level=self.logger_level)
         eo.unique_name = getattr(plant_loop_class_object, 'template_name')
-        # create branchlists
-        demand_branchlist = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'Demand'])
-        supply_branchlist = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'Supply'])
-        # create connector objects
-        connector_demand_splitter = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'Demand'])
-        connector_demand_mixer = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'Demand'])
-        connector_supply_splitter = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'Supply'])
-        connector_supply_mixer = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'Supply'])
+        # create connector objects based on template attributes
+        if (plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
+                plant_loop_class_object, 'chilled_water_supply_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:CondenserWaterLoop' and getattr(
+                plant_loop_class_object, 'condenser_water_supply_side_bypass_pipe', 'Yes') == 'No'):
+            supply_branchlist = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'SupplyNoBypass'])
+            connector_supply_mixer = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'SupplyNoBypass'])
+            connector_supply_splitter = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'SupplyNoBypass'])
+            # set the 'branches' value type to list if it's none
+            if not connector_supply_mixer['branches']:
+                connector_supply_splitter['branches'] = []
+            if not connector_supply_splitter['branches']:
+                connector_supply_mixer['branches'] = []
+        else:
+            supply_branchlist = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'Supply'])
+            connector_supply_mixer = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'Supply'])
+            connector_supply_splitter = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'Supply'])
+        if (plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
+                plant_loop_class_object, 'chilled_water_demand_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:CondenserWaterLoop' and getattr(
+                plant_loop_class_object, 'condenser_water_demand_side_bypass_pipe', 'Yes') == 'No'):
+            demand_branchlist = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'DemandNoBypass'])
+            connector_demand_splitter = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'DemandNoBypass'])
+            connector_demand_mixer = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'DemandNoBypass'])
+            # set the 'branches' value type to list if it's none
+            if not connector_demand_mixer['branches']:
+                connector_demand_splitter['branches'] = []
+            if not connector_demand_splitter['branches']:
+                connector_demand_mixer['branches'] = []
+        else:
+            demand_branchlist = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'Demand'])
+            connector_demand_splitter = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'Demand'])
+            connector_demand_mixer = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'Demand'])
         # create supply nodelist
         supply_nodelist = eo.get_structure(
             structure_hierarchy=['AutoCreated', 'PlantLoop', 'NodeList', 'Supply'])

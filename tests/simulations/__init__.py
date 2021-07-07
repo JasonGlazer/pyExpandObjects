@@ -192,6 +192,14 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         baseline_file_location = self.convert_file(base_idf_test_file_path)
         # setup outputs for perform_comparison to function and write base file
         base_formatted_epjson = self.setup_file(baseline_file_location)
+        # move file so that it isn't accidentally read from a previous run
+        try:
+            os.rename(
+                str(test_dir / '..' / 'simulation' / 'test' / 'test_input_epjson.epJSON'),
+                str(test_dir / '..' / 'simulation' / 'test' / 'old_test_input_epjson.epJSON')
+            )
+        except FileNotFoundError:
+            pass
         # write the preformatted base file for main to call
         test_pre_input_file_path = self.write_file_for_testing(
             epjson=base_formatted_epjson,
