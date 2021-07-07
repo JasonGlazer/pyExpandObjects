@@ -1933,6 +1933,12 @@ Objects:
                       Coil:Heating:Water: self
                     component_outlet_node_name:
                       Coil:Heating:Water: water_outlet_node_name
+          Mappings: &CoilHeatingWaterCommonMappings
+            - heating_coil_capacity:
+                None:
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
         Base: &CoilHeatingWaterSuperObject
           Fields: &CoilHeatingWaterFields
             << : *CoilHeatingCommonFields
@@ -2156,10 +2162,9 @@ Objects:
                   CoolingTower.*: water_outlet_node_name
       Fields: &CoolingTowerCommonFields
         blowdown_calculation_mode: ConcentrationRatio # set by legacy, not reachable from template, no default
-        design_water_flow_rate: Autosize # set by legacy, not reachable from template, no default
         evaporation_loss_mode: SaturatedExit # set by legacy, not reachable from template, no default
         free_convection_regime_air_flow_rate: Autocalculate # set by legacy, not reachable from template, not default
-        free_convection_regime_u_factor_times_area_value: Autocalculate # set by legacy, not reachable from template, not default
+        performance_input_method: NominalCapacity
         outdoor_air_inlet_node_name: *OutdoorAirInletNodes
         sizing_factor: '{sizing_factor}'
         water_inlet_node_name: '{} Inlet' # required by schema
@@ -2170,18 +2175,45 @@ Objects:
           - CoolingTower:SingleSpeed:
               free_convection_capacity: free_convection_capacity
               high_speed_fan_power: design_fan_power
+              high_speed_nominal_capacity: '{nominal_capacity} / 1'
         Mappings: &CoolingTowerSingleSpeedCommonMappings
           - CoolingTower:SingleSpeed:
               free_convection_capacity:
                 Autosize:
                   free_convection_capacity: Autocalculate
+          - CoolingTower:SingleSpeed:
+              high_speed_nominal_capacity:
+                None:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+              free_convection_capacity:
+                None:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
       Base:
         Fields: &CoolingTowerSingleSpeed
           name: '{}'
           <<: *CoolingTowerCommonFields
           design_air_flow_rate: Autosize # set by legacy, not reachable from template, no default, required by schema
           design_fan_power: Autosize # set by legacy, not reachable from template, no default, required by schema
-          design_u_factor_times_area_value: Autosize # set by legacy, not reachable from template, no default
           free_convection_capacity: Autocalculate # set by legacy, not reachable from template, no default
     TwoSpeed:
       Common:
@@ -2189,6 +2221,7 @@ Objects:
           - CoolingTower:TwoSpeed:
               free_convection_capacity: free_convection_nominal_capacity
               high_speed_fan_power: high_fan_speed_fan_power
+              high_speed_nominal_capacity: '{high_speed_nominal_capacity} / 1'
               low_speed_fan_power: low_fan_speed_fan_power
               low_speed_nominal_capacity: low_speed_nominal_capacity
         Mappings: &CoolingTowerTwoSpeedCommonMappings
@@ -2202,6 +2235,58 @@ Objects:
               low_speed_fan_power:
                 Autosize:
                   low_fan_speed_fan_power: Autocalculate
+          - CoolingTower:TwoSpeed:
+              high_speed_nominal_capacity:
+                None:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+              low_speed_nominal_capacity:
+                None:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+              free_convection_capacity:
+                None:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
       Base:
         Fields: &CoolingTowerTwoSpeed
           name: '{}'
@@ -2209,13 +2294,10 @@ Objects:
           free_convection_nominal_capacity: Autocalculate
           high_fan_speed_air_flow_rate: Autosize
           high_fan_speed_fan_power: Autosize
-          high_fan_speed_u_factor_times_area_value: Autosize
-#          high_speed_nominal_capacity # todo_eo: no transitions or setting since only numeric allowed, not Autosize
           low_fan_speed_air_flow_rate: Autocalculate
           low_fan_speed_fan_power: Autocalculate
-          low_fan_speed_u_factor_times_area_value: Autocalculate
           low_speed_nominal_capacity: Autocalculate
-          performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+          performance_input_method: NominalCapacity
   DesignSpecification:
     OutdoorAir:
       Base:
@@ -3575,6 +3657,7 @@ OptionTree:
                       Objects: &ZoneCommonBuildPathActionsObjectsHeatingCoilTypeHotWaterObjects
                         - Coil:Heating:Water: *CoilHeatingWaterSuperObject
                         - *CoilHeatingWaterCommonObjects
+                      Mappings: *CoilHeatingWaterCommonMappings
                     Gas:
                       ObjectReference: Fan:.*
                       Location: After
@@ -3903,6 +3986,7 @@ OptionTree:
                         <<: *CoilHeatingWaterCommonObjectsBranch
                         name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
                   Transitions: *AirTerminalSingleDuctVAVCommonTransitions
+                  Mappings: *CoilHeatingWaterCommonMappings
             HeatAndCool: &ZoneCommonTemplateObjectsVAVHeatAndCool
               reheat_coil_type:
                 None:
@@ -3960,6 +4044,7 @@ OptionTree:
                   Transitions:
                     - *AirTerminalSingleDuctVAVCommonTransitions
                     - *AirTerminalSingleDuctVAVHeatAndCoolCommonTransitions
+                  Mappings: *CoilHeatingWaterCommonMappings
             FanPowered: &ZoneCommonTemplateObjectsVAVFanPowered
               flow_type:
                 Parallel:
@@ -4075,6 +4160,7 @@ OptionTree:
                     <<: *CoilHeatingWaterCommonObjectsBranch
                     name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
               Transitions: *AirTerminalSingleDuctCommonTransitions
+              Mappings: *CoilHeatingWaterCommonMappings
           <<: *ZoneCommonTemplateObjectsSupplyPlenum
           <<: *ZoneCommonTemplateObjectsReturnPlenum
       DualDuct:
@@ -4326,6 +4412,7 @@ OptionTree:
                     - Coil:Heating:Water:
                         supplemental_heating_coil_capacity: rated_capacity
                         supplemental_heating_or_reheat_coil_capacity: nominal_capacity
+                  Mappings: *CoilHeatingWaterCommonMappings
         BaseObjects:
           Objects:
             - Sizing:Zone: *SizingZoneOA
@@ -4483,6 +4570,7 @@ OptionTree:
                           Connectors:
                             AirLoop: *ConnectorsAirLoop
                       - *CoilHeatingWaterCommonObjects
+                    Mappings: *CoilHeatingWaterCommonMappings
                   Gas:
                     ObjectReference: Fan:.*
                     Location: After
@@ -4962,6 +5050,7 @@ OptionTree:
                           <<: *ControllerWaterCoil
                           name: '{} Heating Coil Controller'
                       - *CoilHeatingWaterCommonObjects
+                    Mappings: *CoilHeatingWaterCommonMappings
                   Gas:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
@@ -5115,6 +5204,7 @@ OptionTree:
                     Transitions:
                       - SetpointManager:Scheduled:
                           preheat_coil_setpoint_schedule_name: schedule_name
+                    Mappings: *CoilHeatingWaterCommonMappings
                   ElectricPreheat:
                     ObjectReference: OutdoorAir:Mixer
                     Location: Before
@@ -5193,6 +5283,7 @@ OptionTree:
                     Transitions:
                       - SetpointManager:Scheduled:
                           preheat_coil_setpoint_schedule_name: schedule_name
+                    Mappings: *CoilHeatingWaterCommonMappings
                   ElectricPreheatSensibleHR: &ConstantvolumeBuildPathOutsideAirEquipmentTypeElectricPreheatSensibleHR
                     ObjectReference: OutdoorAir:Mixer
                     Location: Before
@@ -6463,6 +6554,7 @@ OptionTree:
                   Objects:
                     - Coil:Heating:Water: *CoilHeatingWaterSuperObject
                     - *CoilHeatingWaterCommonObjects
+                  Mappings: *CoilHeatingWaterCommonMappings
                 Gas: # Override existing Gas option with different Coil:Heating:Fuel object
                   ObjectReference: OutdoorAir:Mixer
                   Location: After
