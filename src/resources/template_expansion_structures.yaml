@@ -2931,7 +2931,7 @@ Objects:
           name: '{} Sizing Plant'
           plant_or_condenser_loop_name: *PlantLoop
         Transitions: &SizingPlantCommonTransitions
-          - Plant:Sizing:
+          - Sizing:Plant:
               loop_design_delta_temperature: loop_design_temperature_difference
       ChilledWater:
         Fields: &SizingPlantChilledWater
@@ -3380,11 +3380,21 @@ AutoCreated:
           - branch_name: *DemandInletBranch
           - branch_name: *DemandBypassBranch
           - branch_name: *DemandOutletBranch
+      DemandNoBypass:
+        name: *DemandSideBranches
+        branches:
+          - branch_name: *DemandInletBranch
+          - branch_name: *DemandOutletBranch
       Supply:
         name: *SupplySideBranches
         branches:
           - branch_name: *SupplyInletBranch
           - branch_name: *SupplyBypassBranch
+          - branch_name: *SupplyOutletBranch
+      SupplyNoBypass:
+        name: *SupplySideBranches
+        branches:
+          - branch_name: *SupplyInletBranch
           - branch_name: *SupplyOutletBranch
     CondenserEquipmentList:
       name: *CondenserEquipmentList
@@ -3395,22 +3405,38 @@ AutoCreated:
           outlet_branch_name: *DemandOutletBranch
           branches:
             - inlet_branch_name: *DemandBypassBranch
+        DemandNoBypass:
+          name: *DemandMixer
+          outlet_branch_name: *DemandOutletBranch
+          branches:
         Supply:
           name: *SupplyMixer
           outlet_branch_name: *SupplyOutletBranch
           branches:
             - inlet_branch_name: *SupplyBypassBranch
+        SupplyNoBypass:
+          name: *SupplyMixer
+          outlet_branch_name: *SupplyOutletBranch
+          branches:
       Splitter:
         Demand:
           name: *DemandSplitter
           inlet_branch_name: *DemandInletBranch
           branches:
             - outlet_branch_name: *DemandBypassBranch
+        DemandNoBypass:
+          name: *DemandSplitter
+          inlet_branch_name: *DemandInletBranch
+          branches:
         Supply:
           name: *SupplySplitter
           inlet_branch_name: *SupplyInletBranch
           branches:
             - outlet_branch_name: *SupplyBypassBranch
+        SupplyNoBypass:
+          name: *SupplySplitter
+          inlet_branch_name: *SupplyInletBranch
+          branches:
     ConnectorList:
       Demand:
         name: *DemandSideConnectors
@@ -6567,17 +6593,6 @@ OptionTree:
         PlantLoop:
           Base: &PlantCommonPlantLoopBase
             - Pipe:Adiabatic:
-                name: '{} Supply Bypass Pipe'
-                inlet_node_name: '{} Supply Bypass Inlet'
-                outlet_node_name: '{} Supply Bypass Outlet'
-            - Branch:
-                name: *SupplyBypassBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Supply Bypass Pipe'
-                    component_inlet_node_name: '{} Supply Bypass Inlet'
-                    component_outlet_node_name: '{} Supply Bypass Outlet'
-            - Pipe:Adiabatic:
                 name: '{} Supply Outlet Pipe'
                 inlet_node_name: '{} Supply Outlet Pipe Inlet'
                 outlet_node_name: *SupplyOutlet
@@ -6588,17 +6603,6 @@ OptionTree:
                     component_name: '{} Supply Outlet Pipe'
                     component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
                     component_outlet_node_name: *SupplyOutlet
-            - Pipe:Adiabatic:
-                name: '{} Demand Bypass Pipe'
-                inlet_node_name: '{} Demand Bypass Inlet'
-                outlet_node_name: '{} Demand Bypass Outlet'
-            - Branch:
-                name: *DemandBypassBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Demand Bypass Pipe'
-                    component_inlet_node_name: '{} Demand Bypass Inlet'
-                    component_outlet_node_name: '{} Demand Bypass Outlet'
             - Pipe:Adiabatic:
                 name: '{} Demand Outlet Pipe'
                 inlet_node_name: '{} Demand Outlet Pipe Inlet'
@@ -6697,6 +6701,38 @@ OptionTree:
                   - HeaderedPumps:VariableSpeed:
                       <<: *HeaderedPumpsVariableSpeed
                       number_of_pumps_in_bank: 5
+          SupplySideBypassPipe: &PlantCommonPlantLoopSupplySideBypassPipe
+            None: &PlantCommonPlantLoopSupplySideBypassPipeNone
+              Objects:
+                - Pipe:Adiabatic:
+                    name: '{} Supply Bypass Pipe'
+                    inlet_node_name: '{} Supply Bypass Inlet'
+                    outlet_node_name: '{} Supply Bypass Outlet'
+                - Branch:
+                    name: *SupplyBypassBranch
+                    components:
+                      - component_object_type: Pipe:Adiabatic
+                        component_name: '{} Supply Bypass Pipe'
+                        component_inlet_node_name: '{} Supply Bypass Inlet'
+                        component_outlet_node_name: '{} Supply Bypass Outlet'
+            'Yes': *PlantCommonPlantLoopSupplySideBypassPipeNone
+            'No':
+          DemandSideBypassPipe: &PlantCommonPlantLoopDemandSideBypassPipe
+            None: &PlantCommonPlantLoopDemandSideBypassPipeNone
+              Objects:
+                - Pipe:Adiabatic:
+                    name: '{} Demand Bypass Pipe'
+                    inlet_node_name: '{} Demand Bypass Inlet'
+                    outlet_node_name: '{} Demand Bypass Outlet'
+                - Branch:
+                    name: *DemandBypassBranch
+                    components:
+                      - component_object_type: Pipe:Adiabatic
+                        component_name: '{} Demand Bypass Pipe'
+                        component_inlet_node_name: '{} Demand Bypass Inlet'
+                        component_outlet_node_name: '{} Demand Bypass Outlet'
+            'Yes': *PlantCommonPlantLoopDemandSideBypassPipeNone
+            'No':
       Boiler:
         BaseObjects:
         TemplateObjects:
@@ -6752,9 +6788,10 @@ OptionTree:
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
             - Sizing:Plant: *SizingPlantChilledWater
           Transitions:
-          - *SizingPlantCommonTransitions
-          - Sizing:Plant:
-              chilled_water_design_setpoint: design_loop_exit_temperature
+            - *SizingPlantCommonTransitions
+            - Sizing:Plant:
+                chilled_water_design_setpoint: design_loop_exit_temperature
+
         TemplateObjects:
           chiller_plant_operation_scheme_type:
             None: &PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
@@ -6780,6 +6817,20 @@ OptionTree:
               Transitions:
                 - ^PlantLoop$:
                     chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
+                    chilled_water_load_distribution_scheme: load_distribution_scheme
+              Mappings:
+                - ^PlantLoop$:
+                    fluid_type:
+                      EthyleneGlycol30: &PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                        fluid_type: UserDefinedFluidType
+                        user_defined_fluid_type: '{} Fluid'
+                      EthyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      EthyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      EthyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
             VariablePrimaryNoSecondary:
               Objects:
                 - PlantLoop: *PlantLoopChilledWaterFields
@@ -6797,6 +6848,17 @@ OptionTree:
               Transitions:
                 - ^PlantLoop$:
                     chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
+              Mappings:
+                - ^PlantLoop$:
+                    fluid_type:
+                      EthyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      EthyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      EthyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      EthyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
             ConstantPrimaryVariableSecondary:
               Objects:
                 - PlantLoop:
@@ -6950,6 +7012,59 @@ OptionTree:
                     name: '{} Availability Low Temp TurnOff'
                     sensor_node_name: '{} Outside Air Sensor'
                     temperature: '{minimum_outdoor_dry_bulb_temperature}'
+          chilled_water_supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
+          chilled_water_demand_side_bypass_pipe: *PlantCommonPlantLoopDemandSideBypassPipe
+          fluid_type:
+            None:
+            Water:
+            EthyleneGlycol30:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.3
+                    glycol_type: EthyleneGlycol
+            EthyleneGlycol40:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.4
+                    glycol_type: EthyleneGlycol
+            EthyleneGlycol50:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.5
+                    glycol_type: EthyleneGlycol
+            EthyleneGlycol60:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.6
+                    glycol_type: EthyleneGlycol
+            PropyleneGlycol30:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.3
+                    glycol_type: PropyleneGlycol
+            PropyleneGlycol40:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.4
+                    glycol_type: PropyleneGlycol
+            PropyleneGlycol50:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.5
+                    glycol_type: PropyleneGlycol
+            PropyleneGlycol60:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.6
+                    glycol_type: PropyleneGlycol
       Chiller:
         BaseObjects:
         TemplateObjects:
@@ -7128,6 +7243,7 @@ OptionTree:
             - *PumpCommonTransitions
             - ^CondenserLoop$:
                 condenser_equipment_operation_schemes_name: condenser_equipment_operation_scheme_name
+                condenser_water_load_distribution_scheme: load_distribution_scheme
         TemplateObjects:
           condenser_water_temperature_control_type:
             None: &PlantCondenserWaterLoopTemplateObjectsCondenserWaterTemperatureControlType
@@ -7155,6 +7271,8 @@ OptionTree:
                 - CondenserEquipmentOperationSchemes: *CondenserEquipmentOperationSchemesCondenserLoad
             Default: *PlantCondenserWaterLoopTemplateObjectsCondenserPlantOperationSchemeTypeNone
             UserDefined:
+          condenser_water_supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
+          condenser_water_demand_side_bypass_pipe: *PlantCommonPlantLoopDemandSideBypassPipe
           primary_pump_flow_and_type:
             VariablePumpPerTower:
               Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipment
@@ -7246,6 +7364,28 @@ OptionTree:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
+            - Pipe:Adiabatic:
+                name: '{} Supply Bypass Pipe'
+                inlet_node_name: '{} Supply Bypass Inlet'
+                outlet_node_name: '{} Supply Bypass Outlet'
+            - Branch:
+                name: *SupplyBypassBranch
+                components:
+                  - component_object_type: Pipe:Adiabatic
+                    component_name: '{} Supply Bypass Pipe'
+                    component_inlet_node_name: '{} Supply Bypass Inlet'
+                    component_outlet_node_name: '{} Supply Bypass Outlet'
+            - Pipe:Adiabatic:
+                name: '{} Demand Bypass Pipe'
+                inlet_node_name: '{} Demand Bypass Inlet'
+                outlet_node_name: '{} Demand Bypass Outlet'
+            - Branch:
+                name: *DemandBypassBranch
+                components:
+                  - component_object_type: Pipe:Adiabatic
+                    component_name: '{} Demand Bypass Pipe'
+                    component_inlet_node_name: '{} Demand Bypass Inlet'
+                    component_outlet_node_name: '{} Demand Bypass Outlet'
             - *PlantCommonPlantLoopNoSecondary
             - Sizing:Plant: *SizingPlantHotWater
             - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadHotWater
@@ -7278,6 +7418,28 @@ OptionTree:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
+            - Pipe:Adiabatic:
+                name: '{} Supply Bypass Pipe'
+                inlet_node_name: '{} Supply Bypass Inlet'
+                outlet_node_name: '{} Supply Bypass Outlet'
+            - Branch:
+                name: *SupplyBypassBranch
+                components:
+                  - component_object_type: Pipe:Adiabatic
+                    component_name: '{} Supply Bypass Pipe'
+                    component_inlet_node_name: '{} Supply Bypass Inlet'
+                    component_outlet_node_name: '{} Supply Bypass Outlet'
+            - Pipe:Adiabatic:
+                name: '{} Demand Bypass Pipe'
+                inlet_node_name: '{} Demand Bypass Inlet'
+                outlet_node_name: '{} Demand Bypass Outlet'
+            - Branch:
+                name: *DemandBypassBranch
+                components:
+                  - component_object_type: Pipe:Adiabatic
+                    component_name: '{} Demand Bypass Pipe'
+                    component_inlet_node_name: '{} Demand Bypass Inlet'
+                    component_outlet_node_name: '{} Demand Bypass Outlet'
             - *PlantCommonPlantLoopNoSecondary
             - Sizing:Plant: *SizingPlantMixedWater
             # Custom naming needed for two PlantEquipmentOperation objects and PlantEquipmentOperationSchemes
