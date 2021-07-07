@@ -85,7 +85,8 @@ class TestSimulationsPlantEquipmentBoiler(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Boiler:priority")
     def test_priority(self):
-        # todo_eo: discuss with team that priority requires a string and not integer.
+        # todo_eo: discuss with team that priority requires a string and not integer.  Otherwise, it silently fails
+        #  and removes any object that is not 1 priority
         self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'HotWaterBoiler'
         self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['fuel_type'] = 'Coal'
         self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['priority'] = '2'

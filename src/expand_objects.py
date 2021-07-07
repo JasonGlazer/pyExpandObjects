@@ -751,41 +751,47 @@ class ExpandObjects(EPJSON):
                         #  is reapplied recursively
                         # For anything else, process the reference node and return a value.
                         (object_name, _), = epjson[object_type].items()
-                        if lookup_instructions.lower() == 'self':
-                            yield {"field": field_name, "value": object_type}
-                        elif lookup_instructions.lower() == 'key':
-                            yield {"field": field_name, "value": object_name}
-                        elif isinstance(epjson[object_type][object_name][lookup_instructions], dict):
-                            try:
-                                # safeguard in case Recursions exception misses infinite loop
-                                if recursions > 5:
+                        try:
+                            if lookup_instructions.lower() == 'self':
+                                yield {"field": field_name, "value": object_type}
+                            elif lookup_instructions.lower() == 'key':
+                                yield {"field": field_name, "value": object_name}
+                            elif isinstance(epjson[object_type][object_name][lookup_instructions], dict):
+                                try:
+                                    # safeguard in case Recursions exception misses infinite loop
+                                    if recursions > 5:
+                                        raise PyExpandObjectsYamlStructureException(
+                                            "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                                            .format(self.template_type, self.template_name, input_value, field_name))
+                                    complex_generator = self._resolve_complex_input(
+                                        epjson=epjson,
+                                        field_name=field_name,
+                                        input_value=epjson[object_type][object_name][lookup_instructions],
+                                        recursions=recursions + 1)
+                                    for cg in complex_generator:
+                                        yield cg
+                                except RecursionError:
                                     raise PyExpandObjectsYamlStructureException(
                                         "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
                                         .format(self.template_type, self.template_name, input_value, field_name))
-                                complex_generator = self._resolve_complex_input(
-                                    epjson=epjson,
-                                    field_name=field_name,
-                                    input_value=epjson[object_type][object_name][lookup_instructions],
-                                    recursions=recursions + 1)
-                                for cg in complex_generator:
-                                    yield cg
-                            except RecursionError:
-                                raise PyExpandObjectsYamlStructureException(
-                                    "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
-                                    .format(self.template_type, self.template_name, input_value, field_name))
-                        else:
-                            # attempt to format both the field and value to be returned.
-                            if isinstance(field_name, str):
-                                formatted_field_name = field_name.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
                             else:
-                                formatted_field_name = field_name
-                            if isinstance(epjson[object_type][object_name][lookup_instructions], str):
-                                raw_val = epjson[object_type][object_name][lookup_instructions]
-                                formatted_value = raw_val.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
-                            else:
-                                formatted_value = epjson[object_type][object_name][lookup_instructions]
-                            yield {"field": formatted_field_name,
-                                   "value": formatted_value}
+                                # attempt to format both the field and value to be returned.
+                                if isinstance(field_name, str):
+                                    formatted_field_name = field_name.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
+                                else:
+                                    formatted_field_name = field_name
+                                if isinstance(epjson[object_type][object_name][lookup_instructions], str):
+                                    raw_val = epjson[object_type][object_name][lookup_instructions]
+                                    formatted_value = raw_val.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
+                                else:
+                                    formatted_value = epjson[object_type][object_name][lookup_instructions]
+                                yield {"field": formatted_field_name,
+                                       "value": formatted_value}
+                        except KeyError:
+                            raise InvalidTemplateException(
+                                'Error: In {} ({}) A complex input failed because a bad dictionary key was referenced '
+                                'when trying to process the field {} with a value of {}'
+                                .format(self.template_type, self.template_name, field_name, input_value))
         elif isinstance(input_value, list):
             # When the input is a list, iterate and apply this function recursively to each object.
             try:

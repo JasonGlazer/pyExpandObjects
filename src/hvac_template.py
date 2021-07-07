@@ -910,7 +910,7 @@ class HVACTemplate(EPJSON):
         # create condenser water loop for water cooled condensers
         if getattr(plant_equipment_class_object, 'template_type', None).lower() in \
                 ['hvactemplate:plant:chiller', 'hvactemplate:plant:chiller:objectreference'] \
-                and getattr(plant_equipment_class_object, 'condenser_type', None).lower() == 'watercooled' \
+                and getattr(plant_equipment_class_object, 'condenser_type', 'None').lower() == 'watercooled' \
                 and 'hvactemplate:plant:condenserwaterloop' not in plant_loops:
             # try to get the chilled water loop attributes to transition to condenser water
             chw_loop = [
@@ -1023,6 +1023,12 @@ class HVACTemplate(EPJSON):
         branch_dictionary = {}
         for pe in expanded_plant_equipment.values():
             branch_objects = copy.deepcopy(pe.epjson.get('Branch', {}))
+            for branch_name, branch_structure in branch_objects.items():
+                components = branch_structure.get('components')
+                if not components:
+                    raise InvalidTemplateException(
+                        'Error: In {} ({}) A branch object failed to create component fields {}'
+                        .format(pe.template_type, pe.template_name, branch_name))
             # Special handling for chillers with condenser water and chilled water branches
             # todo_eo: find a better way to separate the branches instead of searching for chw or cnd in the branch
             #  names.  It may be unreliable with future user inputs.
@@ -1473,8 +1479,7 @@ class HVACTemplate(EPJSON):
         # Pass through expanded plant equipment objects to create additional plant loops and equipment if necessary
         self._create_additional_plant_loops_and_equipment_from_equipment(
             expanded_plant_equipment=self.expanded_plant_equipment,
-            expanded_plant_loops=self.expanded_plant_loops
-        )
+            expanded_plant_loops=self.expanded_plant_loops)
         self.logger.info('##### Building Plant-Plant Equipment Connections #####')
         for expanded_pl in self.expanded_plant_loops.values():
             self._create_water_loop_connectors_and_nodelist(
