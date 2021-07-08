@@ -587,6 +587,39 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             epjson_output['SetpointManager:OutdoorAirReset']['AHU 1 Spaces 1-4 Cooling Supply Air Temp Manager']['setpoint_at_outdoor_low_temperature'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heating_coil_type_hot_water")
+    def test_heating_coil_type_hot_water(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heating_coil_type'] = 'HotWater'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Water'].get('AHU 1 Spaces 1-4 Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heating_coil_type_electric")
+    def test_heating_coil_type_electric(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heating_coil_type'] = 'Electric'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Electric'].get('AHU 1 Spaces 1-4 Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heating_coil_type_gas")
+    def test_heating_coil_type_gas(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heating_coil_type'] = 'Gas'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Fuel'].get('AHU 1 Spaces 1-4 Heating Coil'))
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heating_coil_availability_schedule_name")
     def test_heating_coil_availability_schedule_name(self):
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
