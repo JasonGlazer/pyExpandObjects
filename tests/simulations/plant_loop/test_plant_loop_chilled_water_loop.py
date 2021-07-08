@@ -895,8 +895,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(
-            epjson_output['Pipe:Adiabatic'].get('Condenser Water Loop Supply Bypass Pipe'))
+        self.assertIsNone(
+            epjson_output['PlantLoop']['Chilled Water Loop PlantLoop'].get('fluid_type'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:fluid_type_ethylene_glycol_30")
@@ -908,7 +908,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'UserDefinedFluidType',
-            epjson_output['PlantLoop']['Chilled Water Loop PlantLop']['fluid_type'])
+            epjson_output['PlantLoop']['Chilled Water Loop PlantLoop']['fluid_type'])
         self.assertEqual(
             0.3,
             epjson_output['FluidProperties:GlycolConcentration']['Chilled Water Loop Fluid']['glycol_concentration'])

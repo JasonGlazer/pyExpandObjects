@@ -2739,8 +2739,9 @@ class SecondaryPumpFlowAndType:
                 raise InvalidTemplateException(
                     'In {} ({}) The chilled_water_pump_configuration value is improperly formatted'
                     .format(template_type, template_name))
-            configuration_type = template_fields.get('chilled_water_secondary_pump_type', 'SinglePump')
-            obj._secondary_pump_flow_and_type = ''.join([flow_type, configuration_type])
+            if flow_type != 'No':
+                configuration_type = template_fields.get('chilled_water_secondary_pump_type', 'SinglePump')
+                obj._secondary_pump_flow_and_type = ''.join([flow_type, configuration_type])
         return
 
 
@@ -2902,12 +2903,14 @@ class PrimaryPumpType:
                     class_object_structure, 'chilled_water_primary_pump_type', None)]
         elif template_type == 'HVACTemplate:Plant:Tower' and obj.template_plant_loop_type == 'CondenserWaterLoop':
             flow_rgx_value = r'(^.*)Primary'
+            # call HVACTemplate:Plant:ChilledWaterLoop since CondenserWaterLoop isn't in the list of expanded plant
+            # loops
             primary_pump_type = [
                 (
                     getattr(class_object_structure, 'condenser_water_pump_type'),
                     'VariablePrimary')
                 for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
-                if class_object_structure.template_type == 'HVACTemplate:Plant:CondenserWaterLoop' and getattr(
+                if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
                     class_object_structure, 'condenser_water_pump_type', None)]
         elif template_type == 'HVACTemplate:Plant:Boiler':
             if template_fields.get('boiler_type') == 'DistrictHotWater':

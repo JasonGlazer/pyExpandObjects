@@ -6489,7 +6489,7 @@ OptionTree:
                   ActionType: Insert
                   Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasObjects
                   Mappings: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasMappings
-                Electric:
+                Electric: # Remove temperature_setpoint_node field
                   ObjectReference: OutdoorAir:Mixer
                   Location: After
                   ActionType: Insert
@@ -6842,6 +6842,57 @@ OptionTree:
                         component_outlet_node_name: '{} Demand Bypass Outlet'
             'Yes': *PlantCommonPlantLoopDemandSideBypassPipeNone
             'No':
+          FluidType: &PlantCommonPlantLoopFluidType
+            None:
+            Water:
+            EthyleneGlycol30:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.3
+                    glycol_type: EthyleneGlycol
+            EthyleneGlycol40:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.4
+                    glycol_type: EthyleneGlycol
+            EthyleneGlycol50:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.5
+                    glycol_type: EthyleneGlycol
+            EthyleneGlycol60:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.6
+                    glycol_type: EthyleneGlycol
+            PropyleneGlycol30:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.3
+                    glycol_type: PropyleneGlycol
+            PropyleneGlycol40:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.4
+                    glycol_type: PropyleneGlycol
+            PropyleneGlycol50:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.5
+                    glycol_type: PropyleneGlycol
+            PropyleneGlycol60:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.6
+                    glycol_type: PropyleneGlycol
       Boiler:
         BaseObjects:
         TemplateObjects:
@@ -7004,8 +7055,6 @@ OptionTree:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
-            - OutdoorAir:Node:
-                name: '{} Outside Air Sensor'
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
             - Sizing:Plant: *SizingPlantChilledWater
           Transitions:
@@ -7020,20 +7069,9 @@ OptionTree:
             Default: *PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
             UserDefined:
           chilled_water_pump_configuration:
-            ConstantPrimaryNoSecondary:
+            ConstantPrimaryNoSecondary: &PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationConstantPrimaryNoSecondary
               Objects:
                 - PlantLoop: *PlantLoopChilledWaterFields
-                - Pipe:Adiabatic:
-                    name: '{} Demand Inlet Pipe'
-                    inlet_node_name: *DemandInlet
-                    outlet_node_name: '{} Demand Inlet Pipe Outlet'
-                - Branch:
-                    name: *DemandInletBranch
-                    components:
-                      - component_object_type: Pipe:Adiabatic
-                        component_name: '{} Demand Inlet Pipe'
-                        component_inlet_node_name: *DemandInlet
-                        component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
               Transitions:
                 - ^PlantLoop$:
                     chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
@@ -7051,20 +7089,12 @@ OptionTree:
                       PropyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
                       PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
                       PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
-            VariablePrimaryNoSecondary:
+            VariablePrimaryNoSecondary: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationConstantPrimaryNoSecondary
+            ConstantPrimaryVariableSecondary:
               Objects:
-                - PlantLoop: *PlantLoopChilledWaterFields
-                - Pipe:Adiabatic:
-                    name: '{} Demand Inlet Pipe'
-                    inlet_node_name: *DemandInlet
-                    outlet_node_name: '{} Demand Inlet Pipe Outlet'
-                - Branch:
-                    name: *DemandInletBranch
-                    components:
-                      - component_object_type: Pipe:Adiabatic
-                        component_name: '{} Demand Inlet Pipe'
-                        component_inlet_node_name: *DemandInlet
-                        component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
+                - PlantLoop:
+                    <<: *PlantLoopChilledWaterFields
+                    common_pipe_simulation: CommonPipe
               Transitions:
                 - ^PlantLoop$:
                     chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
@@ -7079,14 +7109,6 @@ OptionTree:
                       PropyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
                       PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
                       PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
-            ConstantPrimaryVariableSecondary:
-              Objects:
-                - PlantLoop:
-                    <<: *PlantLoopChilledWaterFields
-                    common_pipe_simulation: CommonPipe
-              Transitions:
-                - ^PlantLoop$:
-                    chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
           primary_pump_flow_and_type:
             ConstantPumpPerChiller:
               Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipmentObjects
@@ -7153,6 +7175,19 @@ OptionTree:
                 - HeaderedPumps:VariableSpeed:
                     primary_chilled_water_pump_rated_head: design_pump_head
           secondary_pump_flow_and_type:
+            None:
+              Objects:
+                - Pipe:Adiabatic:
+                    name: '{} Demand Inlet Pipe'
+                    inlet_node_name: *DemandInlet
+                    outlet_node_name: '{} Demand Inlet Pipe Outlet'
+                - Branch:
+                    name: *DemandInletBranch
+                    components:
+                      - component_object_type: Pipe:Adiabatic
+                        component_name: '{} Demand Inlet Pipe'
+                        component_inlet_node_name: *DemandInlet
+                        component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
             VariableSinglePump:
               Objects:
                 - Branch: *PumpBranchVariableSpeedDemandInlet
@@ -7228,63 +7263,15 @@ OptionTree:
             None:
             AnyValue:
               Objects:
+                - OutdoorAir:Node:
+                    name: '{} Outside Air Sensor'
                 - AvailabilityManager:LowTemperatureTurnOff:
                     name: '{} Availability Low Temp TurnOff'
                     sensor_node_name: '{} Outside Air Sensor'
                     temperature: '{minimum_outdoor_dry_bulb_temperature}'
           chilled_water_supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
           chilled_water_demand_side_bypass_pipe: *PlantCommonPlantLoopDemandSideBypassPipe
-          fluid_type:
-            None:
-            Water:
-            EthyleneGlycol30:
-              Objects:
-                - FluidProperties:GlycolConcentration:
-                    name: '{} Fluid'
-                    glycol_concentration: 0.3
-                    glycol_type: EthyleneGlycol
-            EthyleneGlycol40:
-              Objects:
-                - FluidProperties:GlycolConcentration:
-                    name: '{} Fluid'
-                    glycol_concentration: 0.4
-                    glycol_type: EthyleneGlycol
-            EthyleneGlycol50:
-              Objects:
-                - FluidProperties:GlycolConcentration:
-                    name: '{} Fluid'
-                    glycol_concentration: 0.5
-                    glycol_type: EthyleneGlycol
-            EthyleneGlycol60:
-              Objects:
-                - FluidProperties:GlycolConcentration:
-                    name: '{} Fluid'
-                    glycol_concentration: 0.6
-                    glycol_type: EthyleneGlycol
-            PropyleneGlycol30:
-              Objects:
-                - FluidProperties:GlycolConcentration:
-                    name: '{} Fluid'
-                    glycol_concentration: 0.3
-                    glycol_type: PropyleneGlycol
-            PropyleneGlycol40:
-              Objects:
-                - FluidProperties:GlycolConcentration:
-                    name: '{} Fluid'
-                    glycol_concentration: 0.4
-                    glycol_type: PropyleneGlycol
-            PropyleneGlycol50:
-              Objects:
-                - FluidProperties:GlycolConcentration:
-                    name: '{} Fluid'
-                    glycol_concentration: 0.5
-                    glycol_type: PropyleneGlycol
-            PropyleneGlycol60:
-              Objects:
-                - FluidProperties:GlycolConcentration:
-                    name: '{} Fluid'
-                    glycol_concentration: 0.6
-                    glycol_type: PropyleneGlycol
+          fluid_type: *PlantCommonPlantLoopFluidType
       Chiller:
         BaseObjects:
         TemplateObjects:
@@ -7584,34 +7571,27 @@ OptionTree:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
-            - Pipe:Adiabatic:
-                name: '{} Supply Bypass Pipe'
-                inlet_node_name: '{} Supply Bypass Inlet'
-                outlet_node_name: '{} Supply Bypass Outlet'
-            - Branch:
-                name: *SupplyBypassBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Supply Bypass Pipe'
-                    component_inlet_node_name: '{} Supply Bypass Inlet'
-                    component_outlet_node_name: '{} Supply Bypass Outlet'
-            - Pipe:Adiabatic:
-                name: '{} Demand Bypass Pipe'
-                inlet_node_name: '{} Demand Bypass Inlet'
-                outlet_node_name: '{} Demand Bypass Outlet'
-            - Branch:
-                name: *DemandBypassBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Demand Bypass Pipe'
-                    component_inlet_node_name: '{} Demand Bypass Inlet'
-                    component_outlet_node_name: '{} Demand Bypass Outlet'
             - *PlantCommonPlantLoopNoSecondary
             - Sizing:Plant: *SizingPlantHotWater
             - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadHotWater
             - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesHeatingLoad
             - PlantLoop: *PlantLoopHotWaterFields
-          Transitions: *SizingPlantCommonTransitions
+          Transitions:
+            - *SizingPlantCommonTransitions
+            - ^PlantLoop$:
+                hot_water_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
+                load_distribution_scheme: load_distribution_scheme
+          Mappings:
+            - ^PlantLoop$:
+                fluid_type:
+                  EthyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
         TemplateObjects:
           primary_pump_flow_and_type:
             ConstantPumpPerBoiler:
@@ -7690,6 +7670,19 @@ OptionTree:
             OutdoorAirTemperatureReset:
               Objects:
                 - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHotWater
+          maximum_outdoor_dry_bulb_temperature:
+            None:
+            AnyValue:
+              Objects:
+                - OutdoorAir:Node:
+                    name: '{} Outside Air Sensor'
+                - AvailabilityManager:HighTemperatureTurnOff:
+                    name: '{} Availability Low Temp TurnOff'
+                    sensor_node_name: '{} Outside Air Sensor'
+                    temperature: '{maximum_outdoor_dry_bulb_temperature}'
+          supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
+          demand_side_bypass_pipe: *PlantCommonPlantLoopDemandSideBypassPipe
+          fluid_type: *PlantCommonPlantLoopFluidType
       MixedWaterLoop:
         BaseObjects:
           Objects:

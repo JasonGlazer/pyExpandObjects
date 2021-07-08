@@ -313,3 +313,456 @@ class TestSimulationsPlantLoopHotWaterLoop(BaseSimulationTest):
             'Main Boiler',
             epjson_output['Branch']['Main Boiler HW Branch']['components'][1]['component_name'])
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_pump_type_two_headered_pumps")
+    def test_hot_water_pump_type_two_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_type'] = 'TwoHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Hot Water Loop Supply Pump'))
+        self.assertEqual(
+            2,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Hot Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_pump_type_two_headered_pumps_variable")
+    def test_hot_water_pump_type_two_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_type'] = 'TwoHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Hot Water Loop Supply Pump'))
+        self.assertEqual(
+            2,
+            epjson_output['HeaderedPumps:VariableSpeed']['Hot Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_pump_type_three_headered_pumps")
+    def test_hot_water_pump_type_three_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_type'] = 'ThreeHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Hot Water Loop Supply Pump'))
+        self.assertEqual(
+            3,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Hot Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_pump_type_three_headered_pumps_variable")
+    def test_hot_water_pump_type_three_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_type'] = 'ThreeHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Hot Water Loop Supply Pump'))
+        self.assertEqual(
+            3,
+            epjson_output['HeaderedPumps:VariableSpeed']['Hot Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_pump_type_four_headered_pumps")
+    def test_hot_water_pump_type_four_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_type'] = 'FourHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Hot Water Loop Supply Pump'))
+        self.assertEqual(
+            4,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Hot Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_pump_type_four_headered_pumps_variable")
+    def test_hot_water_pump_type_four_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_type'] = 'FourHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Hot Water Loop Supply Pump'))
+        self.assertEqual(
+            4,
+            epjson_output['HeaderedPumps:VariableSpeed']['Hot Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_pump_type_five_headered_pumps")
+    def test_hot_water_pump_type_five_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_type'] = 'FiveHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Hot Water Loop Supply Pump'))
+        self.assertEqual(
+            5,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Hot Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_pump_type_five_headered_pumps_variable")
+    def test_hot_water_pump_type_five_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_type'] = 'FiveHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Hot Water Loop Supply Pump'))
+        self.assertEqual(
+            5,
+            epjson_output['HeaderedPumps:VariableSpeed']['Hot Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_supply_side_bypass_pipe_yes")
+    def test_hot_water_supply_side_bypass_pipe_yes(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'supply_side_bypass_pipe'] = 'Yes'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Pipe:Adiabatic'].get('Hot Water Loop Supply Bypass Pipe'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_supply_side_bypass_pipe_no")
+    def test_hot_water_supply_side_bypass_pipe_no(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'supply_side_bypass_pipe'] = 'No'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(
+            epjson_output['Pipe:Adiabatic'].get('Hot Water Loop Supply Bypass Pipe'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_demand_side_bypass_pipe_yes")
+    def test_hot_water_demand_side_bypass_pipe_yes(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'demand_side_bypass_pipe'] = 'Yes'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Pipe:Adiabatic'].get('Hot Water Loop Demand Bypass Pipe'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_demand_side_bypass_pipe_no")
+    def test_hot_water_demand_side_bypass_pipe_no(self):
+        # Variable flow is needed to converge simulation
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'demand_side_bypass_pipe'] = 'No'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(
+            epjson_output['Pipe:Adiabatic'].get('Hot Water Loop Demand Bypass Pipe'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_supply_side_bypass_pipe_no_demand_side_bypass_pipe_no")
+    def test_hot_water_supply_side_bypass_pipe_no_demand_side_bypass_pipe_no(self):
+        # Variable flow is needed to converge simulation
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'supply_side_bypass_pipe'] = 'No'
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'demand_side_bypass_pipe'] = 'No'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(
+            epjson_output['Pipe:Adiabatic'].get('Hot Water Loop Supply Bypass Pipe'))
+        self.assertIsNone(
+            epjson_output['Pipe:Adiabatic'].get('Hot Water Loop Demand Bypass Pipe'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:fluid_type_water")
+    def test_fluid_type_water(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'fluid_type'] = 'Water'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop'].get('fluid_type'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:fluid_type_ethylene_glycol_30")
+    def test_fluid_type_ethylene_glycol_30(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'fluid_type'] = 'EthyleneGlycol30'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'UserDefinedFluidType',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['fluid_type'])
+        self.assertEqual(
+            0.3,
+            epjson_output['FluidProperties:GlycolConcentration']['Hot Water Loop Fluid']['glycol_concentration'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:fluid_type_ethylene_glycol_40")
+    def test_fluid_type_ethylene_glycol_40(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'fluid_type'] = 'EthyleneGlycol40'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'UserDefinedFluidType',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['fluid_type'])
+        self.assertEqual(
+            0.4,
+            epjson_output['FluidProperties:GlycolConcentration']['Hot Water Loop Fluid']['glycol_concentration'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:fluid_type_ethylene_glycol_50")
+    def test_fluid_type_ethylene_glycol_50(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'fluid_type'] = 'EthyleneGlycol50'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'UserDefinedFluidType',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['fluid_type'])
+        self.assertEqual(
+            0.5,
+            epjson_output['FluidProperties:GlycolConcentration']['Hot Water Loop Fluid']['glycol_concentration'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:fluid_type_ethylene_glycol_60")
+    def test_fluid_type_ethylene_glycol_60(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'fluid_type'] = 'EthyleneGlycol60'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'UserDefinedFluidType',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['fluid_type'])
+        self.assertEqual(
+            0.6,
+            epjson_output['FluidProperties:GlycolConcentration']['Hot Water Loop Fluid']['glycol_concentration'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:fluid_type_propylene_glycol_30")
+    def test_fluid_type_propylene_glycol_30(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'fluid_type'] = 'PropyleneGlycol30'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'UserDefinedFluidType',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['fluid_type'])
+        self.assertEqual(
+            0.3,
+            epjson_output['FluidProperties:GlycolConcentration']['Hot Water Loop Fluid']['glycol_concentration'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:fluid_type_propylene_glycol_40")
+    def test_fluid_type_propylene_glycol_40(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'fluid_type'] = 'PropyleneGlycol40'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'UserDefinedFluidType',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['fluid_type'])
+        self.assertEqual(
+            0.4,
+            epjson_output['FluidProperties:GlycolConcentration']['Hot Water Loop Fluid']['glycol_concentration'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:fluid_type_propylene_glycol_50")
+    def test_fluid_type_propylene_glycol_50(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'fluid_type'] = 'PropyleneGlycol50'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'UserDefinedFluidType',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['fluid_type'])
+        self.assertEqual(
+            0.5,
+            epjson_output['FluidProperties:GlycolConcentration']['Hot Water Loop Fluid']['glycol_concentration'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:fluid_type_propylene_glycol_60")
+    def test_fluid_type_propylene_glycol_60(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'fluid_type'] = 'PropyleneGlycol60'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'UserDefinedFluidType',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['fluid_type'])
+        self.assertEqual(
+            0.6,
+            epjson_output['FluidProperties:GlycolConcentration']['Hot Water Loop Fluid']['glycol_concentration'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:loop_design_delta_temperature")
+    def test_loop_design_delta_temperature(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'loop_design_delta_temperature'] = 10
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            10,
+            epjson_output['Sizing:Plant']['Hot Water Loop Sizing Plant']['loop_design_temperature_difference'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "maximum_outdoor_dry_bulb_temperature_none")
+    def test_maximum_outdoor_dry_bulb_temperature_none(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'].pop(
+            'maximum_outdoor_dry_bulb_temperature', None)
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output.get('AvailabilityManager:HighTemperatureTurnOff'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "maximum_outdoor_dry_bulb_temperature_none")
+    def test_maximum_outdoor_dry_bulb_temperature_value(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'maximum_outdoor_dry_bulb_temperature'] = 20
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('AvailabilityManager:LowTemperatureTurnOff'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "load_distribution_scheme_none")
+    def test_load_distribution_scheme_none(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'].pop('load_distribution_scheme', None)
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'SequentialLoad',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['load_distribution_scheme'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "load_distribution_scheme_sequential_load")
+    def test_load_distribution_scheme_sequential_load(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'load_distribution_scheme'] = 'SequentialLoad'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'SequentialLoad',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['load_distribution_scheme'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "load_distribution_scheme_optimal")
+    def test_load_distribution_scheme_sequential_optimal(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'load_distribution_scheme'] = 'Optimal'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Optimal',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['load_distribution_scheme'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "load_distribution_scheme_uniform")
+    def test_load_distribution_scheme_uniform(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'load_distribution_scheme'] = 'Uniform'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Uniform',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['load_distribution_scheme'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "load_distribution_scheme_uniform_load")
+    def test_load_distribution_scheme_uniform_load(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'load_distribution_scheme'] = 'UniformLoad'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'UniformLoad',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['load_distribution_scheme'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "load_distribution_scheme_uniform_plr")
+    def test_load_distribution_scheme_uniform_plr(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'load_distribution_scheme'] = 'UniformPLR'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'UniformPLR',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['load_distribution_scheme'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "load_distribution_scheme_sequential_uniform_plr")
+    def test_load_distribution_scheme_sequential_uniform_plr(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'load_distribution_scheme'] = 'SequentialUniformPLR'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'SequentialUniformPLR',
+            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['load_distribution_scheme'])
+        return

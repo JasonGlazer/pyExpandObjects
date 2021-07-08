@@ -1210,7 +1210,11 @@ class HVACTemplate(EPJSON):
         if (plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
                 plant_loop_class_object, 'chilled_water_supply_side_bypass_pipe', 'Yes') == 'No') or \
                 (plant_loop_class_object.template_type == 'HVACTemplate:Plant:CondenserWaterLoop' and getattr(
-                plant_loop_class_object, 'condenser_water_supply_side_bypass_pipe', 'Yes') == 'No'):
+                plant_loop_class_object, 'condenser_water_supply_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:HotWaterLoop' and getattr(
+                plant_loop_class_object, 'supply_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:MixedWaterLoop' and getattr(
+                plant_loop_class_object, 'supply_side_bypass_pipe', 'Yes') == 'No'):
             supply_branchlist = eo.get_structure(
                 structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'SupplyNoBypass'])
             connector_supply_mixer = eo.get_structure(
@@ -1232,7 +1236,11 @@ class HVACTemplate(EPJSON):
         if (plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
                 plant_loop_class_object, 'chilled_water_demand_side_bypass_pipe', 'Yes') == 'No') or \
                 (plant_loop_class_object.template_type == 'HVACTemplate:Plant:CondenserWaterLoop' and getattr(
-                plant_loop_class_object, 'condenser_water_demand_side_bypass_pipe', 'Yes') == 'No'):
+                plant_loop_class_object, 'condenser_water_demand_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:HotWaterLoop' and getattr(
+                    plant_loop_class_object, 'demand_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:MixedWaterLoop' and getattr(
+                    plant_loop_class_object, 'demand_side_bypass_pipe', 'Yes') == 'No'):
             demand_branchlist = eo.get_structure(
                 structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'DemandNoBypass'])
             connector_demand_splitter = eo.get_structure(
