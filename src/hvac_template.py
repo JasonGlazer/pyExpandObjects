@@ -1264,17 +1264,9 @@ class HVACTemplate(EPJSON):
                 supply_branchlist['branches'].insert(1, {'branch_name': branch})
                 connector_supply_splitter['branches'].insert(0, {'outlet_branch_name': branch})
                 connector_supply_mixer['branches'].insert(0, {'inlet_branch_name': branch})
-                # the supply node for the equipment changes based on the pump configuration type (variable vs constant).
-                if plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
-                    if getattr(plant_loop_class_object, 'chilled_water_pump_configuration', '')\
-                            .startswith('VariablePrimary'):
-                        supply_nodelist['nodes'].insert(
-                            0,
-                            {'node_name': supply_branches[branch]['components'][-1]['component_outlet_node_name']})
-                    else:
-                        supply_nodelist['nodes'].insert(
-                            0,
-                            {'node_name': supply_branches[branch]['components'][-1]['component_inlet_node_name']})
+                supply_nodelist['nodes'].insert(
+                    0,
+                    {'node_name': supply_branches[branch]['components'][-1]['component_outlet_node_name']})
         except (KeyError, AttributeError):
             raise PyExpandObjectsYamlStructureException(
                 'Error: In {} AutoCreated PlantLoop Connector YAML object was '

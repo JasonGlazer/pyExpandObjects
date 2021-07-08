@@ -2687,21 +2687,26 @@ class PrimaryPumpFlowAndType:
         (template_name, template_fields), = template_structure.items()
         flow_type = None
         configuration_type = None
+        flow_rgx_match = None
         if template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
             flow_type = template_fields.get('chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary')
+            flow_rgx_match = re.match(r'(^.*)Primary', flow_type)
             configuration_type = template_fields.get('chilled_water_primary_pump_type', 'SinglePump')
         elif template_type == 'HVACTemplate:Plant:CondenserWaterLoop':
             flow_type = 'VariablePrimary'
-            configuration_type = template_fields.get('condenser_water_pump_type', 'SinglePump')
-        if flow_type and configuration_type:
             flow_rgx_match = re.match(r'(^.*)Primary', flow_type)
-            if flow_rgx_match:
-                flow_type = flow_rgx_match.group(1)
-            else:
-                raise InvalidTemplateException(
-                    'In {} ({}) The primary pump configuration value is improperly formatted'
-                    .format(template_type, template_name))
+            configuration_type = template_fields.get('condenser_water_pump_type', 'SinglePump')
+        elif template_type == 'HVACTemplate:Plant:HotWaterLoop':
+            flow_type = template_fields.get('hot_water_pump_configuration', 'ConstantFlow')
+            flow_rgx_match = re.match(r'(^.*)Flow', flow_type)
+            configuration_type = template_fields.get('hot_water_pump_type', 'SinglePump')
+        if flow_rgx_match and configuration_type:
+            flow_type = flow_rgx_match.group(1)
             obj._primary_pump_flow_and_type = ''.join([flow_type, configuration_type])
+        else:
+            raise InvalidTemplateException(
+                'In {} ({}) The primary pump configuration value is improperly formatted'
+                .format(template_type, template_name))
         return
 
 
@@ -2837,18 +2842,25 @@ class PumpConfigurationType:
         (template_type, template_structure), = value['template'].items()
         (template_name, _), = template_structure.items()
         # Check the loop type priority list against the expanded loops and return the first match.
+        pump_configuration = []
         if template_type == 'HVACTemplate:Plant:Chiller':
             # This should return only one instance
             pump_configuration = [
                 getattr(class_object_structure, 'chilled_water_pump_configuration', None)
                 for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
                 if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop']
-            if len(pump_configuration) > 1:
-                obj.logger.warning(
-                    'In {} ({}) More than one pump configuration was found.  Applying first instance {}'
-                    .format(template_type, template_name, pump_configuration[0]))
-            if pump_configuration:
-                obj._pump_configuration_type = pump_configuration[0]
+        elif template_type == 'HVACTemplate:Plant:Boiler':
+            # This should return only one instance
+            pump_configuration = [
+                getattr(class_object_structure, 'hot_water_pump_configuration', None)
+                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop']
+        if len(pump_configuration) > 1:
+            obj.logger.warning(
+                'In {} ({}) More than one pump configuration was found.  Applying first instance {}'
+                .format(template_type, template_name, pump_configuration[0]))
+        if pump_configuration:
+            obj._pump_configuration_type = pump_configuration[0]
         return
 
 

@@ -57,6 +57,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
     def teardown(self):
         return
 
+    # todo_eo: test pump_schedule name when secondary pumps are active, do they have schedules applied as well?
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:pump_schedule_name")
     def test_pump_schedule_name(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop']['pump_schedule_name'] = 'OCCUPY-1'
@@ -145,6 +147,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['PlantEquipmentOperationSchemes'].get('Chilled Water Loop Operation Custom'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_setpoint_schedule_name")
     def test_chilled_water_setpoint_schedule_name(self):
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
@@ -159,6 +163,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['SetpointManager:Scheduled']['Chilled Water Loop Temp Manager']['schedule_name'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_design_setpoint")
     def test_chilled_water_design_setpoint(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_design_setpoint'] = 7.1
@@ -173,6 +179,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Sizing:Plant']['Chilled Water Loop Sizing Plant']['design_loop_exit_temperature'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_pump_configuration_constant_primary_no_secondary")
     def test_chilled_water_pump_configuration_constant_primary_no_secondary(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'ConstantPrimaryNoSecondary'
@@ -182,6 +190,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['Pump:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_pump_configuration_variable_primary_no_secondary")
     def test_chilled_water_pump_configuration_variable_primary_no_secondary(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
@@ -194,6 +204,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Chiller:Electric:EIR']['Main Chiller']['chiller_flow_mode'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_pump_configuration_constant_primary_variable_secondary")
     def test_chilled_water_pump_configuration_constant_primary_variable_secondary(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
@@ -204,6 +216,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['Pump:VariableSpeed'].get('Chilled Water Loop Secondary Pump'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_chilled_water_pump_rated_head")
     def test_chilled_water_primary_chilled_water_pump_rated_head(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
@@ -267,6 +281,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['CondenserEquipmentOperationSchemes'].get('Condenser Water Loop Operation Custom'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_temperature_control_type_specified_setpoint")
     def test_condenser_water_temperature_control_type_specified_setpoint(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_temperature_control_type'] = 'SpecifiedSetpoint'
@@ -276,6 +292,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['SetpointManager:Scheduled'].get('Condenser Water Loop Temp Manager'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_temperature_control_type_outdoor_wet_bulb_temperature")
     def test_condenser_water_temperature_control_type_outdoor_wet_bulb_temperature(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_temperature_control_type'] = 'OutdoorWetBulbTemperature'
@@ -286,6 +304,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['SetpointManager:FollowOutdoorAirTemperature'].get('Condenser Water Loop Temp Manager'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_setpoint_schedule_name")
     def test_condenser_water_setpoint_schedule_name(self):
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
@@ -300,6 +320,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['SetpointManager:Scheduled']['Condenser Water Loop Temp Manager']['schedule_name'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_design_setpoint")
     def test_condenser_water_design_setpoint(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_design_setpoint'] = 29.0
@@ -314,6 +336,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Sizing:Plant']['Condenser Water Loop Sizing Plant']['design_loop_exit_temperature'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_pump_rated_head")
     def test_condenser_water_pump_rated_head(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_pump_rated_head'] = 20000
@@ -325,6 +349,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pump:VariableSpeed']['Condenser Water Loop Supply Pump']['design_pump_head'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_setpoint_reset_type_none")
     def test_chilled_water_setpoint_reset_type_none(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_setpoint_reset_type'] = 'None'
@@ -336,6 +362,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['SetpointManager:Scheduled']['Chilled Water Loop Temp Manager']['schedule_name'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_setpoint_reset_type_outdoor_air_temperature_reset")
     def test_chilled_water_setpoint_reset_type_outdoor_air_temperature_reset(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_setpoint_reset_type'] = 'OutdoorAirTemperatureReset'
@@ -346,6 +374,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['SetpointManager:OutdoorAirReset'].get('Chilled Water Loop Temp Manager'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_setpoint_reset_type_outdoor_air_temperature_reset_inputs")
     def test_chilled_water_setpoint_reset_type_outdoor_air_temperature_reset_inputs(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_setpoint_reset_type'] = 'OutdoorAirTemperatureReset'
@@ -378,6 +408,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
                 'setpoint_at_outdoor_low_temperature'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_pump_type_single_pump")
     def test_chilled_water_primary_pump_type_single_pump(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_primary_pump_type'] = 'SinglePump'
@@ -400,6 +432,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pump:VariableSpeed'].get('Chilled Water Loop Supply Pump'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_pump_type_pump_per_chiller")
     def test_chilled_water_primary_pump_type_pump_per_chiller(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
@@ -432,6 +466,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Branch']['Main Chiller ChW Branch']['components'][1]['component_name'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_pump_type_two_headered_pumps")
     def test_chilled_water_primary_pump_type_two_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_primary_pump_type'] = 'TwoHeaderedPumps'
@@ -445,6 +481,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_pump_type_two_headered_pumps_variable")
     def test_chilled_water_primary_pump_type_two_headered_pumps_variable(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
@@ -459,6 +497,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             2,
             epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_pump_type_three_headered_pumps")
     def test_chilled_water_primary_pump_type_three_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_primary_pump_type'] = 'ThreeHeaderedPumps'
@@ -472,6 +512,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_pump_type_three_headered_pumps_variable")
     def test_chilled_water_primary_pump_type_three_headered_pumps_variable(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
@@ -486,6 +528,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             3,
             epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_pump_type_four_headered_pumps")
     def test_chilled_water_primary_pump_type_four_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_primary_pump_type'] = 'FourHeaderedPumps'
@@ -499,6 +543,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_pump_type_four_headered_pumps_variable")
     def test_chilled_water_primary_pump_type_four_headered_pumps_variable(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
@@ -513,6 +559,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             4,
             epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_pump_type_five_headered_pumps")
     def test_chilled_water_primary_pump_type_five_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_primary_pump_type'] = 'FiveHeaderedPumps'
@@ -526,6 +574,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:ConstantSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_primary_pump_type_five_headered_pumps_variable")
     def test_chilled_water_primary_pump_type_five_headered_pumps_variable(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
@@ -541,6 +591,25 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_secondary_pump_type_single_pump")
+    def test_chilled_water_secondary_pump_type_two_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
+            'chilled_water_secondary_pump_type'] = 'SinglePump'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Chilled Water Loop Secondary Pump'))
+        self.assertEqual(
+            2,
+            epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Secondary Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_secondary_pump_type_two_headered_pumps")
     def test_chilled_water_secondary_pump_type_two_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
@@ -556,6 +625,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Secondary Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_secondary_pump_type_three_headered_pumps")
     def test_chilled_water_secondary_pump_type_three_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
@@ -571,6 +642,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Secondary Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_secondary_pump_type_four_headered_pumps")
     def test_chilled_water_secondary_pump_type_four_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
@@ -586,6 +659,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Secondary Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_secondary_pump_type_five_headered_pumps")
     def test_chilled_water_secondary_pump_type_five_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_pump_configuration'] = 'ConstantPrimaryVariableSecondary'
@@ -601,6 +676,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:VariableSpeed']['Chilled Water Loop Secondary Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_primary_pump_type_single_pump")
     def test_condenser_water_primary_pump_type_single_pump(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_pump_type'] = 'SinglePump'
@@ -611,6 +688,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pump:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_primary_pump_type_pump_per_tower")
     def test_condenser_water_primary_pump_type_pump_per_tower(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_pump_type'] = 'PumpPerTower'
@@ -621,6 +700,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pump:ConstantSpeed'].get('Chilled Water Loop Supply Pump'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_primary_pump_type_two_headered_pumps")
     def test_condenser_water_primary_pump_type_two_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_pump_type'] = 'TwoHeaderedPumps'
@@ -634,6 +715,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:VariableSpeed']['Condenser Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_primary_pump_type_three_headered_pumps")
     def test_condenser_water_primary_pump_type_three_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_pump_type'] = 'ThreeHeaderedPumps'
@@ -647,6 +730,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:VariableSpeed']['Condenser Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_primary_pump_type_four_headered_pumps")
     def test_condenser_water_primary_pump_type_four_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_pump_type'] = 'FourHeaderedPumps'
@@ -660,6 +745,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:VariableSpeed']['Condenser Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_primary_pump_type_five_headered_pumps")
     def test_condenser_water_primary_pump_type_five_headered_pumps(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_pump_type'] = 'FiveHeaderedPumps'
@@ -673,6 +760,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['HeaderedPumps:VariableSpeed']['Condenser Water Loop Supply Pump']['number_of_pumps_in_bank'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_supply_side_bypass_pipe_yes")
     def test_chilled_water_supply_side_bypass_pipe_yes(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_supply_side_bypass_pipe'] = 'Yes'
@@ -683,6 +772,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Chilled Water Loop Supply Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_supply_side_bypass_pipe_no")
     def test_chilled_water_supply_side_bypass_pipe_no(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_supply_side_bypass_pipe'] = 'No'
@@ -693,6 +784,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Chilled Water Loop Supply Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_demand_side_bypass_pipe_yes")
     def test_chilled_water_demand_side_bypass_pipe_yes(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_demand_side_bypass_pipe'] = 'Yes'
@@ -703,6 +796,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Chilled Water Loop Demand Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_demand_side_bypass_pipe_no")
     def test_chilled_water_demand_side_bypass_pipe_no(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_demand_side_bypass_pipe'] = 'No'
@@ -713,6 +808,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Chilled Water Loop Demand Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_supply_side_bypass_pipe_no_demand_side_bypass_pipe_no")
     def test_chilled_water_supply_side_bypass_pipe_no_demand_side_bypass_pipe_no(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_supply_side_bypass_pipe'] = 'No'
@@ -727,6 +824,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Chilled Water Loop Demand Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_supply_side_bypass_pipe_yes")
     def test_condenser_water_supply_side_bypass_pipe_yes(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_supply_side_bypass_pipe'] = 'Yes'
@@ -737,6 +836,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Condenser Water Loop Supply Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_supply_side_bypass_pipe_no")
     def test_condenser_water_supply_side_bypass_pipe_no(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_supply_side_bypass_pipe'] = 'No'
@@ -747,6 +848,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Condenser Water Loop Supply Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_demand_side_bypass_pipe_yes")
     def test_condenser_water_demand_side_bypass_pipe_yes(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_demand_side_bypass_pipe'] = 'Yes'
@@ -757,6 +860,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Condenser Water Loop Demand Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_demand_side_bypass_pipe_no")
     def test_condenser_water_demand_side_bypass_pipe_no(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_demand_side_bypass_pipe'] = 'No'
@@ -767,6 +872,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Condenser Water Loop Demand Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_supply_side_bypass_pipe_no_demand_side_bypass_no")
     def test_condenser_water_supply_side_bypass_pipe_no_demand_side_bypass_pipe_no(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_supply_side_bypass_pipe'] = 'No'
@@ -781,6 +888,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Condenser Water Loop Supply Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:fluid_type_water")
     def test_fluid_type_water(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'fluid_type'] = 'Water'
@@ -791,6 +899,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Condenser Water Loop Supply Bypass Pipe'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:fluid_type_ethylene_glycol_30")
     def test_fluid_type_ethylene_glycol_30(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'fluid_type'] = 'EthyleneGlycol30'
@@ -805,6 +914,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['FluidProperties:GlycolConcentration']['Chilled Water Loop Fluid']['glycol_concentration'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:fluid_type_ethylene_glycol_40")
     def test_fluid_type_ethylene_glycol_40(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'fluid_type'] = 'EthyleneGlycol40'
@@ -819,6 +929,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['FluidProperties:GlycolConcentration']['Chilled Water Loop Fluid']['glycol_concentration'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:fluid_type_ethylene_glycol_50")
     def test_fluid_type_ethylene_glycol_50(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'fluid_type'] = 'EthyleneGlycol50'
@@ -833,6 +944,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['FluidProperties:GlycolConcentration']['Chilled Water Loop Fluid']['glycol_concentration'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:fluid_type_ethylene_glycol_60")
     def test_fluid_type_ethylene_glycol_60(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'fluid_type'] = 'EthyleneGlycol60'
@@ -850,6 +962,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['FluidProperties:GlycolConcentration']['Chilled Water Loop Fluid']['glycol_concentration'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:fluid_type_propylene_glycol_30")
     def test_fluid_type_propylene_glycol_30(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'fluid_type'] = 'PropyleneGlycol30'
@@ -867,6 +980,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['FluidProperties:GlycolConcentration']['Chilled Water Loop Fluid']['glycol_concentration'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:fluid_type_propylene_glycol_40")
     def test_fluid_type_propylene_glycol_40(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'fluid_type'] = 'PropyleneGlycol40'
@@ -884,6 +998,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['FluidProperties:GlycolConcentration']['Chilled Water Loop Fluid']['glycol_concentration'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:fluid_type_propylene_glycol_50")
     def test_fluid_type_propylene_glycol_50(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'fluid_type'] = 'PropyleneGlycol50'
@@ -901,6 +1016,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['FluidProperties:GlycolConcentration']['Chilled Water Loop Fluid']['glycol_concentration'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:fluid_type_propylene_glycol_60")
     def test_fluid_type_propylene_glycol_60(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'fluid_type'] = 'PropyleneGlycol60'
@@ -918,6 +1034,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['FluidProperties:GlycolConcentration']['Chilled Water Loop Fluid']['glycol_concentration'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:loop_design_delta_temperature")
     def test_loop_design_delta_temperature(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'loop_design_delta_temperature'] = 6.8
@@ -929,6 +1046,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['Sizing:Plant']['Chilled Water Loop Sizing Plant']['loop_design_temperature_difference'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "minimum_outdoor_dry_bulb_temperature_none")
     def test_minimum_outdoor_dry_bulb_temperature_none(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'].pop(
             'minimum_outdoor_dry_bulb_temperature')
@@ -938,6 +1057,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
         self.assertIsNone(epjson_output.get('AvailabilityManager:LowTemperatureTurnOff'))
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "minimum_outdoor_dry_bulb_temperature_value")
     def test_minimum_outdoor_dry_bulb_temperature_value(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'minimum_outdoor_dry_bulb_temperature'] = 7.5
@@ -950,6 +1071,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
                 'Chilled Water Loop Availability Low Temp TurnOff']['temperature'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_load_distribution_scheme_none")
     def test_chilled_water_load_distribution_scheme_none(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'].pop(
             'chilled_water_load_distribution_scheme', None)
@@ -961,6 +1084,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['PlantLoop']['Chilled Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_load_distribution_scheme_sequential_load")
     def test_chilled_water_load_distribution_scheme_sequential_load(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_load_distribution_scheme'] = 'SequentialLoad'
@@ -972,6 +1097,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['PlantLoop']['Chilled Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_load_distribution_scheme_optimal")
     def test_chilled_water_load_distribution_scheme_optimal(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_load_distribution_scheme'] = 'Optimal'
@@ -983,6 +1110,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['PlantLoop']['Chilled Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_load_distribution_scheme_uniform_load")
     def test_chilled_water_load_distribution_scheme_uniform_load(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_load_distribution_scheme'] = 'UniformLoad'
@@ -994,6 +1123,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['PlantLoop']['Chilled Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_load_distribution_scheme_uniform_plr")
     def test_chilled_water_load_distribution_scheme_uniform_plr(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_load_distribution_scheme'] = 'UniformPLR'
@@ -1005,6 +1136,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['PlantLoop']['Chilled Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "chilled_water_load_distribution_scheme_sequential_uniform_plr")
     def test_chilled_water_load_distribution_scheme_sequential_uniform_plr(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_load_distribution_scheme'] = 'SequentialUniformPLR'
@@ -1016,6 +1149,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['PlantLoop']['Chilled Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_load_distribution_scheme_none")
     def test_condenser_water_load_distribution_scheme_none(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'].pop(
             'condenser_water_load_distribution_scheme', None)
@@ -1027,6 +1162,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['CondenserLoop']['Condenser Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_load_distribution_scheme_sequential_load")
     def test_condenser_water_load_distribution_scheme_sequential_load(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_load_distribution_scheme'] = 'SequentialLoad'
@@ -1038,6 +1175,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['CondenserLoop']['Condenser Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_load_distribution_scheme_optional")
     def test_condenser_water_load_distribution_scheme_optimal(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_load_distribution_scheme'] = 'Optimal'
@@ -1049,6 +1188,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['CondenserLoop']['Condenser Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_load_distribution_scheme_uniform_load")
     def test_condenser_water_load_distribution_scheme_uniform_load(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_load_distribution_scheme'] = 'UniformLoad'
@@ -1060,6 +1201,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['CondenserLoop']['Condenser Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_load_distribution_scheme_uniform_plr")
     def test_condenser_water_load_distribution_scheme_uniform_plr(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_load_distribution_scheme'] = 'UniformPLR'
@@ -1071,6 +1214,8 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
             epjson_output['CondenserLoop']['Condenser Water Loop PlantLoop']['load_distribution_scheme'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:"
+                                              "condenser_water_load_distribution_scheme_sequential_uniform_plr")
     def test_condenser_water_load_distribution_scheme_sequential_uniform_plr(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'condenser_water_load_distribution_scheme'] = 'SequentialUniformPLR'
