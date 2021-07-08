@@ -2705,6 +2705,10 @@ class PrimaryPumpFlowAndType:
             flow_type = template_fields.get('hot_water_pump_configuration', 'ConstantFlow')
             flow_rgx_match = re.match(r'(^.*)Flow', flow_type)
             configuration_type = template_fields.get('hot_water_pump_type', 'SinglePump')
+        elif template_type == 'HVACTemplate:Plant:MixedWaterLoop':
+            flow_type = template_fields.get('water_pump_configuration', 'ConstantFlow')
+            flow_rgx_match = re.match(r'(^.*)Flow', flow_type)
+            configuration_type = template_fields.get('water_pump_type', 'SinglePump')
         if flow_rgx_match and configuration_type:
             flow_type = flow_rgx_match.group(1)
             obj._primary_pump_flow_and_type = ''.join([flow_type, configuration_type])
