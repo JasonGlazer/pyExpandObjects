@@ -436,7 +436,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
                                               "chilled_water_primary_pump_type_pump_per_chiller")
     def test_chilled_water_primary_pump_type_pump_per_chiller(self):
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
-            'chilled_water_pump_configuration'] = 'VariablePrimaryNoSecondary'
+            'chilled_water_pump_configuration'] = 'ConstantPrimaryNoSecondary'
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop']['Chilled Water Loop'][
             'chilled_water_primary_pump_type'] = 'PumpPerChiller'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')

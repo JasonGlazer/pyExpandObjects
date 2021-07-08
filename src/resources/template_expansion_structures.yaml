@@ -878,13 +878,13 @@ Objects:
             name: '{} Branch'
             components:
               - component_object_type:
-                  Boiler.*: self
+                  (Boiler.*|DIstrictHeating): self
                 component_name:
-                  Boiler.*: key
+                  (Boiler.*|DIstrictHeating): key
                 component_inlet_node_name:
-                  Boiler.*: boiler_water_inlet_node_name
+                  (Boiler.*|DIstrictHeating): boiler_water_inlet_node_name
                 component_outlet_node_name:
-                  Boiler.*: boiler_water_outlet_node_name
+                  (Boiler.*|DIstrictHeating): boiler_water_outlet_node_name
     HotWater:
       Common:
         Transitions: &BoilerHotWaterCommonTransitions
@@ -6845,6 +6845,135 @@ OptionTree:
       Boiler:
         BaseObjects:
         TemplateObjects:
+          primary_pump_type:
+            OtherEquipment:
+              Objects:
+                - Branch: *BoilerCommonObjectsBranch
+            OtherDistrictHotWater:
+              Objects:
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          DistrictHeating: self
+                        component_name:
+                          DistrictHeating: key
+                        component_inlet_node_name:
+                          DistrictHeating: hot_water_inlet_node_name
+                        component_outlet_node_name:
+                          DistrictHeating: hot_water_outlet_node_name
+            ConstantPumpPerEquipment:
+              Objects:
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    name: '{unique_name} {plant_loop_type_short} Branch Pump'
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                    inlet_node_name: '{} HW Pump Inlet'
+                    outlet_node_name:
+                      Boiler.*: boiler_water_inlet_node_name
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          Boiler.*: boiler_water_inlet_node_name
+                      - component_object_type:
+                          Boiler.*: self
+                        component_name:
+                          Boiler.*: key
+                        component_inlet_node_name:
+                          Boiler.*: boiler_water_inlet_node_name
+                        component_outlet_node_name:
+                          Boiler.*: boiler_water_outlet_node_name
+            ConstantPumpPerDistrictHotWater: # special branch due to different node names
+              Objects:
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    name: '{unique_name} {plant_loop_type_short} Branch Pump'
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                    inlet_node_name: '{} HW Pump Inlet'
+                    outlet_node_name:
+                      Boiler.*: boiler_water_inlet_node_name
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          DistrictHeating: hot_water_inlet_node_name
+                      - component_object_type:
+                          DistrictHeating: self
+                        component_name:
+                          DistrictHeating: key
+                        component_inlet_node_name:
+                          DistrictHeating: hot_water_inlet_node_name
+                        component_outlet_node_name:
+                          DistrictHeating: hot_water_outlet_node_name
+            VariablePumpPerEquipment:
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    name: '{unique_name} {plant_loop_type_short} Branch Pump'
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                    inlet_node_name: '{} HW Pump Inlet'
+                    outlet_node_name:
+                      Boiler.*: boiler_water_inlet_node_name
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          Boiler.*: boiler_water_inlet_node_name
+                      - component_object_type:
+                          Boiler.*: self
+                        component_name:
+                          Boiler.*: key
+                        component_inlet_node_name:
+                          Boiler.*: boiler_water_inlet_node_name
+                        component_outlet_node_name:
+                          Boiler.*: boiler_water_outlet_node_name
+            VariablePumpPerDistrictHotWater: # special branch due to different node names
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    name: '{unique_name} {plant_loop_type_short} Branch Pump'
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                    inlet_node_name: '{} HW Pump Inlet'
+                    outlet_node_name:
+                      DistrictHeating: hot_water_inlet_node_name
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          DistrictHeating: hot_water_inlet_node_name
+                      - component_object_type:
+                          DistrictHeating: self
+                        component_name:
+                          DistrictHeating: key
+                        component_inlet_node_name:
+                          DistrictHeating: hot_water_inlet_node_name
+                        component_outlet_node_name:
+                          DistrictHeating: hot_water_outlet_node_name
           boiler_type:
             DistrictHotWater:
               Objects:
@@ -6853,25 +6982,11 @@ OptionTree:
                     hot_water_inlet_node_name: '{} {plant_loop_type_short} Inlet'
                     hot_water_outlet_node_name: '{} {plant_loop_type_short} Outlet'
                     nominal_capacity: 1000000000000000
-                - Branch:
-                    name: '{unique_name} {plant_loop_type_short} Branch'
-                    components:
-                      - component_object_type:
-                          ^DistrictHeating$: self
-                        component_name:
-                          ^DistrictHeating$: key
-                        component_inlet_node_name:
-                          ^DistrictHeating$: hot_water_inlet_node_name
-                        component_outlet_node_name:
-                          ^DistrictHeating$: hot_water_outlet_node_name
               Transitions: *BoilerHotWaterCommonTransitions
               Mappings: *BoilerHotWaterCommonMappings
             HotWaterBoiler:
               Objects:
                 - Boiler:HotWater: *BoilerHotWaterFields
-                - Branch:
-                    <<: *BoilerCommonObjectsBranch
-                    name: '{unique_name} {plant_loop_type_short} Branch'
                 - *BoilerHotWaterCommonObjects
               Transitions: *BoilerHotWaterCommonTransitions
               Mappings: *BoilerHotWaterCommonMappings
@@ -6879,9 +6994,6 @@ OptionTree:
               Objects:
                 - Boiler:HotWater: *BoilerHotWaterCondensingBoilerFields
                 - *BoilerHotWaterCondensingBoilerCommonObjects
-                - Branch:
-                    <<: *BoilerCommonObjectsBranch
-                    name: '{unique_name} {plant_loop_type_short} Branch'
               Transitions: *BoilerHotWaterCommonTransitions
               Mappings: *BoilerHotWaterCommonMappings
         ObjectReference:
@@ -6900,7 +7012,6 @@ OptionTree:
             - *SizingPlantCommonTransitions
             - Sizing:Plant:
                 chilled_water_design_setpoint: design_loop_exit_temperature
-
         TemplateObjects:
           chiller_plant_operation_scheme_type:
             None: &PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
@@ -7178,7 +7289,7 @@ OptionTree:
         BaseObjects:
         TemplateObjects:
           primary_pump_type:
-            None:
+            OtherEquipment:
               Objects:
                 - Branch: *ChillerElectricCommonChilledWaterObjectsBranch
             ConstantPumpPerEquipment:
@@ -7189,7 +7300,7 @@ OptionTree:
                     design_pump_head: '{primary_chilled_water_pump_rated_head}'
                     inlet_node_name: '{} Chw Pump Inlet'
                     outlet_node_name:
-                      Chiller.*: chilled_water_inlet_node_name
+                      (Chiller.*|DistrictCooling): chilled_water_inlet_node_name
                 - Branch:
                     name: '{} ChW Branch'
                     components:
@@ -7434,7 +7545,7 @@ OptionTree:
               Transitions: *CoolingTowerTwoSpeedCommonTransitions
               Mappings: *CoolingTowerTwoSpeedCommonMappings
           primary_pump_type:
-            None:
+            OtherEquipment:
               Objects:
                 - Branch: *CoolingTowerCommonObjectsBranch
             VariablePumpPerEquipment:

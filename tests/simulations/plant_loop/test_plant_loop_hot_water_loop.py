@@ -175,7 +175,7 @@ class TestSimulationsPlantLoopHotWaterLoop(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output['Pump:VariableSpeed'].get('Hot Water Loop Supply Pump'))
+        self.assertIsNotNone(epjson_output['Pump:ConstantSpeed'].get('Hot Water Loop Supply Pump'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
@@ -200,7 +200,7 @@ class TestSimulationsPlantLoopHotWaterLoop(BaseSimulationTest):
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            "HVACTemplate-Always82",
+            "HVACTemplate-Always82.0",
             epjson_output['SetpointManager:Scheduled']['Hot Water Loop Temp Manager']['schedule_name'])
         return
 
@@ -273,5 +273,43 @@ class TestSimulationsPlantLoopHotWaterLoop(BaseSimulationTest):
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(
-            epjson_output['Pump:ConstantSpeed'].get('Hot Water Loop Supply Pump'))
+            epjson_output['Pump:VariableSpeed'].get('Hot Water Loop Supply Pump'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_pump_type_pump_per_boiler")
+    def test_hot_water_pump_type_pump_per_boiler(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_configuration'] = 'ConstantFlow'
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_type'] = 'PumpPerBoiler'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Main Boiler HW Branch Pump',
+            epjson_output['Branch']['Main Boiler HW Branch']['components'][0]['component_name'])
+        self.assertEqual(
+            'Main Boiler',
+            epjson_output['Branch']['Main Boiler HW Branch']['components'][1]['component_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+                                              "hot_water_pump_type_pump_per_boiler_district_hot_water")
+    def test_hot_water_pump_type_pump_per_boiler_district_hot_water(self):
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'boiler_type'] = 'DistrictHotWater'
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_configuration'] = 'ConstantFlow'
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
+            'hot_water_pump_type'] = 'PumpPerBoiler'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Main Boiler HW Branch Pump',
+            epjson_output['Branch']['Main Boiler HW Branch']['components'][0]['component_name'])
+        self.assertEqual(
+            'Main Boiler',
+            epjson_output['Branch']['Main Boiler HW Branch']['components'][1]['component_name'])
         return
