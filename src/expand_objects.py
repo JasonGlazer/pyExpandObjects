@@ -428,12 +428,17 @@ class ExpandObjects(EPJSON):
                                         # apply with the template_field.  Otherwise, just try to get the value from the
                                         # template field, which is stored as a class attribute (on class initialization).
                                         try:
+                                            # if the value is a formatted string referencing a class attribute
+                                            # then reformat the object to be processed as a dictionary with
+                                            # the key being the template name
+                                            if isinstance(object_field, str) and '{' in object_field:
+                                                object_field = {template_field: object_field}
                                             if isinstance(object_field, dict):
                                                 (object_field, object_val), = object_field.items()
                                                 # Try to perform numeric evaluation if operators and formatting brackets
                                                 # are present.  regex match is to avoid any operator symbols used in
                                                 # variable names, but not intended for evaluation, e.g. HVACTemplate-Always
-                                                if re.match(r'.*[a-zA-Z][-+/*][a-zA-Z].*', object_val):
+                                                if re.match(r'.*[a-zA-Z]\s*[-+/*]\s*[a-zA-Z].*', object_val):
                                                     object_value = object_val
                                                 elif any(i in ['*', '+', '/', '-'] for i in object_val) and '{' in object_val:
                                                     # Add '0.' for accessing class object attributes

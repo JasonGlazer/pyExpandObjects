@@ -2175,7 +2175,8 @@ Objects:
           - CoolingTower:SingleSpeed:
               free_convection_capacity: free_convection_capacity
               high_speed_fan_power: design_fan_power
-              high_speed_nominal_capacity: '{nominal_capacity} / 1'
+              high_speed_nominal_capacity:
+                nominal_capacity: '{high_speed_nominal_capacity} / 1'
         Mappings: &CoolingTowerSingleSpeedCommonMappings
           - CoolingTower:SingleSpeed:
               free_convection_capacity:
@@ -5039,7 +5040,12 @@ OptionTree:
                     Location: After
                     ActionType: Insert
                     Objects: &SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerElectric
-                      - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
+                      - Coil:Heating:Electric:
+                          Fields:
+                            <<: *CoilHeatingElectricFields
+                            temperature_setpoint_node_name: '{} Heating Coil Outlet'
+                          Connectors:
+                            AirLoop: *ConnectorsAirLoop
                   HotWater:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
@@ -6478,6 +6484,12 @@ OptionTree:
                   ActionType: Insert
                   Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasObjects
                   Mappings: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasMappings
+                Electric:
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
             - *SystemCommonBuildPathActionsCommonCoolingCoilLast
             - *SystemCommonBuildPathActionFanOnOff
             - airloop_hvac_unitary_object_type:

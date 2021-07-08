@@ -182,6 +182,14 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         :param warning_check: boolean to indicate whether to check warnings or not.
         :return: None.  Assertions performed within function.
         """
+        # Move old file to prevent calling an outdated file.
+        try:
+            os.rename(
+                str(test_dir / '..' / 'simulation' / 'test' / 'base_input.idf'),
+                str(test_dir / '..' / 'simulation' / 'test' / 'old_base_input.idf')
+            )
+        except FileNotFoundError:
+            pass
         # move file to testing directory manually, shutil does not work reliably for some reason
         base_idf_test_file_path = test_dir.joinpath('..', 'simulation', 'test', 'base_input.idf')
         with open(base_idf_file_path, 'r') as f1, \
