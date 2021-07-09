@@ -7710,31 +7710,8 @@ OptionTree:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
-            - Pipe:Adiabatic:
-                name: '{} Supply Bypass Pipe'
-                inlet_node_name: '{} Supply Bypass Inlet'
-                outlet_node_name: '{} Supply Bypass Outlet'
-            - Branch:
-                name: *SupplyBypassBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Supply Bypass Pipe'
-                    component_inlet_node_name: '{} Supply Bypass Inlet'
-                    component_outlet_node_name: '{} Supply Bypass Outlet'
-            - Pipe:Adiabatic:
-                name: '{} Demand Bypass Pipe'
-                inlet_node_name: '{} Demand Bypass Inlet'
-                outlet_node_name: '{} Demand Bypass Outlet'
-            - Branch:
-                name: *DemandBypassBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Demand Bypass Pipe'
-                    component_inlet_node_name: '{} Demand Bypass Inlet'
-                    component_outlet_node_name: '{} Demand Bypass Outlet'
             - *PlantCommonPlantLoopNoSecondary
             - Sizing:Plant: *SizingPlantMixedWater
-            # Custom naming needed for two PlantEquipmentOperation objects and PlantEquipmentOperationSchemes
             - PlantLoop: *PlantLoopMixedWaterFields
             - SetpointManager:Scheduled:DualSetpoint: *SetpointManagerScheduledDualSetpoint
           Transitions:
@@ -7746,6 +7723,8 @@ OptionTree:
                 high_temperature_setpoint_schedule_name: high_setpoint_schedule_name
                 low_temperature_setpoint_schedule_name:  low_setpoint_schedule_name
         TemplateObjects:
+          supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
+          demand_side_bypass_pipe: *PlantCommonPlantLoopDemandSideBypassPipe
           operation_scheme_type:
             None: &PlantMixedWaterLoopTemplateObjectsOperationSchemeTypeNone
               Objects:

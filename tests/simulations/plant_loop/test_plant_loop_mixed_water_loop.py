@@ -244,6 +244,20 @@ class TestSimulationsPlantLoopMixedWaterLoop(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "water_pump_type_single_pump_variable")
+    def test_water_pump_type_single_pump_variable(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_type'] = 'SinglePump'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Pump:VariableSpeed'].get('Only Water Loop Supply Pump'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
                                               "water_pump_type_pump_per_tower_or_boiler")
     def test_water_pump_type_pump_per_tower_or_boiler(self):
         self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
@@ -273,4 +287,229 @@ class TestSimulationsPlantLoopMixedWaterLoop(BaseSimulationTest):
         self.assertEqual(
             19000,
             epjson_output['Pump:ConstantSpeed']['Main Boiler MW Branch Pump']['design_pump_head'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "water_pump_type_pump_per_tower_or_boiler")
+    def test_water_pump_type_pump_per_tower_or_boiler_variable(self):
+        # todo_eo: legacy does not make a tower branch pump.
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_type'] = 'PumpPerTowerOrBoiler'
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_rated_head'] = 19000
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Main Boiler MW Branch Pump',
+            epjson_output['Branch']['Main Boiler MW Branch']['components'][0]['component_name'])
+        self.assertEqual(
+            'Main Boiler',
+            epjson_output['Branch']['Main Boiler MW Branch']['components'][1]['component_name'])
+        self.assertEqual(
+            'Main Tower Branch Pump',
+            epjson_output['Branch']['Main Tower Branch']['components'][0]['component_name'])
+        self.assertEqual(
+            'Main Tower',
+            epjson_output['Branch']['Main Tower Branch']['components'][1]['component_name'])
+        self.assertEqual(
+            19000,
+            epjson_output['Pump:VariableSpeed']['Main Tower Branch Pump']['design_pump_head'])
+        self.assertEqual(
+            19000,
+            epjson_output['Pump:VariableSpeed']['Main Boiler MW Branch Pump']['design_pump_head'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "water_pump_type_two_headered_pumps")
+    def test_water_pump_type_two_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_type'] = 'TwoHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Only Water Loop Supply Pump'))
+        self.assertEqual(
+            2,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Only Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "water_pump_type_two_headered_pumps_variable")
+    def test_water_pump_type_two_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_type'] = 'TwoHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Only Water Loop Supply Pump'))
+        self.assertEqual(
+            2,
+            epjson_output['HeaderedPumps:VariableSpeed']['Only Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "water_pump_type_three_headered_pumps")
+    def test_water_pump_type_three_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_type'] = 'ThreeHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Only Water Loop Supply Pump'))
+        self.assertEqual(
+            3,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Only Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "water_pump_type_three_headered_pumps_variable")
+    def test_water_pump_type_three_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_type'] = 'ThreeHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Only Water Loop Supply Pump'))
+        self.assertEqual(
+            3,
+            epjson_output['HeaderedPumps:VariableSpeed']['Only Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "water_pump_type_four_headered_pumps")
+    def test_water_pump_type_four_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_type'] = 'FourHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Only Water Loop Supply Pump'))
+        self.assertEqual(
+            4,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Only Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "water_pump_type_four_headered_pumps_variable")
+    def test_water_pump_type_four_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_type'] = 'FourHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Only Water Loop Supply Pump'))
+        self.assertEqual(
+            4,
+            epjson_output['HeaderedPumps:VariableSpeed']['Only Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "water_pump_type_five_headered_pumps")
+    def test_water_pump_type_five_headered_pumps(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_type'] = 'FiveHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:ConstantSpeed'].get('Only Water Loop Supply Pump'))
+        self.assertEqual(
+            5,
+            epjson_output['HeaderedPumps:ConstantSpeed']['Only Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "water_pump_type_five_headered_pumps_variable")
+    def test_water_pump_type_five_headered_pumps_variable(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_configuration'] = 'VariableFlow'
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'water_pump_type'] = 'FiveHeaderedPumps'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeaderedPumps:VariableSpeed'].get('Only Water Loop Supply Pump'))
+        self.assertEqual(
+            5,
+            epjson_output['HeaderedPumps:VariableSpeed']['Only Water Loop Supply Pump']['number_of_pumps_in_bank'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "supply_side_bypass_pipe_yes")
+    def test_supply_side_bypass_pipe_yes(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'supply_side_bypass_pipe'] = 'Yes'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Pipe:Adiabatic'].get('Only Water Loop Supply Bypass Pipe'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "supply_side_bypass_pipe_no")
+    def test_supply_side_bypass_pipe_no(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'supply_side_bypass_pipe'] = 'No'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(
+            epjson_output['Pipe:Adiabatic'].get('Only Water Loop Supply Bypass Pipe'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "demand_side_bypass_pipe_yes")
+    def test_demand_side_bypass_pipe_yes(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'demand_side_bypass_pipe'] = 'Yes'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Pipe:Adiabatic'].get('Only Water Loop Demand Bypass Pipe'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "demand_side_bypass_pipe_no")
+    def test_demand_side_bypass_pipe_no(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'demand_side_bypass_pipe'] = 'No'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(
+            epjson_output['Pipe:Adiabatic'].get('Only Water Loop Demand Bypass Pipe'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
+                                              "demand_side_bypass_pipe_no")
+    def test_supply_side_bypass_pipe_no_demand_side_bypass_pipe_no(self):
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'supply_side_bypass_pipe'] = 'No'
+        self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
+            'demand_side_bypass_pipe'] = 'No'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(
+            epjson_output['Pipe:Adiabatic'].get('Only Water Loop Supply Bypass Pipe'))
+        self.assertIsNone(
+            epjson_output['Pipe:Adiabatic'].get('Only Water Loop Demand Bypass Pipe'))
         return
