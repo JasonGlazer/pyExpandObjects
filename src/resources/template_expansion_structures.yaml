@@ -878,19 +878,24 @@ Objects:
             name: '{} Branch'
             components:
               - component_object_type:
-                  Boiler.*: self
+                  (Boiler.*|DIstrictHeating): self
                 component_name:
-                  Boiler.*: key
+                  (Boiler.*|DIstrictHeating): key
                 component_inlet_node_name:
-                  Boiler.*: boiler_water_inlet_node_name
+                  (Boiler.*|DIstrictHeating): boiler_water_inlet_node_name
                 component_outlet_node_name:
-                  Boiler.*: boiler_water_outlet_node_name
+                  (Boiler.*|DIstrictHeating): boiler_water_outlet_node_name
     HotWater:
       Common:
         Transitions: &BoilerHotWaterCommonTransitions
           - Boiler:.*:
               capacity: nominal_thermal_capacity
               maximum_part_load_ratio: maximum_part_load_ratio
+        Mappings: &BoilerHotWaterCommonMappings
+          - Boiler.*:
+              pump_configuration_type:
+                VariableFlow:
+                  boiler_flow_mode: LeavingSetpointModulated
         Fields: &BoilerHotWaterCommonFields
           boiler_flow_mode: ConstantFlow # set by legacy, not reachable by template, not object default
           boiler_water_inlet_node_name: '{} HW Inlet' # required by schema
@@ -942,18 +947,18 @@ Objects:
     Electric:
       Common:
         ChilledWater:
-          Objects: &ChillerElectricCommonChilledWaterObjects
+          Objects:
             - Branch: &ChillerElectricCommonChilledWaterObjectsBranch
                 name: '{} ChW Branch'
                 components:
                   - component_object_type:
-                      Chiller.*: self
+                      (Chiller.*|DistrictCooling): self
                     component_name:
-                      Chiller.*: key
+                      (Chiller.*|DistrictCooling): key
                     component_inlet_node_name:
-                      Chiller.*: chilled_water_inlet_node_name
+                      (Chiller.*|DistrictCooling): chilled_water_inlet_node_name
                     component_outlet_node_name:
-                      Chiller.*: chilled_water_outlet_node_name
+                      (Chiller.*|DistrictCooling): chilled_water_outlet_node_name
         CondenserWater:
           Objects: &ChillerElectricCommonCondenserWaterObjects
             - Branch: &ChillerElectricCommonCondenserWaterObjectsBranch
@@ -969,51 +974,153 @@ Objects:
                       Chiller.*: condenser_outlet_node_name
       EIR:
         Common:
-          Objects: &ChillerElectricEIRCommonObjects
-            - Curve:Quadratic:
-                name: '{} RecipEIRFPLR'
-                coefficient1_constant: 0.088065
-                coefficient2_x: 1.137742
-                coefficient3_x_2: -0.225806
-                maximum_value_of_x: 1
-                minimum_value_of_x: 0
-            - Curve:Biquadratic:
-                name: '{} RecipCapFT'
-                coefficient1_constant: 0.507883
-                coefficient2_x: 0.145228
-                coefficient3_x_2: -0.00625644
-                coefficient4_y: -0.0011178
-                coefficient5_y_2: -0.0001296
-                coefficient6_x_y: -0.00028188
-                maximum_value_of_x: 10
-                maximum_value_of_y: 35
-                minimum_value_of_x: 5
-                minimum_value_of_y: 24
-            - Curve:Biquadratic:
-                name: '{} RecipEIRFT'
-                coefficient1_constant: 1.03076
-                coefficient2_x: -0.103536
-                coefficient3_x_2: 0.00710208
-                coefficient4_y: 0.0093186
-                coefficient5_y_2: 0.00031752
-                coefficient6_x_y: -0.00104328
-                maximum_value_of_x: 10
-                maximum_value_of_y: 35
-                minimum_value_of_x: 5
-                minimum_value_of_y: 24
+          Objects:
+            Centrifugal: &ChillerElectricEIRCommonObjectsCentrifugal
+              - Curve:Biquadratic:
+                  name: '{} CentCapFT'
+                  coefficient1_constant: 0.257896
+                  coefficient2_x: 0.0389016
+                  coefficient3_x_2: -0.00021708
+                  coefficient4_y: 0.0468684
+                  coefficient5_y_2: -0.00094284
+                  coefficient6_x_y: -0.00034344
+                  maximum_value_of_x: 10
+                  maximum_value_of_y: 35
+                  minimum_value_of_x: 5
+                  minimum_value_of_y: 24
+              - Curve:Biquadratic:
+                  name: '{} CentEIRFT'
+                  coefficient1_constant: 0.933884
+                  coefficient2_x: -0.058212
+                  coefficient3_x_2: 0.00450036
+                  coefficient4_y: 0.00243
+                  coefficient5_y_2: 0.000486
+                  coefficient6_x_y: -0.001215
+                  maximum_value_of_x: 10
+                  maximum_value_of_y: 35
+                  minimum_value_of_x: 5
+                  minimum_value_of_y: 24
+              - Curve:Quadratic:
+                  name: '{} CentEIRFPLR'
+                  coefficient1_constant: 0.222903
+                  coefficient2_x: 0.313387
+                  coefficient3_x_2: 0.46371
+                  maximum_value_of_x: 1
+                  minimum_value_of_x: 0
+            Reciprocating: &ChillerElectricEIRCommonObjectsReciprocating
+              - Curve:Quadratic:
+                  name: '{} RecipEIRFPLR'
+                  coefficient1_constant: 0.088065
+                  coefficient2_x: 1.137742
+                  coefficient3_x_2: -0.225806
+                  maximum_value_of_x: 1
+                  minimum_value_of_x: 0
+              - Curve:Biquadratic:
+                  name: '{} RecipCapFT'
+                  coefficient1_constant: 0.507883
+                  coefficient2_x: 0.145228
+                  coefficient3_x_2: -0.00625644
+                  coefficient4_y: -0.0011178
+                  coefficient5_y_2: -0.0001296
+                  coefficient6_x_y: -0.00028188
+                  maximum_value_of_x: 10
+                  maximum_value_of_y: 35
+                  minimum_value_of_x: 5
+                  minimum_value_of_y: 24
+              - Curve:Biquadratic:
+                  name: '{} RecipEIRFT'
+                  coefficient1_constant: 1.03076
+                  coefficient2_x: -0.103536
+                  coefficient3_x_2: 0.00710208
+                  coefficient4_y: 0.0093186
+                  coefficient5_y_2: 0.00031752
+                  coefficient6_x_y: -0.00104328
+                  maximum_value_of_x: 10
+                  maximum_value_of_y: 35
+                  minimum_value_of_x: 5
+                  minimum_value_of_y: 24
+            ScrewWaterCooled: &ChillerElectricEIRCommonObjectsScrewWaterCooled
+              - Curve:Biquadratic:
+                  name: '{} ScrewCapFT'
+                  coefficient1_constant: 0.81302462
+                  coefficient2_x: -0.01425319
+                  coefficient3_x_2: -0.00161799
+                  coefficient4_y: 0.02638438
+                  coefficient5_y_2: -0.00091543
+                  coefficient6_x_y: 0.00169601
+                  maximum_value_of_x: 10
+                  maximum_value_of_y: 35
+                  minimum_value_of_x: 5
+                  minimum_value_of_y: 24
+              - Curve:Biquadratic:
+                  name: '{} ScrewEIRFT'
+                  coefficient1_constant: 0.63812315
+                  coefficient2_x: 0.00630389
+                  coefficient3_x_2: 0.00092334
+                  coefficient4_y: -0.00455294
+                  coefficient5_y_2: 0.00082568
+                  coefficient6_x_y: -0.00156152
+                  maximum_value_of_x: 10
+                  maximum_value_of_y: 35
+                  minimum_value_of_x: 5
+                  minimum_value_of_y: 24
+              - Curve:Quadratic:
+                  name: '{} ScrewEIRFPLR'
+                  coefficient1_constant: 0.33018833
+                  coefficient2_x: 0.23554291
+                  coefficient3_x_2: 0.46070828
+                  maximum_value_of_x: 1
+                  minimum_value_of_x: 0
+            ScrewAirCooled: &ChillerElectricEIRCommonObjectsScrewAirCooled
+              - Curve:Biquadratic:
+                  name: '{} ScrewCapFT'
+                  coefficient1_constant: 0.98652509
+                  coefficient2_x: 0.04950184
+                  coefficient3_x_2: -0.00029824
+                  coefficient4_y: -0.00368714
+                  coefficient5_y_2: -4.455e-05
+                  coefficient6_x_y: -0.00050103
+                  maximum_value_of_x: 10
+                  maximum_value_of_y: 35
+                  minimum_value_of_x: 5
+                  minimum_value_of_y: 24
+              - Curve:Biquadratic:
+                  name: '{} ScrewEIRFT'
+                  coefficient1_constant: 0.57063012
+                  coefficient2_x: 0.0119552
+                  coefficient3_x_2: -0.00052187
+                  coefficient4_y: -3.406e-05
+                  coefficient5_y_2: 0.00042091
+                  coefficient6_x_y: -0.00060539
+                  maximum_value_of_x: 10
+                  maximum_value_of_y: 35
+                  minimum_value_of_x: 5
+                  minimum_value_of_y: 24
+              - Curve:Quadratic:
+                  name: '{} ScrewEIRFPLR'
+                  coefficient1_constant: 0.03648722
+                  coefficient2_x: 0.73474298
+                  coefficient3_x_2: 0.21994748
+                  maximum_value_of_x: 1
+                  minimum_value_of_x: 0
           Transitions: &ChillerElectricEIRCommonTransitions
             - Chiller:.*:
                 leaving_chilled_water_lower_temperature_limit: leaving_chilled_water_lower_temperature_limit
                 minimum_part_load_ratio: minimum_part_load_ratio
                 minimum_unloading_ratio: minimum_unloading_ratio
                 optimum_part_load_ratio: optimum_part_load_ratio
+          Mappings: &ChillerElectricEIRCommonMappings
+            - Chiller.*:
+                pump_configuration_type:
+                  VariablePrimaryNoSecondary:
+                    chiller_flow_mode: LeavingSetpointModulated
         Base:
           Fields: &ChillerElectricEIRFields
             name: '{}'
-            chilled_water_inlet_node_name: '{} Chiller ChW Inlet' # required by schema
-            chilled_water_outlet_node_name: '{} Chiller ChW Outlet' # required by schema
-            condenser_inlet_node_name: '{} Chiller Cnd Inlet'
-            condenser_outlet_node_name: '{} Chiller Cnd Outlet'
+            chilled_water_inlet_node_name: '{} ChW Inlet' # required by schema
+            chilled_water_outlet_node_name: '{} ChW Outlet' # required by schema
+            condenser_inlet_node_name: '{} Cnd Inlet'
+            condenser_outlet_node_name: '{} Cnd Outlet'
             chiller_flow_mode: ConstantFlow # set by legacy, not reachable by template, not object default
             condenser_type: '{condenser_type}'
             cooling_capacity_function_of_temperature_curve_name: '{} RecipCapFT' # required by schema
@@ -1831,6 +1938,12 @@ Objects:
                       Coil:Heating:Water: self
                     component_outlet_node_name:
                       Coil:Heating:Water: water_outlet_node_name
+          Mappings: &CoilHeatingWaterCommonMappings
+            - heating_coil_capacity:
+                None:
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
         Base: &CoilHeatingWaterSuperObject
           Fields: &CoilHeatingWaterFields
             << : *CoilHeatingCommonFields
@@ -2054,10 +2167,9 @@ Objects:
                   CoolingTower.*: water_outlet_node_name
       Fields: &CoolingTowerCommonFields
         blowdown_calculation_mode: ConcentrationRatio # set by legacy, not reachable from template, no default
-        design_water_flow_rate: Autosize # set by legacy, not reachable from template, no default
         evaporation_loss_mode: SaturatedExit # set by legacy, not reachable from template, no default
         free_convection_regime_air_flow_rate: Autocalculate # set by legacy, not reachable from template, not default
-        free_convection_regime_u_factor_times_area_value: Autocalculate # set by legacy, not reachable from template, not default
+        performance_input_method: NominalCapacity
         outdoor_air_inlet_node_name: *OutdoorAirInletNodes
         sizing_factor: '{sizing_factor}'
         water_inlet_node_name: '{} Inlet' # required by schema
@@ -2068,18 +2180,46 @@ Objects:
           - CoolingTower:SingleSpeed:
               free_convection_capacity: free_convection_capacity
               high_speed_fan_power: design_fan_power
+              high_speed_nominal_capacity:
+                nominal_capacity: '{high_speed_nominal_capacity} / 1'
         Mappings: &CoolingTowerSingleSpeedCommonMappings
           - CoolingTower:SingleSpeed:
               free_convection_capacity:
                 Autosize:
                   free_convection_capacity: Autocalculate
+          - CoolingTower:SingleSpeed:
+              high_speed_nominal_capacity:
+                None:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+              free_convection_capacity:
+                None:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
       Base:
         Fields: &CoolingTowerSingleSpeed
           name: '{}'
           <<: *CoolingTowerCommonFields
           design_air_flow_rate: Autosize # set by legacy, not reachable from template, no default, required by schema
           design_fan_power: Autosize # set by legacy, not reachable from template, no default, required by schema
-          design_u_factor_times_area_value: Autosize # set by legacy, not reachable from template, no default
           free_convection_capacity: Autocalculate # set by legacy, not reachable from template, no default
     TwoSpeed:
       Common:
@@ -2087,6 +2227,7 @@ Objects:
           - CoolingTower:TwoSpeed:
               free_convection_capacity: free_convection_nominal_capacity
               high_speed_fan_power: high_fan_speed_fan_power
+              high_speed_nominal_capacity: '{high_speed_nominal_capacity} / 1'
               low_speed_fan_power: low_fan_speed_fan_power
               low_speed_nominal_capacity: low_speed_nominal_capacity
         Mappings: &CoolingTowerTwoSpeedCommonMappings
@@ -2100,6 +2241,58 @@ Objects:
               low_speed_fan_power:
                 Autosize:
                   low_fan_speed_fan_power: Autocalculate
+          - CoolingTower:TwoSpeed:
+              high_speed_nominal_capacity:
+                None:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+              low_speed_nominal_capacity:
+                None:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+              free_convection_capacity:
+                None:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                Autosize:
+                  design_water_flow_rate: Autosize
+                  design_u_factor_times_area_value: Autosize
+                  free_convection_regime_u_factor_times_area_value: Autocalculate
+                  free_convection_u_factor_times_area_value: Autocalculate
+                  high_fan_speed_u_factor_times_area_value: Autosize
+                  low_fan_speed_u_factor_times_area_value: Autocalculate
+                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
       Base:
         Fields: &CoolingTowerTwoSpeed
           name: '{}'
@@ -2107,13 +2300,10 @@ Objects:
           free_convection_nominal_capacity: Autocalculate
           high_fan_speed_air_flow_rate: Autosize
           high_fan_speed_fan_power: Autosize
-          high_fan_speed_u_factor_times_area_value: Autosize
-#          high_speed_nominal_capacity # todo_eo: no transitions or setting since only numeric allowed, not Autosize
           low_fan_speed_air_flow_rate: Autocalculate
           low_fan_speed_fan_power: Autocalculate
-          low_fan_speed_u_factor_times_area_value: Autocalculate
           low_speed_nominal_capacity: Autocalculate
-          performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+          performance_input_method: NominalCapacity
   DesignSpecification:
     OutdoorAir:
       Base:
@@ -2145,7 +2335,11 @@ Objects:
           CommonMappings: &FanCommonMappingsVariableVolume
             - Fan:.*:
                 supply_fan_minimum_flow_rate:
-                  AnyValue:
+                  None:
+                    fan_power_minimum_flow_fraction: 0.25
+                  Autosize:
+                    fan_power_minimum_flow_fraction: 0.25
+                  AnyNumber:
                     fan_power_minimum_flow_rate_input_method: FixedFlowRate
                 supply_fan_part_load_power_coefficients:
                   None: &FanVariableVolumeSupplyPLRCoefficients
@@ -2154,8 +2348,7 @@ Objects:
                     fan_power_coefficient_3: -0.54137364
                     fan_power_coefficient_4: 0.87198823
                     fan_power_coefficient_5: 0
-#                    fan_power_minimum_flow_fraction: 0.25
-#                    fan_power_minimum_flow_rate_input_method: Fraction
+                    fan_power_minimum_flow_rate_input_method: Fraction
                   InletVaneDampers: *FanVariableVolumeSupplyPLRCoefficients
                 return_fan_part_load_power_coefficients:
                   InletVaneDampers:
@@ -2234,6 +2427,50 @@ Objects:
         Connectors: &FanVariableVolumeConnectors
           << : *FanConnectors
           pressure_rise: 1000 # set by HVACTemplate:System:VAV template
+  HeaderedPumps:
+    Common:
+      Objects:
+        - Branch: &HeaderedPumpsBranchVariableSpeedSupplyInlet
+            name: *SupplyInletBranch
+            components:
+              - component_object_type: HeaderedPumps:VariableSpeed # required by schema
+                component_name: '{} Supply Pump' # required by schema
+                component_inlet_node_name: '{} Supply Inlet' # required by schema
+                component_outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
+        - Branch: &HeaderedPumpsBranchConstantSpeedSupplyInlet
+            name: *SupplyInletBranch
+            components:
+              - component_object_type: HeaderedPumps:ConstantSpeed # required by schema
+                component_name: '{} Supply Pump' # required by schema
+                component_inlet_node_name: '{} Supply Inlet' # required by schema
+                component_outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
+        - Branch: &HeaderedPumpsBranchVariableSpeedDemandInlet
+            name: *DemandInletBranch
+            components:
+              - component_object_type: HeaderedPumps:VariableSpeed # required by schema
+                component_name: '{} Secondary Pump' # required by schema
+                component_inlet_node_name: '{} Demand Inlet' # required by schema
+                component_outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+      Transitions: &HeaderedPumpsCommonTransitions
+        - Pump:.*:
+            pump_control_type: pump_control_type
+      Base:
+        Fields: &HeaderedPumpsCommonFields
+          name: '{} Supply Pump'
+          inlet_node_name: '{} Supply Inlet' # required by schema
+          outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
+          design_power_consumption: Autosize # set by legacy, not reachable from template, no default
+          pump_control_type: Intermittent # set by legacy, not reachable from template, no default
+          pump_flow_rate_schedule_name: '{pump_schedule_name}'
+          total_design_flow_rate: Autosize # set by legacy, not reachable from template, no default
+    ConstantSpeed:
+      Fields: &HeaderedPumpsConstantSpeed
+        <<: *HeaderedPumpsCommonFields
+    VariableSpeed:
+      Fields: &HeaderedPumpsVariableSpeed
+        <<: *HeaderedPumpsCommonFields
+        coefficient_2_of_the_part_load_performance_curve: 0 # set by legacy, not reachable from template, no default
+        coefficient_3_of_the_part_load_performance_curve: 1 # set by legacy, not reachable from template, no default
   HeatExchanger:
     AirToAir:
       SensibleAndLatent:
@@ -2420,6 +2657,16 @@ Objects:
                 component_name: '{} Supply Pump' # required by schema
                 component_inlet_node_name: '{} Supply Inlet' # required by schema
                 component_outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
+        - Branch: &PumpBranchVariableSpeedDemandInlet
+            name: *DemandInletBranch
+            components:
+              - component_object_type: Pump:VariableSpeed # required by schema
+                component_name: '{} Secondary Pump' # required by schema
+                component_inlet_node_name: '{} Demand Inlet' # required by schema
+                component_outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+      Transitions: &PumpCommonTransitions
+        - Pump:.*:
+            pump_control_type: pump_control_type
     Base:
       Fields: &PumpFields
         name: '{} Supply Pump'
@@ -2427,6 +2674,7 @@ Objects:
         outlet_node_name: '{} Supply Inlet Pump Outlet' # required by schema
         design_power_consumption: Autosize # set by legacy, not reachable from template, no default
         pump_control_type: Intermittent # set by legacy, not reachable from template, no default
+        pump_flow_rate_schedule_name: '{pump_schedule_name}'
       ConstantSpeed:
         Fields: &PumpConstantSpeed
           <<: *PumpFields
@@ -2541,11 +2789,6 @@ Objects:
       Base:
         Fields: &SetpointManagerScheduled
           <<: *SetpointManagerOutdoorAirReset
-      ChilledWater:
-        Base:
-          Fields: &SetpointManagerScheduledChilledWater
-            <<: *SetpointManagerScheduled
-            schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
       Cooling:
         Base:
           Fields: &SetpointManagerScheduledCooling
@@ -2758,6 +3001,9 @@ Objects:
                 preheat_coil_design_setpoint: preheat_design_temperature
                 supply_fan_maximum_flow_rate:
                   cooling_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
+            - Sizing:System:
+                supply_fan_maximum_flow_rate:
+                  heating_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
           DedicatedOutdoorAir: &SizingSystemCommonTransitionsDedicatedOutdoorAir
             - Sizing:System:
                 supply_fan_flow_rate:
@@ -2773,7 +3019,7 @@ Objects:
           name: '{} Sizing Plant'
           plant_or_condenser_loop_name: *PlantLoop
         Transitions: &SizingPlantCommonTransitions
-          - Plant:Sizing:
+          - Sizing:Plant:
               loop_design_delta_temperature: loop_design_temperature_difference
       ChilledWater:
         Fields: &SizingPlantChilledWater
@@ -3222,11 +3468,21 @@ AutoCreated:
           - branch_name: *DemandInletBranch
           - branch_name: *DemandBypassBranch
           - branch_name: *DemandOutletBranch
+      DemandNoBypass:
+        name: *DemandSideBranches
+        branches:
+          - branch_name: *DemandInletBranch
+          - branch_name: *DemandOutletBranch
       Supply:
         name: *SupplySideBranches
         branches:
           - branch_name: *SupplyInletBranch
           - branch_name: *SupplyBypassBranch
+          - branch_name: *SupplyOutletBranch
+      SupplyNoBypass:
+        name: *SupplySideBranches
+        branches:
+          - branch_name: *SupplyInletBranch
           - branch_name: *SupplyOutletBranch
     CondenserEquipmentList:
       name: *CondenserEquipmentList
@@ -3237,22 +3493,38 @@ AutoCreated:
           outlet_branch_name: *DemandOutletBranch
           branches:
             - inlet_branch_name: *DemandBypassBranch
+        DemandNoBypass:
+          name: *DemandMixer
+          outlet_branch_name: *DemandOutletBranch
+          branches:
         Supply:
           name: *SupplyMixer
           outlet_branch_name: *SupplyOutletBranch
           branches:
             - inlet_branch_name: *SupplyBypassBranch
+        SupplyNoBypass:
+          name: *SupplyMixer
+          outlet_branch_name: *SupplyOutletBranch
+          branches:
       Splitter:
         Demand:
           name: *DemandSplitter
           inlet_branch_name: *DemandInletBranch
           branches:
             - outlet_branch_name: *DemandBypassBranch
+        DemandNoBypass:
+          name: *DemandSplitter
+          inlet_branch_name: *DemandInletBranch
+          branches:
         Supply:
           name: *SupplySplitter
           inlet_branch_name: *SupplyInletBranch
           branches:
             - outlet_branch_name: *SupplyBypassBranch
+        SupplyNoBypass:
+          name: *SupplySplitter
+          inlet_branch_name: *SupplyInletBranch
+          branches:
     ConnectorList:
       Demand:
         name: *DemandSideConnectors
@@ -3391,6 +3663,7 @@ OptionTree:
                       Objects: &ZoneCommonBuildPathActionsObjectsHeatingCoilTypeHotWaterObjects
                         - Coil:Heating:Water: *CoilHeatingWaterSuperObject
                         - *CoilHeatingWaterCommonObjects
+                      Mappings: *CoilHeatingWaterCommonMappings
                     Gas:
                       ObjectReference: Fan:.*
                       Location: After
@@ -3584,6 +3857,7 @@ OptionTree:
                 Objects:
                   - ZoneHVAC:Baseboard:Convective:Electric: *ZoneHVACBaseboardConvectiveElectricFields
                 Transitions: *ZoneHVACBaseboardCommonTransitions
+              None:
           DesignSpecification: &ZoneCommonTemplateObjectsDesignSpecification
             design_specification_outdoor_air_object_status:
               IncludeDSOA: # Created via descriptors in ExpandZone
@@ -3615,6 +3889,7 @@ OptionTree:
                   - ZoneHVAC:EquipmentList: *ZoneHVACEquipmentListWithBaseboard
           SupplyPlenum: &ZoneCommonTemplateObjectsSupplyPlenum
             supply_plenum_name:
+              None:
               AnyValue:
                 Objects:
                   - AirLoopHVAC:SupplyPlenum:
@@ -3627,6 +3902,7 @@ OptionTree:
                       zone_node_name: '{supply_plenum_name} Zone Air Node'
           ReturnPlenum: &ZoneCommonTemplateObjectsReturnPlenum
             return_plenum_name:
+              None:
               AnyValue:
                 Objects:
                   - AirLoopHVAC:ReturnPlenum:
@@ -3716,6 +3992,7 @@ OptionTree:
                         <<: *CoilHeatingWaterCommonObjectsBranch
                         name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
                   Transitions: *AirTerminalSingleDuctVAVCommonTransitions
+                  Mappings: *CoilHeatingWaterCommonMappings
             HeatAndCool: &ZoneCommonTemplateObjectsVAVHeatAndCool
               reheat_coil_type:
                 None:
@@ -3773,6 +4050,7 @@ OptionTree:
                   Transitions:
                     - *AirTerminalSingleDuctVAVCommonTransitions
                     - *AirTerminalSingleDuctVAVHeatAndCoolCommonTransitions
+                  Mappings: *CoilHeatingWaterCommonMappings
             FanPowered: &ZoneCommonTemplateObjectsVAVFanPowered
               flow_type:
                 Parallel:
@@ -3888,6 +4166,7 @@ OptionTree:
                     <<: *CoilHeatingWaterCommonObjectsBranch
                     name: '{} Reheat Coil Hw Branch' # todo_eo: Is this renaming necessary
               Transitions: *AirTerminalSingleDuctCommonTransitions
+              Mappings: *CoilHeatingWaterCommonMappings
           <<: *ZoneCommonTemplateObjectsSupplyPlenum
           <<: *ZoneCommonTemplateObjectsReturnPlenum
       DualDuct:
@@ -3905,6 +4184,7 @@ OptionTree:
           <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
           <<: *ZoneCommonTemplateObjectsDesignSpecification
           cold_supply_plenum_name:
+            None:
             AnyValue:
               Objects:
                 - AirLoopHVAC:SupplyPlenum:
@@ -3916,6 +4196,7 @@ OptionTree:
                     zone_name: '{cold_supply_plenum_name}'
                     zone_node_name: '{cold_supply_plenum_name} Zone Air Node'
           hot_supply_plenum_name:
+            None:
             AnyValue:
               Objects:
                 - AirLoopHVAC:SupplyPlenum:
@@ -4006,6 +4287,7 @@ OptionTree:
               Transitions:
                 - *SizingZoneCommonTransitionsIdealLoads
           humidistat_object_type:
+            None:
             IncludeHumidistat: # Created via descriptors in ExpandZone
               Objects:
                 - ZoneControl:Humidistat:
@@ -4136,6 +4418,7 @@ OptionTree:
                     - Coil:Heating:Water:
                         supplemental_heating_coil_capacity: rated_capacity
                         supplemental_heating_or_reheat_coil_capacity: nominal_capacity
+                  Mappings: *CoilHeatingWaterCommonMappings
         BaseObjects:
           Objects:
             - Sizing:Zone: *SizingZoneOA
@@ -4293,6 +4576,7 @@ OptionTree:
                           Connectors:
                             AirLoop: *ConnectorsAirLoop
                       - *CoilHeatingWaterCommonObjects
+                    Mappings: *CoilHeatingWaterCommonMappings
                   Gas:
                     ObjectReference: Fan:.*
                     Location: After
@@ -4343,6 +4627,7 @@ OptionTree:
             <<: *ZoneCommonTemplateObjectsVAVFanPowered
             <<: *ZoneCommonTemplateObjectsDesignSpecification
             supply_plenum_name:
+              None:
               AnyValue:
                 Objects:
                   - AirLoopHVAC:SupplyPlenum:
@@ -4760,7 +5045,12 @@ OptionTree:
                     Location: After
                     ActionType: Insert
                     Objects: &SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerElectric
-                      - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
+                      - Coil:Heating:Electric:
+                          Fields:
+                            <<: *CoilHeatingElectricFields
+                            temperature_setpoint_node_name: '{} Heating Coil Outlet'
+                          Connectors:
+                            AirLoop: *ConnectorsAirLoop
                   HotWater:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
@@ -4771,6 +5061,7 @@ OptionTree:
                           <<: *ControllerWaterCoil
                           name: '{} Heating Coil Controller'
                       - *CoilHeatingWaterCommonObjects
+                    Mappings: *CoilHeatingWaterCommonMappings
                   Gas:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
@@ -4924,6 +5215,7 @@ OptionTree:
                     Transitions:
                       - SetpointManager:Scheduled:
                           preheat_coil_setpoint_schedule_name: schedule_name
+                    Mappings: *CoilHeatingWaterCommonMappings
                   ElectricPreheat:
                     ObjectReference: OutdoorAir:Mixer
                     Location: Before
@@ -5002,6 +5294,7 @@ OptionTree:
                     Transitions:
                       - SetpointManager:Scheduled:
                           preheat_coil_setpoint_schedule_name: schedule_name
+                    Mappings: *CoilHeatingWaterCommonMappings
                   ElectricPreheatSensibleHR: &ConstantvolumeBuildPathOutsideAirEquipmentTypeElectricPreheatSensibleHR
                     ObjectReference: OutdoorAir:Mixer
                     Location: Before
@@ -5446,7 +5739,7 @@ OptionTree:
                 Transitions:
                   - SetpointManager:Warmest:
                       maximum_setpoint_temperature:
-                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
+                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+1.0)'
               WarmestDrawThrough:
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
@@ -5454,7 +5747,7 @@ OptionTree:
                 Transitions:
                   - SetpointManager:Warmest:
                       maximum_setpoint_temperature:
-                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
+                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+1.0)'
             heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
               ControlZoneBlowThrough:
                 Objects:
@@ -6196,6 +6489,12 @@ OptionTree:
                   ActionType: Insert
                   Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasObjects
                   Mappings: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasMappings
+                Electric: # Remove temperature_setpoint_node field
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
             - *SystemCommonBuildPathActionsCommonCoolingCoilLast
             - *SystemCommonBuildPathActionFanOnOff
             - airloop_hvac_unitary_object_type:
@@ -6272,6 +6571,7 @@ OptionTree:
                   Objects:
                     - Coil:Heating:Water: *CoilHeatingWaterSuperObject
                     - *CoilHeatingWaterCommonObjects
+                  Mappings: *CoilHeatingWaterCommonMappings
                 Gas: # Override existing Gas option with different Coil:Heating:Fuel object
                   ObjectReference: OutdoorAir:Mixer
                   Location: After
@@ -6402,17 +6702,6 @@ OptionTree:
         PlantLoop:
           Base: &PlantCommonPlantLoopBase
             - Pipe:Adiabatic:
-                name: '{} Supply Bypass Pipe'
-                inlet_node_name: '{} Supply Bypass Inlet'
-                outlet_node_name: '{} Supply Bypass Outlet'
-            - Branch:
-                name: *SupplyBypassBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Supply Bypass Pipe'
-                    component_inlet_node_name: '{} Supply Bypass Inlet'
-                    component_outlet_node_name: '{} Supply Bypass Outlet'
-            - Pipe:Adiabatic:
                 name: '{} Supply Outlet Pipe'
                 inlet_node_name: '{} Supply Outlet Pipe Inlet'
                 outlet_node_name: *SupplyOutlet
@@ -6424,17 +6713,6 @@ OptionTree:
                     component_inlet_node_name: '{} Supply Outlet Pipe Inlet'
                     component_outlet_node_name: *SupplyOutlet
             - Pipe:Adiabatic:
-                name: '{} Demand Bypass Pipe'
-                inlet_node_name: '{} Demand Bypass Inlet'
-                outlet_node_name: '{} Demand Bypass Outlet'
-            - Branch:
-                name: *DemandBypassBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Demand Bypass Pipe'
-                    component_inlet_node_name: '{} Demand Bypass Inlet'
-                    component_outlet_node_name: '{} Demand Bypass Outlet'
-            - Pipe:Adiabatic:
                 name: '{} Demand Outlet Pipe'
                 inlet_node_name: '{} Demand Outlet Pipe Inlet'
                 outlet_node_name: '{} Demand Outlet'
@@ -6445,18 +6723,18 @@ OptionTree:
                     component_name: '{} Demand Outlet Pipe'
                     component_inlet_node_name: '{} Demand Outlet Pipe Inlet'
                     component_outlet_node_name: '{} Demand Outlet'
-          PrimaryNoSecondary: &PlantCommonPlantLoopPrimaryNoSecondary
+          NoPrimary: &PlantCommonPlantLoopNoPrimary
             - Pipe:Adiabatic:
-                name: '{} Demand Inlet Pipe'
-                inlet_node_name: *DemandInlet
-                outlet_node_name: '{} Demand Inlet Pipe Outlet'
+                name: '{} Supply Inlet Pipe'
+                inlet_node_name: *SupplyInlet
+                outlet_node_name: '{} Supply Inlet Pipe Outlet'
             - Branch:
-                name: *DemandInletBranch
+                name: *SupplyInletBranch
                 components:
                   - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Demand Inlet Pipe'
-                    component_inlet_node_name: *DemandInlet
-                    component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
+                    component_name: '{} Supply Inlet Pipe'
+                    component_inlet_node_name: *SupplyInlet
+                    component_outlet_node_name: '{} Supply Inlet Pipe Outlet'
           NoSecondary: &PlantCommonPlantLoopNoSecondary
             - Pipe:Adiabatic:
                 name: '{} Demand Inlet Pipe'
@@ -6469,15 +6747,284 @@ OptionTree:
                     component_name: '{} Demand Inlet Pipe'
                     component_inlet_node_name: *DemandInlet
                     component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
-        ChilledWaterLoop:
-          Objects: &PlantCommonObjectsChilledWaterLoop
-            - OutdoorAir:Node:
-                name: '{} Outside Air Sensor'
-            - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
-            - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesCoolingLoad
+          PrimaryPumpFlowAndType: &PlantCommonPlantLoopPrimaryPumpFlowAndType
+            ConstantPumpPerEquipment:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipmentObjects
+                - *PlantCommonPlantLoopNoPrimary
+            ConstantSinglePump:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantSinglePumpObjects
+                - Branch: *PumpBranchConstantSpeedSupplyInlet
+                - Pump:ConstantSpeed: *PumpConstantSpeed
+            ConstantTwoHeadered:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantTwoHeaderedObjects
+                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                - HeaderedPumps:ConstantSpeed:
+                    <<: *HeaderedPumpsConstantSpeed
+                    number_of_pumps_in_bank: 2
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+            ConstantThreeHeadered:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantThreeHeaderedObjects
+                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                - HeaderedPumps:ConstantSpeed:
+                    <<: *HeaderedPumpsConstantSpeed
+                    number_of_pumps_in_bank: 3
+            ConstantFourHeadered:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFourHeaderedObjects
+                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                - HeaderedPumps:ConstantSpeed:
+                    <<: *HeaderedPumpsConstantSpeed
+                    number_of_pumps_in_bank: 4
+            ConstantFiveHeadered:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFiveHeaderedObjects
+                - Branch: *HeaderedPumpsBranchConstantSpeedSupplyInlet
+                - HeaderedPumps:ConstantSpeed:
+                    <<: *HeaderedPumpsConstantSpeed
+                    number_of_pumps_in_bank: 5
+            VariableSinglePump:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableSinglePumpObjects
+                - Branch: *PumpBranchVariableSpeedSupplyInlet
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    design_minimum_flow_rate: 0
+            VariableTwoHeaderedPumps:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableTwoHeaderedObjects
+                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    number_of_pumps_in_bank: 2
+            VariableThreeHeaderedPumps:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableThreeHeaderedObjects
+                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    number_of_pumps_in_bank: 3
+            VariableFourHeaderedPumps:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFourHeaderedObjects
+                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    number_of_pumps_in_bank: 4
+            VariableFiveHeaderedPumps:
+              Objects: &PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFiveHeaderedObjects
+                - Branch: *HeaderedPumpsBranchVariableSpeedSupplyInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    number_of_pumps_in_bank: 5
+          SupplySideBypassPipe: &PlantCommonPlantLoopSupplySideBypassPipe
+            None: &PlantCommonPlantLoopSupplySideBypassPipeNone
+              Objects:
+                - Pipe:Adiabatic:
+                    name: '{} Supply Bypass Pipe'
+                    inlet_node_name: '{} Supply Bypass Inlet'
+                    outlet_node_name: '{} Supply Bypass Outlet'
+                - Branch:
+                    name: *SupplyBypassBranch
+                    components:
+                      - component_object_type: Pipe:Adiabatic
+                        component_name: '{} Supply Bypass Pipe'
+                        component_inlet_node_name: '{} Supply Bypass Inlet'
+                        component_outlet_node_name: '{} Supply Bypass Outlet'
+            'Yes': *PlantCommonPlantLoopSupplySideBypassPipeNone
+            'No':
+          DemandSideBypassPipe: &PlantCommonPlantLoopDemandSideBypassPipe
+            None: &PlantCommonPlantLoopDemandSideBypassPipeNone
+              Objects:
+                - Pipe:Adiabatic:
+                    name: '{} Demand Bypass Pipe'
+                    inlet_node_name: '{} Demand Bypass Inlet'
+                    outlet_node_name: '{} Demand Bypass Outlet'
+                - Branch:
+                    name: *DemandBypassBranch
+                    components:
+                      - component_object_type: Pipe:Adiabatic
+                        component_name: '{} Demand Bypass Pipe'
+                        component_inlet_node_name: '{} Demand Bypass Inlet'
+                        component_outlet_node_name: '{} Demand Bypass Outlet'
+            'Yes': *PlantCommonPlantLoopDemandSideBypassPipeNone
+            'No':
+          FluidType: &PlantCommonPlantLoopFluidType
+            None:
+            Water:
+            EthyleneGlycol30:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.3
+                    glycol_type: EthyleneGlycol
+            EthyleneGlycol40:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.4
+                    glycol_type: EthyleneGlycol
+            EthyleneGlycol50:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.5
+                    glycol_type: EthyleneGlycol
+            EthyleneGlycol60:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.6
+                    glycol_type: EthyleneGlycol
+            PropyleneGlycol30:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.3
+                    glycol_type: PropyleneGlycol
+            PropyleneGlycol40:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.4
+                    glycol_type: PropyleneGlycol
+            PropyleneGlycol50:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.5
+                    glycol_type: PropyleneGlycol
+            PropyleneGlycol60:
+              Objects:
+                - FluidProperties:GlycolConcentration:
+                    name: '{} Fluid'
+                    glycol_concentration: 0.6
+                    glycol_type: PropyleneGlycol
       Boiler:
         BaseObjects:
         TemplateObjects:
+          primary_pump_type:
+            OtherEquipment:
+              Objects:
+                - Branch: *BoilerCommonObjectsBranch
+            OtherDistrictHotWater:
+              Objects:
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          DistrictHeating: self
+                        component_name:
+                          DistrictHeating: key
+                        component_inlet_node_name:
+                          DistrictHeating: hot_water_inlet_node_name
+                        component_outlet_node_name:
+                          DistrictHeating: hot_water_outlet_node_name
+            ConstantPumpPerEquipment:
+              Objects:
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    name: '{unique_name} {plant_loop_type_short} Branch Pump'
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                    inlet_node_name: '{} HW Pump Inlet'
+                    outlet_node_name:
+                      Boiler.*: boiler_water_inlet_node_name
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          Boiler.*: boiler_water_inlet_node_name
+                      - component_object_type:
+                          Boiler.*: self
+                        component_name:
+                          Boiler.*: key
+                        component_inlet_node_name:
+                          Boiler.*: boiler_water_inlet_node_name
+                        component_outlet_node_name:
+                          Boiler.*: boiler_water_outlet_node_name
+            ConstantPumpPerDistrictHotWater: # special branch due to different node names
+              Objects:
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    name: '{unique_name} {plant_loop_type_short} Branch Pump'
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                    inlet_node_name: '{} HW Pump Inlet'
+                    outlet_node_name:
+                      Boiler.*: boiler_water_inlet_node_name
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          DistrictHeating: hot_water_inlet_node_name
+                      - component_object_type:
+                          DistrictHeating: self
+                        component_name:
+                          DistrictHeating: key
+                        component_inlet_node_name:
+                          DistrictHeating: hot_water_inlet_node_name
+                        component_outlet_node_name:
+                          DistrictHeating: hot_water_outlet_node_name
+            VariablePumpPerEquipment:
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    name: '{unique_name} {plant_loop_type_short} Branch Pump'
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                    inlet_node_name: '{} HW Pump Inlet'
+                    outlet_node_name:
+                      Boiler.*: boiler_water_inlet_node_name
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          Boiler.*: boiler_water_inlet_node_name
+                      - component_object_type:
+                          Boiler.*: self
+                        component_name:
+                          Boiler.*: key
+                        component_inlet_node_name:
+                          Boiler.*: boiler_water_inlet_node_name
+                        component_outlet_node_name:
+                          Boiler.*: boiler_water_outlet_node_name
+            VariablePumpPerDistrictHotWater: # special branch due to different node names
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    name: '{unique_name} {plant_loop_type_short} Branch Pump'
+                    design_pump_head: '{hot_water_pump_rated_head}'
+                    inlet_node_name: '{} HW Pump Inlet'
+                    outlet_node_name:
+                      DistrictHeating: hot_water_inlet_node_name
+                - Branch:
+                    name: '{unique_name} {plant_loop_type_short} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          DistrictHeating: hot_water_inlet_node_name
+                      - component_object_type:
+                          DistrictHeating: self
+                        component_name:
+                          DistrictHeating: key
+                        component_inlet_node_name:
+                          DistrictHeating: hot_water_inlet_node_name
+                        component_outlet_node_name:
+                          DistrictHeating: hot_water_outlet_node_name
           boiler_type:
             DistrictHotWater:
               Objects:
@@ -6486,37 +7033,20 @@ OptionTree:
                     hot_water_inlet_node_name: '{} {plant_loop_type_short} Inlet'
                     hot_water_outlet_node_name: '{} {plant_loop_type_short} Outlet'
                     nominal_capacity: 1000000000000000
-                - Branch:
-                    name: '{unique_name} {plant_loop_type_short} Branch'
-                    components:
-                      - component_object_type:
-                          ^DistrictHeating$: self
-                        component_name:
-                          ^DistrictHeating$: key
-                        component_inlet_node_name:
-                          ^DistrictHeating$: hot_water_inlet_node_name
-                        component_outlet_node_name:
-                          ^DistrictHeating$: hot_water_outlet_node_name
-              Transitions:
-                - *BoilerHotWaterCommonTransitions
+              Transitions: *BoilerHotWaterCommonTransitions
+              Mappings: *BoilerHotWaterCommonMappings
             HotWaterBoiler:
               Objects:
                 - Boiler:HotWater: *BoilerHotWaterFields
-                - Branch:
-                    <<: *BoilerCommonObjectsBranch
-                    name: '{unique_name} {plant_loop_type_short} Branch'
                 - *BoilerHotWaterCommonObjects
-              Transitions:
-                - *BoilerHotWaterCommonTransitions
+              Transitions: *BoilerHotWaterCommonTransitions
+              Mappings: *BoilerHotWaterCommonMappings
             CondensingHotWaterBoiler:
               Objects:
                 - Boiler:HotWater: *BoilerHotWaterCondensingBoilerFields
                 - *BoilerHotWaterCondensingBoilerCommonObjects
-                - Branch:
-                    <<: *BoilerCommonObjectsBranch
-                    name: '{unique_name} {plant_loop_type_short} Branch'
-              Transitions:
-                - *BoilerHotWaterCommonTransitions
+              Transitions: *BoilerHotWaterCommonTransitions
+              Mappings: *BoilerHotWaterCommonMappings
         ObjectReference:
           BaseObjects:
             Objects:
@@ -6525,67 +7055,370 @@ OptionTree:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
-            - *PlantCommonObjectsChilledWaterLoop
+            - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
             - Sizing:Plant: *SizingPlantChilledWater
-          Transitions: *SizingPlantCommonTransitions
-        TemplateObjects: # todo_eo: Secondary options need to have PlantLoop common_pipe_simulation changed to CommonPipe
+          Transitions:
+            - *SizingPlantCommonTransitions
+            - Sizing:Plant:
+                chilled_water_design_setpoint: design_loop_exit_temperature
+        TemplateObjects:
+          chiller_plant_operation_scheme_type:
+            None: &PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
+              Objects:
+                - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesCoolingLoad
+            Default: *PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
+            UserDefined:
           chilled_water_pump_configuration:
-            ConstantPrimaryNoSecondary:
+            ConstantPrimaryNoSecondary: &PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationConstantPrimaryNoSecondary
               Objects:
-                - *PlantCommonPlantLoopPrimaryNoSecondary
                 - PlantLoop: *PlantLoopChilledWaterFields
-                - Pump:ConstantSpeed:
-                    <<: *PumpConstantSpeed
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
-                - Branch: *PumpBranchConstantSpeedSupplyInlet
-            VariablePrimaryNoSecondary:
+              Transitions:
+                - ^PlantLoop$:
+                    chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
+                    chilled_water_load_distribution_scheme: load_distribution_scheme
+              Mappings:
+                - ^PlantLoop$:
+                    fluid_type:
+                      EthyleneGlycol30: &PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                        fluid_type: UserDefinedFluidType
+                        user_defined_fluid_type: '{} Fluid'
+                      EthyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      EthyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      EthyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+            VariablePrimaryNoSecondary: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationConstantPrimaryNoSecondary
+            ConstantPrimaryVariableSecondary:
               Objects:
-                - *PlantCommonPlantLoopPrimaryNoSecondary
-                - PlantLoop: *PlantLoopChilledWaterFields
+                - PlantLoop:
+                    <<: *PlantLoopChilledWaterFields
+                    common_pipe_simulation: CommonPipe
+              Transitions:
+                - ^PlantLoop$:
+                    chiller_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
+              Mappings:
+                - ^PlantLoop$:
+                    fluid_type:
+                      EthyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      EthyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      EthyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      EthyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                      PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+          primary_pump_flow_and_type:
+            ConstantPumpPerChiller:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipmentObjects
+            ConstantSinglePump:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantSinglePumpObjects
+              Transitions:
+                - *PumpCommonTransitions
+                - Pump.*:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+            ConstantTwoHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantTwoHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+            ConstantThreeHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantThreeHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+            ConstantFourHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFourHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+            ConstantFiveHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFiveHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+            VariablePumpPerChiller:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipmentObjects
+            VariableSinglePump:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableSinglePumpObjects
+              Transitions:
+                - *PumpCommonTransitions
+                - Pump:.*:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+            VariableTwoHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableTwoHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+            VariableThreeHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableThreeHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+            VariableFourHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFourHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+            VariableFiveHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFiveHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    primary_chilled_water_pump_rated_head: design_pump_head
+          secondary_pump_flow_and_type:
+            None:
+              Objects:
+                - Pipe:Adiabatic:
+                    name: '{} Demand Inlet Pipe'
+                    inlet_node_name: *DemandInlet
+                    outlet_node_name: '{} Demand Inlet Pipe Outlet'
+                - Branch:
+                    name: *DemandInletBranch
+                    components:
+                      - component_object_type: Pipe:Adiabatic
+                        component_name: '{} Demand Inlet Pipe'
+                        component_inlet_node_name: *DemandInlet
+                        component_outlet_node_name: '{} Demand Inlet Pipe Outlet'
+            VariableSinglePump:
+              Objects:
+                - Branch: *PumpBranchVariableSpeedDemandInlet
                 - Pump:VariableSpeed:
                     <<: *PumpVariableSpeed
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
-                - Branch: *PumpBranchVariableSpeedSupplyInlet
+                    name: '{} Secondary Pump'
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+              Transitions:
+                - *PumpCommonTransitions
+            VariableTwoHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedDemandInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    name: '{} Secondary Pump'
+                    number_of_pumps_in_bank: 2
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+            VariableThreeHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedDemandInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    name: '{} Secondary Pump'
+                    number_of_pumps_in_bank: 3
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+            VariableFourHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedDemandInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    name: '{} Secondary Pump'
+                    number_of_pumps_in_bank: 4
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+            VariableFiveHeaderedPumps:
+              Objects:
+                - Branch: *HeaderedPumpsBranchVariableSpeedDemandInlet
+                - HeaderedPumps:VariableSpeed:
+                    <<: *HeaderedPumpsVariableSpeed
+                    name: '{} Secondary Pump'
+                    number_of_pumps_in_bank: 5
+                    design_pump_head: '{secondary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Demand Inlet' # required by schema
+                    outlet_node_name: '{} Demand Inlet Pump Outlet' # required by schema
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
           chilled_water_setpoint_reset_type:
             None:
               Objects:
-                - SetpointManager:Scheduled: *SetpointManagerScheduledChilledWater
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManagerScheduled
+                    schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
+              Transitions:
+                - SetpointManager:Scheduled:
+                    chilled_water_setpoint_schedule_name: schedule_name
             OutdoorAirTemperatureReset:
               Objects:
                 - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetChilledWater
           minimum_outdoor_dry_bulb_temperature:
+            None:
             AnyValue:
               Objects:
+                - OutdoorAir:Node:
+                    name: '{} Outside Air Sensor'
                 - AvailabilityManager:LowTemperatureTurnOff:
                     name: '{} Availability Low Temp TurnOff'
                     sensor_node_name: '{} Outside Air Sensor'
                     temperature: '{minimum_outdoor_dry_bulb_temperature}'
+          chilled_water_supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
+          chilled_water_demand_side_bypass_pipe: *PlantCommonPlantLoopDemandSideBypassPipe
+          fluid_type: *PlantCommonPlantLoopFluidType
       Chiller:
         BaseObjects:
         TemplateObjects:
-          chiller_and_condenser_type:
-            ElectricReciprocatingChillerWaterCooled:
+          primary_pump_type:
+            OtherEquipment:
               Objects:
-                - Chiller:Electric:EIR: *ChillerElectricEIRFields
-                - *ChillerElectricCommonChilledWaterObjects
-                - *ChillerElectricEIRCommonObjects
+                - Branch: *ChillerElectricCommonChilledWaterObjectsBranch
+            ConstantPumpPerEquipment:
+              Objects:
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    name: '{} ChW Branch Pump'
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Chw Pump Inlet'
+                    outlet_node_name:
+                      (Chiller.*|DistrictCooling): chilled_water_inlet_node_name
+                - Branch:
+                    name: '{} ChW Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          (Chiller.*|DistrictCooling): chilled_water_inlet_node_name
+                      - component_object_type:
+                          (Chiller.*|DistrictCooling): self
+                        component_name:
+                          (Chiller.*|DistrictCooling): key
+                        component_inlet_node_name:
+                          (Chiller.*|DistrictCooling): chilled_water_inlet_node_name
+                        component_outlet_node_name:
+                          (Chiller.*|DistrictCooling): chilled_water_outlet_node_name
+            VariablePumpPerEquipment:
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    name: '{} ChW Branch Pump'
+                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                    inlet_node_name: '{} Chw Pump Inlet'
+                    outlet_node_name:
+                      Chiller.*: chilled_water_inlet_node_name
+                - Branch:
+                    name: '{} ChW Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          (Chiller.*|DistrictCooling): chilled_water_inlet_node_name
+                      - component_object_type:
+                          (Chiller.*|DistrictCooling): self
+                        component_name:
+                          (Chiller.*|DistrictCooling): key
+                        component_inlet_node_name:
+                          (Chiller.*|DistrictCooling): chilled_water_inlet_node_name
+                        component_outlet_node_name:
+                          (Chiller.*|DistrictCooling): chilled_water_outlet_node_name
+          chiller_and_condenser_type:
+            DistrictChilledWaterNone: &PlantChillerTemplateObjectsChillerAndCondenserTypeDistrictChilledWaterNone
+              Objects:
+                - DistrictCooling:
+                    name: '{}'
+                    chilled_water_inlet_node_name: '{} {plant_loop_type_short} Inlet'
+                    chilled_water_outlet_node_name: '{} {plant_loop_type_short} Outlet'
+                    nominal_capacity: 1000000000000000
+            DistrictChilledWaterWaterCooled: *PlantChillerTemplateObjectsChillerAndCondenserTypeDistrictChilledWaterNone
+            DistrictChilledWaterAirCooled: *PlantChillerTemplateObjectsChillerAndCondenserTypeDistrictChilledWaterNone
+            ElectricCentrifugalChillerWaterCooled:
+              Objects:
+                - Chiller:Electric:EIR:
+                    <<: *ChillerElectricEIRFields
+                    cooling_capacity_function_of_temperature_curve_name: '{} CentCapFT'
+                    electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name: '{} CentEIRFPLR'
+                    electric_input_to_cooling_output_ratio_function_of_temperature_curve_name: '{} CentEIRFT'
+                - *ChillerElectricEIRCommonObjectsCentrifugal
                 - *ChillerElectricCommonCondenserWaterObjects
-              Transitions:
-                - *ChillerElectricEIRCommonTransitions
-            ElectricReciprocatingChillerAirCooled:
+              Transitions: *ChillerElectricEIRCommonTransitions
+              Mappings: *ChillerElectricEIRCommonMappings
+            ElectricCentrifugalChillerAirCooled:
               Objects:
                 - Chiller:Electric:EIR:
                     <<: *ChillerElectricEIRFields
                     condenser_fan_power_ratio: 0.035
-                - *ChillerElectricCommonChilledWaterObjects
-                - *ChillerElectricEIRCommonObjects
+                    cooling_capacity_function_of_temperature_curve_name: '{} CentCapFT'
+                    electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name: '{} CentEIRFPLR'
+                    electric_input_to_cooling_output_ratio_function_of_temperature_curve_name: '{} CentEIRFT'
+                - *ChillerElectricEIRCommonObjectsCentrifugal
                 - OutdoorAir:NodeList:
                     name: '{} Outdoor Air NodeList'
                     nodes:
                       - node_or_nodelist_name:
                           Chiller:.*: condenser_inlet_node_name
-              Transitions:
-                - *ChillerElectricEIRCommonTransitions
+              Transitions: *ChillerElectricEIRCommonTransitions
+              Mappings: *ChillerElectricEIRCommonMappings
+            ElectricReciprocatingChillerWaterCooled:
+              Objects:
+                - Chiller:Electric:EIR: *ChillerElectricEIRFields
+                - *ChillerElectricEIRCommonObjectsReciprocating
+                - *ChillerElectricCommonCondenserWaterObjects
+              Transitions: *ChillerElectricEIRCommonTransitions
+              Mappings: *ChillerElectricEIRCommonMappings
+            ElectricReciprocatingChillerAirCooled:
+              Objects:
+                - Chiller:Electric:EIR:
+                    <<: *ChillerElectricEIRFields
+                    condenser_fan_power_ratio: 0.035
+                - *ChillerElectricEIRCommonObjectsReciprocating
+                - OutdoorAir:NodeList:
+                    name: '{} Outdoor Air NodeList'
+                    nodes:
+                      - node_or_nodelist_name:
+                          Chiller:.*: condenser_inlet_node_name
+              Transitions: *ChillerElectricEIRCommonTransitions
+              Mappings: *ChillerElectricEIRCommonMappings
+            ElectricScrewChillerWaterCooled:
+              Objects:
+                - Chiller:Electric:EIR:
+                    <<: *ChillerElectricEIRFields
+                    cooling_capacity_function_of_temperature_curve_name: '{} ScrewCapFT'
+                    electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name: '{} ScrewEIRFPLR'
+                    electric_input_to_cooling_output_ratio_function_of_temperature_curve_name: '{} ScrewEIRFT'
+                - *ChillerElectricEIRCommonObjectsScrewWaterCooled
+                - *ChillerElectricCommonCondenserWaterObjects
+              Transitions: *ChillerElectricEIRCommonTransitions
+              Mappings: *ChillerElectricEIRCommonMappings
+            ElectricScrewChillerAirCooled:
+              Objects:
+                - Chiller:Electric:EIR:
+                    <<: *ChillerElectricEIRFields
+                    condenser_fan_power_ratio: 0.035
+                    cooling_capacity_function_of_temperature_curve_name: '{} ScrewCapFT'
+                    electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name: '{} ScrewEIRFPLR'
+                    electric_input_to_cooling_output_ratio_function_of_temperature_curve_name: '{} ScrewEIRFT'
+                - *ChillerElectricEIRCommonObjectsScrewAirCooled
+                - OutdoorAir:NodeList:
+                    name: '{} Outdoor Air NodeList'
+                    nodes:
+                      - node_or_nodelist_name:
+                          Chiller:.*: condenser_inlet_node_name
+              Transitions: *ChillerElectricEIRCommonTransitions
+              Mappings: *ChillerElectricEIRCommonMappings
         ObjectReference:
           BaseObjects:
             Objects:
@@ -6607,18 +7440,79 @@ OptionTree:
           Objects:
             - *PlantCommonPlantLoopBase
             - *PlantCommonPlantLoopNoSecondary
-            - Pump:VariableSpeed:
-                <<: *PumpVariableSpeed
-                design_pump_head: '{condenser_water_pump_rated_head}' # template attribute set in hvac_template.py
-            - Branch: *PumpBranchVariableSpeedSupplyInlet
             - Sizing:Plant: *SizingPlantCondenserWater
-            - SetpointManager:Scheduled:
-                <<: *SetpointManagerScheduled
-                schedule_name: HVACTemplate-Always29.4
             - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadCondenserWater
-            - CondenserEquipmentOperationSchemes: *CondenserEquipmentOperationSchemesCondenserLoad
             - CondenserLoop: *CondenserLoopFields
-          Transitions: *SizingPlantCommonTransitions
+          Transitions:
+            - *SizingPlantCommonTransitions
+            - Sizing:Plant:
+                condenser_water_design_setpoint: design_loop_exit_temperature
+            - *PumpCommonTransitions
+            - ^CondenserLoop$:
+                condenser_equipment_operation_schemes_name: condenser_equipment_operation_scheme_name
+                condenser_water_load_distribution_scheme: load_distribution_scheme
+        TemplateObjects:
+          condenser_water_temperature_control_type:
+            None: &PlantCondenserWaterLoopTemplateObjectsCondenserWaterTemperatureControlType
+              Objects:
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManagerScheduled
+                    schedule_name: 'HVACTemplate-Always{condenser_water_design_setpoint}'
+              Transitions:
+                - SetpointManager:Scheduled:
+                    condenser_water_setpoint_schedule_name: schedule_name
+            SpecifiedSetpoint: *PlantCondenserWaterLoopTemplateObjectsCondenserWaterTemperatureControlType
+            OutdoorWetBulbTemperature:
+              Objects:
+                - SetpointManager:FollowOutdoorAirTemperature:
+                    <<: *SetpointManager
+                    name: '{} Temp Manager'
+                    maximum_setpoint_temperature: 80
+                    minimum_setpoint_temperature: 5
+                    offset_temperature_difference: 0
+                    reference_temperature_type: OutdoorAirWetBulb
+                    setpoint_node_or_nodelist_name: *SupplySetpointNodes
+          condenser_plant_operation_scheme_type:
+            None: &PlantCondenserWaterLoopTemplateObjectsCondenserPlantOperationSchemeTypeNone
+              Objects:
+                - CondenserEquipmentOperationSchemes: *CondenserEquipmentOperationSchemesCondenserLoad
+            Default: *PlantCondenserWaterLoopTemplateObjectsCondenserPlantOperationSchemeTypeNone
+            UserDefined:
+          condenser_water_supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
+          condenser_water_demand_side_bypass_pipe: *PlantCommonPlantLoopDemandSideBypassPipe
+          primary_pump_flow_and_type:
+            VariablePumpPerTower:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipmentObjects
+            VariableSinglePump:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableSinglePumpObjects
+              Transitions:
+                - *PumpCommonTransitions
+                - Pump.*:
+                    condenser_water_pump_rated_head: design_pump_head
+            VariableTwoHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableTwoHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    condenser_water_pump_rated_head: design_pump_head
+            VariableThreeHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableThreeHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    condenser_water_pump_rated_head: design_pump_head
+            VariableFourHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFourHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    condenser_water_pump_rated_head: design_pump_head
+            VariableFiveHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFiveHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    condenser_water_pump_rated_head: design_pump_head
       Tower:
         BaseObjects:
         TemplateObjects:
@@ -6628,7 +7522,6 @@ OptionTree:
                 - CoolingTower:SingleSpeed: *CoolingTowerSingleSpeed
                 - OutdoorAir:Node:
                     name: *OutdoorAirInletNodes
-                - *CoolingTowerCommonObjects
               Transitions: *CoolingTowerSingleSpeedCommonTransitions
               Mappings: *CoolingTowerSingleSpeedCommonMappings
             TwoSpeed:
@@ -6636,9 +7529,40 @@ OptionTree:
                 - CoolingTower:TwoSpeed: *CoolingTowerTwoSpeed
                 - OutdoorAir:Node:
                     name: *OutdoorAirInletNodes
-                - *CoolingTowerCommonObjects
               Transitions: *CoolingTowerTwoSpeedCommonTransitions
               Mappings: *CoolingTowerTwoSpeedCommonMappings
+          primary_pump_type:
+            OtherEquipment:
+              Objects:
+                - Branch: *CoolingTowerCommonObjectsBranch
+            VariablePumpPerEquipment:
+              Objects:
+                - Pump:VariableSpeed:
+                    <<: *PumpVariableSpeed
+                    name: '{} Branch Pump'
+                    design_pump_head: '{condenser_water_pump_rated_head}'
+                    inlet_node_name: '{} CW Pump Inlet'
+                    outlet_node_name:
+                      CoolingTower.*: water_inlet_node_name
+                - Branch:
+                    name: '{} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          CoolingTower.*: water_inlet_node_name
+                      - component_object_type:
+                          CoolingTower.*: self
+                        component_name:
+                          CoolingTower.*: key
+                        component_inlet_node_name:
+                          CoolingTower.*: water_inlet_node_name
+                        component_outlet_node_name:
+                          CoolingTower.*: water_outlet_node_name
         ObjectReference:
           BaseObjects:
             Objects:
@@ -6652,33 +7576,139 @@ OptionTree:
             - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadHotWater
             - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesHeatingLoad
             - PlantLoop: *PlantLoopHotWaterFields
-          Transitions: *SizingPlantCommonTransitions
+          Transitions:
+            - *SizingPlantCommonTransitions
+            - ^PlantLoop$:
+                hot_water_plant_equipment_operation_schemes_name: plant_equipment_operation_scheme_name
+                load_distribution_scheme: load_distribution_scheme
+          Mappings:
+            - ^PlantLoop$:
+                fluid_type:
+                  EthyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
         TemplateObjects:
-          hot_water_pump_configuration:
-            None: &PlantHotWaterLoopTemplateObjectsHotWaterPumpConfigurationNone
-              Objects:
-                - Pump:ConstantSpeed:
-                    <<: *PumpConstantSpeed
-                    design_pump_head: '{hot_water_pump_rated_head}'
-                - Branch: *PumpBranchConstantSpeedSupplyInlet
-            ConstantFlow: *PlantHotWaterLoopTemplateObjectsHotWaterPumpConfigurationNone
-            VariableFlow:
-              Objects:
-                - Pump:VariableSpeed:
-                    <<: *PumpVariableSpeed
-                    design_pump_head: '{hot_water_pump_rated_head}'
-                - Branch: *PumpBranchVariableSpeedSupplyInlet
+          primary_pump_flow_and_type:
+            ConstantPumpPerBoiler:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipmentObjects
+            ConstantSinglePump:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantSinglePumpObjects
+              Transitions:
+                - *PumpCommonTransitions
+                - Pump.*:
+                    hot_water_pump_rated_head: design_pump_head
+            ConstantTwoHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantTwoHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    hot_water_pump_rated_head: design_pump_head
+            ConstantThreeHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantThreeHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    hot_water_pump_rated_head: design_pump_head
+            ConstantFourHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFourHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    hot_water_pump_rated_head: design_pump_head
+            ConstantFiveHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFiveHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    hot_water_pump_rated_head: design_pump_head
+            VariablePumpPerBoiler:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipmentObjects
+            VariableSinglePump:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableSinglePumpObjects
+              Transitions:
+                - *PumpCommonTransitions
+                - Pump:.*:
+                    hot_water_pump_rated_head: design_pump_head
+            VariableTwoHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableTwoHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    hot_water_pump_rated_head: design_pump_head
+            VariableThreeHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableThreeHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    hot_water_pump_rated_head: design_pump_head
+            VariableFourHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFourHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    hot_water_pump_rated_head: design_pump_head
+            VariableFiveHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFiveHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    hot_water_pump_rated_head: design_pump_head
           hot_water_setpoint_reset_type:
             None:
               Objects:
-                - SetpointManager:Scheduled: *SetpointManagerScheduledHotWater
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManagerScheduled
+                    schedule_name: 'HVACTemplate-Always{hot_water_design_setpoint}'
+              Transitions:
+                - SetpointManager:Scheduled:
+                    hot_water_setpoint_schedule_name: schedule_name
             OutdoorAirTemperatureReset:
               Objects:
                 - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHotWater
+          maximum_outdoor_dry_bulb_temperature:
+            None:
+            AnyValue:
+              Objects:
+                - OutdoorAir:Node:
+                    name: '{} Outside Air Sensor'
+                - AvailabilityManager:HighTemperatureTurnOff:
+                    name: '{} Availability Low Temp TurnOff'
+                    sensor_node_name: '{} Outside Air Sensor'
+                    temperature: '{maximum_outdoor_dry_bulb_temperature}'
+          supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
+          demand_side_bypass_pipe: *PlantCommonPlantLoopDemandSideBypassPipe
+          fluid_type: *PlantCommonPlantLoopFluidType
       MixedWaterLoop:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
+            - Pipe:Adiabatic:
+                name: '{} Supply Bypass Pipe'
+                inlet_node_name: '{} Supply Bypass Inlet'
+                outlet_node_name: '{} Supply Bypass Outlet'
+            - Branch:
+                name: *SupplyBypassBranch
+                components:
+                  - component_object_type: Pipe:Adiabatic
+                    component_name: '{} Supply Bypass Pipe'
+                    component_inlet_node_name: '{} Supply Bypass Inlet'
+                    component_outlet_node_name: '{} Supply Bypass Outlet'
+            - Pipe:Adiabatic:
+                name: '{} Demand Bypass Pipe'
+                inlet_node_name: '{} Demand Bypass Inlet'
+                outlet_node_name: '{} Demand Bypass Outlet'
+            - Branch:
+                name: *DemandBypassBranch
+                components:
+                  - component_object_type: Pipe:Adiabatic
+                    component_name: '{} Demand Bypass Pipe'
+                    component_inlet_node_name: '{} Demand Bypass Inlet'
+                    component_outlet_node_name: '{} Demand Bypass Outlet'
             - *PlantCommonPlantLoopNoSecondary
             - Sizing:Plant: *SizingPlantMixedWater
             # Custom naming needed for two PlantEquipmentOperation objects and PlantEquipmentOperationSchemes

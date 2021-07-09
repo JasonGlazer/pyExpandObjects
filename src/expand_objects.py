@@ -36,10 +36,13 @@ class ExpansionStructureLocation:
                         parsed_value = copy.deepcopy(yaml_file)
                     else:
                         with open(value, 'r') as f:
-                            # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
-                            #   With FullLoader there would be more functionality but might not be necessary.
-                            parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
-                            yaml_file = parsed_value
+                            try:
+                                # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
+                                #   With FullLoader there would be more functionality but might not be necessary.
+                                parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
+                                yaml_file = parsed_value
+                            except yaml.YAMLError as err:
+                                raise PyExpandObjectsYamlError('Failed to load YAML:\n{}'.format(err))
             else:
                 try:
                     # if the string is not a file, then try to load it directly with SafeLoader.
@@ -225,6 +228,9 @@ class ExpandObjects(EPJSON):
                         if skl == 'AnyValue':
                             if re.match(r'\w+', str(key)) and str(key) != 'None':
                                 structure = structure['AnyValue']
+                        elif skl == 'AnyNumber':
+                            if isinstance(key, (int, float)) and str(key) != 'None':
+                                structure = structure['AnyNumber']
                         else:
                             if skl == str(key):
                                 structure = structure[skl]
@@ -297,6 +303,7 @@ class ExpandObjects(EPJSON):
                 template_applied = None
                 template_field_processing = None
                 for template_field, template_tree in option_tree['TemplateObjects'].items():
+                    template_applied = None
                     template_field_processing = template_field
                     for field_option, objects in template_tree.items():
                         # check if field option is 'None' and if object doesn't exist in the class, or if
@@ -304,7 +311,9 @@ class ExpandObjects(EPJSON):
                         if (field_option == 'None' and getattr(self, template_field, 'None') == 'None') or \
                                 (getattr(self, template_field, None) and (
                                     field_option == str(getattr(self, template_field)) or (
-                                        field_option == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
+                                        field_option == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))) or (
+                                        field_option == 'AnyNumber' and isinstance(getattr(self, template_field), (int, float)))
+                                )):
                             option_tree_leaf = self._get_option_tree_leaf(
                                 option_tree=option_tree,
                                 leaf_path=['TemplateObjects', template_field, getattr(self, template_field, 'None')])
@@ -315,19 +324,18 @@ class ExpandObjects(EPJSON):
                             # Only one field option should be applied, so break after it is successful
                             template_applied = True
                             break
+                if not template_applied:
+                    raise PyExpandObjectsYamlStructureException(
+                        'Error: In {} ({}) A template option was not applied for template field {} and option {}'
+                        .format(
+                            self.template_type,
+                            self.template_name,
+                            template_field_processing,
+                            getattr(self, template_field_processing, None)))
             except (AttributeError, KeyError):
                 raise PyExpandObjectsYamlStructureException(
                     'Error: In {} ({}) TemplateObjects section for system type is invalid in yaml file.'.
                     format(self.template_type, self.template_name))
-            if not template_applied:
-                raise PyExpandObjectsYamlStructureException(
-                    'Error: In {} ({}) A template option was not applied for template field {} and option {}: {}'
-                    .format(
-                        self.template_type,
-                        self.template_name,
-                        template_field_processing,
-                        getattr(self, template_field_processing, None),
-                        option_tree['TemplateObjects']))
         return option_tree_dictionary
 
     def _get_option_tree_leaf(
@@ -394,110 +402,129 @@ class ExpandObjects(EPJSON):
             # Note, this method may be deprecated due to the more direct option of specifying the class attribute
             # directly in the yaml text field (e.g. field_name: {class_variable}).  However, this code has not been
             # removed in case it proves useful during development.
-            for opt in option_tree_transitions:
-                for object_type_reference, transition_structure in opt.items():
-                    for template_field, object_field in transition_structure.items():
-                        # Ensure there is only one object_key and it is 'Objects'
-                        try:
-                            (object_key, tree_objects), = option_tree_leaf.items()
-                            if not object_key == 'Objects':
+            try:
+                for opt in option_tree_transitions:
+                    for object_type_reference, transition_structure in opt.items():
+                        for template_field, object_field in transition_structure.items():
+                            # Ensure there is only one object_key and it is 'Objects'
+                            try:
+                                (object_key, tree_objects), = option_tree_leaf.items()
+                                if not object_key == 'Objects':
+                                    raise PyExpandObjectsYamlStructureException(
+                                        "Error: In {} ({}) OptionTree leaf is incorrectly formatted Transition: {}"
+                                        .format(self.template_type, self.template_name, opt))
+                            except ValueError:
                                 raise PyExpandObjectsYamlStructureException(
                                     "Error: In {} ({}) OptionTree leaf is incorrectly formatted Transition: {}"
                                     .format(self.template_type, self.template_name, opt))
-                        except ValueError:
-                            raise PyExpandObjectsYamlStructureException(
-                                "Error: In {} ({}) OptionTree leaf is incorrectly formatted Transition: {}"
-                                .format(self.template_type, self.template_name, opt))
-                        # iterate over each object from 'Objects' dictionary
-                        for tree_object in tree_objects:
-                            for object_type, _ in tree_object.items():
-                                # if the object reference matches the object or 'AnyValue', apply the transition
-                                if re.match(object_type_reference, object_type) or object_type_reference == 'AnyValue':
-                                    # if the object_field is a dictionary, then the value is a formatted string to
-                                    # apply with the template_field.  Otherwise, just try to get the value from the
-                                    # template field, which is stored as a class attribute (on class initialization).
-                                    try:
-                                        if isinstance(object_field, dict):
-                                            (object_field, object_val), = object_field.items()
-                                            # Try to perform numeric evaluation if operators and formatting brackets
-                                            # are present.  regex match is to avoid any operator symbols used in
-                                            # variable names, but not intended for evaluation, e.g. HVACTemplate-Always
-                                            if re.match(r'.*[a-zA-Z][-+/*][a-zA-Z].*', object_val):
-                                                object_value = object_val
-                                            elif any(i in ['*', '+', '/', '-'] for i in object_val) and '{' in object_val:
-                                                # Add '0.' for accessing class object attributes
-                                                try:
-                                                    object_value = eval(object_val.replace('{', '{0.').format(self))
-                                                except SyntaxError:
-                                                    # if attempt at numerical evaluation fails, just pass the
-                                                    # string directly
+                            # iterate over each object from 'Objects' dictionary
+                            for tree_object in tree_objects:
+                                for object_type, _ in tree_object.items():
+                                    # if the object reference matches the object or 'AnyValue', apply the transition
+                                    if re.match(object_type_reference, object_type) or \
+                                            object_type_reference == 'AnyValue' or \
+                                            (object_type_reference == 'AnyNumber' and isinstance(object_type, (int, float))):
+                                        # if the object_field is a dictionary, then the value is a formatted string to
+                                        # apply with the template_field.  Otherwise, just try to get the value from the
+                                        # template field, which is stored as a class attribute (on class initialization).
+                                        try:
+                                            # if the value is a formatted string referencing a class attribute
+                                            # then reformat the object to be processed as a dictionary with
+                                            # the key being the template name
+                                            if isinstance(object_field, str) and '{' in object_field:
+                                                object_field = {template_field: object_field}
+                                            if isinstance(object_field, dict):
+                                                (object_field, object_val), = object_field.items()
+                                                # Try to perform numeric evaluation if operators and formatting brackets
+                                                # are present.  regex match is to avoid any operator symbols used in
+                                                # variable names, but not intended for evaluation, e.g. HVACTemplate-Always
+                                                if re.match(r'.*[a-zA-Z]\s*[-+/*]\s*[a-zA-Z].*', object_val):
                                                     object_value = object_val
+                                                elif any(i in ['*', '+', '/', '-'] for i in object_val) and '{' in object_val:
+                                                    # Add '0.' for accessing class object attributes
+                                                    try:
+                                                        object_value = eval(object_val.replace('{', '{0.').format(self))
+                                                    except SyntaxError:
+                                                        # if attempt at numerical evaluation fails, just pass the
+                                                        # string directly
+                                                        object_value = object_val
+                                                else:
+                                                    object_value = object_val.format(getattr(self, template_field))
                                             else:
-                                                object_value = object_val.format(getattr(self, template_field))
-                                        else:
-                                            object_value = getattr(self, template_field)
-                                    except (AttributeError, KeyError, NameError):
-                                        object_value = None
-                                        # todo_eo: may not be necessary, overly used
-                                        # self.logger.info("A template value was attempted to be applied "
-                                        #                  "to an object field but the template "
-                                        #                  "field was not present in template object. "
-                                        #                  "object: {}, object fieled: {}, template field: {}"
-                                        #                  .format(object_type, object_field, template_field))
-                                    if object_value:
-                                        # On a match and valid value, apply the field.
-                                        # If the object is a 'super' object used in a
-                                        # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
-                                        # into the top level of the object.
-                                        if 'Fields' in tree_object[object_type].keys():
-                                            tree_object[object_type]['Fields'][object_field] = object_value
-                                        else:
-                                            tree_object[object_type][object_field] = object_value
+                                                object_value = getattr(self, template_field)
+                                        except (AttributeError, KeyError, NameError):
+                                            object_value = None
+                                            # todo_eo: may not be necessary, overly used
+                                            # self.logger.info("A template value was attempted to be applied "
+                                            #                  "to an object field but the template "
+                                            #                  "field was not present in template object. "
+                                            #                  "object: {}, object fieled: {}, template field: {}"
+                                            #                  .format(object_type, object_field, template_field))
+                                        if object_value:
+                                            # On a match and valid value, apply the field.
+                                            # If the object is a 'super' object used in a
+                                            # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
+                                            # into the top level of the object.
+                                            if 'Fields' in tree_object[object_type].keys():
+                                                tree_object[object_type]['Fields'][object_field] = object_value
+                                            else:
+                                                tree_object[object_type][object_field] = object_value
+            except (KeyError, AttributeError, ValueError):
+                raise InvalidTemplateException(
+                    'In {} ({}) A TemplateObject transition failed an is likely incorrectly formatted'
+                    .format(self.template_type, self.template_name))
         # for each mapping instruction, iterate over the objects and apply if the object_type matches the reference
         if option_tree_mappings:
-            # flatten list if it is nested due to yaml structuring
-            option_tree_mappings = self._flatten_list(option_tree_mappings)
-            # iterate over mapping instructions
-            for otm in option_tree_mappings:
-                for object_type_reference, mapping_structure in otm.items():
-                    for mapping_field, mapping_dictionary in mapping_structure.items():
-                        # Ensure there is only one object_key and it is 'Objects'
-                        try:
-                            (object_key, tree_objects), = option_tree_leaf.items()
-                            if not object_key == 'Objects':
+            try:
+                # flatten list if it is nested due to yaml structuring
+                option_tree_mappings = self._flatten_list(option_tree_mappings)
+                # iterate over mapping instructions
+                for otm in option_tree_mappings:
+                    for object_type_reference, mapping_structure in otm.items():
+                        for mapping_field, mapping_dictionary in mapping_structure.items():
+                            # Ensure there is only one object_key and it is 'Objects'
+                            try:
+                                (object_key, tree_objects), = option_tree_leaf.items()
+                                if not object_key == 'Objects':
+                                    raise PyExpandObjectsYamlStructureException(
+                                        "Error: In {} ({}) OptionTree leaf has incorrectly formatted Mapping: {}"
+                                        .format(self.template_type, self.template_name, otm))
+                            except ValueError:
                                 raise PyExpandObjectsYamlStructureException(
-                                    "Error: In {} ({}) OptionTree leaf has incorrectly formatted Mapping: {}"
+                                    "Error: In {} ({}) OptionTree leaf is incorrectly formatted Mapping: {}"
                                     .format(self.template_type, self.template_name, otm))
-                        except ValueError:
-                            raise PyExpandObjectsYamlStructureException(
-                                "Error: In {} ({}) OptionTree leaf is incorrectly formatted Mapping: {}"
-                                .format(self.template_type, self.template_name, otm))
-                        # iterate over each object from 'Objects' dictionary
-                        for tree_object in tree_objects:
-                            for object_type, object_fields in tree_object.items():
-                                # if the object reference in the mapping dictionary matches the object or is
-                                # 'AnyValue' then apply the map
-                                if re.match(object_type_reference, object_type):
-                                    for map_option, sub_dictionary in mapping_dictionary.items():
-                                        if (map_option == 'None' and getattr(self, mapping_field, 'None') == 'None') or \
-                                                hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option or \
-                                                map_option == 'AnyValue' and getattr(self, mapping_field, None):
-                                            for field, val in sub_dictionary.items():
-                                                try:
-                                                    # On a match and valid value, apply the field.
-                                                    # If the object is a 'super' object used in a
-                                                    # BuildPath, then insert it in the 'Fields' dictionary.
-                                                    # Otherwise, insert it into the top level of the object.
-                                                    if 'Fields' in tree_object[object_type].keys():
-                                                        tree_object[object_type]['Fields'][field] = val
-                                                    else:
-                                                        tree_object[object_type][field] = val
-                                                except AttributeError:
-                                                    self.logger.warning(
-                                                        "Warning: Template field was attempted to be "
-                                                        "mapped to object but was not present "
-                                                        "in template inputs. mapping field: {}, "
-                                                        "object type: {}".format(field, object_type))
+                            # iterate over each object from 'Objects' dictionary
+                            for tree_object in tree_objects:
+                                for object_type, object_fields in tree_object.items():
+                                    # if the object reference in the mapping dictionary matches the object or is
+                                    # 'AnyValue' then apply the map
+                                    if re.match(object_type_reference, object_type):
+                                        for map_option, sub_dictionary in mapping_dictionary.items():
+                                            if (map_option == 'None' and getattr(self, mapping_field, 'None') == 'None') or \
+                                                    (hasattr(self, mapping_field) and getattr(self, mapping_field) == map_option) or \
+                                                    (map_option == 'AnyValue' and getattr(self, mapping_field, None)) or \
+                                                    (map_option == 'AnyNumber' and isinstance(
+                                                        getattr(self, mapping_field, None), (int, float))):
+                                                for field, val in sub_dictionary.items():
+                                                    try:
+                                                        # On a match and valid value, apply the field.
+                                                        # If the object is a 'super' object used in a
+                                                        # BuildPath, then insert it in the 'Fields' dictionary.
+                                                        # Otherwise, insert it into the top level of the object.
+                                                        if 'Fields' in tree_object[object_type].keys():
+                                                            tree_object[object_type]['Fields'][field] = val
+                                                        else:
+                                                            tree_object[object_type][field] = val
+                                                    except AttributeError:
+                                                        self.logger.warning(
+                                                            "Warning: Template field was attempted to be "
+                                                            "mapped to object but was not present "
+                                                            "in template inputs. mapping field: {}, "
+                                                            "object type: {}".format(field, object_type))
+            except (KeyError, AttributeError, ValueError):
+                raise InvalidTemplateException(
+                    'In {} ({}) A TemplateObject mapping failed an is likely incorrectly formatted'
+                    .format(self.template_type, self.template_name))
         return option_tree_leaf['Objects']
 
     def yaml_list_to_epjson_dictionaries(self, yaml_list: list) -> dict:
@@ -729,41 +756,47 @@ class ExpandObjects(EPJSON):
                         #  is reapplied recursively
                         # For anything else, process the reference node and return a value.
                         (object_name, _), = epjson[object_type].items()
-                        if lookup_instructions.lower() == 'self':
-                            yield {"field": field_name, "value": object_type}
-                        elif lookup_instructions.lower() == 'key':
-                            yield {"field": field_name, "value": object_name}
-                        elif isinstance(epjson[object_type][object_name][lookup_instructions], dict):
-                            try:
-                                # safeguard in case Recursions exception misses infinite loop
-                                if recursions > 5:
+                        try:
+                            if lookup_instructions.lower() == 'self':
+                                yield {"field": field_name, "value": object_type}
+                            elif lookup_instructions.lower() == 'key':
+                                yield {"field": field_name, "value": object_name}
+                            elif isinstance(epjson[object_type][object_name][lookup_instructions], dict):
+                                try:
+                                    # safeguard in case Recursions exception misses infinite loop
+                                    if recursions > 5:
+                                        raise PyExpandObjectsYamlStructureException(
+                                            "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
+                                            .format(self.template_type, self.template_name, input_value, field_name))
+                                    complex_generator = self._resolve_complex_input(
+                                        epjson=epjson,
+                                        field_name=field_name,
+                                        input_value=epjson[object_type][object_name][lookup_instructions],
+                                        recursions=recursions + 1)
+                                    for cg in complex_generator:
+                                        yield cg
+                                except RecursionError:
                                     raise PyExpandObjectsYamlStructureException(
                                         "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
                                         .format(self.template_type, self.template_name, input_value, field_name))
-                                complex_generator = self._resolve_complex_input(
-                                    epjson=epjson,
-                                    field_name=field_name,
-                                    input_value=epjson[object_type][object_name][lookup_instructions],
-                                    recursions=recursions + 1)
-                                for cg in complex_generator:
-                                    yield cg
-                            except RecursionError:
-                                raise PyExpandObjectsYamlStructureException(
-                                    "Error: In {} ({}) Maximum Recursion limit exceeded when resolving {} for {}"
-                                    .format(self.template_type, self.template_name, input_value, field_name))
-                        else:
-                            # attempt to format both the field and value to be returned.
-                            if isinstance(field_name, str):
-                                formatted_field_name = field_name.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
                             else:
-                                formatted_field_name = field_name
-                            if isinstance(epjson[object_type][object_name][lookup_instructions], str):
-                                raw_val = epjson[object_type][object_name][lookup_instructions]
-                                formatted_value = raw_val.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
-                            else:
-                                formatted_value = epjson[object_type][object_name][lookup_instructions]
-                            yield {"field": formatted_field_name,
-                                   "value": formatted_value}
+                                # attempt to format both the field and value to be returned.
+                                if isinstance(field_name, str):
+                                    formatted_field_name = field_name.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
+                                else:
+                                    formatted_field_name = field_name
+                                if isinstance(epjson[object_type][object_name][lookup_instructions], str):
+                                    raw_val = epjson[object_type][object_name][lookup_instructions]
+                                    formatted_value = raw_val.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
+                                else:
+                                    formatted_value = epjson[object_type][object_name][lookup_instructions]
+                                yield {"field": formatted_field_name,
+                                       "value": formatted_value}
+                        except KeyError:
+                            raise InvalidTemplateException(
+                                'Error: In {} ({}) A complex input failed because a bad dictionary key was referenced '
+                                'when trying to process the field {} with a value of {}'
+                                .format(self.template_type, self.template_name, field_name, input_value))
         elif isinstance(input_value, list):
             # When the input is a list, iterate and apply this function recursively to each object.
             try:
@@ -1051,7 +1084,8 @@ class ExpandObjects(EPJSON):
                     "Error: In {} ({}) Referenced super object is missing Connectors key: {}"
                     .format(self.template_type, self.template_name, super_object))
             try:
-                # if a super object is specified but the Loop Connectors is identified as False, then just
+                # if a super object is specified but the Loop Connectors is identified as False
+                # (i.e. {Connectors: {AirLoop: False}}), then just
                 #  append it to the build path but don't make a connection.  An example of this is the heat
                 #  exchanger which connects to the OA node, not the inlet node of the OutdoorAir:Mixer, which is
                 #  the return node
@@ -1151,7 +1185,8 @@ class ExpandObjects(EPJSON):
                             if (template_value == 'None' and getattr(self, template_field, 'None') == 'None') or \
                                     (getattr(self, template_field, None) and (
                                         template_value == str(getattr(self, template_field)) or (
-                                            template_value == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field)))))):
+                                            template_value == 'AnyValue' and re.match(r'\w+', str(getattr(self, template_field))) or (
+                                                template_value == 'AnyNumber' and isinstance(getattr(self, template_field), (int, float)))))):
                                 if action_instructions:
                                     build_path = self._apply_build_path_action(
                                         build_path=build_path,
@@ -1308,7 +1343,7 @@ class ExpandThermostat(ExpandObjects):
 
 class ZonevacEquipmentListObjectType:
     """
-    Set a class attribute to select the appropriate ZoneHVAC:EquipmentList from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate ZoneHVAC:EquipmentList from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._zone_hvac_equipmentlist_object_type
@@ -1340,7 +1375,7 @@ class ZonevacEquipmentListObjectType:
 
 class DesignSpecificationOutsideAirObjectStatus:
     """
-    Set a class attribute to select the appropriate DesignSpecification:OutdoorAir from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate DesignSpecification:OutdoorAir from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._design_specification_outdoor_air_object_status
@@ -1373,7 +1408,7 @@ class DesignSpecificationOutsideAirObjectStatus:
 
 class DesignSpecificationZoneAirDistributionObjectStatus:
     """
-    Set a class attribute to select the appropriate DesignSpecification:ZoneAirDistribution from TemplateOptions
+    Set a class attribute to select the appropriate DesignSpecification:ZoneAirDistribution from TemplateObjects
     in the YAML lookup.
     """
     def __get__(self, obj, owner):
@@ -1612,7 +1647,7 @@ class ExpandZone(ExpandObjects):
 
 class AirLoopHVACUnitaryObjectType:
     """
-    Set a class attribute to select the appropriate unitary equipment type from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate unitary equipment type from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._airloop_hvac_unitary_object_type
@@ -1645,7 +1680,7 @@ class AirLoopHVACUnitaryObjectType:
 
 class AirLoopHVACUnitaryFanTypeAndPlacement:
     """
-    Set a class attribute to select the appropriate fan type and placement from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate fan type and placement from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._airloop_hvac_unitary_fan_type_and_placement
@@ -1667,7 +1702,7 @@ class AirLoopHVACUnitaryFanTypeAndPlacement:
 
 class AirLoopHVACObjectType:
     """
-    Set a class attribute to select the appropriate AirLoopHVAC type from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate AirLoopHVAC type from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._airloop_hvac_object_type
@@ -1691,7 +1726,7 @@ class AirLoopHVACObjectType:
 
 class ModifyCoolingCoilSetpointControlType:
     """
-    Modify cooling_coil_setpoint_control_type based on other template attributes for YAML TemplateOptions lookup.
+    Modify cooling_coil_setpoint_control_type based on other template attributes for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
         return obj._cooling_coil_setpoint_control_type
@@ -1736,7 +1771,7 @@ class ModifyCoolingCoilSetpointControlType:
 
 class ModifyHeatingCoilSetpointControlType:
     """
-    Modify heating_coil_setpoint_control_type based on other template attributes for YAML TemplateOptions lookup.
+    Modify heating_coil_setpoint_control_type based on other template attributes for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
         return obj._heating_coil_setpoint_control_type
@@ -1797,7 +1832,7 @@ class ModifyHeatingCoilSetpointControlType:
 
 class HumidistatType:
     """
-    Create class attribute to select Humidistat type based on other template attributes for YAML TemplateOptions lookup.
+    Create class attribute to select Humidistat type based on other template attributes for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
         return obj._humidistat_type
@@ -1847,7 +1882,7 @@ class OutsideAirEquipmentType:
 
 class ModifyDehumidificationControlType:
     """
-    Modify dehumidification_control_type based on other template attributes for YAML TemplateOptions lookup.
+    Modify dehumidification_control_type based on other template attributes for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
         return obj._dehumidification_control_type
@@ -2334,6 +2369,13 @@ class ExpandSystem(ExpandObjects):
             self, loop_type: str = 'AirLoop', build_path: list = None) -> list:
         """
         Modify input build path to use special equipment objects in the build path, rather than individual components.
+        This function loads a structured tuple that contains a list of instructions:
+
+            0 - HVACTemplate:System for which the instructions are applied
+            1 - Regular expression match of the super object to be manipulated.  This object has a special format to
+                prevent it from being connected in earlier steps {Fields: ..., Connectors: {AirLoop: False}}
+            2 - Connectors to be applied to the object
+            3 - Tuple of objects to be removed from build path.
 
         :param build_path: list of EnergyPlus Super objects
         :return: build path
@@ -2637,13 +2679,89 @@ class ExpandSystem(ExpandObjects):
         return self
 
 
+class PrimaryPumpFlowAndType:
+    """
+    Create class attribute, primary_pump_flow_and_type to select the pump flow type, and configuration
+     type for YAML TemplateObjects lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._primary_pump_flow_and_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (template_name, template_fields), = template_structure.items()
+        flow_type = None
+        configuration_type = None
+        flow_rgx_match = None
+        if template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
+            flow_type = template_fields.get('chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary')
+            flow_rgx_match = re.match(r'(^.*)Primary', flow_type)
+            configuration_type = template_fields.get('chilled_water_primary_pump_type', 'SinglePump')
+        elif template_type == 'HVACTemplate:Plant:CondenserWaterLoop':
+            flow_type = 'VariablePrimary'
+            flow_rgx_match = re.match(r'(^.*)Primary', flow_type)
+            configuration_type = template_fields.get('condenser_water_pump_type', 'SinglePump')
+        elif template_type == 'HVACTemplate:Plant:HotWaterLoop':
+            flow_type = template_fields.get('hot_water_pump_configuration', 'ConstantFlow')
+            flow_rgx_match = re.match(r'(^.*)Flow', flow_type)
+            configuration_type = template_fields.get('hot_water_pump_type', 'SinglePump')
+        elif template_type == 'HVACTemplate:Plant:MixedWaterLoop':
+            flow_type = template_fields.get('water_pump_configuration', 'ConstantFlow')
+            flow_rgx_match = re.match(r'(^.*)Flow', flow_type)
+            configuration_type = template_fields.get('water_pump_type', 'SinglePump')
+        if flow_rgx_match and configuration_type:
+            flow_type = flow_rgx_match.group(1)
+            obj._primary_pump_flow_and_type = ''.join([flow_type, configuration_type])
+        else:
+            raise InvalidTemplateException(
+                'In {} ({}) The primary pump configuration value is improperly formatted'
+                .format(template_type, template_name))
+        return
+
+
+class SecondaryPumpFlowAndType:
+    """
+    Create class attribute, secondary_pump_flow_and_type to select the pump flow type, and configuration
+     type for YAML TemplateObjects lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._secondary_pump_flow_and_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value.items()
+        (template_name, template_fields), = template_structure.items()
+        if template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
+            flow_type = template_fields.get('chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary')
+            flow_rgx_match = re.match(r'^.*Primary(.*)Secondary', flow_type)
+            if flow_rgx_match:
+                flow_type = flow_rgx_match.group(1)
+            else:
+                raise InvalidTemplateException(
+                    'In {} ({}) The chilled_water_pump_configuration value is improperly formatted'
+                    .format(template_type, template_name))
+            if flow_type != 'No':
+                configuration_type = template_fields.get('chilled_water_secondary_pump_type', 'SinglePump')
+                obj._secondary_pump_flow_and_type = ''.join([flow_type, configuration_type])
+        return
+
+
 class ExpandPlantLoop(ExpandObjects):
     """
     Plant loop expansion operations
+
+    Attributes from Descriptors:
+        primary_pump_flow_and_type
+        secondary_pump_flow_and_type
     """
+
+    primary_pump_flow_and_type = PrimaryPumpFlowAndType()
+    secondary_pump_flow_and_type = SecondaryPumpFlowAndType()
+
     def __init__(self, template, logger_level='WARNING', epjson=None):
         super().__init__(template=template, logger_level=logger_level)
         self.unique_name = self.template_name
+        self.primary_pump_flow_and_type = template
+        self.secondary_pump_flow_and_type = template
         self.epjson = epjson or self.epjson
         return
 
@@ -2722,9 +2840,120 @@ class RetrievePlantEquipmentLoop:
         return
 
 
+class PumpConfigurationType:
+    """
+    Set a class attribute pump_configuration_type that reflects the loop attribute of the same name to use in
+    TemplateObjects in the YAML lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._pump_configuration_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value['template'].items()
+        (template_name, _), = template_structure.items()
+        # Check the loop type priority list against the expanded loops and return the first match.
+        pump_configuration = []
+        if template_type == 'HVACTemplate:Plant:Chiller':
+            # This should return only one instance
+            pump_configuration = [
+                getattr(class_object_structure, 'chilled_water_pump_configuration', None)
+                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop']
+        elif template_type == 'HVACTemplate:Plant:Boiler':
+            # This should return only one instance
+            pump_configuration = [
+                getattr(class_object_structure, 'hot_water_pump_configuration', None)
+                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop']
+        if len(pump_configuration) > 1:
+            obj.logger.warning(
+                'In {} ({}) More than one pump configuration was found.  Applying first instance {}'
+                .format(template_type, template_name, pump_configuration[0]))
+        if pump_configuration:
+            obj._pump_configuration_type = pump_configuration[0]
+        return
+
+
+class PrimaryPumpType:
+    """
+    Set a class attribute pump_type that reflects the loop attribute primary_pump_type to use in
+    TemplateObjects in the YAML lookup.  This descriptor will only either be None, or 'PumpPerEquipment', since those
+    are the only configurations needed to inform the equipment
+    """
+    def __get__(self, obj, owner):
+        return obj._primary_pump_type
+
+    def __set__(self, obj, value):
+        (template_type, template_structure), = value['template'].items()
+        (template_name, template_fields), = template_structure.items()
+        # Check the loop type priority list against the expanded loops and return the first match.
+        primary_pump_type = []
+        flow_rgx_value = ''
+        equipment_type = 'Equipment'
+        if template_type == 'HVACTemplate:Plant:Chiller':
+            # set variables and regex matches for output format
+            flow_rgx_value = r'(^.*)Primary'
+            # This should return only one instance
+            primary_pump_type = [
+                (
+                    getattr(class_object_structure, 'chilled_water_primary_pump_type'),
+                    getattr(class_object_structure, 'chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary'))
+                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
+                    class_object_structure, 'chilled_water_primary_pump_type', None)]
+        elif template_type == 'HVACTemplate:Plant:Tower' and obj.template_plant_loop_type == 'CondenserWaterLoop':
+            flow_rgx_value = r'(^.*)Primary'
+            # call HVACTemplate:Plant:ChilledWaterLoop since CondenserWaterLoop isn't in the list of expanded plant
+            # loops
+            primary_pump_type = [
+                (
+                    getattr(class_object_structure, 'condenser_water_pump_type'),
+                    'VariablePrimary')
+                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
+                    class_object_structure, 'condenser_water_pump_type', None)]
+        elif template_type == 'HVACTemplate:Plant:Boiler':
+            if template_fields.get('boiler_type') == 'DistrictHotWater':
+                equipment_type = 'DistrictHotWater'
+            flow_rgx_value = r'(^.*)Flow'
+            # This should return only one instance
+            primary_pump_type = [
+                (
+                    getattr(class_object_structure, 'hot_water_pump_type'),
+                    getattr(class_object_structure, 'hot_water_pump_configuration', 'ConstantFlow'))
+                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop' and getattr(
+                    class_object_structure, 'hot_water_pump_type', None)]
+        if len(primary_pump_type) > 1:
+            obj.logger.warning(
+                'In {} ({}) More than one pump type was found.  Applying first instance {}'
+                .format(template_type, template_name, primary_pump_type[0]))
+        # If no water pump type is specified, then set it to 'other' so a combined template can be used.
+        if primary_pump_type:
+            flow_rgx_match = re.match(flow_rgx_value, primary_pump_type[0][1])
+            if flow_rgx_match:
+                flow_type = flow_rgx_match.group(1)
+            else:
+                raise InvalidTemplateException(
+                    'In {} ({}) The pump configuration value found in loop class object is '
+                    'improperly formatted'.format(template_type, template_name))
+            # replace object type (e.g. chiller, boiler) with 'Equipment' to make less template object options
+            primary_pump_type_value = \
+                ''.join(['PumpPer', equipment_type]) \
+                if re.match('^PumpPer.*', primary_pump_type[0][0]) \
+                else None
+            if flow_type and primary_pump_type_value:
+                obj._primary_pump_type = ''.join([flow_type, primary_pump_type_value])
+            else:
+                obj._primary_pump_type = ''.join(['Other', equipment_type])
+        else:
+            obj._primary_pump_type = ''.join(['Other', equipment_type])
+        return
+
+
 class ChillerAndCondenserType:
     """
-    Set a class attribute to select the appropriate fan type and placement from TemplateOptions in the YAML lookup.
+    Set a class attribute to select the appropriate fan type and placement from TemplateObjects in the YAML lookup.
     """
     def __get__(self, obj, owner):
         return obj._chiller_and_condenser_type
@@ -2752,7 +2981,9 @@ class ExpandPlantEquipment(ExpandObjects):
     """
 
     template_plant_loop_type = RetrievePlantEquipmentLoop()
+    pump_configuration_type = PumpConfigurationType()
     chiller_and_condenser_type = ChillerAndCondenserType()
+    primary_pump_type = PrimaryPumpType()
 
     def __init__(self, template, logger_level='WARNING', plant_loop_class_objects=None, epjson=None):
         """
@@ -2765,6 +2996,8 @@ class ExpandPlantEquipment(ExpandObjects):
         self.unique_name = self.template_name
         plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}
+        self.pump_configuration_type = {'template': template, **plant_loops}
+        self.primary_pump_type = {'template': template, **plant_loops}
         if self.template_plant_loop_type == 'ChilledWaterLoop':
             self.plant_loop_type_short = 'CHW'
         elif self.template_plant_loop_type == 'MixedWaterLoop':

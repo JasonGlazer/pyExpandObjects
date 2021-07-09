@@ -381,7 +381,7 @@ class HVACTemplate(EPJSON):
                                     .format(object_type, object_name, object_fields.get('tower_type')))
                     # for plant equipment object references, add the referenced object to epjson for complex input resolution
                     #  later on.  For chiller objects, also identify condenser type and make it a template attribute.
-                    if object_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
+                    elif object_type == 'HVACTemplate:Plant:Boiler:ObjectReference':
                         for object_name, object_fields in object_structure.items():
                             reference_object_structure = epjson.get(object_fields['boiler_object_type'])
                             if not reference_object_structure:
@@ -910,7 +910,7 @@ class HVACTemplate(EPJSON):
         # create condenser water loop for water cooled condensers
         if getattr(plant_equipment_class_object, 'template_type', None).lower() in \
                 ['hvactemplate:plant:chiller', 'hvactemplate:plant:chiller:objectreference'] \
-                and getattr(plant_equipment_class_object, 'condenser_type', None).lower() == 'watercooled' \
+                and getattr(plant_equipment_class_object, 'condenser_type', 'None').lower() == 'watercooled' \
                 and 'hvactemplate:plant:condenserwaterloop' not in plant_loops:
             # try to get the chilled water loop attributes to transition to condenser water
             chw_loop = [
@@ -918,12 +918,21 @@ class HVACTemplate(EPJSON):
                 in expanded_plant_loops.values()
                 if getattr(pl, 'template_type').lower() == 'hvactemplate:plant:chilledwaterloop']
             cndw_attributes = {}
+            # transfer ChilledWaterLoop attributes to CondenserWaterLoop
             if chw_loop:
                 for cndw_attribute, chw_attribute in zip(
                         ['condenser_water_pump_rated_head', 'condenser_water_design_setpoint',
-                         'condenser_plant_operation_scheme_type'],
-                        ['primary_chilled_water_pump_rated_head', 'condenser_water_design_setpoint',
-                         'condenser_plant_operation_scheme_type']):
+                         'condenser_plant_operation_scheme_type', 'condenser_equipment_operation_schemes_name',
+                         'condenser_water_temperature_control_type', 'condenser_water_setpoint_schedule_name',
+                         'pump_schedule_name', 'pump_control_type', 'condenser_water_pump_type',
+                         'condenser_water_supply_side_bypass_pipe', 'condenser_water_demand_side_bypass_pipe',
+                         'condenser_water_load_distribution_scheme'],
+                        ['condenser_water_pump_rated_head', 'condenser_water_design_setpoint',
+                         'condenser_plant_operation_scheme_type', 'condenser_equipment_operation_schemes_name',
+                         'condenser_water_temperature_control_type', 'condenser_water_setpoint_schedule_name',
+                         'pump_schedule_name', 'pump_control_type', 'condenser_water_pump_type',
+                         'condenser_water_supply_side_bypass_pipe', 'condenser_water_demand_side_bypass_pipe',
+                         'condenser_water_load_distribution_scheme']):
                     try:
                         cndw_attributes[cndw_attribute] = getattr(chw_loop[0], chw_attribute)
                     except AttributeError:
@@ -1018,6 +1027,12 @@ class HVACTemplate(EPJSON):
         branch_dictionary = {}
         for pe in expanded_plant_equipment.values():
             branch_objects = copy.deepcopy(pe.epjson.get('Branch', {}))
+            for branch_name, branch_structure in branch_objects.items():
+                components = branch_structure.get('components')
+                if not components:
+                    raise InvalidTemplateException(
+                        'Error: In {} ({}) A branch object failed to create component fields {}'
+                        .format(pe.template_type, pe.template_name, branch_name))
             # Special handling for chillers with condenser water and chilled water branches
             # todo_eo: find a better way to separate the branches instead of searching for chw or cnd in the branch
             #  names.  It may be unreliable with future user inputs.
@@ -1152,10 +1167,16 @@ class HVACTemplate(EPJSON):
         # check to make sure loops aren't empty
         if demand_branches:
             if plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop':
-                equipment_types = [
-                    (component[0]['component_name'], component[0]['component_object_type']) for
-                    object_name, object_structure in supply_branches.items()
-                    for component in object_structure.values()]
+                try:
+                    equipment_types = [
+                        (component[-1]['component_name'], component[-1]['component_object_type']) for
+                        object_name, object_structure in supply_branches.items()
+                        for component in object_structure.values()]
+                except AttributeError:
+                    raise PyExpandObjectsYamlStructureException(
+                        'Error: In {} ({}) No supply branches found plant loop object'
+                        .format(plant_loop_class_object.template_type, plant_loop_class_object.unique_name))
+
                 chillers = [i for i in equipment_types if re.match(r'Chiller:.*', i[1])]
                 towers = [i for i in equipment_types if re.match(r'CoolingTower:.*', i[1])]
                 # For water-cooled chillers, the tower is in the condenserloop so that needs to be checked instead of
@@ -1185,20 +1206,59 @@ class HVACTemplate(EPJSON):
         # Use ExpandObjects class for helper functions
         eo = ExpandObjects(logger_level=self.logger_level)
         eo.unique_name = getattr(plant_loop_class_object, 'template_name')
-        # create branchlists
-        demand_branchlist = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'Demand'])
-        supply_branchlist = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'Supply'])
-        # create connector objects
-        connector_demand_splitter = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'Demand'])
-        connector_demand_mixer = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'Demand'])
-        connector_supply_splitter = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'Supply'])
-        connector_supply_mixer = eo.get_structure(
-            structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'Supply'])
+        # create connector objects based on template attributes
+        if (plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
+                plant_loop_class_object, 'chilled_water_supply_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:CondenserWaterLoop' and getattr(
+                plant_loop_class_object, 'condenser_water_supply_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:HotWaterLoop' and getattr(
+                plant_loop_class_object, 'supply_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:MixedWaterLoop' and getattr(
+                plant_loop_class_object, 'supply_side_bypass_pipe', 'Yes') == 'No'):
+            supply_branchlist = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'SupplyNoBypass'])
+            connector_supply_mixer = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'SupplyNoBypass'])
+            connector_supply_splitter = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'SupplyNoBypass'])
+            # set the 'branches' value type to list if it's none
+            if not connector_supply_mixer['branches']:
+                connector_supply_splitter['branches'] = []
+            if not connector_supply_splitter['branches']:
+                connector_supply_mixer['branches'] = []
+        else:
+            supply_branchlist = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'Supply'])
+            connector_supply_mixer = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'Supply'])
+            connector_supply_splitter = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'Supply'])
+        if (plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
+                plant_loop_class_object, 'chilled_water_demand_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:CondenserWaterLoop' and getattr(
+                plant_loop_class_object, 'condenser_water_demand_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:HotWaterLoop' and getattr(
+                    plant_loop_class_object, 'demand_side_bypass_pipe', 'Yes') == 'No') or \
+                (plant_loop_class_object.template_type == 'HVACTemplate:Plant:MixedWaterLoop' and getattr(
+                    plant_loop_class_object, 'demand_side_bypass_pipe', 'Yes') == 'No'):
+            demand_branchlist = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'DemandNoBypass'])
+            connector_demand_splitter = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'DemandNoBypass'])
+            connector_demand_mixer = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'DemandNoBypass'])
+            # set the 'branches' value type to list if it's none
+            if not connector_demand_mixer['branches']:
+                connector_demand_splitter['branches'] = []
+            if not connector_demand_splitter['branches']:
+                connector_demand_mixer['branches'] = []
+        else:
+            demand_branchlist = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'BranchList', 'Demand'])
+            connector_demand_splitter = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Splitter', 'Demand'])
+            connector_demand_mixer = eo.get_structure(
+                structure_hierarchy=['AutoCreated', 'PlantLoop', 'Connector', 'Mixer', 'Demand'])
         # create supply nodelist
         supply_nodelist = eo.get_structure(
             structure_hierarchy=['AutoCreated', 'PlantLoop', 'NodeList', 'Supply'])
@@ -1214,7 +1274,7 @@ class HVACTemplate(EPJSON):
                 connector_supply_mixer['branches'].insert(0, {'inlet_branch_name': branch})
                 supply_nodelist['nodes'].insert(
                     0,
-                    {'node_name': supply_branches[branch]['components'][0]['component_outlet_node_name']})
+                    {'node_name': supply_branches[branch]['components'][-1]['component_outlet_node_name']})
         except (KeyError, AttributeError):
             raise PyExpandObjectsYamlStructureException(
                 'Error: In {} AutoCreated PlantLoop Connector YAML object was '
@@ -1278,7 +1338,7 @@ class HVACTemplate(EPJSON):
                     equipment_name = equipment_class.chiller_name
                 elif equipment_class.template_type == 'HVACTemplate:Plant:Tower:ObjectReference':
                     equipment_name = equipment_class.cooling_tower_name
-                if sb['components'][0]['component_name'] == equipment_name:
+                if sb['components'][-1]['component_name'] == equipment_name:
                     # make tuple of (object, priority)
                     # if priority isn't set, use infinity to push it to the end when sorted
                     supply_branches_with_priority.append((sb, getattr(equipment_class, 'priority', float('inf'))))
@@ -1287,8 +1347,8 @@ class HVACTemplate(EPJSON):
             in sorted(supply_branches_with_priority, key=lambda s: s[1])]
         for sb in supply_branches_ordered:
             equipment.append({
-                'equipment_name': sb['components'][0]['component_name'],
-                'equipment_object_type': sb['components'][0]['component_object_type']
+                'equipment_name': sb['components'][-1]['component_name'],
+                'equipment_object_type': sb['components'][-1]['component_object_type']
             })
         # use ExpandObjects functions
         eo = ExpandObjects(logger_level=self.logger_level)
@@ -1331,7 +1391,19 @@ class HVACTemplate(EPJSON):
 
     def _apply_system_fields_to_zone_template(self, template_fields, system_templates):
         """
-        Set zone attributes based on system templates where appropriate
+        Set zone attributes based on system templates where appropriate.  This function calls a structured object
+        that contains lists of instructions to perform the map.  Each list is structured in the following manner:
+
+            [
+                zone_field_name: { # The zone field to check to apply the action
+                    {
+                        zone_field_value: # The zone field value to trigger the mapping
+                            system_field: system_field_name # The system field that contains the referenced value
+                            zone_field: zone_field_name # The zone field to apply the value
+                    }
+                }
+            ]
+
         :param template_fields: HVACTemplate:Zone fields
         :param system_templates: dictionary of HVACTemplate:System objects
         :return: None.  the zone template is updated in the class attributes
@@ -1442,8 +1514,7 @@ class HVACTemplate(EPJSON):
         # Pass through expanded plant equipment objects to create additional plant loops and equipment if necessary
         self._create_additional_plant_loops_and_equipment_from_equipment(
             expanded_plant_equipment=self.expanded_plant_equipment,
-            expanded_plant_loops=self.expanded_plant_loops
-        )
+            expanded_plant_loops=self.expanded_plant_loops)
         self.logger.info('##### Building Plant-Plant Equipment Connections #####')
         for expanded_pl in self.expanded_plant_loops.values():
             self._create_water_loop_connectors_and_nodelist(
