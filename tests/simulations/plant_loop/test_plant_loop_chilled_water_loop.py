@@ -134,6 +134,13 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
                         "control_scheme_1_object_type": "PlantEquipmentOperation:CoolingLoad",
                         "control_scheme_1_schedule_name": "HVACTemplate-Always1"
                     }
+                },
+                "PlantEquipmentOperation:CoolingLoad": {
+                    "Chilled Water Loop Operation All Hours": {
+                        "load_range_1_lower_limit": 0,
+                        "load_range_1_upper_limit": 1000000000000000,
+                        "range_1_equipment_list_name": "Chilled Water Loop All Equipment"
+                    }
                 }
             }
         )

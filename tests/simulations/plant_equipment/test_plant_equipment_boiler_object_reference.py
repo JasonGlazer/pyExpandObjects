@@ -224,6 +224,12 @@ class TestSimulationsPlantEquipmentBoilerObjectReference(BaseSimulationTest):
             super_dictionary=self.base_epjson,
             object_dictionary=mixed_water_objects)
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        # warning mismatch, but pyExpandObjects has same warning output
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Heat Pump Loop Boiler',
+            epjson_output['PlantEquipmentList']['Heat Pump Water Loop Heating All Equipment']['equipment'][0][
+                'equipment_name']
+        )
         return

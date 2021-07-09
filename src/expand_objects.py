@@ -2751,6 +2751,7 @@ class ExpandPlantLoop(ExpandObjects):
 
     Attributes from Descriptors:
         primary_pump_flow_and_type
+
         secondary_pump_flow_and_type
     """
 
@@ -2861,10 +2862,16 @@ class PumpConfigurationType:
                 if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop']
         elif template_type == 'HVACTemplate:Plant:Boiler':
             # This should return only one instance
-            pump_configuration = [
-                getattr(class_object_structure, 'hot_water_pump_configuration', None)
-                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
-                if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop']
+            if getattr(obj, 'template_plant_loop_type', None) == 'HotWaterLoop':
+                pump_configuration = [
+                    getattr(class_object_structure, 'hot_water_pump_configuration', None)
+                    for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                    if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop']
+            elif getattr(obj, 'template_plant_loop_type', None) == 'MixedWaterLoop':
+                pump_configuration = [
+                    getattr(class_object_structure, 'water_pump_configuration', None)
+                    for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                    if class_object_structure.template_type == 'HVACTemplate:Plant:MixedWaterLoop']
         if len(pump_configuration) > 1:
             obj.logger.warning(
                 'In {} ({}) More than one pump configuration was found.  Applying first instance {}'
@@ -2894,10 +2901,12 @@ class PrimaryPumpType:
             # set variables and regex matches for output format
             flow_rgx_value = r'(^.*)Primary'
             # This should return only one instance
+            # 0th item is the pump type, 1th is the configuration, and 2nd is the pump head to be transferred
             primary_pump_type = [
                 (
                     getattr(class_object_structure, 'chilled_water_primary_pump_type'),
-                    getattr(class_object_structure, 'chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary'))
+                    getattr(class_object_structure, 'chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary'),
+                    getattr(class_object_structure, 'primary_chilled_water_pump_rated_head'))
                 for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
                 if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
                     class_object_structure, 'chilled_water_primary_pump_type', None)]
@@ -2908,7 +2917,8 @@ class PrimaryPumpType:
             primary_pump_type = [
                 (
                     getattr(class_object_structure, 'condenser_water_pump_type'),
-                    'VariablePrimary')
+                    'VariablePrimary',
+                    getattr(class_object_structure, 'condenser_water_pump_rated_head'))
                 for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
                 if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
                     class_object_structure, 'condenser_water_pump_type', None)]
@@ -2917,13 +2927,36 @@ class PrimaryPumpType:
                 equipment_type = 'DistrictHotWater'
             flow_rgx_value = r'(^.*)Flow'
             # This should return only one instance
-            primary_pump_type = [
-                (
-                    getattr(class_object_structure, 'hot_water_pump_type'),
-                    getattr(class_object_structure, 'hot_water_pump_configuration', 'ConstantFlow'))
-                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
-                if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop' and getattr(
-                    class_object_structure, 'hot_water_pump_type', None)]
+            if getattr(obj, 'template_plant_loop_type', None) == 'HotWaterLoop':
+                primary_pump_type = [
+                    (
+                        getattr(class_object_structure, 'hot_water_pump_type'),
+                        getattr(class_object_structure, 'hot_water_pump_configuration', 'ConstantFlow'),
+                        getattr(class_object_structure, 'hot_water_pump_rated_head'))
+                    for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                    if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop' and getattr(
+                        class_object_structure, 'hot_water_pump_type', None)]
+            elif getattr(obj, 'template_plant_loop_type', None) == 'MixedWaterLoop':
+                primary_pump_type = [
+                    (
+                        getattr(class_object_structure, 'water_pump_type'),
+                        getattr(class_object_structure, 'water_pump_configuration', 'ConstantFlow'),
+                        getattr(class_object_structure, 'water_pump_rated_head'))
+                    for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                    if class_object_structure.template_type == 'HVACTemplate:Plant:MixedWaterLoop' and getattr(
+                        class_object_structure, 'water_pump_type', None)]
+        elif template_type == 'HVACTemplate:Plant:Tower':
+            flow_rgx_value = r'(^.*)Flow'
+            # This should return only one instance
+            if getattr(obj, 'template_plant_loop_type', None) == 'MixedWaterLoop':
+                primary_pump_type = [
+                    (
+                        getattr(class_object_structure, 'water_pump_type'),
+                        getattr(class_object_structure, 'water_pump_configuration', 'ConstantFlow'),
+                        getattr(class_object_structure, 'water_pump_rated_head'))
+                    for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                    if class_object_structure.template_type == 'HVACTemplate:Plant:MixedWaterLoop' and getattr(
+                        class_object_structure, 'water_pump_type', None)]
         if len(primary_pump_type) > 1:
             obj.logger.warning(
                 'In {} ({}) More than one pump type was found.  Applying first instance {}'
@@ -2944,6 +2977,8 @@ class PrimaryPumpType:
                 else None
             if flow_type and primary_pump_type_value:
                 obj._primary_pump_type = ''.join([flow_type, primary_pump_type_value])
+                # set pump rated head as a class attribute
+                setattr(obj, 'water_pump_rated_head', primary_pump_type[0][2])
             else:
                 obj._primary_pump_type = ''.join(['Other', equipment_type])
         else:
@@ -2976,7 +3011,11 @@ class ExpandPlantEquipment(ExpandObjects):
     Attributes from Descriptors:
         template_plant_loop_type
 
+        pump_configuration_type
+
         chiller_and_condenser_type
+
+        primary_pump_type
 
     """
 

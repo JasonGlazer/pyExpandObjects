@@ -107,6 +107,13 @@ class TestSimulationsPlantLoopHotWaterLoop(BaseSimulationTest):
                         "control_scheme_1_object_type": "PlantEquipmentOperation:HeatingLoad",
                         "control_scheme_1_schedule_name": "HVACTemplate-Always1"
                     }
+                },
+                "PlantEquipmentOperation:HeatingLoad": {
+                    "Hot Water Loop Operation All Hours": {
+                        "load_range_1_lower_limit": 0,
+                        "load_range_1_upper_limit": 1000000000000000,
+                        "range_1_equipment_list_name": "Hot Water Loop All Equipment"
+                    }
                 }
             }
         )
