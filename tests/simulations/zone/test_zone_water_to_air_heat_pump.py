@@ -333,8 +333,6 @@ class TestSimulationsZoneWaterToAirHeatPump(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:WaterToAirHeatPump:cooling_coil_gross_rated_total_capacity")
     def test_cooling_coil_gross_rated_total_capacity(self):
-        # todo_eo: ExpandObjects warning issued on setting this attribute and sensible heat ratio,
-        #  check in on if same message should be made
         self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump']['HVACTemplate:Zone:WaterToAirHeatPump 1'][
             'cooling_coil_gross_rated_total_capacity'] = 5000
         self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump']['HVACTemplate:Zone:WaterToAirHeatPump 1'][

@@ -25,6 +25,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         base_copy_file_path = self._copy_to_test_directory(base_idf_file_path)
         # read in base file, then edit inputs for alternate tests
         self.base_epjson = self.get_epjson_object_from_idf_file(base_copy_file_path)
+        self.base_epjson.pop('Output:Variable')
         return
 
     def teardown(self):
@@ -35,8 +36,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'system_availability_schedule_name'] = 'OCCUPY-1'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # Warning mismatch due to naming conventions
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'OCCUPY-1',
@@ -48,8 +48,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'maximum_heating_supply_air_temperature'] = 45
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # Warning mismatch due to naming conventions
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             45,
@@ -61,8 +60,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'minimum_cooling_supply_air_temperature'] = 15
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # Warning mismatch due to naming conventions
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             15,
@@ -74,8 +72,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'maximum_heating_supply_air_humidity_ratio'] = 0.017
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # Warning mismatch due to naming conventions
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.017,
@@ -87,8 +84,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'minimum_cooling_supply_air_humidity_ratio'] = 0.009
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # Warning mismatch due to naming conventions
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.009,
@@ -102,8 +98,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'maximum_heating_air_flow_rate'] = 0.5
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # Warning mismatch due to naming conventions
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'LimitFlowRate',
@@ -120,8 +115,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'maximum_sensible_heating_capacity'] = 500
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # Warning mismatch due to naming conventions
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'LimitCapacity',
@@ -138,8 +132,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'maximum_cooling_air_flow_rate'] = 0.5
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # Warning mismatch due to naming conventions
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'LimitFlowRate',
@@ -156,8 +149,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'maximum_total_cooling_capacity'] = 500
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # Warning mismatch due to naming conventions
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'LimitCapacity',
@@ -172,8 +164,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'heating_availability_schedule_name'] = 'OCCUPY-1'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # Warning mismatch due to naming conventions
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'OCCUPY-1',
@@ -185,8 +176,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'cooling_availability_schedule_name'] = 'OCCUPY-1'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'OCCUPY-1',
@@ -198,8 +188,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'dehumidification_control_type'] = 'ConstantSupplyHumidityRatio'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'ConstantSupplyHumidityRatio',
@@ -213,8 +202,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'cooling_sensible_heat_ratio'] = 0.65
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.65,
@@ -228,8 +216,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'dehumidification_setpoint'] = 65
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'HVACTemplate-Always65.0',
@@ -241,8 +228,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'humidification_control_type'] = 'ConstantSupplyHumidityRatio'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'ConstantSupplyHumidityRatio',
@@ -256,8 +242,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'humidification_setpoint'] = 33
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'HVACTemplate-Always33.0',
@@ -271,8 +256,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'outdoor_air_flow_rate_per_person'] = 0.01
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'Flow/Person',
@@ -289,8 +273,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'outdoor_air_flow_rate_per_zone_floor_area'] = 0.0014
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'Flow/Area',
@@ -307,8 +290,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'outdoor_air_flow_rate_per_zone'] = 0.01
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'Flow/Zone',
@@ -330,8 +312,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'design_specification_zone_air_distribution_object_name'] = 'SPACE1-1 SZ DSZAD Custom Object'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(epjson_output['DesignSpecification:OutdoorAir'].get('SPACE1-1 SZ DSOA Custom Object'))
         self.assertIsNotNone(epjson_output['DesignSpecification:ZoneAirDistribution'].get('SPACE1-1 SZ DSZAD Custom Object'))
@@ -342,8 +323,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'demand_controlled_ventilation_type'] = 'OccupancySchedule'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'OccupancySchedule',
@@ -356,8 +336,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'demand_controlled_ventilation_type'] = 'CO2Setpoint'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'CO2Setpoint',
@@ -369,8 +348,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'outdoor_air_economizer_type'] = 'DifferentialDryBulb'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'DifferentialDryBulb',
@@ -386,8 +364,7 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'heat_recovery_type'] = 'Enthalpy'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # warnings disabled due to output variable naming mismatch
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.65,

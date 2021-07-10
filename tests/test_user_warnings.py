@@ -1956,11 +1956,31 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             json.dump(
                 {
                     **minimum_objects_d,
-                    **chilled_water_objects,
                     "HVACTemplate:Zone:PTAC": {
-                        'PTAC 1': {
-                            'dedicated_outdoor_air_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                        "HVACTemplate:Zone:PTAC 1": {
+                            "capacity_control_method": "None",
+                            "cooling_coil_gross_rated_cooling_cop": 3,
+                            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+                            "cooling_coil_gross_rated_total_capacity": "Autosize",
+                            "cooling_coil_type": "SingleSpeedDX",
+                            "cooling_supply_air_flow_rate": "Autosize",
+                            "dedicated_outdoor_air_system_name": "CV Sys 1",
+                            "gas_heating_coil_efficiency": 0.8,
+                            "heating_coil_capacity": "Autosize",
+                            "heating_coil_type": "Electric",
+                            "heating_supply_air_flow_rate": "Autosize",
+                            "outdoor_air_flow_rate_per_person": 0.00944,
+                            "outdoor_air_method": "Flow/Person",
+                            "supply_fan_delta_pressure": 75,
+                            "supply_fan_motor_efficiency": 0.9,
+                            "supply_fan_placement": "DrawThrough",
+                            "supply_fan_total_efficiency": 0.7,
+                            "template_thermostat_name": "All Zones",
+                            "zone_cooling_design_supply_air_temperature": 14.0,
+                            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+                            "zone_heating_design_supply_air_temperature": 50.0,
+                            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+                            "zone_name": "SPACE1-1"
                         }
                     },
                     "HVACTemplate:System:DedicatedOutdoorAir": {
@@ -1978,9 +1998,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Dehumidification Control Type field=Multimode is '
-                                                              r'not applicable for Cooling Coil '
-                                                              r'Type=TwoStageHumidityControlDX')
+        self.assertRegex(output['outputPreProcessorMessage'], r'the Dehumidification Control Type field=Multimode')
         return
 
     def test_doas_humid_control_no_heating(self):

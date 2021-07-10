@@ -68,8 +68,6 @@ class VerifyTemplate:
     """
     Verify if template dictionary is a valid type and structure
     """
-    def __init__(self):
-        super().__init__()
 
     def __get__(self, obj, owner):
         template = obj._template
@@ -126,7 +124,7 @@ class ExpandObjects(EPJSON):
             template=None,
             expansion_structure=str(source_dir / 'resources' / 'template_expansion_structures.yaml'),
             logger_level='WARNING'):
-        super().__init__()
+        super().__init__(logger_level=logger_level)
         self.logger.setLevel(logger_level)
         self.expansion_structure = expansion_structure
         self.template = template
@@ -1877,6 +1875,8 @@ class OutsideAirEquipmentType:
             obj._outside_air_equipment_type = outside_air_equipment
             # set attribute for more specific definition
             setattr(obj, 'outside_air_equipment_type_detailed', ''.join([outside_air_equipment, supply_fan_placement]))
+            print(obj.outside_air_equipment_type_detailed)
+            print('----------------------')
         return
 
 
@@ -1903,11 +1903,23 @@ class ModifyDehumidificationControlType:
                     template_fields.get('dehumidification_control_type', 'None') != 'None' else False
                 if dehumidification_control_type == 'Multimode':
                     if cooling_coil_type not in ['TwoStageHumidityControlDX', 'HeatExchangerAssistedDX']:
+                        obj.logger.warning(
+                            'Warning: In {} ({})'
+                            ' the Dehumidification Control Type field={}'
+                            ' is not applicable for Cooling Coil Type={}'
+                            '. Dehumidification Control Type reset to None.'
+                            .format(obj.template_type, obj.unique_name, dehumidification_control_type, cooling_coil_type))
                         obj._dehumidification_control_type = 'None'
                     else:
                         obj._dehumidification_control_type = dehumidification_control_type
                 elif dehumidification_control_type == 'CoolReheatDesuperheater':
                     if cooling_coil_type not in ['TwoSpeedDX', 'TwoStageDX', 'TwoStageHumidityControlDX', 'HeatExchangerAssistedDX']:
+                        obj.logger.warning(
+                            'Warning: In {} ({})'
+                            ' the Dehumidification Control Type field={}'
+                            ' is not applicable for Cooling Coil Type={}'
+                            '. Dehumidification Control Type reset to None.'
+                            .format(obj.template_type, obj.unique_name, dehumidification_control_type, cooling_coil_type))
                         obj._dehumidification_control_type = 'None'
                     else:
                         obj._dehumidification_control_type = dehumidification_control_type
@@ -1980,18 +1992,18 @@ class ExpandSystem(ExpandObjects):
             cooling_setpoint_schedule_name = getattr(self, 'cooling_coil_setpoint_schedule_name', 'None')
             cooling_coil_setpoint_type = getattr(self, 'cooling_coil_setpoint_reset_type', 'None')
             if cooling_coil_setpoint_type == 'None':
-                getattr(self, 'cooling_coil_setpoint_control_type', 'None')
+                cooling_coil_setpoint_type =getattr(self, 'cooling_coil_setpoint_control_type', 'None')
             heating_coil_type = getattr(self, 'heating_coil_type', 'None')
             heating_coil_design_setpoint = getattr(self, 'heating_coil_design_setpoint', None)
             heating_setpoint_schedule_name = getattr(self, 'heating_coil_setpoint_schedule_name', 'None')
             heating_coil_setpoint_type = getattr(self, 'heating_coil_setpoint_reset_type', 'None')
             if heating_coil_setpoint_type == 'None':
-                getattr(self, 'heating_coil_setpoint_control_type', 'None')
+                heating_coil_setpoint_type = getattr(self, 'heating_coil_setpoint_control_type', 'None')
             preheat_coil_type = getattr(self, 'preheat_coil_type', 'None')
             preheat_coil_setpoint_schedule_name = getattr(self, 'preheat_coil_setpoint_schedule_name', 'None')
             preheat_coil_design_setpoint = getattr(self, 'preheat_coil_design_setpoint', None)
-            if cooling_setpoint_schedule_name == 'None' and cooling_coil_setpoint_type == 'None':
-                if heating_coil_type != 'None' and \
+            if cooling_coil_setpoint_type in ['FixedSetpoint', 'None'] and cooling_setpoint_schedule_name == 'None':
+                if heating_coil_type != 'None' and heating_coil_setpoint_type == 'FixedSetpoint' and \
                         heating_setpoint_schedule_name == 'None' and heating_coil_setpoint_type == 'None':
                     if not heating_coil_design_setpoint or not cooling_coil_design_setpoint:
                         self.logger.warning('Warning: Expected cooling and heating design setpoints to be set but '
@@ -2034,18 +2046,8 @@ class ExpandSystem(ExpandObjects):
                 setattr(self, 'dx_cooling_coil_gross_rated_total_capacity', 'Autosize')
         if self.template_type in ['HVACTemplate:System:DedicatedOutdoorAir', ]:
             dehumidification_control_type = getattr(self, 'dehumidification_control_type', 'None')
-            cooling_coil_type = getattr(self, 'cooling_coil_type', 'None')
             heating_coil_type = getattr(self, 'heating_coil_type', 'None')
             heat_recovery_type = getattr(self, 'heat_recovery_type', 'None')
-            if (dehumidification_control_type == 'Multimode' and cooling_coil_type == 'TwoStageHumidityControlDX') or \
-                    (dehumidification_control_type == 'CoolReheatDesuperheater' and cooling_coil_type == 'TwoSpeedDX'):
-                self.logger.warning(
-                    'Warning: In {} ({})'
-                    ' the Dehumidification Control Type field={}'
-                    ' is not applicable for Cooling Coil Type={}'
-                    '. Dehumidification Control Type reset to None.'
-                    .format(self.template_type, self.unique_name, dehumidification_control_type, cooling_coil_type))
-                setattr(self, 'dehumidification_control_type', 'None')
             if dehumidification_control_type != 'None' and heating_coil_type == 'None':
                 self.logger.warning(
                     'Warning: In {} ({})'

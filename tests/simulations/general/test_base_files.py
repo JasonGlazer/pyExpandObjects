@@ -38,8 +38,6 @@ class TestSimulationsBase(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneFanCoil-DOAS")
-    # Chilled water low temp turnoff is not created in base file, appears to be error.  Causing failure
-    # todo_eo: discuss issue with low temp turnoff missing in base file
     def test_5_zone_fan_coil_doas(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneFanCoil-DOAS.idf')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
@@ -91,9 +89,7 @@ class TestSimulationsBase(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneUnitarySystem")
     def test_5_zone_unitary_system(self):
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneUnitarySystem.idf')
-        # Warnings turned off due to ExpandObjects warning about boilers with MixedWater and HotWater loops
-        # todo_eo: look into this and other warnings to duplicate
-        self.perform_full_comparison(base_idf_file_path=base_file_path, warning_check=False)
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneVAVFanPowered")
