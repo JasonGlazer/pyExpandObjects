@@ -20,10 +20,12 @@ class Logger:
             logging_file_name='logging.conf',
             logger_name='expand_objects_logger',
             log_file_name='base',
-            logger_level='WARNING'):
+            logger_level='WARNING',
+            reset_stream=False):
         # prevent re-calling same logger handlers once initialized
         # also prevent bad logger name from being called
         global loggers
+        global stream
         # noinspection PyBroadException
         # Use a different file for testing logger
         logging_dir = str(this_script_path.parent.parent / 'logs')
@@ -77,6 +79,8 @@ class Logger:
                 logger_name, str(e)
             )
         finally:
+            if reset_stream:
+                stream = StringIO()
             # add stream handler for output
             self.stream = stream
             handler = logging.StreamHandler(self.stream)

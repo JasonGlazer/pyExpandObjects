@@ -31,11 +31,12 @@ class HVACTemplate(EPJSON):
     def __init__(
             self,
             no_schema=False,
-            logger_level='WARNING'):
+            logger_level='WARNING',
+            reset_stream=True):
         """
         :param no_schema: Boolean flag for skipping schema validation
         """
-        super().__init__(no_schema=no_schema, logger_level=logger_level)
+        super().__init__(no_schema=no_schema, logger_level=logger_level, reset_stream=reset_stream)
         self.logger_level = logger_level
         self.templates = {}
         self.base_objects = {}
@@ -154,7 +155,7 @@ class HVACTemplate(EPJSON):
                             cooling_limit = object_fields.get('cooling_limit')
                             maximum_cooling_air_flow_rate = object_fields.get('maximum_cooling_air_flow_rate', '')
                             maximum_total_cooling_capacity = \
-                                object_fields.get('maximum_total_heating_capacity', '')
+                                object_fields.get('maximum_total_cooling_capacity', '')
                             if heating_limit == 'LimitFlowRate' and maximum_heating_air_flow_rate == '':
                                 raise InvalidTemplateException(
                                     'Error: In {} ({})'
@@ -1468,9 +1469,6 @@ class HVACTemplate(EPJSON):
         :param input_epjson: input epJSON file
         :return: epJSON containing expanded objects from templates
         """
-        # output_epJSON
-        # flush the stream handler
-        # self.logger.stream_flush
         if not input_epjson:
             if self.input_epjson:
                 input_epjson = self.input_epjson

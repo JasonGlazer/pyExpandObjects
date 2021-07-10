@@ -386,8 +386,6 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:cooling_coil_type_"
                                               "heat_exchanger_assisted_chilled_water")
     def test_cooling_coil_type_heat_exchanger_assisted_chilled_water(self):
-        # todo_eo: expandobjects issues warning for not using multimode dehumidification, should this do the same?
-        #  if so, set in the descriptors
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=chilled_water_objects)
@@ -396,40 +394,35 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output.get('Coil:Cooling:Water:DetailedGeometry'))
+        self.assertIsNotNone(epjson_output.get('CoilSystem:Cooling:Water:HeatExchangerAssisted'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:cooling_coil_type_"
                                               "two_speed_dx")
     def test_cooling_coil_type_two_speed_dx(self):
-        # todo_eo: expandobjects issues warning for not using multimode dehumidification, should this do the same?
-        #  if so, set in the descriptors
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'cooling_coil_type'] = 'TwoSpeedDX'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output.get('Coil:Cooling:Water:DetailedGeometry'))
+        self.assertIsNotNone(epjson_output.get('Coil:Cooling:DX:TwoSpeed'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:cooling_coil_type_"
                                               "two_stage_dx")
     def test_cooling_coil_type_two_stage_dx(self):
-        # todo_eo: expandobjects issues warning for not using multimode dehumidification, should this do the same?
-        #  if so, set in the descriptors
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'cooling_coil_type'] = 'TwoStageDX'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output.get('Coil:Cooling:Water:DetailedGeometry'))
+        self.assertIsNotNone(epjson_output.get('Coil:Cooling:DX:TwoStageWithHumidityControlMode'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:cooling_coil_type_"
                                               "heat_exchanger_assisted_dx")
     def test_cooling_coil_type_heat_exchanger_assisted_dx(self):
-        # todo_eo: expandobjects issues warning for not using multimode dehumidification, should this do the same?
-        #  if so, set in the descriptors
+        # todo_eo: discuss with team.  EnergyPlus notes say that this setup is okay but a warning is issued.
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'cooling_coil_type'] = 'HeatExchangerAssistedDX'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -440,14 +433,12 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:cooling_coil_type_none")
     def test_cooling_coil_type_none(self):
-        # todo_eo: expandobjects issues warning for not using multimode dehumidification, should this do the same?
-        #  if so, set in the descriptors
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'cooling_coil_type'] = 'None'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output.get('Coil:Cooling:Water:DetailedGeometry'))
+        self.assertIsNone(epjson_output.get('Coil:Cooling:DX:TwoStageWithHumidityControlMode'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:cooling_coil_availability_schedule_name")
@@ -600,11 +591,13 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heating_coil_type_none")
     def test_heating_coil_type_none(self):
+        # todo_eo: legacy does not issue cold temperature warning but it appears it should
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'heating_coil_type'] = 'None'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output.get('Coil:Heating:Electric'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heating_coil_availability_schedule_name")
@@ -753,12 +746,13 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_effectiveness")
     def test_heat_recovery_effectiveness(self):
+        # todo_eo: values not mapping in legacy
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'heat_recovery_type'] = 'Enthalpy'
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
-            'sensible_heat_recovery_effectiveness'] = 0.72
+            'heat_recovery_sensible_effectiveness'] = 0.72
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
-            'latent_heat_recovery_effectiveness'] = 0.61
+            'heat_recovery_latent_effectiveness'] = 0.61
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
