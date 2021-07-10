@@ -1722,18 +1722,18 @@ class AirLoopHVACObjectType:
         return
 
 
-class ModifyCoolingCoilSetpointControlType:
+class CoolingCoilSetpointControlTypeDetailed:
     """
-    Modify cooling_coil_setpoint_control_type based on other template attributes for YAML TemplateObjects lookup.
+    set cooling_coil_setpoint_control_type_detailed based on other template attributes for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
-        return obj._cooling_coil_setpoint_control_type
+        return obj._cooling_coil_setpoint_control_type_detailed
 
     def __set__(self, obj, value):
         # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
         #  the template
         if isinstance(value, str):
-            obj._cooling_coil_setpoint_control_type = value
+            obj._cooling_coil_setpoint_control_type_detailed = value
         else:
             (template_type, template_structure), = value.items()
             (_, template_fields), = template_structure.items()
@@ -1757,28 +1757,29 @@ class ModifyCoolingCoilSetpointControlType:
                         hot_duct_supply_fan_placement = \
                             template_fields.get('hot_duct_supply_fan_placement', 'BlowThrough')
                         supply_fan_placement = ''
-                        setattr(obj, 'cold_duct_cooling_coil_setpoint_control_type',
+                        setattr(obj, 'cold_duct_cooling_coil_setpoint_control_type_detailed',
                                 ''.join([cooling_setpoint, cold_duct_supply_fan_placement]))
-                        setattr(obj, 'hot_duct_cooling_coil_setpoint_control_type',
+                        setattr(obj, 'hot_duct_heating_coil_setpoint_control_type_detailed',
                                 ''.join([cooling_setpoint, hot_duct_supply_fan_placement]))
                     else:
                         supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
-                obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, supply_fan_placement])
+                obj._cooling_coil_setpoint_control_type_detailed = ''.join([cooling_setpoint, supply_fan_placement])
         return
 
 
-class ModifyHeatingCoilSetpointControlType:
+class HeatingCoilSetpointControlTypeDetailed:
     """
-    Modify heating_coil_setpoint_control_type based on other template attributes for YAML TemplateObjects lookup.
+    create attribute heating_coil_setpoint_control_type_detailed based on other template attributes for
+    YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
-        return obj._heating_coil_setpoint_control_type
+        return obj._heating_coil_setpoint_control_type_detailed
 
     def __set__(self, obj, value):
         # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
         #  the template
         if isinstance(value, str):
-            obj._heating_coil_setpoint_control_type = value
+            obj._heating_coil_setpoint_control_type_detailed = value
         else:
             (template_type, template_structure), = value.items()
             (_, template_fields), = template_structure.items()
@@ -1800,7 +1801,7 @@ class ModifyHeatingCoilSetpointControlType:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
                 else:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
-                obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, supply_fan_placement])
+                obj._heating_coil_setpoint_control_type_detailed = ''.join([heating_setpoint, supply_fan_placement])
             else:
                 # Change heating design setpoint if no coil is present
                 if getattr(obj, 'preheat_coil_design_setpoint', None) and \
@@ -1875,8 +1876,6 @@ class OutsideAirEquipmentType:
             obj._outside_air_equipment_type = outside_air_equipment
             # set attribute for more specific definition
             setattr(obj, 'outside_air_equipment_type_detailed', ''.join([outside_air_equipment, supply_fan_placement]))
-            print(obj.outside_air_equipment_type_detailed)
-            print('----------------------')
         return
 
 
@@ -1953,8 +1952,8 @@ class ExpandSystem(ExpandObjects):
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
     airloop_hvac_object_type = AirLoopHVACObjectType()
     airloop_hvac_unitary_fan_type_and_placement = AirLoopHVACUnitaryFanTypeAndPlacement()
-    cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
-    heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
+    cooling_coil_setpoint_control_type_detailed = CoolingCoilSetpointControlTypeDetailed()
+    heating_coil_setpoint_control_type_detailed = HeatingCoilSetpointControlTypeDetailed()
     humidistat_type = HumidistatType()
     outside_air_equipment_type = OutsideAirEquipmentType()
     dehumidification_control_type = ModifyDehumidificationControlType()
@@ -1971,12 +1970,12 @@ class ExpandSystem(ExpandObjects):
         self.airloop_hvac_unitary_object_type = template
         self.airloop_hvac_object_type = template
         self.airloop_hvac_unitary_fan_type_and_placement = template
-        self.cooling_coil_setpoint_control_type = template
-        self.heating_coil_setpoint_control_type = template
+        self.cooling_coil_setpoint_control_type_detailed = template
+        self.heating_coil_setpoint_control_type_detailed = template
         try:
-            self.setpoint_control_type = \
-                ''.join(['Cooling', self.cooling_coil_setpoint_control_type,
-                         'Heating', self.heating_coil_setpoint_control_type])\
+            self.setpoint_control_type_detailed = \
+                ''.join(['Cooling', self.cooling_coil_setpoint_control_type_detailed,
+                         'Heating', self.heating_coil_setpoint_control_type_detailed])\
                 .replace('BlowThrough', '', 1).replace('DrawThrough', '', 1)
         except AttributeError:
             self.setpoint_control_type = None
@@ -2003,7 +2002,7 @@ class ExpandSystem(ExpandObjects):
             preheat_coil_setpoint_schedule_name = getattr(self, 'preheat_coil_setpoint_schedule_name', 'None')
             preheat_coil_design_setpoint = getattr(self, 'preheat_coil_design_setpoint', None)
             if cooling_coil_setpoint_type in ['FixedSetpoint', 'None'] and cooling_setpoint_schedule_name == 'None':
-                if heating_coil_type != 'None' and heating_coil_setpoint_type == 'FixedSetpoint' and \
+                if heating_coil_type != 'None' and heating_coil_setpoint_type in ['FixedSetpoint', 'None'] and \
                         heating_setpoint_schedule_name == 'None' and heating_coil_setpoint_type == 'None':
                     if not heating_coil_design_setpoint or not cooling_coil_design_setpoint:
                         self.logger.warning('Warning: Expected cooling and heating design setpoints to be set but '

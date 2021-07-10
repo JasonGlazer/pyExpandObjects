@@ -1939,11 +1939,12 @@ Objects:
                     component_outlet_node_name:
                       Coil:Heating:Water: water_outlet_node_name
           Mappings: &CoilHeatingWaterCommonMappings
-            - heating_coil_capacity:
-                None:
-                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
-                Autosize:
-                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+            - Coil:Heating:Water.*:
+                heating_coil_capacity:
+                  None:
+                    performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                  Autosize:
+                    performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
         Base: &CoilHeatingWaterSuperObject
           Fields: &CoilHeatingWaterFields
             << : *CoilHeatingCommonFields
@@ -5475,12 +5476,13 @@ OptionTree:
                 Transitions: *AvailabilityManagerNightCycleCommonTransitions
               CycleOnControlZone: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
               CycleOnAnyZoneFansOnly: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
-              StayOff:
+              StayOff: &HVACTemplateSystemCommonTemplateObjectsBaseNightCycleControlStayOff
                 Objects:
                   - AvailabilityManager:NightCycle:
                       <<: *AvailabilityManagerNightCycle
                       control_type: StayOff
                 Transitions: *AvailabilityManagerNightCycleCommonTransitions
+              None: *HVACTemplateSystemCommonTemplateObjectsBaseNightCycleControlStayOff
             airloop_hvac_object_type: &SystemCommonTemplateObjectsAirLoopHVACObjectType
               Base:
                 Objects:
@@ -5624,7 +5626,7 @@ OptionTree:
               GasPreheatEnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
               SensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               EnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
-            cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType # created by descriptors
+            cooling_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType # created by descriptors
               ControlZoneBlowThrough:
                 Objects:
                   - NodeList:
@@ -5746,7 +5748,7 @@ OptionTree:
                   - SetpointManager:Warmest:
                       maximum_setpoint_temperature:
                         maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+1.0)'
-            heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
+            heating_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
               ControlZoneBlowThrough:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
@@ -5794,7 +5796,7 @@ OptionTree:
                       <<: *SetpointManagerScheduledHeating
                       schedule_name: 'HVACTemplate-Always{heating_coil_design_setpoint}'
           DedicatedOutdoorAir:
-            cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilSetpointControlType # created by descriptors
+            cooling_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilSetpointControlType # created by descriptors
               FixedSetpointBlowThrough: &SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointBlowThrough
                 Objects:
                   - SetpointManager:Scheduled:
@@ -5834,7 +5836,7 @@ OptionTree:
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetCooling
               ScheduledBlowThrough: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointBlowThrough
               ScheduledDrawThrough: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointDrawThrough
-            heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilSetpointControlType
+            heating_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilSetpointControlType
               FixedSetpointBlowThrough: &SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilControlTypeFixedSetpointBlowThrough
                 Objects:
                   - SetpointManager:Scheduled:
@@ -5935,8 +5937,8 @@ OptionTree:
           humidistat_type: *SystemCommonTemplateObjectsHumidistatType
           humidifier_type: *SystemCommonTemplateObjectsHumidifierType
           dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
-          cooling_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
-          heating_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
+          cooling_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
+          heating_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
           outside_air_equipment_type: *SystemCommonTemplateObjectsOutsideAirEquipmentType
       DedicatedOutdoorAir:
         BuildPath:
@@ -6061,8 +6063,8 @@ OptionTree:
                 - SetpointManager:Scheduled:
                     humidifier_setpoint_schedule_name: schedule_name
           dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
-          cooling_coil_setpoint_control_type: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilSetpointControlType
-          heating_coil_setpoint_control_type: *SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilSetpointControlType
+          cooling_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilSetpointControlType
+          heating_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilSetpointControlType
           outside_air_equipment_type_detailed:
             None:
               Objects:
@@ -6276,7 +6278,7 @@ OptionTree:
               - supply_fan_placement: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
           BaseObjects:
           TemplateObjects:
-            cooling_coil_setpoint_control_type:
+            cooling_coil_setpoint_control_type_detailed:
               <<: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
               OutdoorAirTemperatureResetDrawThrough:
                 Objects:
@@ -6306,9 +6308,9 @@ OptionTree:
                     Mappings: *FanCommonMappingsVariableVolume
           BaseObjects:
           TemplateObjects:
-            heating_coil_setpoint_control_type:
+            heating_coil_setpoint_control_type_detailed:
               <<: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
-              OutdoorAirTemperatureResetDrawThrough:
+              OutdoorAirTemperatureResetBlowThrough:
                 Objects:
                   - SetpointManager:OutdoorAirReset:
                       <<: *SetpointManagerOutdoorAirResetHeating
@@ -6347,7 +6349,7 @@ OptionTree:
             - Sizing:System: *SizingSystemVAV
           Transitions: *SystemCommonTransitions
         TemplateObjects:
-          setpoint_control_type: # set by descriptors in ExpandSystem
+          setpoint_control_type_detailed: # set by descriptors in ExpandSystem
             CoolingNoneHeatingNoneBlowThrough:
               Objects:
                 - SetpointManager:Scheduled:

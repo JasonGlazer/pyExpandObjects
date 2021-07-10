@@ -410,7 +410,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:FanCoil": {
                         "FanCoil 1": {
                             "zone_name": 'SPACE1-1',
-                            "baseboard_heating_type": 'HotWater'
+                            "baseboard_heating_type": 'HotWater',
+                            "template_thermostat_name": "All Zones"
                         }
                     }
                 },
@@ -435,7 +436,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                         "FanCoil 1": {
                             "zone_name": 'SPACE1-1',
                             "capacity_control_method": 'ConstantFanVariableFlow',
-                            'dedicated_outdoor_air_system_name': 'DOAS'
+                            'dedicated_outdoor_air_system_name': 'DOAS',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     'HVACTemplate:System:DedicatedOutdoorAir': {
@@ -461,7 +463,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "heating_limit": 'LimitFlowRate'
+                            "heating_limit": 'LimitFlowRate',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -485,7 +488,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "cooling_limit": 'LimitFlowRate'
+                            "cooling_limit": 'LimitFlowRate',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -509,7 +513,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "heating_limit": 'LimitCapacity'
+                            "heating_limit": 'LimitCapacity',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -533,7 +538,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "cooling_limit": 'LimitCapacity'
+                            "cooling_limit": 'LimitCapacity',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -557,7 +563,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "heating_limit": 'LimitFlowRateAndCapacity'
+                            "heating_limit": 'LimitFlowRateAndCapacity',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -582,7 +589,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "cooling_limit": 'LimitFlowRateAndCapacity'
+                            "cooling_limit": 'LimitFlowRateAndCapacity',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -604,11 +612,19 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             json.dump(
                 {
                     **minimum_objects_d,
+                    'HVACTemplate:Zone:VAV': {
+                        'VAV Zone 1': {
+                            'zone_name': 'SPACE1-1',
+                            'template_vav_system_name': 'VAV Sys 1',
+                            'template_thermostat_name': 'All Zones'
+                        }
+                    },
                     "HVACTemplate:System:VAV": {
                         "VAV Sys 1": {
                             'cooling_coil_design_setpoint': 12,
                             "heating_coil_type": 'Electric',
-                            'heating_coil_design_setpoint': 15
+                            'heating_coil_design_setpoint': 15,
+                            'supply_fan_delta_pressure': 600
                         }
                     }
                 },
@@ -632,7 +648,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:ConstantVolume": {
                         'CV Zone 1': {
                             'template_constant_volume_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:ConstantVolume": {
@@ -663,7 +680,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:VAV": {
                         'VAV Zone 1': {
                             'template_vav_system_name': 'VAV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:VAV": {
@@ -694,7 +712,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:ConstantVolume": {
                         'CV Zone 1': {
                             'template_constant_volume_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:ConstantVolume": {
@@ -722,6 +741,13 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             json.dump(
                 {
                     **minimum_objects_d,
+                    "HVACTemplate:Zone:VAV": {
+                        'VAV Zone 1': {
+                            'template_vav_system_name': 'VAV Sys 1',
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
+                        }
+                    },
                     "HVACTemplate:System:VAV": {
                         "VAV Sys 1": {
                             'heating_coil_design_setpoint': 15,
@@ -750,12 +776,14 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:ConstantVolume": {
                         'CV Zone 1': {
                             'template_constant_volume_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:ConstantVolume": {
                         "CV Sys 1": {
-                            'heating_coil_design_setpoint': 15,
+                            'heating_coil_design_setpoint': 10,
+                            'heating_coil_type': 'None',
                             'preheat_coil_type': 'Electric',
                             'preheat_coil_design_setpoint': 7
                         }
@@ -781,7 +809,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:VAV": {
                         'VAV Zone 1': {
                             'template_vav_system_name': 'VAV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:VAV": {
@@ -810,7 +839,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:Unitary': {
                         'Uniitary Zone 1': {
                             'template_unitary_system_name': 'Unitary Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:Unitary": {
@@ -840,7 +870,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:ConstantVolume': {
                         'CV Zone 1': {
                             'template_constant_volume_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:ConstantVolume": {
@@ -870,7 +901,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:ConstantVolume': {
                         'CV Zone 1': {
                             'template_constant_volume_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:ConstantVolume": {
@@ -900,7 +932,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:VRF': {
                         'VRF Zone 1': {
                             'template_vrf_system_name': 'VRF Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:VRF": {
@@ -930,7 +963,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:VRF': {
                         'VRF Zone 1': {
                             'template_vrf_system_name': 'VRF Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:VRF": {
@@ -959,7 +993,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:Unitary": {
                         'Unitary Zone 1': {
                             'template_unitary_system_name': 'Unitary Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:Unitary": {
@@ -1032,7 +1067,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:Unitary": {
                         'Unitary Zone 1': {
                             'template_unitary_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:UnitarySystem": {
@@ -1062,7 +1098,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:Unitary": {
                         'Unitary Zone 1': {
                             'template_unitary_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:UnitarySystem": {
@@ -1092,7 +1129,10 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:Unitary': {
                         'Zone 1': {
                             'template_unitary_system_name': 'CV Sys 2',
-                            'zone_name': 'SPACE1-1'}},
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
+                        }
+                    },
                     "HVACTemplate:System:UnitarySystem": {
                         "CV Sys 1": {
                             'dx_cooling_coil_gross_rated_total_capacity': 1000
@@ -1867,7 +1907,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                         "WAHP 1": {
                             'zone_name': 'SPACE1-1',
                             'cooling_coil_gross_rated_total_capacity': 'Autosize',
-                            'cooling_coil_gross_rated_sensible_heat_ratio': 0.65
+                            'cooling_coil_gross_rated_sensible_heat_ratio': 0.65,
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -1892,7 +1933,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                         "WAHP 1": {
                             'zone_name': 'SPACE1-1',
                             'cooling_coil_gross_rated_total_capacity': 1000,
-                            'cooling_coil_gross_rated_sensible_heat_ratio': 'Autosize'
+                            'cooling_coil_gross_rated_sensible_heat_ratio': 'Autosize',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -2010,7 +2052,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:PTAC": {
                         'PTAC 1': {
                             'dedicated_outdoor_air_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:DedicatedOutdoorAir": {
@@ -2041,7 +2084,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:PTAC": {
                         'PTAC 1': {
                             'dedicated_outdoor_air_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:DedicatedOutdoorAir": {

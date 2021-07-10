@@ -174,18 +174,6 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
             self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
         return
 
-    def test_exception_create_zonecontrol_thermostat_no_thermostat_reference(self):
-        ez = ExpandZone(template={
-            "HVACTemplate:Zone:VAV": {
-                "HVACTemplate:Zone:VAV 1": {
-                    "zone_name": "TEST ZONE",
-                }
-            }
-        })
-        with self.assertRaisesRegex(InvalidTemplateException, 'Zone object does not reference a thermostat'):
-            self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
-        return
-
     def test_zone_field_name_from_system_template_type(self):
         output = self.hvac_template._get_zone_template_field_from_system_type(
             template_type='HVACTemplate:System:ConstantVolume')

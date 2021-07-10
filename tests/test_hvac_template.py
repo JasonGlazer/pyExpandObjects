@@ -914,6 +914,8 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         (_, zone_template), = zt.items()
         (_, template_fields), = zone_template.items()
         self.hvac_template._apply_system_fields_to_zone_template(
+            zone_template_type='ZoneTemplateType',
+            template_name='ZoneTemplateName',
             template_fields=template_fields,
             system_templates=st)
         self.assertEqual(
