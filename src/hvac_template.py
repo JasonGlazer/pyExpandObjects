@@ -121,6 +121,14 @@ class HVACTemplate(EPJSON):
                                         .format(object_type, object_name, system_name))
                     # check fields
                     for object_name, object_fields in object_structure.items():
+                        # check for required info
+                        print('test22222222222')
+                        print(object_fields.get('template_thermostat_name', None))
+                        if not object_fields.get('template_thermostat_name', None):
+                            print('test')
+                            raise InvalidTemplateException(
+                                'Error: In {} ({}) template thermostat name not provided'
+                                .format(object_type, object_name))
                         # check baseboard settings
                         if object_fields.get('baseboard_heating_type', None) == 'HotWater' and (
                                 not epjson.get('HVACTemplate:Plant:HotWaterLoop') or not

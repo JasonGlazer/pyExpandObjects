@@ -7722,9 +7722,21 @@ OptionTree:
             - SetpointManager:Scheduled:DualSetpoint:
                 high_temperature_setpoint_schedule_name: high_setpoint_schedule_name
                 low_temperature_setpoint_schedule_name:  low_setpoint_schedule_name
+          Mappings:
+            - ^PlantLoop$:
+                fluid_type:
+                  EthyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
         TemplateObjects:
           supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
           demand_side_bypass_pipe: *PlantCommonPlantLoopDemandSideBypassPipe
+          fluid_type: *PlantCommonPlantLoopFluidType
           operation_scheme_type:
             None: &PlantMixedWaterLoopTemplateObjectsOperationSchemeTypeNone
               Objects:

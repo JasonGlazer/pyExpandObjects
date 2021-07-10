@@ -1,7 +1,11 @@
 from pathlib import Path
+import tempfile
+from argparse import Namespace
+import json
 
 from tests.simulations import BaseSimulationTest
 from src.epjson_handler import EPJSON
+from src.main import main
 
 test_dir = Path(__file__).parent.parent.parent
 
@@ -28,6 +32,28 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
         return
 
     def teardown(self):
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:test_blank")
+    def test_blank(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume'].get('HVACTemplate:Zone:ConstantVolume 1')
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'] = {
+            "template_thermostat_name": "All Zones",
+            # "template_constant_volume_system_name": "AHU 1 Spaces 1-4",
+            "zone_name": "SPACE1-1"
+        }
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                self.base_epjson,
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=False
+                )
+            )
+        self.assertRegex(output['outputPreProcessorMessage'], r'In HVACTemplate:Thermostat')
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:supply_air_maximum_flow_rate")
