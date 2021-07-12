@@ -1991,7 +1991,7 @@ class ExpandSystem(ExpandObjects):
             cooling_setpoint_schedule_name = getattr(self, 'cooling_coil_setpoint_schedule_name', 'None')
             cooling_coil_setpoint_type = getattr(self, 'cooling_coil_setpoint_reset_type', 'None')
             if cooling_coil_setpoint_type == 'None':
-                cooling_coil_setpoint_type =getattr(self, 'cooling_coil_setpoint_control_type', 'None')
+                cooling_coil_setpoint_type = getattr(self, 'cooling_coil_setpoint_control_type', 'None')
             heating_coil_type = getattr(self, 'heating_coil_type', 'None')
             heating_coil_design_setpoint = getattr(self, 'heating_coil_design_setpoint', None)
             heating_setpoint_schedule_name = getattr(self, 'heating_coil_setpoint_schedule_name', 'None')

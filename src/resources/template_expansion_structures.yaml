@@ -1198,6 +1198,8 @@ Objects:
             Transitions: &CoilCoolingDXSingleSpeedCommonTransitions
               - Coil:Cooling:DX.*:
                   cooling_coil_gross_rated_cooling_cop: gross_rated_cooling_cop
+                  cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
+                  cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
                   cooling_supply_air_flow_rate: rated_air_flow_rate
                   dx_cooling_coil_gross_rated_cop: gross_rated_cooling_cop
                   dx_cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
@@ -1212,8 +1214,8 @@ Objects:
               energy_input_ratio_function_of_temperature_curve_name: '{} Cool DX Coil EIR-FT'
               evaporative_condenser_effectiveness: 0
               gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop}'
-              gross_rated_sensible_heat_ratio: '{cooling_coil_gross_rated_sensible_heat_ratio}'
-              gross_rated_total_cooling_capacity: '{cooling_coil_gross_rated_total_capacity}'
+              gross_rated_sensible_heat_ratio: Autosize
+              gross_rated_total_cooling_capacity: Autosize
               maximum_cycling_rate: 0
               part_load_fraction_correlation_curve_name: '{} Cool DX Coil PLF'
               rated_air_flow_rate: Autosize
@@ -1826,6 +1828,7 @@ Objects:
               - Coil:Heating:DX:SingleSpeed:
                   heating_supply_air_flow_rate: rated_air_flow_rate
                   heat_pump_heating_coil_availability_schedule_name: availability_schedule_name
+                  heat_pump_heating_coil_gross_rated_cop: gross_rated_heating_cop
                   heat_pump_heating_coil_rated_cop: gross_rated_heating_cop # todo_eo: could be combined into one variable
                   heat_pump_heating_coil_gross_rated_capacity: gross_rated_heating_capacity
           Base: &CoilHeatingDXSingleSpeedSuperObject
@@ -1837,8 +1840,8 @@ Objects:
               defrost_time_period_fraction: '{heat_pump_defrost_time_period_fraction}'
               energy_input_ratio_function_of_flow_fraction_curve_name: '{} Heating Coil EIR-FF'
               energy_input_ratio_function_of_temperature_curve_name: '{} Heating Coil EIR-FT'
-              gross_rated_heating_capacity: '{heating_coil_gross_rated_capacity}'
-              gross_rated_heating_cop: '{heat_pump_heating_coil_gross_rated_cop}'
+              gross_rated_heating_capacity: Autosize
+              gross_rated_heating_cop: 2.75
               heating_capacity_function_of_flow_fraction_curve_name: '{} Heating Coil Cap-FF'
               heating_capacity_function_of_temperature_curve_name: '{} Heating Coil Cap-FT'
               maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation: 0 # set by legacy, not default
@@ -2348,6 +2351,7 @@ Objects:
       Transitions:
         SystemModel: &FanCommonTransitionsSystemModel
           - Fan:.*:
+              supply_air_maximum_flow_rate: design_maximum_air_flow_rate
               supply_fan_delta_pressure: design_pressure_rise
               supply_fan_motor_efficiency: motor_efficiency
               supply_fan_total_efficiency: fan_total_efficiency
@@ -2406,18 +2410,20 @@ Objects:
       Base:
         Fields: &FanSystemModelFields
           <<: *FanFields
-          design_maximum_air_flow_rate: '{supply_air_maximum_flow_rate}' # required by schema
+          design_maximum_air_flow_rate: Autosize
+          design_pressure_rise: 75
           design_power_sizing_method: TotalEfficiencyAndPressure # set by legacy, not reachable by template, not default
           electric_power_minimum_flow_rate_fraction: 0 # set by legacy, not reachable by template, not default
+          fan_total_efficiency: 0.7
         Connectors: *FanConnectors
     VariableVolume:
       Base: &FanVariableVolumeSuperObject
         Fields: &FanVariableVolumeFields
           << : *FanFields
+          pressure_rise: 1000 # set by HVACTemplate:System:VAV template
           maximum_flow_rate: Autosize
         Connectors: &FanVariableVolumeConnectors
           << : *FanConnectors
-          pressure_rise: 1000 # set by HVACTemplate:System:VAV template
   HeaderedPumps:
     Common:
       Objects:
@@ -2933,7 +2939,7 @@ Objects:
           heating_maximum_air_flow_fraction: 0 # set by legacy, no default
           zone_cooling_design_supply_air_humidity_ratio: 0.008 # set by legacy, not reachable from template, no default, required by schema
           zone_cooling_design_supply_air_temperature_input_method: '{zone_cooling_design_supply_air_temperature_input_method}'
-          zone_cooling_design_supply_air_temperature: 12.8 # template default, no object default
+          zone_cooling_design_supply_air_temperature: 14 # template default, no object default
           zone_cooling_design_supply_air_temperature_difference: 11.11 # template default, no object default
           zone_heating_design_supply_air_humidity_ratio: 0.008 # set by legacy, not reachable from template, no default, required by schema
           zone_heating_design_supply_air_temperature: 50.0 # template default, no object default
@@ -4744,8 +4750,6 @@ OptionTree:
           BaseObjects:
             Objects:
               - *ZoneCommonBuildPathBaseObjectsObjects
-            Transitions:
-              - *FanCommonTransitionsSystemModel
           Actions:
             - heat_pump_heating_coil_type:
                 Coil:Heating:WaterToAirHeatPump:EquationFit:

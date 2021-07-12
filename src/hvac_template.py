@@ -72,6 +72,39 @@ class HVACTemplate(EPJSON):
                               'ConstantVolume|BaseboardHeat|FanCoil|IdealLoadsAirSystem|PTAC|PTHP|WaterToAirHeatPump|'
                               'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|DualDuct)$',
                               object_type):
+                    zone_default_map = {
+                        'HVACTemplate:Zone:FanCoil': {
+                            'cooling_coil_type': 'ChilledWater',
+                            'heating_coil_type': 'HotWater',
+                            'outdoor_air_method': 'Flow/Person',
+                            'outdoor_air_flow_rate_per_person': 0.00944
+                        },
+                        'HVACTemplate:Zone:PTAC': {
+                            'cooling_coil_type': 'SingleSpeedDX',
+                            'heating_coil_type': 'Electric'
+                        },
+                        'HVACTemplate:Zone:PTHP': {
+                            'cooling_coil_type': 'SingleSpeedDX',
+                            'heat_pump_heating_coil_type': 'SingleSpeedDXHeatPump',
+                            'supplemental_heating_coil_type': 'Electric'
+                        },
+                        'HVACTemplate:Zone:WaterToAirHeatPump': {
+                            'cooling_coil_type': 'Coil:Cooling:WaterToAirHeatPump:EquationFit',
+                            'cooling_coil_gross_rated_cop': 3.5,
+                            # todo_eo: template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched
+                            'supply_fan_placement': 'DrawThrough',
+                            'heat_pump_heating_coil_type': 'Coil:Heating:WaterToAirHeatPump:EquationFit',
+                            'heat_pump_heating_coil_gross_rated_cop': 4.2,
+                            'supplemental_heating_coil_type': 'Electric'
+                        }
+                    }
+                    for object_name, object_fields in object_structure.items():
+                        # set defaults
+                        selected_default_map = zone_default_map.get(object_type)
+                        if selected_default_map:
+                            for field, default_value in selected_default_map.items():
+                                if not object_fields.get(field):
+                                    object_fields[field] = default_value
                     # set a mapping of zone template type to look up parent system
                     zone_template_map = {
                         ('HVACTemplate:Zone:ConstantVolume', ):
@@ -216,20 +249,29 @@ class HVACTemplate(EPJSON):
                               'ConstantVolume|DualDuct|DedicatedOutdoorAir'
                               ')$', object_type):
                     # check for individual template issues
-                    default_map = {
+                    system_default_map = {
                         'HVACTemplate:System:ConstantVolume': {
+                            'cooling_coil_type': 'ChilledWater',
+                            'cooling_coil_design_setpoint_temperature': 12.8,
+                            'economizer_type': 'NoEconomizer',
+                            'heating_coil_type': 'HotWater',
+                            'heating_coil_design_setpoint': 10,
+                            'supply_fan_placement': 'DrawThrough',
+                        },
+                        'HVACTemplate:System:DedicatedOutdoorAir': {
+                            'air_outlet_type': 'DirectIntoZone',
                             'cooling_coil_type': 'ChilledWater',
                             'heating_coil_type': 'HotWater',
                             'supply_fan_placement': 'DrawThrough',
                             'cooling_coil_design_setpoint_temperature': 12.8,
-                            'heating_coil_design_setpoint': 10
+                            'heating_coil_design_setpoint': 12.2
                         }
                     }
                     for object_name, object_fields in object_structure.items():
                         # set defaults
-                        system_default_map = default_map.get(object_type)
-                        if system_default_map:
-                            for field, default_value in system_default_map.items():
+                        selected_default_map = system_default_map.get(object_type)
+                        if selected_default_map:
+                            for field, default_value in selected_default_map.items():
                                 if not object_fields.get(field):
                                     object_fields[field] = default_value
                         try:
@@ -387,6 +429,26 @@ class HVACTemplate(EPJSON):
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
                 elif re.match('^HVACTemplate:Plant:(Chiller|Tower|Boiler)(:ObjectReference)*$', object_type):
+                    boiler_default_map = {
+                        'HVACTemplate:Plant:Boiler': {
+                            'efficiency': 0.8
+                        }
+                    }
+                    for object_name, object_fields in object_structure.items():
+                        # set defaults
+                        selected_default_map = boiler_default_map.get(object_type)
+                        if selected_default_map:
+                            for field, default_value in selected_default_map.items():
+                                if not object_fields.get(field):
+                                    object_fields[field] = default_value
+                    # Check boiler inputs
+                    if object_type == 'HVACTemplate:Plant:Boiler':
+                        for object_name, object_fields in object_structure.items():
+                            if not object_fields.get('fuel_type') and \
+                                    object_fields.get('boiler_type') != 'DistrictHotWater':
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({}) fuel_type must be specified when boiler_type is not '
+                                    'DistrictHotWater'.format(object_type, object_name))
                     # Check tower inputs
                     if object_type == 'HVACTemplate:Plant:Tower':
                         for object_name, object_fields in object_structure.items():

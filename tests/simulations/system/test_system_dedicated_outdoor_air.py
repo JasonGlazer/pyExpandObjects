@@ -142,6 +142,29 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:test_minimum_inputs")
+    def test_minimum_inputs(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                **chilled_water_objects,
+                **hot_water_objects
+            }
+        )
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir'].pop('DOAS')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:System:DedicatedOutdoorAir': {
+                    'DOAS': {
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:system_availability_schedule_name")
     def test_system_availability_schedule_name(self):
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS']['system_availability_schedule_name'] = 'LIGHTS-1'
