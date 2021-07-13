@@ -455,7 +455,19 @@ class HVACTemplate(EPJSON):
                     boiler_default_map = {
                         'HVACTemplate:Plant:Boiler': {
                             'efficiency': 0.8
-                        }
+                        },
+                        'HVACTemplate:Plant:Boiler:ObjectReference': {
+                            'boiler_object_type': 'Boiler:HotWater'
+                        },
+                        'HVACTemplate:Plant:Chiller': {
+                            'condenser_type': 'WaterCooled'
+                        },
+                        'HVACTemplate:Plant:Chiller:ObjectReference': {
+                            'chiller_object_type': 'Chiller:Electric:EIR'
+                        },
+                        'HVACTemplate:Plant:Tower:ObjectReference': {
+                            'cooling_tower_object_type': 'CoolingTower:SingleSpeed'
+                        },
                     }
                     for object_name, object_fields in object_structure.items():
                         # set defaults
@@ -1020,7 +1032,7 @@ class HVACTemplate(EPJSON):
         # create condenser water loop for water cooled condensers
         if getattr(plant_equipment_class_object, 'template_type', None).lower() in \
                 ['hvactemplate:plant:chiller', 'hvactemplate:plant:chiller:objectreference'] \
-                and getattr(plant_equipment_class_object, 'condenser_type', 'None').lower() == 'watercooled' \
+                and getattr(plant_equipment_class_object, 'condenser_type', 'WaterCooled').lower() == 'watercooled' \
                 and 'hvactemplate:plant:condenserwaterloop' not in plant_loops:
             # try to get the chilled water loop attributes to transition to condenser water
             chw_loop = [
@@ -1147,7 +1159,7 @@ class HVACTemplate(EPJSON):
             # todo_eo: find a better way to separate the branches instead of searching for chw or cnd in the branch
             #  names.  It may be unreliable with future user inputs.
             if pe.template_type in ['HVACTemplate:Plant:Chiller', 'HVACTemplate:Plant:Chiller:ObjectReference'] \
-                    and getattr(pe, 'condenser_type', None) == 'WaterCooled':
+                    and getattr(pe, 'condenser_type', 'WaterCooled') == 'WaterCooled':
                 for branch_name, branch_structure in branch_objects.items():
                     if 'chilledwater' in plant_loop_class_object.template_type.lower() and 'chw' in branch_name.lower():
                         branch_dictionary.update({branch_name: branch_objects[branch_name]})

@@ -19,6 +19,26 @@ class TestSimulationsPlantEquipmentTower(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Tower:test_minimum_inputs")
+    def test_minimum_inputs (self):
+        # todo_eo: legacy fails with IDD message if 'priority' not set, but is not required in template.
+        # todo_eo: priority must be a string or it silently fails in legacy.
+        self.base_epjson['HVACTemplate:Plant:Tower'].pop('Main Tower')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Plant:Tower': {
+                    'Main Tower': {
+                        "tower_type": "SingleSpeed",
+                        'priority': '1'
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Tower:tower_type_single_speed")
     def test_tower_type_single_speed(self):
         self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['tower_type'] = 'SingleSpeed'
