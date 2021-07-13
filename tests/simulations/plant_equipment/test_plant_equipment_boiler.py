@@ -28,7 +28,7 @@ class TestSimulationsPlantEquipmentBoiler(BaseSimulationTest):
             object_dictionary={
                 'HVACTemplate:Plant:Boiler': {
                     'Main Boiler': {
-                        "boiler_type": "HotWaterBoiler",
+                        'boiler_type': 'HotWaterBoiler',
                         'fuel_type': 'NaturalGas',
                         'priority': '1'
                     }

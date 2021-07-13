@@ -2108,26 +2108,3 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
         self.assertRegex(output['outputPreProcessorMessage'], r'there is heat recovery with no heating coil\. The heat '
                                                               r'recovery heating mode will be controlled')
         return
-
-    def test_boiler_no_fuel_type(self):
-        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
-            json.dump(
-                {
-                    **minimum_objects_d,
-                    **chilled_water_objects,
-                    "HVACTemplate:Plant:Boiler": {
-                        "Main Boiler": {
-                            'boiler_type': 'HotWaterBoiler'
-                        }
-                    }
-                },
-                temp_file)
-            temp_file.seek(0)
-            output = main(
-                Namespace(
-                    file=temp_file.name,
-                    no_schema=False
-                )
-            )
-        self.assertRegex(output['outputPreProcessorMessage'], r'fuel_type must be specified when boiler_type is not')
-        return

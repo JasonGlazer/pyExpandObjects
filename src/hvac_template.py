@@ -454,16 +454,20 @@ class HVACTemplate(EPJSON):
                 elif re.match('^HVACTemplate:Plant:(Chiller|Tower|Boiler)(:ObjectReference)*$', object_type):
                     boiler_default_map = {
                         'HVACTemplate:Plant:Boiler': {
+                            'fuel_type': 'NaturalGas',
+                            'priority': '1',
                             'efficiency': 0.8
                         },
                         'HVACTemplate:Plant:Boiler:ObjectReference': {
-                            'boiler_object_type': 'Boiler:HotWater'
+                            'boiler_object_type': 'Boiler:HotWater',
+                            'priority': '1'
                         },
                         'HVACTemplate:Plant:Chiller': {
                             'condenser_type': 'WaterCooled'
                         },
                         'HVACTemplate:Plant:Chiller:ObjectReference': {
-                            'chiller_object_type': 'Chiller:Electric:EIR'
+                            'chiller_object_type': 'Chiller:Electric:EIR',
+                            'priority': '1'
                         },
                         'HVACTemplate:Plant:Tower:ObjectReference': {
                             'cooling_tower_object_type': 'CoolingTower:SingleSpeed'

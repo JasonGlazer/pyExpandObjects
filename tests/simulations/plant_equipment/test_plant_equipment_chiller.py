@@ -28,7 +28,7 @@ class TestSimulationsPlantEquipmentChiller(BaseSimulationTest):
             object_dictionary={
                 'HVACTemplate:Plant:Chiller': {
                     'Main Chiller': {
-                        "chiller_type": "ElectricReciprocatingChiller",
+                        'chiller_type': 'ElectricReciprocatingChiller',
                         'nominal_cop': 6.1,
                         'priority': '1'
                     }
