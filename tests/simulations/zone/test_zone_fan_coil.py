@@ -74,30 +74,6 @@ class TestSimulationsZoneFanCoil(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:supply_air_maximum_flow_rate")
-    def test_supply_air_maximum_flow_rate(self):
-        # todo_eo: Fan:SystemModel design_maximum_air_flow_rate is not set in legacy with these
-        #  inputs which is causing the discrepancy.
-        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['supply_air_maximum_flow_rate'] = 0.1
-        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertEqual(
-            0.1,
-            epjson_output['Fan:SystemModel']['SPACE1-1 Supply Fan']['design_maximum_air_flow_rate'])
-        return
-
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:zone_heating_sizing_factor")
-    def test_zone_heating_sizing_factor(self):
-        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['zone_heating_sizing_factor'] = 1.2
-        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertEqual(
-            1.2,
-            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_heating_sizing_factor'])
-        return
-
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:test_minimum_inputs")
     def test_minimum_inputs(self):
         self.base_epjson['HVACTemplate:Zone:FanCoil'].pop('HVACTemplate:Zone:FanCoil 1')
@@ -134,6 +110,30 @@ class TestSimulationsZoneFanCoil(BaseSimulationTest):
         )
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:supply_air_maximum_flow_rate")
+    def test_supply_air_maximum_flow_rate(self):
+        # todo_eo: Fan:SystemModel design_maximum_air_flow_rate is not set in legacy with these
+        #  inputs which is causing the discrepancy.
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['supply_air_maximum_flow_rate'] = 0.1
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.1,
+            epjson_output['Fan:SystemModel']['SPACE1-1 Supply Fan']['design_maximum_air_flow_rate'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:zone_heating_sizing_factor")
+    def test_zone_heating_sizing_factor(self):
+        self.base_epjson['HVACTemplate:Zone:FanCoil']['HVACTemplate:Zone:FanCoil 1']['zone_heating_sizing_factor'] = 1.2
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            1.2,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['zone_heating_sizing_factor'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:zone_cooling_sizing_factor")

@@ -158,7 +158,26 @@ class TestSimulationsPlantEquipmentTowerObjectReference(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Boiler:ObjectReference:priority")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Tower:ObjectReference:test_minimum_inputs")
+    def test_minimum_inputs(self):
+        # todo_eo: legacy fails with IDD message without 'priority', but it is not a required field
+        self.base_epjson['HVACTemplate:Plant:Tower:ObjectReference'].pop('Main Tower Connection')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Plant:Tower:ObjectReference': {
+                    'Main Tower Connection': {
+                        'cooling_tower_name': 'Main Tower',
+                        'priority': 1
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Tower:ObjectReference:priority")
     def test_priority(self):
         # todo_eo: discuss with team that priority requires a string and not integer.
         self.base_epjson['HVACTemplate:Plant:Tower:ObjectReference']['Main Tower Connection']['priority'] = 2
@@ -208,7 +227,7 @@ class TestSimulationsPlantEquipmentTowerObjectReference(BaseSimulationTest):
                 'equipment_name'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Boiler:ObjectReference:"
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Tower:ObjectReference:"
                                               "template_plant_loop_type")
     def test_template_plant_loop_type(self):
         # todo_eo: legacy fails if template_plant_loop_type not explicity set
