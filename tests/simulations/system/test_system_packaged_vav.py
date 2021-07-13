@@ -31,37 +31,30 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_maximum_flow_rate")
     def test_supply_fan_maximum_flow_rate(self):
-        # todo_eo: AirLoopHVAC not set which is causing discrepancy
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_maximum_flow_rate'] = 2
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             2.0,
-            epjson_output['Fan:VariableVolume']['DXVAV Sys 1']['maximum_flow_rate'])
-        self.assertEqual(
-            2.0,
-            epjson_output['AirLoopHVAC']['DXVAV Sys 1']['design_supply_air_flow_rate'])
-        self.assertEqual(
-            2.0,
             epjson_output['Sizing:System']['DXVAV Sys 1 Sizing System']['cooling_supply_air_flow_rate'])
         self.assertEqual(
-            2.0,
-            epjson_output['Sizing:System']['DXVAV Sys 1 Sizing System']['design_outdoor_supply_air_flow_rate'])
+            'Flow/System',
+            epjson_output['Sizing:System']['DXVAV Sys 1 Sizing System']['cooling_supply_air_flow_rate_method'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_minimum_flow_rate")
     def test_supply_fan_minimum_flow_rate(self):
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_minimum_flow_rate'] = 0.2
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_minimum_flow_rate'] = 0.25
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            0.2,
+            0.25,
             epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Supply Fan']['fan_power_minimum_air_flow_rate'])
         self.assertEqual(
             'FixedFlowRate',
-            epjson_output['AirLoopHVAC']['DXVAV Sys 1']['fan_power_minimum_flow_rate_input_method'])
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Supply Fan']['fan_power_minimum_flow_rate_input_method'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement"

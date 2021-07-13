@@ -2327,16 +2327,9 @@ Objects:
                   fan_power_coefficient_5: 0
                   fan_power_minimum_flow_rate_input_method: Fraction
                   fan_power_minimum_flow_fraction: 0
-        VariableVolum:
+        VariableVolume:
           CommonMappings: &FanCommonMappingsVariableVolume
             - Fan:.*:
-                supply_fan_minimum_flow_rate:
-                  None:
-                    fan_power_minimum_flow_fraction: 0.25
-                  Autosize:
-                    fan_power_minimum_flow_fraction: 0.25
-                  AnyNumber:
-                    fan_power_minimum_flow_rate_input_method: FixedFlowRate
                 supply_fan_part_load_power_coefficients:
                   None: &FanVariableVolumeSupplyPLRCoefficients
                     fan_power_coefficient_1: 0.35071223
@@ -2350,6 +2343,13 @@ Objects:
                   InletVaneDampers:
                     <<: *FanVariableVolumeSupplyPLRCoefficients
                     fan_power_minimum_flow_fraction: 0
+                supply_fan_minimum_flow_rate:
+                  None:
+                    fan_power_minimum_flow_fraction: 0.25
+                  Autosize:
+                    fan_power_minimum_flow_fraction: 0.25
+                  AnyNumber:
+                    fan_power_minimum_flow_rate_input_method: FixedFlowRate
       Transitions:
         SystemModel: &FanCommonTransitionsSystemModel
           - Fan:.*:
@@ -2994,6 +2994,7 @@ Objects:
               Base: &SizingSystemVAV
                 Fields:
                   <<: *SizingSystem
+                  preheat_design_temperature: 2.0
                   central_heating_maximum_system_air_flow_ratio: 0.3 # set by legacy, not default, required by schema
         Transitions:
           Base: &SizingSystemCommonTransitions
@@ -3008,6 +3009,7 @@ Objects:
                 preheat_coil_design_setpoint: preheat_design_temperature
                 supply_fan_maximum_flow_rate:
                   cooling_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
+          ConstantVolume: &SizingSystemCommonTransitionsConstantVolume
             - Sizing:System:
                 supply_fan_maximum_flow_rate:
                   heating_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
@@ -5937,6 +5939,7 @@ OptionTree:
           Transitions:
             - *SystemCommonTransitions
             - *SizingSystemCommonTransitions
+            - *SizingSystemCommonTransitionsConstantVolume
         TemplateObjects:
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
@@ -6049,6 +6052,7 @@ OptionTree:
           Transitions:
             - *SystemCommonTransitions
             - *SizingSystemCommonTransitions
+            - *SizingSystemCommonTransitionsConstantVolume
             - *SizingSystemCommonTransitionsDedicatedOutdoorAir
             - *AvailabilityManagerScheduledCommonTransitions
         TemplateObjects:
@@ -6353,7 +6357,18 @@ OptionTree:
             - Controller:OutdoorAir: *ControllerOutdoorAir
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Sizing:System: *SizingSystemVAV
-          Transitions: *SystemCommonTransitions
+          Transitions:
+            - *SystemCommonTransitions
+            - *SizingSystemCommonTransitions
+          Mappings:
+            - Coil:Heating:Fuel:
+                heating_coil_type:
+                  Gas:
+                    fuel_type: NaturalGas
+            - Sizing:System:
+                supply_fan_maximum_flow_rate:
+                  AnyNumber:
+                    cooling_supply_air_flow_rate_method: 'Flow/System'
         TemplateObjects:
           setpoint_control_type_detailed: # set by descriptors in ExpandSystem
             CoolingNoneHeatingNoneBlowThrough:
@@ -6412,7 +6427,24 @@ OptionTree:
                           ^OutdoorAir:Mixer: mixed_air_node_name
                 - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
-            CoolingWarmestTemperatureFirstHeatingNoneDrawThrough: *SystemCommonPackagedVAVTemplateObjectsSetpointControlTypeCoolingWarmestHeatingNoneDrawThrough
+            CoolingWarmestTemperatureFirstHeatingNoneDrawThrough:
+              Objects:
+                - SetpointManager:WarmestTemperatureFlow: *SetpointManagerWarmestTemperatureFlow
+                - SetpointManager:MixedAir:
+                    <<: *SetpointManagerMixedAirCoolingSystemNodelist
+                    reference_setpoint_node_name:
+                      BuildPathReference:
+                        Location: -1
+                        ValueLocation: Outlet
+                - NodeList:
+                    name: *SystemMixedAirNodelistName
+                    nodes:
+                      - node_name:
+                          ^Coil:Cooling:.*: air_outlet_node_name
+                      - node_name:
+                          ^OutdoorAir:Mixer: mixed_air_node_name
+                - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
+                - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
             CoolingWarmestHeatingNoneBlowThrough:
               Objects:
                 - SetpointManager:Warmest:
@@ -6541,6 +6573,7 @@ OptionTree:
           Transitions:
             - *SystemCommonTransitions
             - *SizingSystemCommonTransitions
+            - *SizingSystemCommonTransitionsConstantVolume
         TemplateObjects: *SystemCommonTemplateObjects
       UnitaryHeatPump:
         AirToAir:
@@ -6567,6 +6600,7 @@ OptionTree:
               - *SystemUnitaryBaseObjects
             Transitions:
               - *SizingSystemCommonTransitions
+              - *SizingSystemCommonTransitionsConstantVolume
           TemplateObjects: *SystemCommonTemplateObjects
       UnitarySystem:
         BuildPath:
@@ -6672,6 +6706,7 @@ OptionTree:
           Transitions:
             - *AvailabilityManagerScheduledCommonTransitions
             - *SizingSystemCommonTransitions
+            - *SizingSystemCommonTransitionsConstantVolume
         TemplateObjects: *SystemCommonTemplateObjects
       VAV:
         BuildPath:
