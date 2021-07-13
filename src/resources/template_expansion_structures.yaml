@@ -889,7 +889,7 @@ Objects:
       Common:
         Transitions: &BoilerHotWaterCommonTransitions
           - Boiler:.*:
-              capacity: nominal_thermal_capacity
+              capacity: nominal_capacity
               maximum_part_load_ratio: maximum_part_load_ratio
         Mappings: &BoilerHotWaterCommonMappings
           - Boiler.*:

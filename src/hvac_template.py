@@ -386,6 +386,29 @@ class HVACTemplate(EPJSON):
                 elif re.match('^HVACTemplate:Plant:(ChilledWater|HotWater|MixedWater)Loop$', object_type):
                     if len(object_structure.keys()) > 1:
                         self.logger.warning('Warning: Only one {} allowed per file.'.format(object_type))
+                    plant_loop_default_map = {
+                        'HVACTemplate:Plant:ChilledWaterLoop': {
+                            'chilled_water_design_setpoint': 7.22,
+                            'condenser_water_design_setpoint': 29.4,
+                            'chilled_water_pump_configuration': 'ConstantPrimaryNoSecondary'
+                        },
+                        'HVACTemplate:Plant:HotWaterLoop': {
+                            'hot_water_design_setpoint': 82,
+                            'hot_water_pump_configuration': 'ConstantFlow'
+                        },
+                        'HVACTemplate:Plant:MixedWaterLoop': {
+                            'high_temperature_design_setpoint': 33,
+                            'low_temperature_design_setpoint': 20,
+                            'water_pump_configuration': 'ConstantFlow'
+                        }
+                    }
+                    for object_name, object_fields in object_structure.items():
+                        # set defaults
+                        selected_default_map = plant_loop_default_map.get(object_type)
+                        if selected_default_map:
+                            for field, default_value in selected_default_map.items():
+                                if not object_fields.get(field):
+                                    object_fields[field] = default_value
                     if object_type == 'HVACTemplate:Plant:HotWaterLoop':
                         loop_system_list = [
                             'HVACTemplate:System:VAV', 'HVACTemplate:Zone:FanCoil', 'HVACTemplate:Zone:Unitary',

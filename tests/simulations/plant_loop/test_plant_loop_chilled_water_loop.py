@@ -57,6 +57,22 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:ChilledWaterLoop:test_minimum_inputs")
+    def test_minimum_inputs(self):
+        # todo_eo: legacy generates odd warning
+        self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop'].pop('Chilled Water Loop')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Plant:ChilledWaterLoop': {
+                    'Chilled Water Loop': {}
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     # todo_eo: test pump_schedule name when secondary pumps are active, do they have schedules applied as well?
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:pump_schedule_name")
