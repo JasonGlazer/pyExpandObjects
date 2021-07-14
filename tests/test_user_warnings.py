@@ -111,7 +111,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Invalid choice in HVACTemplate:Zone:FanCoil .* '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Invalid choice in HVACTemplate:Zone:FanCoil .* '
                                                               r'is a required property')
         return
 
@@ -155,7 +155,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Input file does not meet schema format')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Input file does not meet schema format')
         return
 
     def test_two_hot_water_loop_templates_no_schema(self):
@@ -198,7 +198,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=True
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Only one HVACTemplate:Plant:HotWaterLoop.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Only one HVACTemplate:Plant:HotWaterLoop.*')
         return
 
     def test_two_chilled_water_loop_templates_with_schema(self):
@@ -251,7 +251,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Input file does not meet schema format')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Input file does not meet schema format')
         return
 
     def test_two_chilled_water_loop_templates_no_schema(self):
@@ -304,8 +304,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=True
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Only one HVACTemplate:Plant:ChilledWaterLoop.*')
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*You must specify at least one.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Only one HVACTemplate:Plant:ChilledWaterLoop.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*You must specify at least one.*')
         return
 
     def test_two_mixed_water_loop_templates_with_schema(self):
@@ -340,7 +340,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Input file does not meet schema format')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Input file does not meet schema format')
         return
 
     def test_two_mixed_water_loop_templates_no_schema(self):
@@ -375,8 +375,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=True
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Only one HVACTemplate:Plant:MixedWaterLoop.*')
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*You must specify at least one.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Only one HVACTemplate:Plant:MixedWaterLoop.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*You must specify at least one.*')
         return
 
     def test_zone_equipment_no_system(self):
@@ -399,7 +399,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Could not find air handler name referenced')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Could not find air handler name referenced')
         return
 
     def test_baseboard_hot_water_no_supply_equipment(self):
@@ -423,7 +423,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*HVACTemplate:Plant:HotWaterLoop and a '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*HVACTemplate:Plant:HotWaterLoop and a '
                                                               r'HVACTemplate:Plant:Boiler are needed.*')
         return
 
@@ -452,7 +452,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Capacity Control Method is')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Capacity Control Method is')
         return
 
     def test_ideal_load_flow_heat_limit_flow(self):
@@ -476,7 +476,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitFlowRate but the '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Limit field is LimitFlowRate but the '
                                                               r'Maximum Heating Air Flow Rate field')
         return
 
@@ -501,7 +501,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitFlowRate but the '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Limit field is LimitFlowRate but the '
                                                               r'Maximum Cooling Air Flow Rate field')
         return
 
@@ -526,7 +526,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitCapacity but the '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Limit field is LimitCapacity but the '
                                                               r'Maximum Sensible Heating Capacity field')
         return
 
@@ -551,7 +551,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Limit field is LimitCapacity but the '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Cooling Limit field is LimitCapacity but the '
                                                               r'Maximum Total Cooling Capacity field')
         return
 
@@ -576,7 +576,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitFlowRateAndCapacity but '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Limit field is LimitFlowRateAndCapacity but '
                                                               r'the Maximum Heating Air Flow Rate field is blank and '
                                                               r'the Maximum Sensible Heating Capacity field is blank.')
         return
@@ -602,7 +602,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Limit field is LimitFlowRateAndCapacity but '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Cooling Limit field is LimitFlowRateAndCapacity but '
                                                               r'the Maximum Cooling Air Flow Rate field is blank and '
                                                               r'the Maximum Total Cooling Capacity field is blank.')
         return
@@ -636,7 +636,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Coil Design Setpoint is greater than '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Coil Design Setpoint is greater than '
                                                               r'the Cooling Coil Design Setpoint.')
         return
 
@@ -668,7 +668,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Coil Design Setpoint is greater than '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Coil Design Setpoint is greater than '
                                                               r'the Cooling Coil Design Setpoint.')
         return
 
@@ -700,7 +700,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Preheat Coil Design Setpoint is greater than '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Preheat Coil Design Setpoint is greater than '
                                                               r'the Cooling Coil Design Setpoint')
         return
 
@@ -732,7 +732,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Preheat Coil Design Setpoint is greater than '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Preheat Coil Design Setpoint is greater than '
                                                               r'the Cooling Coil Design Setpoint')
         return
 
@@ -764,7 +764,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Coil Design Setpoint is greater than the '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Coil Design Setpoint is greater than the '
                                                               r'Preheat Coil Design Setpoint,')
         return
 
@@ -797,7 +797,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Coil Design Setpoint is greater than the '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Coil Design Setpoint is greater than the '
                                                               r'Preheat Coil Design Setpoint,')
         return
 
@@ -828,7 +828,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'there is no Heating Coil and no Preheat Coil.')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'there is no Heating Coil and no Preheat Coil.')
         return
 
     def test_unitary_control_zone_no_template(self):
@@ -858,7 +858,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'for the field control_zone_or_thermostat_location_name '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'for the field control_zone_or_thermostat_location_name '
                                                               r'could not find a matching')
         return
 
@@ -889,7 +889,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'for the field cooling_coil_control_zone_name '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'for the field cooling_coil_control_zone_name '
                                                               r'could not find a matching')
         return
 
@@ -920,7 +920,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'for the field heating_coil_control_zone_name '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'for the field heating_coil_control_zone_name '
                                                               r'could not find a matching')
         return
 
@@ -951,7 +951,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'field Zone Name for Master Thermostat Location could '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'field Zone Name for Master Thermostat Location could '
                                                               r'not find a matching')
         return
 
@@ -981,7 +981,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Priority Control Type = Scheduled, but the Thermostat '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Priority Control Type = Scheduled, but the Thermostat '
                                                               r'Priority Schedule Name')
         return
 
@@ -1012,7 +1012,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the field control_zone_or_thermostat_location_name '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the field control_zone_or_thermostat_location_name '
                                                               r'could not find a matching HVACTemplate:Zone:Unitary')
         return
 
@@ -1055,7 +1055,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'A zone name must be specified when Night Cycle Control')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'A zone name must be specified when Night Cycle Control')
         return
 
     def test_unitary_system_dx_cooling_coil_sensible_heat_ratio(self):
@@ -1085,7 +1085,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Coil Rated Capacity is autosized, so the '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Cooling Coil Rated Capacity is autosized, so the '
                                                               r'Cooling Coil Gross Rated Sensible Heat Ratio')
         return
 
@@ -1116,7 +1116,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'he Cooling Coil Rated Capacity will not be used when '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'he Cooling Coil Rated Capacity will not be used when '
                                                               r'the Cooling Coil Gross Rated ')
         return
 
@@ -1150,7 +1150,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Did not find any HVACTemplate:Zone objects connected to')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Did not find any HVACTemplate:Zone objects connected to')
         return
 
     def test_object_reference_boiler_no_type(self):
@@ -1174,7 +1174,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'n HVACTemplate:Plant:Boiler:ObjectReference \(OR 1\) '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'n HVACTemplate:Plant:Boiler:ObjectReference \(OR 1\) '
                                                               r'Referenced boiler not found')
         return
 
@@ -1206,7 +1206,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'HVACTemplate:Plant:Boiler:ObjectReference \(OR 1\) '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'HVACTemplate:Plant:Boiler:ObjectReference \(OR 1\) '
                                                               r'Referenced boiler not found')
         return
 
@@ -1238,7 +1238,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Inlet Node Name found in referenced boiler: ')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank Inlet Node Name found in referenced boiler: ')
         return
 
     def test_object_reference_boiler_no_outlet_name(self):
@@ -1269,7 +1269,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Outlet Node Name found in referenced boiler: ')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank Outlet Node Name found in referenced boiler: ')
         return
 
     def test_object_reference_boiler_no_duplicate_name(self):
@@ -1300,7 +1300,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate hot water node name found in '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Duplicate hot water node name found in '
                                                               r'referenced boiler')
         return
 
@@ -1323,7 +1323,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'There is no demand\-side equipment connected to this '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'There is no demand\-side equipment connected to this '
                                                               r'loop\. There is no supply\-side equipment serving this '
                                                               r'loop\.')
         return
@@ -1348,7 +1348,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'n HVACTemplate:Plant:Chiller:ObjectReference \(OR 1\) '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'n HVACTemplate:Plant:Chiller:ObjectReference \(OR 1\) '
                                                               r'Referenced chiller not found')
         return
 
@@ -1383,7 +1383,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'HVACTemplate:Plant:Chiller:ObjectReference \(OR 1\) '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'HVACTemplate:Plant:Chiller:ObjectReference \(OR 1\) '
                                                               r'Referenced chiller not found')
         return
 
@@ -1418,7 +1418,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank chilled water Inlet Node Name found in '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank chilled water Inlet Node Name found in '
                                                               r'referenced chiller: ')
         return
 
@@ -1453,7 +1453,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank chilled water Outlet Node Name found in '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank chilled water Outlet Node Name found in '
                                                               r'referenced chiller: ')
         return
 
@@ -1489,7 +1489,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank condenser water Inlet Node Name')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank condenser water Inlet Node Name')
         return
 
     def test_object_reference_chiller_no_cw_outlet_name(self):
@@ -1524,7 +1524,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank condenser water Outlet Node Name')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank condenser water Outlet Node Name')
         return
 
     def test_object_reference_chiller_duplicate_chw_nodes(self):
@@ -1560,7 +1560,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate chilled water node name found in '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Duplicate chilled water node name found in '
                                                               r'referenced chiller')
         return
 
@@ -1597,7 +1597,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate condenser water node name found in '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Duplicate condenser water node name found in '
                                                               r'referenced chiller')
         return
 
@@ -1633,7 +1633,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertNotRegex(output['outputPreProcessorMessage'], r'Blank condenser water Inlet Node Name')
+        self.assertNotRegex(output['Output:PreprocessorMessage'], r'Blank condenser water Inlet Node Name')
         return
 
     def test_tower_not_all_autosize(self):
@@ -1658,7 +1658,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'For a SingleSpeed tower the high speed capacity and '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'For a SingleSpeed tower the high speed capacity and '
                                                               r'free convection capacity both need to be specified '
                                                               r'or set to autosize')
         return
@@ -1683,7 +1683,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'n HVACTemplate:Plant:Tower:ObjectReference \(OR 1\) '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'n HVACTemplate:Plant:Tower:ObjectReference \(OR 1\) '
                                                               r'Referenced tower not found')
         return
 
@@ -1715,7 +1715,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Inlet Node Name found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank Inlet Node Name found')
         return
 
     def test_object_reference_tower_no_outlet(self):
@@ -1746,7 +1746,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Outlet Node Name found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank Outlet Node Name found')
         return
 
     def test_object_reference_tower_duplicate_nodes(self):
@@ -1777,7 +1777,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate node name found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Duplicate node name found')
         return
 
     def test_object_reference_chilled_water_loop_no_tower(self):
@@ -1893,7 +1893,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'in HVACTemplate:Plant:CondenserWaterLoop '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'in HVACTemplate:Plant:CondenserWaterLoop '
                                                               r'\(Condenser Water Loop\)\. There is no supply-side '
                                                               r'equipment serving this loop')
         return
@@ -1920,7 +1920,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Coil Rated Capacity is autosized, so the '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Cooling Coil Rated Capacity is autosized, so the '
                                                               r'Cooling Coil Gross Rated Sensible')
         return
 
@@ -1946,7 +1946,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Coil Rated Capacity will not be used when '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Cooling Coil Rated Capacity will not be used when '
                                                               r'the Cooling Coil Gross Rated Sensible Heat Ratio '
                                                               r'is autosized')
         return
@@ -1988,7 +1988,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'VACTemplate:Plant:HotWaterLoop is also present\.  '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'VACTemplate:Plant:HotWaterLoop is also present\.  '
                                                               r'All boilers with blank Template Loop Type field will '
                                                               r'be connected')
         return
@@ -2041,7 +2041,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Dehumidification Control Type field=Multimode')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Dehumidification Control Type field=Multimode')
         return
 
     def test_doas_humid_control_no_heating(self):
@@ -2073,7 +2073,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'there is no heating coil in this system to provide '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'there is no heating coil in this system to provide '
                                                               r'reheat\. Cold supply temps may result')
         return
 
@@ -2101,10 +2101,40 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             temp_file.seek(0)
             output = main(
                 Namespace(
-                    file=temp_file.name,
-                    no_schema=False
+                    file=temp_file.name
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'there is heat recovery with no heating coil\. The heat '
+        self.assertRegex(output['Output:PreprocessorMessage'], r'there is heat recovery with no heating coil\. The heat '
                                                               r'recovery heating mode will be controlled')
+        return
+
+    def test_no_schema_warning(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:PTAC": {
+                        'PTAC 1': {
+                            'dedicated_outdoor_air_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
+                        }
+                    },
+                    "HVACTemplate:System:DedicatedOutdoorAir": {
+                        "CV Sys 1": {
+                            'cooling_coil_type': 'TwoStageHumidityControlDX',
+                            'heat_recovery_type': 'Sensible',
+                            'heating_coil_type': 'None'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name,
+                    no_schema=True
+                )
+            )
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Schema validation has been turned off')
         return

@@ -715,7 +715,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 name_check = False
         self.assertTrue(name_check)
         for object_type in epjson.keys():
-            if object_type not in ['outputPreProcessorMessage', 'epJSON', 'epJSON_base', 'epJSON_hvac_templates']:
+            if object_type not in ['Output:PreprocessorMessage', 'epJSON', 'epJSON_base', 'epJSON_hvac_templates']:
                 object_check = False
         self.assertTrue(object_check)
         return
