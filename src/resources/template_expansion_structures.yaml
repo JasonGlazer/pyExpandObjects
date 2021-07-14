@@ -2813,7 +2813,7 @@ Objects:
             schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
             setpoint_node_or_nodelist_name:
               BuildPathReference:
-                Location: Coil:Cooling.*
+                Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                 ValueLocation: Outlet
       Heating:
         Base:
@@ -2867,7 +2867,7 @@ Objects:
               control_zone_air_node_name: '{dehumidification_control_zone_name} Zone Air Node'
               setpoint_node_or_nodelist_name:
                 BuildPathReference:
-                  Location: Coil:Cooling.*
+                  Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                   ValueLocation: Outlet
         Minimum:
           Base:
@@ -6377,13 +6377,13 @@ OptionTree:
                     <<: *SetpointManagerScheduledCooling
                     setpoint_node_or_nodelist_name:
                       BuildPathReference:
-                        Location: Coil:Cooling.*
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                         ValueLocation: Outlet
                 - SetpointManager:MixedAir:
                     <<: *SetpointManagerMixedAirCoolingSystemNodelist
                     reference_setpoint_node_name:
                       BuildPathReference:
-                        Location: Coil:Cooling.*
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                         ValueLocation: Outlet
                 - NodeList:
                     name: *SystemMixedAirNodelistName
@@ -6409,27 +6409,29 @@ OptionTree:
                           ^OutdoorAir:Mixer: mixed_air_node_name
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                 - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
-            CoolingWarmestHeatingNoneDrawThrough: &SystemCommonPackagedVAVTemplateObjectsSetpointControlTypeCoolingWarmestHeatingNoneDrawThrough
+            CoolingNoneHeatingOutdoorAirTemperatureResetDrawThrough:
               Objects:
-                - SetpointManager:Warmest: *SetpointManagerWarmest
-                - SetpointManager:MixedAir:
-                    <<: *SetpointManagerMixedAirCoolingSystemNodelist
-                    reference_setpoint_node_name:
-                      BuildPathReference:
-                        Location: -1
-                        ValueLocation: Outlet
+                - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
+                - SetpointManager:MixedAir: *SetpointManagerMixedAirCoolingSystemNodelist
                 - NodeList:
                     name: *SystemMixedAirNodelistName
                     nodes:
                       - node_name:
-                          ^Coil:Cooling:.*: air_outlet_node_name
+                          BuildPathReference:
+                            Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
+                            ValueLocation: Outlet
                       - node_name:
                           ^OutdoorAir:Mixer: mixed_air_node_name
-                - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
-            CoolingWarmestTemperatureFirstHeatingNoneDrawThrough:
+                - SetpointManager:OutdoorAirReset:
+                    <<: *SetpointManagerOutdoorAirResetHeating
+                    outdoor_high_temperature: 10
+                    outdoor_low_temperature: -6.7
+                    setpoint_at_outdoor_high_temperature: 4.8
+                    setpoint_at_outdoor_low_temperature: '{heating_coil_design_setpoint}'
+            CoolingWarmestHeatingNoneDrawThrough: &SystemCommonPackagedVAVTemplateObjectsSetpointControlTypeCoolingWarmestHeatingNoneDrawThrough
               Objects:
-                - SetpointManager:WarmestTemperatureFlow: *SetpointManagerWarmestTemperatureFlow
+                - SetpointManager:Warmest: *SetpointManagerWarmest
                 - SetpointManager:MixedAir:
                     <<: *SetpointManagerMixedAirCoolingSystemNodelist
                     reference_setpoint_node_name:
@@ -6451,13 +6453,56 @@ OptionTree:
                     <<: *SetpointManagerWarmest
                     setpoint_node_or_nodelist_name:
                       BuildPathReference:
-                        Location: Coil:Cooling.*
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                         ValueLocation: Outlet
                 - SetpointManager:MixedAir:
                     <<: *SetpointManagerMixedAirCoolingSystemNodelist
                     reference_setpoint_node_name:
                       BuildPathReference:
-                        Location: Coil:Cooling.*
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
+                        ValueLocation: Outlet
+                - NodeList:
+                    name: *SystemMixedAirNodelistName
+                    nodes:
+                      - node_name:
+                          ^OutdoorAir:Mixer: mixed_air_node_name
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManagerScheduledHeating
+                    setpoint_node_or_nodelist_name:
+                      BuildPathReference:
+                        Location: -1
+                        ValueLocation: Outlet
+            CoolingWarmestTemperatureFirstHeatingNoneDrawThrough:
+              Objects:
+                - SetpointManager:WarmestTemperatureFlow: *SetpointManagerWarmestTemperatureFlow
+                - SetpointManager:MixedAir:
+                    <<: *SetpointManagerMixedAirCoolingSystemNodelist
+                    reference_setpoint_node_name:
+                      BuildPathReference:
+                        Location: -1
+                        ValueLocation: Outlet
+                - NodeList:
+                    name: *SystemMixedAirNodelistName
+                    nodes:
+                      - node_name:
+                          ^Coil:Cooling:.*: air_outlet_node_name
+                      - node_name:
+                          ^OutdoorAir:Mixer: mixed_air_node_name
+                - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
+                - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
+            CoolingWarmestTemperatureFirstHeatingNoneBlowThrough:
+              Objects:
+                - SetpointManager:WarmestTemperatureFlow:
+                    <<: *SetpointManagerWarmestTemperatureFlow
+                    setpoint_node_or_nodelist_name:
+                      BuildPathReference:
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
+                        ValueLocation: Outlet
+                - SetpointManager:MixedAir:
+                    <<: *SetpointManagerMixedAirCoolingSystemNodelist
+                    reference_setpoint_node_name:
+                      BuildPathReference:
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                         ValueLocation: Outlet
                 - NodeList:
                     name: *SystemMixedAirNodelistName
@@ -6482,7 +6527,7 @@ OptionTree:
                     <<: *SetpointManagerMixedAirCoolingSystemNodelist
                     reference_setpoint_node_name:
                       BuildPathReference:
-                        Location: Coil:Cooling.*
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                         ValueLocation: Outlet
                 - NodeList:
                     name: *SystemMixedAirNodelistName
