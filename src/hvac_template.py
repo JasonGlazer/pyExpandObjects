@@ -1696,6 +1696,6 @@ class HVACTemplate(EPJSON):
             "epJSON": output_epjson,
             "epJSON_base": self.base_objects,
             "epJSON_hvac_templates": self.templates,
-            'outputPreProcessorMessage': self.stream.getvalue()
+            'Output:PreprocessorMessage': self.stream.getvalue()
         }
         return output_epjson

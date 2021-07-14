@@ -120,6 +120,7 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         base_copy_file_path = self._copy_to_test_directory(base_idf_file_path)
         # read in base file, then edit inputs for alternate tests
         self.base_epjson = self.get_epjson_object_from_idf_file(base_copy_file_path)
+        self.base_epjson.pop('Output:Variable')
         return
 
     def teardown(self):
@@ -170,24 +171,13 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_maximum_flow_rate")
     def test_supply_fan_maximum_flow_rate(self):
-        # todo_eo: legacy does not seem to update Fan:ConstantVolume or AirLoopHVAC.
-        #  Not clear which object is being sized here.
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4']['supply_fan_maximum_flow_rate'] = 1.01
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        # self.assertEqual(
-        #     1.01,
-        #     epjson_output['Fan:ConstantVolume']['AHU 1 Spaces 1-4 Supply Fan']['maximum_flow_rate'])
-        # self.assertEqual(
-        #     1.01,
-        #     epjson_output['AirLoopHVAC']['AHU 1 Spaces 1-4']['design_supply_air_flow_rate'])
         self.assertEqual(
             1.01,
             epjson_output['Sizing:System']['AHU 1 Spaces 1-4 Sizing System']['cooling_supply_air_flow_rate'])
-        self.assertEqual(
-            1.01,
-            epjson_output['Sizing:System']['AHU 1 Spaces 1-4 Sizing System']['heating_supply_air_flow_rate'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_total_efficiency")
@@ -552,9 +542,9 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             epjson_output['Coil:Cooling:Water']['AHU 1 Spaces 1-4 Cooling Coil']['availability_schedule_name'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:cooling_coil_design_setpoint_temperature")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:"
+                                              "cooling_coil_design_setpoint_temperature")
     def test_cooling_coil_design_setpoint_temperature(self):
-        # todo_eo: SetpointManager:Warmest does not seem to correctly be applied
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'cooling_coil_design_setpoint_temperature'] = 13
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -564,21 +554,20 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             13,
             epjson_output['Sizing:System']['AHU 1 Spaces 1-4 Sizing System']['central_cooling_design_supply_air_temperature'])
         self.assertEqual(
-            18.2,
+            18,
             epjson_output['SetpointManager:Warmest']['AHU 1 Spaces 1-4 Cooling Supply Air Temp Manager'][
                 'maximum_setpoint_temperature'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:cooling_coil_setpoint_schedule_name")
     def test_cooling_coil_setpoint_schedule_name(self):
-        # todo_eo: legacy doesn't seem to map the value to anything
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=schedule_objects)
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'cooling_coil_setpoint_schedule_name'] = 'Always12.5'
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
-            'cooling_coil_setpoint_control_type'] = 'FixedSetpoint'
+            'cooling_coil_setpoint_control_type'] = 'Scheduled'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
@@ -682,7 +671,7 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'heating_coil_setpoint_schedule_name'] = 'Always15.5'
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
-            'heating_coil_setpoint_control_type'] = 'FixedSetpoint'
+            'heating_coil_setpoint_control_type'] = 'Scheduled'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
@@ -1270,7 +1259,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heat_recovery_frost_control_type"
                                               "exhaust_air_recirculation")
     def test_heat_recovery_frost_control_type_exhaust_air_recirculation(self):
-        # todo_eo: with this option the template effectiveness inputs are not mapped, causing discrepancy
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'heat_recovery_type'] = 'Enthalpy'
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
@@ -1286,7 +1274,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heat_recovery_frost_control_type"
                                               "exhaust_only")
     def test_heat_recovery_frost_control_type_exhaust_only(self):
-        # todo_eo: with this option the template effectiveness inputs are not mapped, causing discrepancy
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'heat_recovery_type'] = 'Enthalpy'
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
