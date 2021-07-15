@@ -281,7 +281,8 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_blow_through_cooling_scheduled")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:"
+                                              "supply_fan_placement_blow_through_cooling_scheduled")
     def test_supply_fan_placement_blow_through_cooling_scheduled(self):
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'supply_fan_placement'] = 'BlowThrough'
@@ -349,7 +350,8 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_blow_"
                                               "through_cooling_control_zone_no_heating")
     def test_supply_fan_placement_blow_through_cooling_control_zone_no_heating(self):
-        # todo_eo: Legacy fails with this option
+        # todo_eo: Legacy changes central_heating_design_supply_air_temperature for AHU 2 Space 5 even though only
+        #  AHU 1 Spaces 1-4 has been modified
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'supply_fan_placement'] = 'BlowThrough'
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
@@ -366,7 +368,8 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_draw_"
                                               "through_cooling_control_zone_no_heating")
     def test_supply_fan_placement_draw_through_cooling_control_zone_no_heating(self):
-        # todo_eo: Legacy fails with this option.  Legacy will alter multiple systems if one is set to no heating coil
+        # todo_eo: Legacy changes central_heating_design_supply_air_temperature for AHU 2 Space 5 even though only
+        #  AHU 1 Spaces 1-4 has been modified
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'supply_fan_placement'] = 'DrawThrough'
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
@@ -375,7 +378,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             'cooling_coil_control_zone_name'] = 'SPACE1-1'
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'heating_coil_type'] = 'None'
-        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'].pop('preheat_coil_design_setpoint')
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
@@ -1194,13 +1196,21 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
                 'sensible_effectiveness_at_100_heating_air_flow'])
         self.assertEqual(
-            0.66,
+            0.61,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
                 'latent_effectiveness_at_100_cooling_air_flow'])
         self.assertEqual(
-            0.66,
+            0.61,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
                 'latent_effectiveness_at_100_heating_air_flow'])
+        self.assertEqual(
+            0.66,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
+                'latent_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.66,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
+                'latent_effectiveness_at_75_heating_air_flow'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heat_recovery_exchanger_type_plate")
