@@ -2474,27 +2474,53 @@ Objects:
     AirToAir:
       SensibleAndLatent:
         Common:
-          Transitions: &HeatExchangerAirToAirSensibleAndLatentCommonTransitions
-#            - HeatExchanger:AirToAir:SensibleAndLatent:
-#                sensible_heat_recovery_effectiveness: sensible_effectiveness_at_75_cooling_air_flow
-#                heat_recovery_sensible_effectiveness: sensible_effectiveness_at_75_cooling_air_flow
-#                latent_heat_recovery_effectiveness: latent_effectiveness_at_75_cooling_air_flow
-#                heat_recovery_latent_effectiveness: latent_effectiveness_at_75_cooling_air_flow
-            - HeatExchanger:AirToAir:SensibleAndLatent:
-                sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
-                heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
-                latent_heat_recovery_effectiveness: latent_effectiveness_at_100_cooling_air_flow
-                heat_recovery_latent_effectiveness: latent_effectiveness_at_100_cooling_air_flow
-#            - HeatExchanger:AirToAir:SensibleAndLatent:
-#                sensible_heat_recovery_effectiveness: sensible_effectiveness_at_75_heating_air_flow
-#                heat_recovery_sensible_effectiveness: sensible_effectiveness_at_75_heating_air_flow
-#                latent_heat_recovery_effectiveness: latent_effectiveness_at_75_heating_air_flow
-#                heat_recovery_latent_effectiveness: latent_effectiveness_at_75_heating_air_flow
-            - HeatExchanger:AirToAir:SensibleAndLatent:
-                sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_heating_air_flow
-                heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_heating_air_flow
-                latent_heat_recovery_effectiveness: latent_effectiveness_at_100_heating_air_flow
-                heat_recovery_latent_effectiveness: latent_effectiveness_at_100_heating_air_flow
+          Transitions:
+            Base: &HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness:
+                    sensible_effectiveness_at_75_cooling_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_sensible_effectiveness:
+                    sensible_effectiveness_at_75_cooling_air_flow: '{heat_recovery_sensible_effectiveness} + 0.05'
+                  latent_heat_recovery_effectiveness:
+                    latent_effectiveness_at_75_cooling_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_latent_effectiveness:
+                    latent_effectiveness_at_75_cooling_air_flow: '{latent_heat_recovery_effectiveness} + 0.05'
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness:
+                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_sensible_effectiveness:
+                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  latent_heat_recovery_effectiveness:
+                    latent_effectiveness_at_75_heating_air_flow: '{latent_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_latent_effectiveness:
+                    latent_effectiveness_at_75_heating_air_flow: '{latent_heat_recovery_effectiveness} + 0.05'
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
+                  heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
+                  latent_heat_recovery_effectiveness: latent_effectiveness_at_100_cooling_air_flow
+                  heat_recovery_latent_effectiveness: latent_effectiveness_at_100_cooling_air_flow
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_heating_air_flow
+                  heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_heating_air_flow
+                  latent_heat_recovery_effectiveness: latent_effectiveness_at_100_heating_air_flow
+                  heat_recovery_latent_effectiveness: latent_effectiveness_at_100_heating_air_flow
+            SensibleOnly: &HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness:
+                    sensible_effectiveness_at_75_cooling_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_sensible_effectiveness:
+                    sensible_effectiveness_at_75_cooling_air_flow: '{heat_recovery_sensible_effectiveness} + 0.05'
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness:
+                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_sensible_effectiveness:
+                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
+                  heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_heating_air_flow
+                  heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_heating_air_flow
         Base:
           Fields: &HeatExchangerAirToAirSensibleAndLatentFields
             name: '{} Heat Recovery'
@@ -2966,7 +2992,7 @@ Objects:
               central_cooling_capacity_control_method: OnOff
               central_cooling_design_supply_air_temperature: 12.8 # set by legacy, not default, required by schema
               central_heating_design_supply_air_temperature: 10.0 # set by legacy, not default
-              design_outdoor_air_flow_rate: '{minimum_outdoor_air_flow_rate}'
+              design_outdoor_air_flow_rate: Autosize
               preheat_design_temperature: 7.2 # required by schema
               preheat_design_humidity_ratio: 0.008 # required by schema
               precool_design_temperature: 11 # required by schema
@@ -3002,7 +3028,7 @@ Objects:
                 cooling_coil_design_setpoint_temperature: central_cooling_design_supply_air_temperature
                 cooling_coil_design_setpoint: central_cooling_design_supply_air_temperature
                 cooling_design_supply_air_temperature: central_cooling_design_supply_air_temperature
-                maximum_outdoor_air_flow_rate: design_outdoor_air_flow_rate
+                minimum_outdoor_air_flow_rate: design_outdoor_air_flow_rate
                 heating_coil_design_setpoint: central_heating_design_supply_air_temperature
                 heating_design_supply_air_temperature: central_heating_design_supply_air_temperature
                 heating_coil_capacity: heating_design_capacity
@@ -5611,12 +5637,7 @@ OptionTree:
                       economizer_control_action_type: MinimumFlowWithBypass
                 Transitions:
                   - *ControllerOutdoorAirCommonTransitions
-                  - HeatExchanger:AirToAir:SensibleAndLatent:
-                      sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
-                      heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
-                  - HeatExchanger:AirToAir:SensibleAndLatent:
-                      sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_heating_air_flow
-                      heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_heating_air_flow
+                  - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
               ElectricPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               GasPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               HotWaterPreheatEnthalpyHR: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR

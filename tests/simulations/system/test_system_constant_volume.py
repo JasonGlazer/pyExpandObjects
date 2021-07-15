@@ -922,9 +922,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.assertEqual(
             0.1,
             epjson_output['Controller:OutdoorAir']['AHU 1 Spaces 1-4 OA Controller']['minimum_outdoor_air_flow_rate'])
-        self.assertEqual(
-            1.0,
-            epjson_output['Sizing:System']['AHU 1 Spaces 1-4 Sizing System']['design_outdoor_air_flow_rate'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:minimum_outdoor_air_schedule_name")
@@ -1181,11 +1178,11 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
         self.assertEqual(
-            0.72,
+            0.77,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
                 'sensible_effectiveness_at_75_cooling_air_flow'])
         self.assertEqual(
-            0.72,
+            0.77,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
                 'sensible_effectiveness_at_75_heating_air_flow'])
         self.assertEqual(
@@ -1197,19 +1194,11 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
                 'sensible_effectiveness_at_100_heating_air_flow'])
         self.assertEqual(
-            0.61,
-            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
-                'latent_effectiveness_at_75_cooling_air_flow'])
-        self.assertEqual(
-            0.61,
-            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
-                'latent_effectiveness_at_75_heating_air_flow'])
-        self.assertEqual(
-            0.61,
+            0.66,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
                 'latent_effectiveness_at_100_cooling_air_flow'])
         self.assertEqual(
-            0.61,
+            0.66,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['AHU 1 Spaces 1-4 Heat Recovery'][
                 'latent_effectiveness_at_100_heating_air_flow'])
         return
