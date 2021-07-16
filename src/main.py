@@ -67,7 +67,7 @@ def output_preprocessor_message_formatter(output_stream):
         else:
             messages['Output:PreprocessorMessage {}'.format(str(counter))]['error_severity'] = 'Information'
         words = line.split()
-        word_groups = [words[i:i+10] for i in range(0, len(words), 10)]
+        word_groups = [words[i:i + 10] for i in range(0, len(words), 10)]
         word_group_counter = 1
         for wg in word_groups:
             messages['Output:PreprocessorMessage {}'.format(str(counter))][
