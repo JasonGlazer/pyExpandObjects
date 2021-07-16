@@ -100,6 +100,49 @@ class TestSimulationsZoneWaterToAirHeatPump(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:WaterToAirHeatPump:test_minimum_inputs")
+    def test_minimum_inputs(self):
+        # todo_eo: template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched for fan_placement
+        self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump'].pop('HVACTemplate:Zone:WaterToAirHeatPump 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Zone:WaterToAirHeatPump': {
+                    'HVACTemplate:Zone:WaterToAirHeatPump 1': {
+                        "template_thermostat_name": "All Zones",
+                        "zone_name": "SPACE1-1"
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:WaterToAirHeatPump:test_minimum_inputs")
+    def test_minimum_inputs_doas(self):
+        # todo_eo: template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched for fan_placement
+        self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump'].pop('HVACTemplate:Zone:WaterToAirHeatPump 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Zone:WaterToAirHeatPump': {
+                    'HVACTemplate:Zone:WaterToAirHeatPump 1': {
+                        "dedicated_outdoor_air_system_name": "DOAS",
+                        "template_thermostat_name": "All Zones",
+                        "zone_name": "SPACE1-1"
+                    }
+                },
+                'HVACTemplate:System:DedicatedOutdoorAir': {'DOAS': {
+                    'cooling_coil_type': 'TwoSpeedDX',
+                    'heating_coil_type': 'Electric'
+                }}
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:WaterToAirHeatPump:cooling_supply_air_flow_rate")
     def test_cooling_supply_air_flow_rate(self):
         # todo_eo: Coil object and ZoneHVAC:WaterToAirHeatPump cooling_supply_air_flow_rate
@@ -333,8 +376,6 @@ class TestSimulationsZoneWaterToAirHeatPump(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:WaterToAirHeatPump:cooling_coil_gross_rated_total_capacity")
     def test_cooling_coil_gross_rated_total_capacity(self):
-        # todo_eo: ExpandObjects warning issued on setting this attribute and sensible heat ratio,
-        #  check in on if same message should be made
         self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump']['HVACTemplate:Zone:WaterToAirHeatPump 1'][
             'cooling_coil_gross_rated_total_capacity'] = 5000
         self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump']['HVACTemplate:Zone:WaterToAirHeatPump 1'][

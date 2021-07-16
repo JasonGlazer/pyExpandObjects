@@ -74,6 +74,47 @@ class TestSimulationsZonePTAC(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:PTAC:test_minimum_inputs")
+    def test_minimum_inputs(self):
+        self.base_epjson['HVACTemplate:Zone:PTAC'].pop('HVACTemplate:Zone:PTAC 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Zone:PTAC': {
+                    'HVACTemplate:Zone:PTAC 1': {
+                        "template_thermostat_name": "All Zones",
+                        "zone_name": "SPACE1-1"
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:PTAC:test_minimum_inputs_doas")
+    def test_minimum_inputs_doas(self):
+        self.base_epjson['HVACTemplate:Zone:PTAC'].pop('HVACTemplate:Zone:PTAC 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Zone:PTAC': {
+                    'HVACTemplate:Zone:PTAC 1': {
+                        "dedicated_outdoor_air_system_name": "DOAS",
+                        "template_thermostat_name": "All Zones",
+                        "zone_name": "SPACE1-1"
+                    }
+                },
+                'HVACTemplate:System:DedicatedOutdoorAir': {'DOAS': {
+                    'cooling_coil_type': 'TwoSpeedDX',
+                    'heating_coil_type': 'Electric'
+                }}
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:PTAC:cooling_supply_air_flow_rate")
     def test_cooling_supply_air_flow_rate(self):
         # todo_eo: ZoneHVAC:EquipmentConnections and ZoneHVAC:PackagedTerminalAirConditioner cooling_supply_air_flow_rate

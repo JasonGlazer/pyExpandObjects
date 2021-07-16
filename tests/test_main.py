@@ -83,7 +83,7 @@ class TestMain(BaseTest, unittest.TestCase):
                     output_directory=output_directory
                 )
             )
-        msg_rgx = re.match('.*File does not exist.*', output['outputPreProcessorMessage'].replace('\n', ' '))
+        msg_rgx = re.match('.*File does not exist.*', output['Output:PreprocessorMessage'].replace('\n', ' '))
         msg_status = False
         if msg_rgx:
             msg_status = True
@@ -97,7 +97,7 @@ class TestMain(BaseTest, unittest.TestCase):
                 file='bad_extension.epJSON_bad'
             )
         )
-        msg_rgx = re.match('.*Bad file extension.*', output['outputPreProcessorMessage'].replace('\n', ' '))
+        msg_rgx = re.match('.*Bad file extension.*', output['Output:PreprocessorMessage'].replace('\n', ' '))
         msg_status = False
         if msg_rgx:
             msg_status = True
@@ -123,7 +123,8 @@ class TestMain(BaseTest, unittest.TestCase):
                     Namespace(
                         file=temp_file.name,
                         no_schema=True,
-                        output_directory=output_directory
+                        output_directory=output_directory,
+                        no_backup=False
                     )
                 )
                 self.assertGreater(
@@ -154,7 +155,8 @@ class TestMain(BaseTest, unittest.TestCase):
             output = main(
                 Namespace(
                     file=temp_file.name,
-                    no_schema=True
+                    no_schema=True,
+                    no_backup=False
                 )
             )
             self.assertTrue(output['output_files']['expanded'].startswith(os.path.dirname(temp_file.name)))

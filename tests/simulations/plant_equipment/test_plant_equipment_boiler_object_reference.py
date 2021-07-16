@@ -158,6 +158,25 @@ class TestSimulationsPlantEquipmentBoilerObjectReference(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Boiler:ObjectReference:test_minimum_inputs")
+    def test_minimum_inputs(self):
+        # todo_eo: legacy fails with IDD message without 'priority', but it is not a required field
+        self.base_epjson['HVACTemplate:Plant:Boiler:ObjectReference'].pop('Main Boiler Connection')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Plant:Boiler:ObjectReference': {
+                    'Main Boiler Connection': {
+                        'boiler_name': 'Main Boiler',
+                        'priority': 1
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Boiler:ObjectReference:priority")
     def test_priority(self):
         # todo_eo: discuss with team that priority requires a string and not integer.
@@ -226,4 +245,9 @@ class TestSimulationsPlantEquipmentBoilerObjectReference(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Heat Pump Loop Boiler',
+            epjson_output['PlantEquipmentList']['Heat Pump Water Loop Heating All Equipment']['equipment'][0][
+                'equipment_name']
+        )
         return

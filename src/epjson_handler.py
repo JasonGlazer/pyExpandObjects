@@ -27,14 +27,18 @@ class EPJSON(Logger):
         input_epjson_is_valid: initialized as None.  False if failed, True if passed.
     """
 
-    def __init__(self, no_schema=False, logger_level="WARNING"):
-        super().__init__(logger_level=logger_level)
+    def __init__(self, no_schema=False, logger_level="WARNING", reset_stream=False):
+        super().__init__(logger_level=logger_level, reset_stream=reset_stream)
         self.no_schema = no_schema
         self.schema = None
         self.Validator = jsonschema.Draft4Validator
         self.schema_is_valid = None
         self.input_epjson = None
         self.input_epjson_is_valid = None
+        if self.no_schema:
+            self.logger.warning(
+                'Warning: Schema validation has been turned off.  There will be no invalid choice error messages generated, '
+                'which may lead to unexplained errors')
         return
 
     @staticmethod
@@ -309,19 +313,26 @@ class EPJSON(Logger):
                         object_dictionary={object_type: object_structure})
                     file_validation = self.schema.is_valid(epjson_object)
                     if not file_validation:
-                        (object_name, _), = object_structure.items()
-                        # if the schema validation fails for the epJSON object, write out specific errors that occurred.
-                        self.logger.error("Error: Input file does not meet schema format")
-                        for err in self.schema.iter_errors(input_epjson):
-                            if re.match(r'.*{.*}.*', err.message):
-                                msg = '. '.join([
-                                    err.message,
-                                    '.  It appears a complex YAML reference was not resolved.'])
-                            else:
-                                msg = err.message
-                            self.logger.error('Error: Invalid choice in {} ({}). {}'
-                                              .format(object_type, object_name, msg))
-                        raise PyExpandObjectsSchemaError("Error: Schema Format is invalid")
+                        if len(object_structure.keys()) > 1:
+                            self.logger.error("Error: Input file does not meet schema format")
+                            for err in self.schema.iter_errors(input_epjson):
+                                self.logger.error('Error: Invalid choice in {} {}'
+                                                  .format(object_type, err.message))
+                            raise PyExpandObjectsSchemaError("Error: Schema Format is invalid")
+                        else:
+                            (object_name, _), = object_structure.items()
+                            # if the schema validation fails for the epJSON object, write out specific errors that occurred.
+                            self.logger.error("Error: Input file does not meet schema format")
+                            for err in self.schema.iter_errors(input_epjson):
+                                if re.match(r'.*{.*}.*', err.message):
+                                    msg = '. '.join([
+                                        err.message,
+                                        '.  It appears a complex YAML reference was not resolved.'])
+                                else:
+                                    msg = err.message
+                                self.logger.error('Error: Invalid choice in {} ({}). {}'
+                                                  .format(object_type, object_name, msg))
+                            raise PyExpandObjectsSchemaError("Error: Schema Format is invalid")
                     else:
                         continue
             setattr(self, 'input_epjson_is_valid', True)

@@ -111,8 +111,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Invalid choice in HVACTemplate:Zone:FanCoil .* '
-                                                              r'is a required property')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Invalid choice in HVACTemplate:Zone:FanCoil .* '
+                                                               r'is a required property')
         return
 
     def test_two_hot_water_loop_templates_with_schema(self):
@@ -155,7 +155,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Input file does not meet schema format')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Input file does not meet schema format')
         return
 
     def test_two_hot_water_loop_templates_no_schema(self):
@@ -198,7 +198,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=True
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Only one HVACTemplate:Plant:HotWaterLoop.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Only one HVACTemplate:Plant:HotWaterLoop.*')
         return
 
     def test_two_chilled_water_loop_templates_with_schema(self):
@@ -251,7 +251,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Input file does not meet schema format')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Input file does not meet schema format')
         return
 
     def test_two_chilled_water_loop_templates_no_schema(self):
@@ -304,8 +304,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=True
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Only one HVACTemplate:Plant:ChilledWaterLoop.*')
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*You must specify at least one.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Only one HVACTemplate:Plant:ChilledWaterLoop.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*You must specify at least one.*')
         return
 
     def test_two_mixed_water_loop_templates_with_schema(self):
@@ -340,7 +340,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Input file does not meet schema format')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Input file does not meet schema format')
         return
 
     def test_two_mixed_water_loop_templates_no_schema(self):
@@ -375,8 +375,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=True
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*Only one HVACTemplate:Plant:MixedWaterLoop.*')
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*You must specify at least one.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*Only one HVACTemplate:Plant:MixedWaterLoop.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*You must specify at least one.*')
         return
 
     def test_zone_equipment_no_system(self):
@@ -399,7 +399,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Could not find air handler name referenced')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Could not find air handler name referenced')
         return
 
     def test_baseboard_hot_water_no_supply_equipment(self):
@@ -410,7 +410,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:FanCoil": {
                         "FanCoil 1": {
                             "zone_name": 'SPACE1-1',
-                            "baseboard_heating_type": 'HotWater'
+                            "baseboard_heating_type": 'HotWater',
+                            "template_thermostat_name": "All Zones"
                         }
                     }
                 },
@@ -422,8 +423,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'.*HVACTemplate:Plant:HotWaterLoop and a '
-                                                              r'HVACTemplate:Plant:Boiler are needed.*')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'.*HVACTemplate:Plant:HotWaterLoop and a '
+                                                               r'HVACTemplate:Plant:Boiler are needed.*')
         return
 
     def test_fan_coil_doas_with_constant_fan(self):
@@ -435,7 +436,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                         "FanCoil 1": {
                             "zone_name": 'SPACE1-1',
                             "capacity_control_method": 'ConstantFanVariableFlow',
-                            'dedicated_outdoor_air_system_name': 'DOAS'
+                            'dedicated_outdoor_air_system_name': 'DOAS',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     'HVACTemplate:System:DedicatedOutdoorAir': {
@@ -450,7 +452,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Capacity Control Method is')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Capacity Control Method is')
         return
 
     def test_ideal_load_flow_heat_limit_flow(self):
@@ -461,7 +463,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "heating_limit": 'LimitFlowRate'
+                            "heating_limit": 'LimitFlowRate',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -473,8 +476,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitFlowRate but the '
-                                                              r'Maximum Heating Air Flow Rate field')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Limit field is LimitFlowRate but the '
+                                                               r'Maximum Heating Air Flow Rate field')
         return
 
     def test_ideal_load_flow_cool_limit_flow(self):
@@ -485,7 +488,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "cooling_limit": 'LimitFlowRate'
+                            "cooling_limit": 'LimitFlowRate',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -497,8 +501,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitFlowRate but the '
-                                                              r'Maximum Cooling Air Flow Rate field')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Limit field is LimitFlowRate but the '
+                                                               r'Maximum Cooling Air Flow Rate field')
         return
 
     def test_ideal_load_flow_heat_limit_capacity(self):
@@ -509,7 +513,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "heating_limit": 'LimitCapacity'
+                            "heating_limit": 'LimitCapacity',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -521,8 +526,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitCapacity but the '
-                                                              r'Maximum Sensible Heating Capacity field')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Limit field is LimitCapacity but the '
+                                                               r'Maximum Sensible Heating Capacity field')
         return
 
     def test_ideal_load_flow_cool_limit_capacity(self):
@@ -533,7 +538,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "cooling_limit": 'LimitCapacity'
+                            "cooling_limit": 'LimitCapacity',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -545,8 +551,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Limit field is LimitCapacity but the '
-                                                              r'Maximum Total Cooling Capacity field')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Cooling Limit field is LimitCapacity but the '
+                                                               r'Maximum Total Cooling Capacity field')
         return
 
     def test_ideal_load_flow_heat_limit_flow_and_capacity(self):
@@ -557,7 +563,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "heating_limit": 'LimitFlowRateAndCapacity'
+                            "heating_limit": 'LimitFlowRateAndCapacity',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -569,9 +576,9 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Limit field is LimitFlowRateAndCapacity but '
-                                                              r'the Maximum Heating Air Flow Rate field is blank and '
-                                                              r'the Maximum Sensible Heating Capacity field is blank.')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Limit field is LimitFlowRateAndCapacity but '
+                                                               r'the Maximum Heating Air Flow Rate field is blank and '
+                                                               r'the Maximum Sensible Heating Capacity field is blank.')
         return
 
     def test_ideal_load_flow_cool_limit_flow_and_capacity(self):
@@ -582,7 +589,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:IdealLoadsAirSystem": {
                         "IL 1": {
                             "zone_name": 'SPACE1-1',
-                            "cooling_limit": 'LimitFlowRateAndCapacity'
+                            "cooling_limit": 'LimitFlowRateAndCapacity',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -594,9 +602,9 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Limit field is LimitFlowRateAndCapacity but '
-                                                              r'the Maximum Cooling Air Flow Rate field is blank and '
-                                                              r'the Maximum Total Cooling Capacity field is blank.')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Cooling Limit field is LimitFlowRateAndCapacity but '
+                                                               r'the Maximum Cooling Air Flow Rate field is blank and '
+                                                               r'the Maximum Total Cooling Capacity field is blank.')
         return
 
     def test_vav_heating_cooling_setpoint_mismatch(self):
@@ -604,11 +612,19 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             json.dump(
                 {
                     **minimum_objects_d,
+                    'HVACTemplate:Zone:VAV': {
+                        'VAV Zone 1': {
+                            'zone_name': 'SPACE1-1',
+                            'template_vav_system_name': 'VAV Sys 1',
+                            'template_thermostat_name': 'All Zones'
+                        }
+                    },
                     "HVACTemplate:System:VAV": {
                         "VAV Sys 1": {
                             'cooling_coil_design_setpoint': 12,
                             "heating_coil_type": 'Electric',
-                            'heating_coil_design_setpoint': 15
+                            'heating_coil_design_setpoint': 15,
+                            'supply_fan_delta_pressure': 600
                         }
                     }
                 },
@@ -620,8 +636,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Coil Design Setpoint is greater than '
-                                                              r'the Cooling Coil Design Setpoint.')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Coil Design Setpoint is greater than '
+                                                               r'the Cooling Coil Design Setpoint.')
         return
 
     def test_cav_heating_cooling_setpoint_mismatch(self):
@@ -632,7 +648,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:ConstantVolume": {
                         'CV Zone 1': {
                             'template_constant_volume_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:ConstantVolume": {
@@ -651,8 +668,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Coil Design Setpoint is greater than '
-                                                              r'the Cooling Coil Design Setpoint.')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Coil Design Setpoint is greater than '
+                                                               r'the Cooling Coil Design Setpoint.')
         return
 
     def test_vav_preheating_cooling_setpoint_mismatch(self):
@@ -663,7 +680,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:VAV": {
                         'VAV Zone 1': {
                             'template_vav_system_name': 'VAV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:VAV": {
@@ -682,8 +700,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Preheat Coil Design Setpoint is greater than '
-                                                              r'the Cooling Coil Design Setpoint')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Preheat Coil Design Setpoint is greater than '
+                                                               r'the Cooling Coil Design Setpoint')
         return
 
     def test_cav_preheating_cooling_setpoint_mismatch(self):
@@ -694,7 +712,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:ConstantVolume": {
                         'CV Zone 1': {
                             'template_constant_volume_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:ConstantVolume": {
@@ -713,8 +732,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Preheat Coil Design Setpoint is greater than '
-                                                              r'the Cooling Coil Design Setpoint')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Preheat Coil Design Setpoint is greater than '
+                                                               r'the Cooling Coil Design Setpoint')
         return
 
     def test_vav_preheating_override_setpoint(self):
@@ -722,6 +741,13 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             json.dump(
                 {
                     **minimum_objects_d,
+                    "HVACTemplate:Zone:VAV": {
+                        'VAV Zone 1': {
+                            'template_vav_system_name': 'VAV Sys 1',
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
+                        }
+                    },
                     "HVACTemplate:System:VAV": {
                         "VAV Sys 1": {
                             'heating_coil_design_setpoint': 15,
@@ -738,8 +764,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Coil Design Setpoint is greater than the '
-                                                              r'Preheat Coil Design Setpoint,')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Coil Design Setpoint is greater than the '
+                                                               r'Preheat Coil Design Setpoint,')
         return
 
     def test_cav_preheating_override_setpoint(self):
@@ -750,12 +776,14 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:ConstantVolume": {
                         'CV Zone 1': {
                             'template_constant_volume_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:ConstantVolume": {
                         "CV Sys 1": {
-                            'heating_coil_design_setpoint': 15,
+                            'heating_coil_design_setpoint': 10,
+                            'heating_coil_type': 'None',
                             'preheat_coil_type': 'Electric',
                             'preheat_coil_design_setpoint': 7
                         }
@@ -769,8 +797,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Heating Coil Design Setpoint is greater than the '
-                                                              r'Preheat Coil Design Setpoint,')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Heating Coil Design Setpoint is greater than the '
+                                                               r'Preheat Coil Design Setpoint,')
         return
 
     def test_vav_preheating_override_no_preheat_coil_setpoint(self):
@@ -781,7 +809,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:VAV": {
                         'VAV Zone 1': {
                             'template_vav_system_name': 'VAV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:VAV": {
@@ -799,7 +828,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'there is no Heating Coil and no Preheat Coil.')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'there is no Heating Coil and no Preheat Coil.')
         return
 
     def test_unitary_control_zone_no_template(self):
@@ -810,7 +839,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:Unitary': {
                         'Uniitary Zone 1': {
                             'template_unitary_system_name': 'Unitary Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:Unitary": {
@@ -828,8 +858,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'for the field control_zone_or_thermostat_location_name '
-                                                              r'could not find a matching')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'for the field control_zone_or_thermostat_location_name '
+                                                               r'could not find a matching')
         return
 
     def test_cav_cooling_control_zone_no_template(self):
@@ -840,7 +870,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:ConstantVolume': {
                         'CV Zone 1': {
                             'template_constant_volume_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:ConstantVolume": {
@@ -858,8 +889,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'for the field cooling_coil_control_zone_name '
-                                                              r'could not find a matching')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'for the field cooling_coil_control_zone_name '
+                                                               r'could not find a matching')
         return
 
     def test_cav_heating_control_zone_no_template(self):
@@ -870,7 +901,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:ConstantVolume': {
                         'CV Zone 1': {
                             'template_constant_volume_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:ConstantVolume": {
@@ -888,8 +920,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'for the field heating_coil_control_zone_name '
-                                                              r'could not find a matching')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'for the field heating_coil_control_zone_name '
+                                                               r'could not find a matching')
         return
 
     def test_vrf_master_thermostat_no_template(self):
@@ -900,7 +932,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:VRF': {
                         'VRF Zone 1': {
                             'template_vrf_system_name': 'VRF Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:VRF": {
@@ -918,8 +951,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'field Zone Name for Master Thermostat Location could '
-                                                              r'not find a matching')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'field Zone Name for Master Thermostat Location could '
+                                                               r'not find a matching')
         return
 
     def test_vrf_master_thermostat_scheduled_no_schedule(self):
@@ -930,7 +963,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:VRF': {
                         'VRF Zone 1': {
                             'template_vrf_system_name': 'VRF Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:VRF": {
@@ -947,8 +981,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Priority Control Type = Scheduled, but the Thermostat '
-                                                              r'Priority Schedule Name')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Priority Control Type = Scheduled, but the Thermostat '
+                                                               r'Priority Schedule Name')
         return
 
     def test_unitary_control_zone_bad_template(self):
@@ -959,7 +993,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:Unitary": {
                         'Unitary Zone 1': {
                             'template_unitary_system_name': 'Unitary Sys 1',
-                            'zone_name': 'SPACE2-1'
+                            'zone_name': 'SPACE2-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:Unitary": {
@@ -977,8 +1012,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the field control_zone_or_thermostat_location_name '
-                                                              r'could not find a matching HVACTemplate:Zone:Unitary')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the field control_zone_or_thermostat_location_name '
+                                                               r'could not find a matching HVACTemplate:Zone:Unitary')
         return
 
     def test_night_cycle_control_zone(self):
@@ -1020,7 +1055,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'A zone name must be specified when Night Cycle Control')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'A zone name must be specified when Night Cycle Control')
         return
 
     def test_unitary_system_dx_cooling_coil_sensible_heat_ratio(self):
@@ -1032,7 +1067,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:Unitary": {
                         'Unitary Zone 1': {
                             'template_unitary_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:UnitarySystem": {
@@ -1049,8 +1085,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Coil Rated Capacity is autosized, so the '
-                                                              r'Cooling Coil Gross Rated Sensible Heat Ratio')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Cooling Coil Rated Capacity is autosized, so the '
+                                                               r'Cooling Coil Gross Rated Sensible Heat Ratio')
         return
 
     def test_unitary_system_dx_cooling_coil_total_capacity(self):
@@ -1062,7 +1098,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:Unitary": {
                         'Unitary Zone 1': {
                             'template_unitary_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:UnitarySystem": {
@@ -1079,8 +1116,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'he Cooling Coil Rated Capacity will not be used when '
-                                                              r'the Cooling Coil Gross Rated ')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'he Cooling Coil Rated Capacity will not be used when '
+                                                               r'the Cooling Coil Gross Rated ')
         return
 
     def test_system_with_no_zones(self):
@@ -1092,7 +1129,10 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     'HVACTemplate:Zone:Unitary': {
                         'Zone 1': {
                             'template_unitary_system_name': 'CV Sys 2',
-                            'zone_name': 'SPACE1-1'}},
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
+                        }
+                    },
                     "HVACTemplate:System:UnitarySystem": {
                         "CV Sys 1": {
                             'dx_cooling_coil_gross_rated_total_capacity': 1000
@@ -1110,7 +1150,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Did not find any HVACTemplate:Zone objects connected to')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Did not find any HVACTemplate:Zone objects connected to')
         return
 
     def test_object_reference_boiler_no_type(self):
@@ -1134,8 +1174,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'n HVACTemplate:Plant:Boiler:ObjectReference \(OR 1\) '
-                                                              r'Referenced boiler not found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'n HVACTemplate:Plant:Boiler:ObjectReference \(OR 1\) '
+                                                               r'Referenced boiler not found')
         return
 
     def test_object_reference_boiler_wrong_name(self):
@@ -1166,8 +1206,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'HVACTemplate:Plant:Boiler:ObjectReference \(OR 1\) '
-                                                              r'Referenced boiler not found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'HVACTemplate:Plant:Boiler:ObjectReference \(OR 1\) '
+                                                               r'Referenced boiler not found')
         return
 
     def test_object_reference_boiler_no_inlet_name(self):
@@ -1198,7 +1238,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Inlet Node Name found in referenced boiler: ')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank Inlet Node Name found in referenced boiler: ')
         return
 
     def test_object_reference_boiler_no_outlet_name(self):
@@ -1229,7 +1269,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Outlet Node Name found in referenced boiler: ')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank Outlet Node Name found in referenced boiler: ')
         return
 
     def test_object_reference_boiler_no_duplicate_name(self):
@@ -1260,8 +1300,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate hot water node name found in '
-                                                              r'referenced boiler')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Duplicate hot water node name found in '
+                                                               r'referenced boiler')
         return
 
     def test_hot_water_loop_no_equipment(self):
@@ -1283,9 +1323,9 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'There is no demand\-side equipment connected to this '
-                                                              r'loop\. There is no supply\-side equipment serving this '
-                                                              r'loop\.')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'There is no demand\-side equipment connected to this '
+                                                               r'loop\. There is no supply\-side equipment serving this '
+                                                               r'loop\.')
         return
 
     def test_object_reference_chiller_no_type(self):
@@ -1308,8 +1348,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'n HVACTemplate:Plant:Chiller:ObjectReference \(OR 1\) '
-                                                              r'Referenced chiller not found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'n HVACTemplate:Plant:Chiller:ObjectReference \(OR 1\) '
+                                                               r'Referenced chiller not found')
         return
 
     def test_object_reference_chiller_wrong_name(self):
@@ -1343,8 +1383,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'HVACTemplate:Plant:Chiller:ObjectReference \(OR 1\) '
-                                                              r'Referenced chiller not found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'HVACTemplate:Plant:Chiller:ObjectReference \(OR 1\) '
+                                                               r'Referenced chiller not found')
         return
 
     def test_object_reference_chiller_no_chw_inlet_name(self):
@@ -1378,8 +1418,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank chilled water Inlet Node Name found in '
-                                                              r'referenced chiller: ')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank chilled water Inlet Node Name found in '
+                                                               r'referenced chiller: ')
         return
 
     def test_object_reference_chiller_no_chw_outlet_name(self):
@@ -1413,8 +1453,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank chilled water Outlet Node Name found in '
-                                                              r'referenced chiller: ')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank chilled water Outlet Node Name found in '
+                                                               r'referenced chiller: ')
         return
 
     def test_object_reference_chiller_no_cw_inlet_name(self):
@@ -1449,7 +1489,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank condenser water Inlet Node Name')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank condenser water Inlet Node Name')
         return
 
     def test_object_reference_chiller_no_cw_outlet_name(self):
@@ -1484,7 +1524,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank condenser water Outlet Node Name')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank condenser water Outlet Node Name')
         return
 
     def test_object_reference_chiller_duplicate_chw_nodes(self):
@@ -1520,8 +1560,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate chilled water node name found in '
-                                                              r'referenced chiller')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Duplicate chilled water node name found in '
+                                                               r'referenced chiller')
         return
 
     def test_object_reference_chiller_duplicate_cw_nodes(self):
@@ -1557,8 +1597,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate condenser water node name found in '
-                                                              r'referenced chiller')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Duplicate condenser water node name found in '
+                                                               r'referenced chiller')
         return
 
     def test_object_reference_chiller_air_cooled(self):
@@ -1593,7 +1633,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertNotRegex(output['outputPreProcessorMessage'], r'Blank condenser water Inlet Node Name')
+        self.assertNotRegex(output['Output:PreprocessorMessage'], r'Blank condenser water Inlet Node Name')
         return
 
     def test_tower_not_all_autosize(self):
@@ -1618,9 +1658,9 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'For a SingleSpeed tower the high speed capacity and '
-                                                              r'free convection capacity both need to be specified '
-                                                              r'or set to autosize')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'For a SingleSpeed tower the high speed capacity and '
+                                                               r'free convection capacity both need to be specified '
+                                                               r'or set to autosize')
         return
 
     def test_object_reference_tower_no_type(self):
@@ -1643,8 +1683,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'n HVACTemplate:Plant:Tower:ObjectReference \(OR 1\) '
-                                                              r'Referenced tower not found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'n HVACTemplate:Plant:Tower:ObjectReference \(OR 1\) '
+                                                               r'Referenced tower not found')
         return
 
     def test_object_reference_tower_no_inlet(self):
@@ -1675,7 +1715,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Inlet Node Name found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank Inlet Node Name found')
         return
 
     def test_object_reference_tower_no_outlet(self):
@@ -1706,7 +1746,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Blank Outlet Node Name found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Blank Outlet Node Name found')
         return
 
     def test_object_reference_tower_duplicate_nodes(self):
@@ -1737,7 +1777,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'Duplicate node name found')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Duplicate node name found')
         return
 
     def test_object_reference_chilled_water_loop_no_tower(self):
@@ -1853,9 +1893,9 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'in HVACTemplate:Plant:CondenserWaterLoop '
-                                                              r'\(Condenser Water Loop\)\. There is no supply-side '
-                                                              r'equipment serving this loop')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'in HVACTemplate:Plant:CondenserWaterLoop '
+                                                               r'\(Condenser Water Loop\)\. There is no supply-side '
+                                                               r'equipment serving this loop')
         return
 
     def test_wahp_autosize_cooling(self):
@@ -1867,7 +1907,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                         "WAHP 1": {
                             'zone_name': 'SPACE1-1',
                             'cooling_coil_gross_rated_total_capacity': 'Autosize',
-                            'cooling_coil_gross_rated_sensible_heat_ratio': 0.65
+                            'cooling_coil_gross_rated_sensible_heat_ratio': 0.65,
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -1879,8 +1920,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Coil Rated Capacity is autosized, so the '
-                                                              r'Cooling Coil Gross Rated Sensible')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Cooling Coil Rated Capacity is autosized, so the '
+                                                               r'Cooling Coil Gross Rated Sensible')
         return
 
     def test_wahp_autosize_shr(self):
@@ -1892,7 +1933,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                         "WAHP 1": {
                             'zone_name': 'SPACE1-1',
                             'cooling_coil_gross_rated_total_capacity': 1000,
-                            'cooling_coil_gross_rated_sensible_heat_ratio': 'Autosize'
+                            'cooling_coil_gross_rated_sensible_heat_ratio': 'Autosize',
+                            'template_thermostat_name': 'All Zones'
                         }
                     }
                 },
@@ -1904,9 +1946,9 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Cooling Coil Rated Capacity will not be used when '
-                                                              r'the Cooling Coil Gross Rated Sensible Heat Ratio '
-                                                              r'is autosized')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Cooling Coil Rated Capacity will not be used when '
+                                                               r'the Cooling Coil Gross Rated Sensible Heat Ratio '
+                                                               r'is autosized')
         return
 
     def test_hot_water_and_mixed_water_loop(self):
@@ -1946,9 +1988,9 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'VACTemplate:Plant:HotWaterLoop is also present\.  '
-                                                              r'All boilers with blank Template Loop Type field will '
-                                                              r'be connected')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'VACTemplate:Plant:HotWaterLoop is also present\.  '
+                                                               r'All boilers with blank Template Loop Type field will '
+                                                               r'be connected')
         return
 
     def test_doas_humid_control_multimode(self):
@@ -1956,17 +1998,38 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             json.dump(
                 {
                     **minimum_objects_d,
-                    **chilled_water_objects,
                     "HVACTemplate:Zone:PTAC": {
-                        'PTAC 1': {
-                            'dedicated_outdoor_air_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                        "HVACTemplate:Zone:PTAC 1": {
+                            "capacity_control_method": "None",
+                            "cooling_coil_gross_rated_cooling_cop": 3,
+                            "cooling_coil_gross_rated_sensible_heat_ratio": "Autosize",
+                            "cooling_coil_gross_rated_total_capacity": "Autosize",
+                            "cooling_coil_type": "SingleSpeedDX",
+                            "cooling_supply_air_flow_rate": "Autosize",
+                            "dedicated_outdoor_air_system_name": "CV Sys 1",
+                            "gas_heating_coil_efficiency": 0.8,
+                            "heating_coil_capacity": "Autosize",
+                            "heating_coil_type": "Electric",
+                            "heating_supply_air_flow_rate": "Autosize",
+                            "outdoor_air_flow_rate_per_person": 0.00944,
+                            "outdoor_air_method": "Flow/Person",
+                            "supply_fan_delta_pressure": 75,
+                            "supply_fan_motor_efficiency": 0.9,
+                            "supply_fan_placement": "DrawThrough",
+                            "supply_fan_total_efficiency": 0.7,
+                            "template_thermostat_name": "All Zones",
+                            "zone_cooling_design_supply_air_temperature": 14.0,
+                            "zone_cooling_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+                            "zone_heating_design_supply_air_temperature": 50.0,
+                            "zone_heating_design_supply_air_temperature_input_method": "SupplyAirTemperature",
+                            "zone_name": "SPACE1-1"
                         }
                     },
                     "HVACTemplate:System:DedicatedOutdoorAir": {
                         "CV Sys 1": {
                             'cooling_coil_type': 'TwoStageHumidityControlDX',
-                            'dehumidification_control_type': 'Multimode'
+                            'dehumidification_control_type': 'Multimode',
+                            'heating_coil_type': 'None'
                         }
                     }
                 },
@@ -1978,9 +2041,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'the Dehumidification Control Type field=Multimode is '
-                                                              r'not applicable for Cooling Coil '
-                                                              r'Type=TwoStageHumidityControlDX')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'the Dehumidification Control Type field=Multimode')
         return
 
     def test_doas_humid_control_no_heating(self):
@@ -1992,13 +2053,15 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:Zone:PTAC": {
                         'PTAC 1': {
                             'dedicated_outdoor_air_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:DedicatedOutdoorAir": {
                         "CV Sys 1": {
                             'cooling_coil_type': 'TwoStageHumidityControlDX',
-                            'dehumidification_control_type': 'Multimode'
+                            'dehumidification_control_type': 'Multimode',
+                            'heating_coil_type': 'None'
                         }
                     }
                 },
@@ -2010,8 +2073,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'there is no heating coil in this system to provide '
-                                                              r'reheat\. Cold supply temps may result')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'there is no heating coil in this system to provide '
+                                                               r'reheat\. Cold supply temps may result')
         return
 
     def test_doas_heat_recovery_no_heating(self):
@@ -2019,17 +2082,49 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             json.dump(
                 {
                     **minimum_objects_d,
-                    **chilled_water_objects,
                     "HVACTemplate:Zone:PTAC": {
                         'PTAC 1': {
                             'dedicated_outdoor_air_system_name': 'CV Sys 1',
-                            'zone_name': 'SPACE1-1'
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
                         }
                     },
                     "HVACTemplate:System:DedicatedOutdoorAir": {
                         "CV Sys 1": {
                             'cooling_coil_type': 'TwoStageHumidityControlDX',
-                            'heat_recovery_type': 'Sensible'
+                            'heat_recovery_type': 'Sensible',
+                            'heating_coil_type': 'None'
+                        }
+                    }
+                },
+                temp_file)
+            temp_file.seek(0)
+            output = main(
+                Namespace(
+                    file=temp_file.name
+                )
+            )
+        self.assertRegex(output['Output:PreprocessorMessage'], r'there is heat recovery with no heating coil\. The heat '
+                                                               r'recovery heating mode will be controlled')
+        return
+
+    def test_no_schema_warning(self):
+        with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+            json.dump(
+                {
+                    **minimum_objects_d,
+                    "HVACTemplate:Zone:PTAC": {
+                        'PTAC 1': {
+                            'dedicated_outdoor_air_system_name': 'CV Sys 1',
+                            'zone_name': 'SPACE1-1',
+                            'template_thermostat_name': 'All Zones'
+                        }
+                    },
+                    "HVACTemplate:System:DedicatedOutdoorAir": {
+                        "CV Sys 1": {
+                            'cooling_coil_type': 'TwoStageHumidityControlDX',
+                            'heat_recovery_type': 'Sensible',
+                            'heating_coil_type': 'None'
                         }
                     }
                 },
@@ -2038,9 +2133,8 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
             output = main(
                 Namespace(
                     file=temp_file.name,
-                    no_schema=False
+                    no_schema=True
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'there is heat recovery with no heating coil\. The heat '
-                                                              r'recovery heating mode will be controlled')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'Schema validation has been turned off')
         return

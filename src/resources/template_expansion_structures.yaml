@@ -889,7 +889,7 @@ Objects:
       Common:
         Transitions: &BoilerHotWaterCommonTransitions
           - Boiler:.*:
-              capacity: nominal_thermal_capacity
+              capacity: nominal_capacity
               maximum_part_load_ratio: maximum_part_load_ratio
         Mappings: &BoilerHotWaterCommonMappings
           - Boiler.*:
@@ -1105,6 +1105,7 @@ Objects:
                   minimum_value_of_x: 0
           Transitions: &ChillerElectricEIRCommonTransitions
             - Chiller:.*:
+                capacity: reference_capacity
                 leaving_chilled_water_lower_temperature_limit: leaving_chilled_water_lower_temperature_limit
                 minimum_part_load_ratio: minimum_part_load_ratio
                 minimum_unloading_ratio: minimum_unloading_ratio
@@ -1122,6 +1123,7 @@ Objects:
             condenser_inlet_node_name: '{} Cnd Inlet'
             condenser_outlet_node_name: '{} Cnd Outlet'
             chiller_flow_mode: ConstantFlow # set by legacy, not reachable by template, not object default
+#            condenser_type: WaterCooled # todo_eo: indicated to be default but simulation crashes without it.
             condenser_type: '{condenser_type}'
             cooling_capacity_function_of_temperature_curve_name: '{} RecipCapFT' # required by schema
             electric_input_to_cooling_output_ratio_function_of_part_load_ratio_curve_name: '{} RecipEIRFPLR' # required by schema
@@ -1131,7 +1133,7 @@ Objects:
             minimum_unloading_ratio: 0.25 # template default, not object default
             maximum_part_load_ratio: '{maximum_part_load_ratio}'
             optimum_part_load_ratio: 1.0 # template default, # todo_eo: object default but comparison fails unless explicitly entered
-            reference_capacity: '{capacity}' # required in template
+            reference_capacity: Autosize
             reference_cop: '{nominal_cop}' # required in template
             reference_chilled_water_flow_rate: Autosize # set by legacy, not reachable by template, no default
             reference_condenser_fluid_flow_rate: Autosize # set by legacy, not reachable by template, no default
@@ -1198,6 +1200,8 @@ Objects:
             Transitions: &CoilCoolingDXSingleSpeedCommonTransitions
               - Coil:Cooling:DX.*:
                   cooling_coil_gross_rated_cooling_cop: gross_rated_cooling_cop
+                  cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
+                  cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
                   cooling_supply_air_flow_rate: rated_air_flow_rate
                   dx_cooling_coil_gross_rated_cop: gross_rated_cooling_cop
                   dx_cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
@@ -1212,8 +1216,8 @@ Objects:
               energy_input_ratio_function_of_temperature_curve_name: '{} Cool DX Coil EIR-FT'
               evaporative_condenser_effectiveness: 0
               gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop}'
-              gross_rated_sensible_heat_ratio: '{cooling_coil_gross_rated_sensible_heat_ratio}'
-              gross_rated_total_cooling_capacity: '{cooling_coil_gross_rated_total_capacity}'
+              gross_rated_sensible_heat_ratio: Autosize
+              gross_rated_total_cooling_capacity: Autosize
               maximum_cycling_rate: 0
               part_load_fraction_correlation_curve_name: '{} Cool DX Coil PLF'
               rated_air_flow_rate: Autosize
@@ -1826,6 +1830,7 @@ Objects:
               - Coil:Heating:DX:SingleSpeed:
                   heating_supply_air_flow_rate: rated_air_flow_rate
                   heat_pump_heating_coil_availability_schedule_name: availability_schedule_name
+                  heat_pump_heating_coil_gross_rated_cop: gross_rated_heating_cop
                   heat_pump_heating_coil_rated_cop: gross_rated_heating_cop # todo_eo: could be combined into one variable
                   heat_pump_heating_coil_gross_rated_capacity: gross_rated_heating_capacity
           Base: &CoilHeatingDXSingleSpeedSuperObject
@@ -1837,8 +1842,8 @@ Objects:
               defrost_time_period_fraction: '{heat_pump_defrost_time_period_fraction}'
               energy_input_ratio_function_of_flow_fraction_curve_name: '{} Heating Coil EIR-FF'
               energy_input_ratio_function_of_temperature_curve_name: '{} Heating Coil EIR-FT'
-              gross_rated_heating_capacity: '{heating_coil_gross_rated_capacity}'
-              gross_rated_heating_cop: '{heat_pump_heating_coil_gross_rated_cop}'
+              gross_rated_heating_capacity: Autosize
+              gross_rated_heating_cop: 2.75
               heating_capacity_function_of_flow_fraction_curve_name: '{} Heating Coil Cap-FF'
               heating_capacity_function_of_temperature_curve_name: '{} Heating Coil Cap-FT'
               maximum_outdoor_dry_bulb_temperature_for_crankcase_heater_operation: 0 # set by legacy, not default
@@ -1939,11 +1944,12 @@ Objects:
                     component_outlet_node_name:
                       Coil:Heating:Water: water_outlet_node_name
           Mappings: &CoilHeatingWaterCommonMappings
-            - heating_coil_capacity:
-                None:
-                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
-                Autosize:
-                  performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+            - Coil:Heating:Water.*:
+                heating_coil_capacity:
+                  None:
+                    performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                  Autosize:
+                    performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
         Base: &CoilHeatingWaterSuperObject
           Fields: &CoilHeatingWaterFields
             << : *CoilHeatingCommonFields
@@ -2193,26 +2199,22 @@ Objects:
                   design_water_flow_rate: Autosize
                   design_u_factor_times_area_value: Autosize
                   free_convection_regime_u_factor_times_area_value: Autocalculate
-                  free_convection_u_factor_times_area_value: Autocalculate
                   performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
                 Autosize:
                   design_water_flow_rate: Autosize
                   design_u_factor_times_area_value: Autosize
                   free_convection_regime_u_factor_times_area_value: Autocalculate
-                  free_convection_u_factor_times_area_value: Autocalculate
                   performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
               free_convection_capacity:
                 None:
                   design_water_flow_rate: Autosize
                   design_u_factor_times_area_value: Autosize
                   free_convection_regime_u_factor_times_area_value: Autocalculate
-                  free_convection_u_factor_times_area_value: Autocalculate
                   performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
                 Autosize:
                   design_water_flow_rate: Autosize
                   design_u_factor_times_area_value: Autosize
                   free_convection_regime_u_factor_times_area_value: Autocalculate
-                  free_convection_u_factor_times_area_value: Autocalculate
                   performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
       Base:
         Fields: &CoolingTowerSingleSpeed
@@ -2247,7 +2249,6 @@ Objects:
                   design_water_flow_rate: Autosize
                   design_u_factor_times_area_value: Autosize
                   free_convection_regime_u_factor_times_area_value: Autocalculate
-                  free_convection_u_factor_times_area_value: Autocalculate
                   high_fan_speed_u_factor_times_area_value: Autosize
                   low_fan_speed_u_factor_times_area_value: Autocalculate
                   performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
@@ -2255,7 +2256,6 @@ Objects:
                   design_water_flow_rate: Autosize
                   design_u_factor_times_area_value: Autosize
                   free_convection_regime_u_factor_times_area_value: Autocalculate
-                  free_convection_u_factor_times_area_value: Autocalculate
                   high_fan_speed_u_factor_times_area_value: Autosize
                   low_fan_speed_u_factor_times_area_value: Autocalculate
                   performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
@@ -2264,7 +2264,6 @@ Objects:
                   design_water_flow_rate: Autosize
                   design_u_factor_times_area_value: Autosize
                   free_convection_regime_u_factor_times_area_value: Autocalculate
-                  free_convection_u_factor_times_area_value: Autocalculate
                   high_fan_speed_u_factor_times_area_value: Autosize
                   low_fan_speed_u_factor_times_area_value: Autocalculate
                   performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
@@ -2272,7 +2271,6 @@ Objects:
                   design_water_flow_rate: Autosize
                   design_u_factor_times_area_value: Autosize
                   free_convection_regime_u_factor_times_area_value: Autocalculate
-                  free_convection_u_factor_times_area_value: Autocalculate
                   high_fan_speed_u_factor_times_area_value: Autosize
                   low_fan_speed_u_factor_times_area_value: Autocalculate
                   performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
@@ -2281,7 +2279,6 @@ Objects:
                   design_water_flow_rate: Autosize
                   design_u_factor_times_area_value: Autosize
                   free_convection_regime_u_factor_times_area_value: Autocalculate
-                  free_convection_u_factor_times_area_value: Autocalculate
                   high_fan_speed_u_factor_times_area_value: Autosize
                   low_fan_speed_u_factor_times_area_value: Autocalculate
                   performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
@@ -2289,7 +2286,6 @@ Objects:
                   design_water_flow_rate: Autosize
                   design_u_factor_times_area_value: Autosize
                   free_convection_regime_u_factor_times_area_value: Autocalculate
-                  free_convection_u_factor_times_area_value: Autocalculate
                   high_fan_speed_u_factor_times_area_value: Autosize
                   low_fan_speed_u_factor_times_area_value: Autocalculate
                   performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
@@ -2331,16 +2327,9 @@ Objects:
                   fan_power_coefficient_5: 0
                   fan_power_minimum_flow_rate_input_method: Fraction
                   fan_power_minimum_flow_fraction: 0
-        VariableVolum:
+        VariableVolume:
           CommonMappings: &FanCommonMappingsVariableVolume
             - Fan:.*:
-                supply_fan_minimum_flow_rate:
-                  None:
-                    fan_power_minimum_flow_fraction: 0.25
-                  Autosize:
-                    fan_power_minimum_flow_fraction: 0.25
-                  AnyNumber:
-                    fan_power_minimum_flow_rate_input_method: FixedFlowRate
                 supply_fan_part_load_power_coefficients:
                   None: &FanVariableVolumeSupplyPLRCoefficients
                     fan_power_coefficient_1: 0.35071223
@@ -2354,9 +2343,17 @@ Objects:
                   InletVaneDampers:
                     <<: *FanVariableVolumeSupplyPLRCoefficients
                     fan_power_minimum_flow_fraction: 0
+                supply_fan_minimum_flow_rate:
+                  None:
+                    fan_power_minimum_flow_fraction: 0.25
+                  Autosize:
+                    fan_power_minimum_flow_fraction: 0.25
+                  AnyNumber:
+                    fan_power_minimum_flow_rate_input_method: FixedFlowRate
       Transitions:
         SystemModel: &FanCommonTransitionsSystemModel
           - Fan:.*:
+              supply_air_maximum_flow_rate: design_maximum_air_flow_rate
               supply_fan_delta_pressure: design_pressure_rise
               supply_fan_motor_efficiency: motor_efficiency
               supply_fan_total_efficiency: fan_total_efficiency
@@ -2415,18 +2412,20 @@ Objects:
       Base:
         Fields: &FanSystemModelFields
           <<: *FanFields
-          design_maximum_air_flow_rate: '{supply_air_maximum_flow_rate}' # required by schema
+          design_maximum_air_flow_rate: Autosize
+          design_pressure_rise: 75
           design_power_sizing_method: TotalEfficiencyAndPressure # set by legacy, not reachable by template, not default
           electric_power_minimum_flow_rate_fraction: 0 # set by legacy, not reachable by template, not default
+          fan_total_efficiency: 0.7
         Connectors: *FanConnectors
     VariableVolume:
       Base: &FanVariableVolumeSuperObject
         Fields: &FanVariableVolumeFields
           << : *FanFields
+          pressure_rise: 1000 # set by HVACTemplate:System:VAV template
           maximum_flow_rate: Autosize
         Connectors: &FanVariableVolumeConnectors
           << : *FanConnectors
-          pressure_rise: 1000 # set by HVACTemplate:System:VAV template
   HeaderedPumps:
     Common:
       Objects:
@@ -2475,19 +2474,53 @@ Objects:
     AirToAir:
       SensibleAndLatent:
         Common:
-          Transitions: &HeatExchangerAirToAirSensibleAndLatentCommonTransitions
-            - HeatExchanger:AirToAir:SensibleAndLatent:
-                sensible_heat_recovery_effectiveness: sensible_effectiveness_at_75_cooling_air_flow
-                latent_heat_recovery_effectiveness: latent_effectiveness_at_75_cooling_air_flow
-            - HeatExchanger:AirToAir:SensibleAndLatent:
-                sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
-                latent_heat_recovery_effectiveness: latent_effectiveness_at_100_cooling_air_flow
-            - HeatExchanger:AirToAir:SensibleAndLatent:
-                sensible_heat_recovery_effectiveness: sensible_effectiveness_at_75_heating_air_flow
-                latent_heat_recovery_effectiveness: latent_effectiveness_at_75_heating_air_flow
-            - HeatExchanger:AirToAir:SensibleAndLatent:
-                sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_heating_air_flow
-                latent_heat_recovery_effectiveness: latent_effectiveness_at_100_heating_air_flow
+          Transitions:
+            Base: &HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness:
+                    sensible_effectiveness_at_75_cooling_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_sensible_effectiveness:
+                    sensible_effectiveness_at_75_cooling_air_flow: '{heat_recovery_sensible_effectiveness} + 0.05'
+                  latent_heat_recovery_effectiveness:
+                    latent_effectiveness_at_75_cooling_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_latent_effectiveness:
+                    latent_effectiveness_at_75_cooling_air_flow: '{latent_heat_recovery_effectiveness} + 0.05'
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness:
+                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_sensible_effectiveness:
+                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  latent_heat_recovery_effectiveness:
+                    latent_effectiveness_at_75_heating_air_flow: '{latent_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_latent_effectiveness:
+                    latent_effectiveness_at_75_heating_air_flow: '{latent_heat_recovery_effectiveness} + 0.05'
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
+                  heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
+                  latent_heat_recovery_effectiveness: latent_effectiveness_at_100_cooling_air_flow
+                  heat_recovery_latent_effectiveness: latent_effectiveness_at_100_cooling_air_flow
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_heating_air_flow
+                  heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_heating_air_flow
+                  latent_heat_recovery_effectiveness: latent_effectiveness_at_100_heating_air_flow
+                  heat_recovery_latent_effectiveness: latent_effectiveness_at_100_heating_air_flow
+            SensibleOnly: &HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness:
+                    sensible_effectiveness_at_75_cooling_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_sensible_effectiveness:
+                    sensible_effectiveness_at_75_cooling_air_flow: '{heat_recovery_sensible_effectiveness} + 0.05'
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness:
+                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                  heat_recovery_sensible_effectiveness:
+                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
+                  heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
+              - HeatExchanger:AirToAir:SensibleAndLatent:
+                  sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_heating_air_flow
+                  heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_heating_air_flow
         Base:
           Fields: &HeatExchangerAirToAirSensibleAndLatentFields
             name: '{} Heat Recovery'
@@ -2806,7 +2839,7 @@ Objects:
             schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
             setpoint_node_or_nodelist_name:
               BuildPathReference:
-                Location: Coil:Cooling.*
+                Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                 ValueLocation: Outlet
       Heating:
         Base:
@@ -2860,7 +2893,7 @@ Objects:
               control_zone_air_node_name: '{dehumidification_control_zone_name} Zone Air Node'
               setpoint_node_or_nodelist_name:
                 BuildPathReference:
-                  Location: Coil:Cooling.*
+                  Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                   ValueLocation: Outlet
         Minimum:
           Base:
@@ -2934,7 +2967,7 @@ Objects:
           heating_maximum_air_flow_fraction: 0 # set by legacy, no default
           zone_cooling_design_supply_air_humidity_ratio: 0.008 # set by legacy, not reachable from template, no default, required by schema
           zone_cooling_design_supply_air_temperature_input_method: '{zone_cooling_design_supply_air_temperature_input_method}'
-          zone_cooling_design_supply_air_temperature: 12.8 # template default, no object default
+          zone_cooling_design_supply_air_temperature: 14 # template default, no object default
           zone_cooling_design_supply_air_temperature_difference: 11.11 # template default, no object default
           zone_heating_design_supply_air_humidity_ratio: 0.008 # set by legacy, not reachable from template, no default, required by schema
           zone_heating_design_supply_air_temperature: 50.0 # template default, no object default
@@ -2959,7 +2992,7 @@ Objects:
               central_cooling_capacity_control_method: OnOff
               central_cooling_design_supply_air_temperature: 12.8 # set by legacy, not default, required by schema
               central_heating_design_supply_air_temperature: 10.0 # set by legacy, not default
-              design_outdoor_air_flow_rate: '{minimum_outdoor_air_flow_rate}'
+              design_outdoor_air_flow_rate: Autosize
               preheat_design_temperature: 7.2 # required by schema
               preheat_design_humidity_ratio: 0.008 # required by schema
               precool_design_temperature: 11 # required by schema
@@ -2987,6 +3020,7 @@ Objects:
               Base: &SizingSystemVAV
                 Fields:
                   <<: *SizingSystem
+                  preheat_design_temperature: 2.0
                   central_heating_maximum_system_air_flow_ratio: 0.3 # set by legacy, not default, required by schema
         Transitions:
           Base: &SizingSystemCommonTransitions
@@ -2994,13 +3028,14 @@ Objects:
                 cooling_coil_design_setpoint_temperature: central_cooling_design_supply_air_temperature
                 cooling_coil_design_setpoint: central_cooling_design_supply_air_temperature
                 cooling_design_supply_air_temperature: central_cooling_design_supply_air_temperature
-                maximum_outdoor_air_flow_rate: design_outdoor_air_flow_rate
+                minimum_outdoor_air_flow_rate: design_outdoor_air_flow_rate
                 heating_coil_design_setpoint: central_heating_design_supply_air_temperature
                 heating_design_supply_air_temperature: central_heating_design_supply_air_temperature
                 heating_coil_capacity: heating_design_capacity
                 preheat_coil_design_setpoint: preheat_design_temperature
                 supply_fan_maximum_flow_rate:
                   cooling_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
+          HeatingSupplyAirFlowRate: &SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
             - Sizing:System:
                 supply_fan_maximum_flow_rate:
                   heating_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
@@ -3013,6 +3048,12 @@ Objects:
             - Sizing:System:
                 supply_fan_flow_rate:
                   heating_supply_air_flow_rate: '{supply_fan_flow_rate} / 1' # trigger eval() to parse out non numeric
+        Mappings:
+          Base: &SizingSystemCommonMappings
+          - Sizing:System:
+              supply_fan_maximum_flow_rate:
+                AnyNumber:
+                  cooling_supply_air_flow_rate_method: 'Flow/System'
     Plant:
       Common:
         Fields: &SizingPlantCommonFields
@@ -4745,8 +4786,6 @@ OptionTree:
           BaseObjects:
             Objects:
               - *ZoneCommonBuildPathBaseObjectsObjects
-            Transitions:
-              - *FanCommonTransitionsSystemModel
           Actions:
             - heat_pump_heating_coil_type:
                 Coil:Heating:WaterToAirHeatPump:EquationFit:
@@ -5477,12 +5516,13 @@ OptionTree:
                 Transitions: *AvailabilityManagerNightCycleCommonTransitions
               CycleOnControlZone: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
               CycleOnAnyZoneFansOnly: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
-              StayOff:
+              StayOff: &HVACTemplateSystemCommonTemplateObjectsBaseNightCycleControlStayOff
                 Objects:
                   - AvailabilityManager:NightCycle:
                       <<: *AvailabilityManagerNightCycle
                       control_type: StayOff
                 Transitions: *AvailabilityManagerNightCycleCommonTransitions
+              None: *HVACTemplateSystemCommonTemplateObjectsBaseNightCycleControlStayOff
             airloop_hvac_object_type: &SystemCommonTemplateObjectsAirLoopHVACObjectType
               Base:
                 Objects:
@@ -5582,6 +5622,7 @@ OptionTree:
                       setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
                   - HeatExchanger:AirToAir:SensibleAndLatent:
                       <<: *HeatExchangerAirToAirSensibleAndLatentFields
+                      economizer_lockout: 'Yes'
                       latent_effectiveness_at_75_cooling_air_flow: 0
                       latent_effectiveness_at_75_heating_air_flow: 0
                       latent_effectiveness_at_100_cooling_air_flow: 0
@@ -5596,7 +5637,7 @@ OptionTree:
                       economizer_control_action_type: MinimumFlowWithBypass
                 Transitions:
                   - *ControllerOutdoorAirCommonTransitions
-                  - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+                  - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
               ElectricPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               GasPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               HotWaterPreheatEnthalpyHR: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
@@ -5608,6 +5649,7 @@ OptionTree:
                       setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
                   - HeatExchanger:AirToAir:SensibleAndLatent:
                       <<: *HeatExchangerAirToAirSensibleAndLatentFields
+                      economizer_lockout: 'Yes'
                       latent_effectiveness_at_75_cooling_air_flow: 0.7
                       latent_effectiveness_at_75_heating_air_flow: 0.7
                       latent_effectiveness_at_100_cooling_air_flow: 0.65
@@ -5626,25 +5668,23 @@ OptionTree:
               GasPreheatEnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
               SensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               EnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
-            cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType # created by descriptors
+            cooling_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType # created by descriptors
               ControlZoneBlowThrough:
                 Objects:
-                  - NodeList:
-                      name: '{} Cooling Setpoint Nodes'
-                      nodes:
-                        - node_name:
-                            BuildPathReference:
-                              Location: ^Coil:Heating:((?!Desuperheater).)*$
-                              Occurrence: -1
-                              ValueLocation: Outlet
-                        - node_name:
-                            BuildPathReference:
-                              Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
-                              Occurrence: -1
-                              ValueLocation: Outlet
                   - SetpointManager:SingleZone:Cooling:
                       <<: *SetpointManagerSingleZoneCooling
-                      setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
+                  - SetpointManager:MixedAir:
+                      <<: *SetpointManagerMixedAirEconomizer
+                      reference_setpoint_node_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
                 Transitions:
                   - SetpointManager:SingleZone:Cooling:
                       maximum_supply_air_temperature:
@@ -5653,6 +5693,12 @@ OptionTree:
                 Objects:
                   - SetpointManager:SingleZone:Cooling: *SetpointManagerSingleZoneCooling
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
+                  - SetpointManager:MixedAir:
+                      <<: *SetpointManagerMixedAirEconomizer
+                      reference_setpoint_node_name:
+                        BuildPathReference:
+                          Location: -1
+                          ValueLocation: Outlet
                 Transitions:
                   - SetpointManager:SingleZone:Cooling:
                       maximum_supply_air_temperature:
@@ -5661,52 +5707,62 @@ OptionTree:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                   - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
-                Transitions:
-                  - SetpointManager:Scheduled:
-                      cooling_coil_setpoint_schedule_name: schedule_name
+                  - SetpointManager:MixedAir:
+                      <<: *SetpointManagerMixedAirEconomizer
+                      reference_setpoint_node_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
               FixedSetpointDrawThrough: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilControlTypeFixedSetpointBlowThrough
               OutdoorAirTemperatureResetBlowThrough:
                 Objects:
-                  - NodeList:
-                      name: '{} Cooling Setpoint Nodes'
-                      nodes:
-                        - node_name:
-                            BuildPathReference:
-                              Location: ^Coil:Heating:((?!Desuperheater).)*$
-                              Occurrence: -1
-                              ValueLocation: Outlet
-                        - node_name:
-                            BuildPathReference:
-                              Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
-                              Occurrence: -1
-                              ValueLocation: Outlet
                   - SetpointManager:OutdoorAirReset:
                       <<: *SetpointManagerOutdoorAirResetCooling
-                      setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
+                  - SetpointManager:MixedAir:
+                      <<: *SetpointManagerMixedAirEconomizer
+                      reference_setpoint_node_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
               OutdoorAirTemperatureResetDrawThrough:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetCooling
+                  - SetpointManager:MixedAir:
+                      <<: *SetpointManagerMixedAirEconomizer
+                      reference_setpoint_node_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
               ScheduledBlowThrough:
                 Objects:
-                  - NodeList:
-                      name: '{} Cooling Setpoint Nodes'
-                      nodes:
-                        - node_name:
-                            BuildPathReference:
-                              Location: ^Coil:Heating:((?!Desuperheater).)*$
-                              Occurrence: -1
-                              ValueLocation: Outlet
-                        - node_name:
-                            BuildPathReference:
-                              Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
-                              Occurrence: -1
-                              ValueLocation: Outlet
                   - SetpointManager:Scheduled:
                       <<: *SetpointManagerScheduled
                       name: '{} Cooling Supply Air Temp Manager'
                       schedule_name: 'HVACTemplate-Always{cooling_coil_design_setpoint}' # cooling coil attribute renamed in class init.
-                      setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
+                  - SetpointManager:MixedAir:
+                      <<: *SetpointManagerMixedAirEconomizer
+                      reference_setpoint_node_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
+                Transitions:
+                  - SetpointManager:Scheduled:
+                      cooling_coil_setpoint_schedule_name: schedule_name
               ScheduledDrawThrough:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
@@ -5718,41 +5774,61 @@ OptionTree:
                         BuildPathReference:
                           Location: -1
                           ValueLocation: Outlet
+                  - SetpointManager:MixedAir:
+                      <<: *SetpointManagerMixedAirEconomizer
+                      reference_setpoint_node_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
+                Transitions:
+                  - SetpointManager:Scheduled:
+                      cooling_coil_setpoint_schedule_name: schedule_name
               WarmestBlowThrough:
                 Objects:
-                  - NodeList:
-                      name: '{} Cooling Setpoint Nodes'
-                      nodes:
-                        - node_name:
-                            BuildPathReference:
-                              Location: ^Coil:Heating:((?!Desuperheater).)*$
-                              Occurrence: -1
-                              ValueLocation: Outlet
-                        - node_name:
-                            BuildPathReference:
-                              Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
-                              Occurrence: -1
-                              ValueLocation: Outlet
                   - SetpointManager:Warmest:
                       <<: *SetpointManagerWarmest
-                      setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
+                  - SetpointManager:MixedAir:
+                      <<: *SetpointManagerMixedAirEconomizer
+                      reference_setpoint_node_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
                 Transitions:
                   - SetpointManager:Warmest:
                       maximum_setpoint_temperature:
-                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+1.0)'
+                        maximum_setpoint_temperature: 'max(18, {heating_coil_design_setpoint}+1.0)'
               WarmestDrawThrough:
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
+                  - SetpointManager:MixedAir:
+                      <<: *SetpointManagerMixedAirEconomizer
+                      reference_setpoint_node_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
                 Transitions:
                   - SetpointManager:Warmest:
                       maximum_setpoint_temperature:
-                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+1.0)'
-            heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
+                        maximum_setpoint_temperature: 'max(18, {heating_coil_design_setpoint}+1.0)'
+            heating_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
               ControlZoneBlowThrough:
                 Objects:
-                  - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
-                  - SetpointManager:SingleZone:Heating: *SetpointManagerSingleZoneHeating
+                  - SetpointManager:SingleZone:Heating:
+                      <<: *SetpointManagerSingleZoneHeating
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: ^Coil:Heating:((?!Desuperheater).)*$
+                          Occurrence: -1
+                          ValueLocation: Outlet
                 Transitions:
                   - SetpointManager:SingleZone:Heating:
                       minimum_supply_air_temperature:
@@ -5769,13 +5845,16 @@ OptionTree:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                   - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
-                Transitions:
-                  - SetpointManager:Scheduled:
-                      heating_coil_setpoint_schedule_name: schedule_name
               FixedSetpointDrawThrough: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilControlTypeFixedSetpointBlowThrough
               OutdoorAirTemperatureResetBlowThrough:
                 Objects:
-                  - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetHeating
+                  - SetpointManager:OutdoorAirReset:
+                      <<: *SetpointManagerOutdoorAirResetHeating
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: ^Coil:Heating:((?!Desuperheater).)*$
+                          Occurrence: -1
+                          ValueLocation: Outlet
               OutdoorAirTemperatureResetDrawThrough:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
@@ -5789,15 +5868,21 @@ OptionTree:
                           Location: ^Coil:Heating:((?!Desuperheater).)*$
                           Occurrence: -1
                           ValueLocation: Outlet
+                Transitions:
+                  - SetpointManager:Scheduled:
+                      heating_coil_setpoint_schedule_name: schedule_name
               ScheduledDrawThrough:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                   - SetpointManager:Scheduled:
                       <<: *SetpointManagerScheduledHeating
                       schedule_name: 'HVACTemplate-Always{heating_coil_design_setpoint}'
+                Transitions:
+                  - SetpointManager:Scheduled:
+                      heating_coil_setpoint_schedule_name: schedule_name
           DedicatedOutdoorAir:
-            cooling_coil_setpoint_control_type: &SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilSetpointControlType # created by descriptors
-              FixedSetpointBlowThrough: &SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointBlowThrough
+            cooling_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilSetpointControlType # created by descriptors
+              FixedSetpointBlowThrough:
                 Objects:
                   - SetpointManager:Scheduled:
                       <<: *SetpointManagerScheduledCooling
@@ -5806,10 +5891,7 @@ OptionTree:
                           Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
                           Occurrence: -1
                           ValueLocation: Outlet
-                Transitions:
-                  - SetpointManager:Scheduled:
-                      cooling_coil_setpoint_schedule_name: schedule_name
-              FixedSetpointDrawThrough: &SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointDrawThrough
+              FixedSetpointDrawThrough:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                   - SetpointManager:Scheduled:
@@ -5818,9 +5900,6 @@ OptionTree:
                         BuildPathReference:
                           Location: -1
                           ValueLocation: Outlet
-                Transitions:
-                  - SetpointManager:Scheduled:
-                      cooling_coil_setpoint_schedule_name: schedule_name
               OutdoorAirTemperatureResetBlowThrough:
                 Objects:
                   - SetpointManager:OutdoorAirReset:
@@ -5834,9 +5913,31 @@ OptionTree:
                 Objects:
                   - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetCooling
-              ScheduledBlowThrough: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointBlowThrough
-              ScheduledDrawThrough: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilControlTypeFixedSetpointDrawThrough
-            heating_coil_setpoint_control_type: &SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilSetpointControlType
+              ScheduledBlowThrough:
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledCooling
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                          Occurrence: -1
+                          ValueLocation: Outlet
+                Transitions:
+                  - SetpointManager:Scheduled:
+                      cooling_coil_setpoint_schedule_name: schedule_name
+              ScheduledDrawThrough:
+                Objects:
+                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledCooling
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: -1
+                          ValueLocation: Outlet
+                Transitions:
+                  - SetpointManager:Scheduled:
+                      cooling_coil_setpoint_schedule_name: schedule_name
+            heating_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilSetpointControlType
               FixedSetpointBlowThrough: &SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilControlTypeFixedSetpointBlowThrough
                 Objects:
                   - SetpointManager:Scheduled:
@@ -5927,18 +6028,18 @@ OptionTree:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Sizing:System: *SizingSystemConstantVolume
-            - SetpointManager:MixedAir: *SetpointManagerMixedAirEconomizer
           Transitions:
             - *SystemCommonTransitions
             - *SizingSystemCommonTransitions
+          Mappings: *SizingSystemCommonMappings
         TemplateObjects:
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           humidistat_type: *SystemCommonTemplateObjectsHumidistatType
           humidifier_type: *SystemCommonTemplateObjectsHumidifierType
           dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
-          cooling_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
-          heating_coil_setpoint_control_type: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
+          cooling_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
+          heating_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
           outside_air_equipment_type: *SystemCommonTemplateObjectsOutsideAirEquipmentType
       DedicatedOutdoorAir:
         BuildPath:
@@ -6043,6 +6144,7 @@ OptionTree:
           Transitions:
             - *SystemCommonTransitions
             - *SizingSystemCommonTransitions
+            - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
             - *SizingSystemCommonTransitionsDedicatedOutdoorAir
             - *AvailabilityManagerScheduledCommonTransitions
         TemplateObjects:
@@ -6063,8 +6165,8 @@ OptionTree:
                 - SetpointManager:Scheduled:
                     humidifier_setpoint_schedule_name: schedule_name
           dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
-          cooling_coil_setpoint_control_type: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilSetpointControlType
-          heating_coil_setpoint_control_type: *SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilSetpointControlType
+          cooling_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsDedicatedOutdoorAirCoolingCoilSetpointControlType
+          heating_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsDedicatedOutdoorAirHeatingCoilSetpointControlType
           outside_air_equipment_type_detailed:
             None:
               Objects:
@@ -6107,6 +6209,8 @@ OptionTree:
                     <<: *ControllerOutdoorAir
                     economizer_control_action_type: MinimumFlowWithBypass
               Transitions:
+                - *ControllerOutdoorAirCommonTransitions
+                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
                 - Controller:OutdoorAir:
                     supply_fan_flow_rate: maximum_outdoor_air_flow_rate
                 - Controller:OutdoorAir:
@@ -6141,6 +6245,8 @@ OptionTree:
                     <<: *ControllerOutdoorAir
                     economizer_control_action_type: MinimumFlowWithBypass
               Transitions:
+                - *ControllerOutdoorAirCommonTransitions
+                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
                 - Controller:OutdoorAir:
                     supply_fan_flow_rate: maximum_outdoor_air_flow_rate
                 - Controller:OutdoorAir:
@@ -6181,6 +6287,8 @@ OptionTree:
                     economizer_control_type: DifferentialDryBulb
                     economizer_minimum_limit_dry_bulb_temperature: '{heating_coil_design_setpoint}'
               Transitions:
+                - *ControllerOutdoorAirCommonTransitions
+                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
                 - Controller:OutdoorAir:
                     supply_fan_flow_rate: maximum_outdoor_air_flow_rate
                 - Controller:OutdoorAir:
@@ -6272,7 +6380,7 @@ OptionTree:
               - supply_fan_placement: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
           BaseObjects:
           TemplateObjects:
-            cooling_coil_setpoint_control_type:
+            cooling_coil_setpoint_control_type_detailed:
               <<: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
               OutdoorAirTemperatureResetDrawThrough:
                 Objects:
@@ -6302,9 +6410,9 @@ OptionTree:
                     Mappings: *FanCommonMappingsVariableVolume
           BaseObjects:
           TemplateObjects:
-            heating_coil_setpoint_control_type:
+            heating_coil_setpoint_control_type_detailed:
               <<: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
-              OutdoorAirTemperatureResetDrawThrough:
+              OutdoorAirTemperatureResetBlowThrough:
                 Objects:
                   - SetpointManager:OutdoorAirReset:
                       <<: *SetpointManagerOutdoorAirResetHeating
@@ -6341,22 +6449,25 @@ OptionTree:
             - Controller:OutdoorAir: *ControllerOutdoorAir
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Sizing:System: *SizingSystemVAV
-          Transitions: *SystemCommonTransitions
+          Transitions:
+            - *SystemCommonTransitions
+            - *SizingSystemCommonTransitions
+          Mappings: *SizingSystemCommonMappings
         TemplateObjects:
-          setpoint_control_type: # set by descriptors in ExpandSystem
+          setpoint_control_type_detailed: # set by descriptors in ExpandSystem
             CoolingNoneHeatingNoneBlowThrough:
               Objects:
                 - SetpointManager:Scheduled:
                     <<: *SetpointManagerScheduledCooling
                     setpoint_node_or_nodelist_name:
                       BuildPathReference:
-                        Location: Coil:Cooling.*
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                         ValueLocation: Outlet
                 - SetpointManager:MixedAir:
                     <<: *SetpointManagerMixedAirCoolingSystemNodelist
                     reference_setpoint_node_name:
                       BuildPathReference:
-                        Location: Coil:Cooling.*
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                         ValueLocation: Outlet
                 - NodeList:
                     name: *SystemMixedAirNodelistName
@@ -6382,6 +6493,26 @@ OptionTree:
                           ^OutdoorAir:Mixer: mixed_air_node_name
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                 - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
+            CoolingNoneHeatingOutdoorAirTemperatureResetDrawThrough:
+              Objects:
+                - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
+                - SetpointManager:MixedAir: *SetpointManagerMixedAirCoolingSystemNodelist
+                - NodeList:
+                    name: *SystemMixedAirNodelistName
+                    nodes:
+                      - node_name:
+                          BuildPathReference:
+                            Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
+                            ValueLocation: Outlet
+                      - node_name:
+                          ^OutdoorAir:Mixer: mixed_air_node_name
+                - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
+                - SetpointManager:OutdoorAirReset:
+                    <<: *SetpointManagerOutdoorAirResetHeating
+                    outdoor_high_temperature: 10
+                    outdoor_low_temperature: -6.7
+                    setpoint_at_outdoor_high_temperature: 4.8
+                    setpoint_at_outdoor_low_temperature: '{heating_coil_design_setpoint}'
             CoolingWarmestHeatingNoneDrawThrough: &SystemCommonPackagedVAVTemplateObjectsSetpointControlTypeCoolingWarmestHeatingNoneDrawThrough
               Objects:
                 - SetpointManager:Warmest: *SetpointManagerWarmest
@@ -6400,20 +6531,62 @@ OptionTree:
                           ^OutdoorAir:Mixer: mixed_air_node_name
                 - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
-            CoolingWarmestTemperatureFirstHeatingNoneDrawThrough: *SystemCommonPackagedVAVTemplateObjectsSetpointControlTypeCoolingWarmestHeatingNoneDrawThrough
             CoolingWarmestHeatingNoneBlowThrough:
               Objects:
                 - SetpointManager:Warmest:
                     <<: *SetpointManagerWarmest
                     setpoint_node_or_nodelist_name:
                       BuildPathReference:
-                        Location: Coil:Cooling.*
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                         ValueLocation: Outlet
                 - SetpointManager:MixedAir:
                     <<: *SetpointManagerMixedAirCoolingSystemNodelist
                     reference_setpoint_node_name:
                       BuildPathReference:
-                        Location: Coil:Cooling.*
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
+                        ValueLocation: Outlet
+                - NodeList:
+                    name: *SystemMixedAirNodelistName
+                    nodes:
+                      - node_name:
+                          ^OutdoorAir:Mixer: mixed_air_node_name
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManagerScheduledHeating
+                    setpoint_node_or_nodelist_name:
+                      BuildPathReference:
+                        Location: -1
+                        ValueLocation: Outlet
+            CoolingWarmestTemperatureFirstHeatingNoneDrawThrough:
+              Objects:
+                - SetpointManager:WarmestTemperatureFlow: *SetpointManagerWarmestTemperatureFlow
+                - SetpointManager:MixedAir:
+                    <<: *SetpointManagerMixedAirCoolingSystemNodelist
+                    reference_setpoint_node_name:
+                      BuildPathReference:
+                        Location: -1
+                        ValueLocation: Outlet
+                - NodeList:
+                    name: *SystemMixedAirNodelistName
+                    nodes:
+                      - node_name:
+                          ^Coil:Cooling:.*: air_outlet_node_name
+                      - node_name:
+                          ^OutdoorAir:Mixer: mixed_air_node_name
+                - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
+                - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
+            CoolingWarmestTemperatureFirstHeatingNoneBlowThrough:
+              Objects:
+                - SetpointManager:WarmestTemperatureFlow:
+                    <<: *SetpointManagerWarmestTemperatureFlow
+                    setpoint_node_or_nodelist_name:
+                      BuildPathReference:
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
+                        ValueLocation: Outlet
+                - SetpointManager:MixedAir:
+                    <<: *SetpointManagerMixedAirCoolingSystemNodelist
+                    reference_setpoint_node_name:
+                      BuildPathReference:
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                         ValueLocation: Outlet
                 - NodeList:
                     name: *SystemMixedAirNodelistName
@@ -6438,7 +6611,7 @@ OptionTree:
                     <<: *SetpointManagerMixedAirCoolingSystemNodelist
                     reference_setpoint_node_name:
                       BuildPathReference:
-                        Location: Coil:Cooling.*
+                        Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
                         ValueLocation: Outlet
                 - NodeList:
                     name: *SystemMixedAirNodelistName
@@ -6529,6 +6702,7 @@ OptionTree:
           Transitions:
             - *SystemCommonTransitions
             - *SizingSystemCommonTransitions
+            - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
         TemplateObjects: *SystemCommonTemplateObjects
       UnitaryHeatPump:
         AirToAir:
@@ -6555,6 +6729,7 @@ OptionTree:
               - *SystemUnitaryBaseObjects
             Transitions:
               - *SizingSystemCommonTransitions
+              - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
           TemplateObjects: *SystemCommonTemplateObjects
       UnitarySystem:
         BuildPath:
@@ -6578,6 +6753,12 @@ OptionTree:
                   ActionType: Insert
                   Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasObjects
                   Mappings: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasMappings
+                Electric: # Remove temperature_setpoint_node field
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
             - supplemental_heating_or_reheat_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
             - cooling_coil_type:
                 <<: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilType
@@ -6654,6 +6835,7 @@ OptionTree:
           Transitions:
             - *AvailabilityManagerScheduledCommonTransitions
             - *SizingSystemCommonTransitions
+            - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
         TemplateObjects: *SystemCommonTemplateObjects
       VAV:
         BuildPath:
@@ -6918,7 +7100,7 @@ OptionTree:
                 - Pump:ConstantSpeed:
                     <<: *PumpConstantSpeed
                     name: '{unique_name} {plant_loop_type_short} Branch Pump'
-                    design_pump_head: '{hot_water_pump_rated_head}'
+                    design_pump_head: '{water_pump_rated_head}'
                     inlet_node_name: '{} HW Pump Inlet'
                     outlet_node_name:
                       Boiler.*: boiler_water_inlet_node_name
@@ -6946,7 +7128,7 @@ OptionTree:
                 - Pump:ConstantSpeed:
                     <<: *PumpConstantSpeed
                     name: '{unique_name} {plant_loop_type_short} Branch Pump'
-                    design_pump_head: '{hot_water_pump_rated_head}'
+                    design_pump_head: '{water_pump_rated_head}'
                     inlet_node_name: '{} HW Pump Inlet'
                     outlet_node_name:
                       Boiler.*: boiler_water_inlet_node_name
@@ -6974,7 +7156,7 @@ OptionTree:
                 - Pump:VariableSpeed:
                     <<: *PumpVariableSpeed
                     name: '{unique_name} {plant_loop_type_short} Branch Pump'
-                    design_pump_head: '{hot_water_pump_rated_head}'
+                    design_pump_head: '{water_pump_rated_head}'
                     inlet_node_name: '{} HW Pump Inlet'
                     outlet_node_name:
                       Boiler.*: boiler_water_inlet_node_name
@@ -7002,7 +7184,7 @@ OptionTree:
                 - Pump:VariableSpeed:
                     <<: *PumpVariableSpeed
                     name: '{unique_name} {plant_loop_type_short} Branch Pump'
-                    design_pump_head: '{hot_water_pump_rated_head}'
+                    design_pump_head: '{water_pump_rated_head}'
                     inlet_node_name: '{} HW Pump Inlet'
                     outlet_node_name:
                       DistrictHeating: hot_water_inlet_node_name
@@ -7055,7 +7237,6 @@ OptionTree:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
-            - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
             - Sizing:Plant: *SizingPlantChilledWater
           Transitions:
             - *SizingPlantCommonTransitions
@@ -7066,6 +7247,7 @@ OptionTree:
             None: &PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
               Objects:
                 - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesCoolingLoad
+                - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadChilledWater
             Default: *PlantChilledWaterLoopTemplateObjectsChillerPlantOperationSchemeTypeNone
             UserDefined:
           chilled_water_pump_configuration:
@@ -7284,7 +7466,7 @@ OptionTree:
                 - Pump:ConstantSpeed:
                     <<: *PumpConstantSpeed
                     name: '{} ChW Branch Pump'
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                    design_pump_head: '{water_pump_rated_head}'
                     inlet_node_name: '{} Chw Pump Inlet'
                     outlet_node_name:
                       (Chiller.*|DistrictCooling): chilled_water_inlet_node_name
@@ -7312,7 +7494,7 @@ OptionTree:
                 - Pump:VariableSpeed:
                     <<: *PumpVariableSpeed
                     name: '{} ChW Branch Pump'
-                    design_pump_head: '{primary_chilled_water_pump_rated_head}'
+                    design_pump_head: '{water_pump_rated_head}'
                     inlet_node_name: '{} Chw Pump Inlet'
                     outlet_node_name:
                       Chiller.*: chilled_water_inlet_node_name
@@ -7441,7 +7623,6 @@ OptionTree:
             - *PlantCommonPlantLoopBase
             - *PlantCommonPlantLoopNoSecondary
             - Sizing:Plant: *SizingPlantCondenserWater
-            - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadCondenserWater
             - CondenserLoop: *CondenserLoopFields
           Transitions:
             - *SizingPlantCommonTransitions
@@ -7476,6 +7657,7 @@ OptionTree:
             None: &PlantCondenserWaterLoopTemplateObjectsCondenserPlantOperationSchemeTypeNone
               Objects:
                 - CondenserEquipmentOperationSchemes: *CondenserEquipmentOperationSchemesCondenserLoad
+                - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadCondenserWater
             Default: *PlantCondenserWaterLoopTemplateObjectsCondenserPlantOperationSchemeTypeNone
             UserDefined:
           condenser_water_supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
@@ -7535,12 +7717,40 @@ OptionTree:
             OtherEquipment:
               Objects:
                 - Branch: *CoolingTowerCommonObjectsBranch
+            ConstantPumpPerEquipment:
+              Objects:
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
+                    name: '{} Branch Pump'
+                    design_pump_head: '{water_pump_rated_head}'
+                    inlet_node_name: '{} CW Pump Inlet'
+                    outlet_node_name:
+                      CoolingTower.*: water_inlet_node_name
+                - Branch:
+                    name: '{} Branch'
+                    components:
+                      - component_object_type:
+                          Pump.*: self
+                        component_name:
+                          Pump.*: key
+                        component_inlet_node_name:
+                          Pump.*: inlet_node_name
+                        component_outlet_node_name:
+                          CoolingTower.*: water_inlet_node_name
+                      - component_object_type:
+                          CoolingTower.*: self
+                        component_name:
+                          CoolingTower.*: key
+                        component_inlet_node_name:
+                          CoolingTower.*: water_inlet_node_name
+                        component_outlet_node_name:
+                          CoolingTower.*: water_outlet_node_name
             VariablePumpPerEquipment:
               Objects:
                 - Pump:VariableSpeed:
                     <<: *PumpVariableSpeed
                     name: '{} Branch Pump'
-                    design_pump_head: '{condenser_water_pump_rated_head}'
+                    design_pump_head: '{water_pump_rated_head}'
                     inlet_node_name: '{} CW Pump Inlet'
                     outlet_node_name:
                       CoolingTower.*: water_inlet_node_name
@@ -7573,8 +7783,6 @@ OptionTree:
             - *PlantCommonPlantLoopBase
             - *PlantCommonPlantLoopNoSecondary
             - Sizing:Plant: *SizingPlantHotWater
-            - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadHotWater
-            - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesHeatingLoad
             - PlantLoop: *PlantLoopHotWaterFields
           Transitions:
             - *SizingPlantCommonTransitions
@@ -7593,6 +7801,13 @@ OptionTree:
                   PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
                   PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
         TemplateObjects:
+          hot_water_plant_operation_scheme_type:
+            None: &PlantHotWaterLoopTemplateObjectsHotWaterPlantOperationSchemeTypeNone
+              Objects:
+                - PlantEquipmentOperationSchemes: *PlantEquipmentOperationSchemesHeatingLoad
+                - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadHotWater
+            Default: *PlantHotWaterLoopTemplateObjectsHotWaterPlantOperationSchemeTypeNone
+            UserDefined:
           primary_pump_flow_and_type:
             ConstantPumpPerBoiler:
               Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipmentObjects
@@ -7687,59 +7902,113 @@ OptionTree:
         BaseObjects:
           Objects:
             - *PlantCommonPlantLoopBase
-            - Pipe:Adiabatic:
-                name: '{} Supply Bypass Pipe'
-                inlet_node_name: '{} Supply Bypass Inlet'
-                outlet_node_name: '{} Supply Bypass Outlet'
-            - Branch:
-                name: *SupplyBypassBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Supply Bypass Pipe'
-                    component_inlet_node_name: '{} Supply Bypass Inlet'
-                    component_outlet_node_name: '{} Supply Bypass Outlet'
-            - Pipe:Adiabatic:
-                name: '{} Demand Bypass Pipe'
-                inlet_node_name: '{} Demand Bypass Inlet'
-                outlet_node_name: '{} Demand Bypass Outlet'
-            - Branch:
-                name: *DemandBypassBranch
-                components:
-                  - component_object_type: Pipe:Adiabatic
-                    component_name: '{} Demand Bypass Pipe'
-                    component_inlet_node_name: '{} Demand Bypass Inlet'
-                    component_outlet_node_name: '{} Demand Bypass Outlet'
             - *PlantCommonPlantLoopNoSecondary
             - Sizing:Plant: *SizingPlantMixedWater
-            # Custom naming needed for two PlantEquipmentOperation objects and PlantEquipmentOperationSchemes
-            - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadMixedWater
-            - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadMixedWater
-            - PlantEquipmentOperationSchemes:
-                <<: *PlantEquipmentOperationSchemesHeatingLoad
-                control_scheme_1_name: *PlantEquipmentOperationHeat
-                control_scheme_1_object_type: PlantEquipmentOperation:HeatingLoad
-                control_scheme_1_schedule_name: HVACTemplate-Always1
-                control_scheme_2_name: *PlantEquipmentOperationCool
-                control_scheme_2_object_type: PlantEquipmentOperation:CoolingLoad
-                control_scheme_2_schedule_name: HVACTemplate-Always1
             - PlantLoop: *PlantLoopMixedWaterFields
             - SetpointManager:Scheduled:DualSetpoint: *SetpointManagerScheduledDualSetpoint
           Transitions:
             - *SizingPlantCommonTransitions
+            - ^PlantLoop$:
+                equipment_operation_schemes_name: plant_equipment_operation_scheme_name
+                load_distribution_scheme: load_distribution_scheme
+            - SetpointManager:Scheduled:DualSetpoint:
+                high_temperature_setpoint_schedule_name: high_setpoint_schedule_name
+                low_temperature_setpoint_schedule_name:  low_setpoint_schedule_name
+          Mappings:
+            - ^PlantLoop$:
+                fluid_type:
+                  EthyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  EthyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol30: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol40: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol50: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
+                  PropyleneGlycol60: *PlantChilledWaterLoopTemplateObjectsChilledWaterPumpConfigurationMappingsUserDefinedFluidType
         TemplateObjects:
-          water_pump_configuration:
-            ConstantFlow:
+          supply_side_bypass_pipe: *PlantCommonPlantLoopSupplySideBypassPipe
+          demand_side_bypass_pipe: *PlantCommonPlantLoopDemandSideBypassPipe
+          fluid_type: *PlantCommonPlantLoopFluidType
+          operation_scheme_type:
+            None: &PlantMixedWaterLoopTemplateObjectsOperationSchemeTypeNone
               Objects:
-                - Pump:ConstantSpeed:
-                    <<: *PumpConstantSpeed
-                    design_pump_head: '{water_pump_rated_head}'
-                - Branch: *PumpBranchConstantSpeedSupplyInlet
-            VariableFlow:
-              Objects:
-                - Pump:VariableSpeed:
-                    <<: *PumpVariableSpeed
-                    design_pump_head: '{water_pump_rated_head}'
-                - Branch: *PumpBranchVariableSpeedSupplyInlet
+                - PlantEquipmentOperation:CoolingLoad: *PlantEquipmentOperationCoolingLoadMixedWater
+                - PlantEquipmentOperation:HeatingLoad: *PlantEquipmentOperationHeatingLoadMixedWater
+                - PlantEquipmentOperationSchemes:
+                    <<: *PlantEquipmentOperationSchemesHeatingLoad
+                    control_scheme_1_name: *PlantEquipmentOperationHeat
+                    control_scheme_1_object_type: PlantEquipmentOperation:HeatingLoad
+                    control_scheme_1_schedule_name: HVACTemplate-Always1
+                    control_scheme_2_name: *PlantEquipmentOperationCool
+                    control_scheme_2_object_type: PlantEquipmentOperation:CoolingLoad
+                    control_scheme_2_schedule_name: HVACTemplate-Always1
+            Default: *PlantMixedWaterLoopTemplateObjectsOperationSchemeTypeNone
+            UserDefined:
+          primary_pump_flow_and_type:
+            ConstantPumpPerTowerOrBoiler:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipmentObjects
+            ConstantSinglePump:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantSinglePumpObjects
+              Transitions:
+                - *PumpCommonTransitions
+                - Pump.*:
+                    water_pump_rated_head: design_pump_head
+            ConstantTwoHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantTwoHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    water_pump_rated_head: design_pump_head
+            ConstantThreeHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantThreeHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    water_pump_rated_head: design_pump_head
+            ConstantFourHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFourHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    water_pump_rated_head: design_pump_head
+            ConstantFiveHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantFiveHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:ConstantSpeed:
+                    water_pump_rated_head: design_pump_head
+            VariablePumpPerTowerOrBoiler:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeConstantPumpPerEquipmentObjects
+            VariableSinglePump:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableSinglePumpObjects
+              Transitions:
+                - *PumpCommonTransitions
+                - Pump:.*:
+                    water_pump_rated_head: design_pump_head
+            VariableTwoHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableTwoHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    water_pump_rated_head: design_pump_head
+            VariableThreeHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableThreeHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    water_pump_rated_head: design_pump_head
+            VariableFourHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFourHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    water_pump_rated_head: design_pump_head
+            VariableFiveHeaderedPumps:
+              Objects: *PlantCommonPlantLoopPrimaryPumpFlowAndTypeVariableFiveHeaderedObjects
+              Transitions:
+                - *HeaderedPumpsCommonTransitions
+                - HeaderedPumps:VariableSpeed:
+                    water_pump_rated_head: design_pump_head
 # Notes
 # Compact schedules can be created on their own via specialized structure
 #  - Schedule:Compact:

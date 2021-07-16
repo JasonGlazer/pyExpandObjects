@@ -30,6 +30,77 @@ class TestSimulationsZoneConstantVolume(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:test_minimum_inputs_no_thermostat")
+    def test_minimum_inputs_no_thermostat(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume'].pop('HVACTemplate:Zone:ConstantVolume 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Zone:ConstantVolume': {
+                    'HVACTemplate:Zone:ConstantVolume 1': {
+                        "template_constant_volume_system_name": "AHU 1 Spaces 1-4",
+                        "zone_name": "SPACE1-1"
+                    }
+                },
+                "ZoneControl:Thermostat": {
+                    "SPACE1-1 Thermostat": {
+                        "control_1_name": "All Zones SP Control",
+                        "control_1_object_type": "ThermostatSetpoint:DualSetpoint",
+                        "control_type_schedule_name": "HVACTemplate-Always4",
+                        "zone_or_zonelist_name": "SPACE1-1"
+                    }
+                },
+                "ThermostatSetpoint:DualSetpoint": {
+                    "All Zones SP Control": {
+                        "cooling_setpoint_temperature_schedule_name": "Clg-SetP-Sch",
+                        "heating_setpoint_temperature_schedule_name": "Htg-SetP-Sch"
+                    }
+                },
+                'Schedule:Compact': {
+                    "HVACTemplate-Always4": {
+                        "data": [
+                            {
+                                "field": "Through 12/31"
+                            },
+                            {
+                                "field": "For AllDays"
+                            },
+                            {
+                                "field": "Until 24:00"
+                            },
+                            {
+                                "field": 4.0
+                            }
+                        ],
+                        "schedule_type_limits_name": "Any Number"
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:test_minimum_inputs")
+    def test_minimum_inputs(self):
+        self.base_epjson['HVACTemplate:Zone:ConstantVolume'].pop('HVACTemplate:Zone:ConstantVolume 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Zone:ConstantVolume': {
+                    'HVACTemplate:Zone:ConstantVolume 1': {
+                        "template_constant_volume_system_name": "AHU 1 Spaces 1-4",
+                        "zone_name": "SPACE1-1",
+                        "template_thermostat_name": "All Zones"
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:ConstantVolume:supply_air_maximum_flow_rate")
     def test_supply_air_maximum_flow_rate(self):
         self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1']['supply_air_maximum_flow_rate'] = 0.1

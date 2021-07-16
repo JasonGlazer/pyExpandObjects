@@ -31,11 +31,12 @@ class HVACTemplate(EPJSON):
     def __init__(
             self,
             no_schema=False,
-            logger_level='WARNING'):
+            logger_level='WARNING',
+            reset_stream=True):
         """
         :param no_schema: Boolean flag for skipping schema validation
         """
-        super().__init__(no_schema=no_schema, logger_level=logger_level)
+        super().__init__(no_schema=no_schema, logger_level=logger_level, reset_stream=reset_stream)
         self.logger_level = logger_level
         self.templates = {}
         self.base_objects = {}
@@ -71,6 +72,39 @@ class HVACTemplate(EPJSON):
                               'ConstantVolume|BaseboardHeat|FanCoil|IdealLoadsAirSystem|PTAC|PTHP|WaterToAirHeatPump|'
                               'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|DualDuct)$',
                               object_type):
+                    zone_default_map = {
+                        'HVACTemplate:Zone:FanCoil': {
+                            'cooling_coil_type': 'ChilledWater',
+                            'heating_coil_type': 'HotWater',
+                            'outdoor_air_method': 'Flow/Person',
+                            'outdoor_air_flow_rate_per_person': 0.00944
+                        },
+                        'HVACTemplate:Zone:PTAC': {
+                            'cooling_coil_type': 'SingleSpeedDX',
+                            'heating_coil_type': 'Electric'
+                        },
+                        'HVACTemplate:Zone:PTHP': {
+                            'cooling_coil_type': 'SingleSpeedDX',
+                            'heat_pump_heating_coil_type': 'SingleSpeedDXHeatPump',
+                            'supplemental_heating_coil_type': 'Electric'
+                        },
+                        'HVACTemplate:Zone:WaterToAirHeatPump': {
+                            'cooling_coil_type': 'Coil:Cooling:WaterToAirHeatPump:EquationFit',
+                            'cooling_coil_gross_rated_cop': 3.5,
+                            # todo_eo: template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched
+                            'supply_fan_placement': 'DrawThrough',
+                            'heat_pump_heating_coil_type': 'Coil:Heating:WaterToAirHeatPump:EquationFit',
+                            'heat_pump_heating_coil_gross_rated_cop': 4.2,
+                            'supplemental_heating_coil_type': 'Electric'
+                        }
+                    }
+                    for object_name, object_fields in object_structure.items():
+                        # set defaults
+                        selected_default_map = zone_default_map.get(object_type)
+                        if selected_default_map:
+                            for field, default_value in selected_default_map.items():
+                                if not object_fields.get(field):
+                                    object_fields[field] = default_value
                     # set a mapping of zone template type to look up parent system
                     zone_template_map = {
                         ('HVACTemplate:Zone:ConstantVolume', ):
@@ -121,6 +155,11 @@ class HVACTemplate(EPJSON):
                                         .format(object_type, object_name, system_name))
                     # check fields
                     for object_name, object_fields in object_structure.items():
+                        # check for required info
+                        if not object_fields.get('template_thermostat_name', None):
+                            self.logger.info(
+                                'In {} ({}) template thermostat name not provided'
+                                .format(object_type, object_name))
                         # check baseboard settings
                         if object_fields.get('baseboard_heating_type', None) == 'HotWater' and (
                                 not epjson.get('HVACTemplate:Plant:HotWaterLoop') or not
@@ -146,7 +185,7 @@ class HVACTemplate(EPJSON):
                             cooling_limit = object_fields.get('cooling_limit')
                             maximum_cooling_air_flow_rate = object_fields.get('maximum_cooling_air_flow_rate', '')
                             maximum_total_cooling_capacity = \
-                                object_fields.get('maximum_total_heating_capacity', '')
+                                object_fields.get('maximum_total_cooling_capacity', '')
                             if heating_limit == 'LimitFlowRate' and maximum_heating_air_flow_rate == '':
                                 raise InvalidTemplateException(
                                     'Error: In {} ({})'
@@ -210,7 +249,31 @@ class HVACTemplate(EPJSON):
                               'ConstantVolume|DualDuct|DedicatedOutdoorAir'
                               ')$', object_type):
                     # check for individual template issues
+                    system_default_map = {
+                        'HVACTemplate:System:ConstantVolume': {
+                            'cooling_coil_type': 'ChilledWater',
+                            'cooling_coil_design_setpoint_temperature': 12.8,
+                            'economizer_type': 'NoEconomizer',
+                            'heating_coil_type': 'HotWater',
+                            'heating_coil_design_setpoint': 10,
+                            'supply_fan_placement': 'DrawThrough',
+                        },
+                        'HVACTemplate:System:DedicatedOutdoorAir': {
+                            'air_outlet_type': 'DirectIntoZone',
+                            'cooling_coil_type': 'ChilledWater',
+                            'heating_coil_type': 'HotWater',
+                            'supply_fan_placement': 'DrawThrough',
+                            'cooling_coil_design_setpoint_temperature': 12.8,
+                            'heating_coil_design_setpoint': 12.2
+                        }
+                    }
                     for object_name, object_fields in object_structure.items():
+                        # set defaults
+                        selected_default_map = system_default_map.get(object_type)
+                        if selected_default_map:
+                            for field, default_value in selected_default_map.items():
+                                if not object_fields.get(field):
+                                    object_fields[field] = default_value
                         try:
                             zone_system_field = self._get_zone_template_field_from_system_type(object_type)
                         except InvalidTemplateException:
@@ -323,6 +386,29 @@ class HVACTemplate(EPJSON):
                 elif re.match('^HVACTemplate:Plant:(ChilledWater|HotWater|MixedWater)Loop$', object_type):
                     if len(object_structure.keys()) > 1:
                         self.logger.warning('Warning: Only one {} allowed per file.'.format(object_type))
+                    plant_loop_default_map = {
+                        'HVACTemplate:Plant:ChilledWaterLoop': {
+                            'chilled_water_design_setpoint': 7.22,
+                            'condenser_water_design_setpoint': 29.4,
+                            'chilled_water_pump_configuration': 'ConstantPrimaryNoSecondary'
+                        },
+                        'HVACTemplate:Plant:HotWaterLoop': {
+                            'hot_water_design_setpoint': 82,
+                            'hot_water_pump_configuration': 'ConstantFlow'
+                        },
+                        'HVACTemplate:Plant:MixedWaterLoop': {
+                            'high_temperature_design_setpoint': 33,
+                            'low_temperature_design_setpoint': 20,
+                            'water_pump_configuration': 'ConstantFlow'
+                        }
+                    }
+                    for object_name, object_fields in object_structure.items():
+                        # set defaults
+                        selected_default_map = plant_loop_default_map.get(object_type)
+                        if selected_default_map:
+                            for field, default_value in selected_default_map.items():
+                                if not object_fields.get(field):
+                                    object_fields[field] = default_value
                     if object_type == 'HVACTemplate:Plant:HotWaterLoop':
                         loop_system_list = [
                             'HVACTemplate:System:VAV', 'HVACTemplate:Zone:FanCoil', 'HVACTemplate:Zone:Unitary',
@@ -366,6 +452,42 @@ class HVACTemplate(EPJSON):
                         object_dictionary={object_type: object_structure},
                         unique_name_override=False)
                 elif re.match('^HVACTemplate:Plant:(Chiller|Tower|Boiler)(:ObjectReference)*$', object_type):
+                    boiler_default_map = {
+                        'HVACTemplate:Plant:Boiler': {
+                            'fuel_type': 'NaturalGas',
+                            'priority': '1',
+                            'efficiency': 0.8
+                        },
+                        'HVACTemplate:Plant:Boiler:ObjectReference': {
+                            'boiler_object_type': 'Boiler:HotWater',
+                            'priority': '1'
+                        },
+                        'HVACTemplate:Plant:Chiller': {
+                            'condenser_type': 'WaterCooled'
+                        },
+                        'HVACTemplate:Plant:Chiller:ObjectReference': {
+                            'chiller_object_type': 'Chiller:Electric:EIR',
+                            'priority': '1'
+                        },
+                        'HVACTemplate:Plant:Tower:ObjectReference': {
+                            'cooling_tower_object_type': 'CoolingTower:SingleSpeed'
+                        },
+                    }
+                    for object_name, object_fields in object_structure.items():
+                        # set defaults
+                        selected_default_map = boiler_default_map.get(object_type)
+                        if selected_default_map:
+                            for field, default_value in selected_default_map.items():
+                                if not object_fields.get(field):
+                                    object_fields[field] = default_value
+                    # Check boiler inputs
+                    if object_type == 'HVACTemplate:Plant:Boiler':
+                        for object_name, object_fields in object_structure.items():
+                            if not object_fields.get('fuel_type') and \
+                                    object_fields.get('boiler_type') != 'DistrictHotWater':
+                                raise InvalidTemplateException(
+                                    'Error: In {} ({}) fuel_type must be specified when boiler_type is not '
+                                    'DistrictHotWater'.format(object_type, object_name))
                     # Check tower inputs
                     if object_type == 'HVACTemplate:Plant:Tower':
                         for object_name, object_fields in object_structure.items():
@@ -553,9 +675,10 @@ class HVACTemplate(EPJSON):
         try:
             thermostat_template_name = getattr(zone_class_object, 'template_thermostat_name')
         except AttributeError:
-            raise InvalidTemplateException(
-                'Error: In {} ({}) Zone object does not reference a thermostat class object'
+            self.logger.info(
+                'In {} ({}) Zone object does not reference a thermostat class object'
                 .format(zone_class_object.template_type, zone_class_object.unique_name))
+            return
         except ValueError:
             raise InvalidTemplateException('Error: Zone template ({}) is improperly formatted.'
                                            .format(zone_class_object.unique_name))
@@ -568,7 +691,10 @@ class HVACTemplate(EPJSON):
         # Evaluate the thermostat type in the thermostat object and format the output object accordingly
         try:
             zone_name = getattr(zone_class_object, 'zone_name')
-            (thermostat_type, thermostat_structure), = thermostat_object.epjson.items()
+            thermostat_epjson = {t_type: t_struct for t_type, t_struct
+                                 in thermostat_object.epjson.items()
+                                 if re.match(r'^ThermostatSetpoint.*', t_type)}
+            (thermostat_type, thermostat_structure), = thermostat_epjson.items()
             (thermostat_name, _), = thermostat_structure.items()
             # create control schedule based on thermostat type
             if thermostat_type == "ThermostatSetpoint:SingleHeating":
@@ -910,7 +1036,7 @@ class HVACTemplate(EPJSON):
         # create condenser water loop for water cooled condensers
         if getattr(plant_equipment_class_object, 'template_type', None).lower() in \
                 ['hvactemplate:plant:chiller', 'hvactemplate:plant:chiller:objectreference'] \
-                and getattr(plant_equipment_class_object, 'condenser_type', 'None').lower() == 'watercooled' \
+                and getattr(plant_equipment_class_object, 'condenser_type', 'WaterCooled').lower() == 'watercooled' \
                 and 'hvactemplate:plant:condenserwaterloop' not in plant_loops:
             # try to get the chilled water loop attributes to transition to condenser water
             chw_loop = [
@@ -1037,7 +1163,7 @@ class HVACTemplate(EPJSON):
             # todo_eo: find a better way to separate the branches instead of searching for chw or cnd in the branch
             #  names.  It may be unreliable with future user inputs.
             if pe.template_type in ['HVACTemplate:Plant:Chiller', 'HVACTemplate:Plant:Chiller:ObjectReference'] \
-                    and getattr(pe, 'condenser_type', None) == 'WaterCooled':
+                    and getattr(pe, 'condenser_type', 'WaterCooled') == 'WaterCooled':
                 for branch_name, branch_structure in branch_objects.items():
                     if 'chilledwater' in plant_loop_class_object.template_type.lower() and 'chw' in branch_name.lower():
                         branch_dictionary.update({branch_name: branch_objects[branch_name]})
@@ -1389,7 +1515,12 @@ class HVACTemplate(EPJSON):
             object_dictionary=resolved_path_dictionary)
         return
 
-    def _apply_system_fields_to_zone_template(self, template_fields, system_templates):
+    def _apply_system_fields_to_zone_template(
+            self,
+            zone_template_type,
+            template_name,
+            template_fields,
+            system_templates):
         """
         Set zone attributes based on system templates where appropriate.  This function calls a structured object
         that contains lists of instructions to perform the map.  Each list is structured in the following manner:
@@ -1404,6 +1535,8 @@ class HVACTemplate(EPJSON):
                 }
             ]
 
+        :param zone_template_type: HVACTemplate:Zone type
+        :param template_name: HVACTemplate:Zone unique name
         :param template_fields: HVACTemplate:Zone fields
         :param system_templates: dictionary of HVACTemplate:System objects
         :return: None.  the zone template is updated in the class attributes
@@ -1429,10 +1562,13 @@ class HVACTemplate(EPJSON):
             return
         try:
             # iterate over systems
+            applied_value = False
+            matched_system = False
             for system_template in system_templates.values():
                 for system_name, system_fields in system_template.items():
                     # if a match is found, apply the map
                     if reference_system_name == system_name:
+                        matched_system = True
                         for mi in mapping_indicators:
                             for zone_field, mapping_instructions in mi.items():
                                 for val, value_map in mapping_instructions.items():
@@ -1443,10 +1579,19 @@ class HVACTemplate(EPJSON):
                                                     system_fields[value_map['system_field']]
                                                 if val == 'SystemSupplyAirTemperature':
                                                     template_fields[zone_field] = 'SupplyAirTemperature'
+                                                applied_value = True
                                             except (ValueError, KeyError):
                                                 self.logger.warning(
                                                     'Zone field {} does not exist for mapping'
                                                     'values: {}'.format(value_map['zone_field'], value_map))
+            if not matched_system:
+                raise InvalidTemplateException(
+                    'Error: In {} ({}) No system was matched'
+                    .format(zone_template_type, template_name))
+            if not applied_value:
+                self.logger.info(
+                    'In {} ({}) System to zone mapping had no results'
+                    .format(zone_template_type, template_name))
         except ValueError:
             raise InvalidTemplateException(
                 "Error: Mapping of system to zone variables failed. zone_template: {}, "
@@ -1460,9 +1605,6 @@ class HVACTemplate(EPJSON):
         :param input_epjson: input epJSON file
         :return: epJSON containing expanded objects from templates
         """
-        # output_epJSON
-        # flush the stream handler
-        # self.logger.stream_flush
         if not input_epjson:
             if self.input_epjson:
                 input_epjson = self.input_epjson
@@ -1471,9 +1613,11 @@ class HVACTemplate(EPJSON):
         self.epjson_process(epjson_ref=input_epjson)
         self.logger.info('##### PreProcessing Data #####')
         self._hvac_template_preprocess(epjson=self.input_epjson)
-        for zone_templates in self.templates_zones.values():
-            for template_fields in zone_templates.values():
+        for zone_template_type, zone_templates in self.templates_zones.items():
+            for template_name, template_fields in zone_templates.items():
                 self._apply_system_fields_to_zone_template(
+                    zone_template_type=zone_template_type,
+                    template_name=template_name,
                     template_fields=template_fields,
                     system_templates=self.templates_systems)
         self.logger.info('##### Processing Thermostats #####')
@@ -1552,6 +1696,6 @@ class HVACTemplate(EPJSON):
             "epJSON": output_epjson,
             "epJSON_base": self.base_objects,
             "epJSON_hvac_templates": self.templates,
-            'outputPreProcessorMessage': self.stream.getvalue()
+            'Output:PreprocessorMessage': self.stream.getvalue()
         }
         return output_epjson

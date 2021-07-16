@@ -715,7 +715,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
                 name_check = False
         self.assertTrue(name_check)
         for object_type in epjson.keys():
-            if object_type not in ['outputPreProcessorMessage', 'epJSON', 'epJSON_base', 'epJSON_hvac_templates']:
+            if object_type not in ['Output:PreprocessorMessage', 'epJSON', 'epJSON_base', 'epJSON_hvac_templates']:
                 object_check = False
         self.assertTrue(object_check)
         return
@@ -914,6 +914,8 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
         (_, zone_template), = zt.items()
         (_, template_fields), = zone_template.items()
         self.hvac_template._apply_system_fields_to_zone_template(
+            zone_template_type='ZoneTemplateType',
+            template_name='ZoneTemplateName',
             template_fields=template_fields,
             system_templates=st)
         self.assertEqual(

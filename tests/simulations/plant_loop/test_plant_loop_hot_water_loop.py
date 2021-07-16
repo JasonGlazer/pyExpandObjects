@@ -41,6 +41,22 @@ class TestSimulationsPlantLoopHotWaterLoop(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:HotWaterLoop:test_minimum_inputs")
+    def test_minimum_inputs(self):
+        # todo_eo: legacy generates odd warning
+        self.base_epjson['HVACTemplate:Plant:HotWaterLoop'].pop('Hot Water Loop')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Plant:HotWaterLoop': {
+                    'Hot Water Loop': {}
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:pump_schedule_name")
     def test_pump_schedule_name(self):
         self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop']['pump_schedule_name'] = 'OCCUPY-1'
@@ -106,6 +122,13 @@ class TestSimulationsPlantLoopHotWaterLoop(BaseSimulationTest):
                         "control_scheme_1_name": "Hot Water Loop Operation All Hours",
                         "control_scheme_1_object_type": "PlantEquipmentOperation:HeatingLoad",
                         "control_scheme_1_schedule_name": "HVACTemplate-Always1"
+                    }
+                },
+                "PlantEquipmentOperation:HeatingLoad": {
+                    "Hot Water Loop Operation All Hours": {
+                        "load_range_1_lower_limit": 0,
+                        "load_range_1_upper_limit": 1000000000000000,
+                        "range_1_equipment_list_name": "Hot Water Loop All Equipment"
                     }
                 }
             }

@@ -215,6 +215,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         # Expand and perform comparisons between the files
         # try expansion.  If it fails, raise an error
         output_epjson = None
+        output = None
         try:
             output = main(
                 Namespace(
@@ -225,25 +226,34 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             test_input_file_path = self.write_file_for_testing(
                 epjson=output_epjson,
                 file_name='test_input_epjson.epJSON')
+            # todo_eo: disabled due to new output formatting being catpured in energyplus.
+            #  Remove permanently after output is stable
+            # pyeo_warnings = output['Output:PreprocessorMessage'].lower().count('warning')
             # check outputs
-            self.perform_comparison([base_idf_file_path, test_input_file_path], warning_check=warning_check)
+            self.perform_comparison(
+                [base_idf_test_file_path, test_input_file_path],
+                warning_check=warning_check,
+                pyeo_warnings=0)
+            del output
         except:
             traceback.print_exc()
             self.assertEqual(1, 0, 'pyExpandObjects process failed to complete')
+            del output
         return
 
-    def perform_comparison(self, epjson_files, warning_check=True):
+    def perform_comparison(self, simulation_files, warning_check=True, pyeo_warnings=0):
         """
         Simulate and compare epJSON files
-        :param epjson_files: input epJSON files to compare
+        :param simulation_files: input simulation files to compare
         :param warning_check: boolean to run warning checks or not
+        :param pyeo_warnings: number of warnings from PyExpandObjects pre-processor
         :return: dictionary of status outputs
         """
         total_energy_outputs = []
         warning_outputs = []
         error_outputs = []
         finished_statuses = []
-        for file_path in epjson_files:
+        for file_path in simulation_files:
             # move files from previous runs, rm is too dangerous
             try:
                 os.rename(
@@ -370,7 +380,11 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 status_match = re.match(status_rgx, line)
                 if warning_match:
                     try:
-                        warning_outputs.append(float(warning_match.group(1)))
+                        # pass the number of warnings from PyExpandObjects to the counter.
+                        if 'test_input' in str(file_path):
+                            warning_outputs.append(float(warning_match.group(1)) + pyeo_warnings)
+                        else:
+                            warning_outputs.append(float(warning_match.group(1)))
                     except TypeError:
                         # special flag for type error
                         warning_outputs.append(-1)
@@ -389,8 +403,8 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             "error_outputs": error_outputs,
             "finished_statuses": finished_statuses}
         # merge each meter output against the others and check if there is a discrepancy
-        for energy_idx in range(len(epjson_files)):
-            index_check = [i for i in range(len(epjson_files)) if i > energy_idx]
+        for energy_idx in range(len(simulation_files)):
+            index_check = [i for i in range(len(simulation_files)) if i > energy_idx]
             for i in index_check:
                 test_df = total_energy_outputs[energy_idx].merge(
                     total_energy_outputs[i],
@@ -400,8 +414,8 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 # Filter out low percentage differences
                 test_filtered_df = test_df.loc[test_df['diff'] > 0.01].copy()
                 test_filtered_df.rename(columns={
-                    "value_x": os.path.basename(epjson_files[energy_idx]),
-                    "value_y": os.path.basename(epjson_files[i])
+                    "value_x": os.path.basename(simulation_files[energy_idx]),
+                    "value_y": os.path.basename(simulation_files[i])
                 }, inplace=True)
                 self.assertEqual(
                     test_filtered_df.shape[0],

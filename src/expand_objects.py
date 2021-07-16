@@ -68,8 +68,6 @@ class VerifyTemplate:
     """
     Verify if template dictionary is a valid type and structure
     """
-    def __init__(self):
-        super().__init__()
 
     def __get__(self, obj, owner):
         template = obj._template
@@ -126,7 +124,7 @@ class ExpandObjects(EPJSON):
             template=None,
             expansion_structure=str(source_dir / 'resources' / 'template_expansion_structures.yaml'),
             logger_level='WARNING'):
-        super().__init__()
+        super().__init__(logger_level=logger_level)
         self.logger.setLevel(logger_level)
         self.expansion_structure = expansion_structure
         self.template = template
@@ -1724,18 +1722,18 @@ class AirLoopHVACObjectType:
         return
 
 
-class ModifyCoolingCoilSetpointControlType:
+class CoolingCoilSetpointControlTypeDetailed:
     """
-    Modify cooling_coil_setpoint_control_type based on other template attributes for YAML TemplateObjects lookup.
+    set cooling_coil_setpoint_control_type_detailed based on other template attributes for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
-        return obj._cooling_coil_setpoint_control_type
+        return obj._cooling_coil_setpoint_control_type_detailed
 
     def __set__(self, obj, value):
         # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
         #  the template
         if isinstance(value, str):
-            obj._cooling_coil_setpoint_control_type = value
+            obj._cooling_coil_setpoint_control_type_detailed = value
         else:
             (template_type, template_structure), = value.items()
             (_, template_fields), = template_structure.items()
@@ -1759,28 +1757,29 @@ class ModifyCoolingCoilSetpointControlType:
                         hot_duct_supply_fan_placement = \
                             template_fields.get('hot_duct_supply_fan_placement', 'BlowThrough')
                         supply_fan_placement = ''
-                        setattr(obj, 'cold_duct_cooling_coil_setpoint_control_type',
+                        setattr(obj, 'cold_duct_cooling_coil_setpoint_control_type_detailed',
                                 ''.join([cooling_setpoint, cold_duct_supply_fan_placement]))
-                        setattr(obj, 'hot_duct_cooling_coil_setpoint_control_type',
+                        setattr(obj, 'hot_duct_heating_coil_setpoint_control_type_detailed',
                                 ''.join([cooling_setpoint, hot_duct_supply_fan_placement]))
                     else:
                         supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
-                obj._cooling_coil_setpoint_control_type = ''.join([cooling_setpoint, supply_fan_placement])
+                obj._cooling_coil_setpoint_control_type_detailed = ''.join([cooling_setpoint, supply_fan_placement])
         return
 
 
-class ModifyHeatingCoilSetpointControlType:
+class HeatingCoilSetpointControlTypeDetailed:
     """
-    Modify heating_coil_setpoint_control_type based on other template attributes for YAML TemplateObjects lookup.
+    create attribute heating_coil_setpoint_control_type_detailed based on other template attributes for
+    YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
-        return obj._heating_coil_setpoint_control_type
+        return obj._heating_coil_setpoint_control_type_detailed
 
     def __set__(self, obj, value):
         # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
         #  the template
         if isinstance(value, str):
-            obj._heating_coil_setpoint_control_type = value
+            obj._heating_coil_setpoint_control_type_detailed = value
         else:
             (template_type, template_structure), = value.items()
             (_, template_fields), = template_structure.items()
@@ -1802,7 +1801,7 @@ class ModifyHeatingCoilSetpointControlType:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
                 else:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
-                obj._heating_coil_setpoint_control_type = ''.join([heating_setpoint, supply_fan_placement])
+                obj._heating_coil_setpoint_control_type_detailed = ''.join([heating_setpoint, supply_fan_placement])
             else:
                 # Change heating design setpoint if no coil is present
                 if getattr(obj, 'preheat_coil_design_setpoint', None) and \
@@ -1903,11 +1902,23 @@ class ModifyDehumidificationControlType:
                     template_fields.get('dehumidification_control_type', 'None') != 'None' else False
                 if dehumidification_control_type == 'Multimode':
                     if cooling_coil_type not in ['TwoStageHumidityControlDX', 'HeatExchangerAssistedDX']:
+                        obj.logger.warning(
+                            'Warning: In {} ({})'
+                            ' the Dehumidification Control Type field={}'
+                            ' is not applicable for Cooling Coil Type={}'
+                            '. Dehumidification Control Type reset to None.'
+                            .format(obj.template_type, obj.unique_name, dehumidification_control_type, cooling_coil_type))
                         obj._dehumidification_control_type = 'None'
                     else:
                         obj._dehumidification_control_type = dehumidification_control_type
                 elif dehumidification_control_type == 'CoolReheatDesuperheater':
                     if cooling_coil_type not in ['TwoSpeedDX', 'TwoStageDX', 'TwoStageHumidityControlDX', 'HeatExchangerAssistedDX']:
+                        obj.logger.warning(
+                            'Warning: In {} ({})'
+                            ' the Dehumidification Control Type field={}'
+                            ' is not applicable for Cooling Coil Type={}'
+                            '. Dehumidification Control Type reset to None.'
+                            .format(obj.template_type, obj.unique_name, dehumidification_control_type, cooling_coil_type))
                         obj._dehumidification_control_type = 'None'
                     else:
                         obj._dehumidification_control_type = dehumidification_control_type
@@ -1941,8 +1952,8 @@ class ExpandSystem(ExpandObjects):
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
     airloop_hvac_object_type = AirLoopHVACObjectType()
     airloop_hvac_unitary_fan_type_and_placement = AirLoopHVACUnitaryFanTypeAndPlacement()
-    cooling_coil_setpoint_control_type = ModifyCoolingCoilSetpointControlType()
-    heating_coil_setpoint_control_type = ModifyHeatingCoilSetpointControlType()
+    cooling_coil_setpoint_control_type_detailed = CoolingCoilSetpointControlTypeDetailed()
+    heating_coil_setpoint_control_type_detailed = HeatingCoilSetpointControlTypeDetailed()
     humidistat_type = HumidistatType()
     outside_air_equipment_type = OutsideAirEquipmentType()
     dehumidification_control_type = ModifyDehumidificationControlType()
@@ -1959,12 +1970,12 @@ class ExpandSystem(ExpandObjects):
         self.airloop_hvac_unitary_object_type = template
         self.airloop_hvac_object_type = template
         self.airloop_hvac_unitary_fan_type_and_placement = template
-        self.cooling_coil_setpoint_control_type = template
-        self.heating_coil_setpoint_control_type = template
+        self.cooling_coil_setpoint_control_type_detailed = template
+        self.heating_coil_setpoint_control_type_detailed = template
         try:
-            self.setpoint_control_type = \
-                ''.join(['Cooling', self.cooling_coil_setpoint_control_type,
-                         'Heating', self.heating_coil_setpoint_control_type])\
+            self.setpoint_control_type_detailed = \
+                ''.join(['Cooling', self.cooling_coil_setpoint_control_type_detailed,
+                         'Heating', self.heating_coil_setpoint_control_type_detailed])\
                 .replace('BlowThrough', '', 1).replace('DrawThrough', '', 1)
         except AttributeError:
             self.setpoint_control_type = None
@@ -1980,18 +1991,18 @@ class ExpandSystem(ExpandObjects):
             cooling_setpoint_schedule_name = getattr(self, 'cooling_coil_setpoint_schedule_name', 'None')
             cooling_coil_setpoint_type = getattr(self, 'cooling_coil_setpoint_reset_type', 'None')
             if cooling_coil_setpoint_type == 'None':
-                getattr(self, 'cooling_coil_setpoint_control_type', 'None')
+                cooling_coil_setpoint_type = getattr(self, 'cooling_coil_setpoint_control_type', 'None')
             heating_coil_type = getattr(self, 'heating_coil_type', 'None')
             heating_coil_design_setpoint = getattr(self, 'heating_coil_design_setpoint', None)
             heating_setpoint_schedule_name = getattr(self, 'heating_coil_setpoint_schedule_name', 'None')
             heating_coil_setpoint_type = getattr(self, 'heating_coil_setpoint_reset_type', 'None')
             if heating_coil_setpoint_type == 'None':
-                getattr(self, 'heating_coil_setpoint_control_type', 'None')
+                heating_coil_setpoint_type = getattr(self, 'heating_coil_setpoint_control_type', 'None')
             preheat_coil_type = getattr(self, 'preheat_coil_type', 'None')
             preheat_coil_setpoint_schedule_name = getattr(self, 'preheat_coil_setpoint_schedule_name', 'None')
             preheat_coil_design_setpoint = getattr(self, 'preheat_coil_design_setpoint', None)
-            if cooling_setpoint_schedule_name == 'None' and cooling_coil_setpoint_type == 'None':
-                if heating_coil_type != 'None' and \
+            if cooling_coil_setpoint_type in ['FixedSetpoint', 'None'] and cooling_setpoint_schedule_name == 'None':
+                if heating_coil_type != 'None' and heating_coil_setpoint_type in ['FixedSetpoint', 'None'] and \
                         heating_setpoint_schedule_name == 'None' and heating_coil_setpoint_type == 'None':
                     if not heating_coil_design_setpoint or not cooling_coil_design_setpoint:
                         self.logger.warning('Warning: Expected cooling and heating design setpoints to be set but '
@@ -2034,18 +2045,8 @@ class ExpandSystem(ExpandObjects):
                 setattr(self, 'dx_cooling_coil_gross_rated_total_capacity', 'Autosize')
         if self.template_type in ['HVACTemplate:System:DedicatedOutdoorAir', ]:
             dehumidification_control_type = getattr(self, 'dehumidification_control_type', 'None')
-            cooling_coil_type = getattr(self, 'cooling_coil_type', 'None')
             heating_coil_type = getattr(self, 'heating_coil_type', 'None')
             heat_recovery_type = getattr(self, 'heat_recovery_type', 'None')
-            if (dehumidification_control_type == 'Multimode' and cooling_coil_type == 'TwoStageHumidityControlDX') or \
-                    (dehumidification_control_type == 'CoolReheatDesuperheater' and cooling_coil_type == 'TwoSpeedDX'):
-                self.logger.warning(
-                    'Warning: In {} ({})'
-                    ' the Dehumidification Control Type field={}'
-                    ' is not applicable for Cooling Coil Type={}'
-                    '. Dehumidification Control Type reset to None.'
-                    .format(self.template_type, self.unique_name, dehumidification_control_type, cooling_coil_type))
-                setattr(self, 'dehumidification_control_type', 'None')
             if dehumidification_control_type != 'None' and heating_coil_type == 'None':
                 self.logger.warning(
                     'Warning: In {} ({})'
@@ -2751,6 +2752,7 @@ class ExpandPlantLoop(ExpandObjects):
 
     Attributes from Descriptors:
         primary_pump_flow_and_type
+
         secondary_pump_flow_and_type
     """
 
@@ -2861,10 +2863,16 @@ class PumpConfigurationType:
                 if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop']
         elif template_type == 'HVACTemplate:Plant:Boiler':
             # This should return only one instance
-            pump_configuration = [
-                getattr(class_object_structure, 'hot_water_pump_configuration', None)
-                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
-                if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop']
+            if getattr(obj, 'template_plant_loop_type', None) == 'HotWaterLoop':
+                pump_configuration = [
+                    getattr(class_object_structure, 'hot_water_pump_configuration', None)
+                    for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                    if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop']
+            elif getattr(obj, 'template_plant_loop_type', None) == 'MixedWaterLoop':
+                pump_configuration = [
+                    getattr(class_object_structure, 'water_pump_configuration', None)
+                    for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                    if class_object_structure.template_type == 'HVACTemplate:Plant:MixedWaterLoop']
         if len(pump_configuration) > 1:
             obj.logger.warning(
                 'In {} ({}) More than one pump configuration was found.  Applying first instance {}'
@@ -2894,10 +2902,12 @@ class PrimaryPumpType:
             # set variables and regex matches for output format
             flow_rgx_value = r'(^.*)Primary'
             # This should return only one instance
+            # 0th item is the pump type, 1th is the configuration, and 2nd is the pump head to be transferred
             primary_pump_type = [
                 (
                     getattr(class_object_structure, 'chilled_water_primary_pump_type'),
-                    getattr(class_object_structure, 'chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary'))
+                    getattr(class_object_structure, 'chilled_water_pump_configuration', 'ConstantPrimaryNoSecondary'),
+                    getattr(class_object_structure, 'primary_chilled_water_pump_rated_head'))
                 for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
                 if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
                     class_object_structure, 'chilled_water_primary_pump_type', None)]
@@ -2908,7 +2918,8 @@ class PrimaryPumpType:
             primary_pump_type = [
                 (
                     getattr(class_object_structure, 'condenser_water_pump_type'),
-                    'VariablePrimary')
+                    'VariablePrimary',
+                    getattr(class_object_structure, 'condenser_water_pump_rated_head'))
                 for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
                 if class_object_structure.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
                     class_object_structure, 'condenser_water_pump_type', None)]
@@ -2917,13 +2928,36 @@ class PrimaryPumpType:
                 equipment_type = 'DistrictHotWater'
             flow_rgx_value = r'(^.*)Flow'
             # This should return only one instance
-            primary_pump_type = [
-                (
-                    getattr(class_object_structure, 'hot_water_pump_type'),
-                    getattr(class_object_structure, 'hot_water_pump_configuration', 'ConstantFlow'))
-                for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
-                if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop' and getattr(
-                    class_object_structure, 'hot_water_pump_type', None)]
+            if getattr(obj, 'template_plant_loop_type', None) == 'HotWaterLoop':
+                primary_pump_type = [
+                    (
+                        getattr(class_object_structure, 'hot_water_pump_type'),
+                        getattr(class_object_structure, 'hot_water_pump_configuration', 'ConstantFlow'),
+                        getattr(class_object_structure, 'hot_water_pump_rated_head'))
+                    for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                    if class_object_structure.template_type == 'HVACTemplate:Plant:HotWaterLoop' and getattr(
+                        class_object_structure, 'hot_water_pump_type', None)]
+            elif getattr(obj, 'template_plant_loop_type', None) == 'MixedWaterLoop':
+                primary_pump_type = [
+                    (
+                        getattr(class_object_structure, 'water_pump_type'),
+                        getattr(class_object_structure, 'water_pump_configuration', 'ConstantFlow'),
+                        getattr(class_object_structure, 'water_pump_rated_head'))
+                    for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                    if class_object_structure.template_type == 'HVACTemplate:Plant:MixedWaterLoop' and getattr(
+                        class_object_structure, 'water_pump_type', None)]
+        elif template_type == 'HVACTemplate:Plant:Tower':
+            flow_rgx_value = r'(^.*)Flow'
+            # This should return only one instance
+            if getattr(obj, 'template_plant_loop_type', None) == 'MixedWaterLoop':
+                primary_pump_type = [
+                    (
+                        getattr(class_object_structure, 'water_pump_type'),
+                        getattr(class_object_structure, 'water_pump_configuration', 'ConstantFlow'),
+                        getattr(class_object_structure, 'water_pump_rated_head'))
+                    for class_object_name, class_object_structure in value.get('plant_loop_class_objects', {}).items()
+                    if class_object_structure.template_type == 'HVACTemplate:Plant:MixedWaterLoop' and getattr(
+                        class_object_structure, 'water_pump_type', None)]
         if len(primary_pump_type) > 1:
             obj.logger.warning(
                 'In {} ({}) More than one pump type was found.  Applying first instance {}'
@@ -2944,6 +2978,8 @@ class PrimaryPumpType:
                 else None
             if flow_type and primary_pump_type_value:
                 obj._primary_pump_type = ''.join([flow_type, primary_pump_type_value])
+                # set pump rated head as a class attribute
+                setattr(obj, 'water_pump_rated_head', primary_pump_type[0][2])
             else:
                 obj._primary_pump_type = ''.join(['Other', equipment_type])
         else:
@@ -2976,7 +3012,11 @@ class ExpandPlantEquipment(ExpandObjects):
     Attributes from Descriptors:
         template_plant_loop_type
 
+        pump_configuration_type
+
         chiller_and_condenser_type
+
+        primary_pump_type
 
     """
 

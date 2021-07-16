@@ -18,6 +18,27 @@ class TestSimulationsPlantEquipmentBoiler(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Boiler:test_minimum_inputs")
+    def test_minimum_inputs(self):
+        # todo_eo: legacy fails with IDD message if 'priority' not set, but is not required in template.
+        # todo_eo: priority must be a string or it silently fails in legacy.
+        self.base_epjson['HVACTemplate:Plant:Boiler'].pop('Main Boiler')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Plant:Boiler': {
+                    'Main Boiler': {
+                        'boiler_type': 'HotWaterBoiler',
+                        'fuel_type': 'NaturalGas',
+                        'priority': '1'
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Boiler:boiler_type_hot_water_boiler")
     def test_boiler_type_hot_water_boiler(self):
         self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'HotWaterBoiler'

@@ -1,4 +1,3 @@
-import copy
 import unittest
 from unittest.mock import MagicMock, PropertyMock
 
@@ -107,12 +106,4 @@ class TestExpandZone(BaseTest, unittest.TestCase):
             'Schedule:Compact': 1,
             'ZoneControl:Thermostat': 1}
         self.assertDictEqual(expected_summary, summarized_output)
-        return
-
-    def test_no_thermostat_template_reference_processes(self):
-        tmp_mock_zone_template = copy.deepcopy(mock_zone_template)
-        tmp_mock_zone_template['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 1'].pop('template_thermostat_name')
-        ez = ExpandZone(template=tmp_mock_zone_template)
-        with self.assertRaisesRegex(InvalidTemplateException, 'does not reference a thermostat class object'):
-            self.hvac_template._create_zonecontrol_thermostat(zone_class_object=ez)
         return
