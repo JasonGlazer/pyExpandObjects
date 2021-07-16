@@ -73,6 +73,9 @@ class HVACTemplate(EPJSON):
                               'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|DualDuct)$',
                               object_type):
                     zone_default_map = {
+                        'HVACTemplate:Zone:ConstantVolume': {
+                            'zone_cooling_design_supply_air_temperature': 12.8
+                        },
                         'HVACTemplate:Zone:FanCoil': {
                             'cooling_coil_type': 'ChilledWater',
                             'heating_coil_type': 'HotWater',
@@ -91,7 +94,7 @@ class HVACTemplate(EPJSON):
                         'HVACTemplate:Zone:WaterToAirHeatPump': {
                             'cooling_coil_type': 'Coil:Cooling:WaterToAirHeatPump:EquationFit',
                             'cooling_coil_gross_rated_cop': 3.5,
-                            # todo_eo: template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched
+                            # todo_eo: template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched for this field
                             'supply_fan_placement': 'DrawThrough',
                             'heat_pump_heating_coil_type': 'Coil:Heating:WaterToAirHeatPump:EquationFit',
                             'heat_pump_heating_coil_gross_rated_cop': 4.2,
