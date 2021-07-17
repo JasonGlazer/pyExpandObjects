@@ -9,6 +9,7 @@ from argparse import Namespace
 import traceback
 import pandas as pd
 import numpy as np
+import time
 
 from src.epjson_handler import EPJSON
 from src.main import main
@@ -110,6 +111,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
+        time.sleep(0.1)
         os.rename(
             os.path.join(
                 os.path.dirname(file_location),
@@ -117,6 +119,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             os.path.join(
                 os.path.dirname(file_location),
                 os.path.basename(file_location).replace('.idf', 'Expanded.idf')))
+        time.sleep(0.1)
         return os.path.basename(file_location).replace('.idf', 'Expanded.idf')
 
     @staticmethod
@@ -155,6 +158,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
+        time.sleep(0.1)
         print('Conversion message output: {}'.format(result.stdout))
         print('Conversion error output: {}'.format(result.stderr))
         if file_location.suffix == '.epJSON':
@@ -174,12 +178,13 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 f2.write(line)
         return base_copy_file_path
 
-    def perform_full_comparison(self, base_idf_file_path, warning_check=True):
+    def perform_full_comparison(self, base_idf_file_path, warning_check=True, compare_epjson_files=True):
         """
         Simulate and compare two files where only the objects controlling output data are manipulated.
         Due to conversion issues within EnergyPlus, the baseline file must be simulated as an idf.
         :param base_idf_file_path: idf file location containing HVACTemplate:.* objects
         :param warning_check: boolean to indicate whether to check warnings or not.
+        :param compare_epjson_files: boolean to indicate if epJSON summaries should be compared
         :return: None.  Assertions performed within function.
         """
         # Move old file to prevent calling an outdated file.
@@ -204,6 +209,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             )
         except FileNotFoundError:
             pass
+        time.sleep(0.1)
         # move file to testing directory manually, shutil does not work reliably for some reason
         base_idf_test_file_path = test_dir.joinpath('..', 'simulation', 'test', 'base_input.idf')
         with open(base_idf_file_path, 'r') as f1, \
@@ -222,6 +228,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             )
         except FileNotFoundError:
             pass
+        time.sleep(0.1)
         # write the preformatted base file for main to call
         test_pre_input_file_path = self.write_file_for_testing(
             epjson=base_formatted_epjson,
@@ -241,14 +248,15 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 epjson=output_epjson,
                 file_name='test_input_epjson.epJSON')
             # compare epjsons by summary count
-            expanded_base_file = self.expand_idf(base_idf_test_file_path)
-            comparison_base_epjson = self.convert_file(
-                str(test_dir / '..' / 'simulation' / 'test' / expanded_base_file))
-            with open(comparison_base_epjson, 'r') as f:
-                comparison_base_epjson = json.load(f)
-            with open(test_input_file_path, 'r') as f:
-                comparison_test_epjson = json.load(f)
-            self.compare_epjsons(comparison_base_epjson, comparison_test_epjson)
+            if compare_epjson_files:
+                expanded_base_file = self.expand_idf(base_idf_test_file_path)
+                comparison_base_epjson = self.convert_file(
+                    str(test_dir / '..' / 'simulation' / 'test' / expanded_base_file))
+                with open(comparison_base_epjson, 'r') as f:
+                    comparison_base_epjson = json.load(f)
+                with open(test_input_file_path, 'r') as f:
+                    comparison_test_epjson = json.load(f)
+                self.compare_epjsons(comparison_base_epjson, comparison_test_epjson)
             # todo_eo: pre-counting pyeo_warnings disabled due to new output formatting being captured in energyplus.
             #  Remove permanently after output is stable
             # pyeo_warnings = output['Output:PreprocessorMessage'].lower().count('warning')
@@ -320,6 +328,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                 )
             except FileNotFoundError:
                 pass
+            time.sleep(0.1)
             if sys.platform.startswith('win'):
                 # enable ExpandObjects for idf files (-x).
                 if file_path.suffix == '.idf':
@@ -386,6 +395,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     ],
                     cwd=str(test_dir / '..' / 'simulation' / 'test')
                 )
+            time.sleep(0.1)
             # get sum of output csv rows to use as comparison
             energy_df = pd.read_csv(str(test_dir / '..' / 'simulation' / 'test' / 'eplusout.csv'))
             melt_columns = [c for c in energy_df.columns if not c == 'Date/Time']
@@ -461,7 +471,9 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             epjson_1,
             epjson_2,
             exclude_list=('Schedule:Compact', 'Output:PreprocessorMessage',
-                          'AvailabilityManagerAssignmentList', 'ScheduleTypeLimits')):
+                          'AvailabilityManagerAssignmentList', 'ScheduleTypeLimits',
+                          'AvailabilityManager:NightCycle', 'OutdoorAir:NodeList', 'OutdoorAir:Node',
+                          'NodeList')):
         """
         Summarize and compare two epJSONs based on object counts.
 
