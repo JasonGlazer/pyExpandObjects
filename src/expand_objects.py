@@ -161,13 +161,14 @@ class ExpandObjects(EPJSON):
 
     def rename_attribute(self, old_attribute, new_attribute):
         """
-        Change attribute name to commonize variables
+        Change attribute name to commonize variables.  Do not perform the operation if the target attribute
+        already has a value.
 
         :param old_attribute: old attribute name
         :param new_attribute: new attribute name
         :return: None.  Old attribute is deleted and new attribute created in class
         """
-        if hasattr(self, old_attribute):
+        if hasattr(self, old_attribute) and not getattr(self, new_attribute, None):
             self.logger.info('{} renamed to {}'.format(old_attribute, new_attribute))
             setattr(self, new_attribute, getattr(self, old_attribute))
             # Possibly make this optional
@@ -425,14 +426,18 @@ class ExpandObjects(EPJSON):
                                         # if the object_field is a dictionary, then the value is a formatted string to
                                         # apply with the template_field.  Otherwise, just try to get the value from the
                                         # template field, which is stored as a class attribute (on class initialization).
+                                        # Make a tmp_object_field variable to hold the instructions and prevent
+                                        # overwriting the original object
+                                        tmp_object_field = None
                                         try:
                                             # if the value is a formatted string referencing a class attribute
                                             # then reformat the object to be processed as a dictionary with
                                             # the key being the template name
-                                            if isinstance(object_field, str) and '{' in object_field:
-                                                object_field = {template_field: object_field}
-                                            if isinstance(object_field, dict):
-                                                (object_field, object_val), = object_field.items()
+                                            tmp_object_field = copy.deepcopy(object_field)
+                                            if isinstance(tmp_object_field, str) and '{' in tmp_object_field:
+                                                tmp_object_field= {template_field: tmp_object_field}
+                                            if isinstance(tmp_object_field, dict):
+                                                (tmp_object_field, object_val), = tmp_object_field.items()
                                                 # Try to perform numeric evaluation if operators and formatting brackets
                                                 # are present.  regex match is to avoid any operator symbols used in
                                                 # variable names, but not intended for evaluation, e.g. HVACTemplate-Always
@@ -463,13 +468,17 @@ class ExpandObjects(EPJSON):
                                             # If the object is a 'super' object used in a
                                             # BuildPath, then insert it in the 'Fields' dictionary.  Otherwise, insert it
                                             # into the top level of the object.
+                                            # if tmp_object_field was not created then just try applying a copy of the
+                                            # original value
+                                            if not tmp_object_field:
+                                                tmp_object_field = copy.deepcopy(object_field)
                                             if 'Fields' in tree_object[object_type].keys():
-                                                tree_object[object_type]['Fields'][object_field] = object_value
+                                                tree_object[object_type]['Fields'][tmp_object_field] = object_value
                                             else:
-                                                tree_object[object_type][object_field] = object_value
+                                                tree_object[object_type][tmp_object_field] = object_value
             except (KeyError, AttributeError, ValueError):
                 raise InvalidTemplateException(
-                    'In {} ({}) A TemplateObject transition failed an is likely incorrectly formatted'
+                    'In {} ({}) A TemplateObject transition failed and is likely incorrectly formatted'
                     .format(self.template_type, self.template_name))
         # for each mapping instruction, iterate over the objects and apply if the object_type matches the reference
         if option_tree_mappings:
@@ -1722,6 +1731,42 @@ class AirLoopHVACObjectType:
         return
 
 
+class EconomizerTypeDetailed:
+    """
+    set economizer_type_detailed based on other template attributes for YAML TemplateObjects lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._economizer_type_detailed
+
+    def __set__(self, obj, value):
+        # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
+        #  the template
+        if isinstance(value, str):
+            obj._economizer_type_detailed = value
+        else:
+            (template_type, template_structure), = value.items()
+            (_, template_fields), = template_structure.items()
+            economizer_type = None if template_fields.get('economizer_type', 'None') == 'None' else \
+                template_fields.get('economizer_type')
+            cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
+                template_fields.get('cooling_coil_type')
+            if economizer_type and cooling_coil_type:
+                if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
+                                     'HVACTemplate:System:Unitary']:
+                    supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
+                else:
+                    if template_type == 'HVACTemplate:System:DualDuct':
+                        cold_duct_supply_fan_placement = \
+                            template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
+                        setattr(obj, 'cold_duct_economizer_type_detailed',
+                                ''.join([economizer_type, cold_duct_supply_fan_placement]))
+                        supply_fan_placement = ''
+                    else:
+                        supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
+                obj._economizer_type_detailed = ''.join([economizer_type, supply_fan_placement])
+        return
+
+
 class CoolingCoilSetpointControlTypeDetailed:
     """
     set cooling_coil_setpoint_control_type_detailed based on other template attributes for YAML TemplateObjects lookup.
@@ -1936,9 +1981,11 @@ class ExpandSystem(ExpandObjects):
 
         airloop_hvac_unitary_fan_type_and_placement
 
-        cooling_coil_setpoint_control_type
+        economizer_type_detailed
 
-        heating_coil_setpoint_control_type
+        cooling_coil_setpoint_control_type_detailed
+
+        heating_coil_setpoint_control_type_detailed
 
         setpoint_control_type: concatenated string of cooling_coil_setpoint_control_type and heating_coil_setpoint_control_type
 
@@ -1952,6 +1999,7 @@ class ExpandSystem(ExpandObjects):
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
     airloop_hvac_object_type = AirLoopHVACObjectType()
     airloop_hvac_unitary_fan_type_and_placement = AirLoopHVACUnitaryFanTypeAndPlacement()
+    economizer_type_detailed = EconomizerTypeDetailed()
     cooling_coil_setpoint_control_type_detailed = CoolingCoilSetpointControlTypeDetailed()
     heating_coil_setpoint_control_type_detailed = HeatingCoilSetpointControlTypeDetailed()
     humidistat_type = HumidistatType()
@@ -1970,6 +2018,7 @@ class ExpandSystem(ExpandObjects):
         self.airloop_hvac_unitary_object_type = template
         self.airloop_hvac_object_type = template
         self.airloop_hvac_unitary_fan_type_and_placement = template
+        self.economizer_type_detailed = template
         self.cooling_coil_setpoint_control_type_detailed = template
         self.heating_coil_setpoint_control_type_detailed = template
         try:

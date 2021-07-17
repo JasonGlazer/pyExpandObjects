@@ -26,10 +26,7 @@ class TestSimulationsZoneDualDuct(BaseSimulationTest):
         # read in base file, then edit inputs for alternate tests
         self.base_epjson = self.get_epjson_object_from_idf_file(base_copy_file_path)
         # Remove Output:Variable Objects that cause naming conflicts
-        self.base_epjson['Output:Variable'].pop('Output:Variable 31')
-        self.base_epjson['Output:Variable'].pop('Output:Variable 32')
-        self.base_epjson['Output:Variable'].pop('Output:Variable 33')
-        self.base_epjson['Output:Variable'].pop('Output:Variable 34')
+        self.base_epjson.pop('Output:Variable')
         return
 
     def teardown(self):

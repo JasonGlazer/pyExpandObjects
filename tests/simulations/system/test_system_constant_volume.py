@@ -243,7 +243,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'cooling_coil_setpoint_control_type'] = 'Warmest'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # todo_eo: odd warning coming from legacy but not current program even though they appear to be the same.
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         return
@@ -289,7 +288,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'cooling_coil_setpoint_control_type'] = 'Scheduled'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # todo_eo: odd warning coming from legacy but not current program even though they appear to be the same.
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         return
@@ -314,7 +312,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'cooling_coil_setpoint_control_type'] = 'OutdoorAirTemperatureReset'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # todo_eo: odd warning coming from legacy but not current program even though they appear to be the same.
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         return
@@ -346,6 +343,60 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_blow_"
+                                              "through_economizer_type_no_economizer")
+    def test_supply_fan_placement_blow_through_economizer_type_no_economizer(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'economizer_type'] = 'NoEconomizer'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output['SetpointManager:MixedAir'].get('AHU 1 Spaces 1-4 Economizer Air Temp Manager'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_blow_"
+                                              "through_economizer_type_no_economizer")
+    def test_supply_fan_placement_draw_through_economizer_type_no_economizer(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'economizer_type'] = 'NoEconomizer'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output['SetpointManager:MixedAir'].get('AHU 1 Spaces 1-4 Economizer Air Temp Manager'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_blow_"
+                                              "through_economizer_type_fixed_dry_bulb")
+    def test_supply_fan_placement_blow_through_economizer_type_fixed_dry_bulb(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'economizer_type'] = 'FixedDryBulb'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['SetpointManager:MixedAir']['AHU 1 Spaces 1-4 Economizer Air Temp Manager'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_blow_"
+                                              "through_economizer_type_fixed_dry_bulb")
+    def test_supply_fan_placement_draw_through_economizer_type_fixed_dry_bulb(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'economizer_type'] = 'FixedDryBulb'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['SetpointManager:MixedAir']['AHU 1 Spaces 1-4 Economizer Air Temp Manager'])
+        return
+
+    #todo_eo: perform testing for other economizer types
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_blow_"
                                               "through_cooling_control_zone_no_heating")
@@ -423,7 +474,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'heating_coil_setpoint_control_type'] = 'FixedSetpoint'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        # todo_eo: odd warning coming from legacy but not current program even though they appear to be the same.
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         return
@@ -666,7 +716,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heating_coil_setpoint_schedule_name")
     def test_heating_coil_setpoint_schedule_name(self):
-        # todo_eo: legacy doesn't seem to map the value to anything
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=schedule_objects)
@@ -910,7 +959,6 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:outdoor_air_flow_rates")
     def test_outdoor_air_flow_rates(self):
-        # todo_eo: Sizing:System design_outdoor_air_flow_rate is set to minimum even when maximum present
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'maximum_outdoor_air_flow_rate'] = 1.0
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][

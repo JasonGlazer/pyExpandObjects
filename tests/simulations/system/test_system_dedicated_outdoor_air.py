@@ -137,6 +137,7 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
         base_copy_file_path = self._copy_to_test_directory(base_idf_file_path)
         # read in base file, then edit inputs for alternate tests
         self.base_epjson = self.get_epjson_object_from_idf_file(base_copy_file_path)
+        self.base_epjson.pop('Output:Variable')
         return
 
     def teardown(self):
@@ -178,23 +179,16 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:supply_fan_flow_rate")
     def test_supply_fan_flow_rate(self):
-        # todo_eo: AirLoopHVAC not set which is causing discrepancy
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS']['supply_fan_flow_rate'] = 0.48
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.48,
-            epjson_output['Fan:VariableVolume']['DOAS Supply Fan']['maximum_flow_rate'])
-        self.assertEqual(
-            0.48,
-            epjson_output['AirLoopHVAC']['DOAS']['design_supply_air_flow_rate'])
-        self.assertEqual(
-            0.48,
             epjson_output['Sizing:System']['DOAS Sizing System']['cooling_supply_air_flow_rate'])
         self.assertEqual(
             0.48,
-            epjson_output['Sizing:System']['DOAS Sizing System']['design_outdoor_supply_air_flow_rate'])
+            epjson_output['Sizing:System']['DOAS Sizing System']['design_outdoor_air_flow_rate'])
         self.assertEqual(
             0.48,
             epjson_output['Sizing:System']['DOAS Sizing System']['heating_supply_air_flow_rate'])
@@ -446,6 +440,9 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
                                               "heat_exchanger_assisted_dx")
     def test_cooling_coil_type_heat_exchanger_assisted_dx(self):
         # todo_eo: discuss with team.  EnergyPlus notes say that this setup is okay but a warning is issued.
+        #  Combination of dehumidification_control_type and cooling_coil_type is not allowed.
+        # todo_eo: simulation fails in legacy SetDXCoilTypeData: Could not find Coil
+        #  "Name="DOAS HEAT EXCHANGER ASSISTED COOLING COIL"
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'cooling_coil_type'] = 'HeatExchangerAssistedDX'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -490,12 +487,13 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:cooling_coil_setpoint_schedule_name")
     def test_cooling_coil_setpoint_schedule_name(self):
-        # todo_eo: legacy doesn't seem to map the value to anything
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=schedule_objects)
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'cooling_coil_setpoint_schedule_name'] = 'Always12.5'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'cooling_coil_setpoint_control_type'] = 'Scheduled'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
@@ -548,9 +546,14 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
             epjson_output['CoilPerformance:DX:Cooling']['DOAS Dehumid Perf 1+2']['gross_rated_total_cooling_capacity'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:dx_cooling_coil_gross_rated_sensible_heat_ratio")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:"
+                                              "dx_cooling_coil_gross_rated_sensible_heat_ratio")
     def test_dx_cooling_coil_gross_rated_sensible_heat_ratio(self):
-        # todo_eo: legacy does not map this value
+        # todo_eo: legacy has odd errors with the cooling coil selection
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'cooling_coil_type'] = 'TwoSpeedDX'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'dehumidification_control_type'] = 'None'
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'dx_cooling_coil_gross_rated_sensible_heat_ratio'] = 0.75
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -561,6 +564,27 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
             epjson_output['CoilPerformance:DX:Cooling']['DOAS Dehumid Perf 1']['gross_rated_sensible_heat_ratio'])
         self.assertEqual(
             0.75,
+            epjson_output['CoilPerformance:DX:Cooling']['DOAS Dehumid Perf 1+2']['gross_rated_sensible_heat_ratio'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:"
+                                              "dx_cooling_coil_gross_rated_sensible_heat_ratio")
+    def test_dx_cooling_coil_gross_rated_sensible_heat_ratio_with_humidity_control(self):
+        # todo_eo: legacy does not seem to map (or adjust) the SHR values with this selection, but apears it should.
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'cooling_coil_type'] = 'TwoStageHumidityControlDX'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'dehumidification_control_type'] = 'Multimode'
+        self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
+            'dx_cooling_coil_gross_rated_sensible_heat_ratio'] = 0.75
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.9 * 0.75,
+            epjson_output['CoilPerformance:DX:Cooling']['DOAS Dehumid Perf 1']['gross_rated_sensible_heat_ratio'])
+        self.assertEqual(
+            0.9 * 0.75,
             epjson_output['CoilPerformance:DX:Cooling']['DOAS Dehumid Perf 1+2']['gross_rated_sensible_heat_ratio'])
         return
 
@@ -649,20 +673,19 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heating_coil_setpoint_schedule_name")
     def test_heating_coil_setpoint_schedule_name(self):
-        # todo_eo: legacy doesn't seem to map the value to anything
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=schedule_objects)
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'heating_coil_setpoint_schedule_name'] = 'Always15.5'
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
-            'heating_coil_setpoint_control_type'] = 'FixedSetpoint'
+            'heating_coil_setpoint_control_type'] = 'Scheduled'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'Always15.5',
-            epjson_output['SetpointManager:Scheduled']['AHU 1 Spaces 1-4 Heating Supply Air Temp Manager']['schedule_name'])
+            epjson_output['SetpointManager:Scheduled']['DOAS Heating Supply Air Temp Manager']['schedule_name'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heating_coil_outdoor_reset_inputs")
@@ -769,7 +792,6 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_effectiveness")
     def test_heat_recovery_effectiveness(self):
-        # todo_eo: values not mapping in legacy
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'heat_recovery_type'] = 'Enthalpy'
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
@@ -781,11 +803,11 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
         self.assertEqual(
-            0.72,
+            0.77,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
                 'sensible_effectiveness_at_75_cooling_air_flow'])
         self.assertEqual(
-            0.72,
+            0.77,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
                 'sensible_effectiveness_at_75_heating_air_flow'])
         self.assertEqual(
@@ -797,11 +819,11 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
                 'sensible_effectiveness_at_100_heating_air_flow'])
         self.assertEqual(
-            0.61,
+            0.66,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
                 'latent_effectiveness_at_75_cooling_air_flow'])
         self.assertEqual(
-            0.61,
+            0.66,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DOAS Heat Recovery'][
                 'latent_effectiveness_at_75_heating_air_flow'])
         self.assertEqual(
@@ -859,7 +881,6 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_frost_control_type"
                                               "exhaust_air_recirculation")
     def test_heat_recovery_frost_control_type_exhaust_air_recirculation(self):
-        # todo_eo: with this option the template effectiveness inputs are not mapped, causing discrepancy
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'heat_recovery_type'] = 'Enthalpy'
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
@@ -875,7 +896,6 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:heat_recovery_frost_control_type"
                                               "exhaust_only")
     def test_heat_recovery_frost_control_type_exhaust_only(self):
-        # todo_eo: with this option the template effectiveness inputs are not mapped, causing discrepancy
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'heat_recovery_type'] = 'Enthalpy'
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
