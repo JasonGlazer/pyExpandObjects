@@ -25,6 +25,7 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
         base_copy_file_path = self._copy_to_test_directory(base_idf_file_path)
         # read in base file, then edit inputs for alternate tests
         self.base_epjson = self.get_epjson_object_from_idf_file(base_copy_file_path)
+        self.base_epjson.pop('Output:Variable')
         return
 
     def teardown(self):
