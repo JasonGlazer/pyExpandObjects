@@ -190,6 +190,20 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             )
         except FileNotFoundError:
             pass
+        try:
+            os.rename(
+                str(test_dir / '..' / 'simulation' / 'test' / 'base_inputExpanded.idf'),
+                str(test_dir / '..' / 'simulation' / 'test' / 'old_base_inputExpanded.idf')
+            )
+        except FileNotFoundError:
+            pass
+        try:
+            os.rename(
+                str(test_dir / '..' / 'simulation' / 'test' / 'base_inputExpanded.epJSON'),
+                str(test_dir / '..' / 'simulation' / 'test' / 'old_base_inputExpanded.epJSON')
+            )
+        except FileNotFoundError:
+            pass
         # move file to testing directory manually, shutil does not work reliably for some reason
         base_idf_test_file_path = test_dir.joinpath('..', 'simulation', 'test', 'base_input.idf')
         with open(base_idf_file_path, 'r') as f1, \
@@ -226,7 +240,16 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             test_input_file_path = self.write_file_for_testing(
                 epjson=output_epjson,
                 file_name='test_input_epjson.epJSON')
-            # todo_eo: disabled due to new output formatting being catpured in energyplus.
+            # compare epjsons by summary count
+            expanded_base_file = self.expand_idf(base_idf_test_file_path)
+            comparison_base_epjson = self.convert_file(
+                str(test_dir / '..' / 'simulation' / 'test' / expanded_base_file))
+            with open(comparison_base_epjson, 'r') as f:
+                comparison_base_epjson = json.load(f)
+            with open(test_input_file_path, 'r') as f:
+                comparison_test_epjson = json.load(f)
+            self.compare_epjsons(comparison_base_epjson, comparison_test_epjson)
+            # todo_eo: pre-counting pyeo_warnings disabled due to new output formatting being captured in energyplus.
             #  Remove permanently after output is stable
             # pyeo_warnings = output['Output:PreprocessorMessage'].lower().count('warning')
             # check outputs
@@ -433,7 +456,12 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             self.assertEqual(1, status, 'Varying status outputs')
         return
 
-    def compare_epjsons(self, epjson_1, epjson_2, exclude_list=['Schedule:Compact', ]):
+    def compare_epjsons(
+            self,
+            epjson_1,
+            epjson_2,
+            exclude_list=('Schedule:Compact', 'Output:PreprocessorMessage',
+                          'AvailabilityManagerAssignmentList', 'ScheduleTypeLimits')):
         """
         Summarize and compare two epJSONs based on object counts.
 
@@ -447,8 +475,8 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         epjson_summary_2 = eo.summarize_epjson(epjson_2)
         # remove schedule compact
         for el in exclude_list:
-            epjson_summary_1.pop(el)
-            epjson_summary_2.pop(el)
+            epjson_summary_1.pop(el, None)
+            epjson_summary_2.pop(el, None)
         msg = ''
         for k, v in epjson_summary_1.items():
             if k not in epjson_summary_2.keys():
