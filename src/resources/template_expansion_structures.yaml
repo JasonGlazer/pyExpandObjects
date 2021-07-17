@@ -2099,6 +2099,11 @@ Objects:
               economizer_type: economizer_control_type
               maximum_outdoor_air_flow_rate: maximum_outdoor_air_flow_rate
               minimum_outdoor_air_flow_rate: minimum_outdoor_air_flow_rate
+        Mappings: &ControllerOutdoorAirCommonMappings
+          - Controller:OutdoorAir:
+              economizer_type:
+                ElectronicEnthalpy:
+                  electronic_enthalpy_limit_curve_name: '{} ElectrEnthCurve'
       Base:
         Fields: &ControllerOutdoorAir
           name: '{} OA Controller'
@@ -5609,6 +5614,7 @@ OptionTree:
                 Objects:
                   - Controller:OutdoorAir: *ControllerOutdoorAir
                 Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
               HotWaterPreheat: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
               ElectricPreheat: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
               GasPreheat: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
@@ -5637,6 +5643,7 @@ OptionTree:
                 Transitions:
                   - *ControllerOutdoorAirCommonTransitions
                   - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
+                Mappings: *ControllerOutdoorAirCommonMappings
               ElectricPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               GasPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               HotWaterPreheatEnthalpyHR: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
@@ -5663,6 +5670,7 @@ OptionTree:
                 Transitions:
                   - *ControllerOutdoorAirCommonTransitions
                   - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
               ElectricPreheatEnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
               GasPreheatEnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
               SensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
@@ -5671,7 +5679,7 @@ OptionTree:
               NoEconomizerBlowThrough:
               NoEconomizerDrawThrough:
               FixedDryBulbBlowThrough: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
-                Objects:
+                Objects: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulbObjects
                   - SetpointManager:MixedAir:
                       <<: *SetpointManagerMixedAirEconomizer
                       reference_setpoint_node_name:
@@ -5680,7 +5688,7 @@ OptionTree:
                           Occurrence: -1
                           ValueLocation: Outlet
               FixedDryBulbDrawThrough: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
-                Objects:
+                Objects: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulbObjects
                   - SetpointManager:MixedAir:
                       <<: *SetpointManagerMixedAirEconomizer
                       reference_setpoint_node_name:
@@ -5695,8 +5703,28 @@ OptionTree:
               DifferentialEnthalpyDrawThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
               FixedDewPointAndDryBulbBlowThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
               FixedDewPointAndDryBulbDrawThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
-              ElectronicEnthalpyBlowThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
-              ElectronicEnthalpyDrawThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
+              ElectronicEnthalpyBlowThrough:
+                Objects:
+                  - *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulbObjects
+                  - Curve:Cubic:
+                      name: '{} ElectrEnthCurve'
+                      coefficient1_constant: 0.01342704
+                      coefficient2_x: -0.00047892
+                      coefficient3_x_2: 5.3352e-05
+                      coefficient4_x_3: -1.8103e-06
+                      maximum_value_of_x: 29.13
+                      minimum_value_of_x: 16.6
+              ElectronicEnthalpyDrawThrough:
+                Objects:
+                  - *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulbObjects
+                  - Curve:Cubic:
+                      name: '{} ElectrEnthCurve'
+                      coefficient1_constant: 0.01342704
+                      coefficient2_x: -0.00047892
+                      coefficient3_x_2: 5.3352e-05
+                      coefficient4_x_3: -1.8103e-06
+                      maximum_value_of_x: 29.13
+                      minimum_value_of_x: 16.6
               DifferentialDryBulbAndEnthalpyBlowThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
               DifferentialDryBulbAndEnthalpyDrawThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
             cooling_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType # created by descriptors
