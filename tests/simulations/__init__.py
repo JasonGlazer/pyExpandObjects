@@ -445,7 +445,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     on=['Date/Time', 'variable'])
                 test_df['diff'] = abs(test_df['value_x'] - test_df['value_y']) / np.maximum(1, test_df['value_x'])
                 # Filter out low percentage differences
-                test_filtered_df = test_df.loc[test_df['diff'] > 0.01].copy()
+                test_filtered_df = test_df.loc[test_df['diff'] > 0.0001].copy()
                 test_filtered_df.rename(columns={
                     "value_x": os.path.basename(simulation_files[energy_idx]),
                     "value_y": os.path.basename(simulation_files[i])

@@ -396,7 +396,7 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['SetpointManager:MixedAir']['AHU 1 Spaces 1-4 Economizer Air Temp Manager'])
         return
 
-    #todo_eo: perform testing for other economizer types
+    # todo_eo: perform testing for other economizer types
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:supply_fan_placement_blow_"
                                               "through_cooling_control_zone_no_heating")

@@ -1202,11 +1202,11 @@ Objects:
                   cooling_coil_gross_rated_cooling_cop: gross_rated_cooling_cop
                   cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
                   cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
-                  cooling_supply_air_flow_rate: rated_air_flow_rate
+#                  cooling_supply_air_flow_rate: rated_air_flow_rate # Set in Sizing object
                   dx_cooling_coil_gross_rated_cop: gross_rated_cooling_cop
                   dx_cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
                   dx_cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
-                  supply_air_maximum_flow_rate: rated_air_flow_rate
+#                  supply_air_maximum_flow_rate: rated_air_flow_rate # Set in Sizing object
           Base: &CoilCoolingDXSingleSpeedSuperObject
             Fields: &CoilCoolingDXSingleSpeedFields
               <<: *CoilCoolingCommonFields
@@ -1621,7 +1621,7 @@ Objects:
               - Coil:Cooling:DX:VariableRefrigerantFlow:
                   cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
                   cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
-                  cooling_supply_air_flow_rate: rated_air_flow_rate
+#                  cooling_supply_air_flow_rate: rated_air_flow_rate # Set in Sizing object
           Base: &CoilCoolingDXVariableRefrigerantFlowSuperObject
             Fields:
               name: '{} VRF Cooling Coil'
@@ -1736,7 +1736,7 @@ Objects:
                 cooling_coil_gross_rated_cop: gross_rated_cooling_cop
                 cooling_coil_gross_rated_sensible_heat_ratio: # todo_eo: document this behavior, rarely used.
                   gross_rated_sensible_cooling_capacity: '{cooling_coil_gross_rated_total_capacity} * {cooling_coil_gross_rated_sensible_heat_ratio}'
-                cooling_supply_air_flow_rate: rated_air_flow_rate
+#                cooling_supply_air_flow_rate: rated_air_flow_rate # Set in Sizing object
                 dx_cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
           Base: &CoilCoolingWatertoAirHeatPumpEquationFitSuperObject
             Fields:
@@ -1831,7 +1831,7 @@ Objects:
                   minimum_value_of_x: 0.0
             Transitions: &CoilHeatingDXSingleSpeedCommonTransitions
               - Coil:Heating:DX:SingleSpeed:
-                  heating_supply_air_flow_rate: rated_air_flow_rate
+#                  heating_supply_air_flow_rate: rated_air_flow_rate # Set in Sizing object
                   heat_pump_heating_coil_availability_schedule_name: availability_schedule_name
                   heat_pump_heating_coil_gross_rated_cop: gross_rated_heating_cop
                   heat_pump_heating_coil_rated_cop: gross_rated_heating_cop # todo_eo: could be combined into one variable
@@ -1882,7 +1882,7 @@ Objects:
             Transitions: &CoilHeatingDXVariableRefrigerantFlowCommonTransitions
               - Coil:Heating:DX:VariableRefrigerantFlow:
                   heat_pump_heating_coil_gross_rated_capacity: gross_rated_heating_capacity
-                  heating_supply_air_flow_rate: rated_air_flow_rate
+#                  heating_supply_air_flow_rate: rated_air_flow_rate # Set in Sizing object
           Base: &CoilHeatingDXVariableRefrigerantFlowSuperObject
             Fields:
               name: '{} VRF Heating Coil'
@@ -1946,9 +1946,17 @@ Objects:
                       Coil:Heating:Water: self
                     component_outlet_node_name:
                       Coil:Heating:Water: water_outlet_node_name
-          Mappings: &CoilHeatingWaterCommonMappings
+          Mappings:
+            Base: &CoilHeatingWaterCommonMappings
+              - Coil:Heating:Water.*:
+                  heating_coil_capacity:
+                    None:
+                      performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+                    Autosize:
+                      performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
+            Supplemental: &CoilHeatingWaterCommonMappingsSupplemental
             - Coil:Heating:Water.*:
-                heating_coil_capacity:
+                supplemental_heating_coil_capacity:
                   None:
                     performance_input_method: UFactorTimesAreaAndDesignWaterFlowRate
                   Autosize:
@@ -2016,7 +2024,7 @@ Objects:
             Transitions: &CoilHeatingWaterToAirHeatPumpEquationFitCommonTransitions
               - Coil:Heating:WaterToAirHeatPump:EquationFit:
                   heating_coil_gross_rated_capacity: gross_rated_heating_capacity
-                  heating_supply_air_flow_rate: rated_air_flow_rate
+#                  heating_supply_air_flow_rate: rated_air_flow_rate # Set in Sizing object
                   heat_pump_heating_coil_gross_rated_capacity: gross_rated_heating_capacity
           Base: &CoilHeatingWaterToAirHeatPumpEquationFitSuperObject
             Fields:
@@ -2363,7 +2371,7 @@ Objects:
       Transitions:
         SystemModel: &FanCommonTransitionsSystemModel
           - Fan:.*:
-              supply_air_maximum_flow_rate: design_maximum_air_flow_rate
+#              supply_air_maximum_flow_rate: design_maximum_air_flow_rate # only set this value in Sizing:Zone
               supply_fan_delta_pressure: design_pressure_rise
               supply_fan_motor_efficiency: motor_efficiency
               supply_fan_total_efficiency: fan_total_efficiency
@@ -3137,8 +3145,8 @@ Objects:
       ZoneEquipment:
         Transitions: &ZoneHVACCommonZoneEquipmentTransitions
           - ZoneHVAC:.*:
-              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
-              heating_supply_air_flow_rate: heating_supply_air_flow_rate
+#              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate # set in Sizing:Zone only
+#              heating_supply_air_flow_rate: heating_supply_air_flow_rate # set in Sizing:Zone only
               supply_fan_operating_mode_schedule_name: supply_air_fan_operating_mode_schedule_name
         Base:
           Fields: &ZoneHVACCommonZoneEquipmentFields
@@ -3337,7 +3345,7 @@ Objects:
       Common:
         Transitions: &ZoneHVACFourPipeFanCoilCommonTransitions
           - ZoneHVAC:FourPipeFanCoil:
-              supply_air_maximum_flow_rate: maximum_supply_air_flow_rate
+#              supply_air_maximum_flow_rate: maximum_supply_air_flow_rate # only set value in sizing
               capacity_control_method: capacity_control_method
               low_speed_supply_air_flow_ratio: low_speed_supply_air_flow_ratio
               medium_speed_supply_air_flow_ratio: medium_speed_supply_air_flow_ratio
@@ -3398,8 +3406,8 @@ Objects:
                   supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always1
         Transitions: &ZoneHVACPackagedTerminalAirConditionerCommonTransitions
           - ZoneHVAC:PackagedTerminalAirConditioner:
-              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
-              heating_supply_air_flow_rate: heating_supply_air_flow_rate
+#              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate # set in Sizing:Zone only
+#              heating_supply_air_flow_rate: heating_supply_air_flow_rate # set in Sizing:Zone only
               no_load_supply_air_flow_rate: no_load_supply_air_flow_rate
               system_availability_schedule_name: availability_schedule_name
         Fields: &ZoneHVACPackagedTerminalAirconditionerCommonFields
@@ -3426,8 +3434,8 @@ Objects:
                   supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always1
         Transitions: &ZoneHVACPackagedTerminalHeatPumpCommonTransitions
           - ZoneHVAC:PackagedTerminalHeatPump:
-              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
-              heating_supply_air_flow_rate: heating_supply_air_flow_rate
+#              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate # set int Sizing object
+#              heating_supply_air_flow_rate: heating_supply_air_flow_rate # set int Sizing object
               no_load_supply_air_flow_rate: no_load_supply_air_flow_rate
               system_availability_schedule_name: availability_schedule_name
       Base:
@@ -3494,10 +3502,11 @@ Objects:
       Common:
         Transitions: &ZoneHVACWaterToAirHeatPumpCommonTransitions
           - ZoneHVAC:WaterToAirHeatPump:
-              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
-              heating_supply_air_flow_rate: heating_supply_air_flow_rate
+#              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate # Set value is Sizing object
+#              heating_supply_air_flow_rate: heating_supply_air_flow_rate # Set value in Sizing object
               no_load_supply_air_flow_rate: no_load_supply_air_flow_rate
               supply_fan_operating_mode_schedule_name: supply_air_fan_operating_mode_schedule_name
+              heat_pump_coil_water_flow_mode: heat_pump_coil_water_flow_mode
       Base:
         Fields: &ZoneHVACWaterToAirHeatPumpFields
           <<: *ZoneHVACPackagedTerminalHeatPumpFields
@@ -4470,7 +4479,7 @@ OptionTree:
                     - Coil:Heating:Water:
                         supplemental_heating_coil_capacity: rated_capacity
                         supplemental_heating_or_reheat_coil_capacity: nominal_capacity
-                  Mappings: *CoilHeatingWaterCommonMappings
+                  Mappings: *CoilHeatingWaterCommonMappingsSupplemental
         BaseObjects:
           Objects:
             - Sizing:Zone: *SizingZoneOA

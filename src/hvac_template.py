@@ -96,6 +96,8 @@ class HVACTemplate(EPJSON):
                             'cooling_coil_gross_rated_cop': 3.5,
                             # todo_eo: template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched for this field
                             'supply_fan_placement': 'DrawThrough',
+                            # Not default efficiency for Fan:OnOff
+                            'supply_fan_total_efficiency': 0.7,
                             'heat_pump_heating_coil_type': 'Coil:Heating:WaterToAirHeatPump:EquationFit',
                             'heat_pump_heating_coil_gross_rated_cop': 4.2,
                             'supplemental_heating_coil_type': 'Electric'

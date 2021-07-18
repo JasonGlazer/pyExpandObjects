@@ -146,46 +146,30 @@ class TestSimulationsZoneWaterToAirHeatPump(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:WaterToAirHeatPump:cooling_supply_air_flow_rate")
     def test_cooling_supply_air_flow_rate(self):
-        # todo_eo: Coil object and ZoneHVAC:WaterToAirHeatPump cooling_supply_air_flow_rate
-        #  are not set in legacy with these inputs which is causing the discrepancy.
         self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump']['HVACTemplate:Zone:WaterToAirHeatPump 1']['cooling_supply_air_flow_rate'] = 0.1
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.1,
-            epjson_output['ZoneHVAC:WaterToAirHeatPump']['SPACE1-1 WAHP']['cooling_supply_air_flow_rate'])
-        self.assertEqual(
-            0.1,
             epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['cooling_design_air_flow_rate'])
         self.assertEqual(
             'Flow/Zone',
             epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['cooling_design_air_flow_method'])
-        self.assertEqual(
-            0.1,
-            epjson_output['Coil:Cooling:WaterToAirHeatPump:EquationFit']['SPACE1-1 Cooling Coil']['rated_air_flow_rate'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:WaterToAirHeatPump:heating_supply_air_flow_rate")
     def test_heating_supply_air_flow_rate(self):
-        # todo_eo: Coil object, Sizing:Zone and ZoneHVAC:WaterToAirHeatPump heating_supply_air_flow_rate
-        #  are not set in legacy with these inputs which is causing the discrepancy.
         self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump']['HVACTemplate:Zone:WaterToAirHeatPump 1']['heating_supply_air_flow_rate'] = 0.1
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.1,
-            epjson_output['ZoneHVAC:WaterToAirHeatPump']['SPACE1-1 WAHP']['heating_supply_air_flow_rate'])
-        self.assertEqual(
-            0.1,
             epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['heating_design_air_flow_rate'])
         self.assertEqual(
             'Flow/Zone',
             epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['heating_design_air_flow_method'])
-        self.assertEqual(
-            0.1,
-            epjson_output['Coil:Heating:WaterToAirHeatPump:EquationFit']['SPACE1-1 Heating Coil']['rated_air_flow_rate'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:WaterToAirHeatPump:no_load_supply_air_flow_rate")
