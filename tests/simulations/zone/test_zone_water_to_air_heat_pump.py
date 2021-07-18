@@ -68,7 +68,8 @@ hot_water_loop_objects = {
             "capacity": "Autosize",
             "efficiency": 0.8,
             "fuel_type": "NaturalGas",
-            "priority": "1"
+            "priority": "1",
+            "template_plant_loop_type": "HotWater"
         }
     },
     "HVACTemplate:Plant:HotWaterLoop": {
@@ -426,7 +427,6 @@ class TestSimulationsZoneWaterToAirHeatPump(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:WaterToAirHeatPump:supplemental_heating_coil_capacity")
     def test_supplemental_heating_coil_capacity(self):
-        # todo_eo: test with HotWater when legacy issues resolved.
         self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump']['HVACTemplate:Zone:WaterToAirHeatPump 1'][
             'supplemental_heating_coil_capacity'] = 1000
         self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump']['HVACTemplate:Zone:WaterToAirHeatPump 1'][
@@ -514,6 +514,7 @@ class TestSimulationsZoneWaterToAirHeatPump(BaseSimulationTest):
         # todo_eo: Legacy fails when a HVACTemplate:Plant:HotWaterLoop and HVACTemplate:Plant:Boiler are
         #  included in the same file as HVACTemplate:PLant:MixedWaterLoop and existing HVACTemplate:Plant:Boiler.
         #  The PlantEquipmentList for the MixedWaterLoop includes the HW boiler.
+        #  Explicitly setting both boilers fixes this in legacy.
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=hot_water_loop_objects)

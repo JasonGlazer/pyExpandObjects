@@ -24,7 +24,8 @@ hot_water_loop_objects = {
             "capacity": "Autosize",
             "efficiency": 0.8,
             "fuel_type": "NaturalGas",
-            "priority": "1"
+            "priority": "1",
+            "template_plant_loop_type": "HotWater"
         }
     },
     "HVACTemplate:Plant:HotWaterLoop": {
@@ -624,6 +625,7 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
         # todo_eo: Legacy fails when a HVACTemplate:Plant:HotWaterLoop and HVACTemplate:Plant:Boiler are
         #  included in the same file as HVACTemplate:PLant:MixedWaterLoop and existing HVACTemplate:Plant:Boiler.
         #  The PlantEquipmentList for the MixedWaterLoop includes the HW boiler.
+        #  Explicitly setting template_plant_loop_type in both boilers fixes this in legacy.
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=hot_water_loop_objects)
@@ -652,9 +654,12 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
         # todo_eo: Legacy fails when a HVACTemplate:Plant:HotWaterLoop and HVACTemplate:Plant:Boiler are
         #  included in the same file as HVACTemplate:PLant:MixedWaterLoop and existing HVACTemplate:Plant:Boiler.
         #  The PlantEquipmentList for the MixedWaterLoop includes the HW boiler.
+        #  Explicitly setting template_plant_loop_type in both boilers fixes this in legacy.
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=hot_water_loop_objects)
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler'][
+            'template_plant_loop_type'] = 'MixedWater'
         self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
             'baseboard_heating_type'] = 'HotWater'
         self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
@@ -679,6 +684,7 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
         # todo_eo: Legacy fails when a HVACTemplate:Plant:HotWaterLoop and HVACTemplate:Plant:Boiler are
         #  included in the same file as HVACTemplate:PLant:MixedWaterLoop and existing HVACTemplate:Plant:Boiler.
         #  The PlantEquipmentList for the MixedWaterLoop includes the HW boiler.
+        #  Explicitly setting template_plant_loop_type in both boilers fixes this in legacy.
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=hot_water_loop_objects)
