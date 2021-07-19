@@ -7778,8 +7778,8 @@ OptionTree:
                           CoolingTower.*: water_outlet_node_name
             VariablePumpPerEquipment:
               Objects:
-                - Pump:VariableSpeed:
-                    <<: *PumpVariableSpeed
+                - Pump:ConstantSpeed:
+                    <<: *PumpConstantSpeed
                     name: '{} Branch Pump'
                     design_pump_head: '{water_pump_rated_head}'
                     inlet_node_name: '{} CW Pump Inlet'

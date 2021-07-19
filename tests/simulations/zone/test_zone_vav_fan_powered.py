@@ -143,7 +143,7 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_flow_per_person'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:outdoor_air_method_flow_per_area")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:outdoor_air_method_flow_per_area")
     def test_outdoor_air_method_flow_per_area(self):
         self.base_epjson['HVACTemplate:Zone:VAV:FanPowered']['HVACTemplate:Zone:VAV:FanPowered 1'][
             'outdoor_air_method'] = 'Flow/Area'
@@ -160,7 +160,7 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_flow_per_zone_floor_area'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:outdoor_air_method_flow_per_zone")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:outdoor_air_method_flow_per_zone")
     def test_outdoor_air_method_flow_per_zone(self):
         self.base_epjson['HVACTemplate:Zone:VAV:FanPowered']['HVACTemplate:Zone:VAV:FanPowered 1'][
             'outdoor_air_method'] = 'Flow/Zone'
@@ -177,7 +177,7 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_flow_per_zone'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:outdoor_air_method_detailed_specification")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:outdoor_air_method_detailed_specification")
     def test_outdoor_air_method_detailed_specification(self):
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,

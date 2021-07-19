@@ -274,6 +274,9 @@ class HVACTemplate(EPJSON):
                             'supply_fan_placement': 'DrawThrough',
                             'cooling_coil_design_setpoint_temperature': 12.8,
                             'heating_coil_design_setpoint': 12.2
+                        },
+                        'HVACTemplate:System:VAV': {
+                            'preheat_coil_design_setpoint': 7.2
                         }
                     }
                     for object_name, object_fields in object_structure.items():
@@ -1046,7 +1049,8 @@ class HVACTemplate(EPJSON):
         if getattr(plant_equipment_class_object, 'template_type', None).lower() in \
                 ['hvactemplate:plant:chiller', 'hvactemplate:plant:chiller:objectreference'] \
                 and getattr(plant_equipment_class_object, 'condenser_type', 'WaterCooled').lower() == 'watercooled' \
-                and 'hvactemplate:plant:condenserwaterloop' not in plant_loops:
+                and 'hvactemplate:plant:condenserwaterloop' not in plant_loops \
+                and getattr(plant_equipment_class_object, 'chiller_type', None) != 'DistrictChilledWater':
             # try to get the chilled water loop attributes to transition to condenser water
             chw_loop = [
                 pl for pl
@@ -1401,12 +1405,12 @@ class HVACTemplate(EPJSON):
         try:
             for branch in demand_branches:
                 demand_branchlist['branches'].insert(1, {'branch_name': branch})
-                connector_demand_splitter['branches'].insert(0, {'outlet_branch_name': branch})
-                connector_demand_mixer['branches'].insert(0, {'inlet_branch_name': branch})
+                connector_demand_splitter['branches'].append({'outlet_branch_name': branch})
+                connector_demand_mixer['branches'].append({'inlet_branch_name': branch})
             for branch in supply_branches:
                 supply_branchlist['branches'].insert(1, {'branch_name': branch})
-                connector_supply_splitter['branches'].insert(0, {'outlet_branch_name': branch})
-                connector_supply_mixer['branches'].insert(0, {'inlet_branch_name': branch})
+                connector_supply_splitter['branches'].insert(-1, {'outlet_branch_name': branch})
+                connector_supply_mixer['branches'].insert(-1, {'inlet_branch_name': branch})
                 supply_nodelist['nodes'].insert(
                     0,
                     {'node_name': supply_branches[branch]['components'][-1]['component_outlet_node_name']})

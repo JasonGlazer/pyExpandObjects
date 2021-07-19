@@ -739,19 +739,6 @@ class TestSimulationsPlantLoopHotWaterLoop(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
-                                              "load_distribution_scheme_uniform")
-    def test_load_distribution_scheme_uniform(self):
-        self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][
-            'load_distribution_scheme'] = 'Uniform'
-        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertEqual(
-            'Uniform',
-            epjson_output['PlantLoop']['Hot Water Loop PlantLoop']['load_distribution_scheme'])
-        return
-
-    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
                                               "load_distribution_scheme_uniform_load")
     def test_load_distribution_scheme_uniform_load(self):
         self.base_epjson['HVACTemplate:Plant:HotWaterLoop']['Hot Water Loop'][

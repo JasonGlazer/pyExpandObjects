@@ -228,6 +228,13 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             )
         except FileNotFoundError:
             pass
+        try:
+            os.rename(
+                str(test_dir / '..' / 'simulation' / 'test' / 'test_pre_input_epjson.epJSON'),
+                str(test_dir / '..' / 'simulation' / 'test' / 'old_test_pre_input_epjson.epJSON')
+            )
+        except FileNotFoundError:
+            pass
         time.sleep(0.1)
         # write the preformatted base file for main to call
         test_pre_input_file_path = self.write_file_for_testing(
