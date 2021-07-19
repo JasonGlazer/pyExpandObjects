@@ -91,6 +91,10 @@ class HVACTemplate(EPJSON):
                             'heat_pump_heating_coil_type': 'SingleSpeedDXHeatPump',
                             'supplemental_heating_coil_type': 'Electric'
                         },
+                        'HVACTemplate:Zone:VRF': {
+                            'cooling_coil_type': 'VariableRefrigerantFlowDX',
+                            'heating_coil_type': 'VariableRefrigerantFlowDX'
+                        },
                         'HVACTemplate:Zone:WaterToAirHeatPump': {
                             'cooling_coil_type': 'Coil:Cooling:WaterToAirHeatPump:EquationFit',
                             'cooling_coil_gross_rated_cop': 3.5,

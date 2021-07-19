@@ -104,6 +104,12 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:test_minimum_inputs")
     def test_minimum_inputs(self):
+        # todo_eo: legacy fails on conversion from idf to epjson because
+        #  Missing required property 'gross_rated_sensible_heat_ratio'.
+        #  \r\n<root>[Coil:Cooling:DX:VariableRefrigerantFlow][SPACE1-1 VRF Cooling Coil] - Missing required property
+        #  'gross_rated_total_cooling_capacity'.\r\n<root>[Coil:Heating:DX:VariableRefrigerantFlow][SPACE1-1 VRF
+        #  Heating Coil] - Missing required property 'gross_rated_heating_capacity'.\r\nErrors occurred when
+        #  validating input file
         self.base_epjson['HVACTemplate:Zone:VRF'].pop('HVACTemplate:Zone:VRF 1')
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
@@ -111,6 +117,7 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
                 'HVACTemplate:Zone:VRF': {
                     'HVACTemplate:Zone:VRF 1': {
                         "template_thermostat_name": "All Zones",
+                        "template_vrf_system_name": "VRF Sys 1 Water Source",
                         "zone_name": "SPACE1-1"
                     }
                 }
@@ -122,6 +129,12 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:test_minimum_inputs_doas")
     def test_minimum_inputs_doas(self):
+        # todo_eo: legacy fails on conversion from idf to epjson because
+        #  Missing required property 'gross_rated_sensible_heat_ratio'.
+        #  \r\n<root>[Coil:Cooling:DX:VariableRefrigerantFlow][SPACE1-1 VRF Cooling Coil] - Missing required property
+        #  'gross_rated_total_cooling_capacity'.\r\n<root>[Coil:Heating:DX:VariableRefrigerantFlow][SPACE1-1 VRF
+        #  Heating Coil] - Missing required property 'gross_rated_heating_capacity'.\r\nErrors occurred when
+        #  validating input file
         self.base_epjson['HVACTemplate:Zone:VRF'].pop('HVACTemplate:Zone:VRF 1')
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
@@ -179,16 +192,11 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:cooling_supply_air_flow_rate")
     def test_cooling_supply_air_flow_rate(self):
-        # todo_eo: ZoneHVAC:TerminalUnit:VariableRefrigerantFlow cooling supply air flow rate not set in legacy, sizing:zone
-        #  cooling_design_flow_rate is set in both.
         self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
             'cooling_supply_air_flow_rate'] = 0.1
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertEqual(
-            0.1,
-            epjson_output['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']['SPACE1-1 VRF Terminal Unit']['cooling_supply_air_flow_rate'])
         self.assertEqual(
             0.1,
             epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['cooling_design_air_flow_rate'])
@@ -211,8 +219,6 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:heating_supply_air_flow_rate")
     def test_heating_supply_air_flow_rate(self):
-        # todo_eo: ZoneHVAC:TerminalUnit:VariableRefrigerantFlow heating supply air flow rate not set in legacy, sizing:zone
-        #  cooling_design_flow_rate is set in both.
         self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
             'heating_supply_air_flow_rate'] = 0.1
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -220,7 +226,10 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.1,
-            epjson_output['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']['SPACE1-1 VRF Terminal Unit']['heating_supply_air_flow_rate'])
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['heating_design_air_flow_rate'])
+        self.assertEqual(
+            'Flow/Zone',
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['heating_design_air_flow_method'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:no_heating_supply_air_flow_rate")
@@ -237,6 +246,7 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:cooling_outdoor_air_flow_rate")
     def test_cooling_outdoor_air_flow_rate(self):
+        # todo_eo: does not appear that zonehvac object gets value applied
         self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
             'cooling_outdoor_air_flow_rate'] = 0.1
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -244,7 +254,8 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.1,
-            epjson_output['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']['SPACE1-1 VRF Terminal Unit']['cooling_outdoor_air_flow_rate'])
+            epjson_output['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']['SPACE1-1 VRF Terminal Unit'][
+                'cooling_outdoor_air_flow_rate'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:heating_outdoor_air_flow_rate")
@@ -257,11 +268,13 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.1,
-            epjson_output['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']['SPACE1-1 VRF Terminal Unit']['heating_outdoor_air_flow_rate'])
+            epjson_output['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']['SPACE1-1 VRF Terminal Unit'][
+                'heating_outdoor_air_flow_rate'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:no_load_outdoor_air_flow_rate")
     def test_no_load_outdoor_air_flow_rate(self):
+        # todo_eo: value is not mapping to anything in legacy
         self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
             'no_load_outdoor_air_flow_rate'] = 0.1
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -269,7 +282,8 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.1,
-            epjson_output['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']['SPACE1-1 VRF Terminal Unit']['no_load_outdoor_air_flow_rate'])
+            epjson_output['ZoneHVAC:TerminalUnit:VariableRefrigerantFlow']['SPACE1-1 VRF Terminal Unit'][
+                'no_load_outdoor_air_flow_rate'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:outdoor_air_method_flow_per_person")
@@ -355,6 +369,9 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VRF:supply_fan_operating_mode_schedule_name")
     def test_supply_fan_operating_mode_schedule_name(self):
+        # todo_eo: schedule does not appear to be mapped to the ZoneHVAC:equipmentconnections even though the same
+        #  name is used.  discuss with team if this should be removed for this template only.  Note, generally removing
+        #  this transition will cause similar tests for pthp and ptac to fail
         self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
             'supply_fan_operating_mode_schedule_name'] = 'OCCUPY-1'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -683,11 +700,13 @@ class TestSimulationsZoneVRF(BaseSimulationTest):
     def test_baseboard_heating_capacity(self):
         # todo_eo: Legacy fails when a HVACTemplate:Plant:HotWaterLoop and HVACTemplate:Plant:Boiler are
         #  included in the same file as HVACTemplate:PLant:MixedWaterLoop and existing HVACTemplate:Plant:Boiler.
-        #  The PlantEquipmentList for the MixedWaterLoop includes the HW boiler.
+        #  The PlantEquipmentList for the MixedWater        Loop includes the HW boiler.
         #  Explicitly setting template_plant_loop_type in both boilers fixes this in legacy.
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=hot_water_loop_objects)
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler'][
+            'template_plant_loop_type'] = 'MixedWater'
         self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][
             'baseboard_heating_type'] = 'HotWater'
         self.base_epjson['HVACTemplate:Zone:VRF']['HVACTemplate:Zone:VRF 1'][

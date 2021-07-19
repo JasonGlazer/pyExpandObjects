@@ -3467,9 +3467,9 @@ Objects:
             name: '{} VRF Terminal Unit'
             <<: *ZoneHVACPackagedTerminalAirconditionerCommonFields
             cooling_outdoor_air_flow_rate: '{cooling_outdoor_air_flow_rate}'
-            cooling_supply_air_flow_rate: '{cooling_supply_air_flow_rate}'
+            cooling_supply_air_flow_rate: Autosize
             heating_outdoor_air_flow_rate: '{heating_outdoor_air_flow_rate}'
-            heating_supply_air_flow_rate: '{heating_supply_air_flow_rate}'
+            heating_supply_air_flow_rate: Autosize
             no_cooling_supply_air_flow_rate: '{no_cooling_supply_air_flow_rate}'
             no_heating_supply_air_flow_rate: '{no_heating_supply_air_flow_rate}'
             no_load_outdoor_air_flow_rate: '{no_load_outdoor_air_flow_rate}'
@@ -4710,7 +4710,7 @@ OptionTree:
             - heat_pump_heating_coil_type: *ZoneCommonBuildPathActionsObjectsAfterMixerHeatingCoilType
             - cooling_coil_type: *ZoneCommonBuildPathActionsObjectsAfterMixerCoolingCoilType
             - supply_air_fan_placement: # todo_eo: combine to supply_fan_placement in descriptors to reduce code here
-                None: *ZoneCommonBuildPathActionsObjectsFanOnOffNone
+                None: *ZoneCommonBuildPathActionsObjectsFanOnOffBlowThrough
                 DrawThrough: *ZoneCommonBuildPathActionsObjectsFanOnOffNone
                 BlowThrough: *ZoneCommonBuildPathActionsObjectsFanOnOffBlowThrough
         BaseObjects:
