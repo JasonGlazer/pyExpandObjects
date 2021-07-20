@@ -38,5 +38,5 @@ class TestSimulationsThermostat(BaseSimulationTest):
                     no_schema=False
                 )
             )
-        self.assertRegex(output['outputPreProcessorMessage'], r'In HVACTemplate:Thermostat')
+        self.assertRegex(output['Output:PreprocessorMessage'], r'In HVACTemplate:Thermostat')
         return

@@ -43,7 +43,6 @@ class TestSimulationsPlantLoopHotWaterLoop(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:HotWaterLoop:test_minimum_inputs")
     def test_minimum_inputs(self):
-        # todo_eo: legacy generates odd warning
         self.base_epjson['HVACTemplate:Plant:HotWaterLoop'].pop('Hot Water Loop')
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,

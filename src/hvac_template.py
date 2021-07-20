@@ -277,6 +277,9 @@ class HVACTemplate(EPJSON):
                         },
                         'HVACTemplate:System:VAV': {
                             'preheat_coil_design_setpoint': 7.2
+                        },
+                        'HVACTemplate:System:Unitary': {
+                            'preheat_coil_design_setpoint': 7.0
                         }
                     }
                     for object_name, object_fields in object_structure.items():

@@ -211,6 +211,8 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:IdealLoadsAirSystem:dehumidification_setpoint")
     def test_dehumidification_setpoint(self):
+        # todo_eo: legacy makes ZoneControl:Humidistat for all zones and setpoints do not appear to align with template
+        #  inputs for each zone
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'dehumidification_control_type'] = 'Humidistat'
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
@@ -220,7 +222,8 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'HVACTemplate-Always65.0',
-            epjson_output['ZoneControl:Humidistat']['SPACE1-1 Humidification Humidistat']['dehumidifying_relative_humidity_setpoint_schedule_name'])
+            epjson_output['ZoneControl:Humidistat']['SPACE1-1 Humidification Humidistat'][
+                'dehumidifying_relative_humidity_setpoint_schedule_name'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:IdealLoadsAirSystem:humidification_control_type")
@@ -232,11 +235,14 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'ConstantSupplyHumidityRatio',
-            epjson_output['ZoneHVAC:IdealLoadsAirSystem']['SPACE1-1 Ideal Loads Air System']['humidification_control_type'])
+            epjson_output['ZoneHVAC:IdealLoadsAirSystem']['SPACE1-1 Ideal Loads Air System'][
+                'humidification_control_type'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:IdealLoadsAirSystem:humidification_setpoint")
     def test_humidification_setpoint(self):
+        # todo_eo: legacy makes ZoneControl:Humidistat for all zones and setpoints do not appear to align with template
+        #  inputs for each zone
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'humidification_control_type'] = 'Humidistat'
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
@@ -246,7 +252,8 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'HVACTemplate-Always33.0',
-            epjson_output['ZoneControl:Humidistat']['SPACE1-1 Humidification Humidistat']['humidifying_relative_humidity_setpoint_schedule_name'])
+            epjson_output['ZoneControl:Humidistat']['SPACE1-1 Humidification Humidistat'][
+                'humidifying_relative_humidity_setpoint_schedule_name'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:IdealLoadsAirSystem:outdoor_air_method_flow_per_person")
@@ -332,7 +339,6 @@ class TestSimulationsZoneIdealLoadsAirSystem(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:IdealLoadsAirSystem:demand_controlled_ventilation_type")
     def test_demand_controlled_ventilation_type_co2_setpoint(self):
-        # todo_eo: ZoneControl:ContaminantController not created in legacy, is that on purpose?
         self.base_epjson['HVACTemplate:Zone:IdealLoadsAirSystem']['HVACTemplate:Zone:IdealLoadsAirSystem 1'][
             'demand_controlled_ventilation_type'] = 'CO2Setpoint'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')

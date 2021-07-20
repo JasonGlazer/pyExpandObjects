@@ -439,7 +439,7 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:cooling_coil_type_"
                                               "heat_exchanger_assisted_dx")
     def test_cooling_coil_type_heat_exchanger_assisted_dx(self):
-        # todo_eo: discuss with team.  EnergyPlus notes say that this setup is okay but a warning is issued.
+        # todo_eo: EnergyPlus notes say that this setup is okay but a warning is issued.
         #  Combination of dehumidification_control_type and cooling_coil_type is not allowed.
         # todo_eo: simulation fails in legacy SetDXCoilTypeData: Could not find Coil
         #  "Name="DOAS HEAT EXCHANGER ASSISTED COOLING COIL"
@@ -549,7 +549,6 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:"
                                               "dx_cooling_coil_gross_rated_sensible_heat_ratio")
     def test_dx_cooling_coil_gross_rated_sensible_heat_ratio(self):
-        # todo_eo: legacy has odd errors with the cooling coil selection
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'cooling_coil_type'] = 'TwoSpeedDX'
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
@@ -561,16 +560,15 @@ class TestSimulationsSystemDedicatedOutdoorAir(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.75,
-            epjson_output['CoilPerformance:DX:Cooling']['DOAS Dehumid Perf 1']['gross_rated_sensible_heat_ratio'])
+            epjson_output['Coil:Cooling:DX:TwoSpeed']['DOAS Cooling Coil']['high_speed_rated_sensible_heat_ratio'])
         self.assertEqual(
             0.75,
-            epjson_output['CoilPerformance:DX:Cooling']['DOAS Dehumid Perf 1+2']['gross_rated_sensible_heat_ratio'])
+            epjson_output['Coil:Cooling:DX:TwoSpeed']['DOAS Cooling Coil']['low_speed_gross_rated_sensible_heat_ratio'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DedicatedOutdoorAir:"
                                               "dx_cooling_coil_gross_rated_sensible_heat_ratio")
     def test_dx_cooling_coil_gross_rated_sensible_heat_ratio_with_humidity_control(self):
-        # todo_eo: legacy does not seem to map (or adjust) the SHR values with this selection, but appears it should.
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
             'cooling_coil_type'] = 'TwoStageHumidityControlDX'
         self.base_epjson['HVACTemplate:System:DedicatedOutdoorAir']['DOAS'][
