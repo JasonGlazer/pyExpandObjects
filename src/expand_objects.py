@@ -435,7 +435,7 @@ class ExpandObjects(EPJSON):
                                             # the key being the template name
                                             tmp_object_field = copy.deepcopy(object_field)
                                             if isinstance(tmp_object_field, str) and '{' in tmp_object_field:
-                                                tmp_object_field= {template_field: tmp_object_field}
+                                                tmp_object_field = {template_field: tmp_object_field}
                                             if isinstance(tmp_object_field, dict):
                                                 (tmp_object_field, object_val), = tmp_object_field.items()
                                                 # Try to perform numeric evaluation if operators and formatting brackets
