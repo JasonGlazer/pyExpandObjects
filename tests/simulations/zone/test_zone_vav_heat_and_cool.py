@@ -131,7 +131,7 @@ class TestSimulationsZoneVAVHeatAndCool(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE4-1 SZ DSOA']['outdoor_air_flow_per_person'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:outdoor_air_method_flow_per_area")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:HeadAndCool:outdoor_air_method_flow_per_area")
     def test_outdoor_air_method_flow_per_area(self):
         self.base_epjson['HVACTemplate:Zone:VAV:HeatAndCool']['HVACTemplate:Zone:VAV:HeatAndCool 1'][
             'outdoor_air_method'] = 'Flow/Area'
@@ -148,7 +148,7 @@ class TestSimulationsZoneVAVHeatAndCool(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE4-1 SZ DSOA']['outdoor_air_flow_per_zone_floor_area'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:outdoor_air_method_flow_per_zone")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:HeatAndCool:outdoor_air_method_flow_per_zone")
     def test_outdoor_air_method_flow_per_zone(self):
         self.base_epjson['HVACTemplate:Zone:VAV:HeatAndCool']['HVACTemplate:Zone:VAV:HeatAndCool 1'][
             'outdoor_air_method'] = 'Flow/Zone'
@@ -165,7 +165,7 @@ class TestSimulationsZoneVAVHeatAndCool(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE4-1 SZ DSOA']['outdoor_air_flow_per_zone'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:outdoor_air_method_detailed_specification")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:HeadAndCool:outdoor_air_method_detailed_specification")
     def test_outdoor_air_method_detailed_specification(self):
         # todo_eo: design_specification_outdoor_air_object_name is dropped when being converted from epjson to idf,
         #  which is causing the failure

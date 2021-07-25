@@ -1502,28 +1502,28 @@ Objects:
                     minimum_value_of_x: -100
                     minimum_value_of_y: -100
                 - CoilPerformance:DX:Cooling:
-                    name: '{} Dehumid Perf 1+2'
+                    name: '{} Standard Perf 1+2'
                     energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Dehum EIR-FT'
-                    gross_rated_cooling_cop: '0.9 * {dx_cooling_coil_gross_rated_cop}'
+                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Std EIR-FT'
+                    gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
                     gross_rated_sensible_heat_ratio: Autosize
                     gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} or Autosize'
                     part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
                     rated_air_flow_rate: Autosize
                     total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-                    total_cooling_capacity_function_of_temperature_curve_name: "{} DX Coil Dehum Cap-FT"
+                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Std Cap-FT'
                 - CoilPerformance:DX:Cooling:
-                    name: '{} Dehumid Perf 1'
+                    name: '{} Standard Perf 1'
                     energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Dehum EIR-FT'
+                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Std EIR-FT'
                     fraction_of_air_flow_bypassed_around_coil: 0.5 # set by legacy, not default
-                    gross_rated_cooling_cop: '0.9 * {dx_cooling_coil_gross_rated_cop}'
+                    gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
                     gross_rated_sensible_heat_ratio: Autosize
                     gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} / 2 or Autosize'
                     part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
                     rated_air_flow_rate: Autosize
                     total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Dehum Cap-FT'
+                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Std Cap-FT'
               WithHumidityControl: &CoilCoolingDXTwoStageWithHumidityControlModeWithHumidtyControlCommonObjects
                 - *CoilCoolingDXTwoStageHumidityControlModeNoHumidityControlCommonObjects
                 - Curve:Biquadratic:
@@ -1552,28 +1552,28 @@ Objects:
                     minimum_value_of_y: -100
               TwoStageWithHumidityControlMode2: &CoilCoolingDXTwoStageWithHumidityControlModeWithHumidtyControlCommonObjectsDehumidificationObjects
                 - CoilPerformance:DX:Cooling:
-                    name: '{} Standard Perf 1+2'
+                    name: '{} Dehumid Perf 1+2'
                     energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Std EIR-FT'
-                    gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
+                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Dehum EIR-FT'
+                    gross_rated_cooling_cop: '0.9 * {dx_cooling_coil_gross_rated_cop}'
                     gross_rated_sensible_heat_ratio: Autosize
                     gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} or Autosize'
                     part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
                     rated_air_flow_rate: Autosize
                     total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Std Cap-FT'
+                    total_cooling_capacity_function_of_temperature_curve_name: "{} DX Coil Dehum Cap-FT"
                 - CoilPerformance:DX:Cooling:
-                    name: '{} Standard Perf 1'
+                    name: '{} Dehumid Perf 1'
                     energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Std EIR-FT'
+                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Dehum EIR-FT'
                     fraction_of_air_flow_bypassed_around_coil: 0.5 # set by legacy, not default
-                    gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
+                    gross_rated_cooling_cop: '0.9 * {dx_cooling_coil_gross_rated_cop}'
                     gross_rated_sensible_heat_ratio: Autosize
                     gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} / 2 or Autosize'
                     part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
                     rated_air_flow_rate: Autosize
                     total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Std Cap-FT'
+                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Dehum Cap-FT'
             Transitions:
               Base: &CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
                 - CoilPerformance:DX:Cooling:
@@ -3071,6 +3071,7 @@ Objects:
             - Sizing:System:
                 supply_fan_flow_rate:
                   cooling_supply_air_flow_rate: '{supply_fan_flow_rate} / 1' # trigger eval() to parse out non numeric
+                dehumidification_setpoint: central_cooling_design_supply_air_humidity_ratio
             - Sizing:System:
                 supply_fan_flow_rate: design_outdoor_air_flow_rate
             - Sizing:System:
