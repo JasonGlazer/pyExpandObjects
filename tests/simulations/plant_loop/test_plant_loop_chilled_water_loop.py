@@ -57,7 +57,7 @@ class TestSimulationsPlantLoopChilledWaterLoop(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:ChilledWaterLoop:test_minimum_inputs")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:ChilledWaterLoop:test_minimum_inputs")
     def test_minimum_inputs(self):
         # todo_eo: legacy generates odd warning
         self.base_epjson['HVACTemplate:Plant:ChilledWaterLoop'].pop('Chilled Water Loop')

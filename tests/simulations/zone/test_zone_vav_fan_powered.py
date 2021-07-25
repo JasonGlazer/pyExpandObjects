@@ -25,6 +25,7 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
         base_copy_file_path = self._copy_to_test_directory(base_idf_file_path)
         # read in base file, then edit inputs for alternate tests
         self.base_epjson = self.get_epjson_object_from_idf_file(base_copy_file_path)
+        self.base_epjson.pop('Output:Variable')
         return
 
     def teardown(self):
@@ -142,7 +143,7 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_flow_per_person'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:outdoor_air_method_flow_per_area")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:outdoor_air_method_flow_per_area")
     def test_outdoor_air_method_flow_per_area(self):
         self.base_epjson['HVACTemplate:Zone:VAV:FanPowered']['HVACTemplate:Zone:VAV:FanPowered 1'][
             'outdoor_air_method'] = 'Flow/Area'
@@ -159,7 +160,7 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_flow_per_zone_floor_area'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:outdoor_air_method_flow_per_zone")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:outdoor_air_method_flow_per_zone")
     def test_outdoor_air_method_flow_per_zone(self):
         self.base_epjson['HVACTemplate:Zone:VAV:FanPowered']['HVACTemplate:Zone:VAV:FanPowered 1'][
             'outdoor_air_method'] = 'Flow/Zone'
@@ -176,7 +177,7 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE1-1 SZ DSOA']['outdoor_air_flow_per_zone'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:outdoor_air_method_detailed_specification")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:outdoor_air_method_detailed_specification")
     def test_outdoor_air_method_detailed_specification(self):
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,

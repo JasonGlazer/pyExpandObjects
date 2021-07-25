@@ -37,8 +37,8 @@ class EPJSON(Logger):
         self.input_epjson_is_valid = None
         if self.no_schema:
             self.logger.warning(
-                'Warning: Schema validation has been turned off.  There will be no invalid choice error messages generated, '
-                'which may lead to unexplained errors')
+                'Warning: Schema validation has been turned off.  There will be no invalid choice error messages '
+                'generated, which may lead to unexplained errors')
         return
 
     @staticmethod

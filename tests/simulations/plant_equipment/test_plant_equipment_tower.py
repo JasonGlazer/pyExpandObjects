@@ -59,8 +59,6 @@ class TestSimulationsPlantEquipmentTower(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Tower:inputs_two_speed")
     def test_inputs_two_speed(self):
-        # todo_eo: fan power inputs are not being mapped in legacy.
-        # todo_eo: performance_input_method needs to be changed based on inputs for pyExpandObjects
         self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['tower_type'] = 'TwoSpeed'
         self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['high_speed_nominal_capacity'] = 25000
         self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['high_speed_fan_power'] = 370
@@ -89,8 +87,6 @@ class TestSimulationsPlantEquipmentTower(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Tower:inputs_single_speed")
     def test_inputs_single_speed(self):
-        # todo_eo: fan power inputs are not being mapped in legacy.
-        # todo_eo: performance_input_method needs to be changed based on inputs for pyExpandObjects
         self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['tower_type'] = 'SingleSpeed'
         self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['high_speed_nominal_capacity'] = 25000
         self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['high_speed_fan_power'] = 370
@@ -167,7 +163,9 @@ class TestSimulationsPlantEquipmentTower(BaseSimulationTest):
         # todo_eo: legacy fails with this option. Plant Component CoolingTower:SingleSpeed called "MAIN CHW TOWER" was
         #  not found on plant loop="ONLY WATER LOOP MIXED WATER LOOP".** Severe  ** AuditBranches: There are 2
         #  branch(es) that do not appear on any BranchList.
+        #  explicitly setting all template_plant_loop_type values fixes issue
         self.base_epjson['HVACTemplate:Zone:WaterToAirHeatPump'].pop('HVACTemplate:Zone:WaterToAirHeatPump 1')
+        self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['template_plant_loop_type'] = 'MixedWater'
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary={
@@ -188,7 +186,8 @@ class TestSimulationsPlantEquipmentTower(BaseSimulationTest):
                         "low_speed_fan_power": "Autosize",
                         "low_speed_nominal_capacity": "Autosize",
                         "priority": "1",
-                        "tower_type": "SingleSpeed"
+                        "tower_type": "SingleSpeed",
+                        'template_plant_loop_type': 'ChilledWater'  # required for legacy to succeed
                     }
                 },
                 "HVACTemplate:Zone:ConstantVolume": {

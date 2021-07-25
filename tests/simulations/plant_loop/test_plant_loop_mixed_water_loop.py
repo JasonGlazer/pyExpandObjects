@@ -60,7 +60,6 @@ class TestSimulationsPlantLoopMixedWaterLoop(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:MixedWaterLoop:test_minimum_inputs")
     def test_minimum_inputs(self):
-        # todo_eo: legacy generates odd warning
         self.base_epjson['HVACTemplate:Plant:MixedWaterLoop'].pop('Only Water Loop')
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
@@ -107,7 +106,7 @@ class TestSimulationsPlantLoopMixedWaterLoop(BaseSimulationTest):
             epjson_output['Pump:ConstantSpeed']['Only Water Loop Supply Pump']['pump_control_type'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:"
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
                                               "hot_water_plant_operation_scheme_type")
     def test_operation_scheme_type(self):
         # todo_eo: legacy fails with message: PlantEquipmentOperationSchemes = "HOT WATER LOOP OPERATION CUSTOM",
@@ -308,7 +307,6 @@ class TestSimulationsPlantLoopMixedWaterLoop(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:"
                                               "water_pump_type_pump_per_tower_or_boiler")
     def test_water_pump_type_pump_per_tower_or_boiler_variable(self):
-        # todo_eo: legacy does not make a tower branch pump.
         self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
             'water_pump_configuration'] = 'VariableFlow'
         self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
@@ -332,7 +330,7 @@ class TestSimulationsPlantLoopMixedWaterLoop(BaseSimulationTest):
             epjson_output['Branch']['Main Tower Branch']['components'][1]['component_name'])
         self.assertEqual(
             19000,
-            epjson_output['Pump:VariableSpeed']['Main Tower Branch Pump']['design_pump_head'])
+            epjson_output['Pump:ConstantSpeed']['Main Tower Branch Pump']['design_pump_head'])
         self.assertEqual(
             19000,
             epjson_output['Pump:VariableSpeed']['Main Boiler MW Branch Pump']['design_pump_head'])
@@ -530,7 +528,7 @@ class TestSimulationsPlantLoopMixedWaterLoop(BaseSimulationTest):
             epjson_output['Pipe:Adiabatic'].get('Only Water Loop Demand Bypass Pipe'))
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:HotWaterLoop:fluid_type_water")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:PlantLoop:MixedWaterLoop:fluid_type_water")
     def test_fluid_type_water(self):
         self.base_epjson['HVACTemplate:Plant:MixedWaterLoop']['Only Water Loop'][
             'fluid_type'] = 'Water'

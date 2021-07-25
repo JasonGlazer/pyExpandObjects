@@ -56,7 +56,6 @@ class TestSimulationsPlantEquipmentBoiler(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:PlantEquipment:Boiler:boiler_type_district_hot_water")
     def test_boiler_type_district_hot_water(self):
-        # todo_eo: Legacy does not appear to map this value to anything.  HotWaterBoiler used.
         self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['boiler_type'] = 'DistrictHotWater'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
@@ -165,7 +164,10 @@ class TestSimulationsPlantEquipmentBoiler(BaseSimulationTest):
     def test_template_plant_loop_type(self):
         # todo_eo: legacy fails with this option. Plant Component Boiler:HotWater called "MAIN BOILER" was not found
         #  on plant loop="ONLY WATER LOOP MIXED WATER LOOP".
+        #  Failures are gone when all template_plant_loop_type are explicitly stated
         self.base_epjson['HVACTemplate:Zone:VAV'].pop('HVACTemplate:Zone:VAV 1')
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['template_plant_loop_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['template_plant_loop_type'] = 'ChilledWater'
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary={
@@ -236,5 +238,4 @@ class TestSimulationsPlantEquipmentBoiler(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        # todo_eo: test for main boiler in HotWater plantequipmentlist since that is the default allocation
         return
