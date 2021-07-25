@@ -61,7 +61,7 @@ def output_preprocessor_message_formatter(output_stream):
             }
         })
         if line.startswith('Error:'):
-            messages['Output:PreprocessorMessage {}'.format(str(counter))]['error_severity'] = 'Error'
+            messages['Output:PreprocessorMessage {}'.format(str(counter))]['error_severity'] = 'Severe'
         elif line.startswith('Warning:'):
             messages['Output:PreprocessorMessage {}'.format(str(counter))]['error_severity'] = 'Warning'
         else:

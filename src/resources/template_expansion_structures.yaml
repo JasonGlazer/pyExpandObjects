@@ -2116,6 +2116,11 @@ Objects:
               economizer_type:
                 ElectronicEnthalpy:
                   electronic_enthalpy_limit_curve_name: '{} ElectrEnthCurve'
+              heat_recovery_type:
+                Enthalpy:
+                  economizer_control_action_type: MinimumFlowWithBypass
+                Sensible:
+                  economizer_control_action_type: MinimumFlowWithBypass
       Base:
         Fields: &ControllerOutdoorAir
           name: '{} OA Controller'
@@ -5664,14 +5669,10 @@ OptionTree:
                 Objects:
                   - SetpointManager:SingleZone:Humidity:Minimum: *SetpointManagerSingleZoneHumidityMinimum
             outside_air_equipment_type: &SystemCommonTemplateObjectsOutsideAirEquipmentType
-              None: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
-                Objects:
-                  - Controller:OutdoorAir: *ControllerOutdoorAir
-                Transitions: *ControllerOutdoorAirCommonTransitions
-                Mappings: *ControllerOutdoorAirCommonMappings
-              HotWaterPreheat: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
-              ElectricPreheat: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
-              GasPreheat: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeNonePreheat
+              None:
+              HotWaterPreheat:
+              ElectricPreheat:
+              GasPreheat:
               HotWaterPreheatSensibleHR: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
                 Objects:
                   - SetpointManager:Scheduled:
@@ -5691,13 +5692,8 @@ OptionTree:
                       sensible_effectiveness_at_75_heating_air_flow: 0.75
                       sensible_effectiveness_at_100_cooling_air_flow: 0.7
                       sensible_effectiveness_at_100_heating_air_flow: 0.7
-                  - Controller:OutdoorAir:
-                      <<: *ControllerOutdoorAir
-                      economizer_control_action_type: MinimumFlowWithBypass
                 Transitions:
-                  - *ControllerOutdoorAirCommonTransitions
                   - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
-                Mappings: *ControllerOutdoorAirCommonMappings
               ElectricPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               GasPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               HotWaterPreheatEnthalpyHR: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
@@ -5718,20 +5714,20 @@ OptionTree:
                       sensible_effectiveness_at_75_heating_air_flow: 0.75
                       sensible_effectiveness_at_100_cooling_air_flow: 0.7
                       sensible_effectiveness_at_100_heating_air_flow: 0.7
-                  - Controller:OutdoorAir:
-                      <<: *ControllerOutdoorAir
-                      economizer_control_action_type: MinimumFlowWithBypass
                 Transitions:
-                  - *ControllerOutdoorAirCommonTransitions
                   - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
-                Mappings: *ControllerOutdoorAirCommonMappings
               ElectricPreheatEnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
               GasPreheatEnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
               SensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
               EnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
             economizer_type_detailed: &SystemCommonTemplateObjectsConstantVolumeEconomizerType
-              NoEconomizerBlowThrough:
-              NoEconomizerDrawThrough:
+              None: &SystemCommonTemplateObjectsCosntantVolumeEconomizerTypeNone
+                Objects:
+                  - Controller:OutdoorAir: *ControllerOutdoorAir
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
+              NoEconomizerBlowThrough: *SystemCommonTemplateObjectsCosntantVolumeEconomizerTypeNone
+              NoEconomizerDrawThrough: *SystemCommonTemplateObjectsCosntantVolumeEconomizerTypeNone
               FixedDryBulbBlowThrough: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
                 Objects: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulbObjects
                   - SetpointManager:MixedAir:
@@ -5741,6 +5737,9 @@ OptionTree:
                           Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
                           Occurrence: -1
                           ValueLocation: Outlet
+                  - Controller:OutdoorAir: *ControllerOutdoorAir
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
               FixedDryBulbDrawThrough: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
                 Objects: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulbObjects
                   - SetpointManager:MixedAir:
@@ -5749,6 +5748,9 @@ OptionTree:
                         BuildPathReference:
                           Location: -1
                           ValueLocation: Outlet
+                  - Controller:OutdoorAir: *ControllerOutdoorAir
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
               FixedEnthalpyBlowThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
               FixedEnthalpyDrawThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
               DifferentialDryBulbBlowThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
@@ -5798,14 +5800,12 @@ OptionTree:
               ControlZoneDrawThrough:
                 Objects:
                   - SetpointManager:SingleZone:Cooling: *SetpointManagerSingleZoneCooling
-                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                 Transitions:
                   - SetpointManager:SingleZone:Cooling:
                       maximum_supply_air_temperature:
                         maximum_supply_air_temperature: 'max(18, {heating_coil_design_setpoint}+1)'
               FixedSetpointBlowThrough: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilControlTypeFixedSetpointBlowThrough
                 Objects:
-                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                   - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
               FixedSetpointDrawThrough: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilControlTypeFixedSetpointBlowThrough
               OutdoorAirTemperatureResetBlowThrough:
@@ -5819,7 +5819,6 @@ OptionTree:
                           ValueLocation: Outlet
               OutdoorAirTemperatureResetDrawThrough:
                 Objects:
-                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetCooling
               ScheduledBlowThrough:
                 Objects:
@@ -5837,7 +5836,6 @@ OptionTree:
                       cooling_coil_setpoint_schedule_name: schedule_name
               ScheduledDrawThrough:
                 Objects:
-                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                   - SetpointManager:Scheduled:
                       <<: *SetpointManagerScheduled
                       name: '{} Cooling Supply Air Temp Manager'
@@ -5865,7 +5863,6 @@ OptionTree:
               WarmestDrawThrough:
                 Objects:
                   - SetpointManager:Warmest: *SetpointManagerWarmest
-                  - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
                 Transitions:
                   - SetpointManager:Warmest:
                       maximum_setpoint_temperature:
@@ -6115,6 +6112,11 @@ OptionTree:
           humidifier_type: *SystemCommonTemplateObjectsHumidifierType
           dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
           economizer_type_detailed: *SystemCommonTemplateObjectsConstantVolumeEconomizerType
+          mixed_air_setpoint_control_type_detailed:
+            None:
+            WithMixedAir:
+              Objects:
+                - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
           cooling_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
           heating_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
           outside_air_equipment_type: *SystemCommonTemplateObjectsOutsideAirEquipmentType
