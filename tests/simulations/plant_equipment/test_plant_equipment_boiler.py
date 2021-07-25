@@ -166,8 +166,8 @@ class TestSimulationsPlantEquipmentBoiler(BaseSimulationTest):
         #  on plant loop="ONLY WATER LOOP MIXED WATER LOOP".
         #  Failures are gone when all template_plant_loop_type are explicitly stated
         self.base_epjson['HVACTemplate:Zone:VAV'].pop('HVACTemplate:Zone:VAV 1')
-        # self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['template_plant_loop_type'] = 'HotWater'
-        # self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['template_plant_loop_type'] = 'ChilledWater'
+        self.base_epjson['HVACTemplate:Plant:Boiler']['Main Boiler']['template_plant_loop_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:Plant:Tower']['Main Tower']['template_plant_loop_type'] = 'ChilledWater'
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary={
