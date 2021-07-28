@@ -1796,7 +1796,7 @@ class MixedAirSetpointControlTypeDetailed:
                 supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
             if template_type == 'HVACTemplate:System:ConstantVolume' and cooling_coil_type and \
                     (supply_fan_placement == 'DrawThrough' or cooling_setpoint == 'FixedSetpoint'):
-                obj._mixed_air_setpoint_control_type_detailed = 'WithMixedAir'
+                obj._mixed_air_setpoint_control_type_detailed = 'IncludeMixedAir'
         return
 
 
@@ -2068,7 +2068,7 @@ class ExpandSystem(ExpandObjects):
                          'Heating', self.heating_coil_setpoint_control_type_detailed])\
                 .replace('BlowThrough', '', 1).replace('DrawThrough', '', 1)
         except AttributeError:
-            self.setpoint_control_type = None
+            self.setpoint_control_type_detailed = None
         self.humidistat_type = template
         self.outside_air_equipment_type = template
         self.dehumidification_control_type = template

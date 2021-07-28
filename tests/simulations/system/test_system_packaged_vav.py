@@ -77,6 +77,24 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement"
+                                              "_draw_through_cooling_none_heating_outdoor_air_temperature_reset")
+    def test_supply_fan_placement_draw_through_cooling_none_heating_outdoor_air_temperature_reset(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
+            'None'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
+            'None'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement"
                                               "_blow_through_cooling_none_heating_none")
     def test_supply_fan_placement_blow_through_cooling_none_heating_none(self):
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'BlowThrough'
@@ -95,14 +113,14 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement"
-                                              "_draw_through_cooling_none_heating_none")
-    def test_supply_fan_placement_draw_through_cooling_none_heating_outdoor_air_temperature_reset(self):
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'DrawThrough'
+                                              "_blow_through_cooling_none_heating_outdoor_air_temperature_reset")
+    def test_supply_fan_placement_blow_through_cooling_none_heating_outdoor_air_temperature_reset(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'BlowThrough'
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
             'None'
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
             'OutdoorAirTemperatureReset'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'BlowThrough'
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
             'None'
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
@@ -131,6 +149,24 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
+                                              "draw_through_cooling_warmest_heating_outdoor_air_temperature_reset")
+    def test_supply_fan_placement_draw_through_cooling_warmest_heating_outdoor_air_temperature_reset(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
+            'None'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
+            'Warmest'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
                                               "blow_through_cooling_warmest_heating_none")
     def test_supply_fan_placement_blow_through_cooling_warmest_heating_none(self):
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'BlowThrough'
@@ -143,6 +179,98 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
             'Warmest'
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
             'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
+                                              "blow_through_cooling_warmest_heating_outdoor_air_temperature_reset")
+    def test_supply_fan_placement_blow_through_cooling_warmest_heating_outdoor_air_temperature_reset(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
+            'Warmest'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
+            'Warmest'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
+                                              "draw_through_cooling_warmest_temperature_first_heating_none")
+    def test_supply_fan_placement_draw_through_cooling_warmest_temperature_first_heating_none(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
+            'WarmestTemperatureFirst'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
+            'None'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
+            'WarmestTemperatureFirst'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
+            'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
+                                              "draw_through_cooling_warmest_temperature_first_"
+                                              "heating_outdoor_air_temperature_reset")
+    def test_supply_fan_placement_draw_through_cooling_warmest_temperature_first_heating_outdoor_air_temperature_reset(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
+            'WarmestTemperatureFirst'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
+            'WarmestTemperatureFirst'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
+                                              "blow_through_cooling_warmest_first_heating_none")
+    def test_supply_fan_placement_blow_through_cooling_warmest_temperature_first_heating_none(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
+            'WarmestTemperatureFirst'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
+            'None'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
+            'WarmestTemperatureFirst'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
+            'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
+                                              "blow_through_cooling_warmest_first_"
+                                              "heating_outdoor_air_temperature_reset")
+    def test_supply_fan_placement_blow_through_cooling_warmest_temperature_first_heating_outdoor_air_temperature_reset(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
+            'WarmestTemperatureFirst'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
+            'WarmestTemperatureFirst'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
@@ -167,57 +295,135 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
+                                              "draw_through_cooling_outdoor_air_temperature_reset_"
+                                              "heating_outdoor_air_temperature_reset")
+    def test_supply_fan_placement_draw_through_cooling_outdoor_air_temperature_reset_heating_outdoor_air_temperature_reset(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'DrawThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
                                               "draw_through_cooling_outdoor_air_temperature_reset_heating_none")
     def test_supply_fan_placement_blow_through_cooling_outdoor_air_temperature_reset_heating_none(self):
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'DrawThrough'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
-            'OutdoorAirTemperatureReset'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
-            'None'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'DrawThrough'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
-            'OutdoorAirTemperatureReset'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
-            'None'
-        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        return
-
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
-                                              "draw_through_cooling_warmest_first_heating_none")
-    def test_supply_fan_placement_draw_through_cooling_warmest_first_heating_none(self):
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'DrawThrough'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
-            'WarmestTemperatureFirst'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
-            'None'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'DrawThrough'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
-            'WarmestTemperatureFirst'
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
-            'None'
-        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        return
-
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
-                                              "blow_through_cooling_warmest_first_heating_none")
-    def test_supply_fan_placement_blow_through_cooling_warmest_first_heating_none(self):
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'BlowThrough'
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
-            'WarmestTemperatureFirst'
+            'OutdoorAirTemperatureReset'
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
             'None'
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'BlowThrough'
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
-            'WarmestTemperatureFirst'
+            'OutdoorAirTemperatureReset'
         self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
             'None'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_placement_"
+                                              "draw_through_cooling_outdoor_air_temperature_reset_"
+                                              "heating_outdoor_air_temperature_reset")
+    def test_supply_fan_placement_blow_through_cooling_outdoor_air_temperature_reset_heating_outdoor_air_temperature_reset(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['cooling_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['cooling_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 2']['heating_coil_setpoint_reset_type'] = \
+            'OutdoorAirTemperatureReset'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_total_efficiency")
+    def test_supply_fan_total_efficiency(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_total_efficiency'] = 0.75
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.75,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Supply Fan']['fan_total_efficiency'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_delta_pressure")
+    def test_supply_fan_delta_pressure(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_delta_pressure'] = 1100
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            1100,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Supply Fan']['pressure_rise'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:supply_fan_motor_efficiency")
+    def test_supply_fan_motor_efficiency(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['supply_fan_motor_efficiency'] = 0.8
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.8,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Supply Fan']['motor_efficiency'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "supply_fan_motor_in_air_stream_fraction")
+    def test_supply_fan_motor_in_air_stream_fraction(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'supply_fan_motor_in_air_stream_fraction'] = 0.8
+        base_file_path = self.create_idf_file_from_epjson(
+            epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.8,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Supply Fan']['motor_in_airstream_fraction'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "cooling_coil_type_two_speed_dx")
+    def test_cooling_coil_type_two_speed_dx(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'cooling_coil_type'] = 'TwoSpeedDX'
+        base_file_path = self.create_idf_file_from_epjson(
+            epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Cooling:DX:TwoSpeed'].get('DXVAV Sys 1 Cooling Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "cooling_coil_type_two_speed_humid_control_dx")
+    def test_cooling_coil_type_two_speed_humid_control_dx(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'cooling_coil_type'] = 'TwoSpeedHumidControlDX'
+        base_file_path = self.create_idf_file_from_epjson(
+            epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Cooling:DX:TwoSpeed'].get('DXVAV Sys 1 Cooling Coil'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:minimum_outdoor_air_control_type"
