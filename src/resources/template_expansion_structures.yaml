@@ -6868,10 +6868,16 @@ OptionTree:
                       BuildPathReference:
                         Location: -1
                         ValueLocation: Outlet
+              Transitions:
+                - SetpointManager:Scheduled:
+                    heating_coil_setpoint_schedule_name: schedule_name
             NoneDrawThrough:
               Objects:
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
                 - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
+              Transitions:
+                - SetpointManager:Scheduled:
+                    heating_coil_setpoint_schedule_name: schedule_name
             OutdoorAirTemperatureResetBlowThrough:
               Objects:
                 - SetpointManager:OutdoorAirReset:

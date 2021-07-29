@@ -814,6 +814,25 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
             epjson_output['Coil:Heating:Fuel']['DXVAV Sys 1 Heating Coil']['availability_schedule_name'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "heating_coil_setpoint_schedule_name")
+    def test_heating_coil_setpoint_schedule_name(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'heating_coil_setpoint_schedule_name'] = 'Always6.8'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'heating_coil_setpoint_reset_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Always6.8',
+            epjson_output['SetpointManager:Scheduled']['DXVAV Sys 1 Heating Supply Air Temp Manager']['schedule_name'])
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:minimum_outdoor_air_control_type"
                                               "proportional_minimum")
     def test_minimum_outdoor_air_control_type_proportional_minimum(self):
