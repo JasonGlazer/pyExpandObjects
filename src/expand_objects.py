@@ -679,8 +679,12 @@ class ExpandObjects(EPJSON):
             try:
                 formatted_value = input_value.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
             except AttributeError:
+                # If the format attempt failed, but autosize is indicated in the field value, then use it.
+                #  example '{class_attribute} / 2 or Autosize'
+                if 'Autosize' in input_value:
+                    formatted_value = 'Autosize'
                 # If the class attribute does not exist, yield None as flag to handle in parent process.
-                yield {'field': field_name, 'value': None}
+                yield {'field': field_name, 'value': formatted_value}
             if formatted_value:
                 # if a simple schedule is indicated by name, create it here.  The schedule
                 # is stored to the class epjson attribute.
@@ -1906,6 +1910,8 @@ class HeatingCoilSetpointControlTypeDetailed:
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
                 elif getattr(obj, 'preheat_coil_design_setpoint', None):
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
+                elif getattr(obj, 'heating_coil_design_setpoint', None):
+                    pass
                 elif getattr(obj, 'cooling_coil_design_setpoint', None):
                     setattr(obj, 'heating_coil_design_setpoint', obj.cooling_coil_design_setpoint)
         return

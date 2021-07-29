@@ -1303,16 +1303,24 @@ Objects:
               - Coil:Cooling:DX:
                   cooling_coil_gross_rated_total_capacity: high_speed_gross_rated_total_cooling_capacity
                   cooling_coil_gross_rated_sensible_heat_ratio: high_speed_rated_sensible_heat_ratio
+                  cooling_coil_gross_rated_cop: high_speed_gross_rated_cooling_cop
                   dx_cooling_coil_gross_rated_cop: high_speed_gross_rated_cooling_cop
                   dx_cooling_coil_gross_rated_sensible_heat_ratio: high_speed_rated_sensible_heat_ratio
               - Coil:Cooling:DX:
+                  dx_cooling_coil_gross_rated_cop:
+                    low_speed_gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop} * 1.5'
+                  cooling_coil_gross_rated_cop:
+                    low_speed_gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop} * 1.5'
+                  cooling_coil_gross_rated_total_capacity:
+                    low_speed_gross_rated_total_cooling_capacity: '{cooling_coil_gross_rated_total_capacity} * 0.33'
                   dx_cooling_coil_gross_rated_sensible_heat_ratio: low_speed_gross_rated_sensible_heat_ratio
+                  cooling_coil_gross_rated_sensible_heat_ratio: low_speed_gross_rated_sensible_heat_ratio
           Base: &CoilCoolingDXTwoSpeedSuperObject
             Fields: &CoilCoolingDXTwoSpeedFields
               <<: *CoilCoolingCommonFields
               energy_input_ratio_function_of_flow_fraction_curve_name: '{} Cool DX Coil EIR-FF'
               energy_input_ratio_function_of_temperature_curve_name: '{} Cool DX Coil EIR-FT'
-              high_speed_gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop}'
+              high_speed_gross_rated_cooling_cop: 3
               high_speed_gross_rated_total_cooling_capacity: Autosize # set by legacy, no default, required by template
               high_speed_rated_air_flow_rate: Autosize # set by legacy, no default, required by template
               high_speed_rated_sensible_heat_ratio: Autosize # set by legacy, no default, required by template
@@ -1455,6 +1463,56 @@ Objects:
         TwoStageWithHumidityControlMode:
           Common:
             Objects:
+              CoilPerformanceStandard1: &CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard1
+                - CoilPerformance:DX:Cooling:
+                    name: '{} Standard Perf 1'
+                    energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
+                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Std EIR-FT'
+                    fraction_of_air_flow_bypassed_around_coil: 0.5 # set by legacy, not default
+                    gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
+                    gross_rated_sensible_heat_ratio: Autosize
+                    gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} / 2 or Autosize'
+                    part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
+                    rated_air_flow_rate: Autosize
+                    total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
+                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Std Cap-FT'
+              CoilPerformanceStandard2: &CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard2
+                - CoilPerformance:DX:Cooling:
+                    name: '{} Standard Perf 1+2'
+                    energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
+                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Std EIR-FT'
+                    gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
+                    gross_rated_sensible_heat_ratio: Autosize
+                    gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} / 1 or Autosize'
+                    part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
+                    rated_air_flow_rate: Autosize
+                    total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
+                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Std Cap-FT'
+              CoilPerformanceDehum1: &CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceDehum1
+                - CoilPerformance:DX:Cooling:
+                    name: '{} Dehumid Perf 1'
+                    energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
+                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Dehum EIR-FT'
+                    fraction_of_air_flow_bypassed_around_coil: 0.5 # set by legacy, not default
+                    gross_rated_cooling_cop: '0.9 * {dx_cooling_coil_gross_rated_cop}'
+                    gross_rated_sensible_heat_ratio: Autosize
+                    gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} / 2 or Autosize'
+                    part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
+                    rated_air_flow_rate: Autosize
+                    total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
+                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Dehum Cap-FT'
+              CoilPerformanceDehum2: &CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceDehum2
+                - CoilPerformance:DX:Cooling:
+                    name: '{} Dehumid Perf 1+2'
+                    energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
+                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Dehum EIR-FT'
+                    gross_rated_cooling_cop: '0.9 * {dx_cooling_coil_gross_rated_cop}'
+                    gross_rated_sensible_heat_ratio: Autosize
+                    gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} / 1 or Autosize'
+                    part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
+                    rated_air_flow_rate: Autosize
+                    total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
+                    total_cooling_capacity_function_of_temperature_curve_name: "{} DX Coil Dehum Cap-FT"
               NoHumidityControl: &CoilCoolingDXTwoStageHumidityControlModeNoHumidityControlCommonObjects
                 - Curve:Quadratic:
                     name: '{} DX Coil EIR-FF'
@@ -1501,29 +1559,6 @@ Objects:
                     maximum_value_of_y: 100
                     minimum_value_of_x: -100
                     minimum_value_of_y: -100
-                - CoilPerformance:DX:Cooling:
-                    name: '{} Standard Perf 1+2'
-                    energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Std EIR-FT'
-                    gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
-                    gross_rated_sensible_heat_ratio: Autosize
-                    gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} or Autosize'
-                    part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
-                    rated_air_flow_rate: Autosize
-                    total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Std Cap-FT'
-                - CoilPerformance:DX:Cooling:
-                    name: '{} Standard Perf 1'
-                    energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Std EIR-FT'
-                    fraction_of_air_flow_bypassed_around_coil: 0.5 # set by legacy, not default
-                    gross_rated_cooling_cop: '{dx_cooling_coil_gross_rated_cop}'
-                    gross_rated_sensible_heat_ratio: Autosize
-                    gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} / 2 or Autosize'
-                    part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
-                    rated_air_flow_rate: Autosize
-                    total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Std Cap-FT'
               WithHumidityControl: &CoilCoolingDXTwoStageWithHumidityControlModeWithHumidtyControlCommonObjects
                 - *CoilCoolingDXTwoStageHumidityControlModeNoHumidityControlCommonObjects
                 - Curve:Biquadratic:
@@ -1550,44 +1585,49 @@ Objects:
                     maximum_value_of_y: 100
                     minimum_value_of_x: -100
                     minimum_value_of_y: -100
-              TwoStageWithHumidityControlMode2: &CoilCoolingDXTwoStageWithHumidityControlModeWithHumidtyControlCommonObjectsDehumidificationObjects
-                - CoilPerformance:DX:Cooling:
-                    name: '{} Dehumid Perf 1+2'
-                    energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Dehum EIR-FT'
-                    gross_rated_cooling_cop: '0.9 * {dx_cooling_coil_gross_rated_cop}'
-                    gross_rated_sensible_heat_ratio: Autosize
-                    gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} or Autosize'
-                    part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
-                    rated_air_flow_rate: Autosize
-                    total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-                    total_cooling_capacity_function_of_temperature_curve_name: "{} DX Coil Dehum Cap-FT"
-                - CoilPerformance:DX:Cooling:
-                    name: '{} Dehumid Perf 1'
-                    energy_input_ratio_function_of_flow_fraction_curve_name: '{} DX Coil EIR-FF'
-                    energy_input_ratio_function_of_temperature_curve_name: '{} DX Coil Dehum EIR-FT'
-                    fraction_of_air_flow_bypassed_around_coil: 0.5 # set by legacy, not default
-                    gross_rated_cooling_cop: '0.9 * {dx_cooling_coil_gross_rated_cop}'
-                    gross_rated_sensible_heat_ratio: Autosize
-                    gross_rated_total_cooling_capacity: '{dx_cooling_coil_gross_rated_total_capacity} / 2 or Autosize'
-                    part_load_fraction_correlation_curve_name: '{} DX Coil PLF'
-                    rated_air_flow_rate: Autosize
-                    total_cooling_capacity_function_of_flow_fraction_curve_name: '{} DX Coil Cap-FF'
-                    total_cooling_capacity_function_of_temperature_curve_name: '{} DX Coil Dehum Cap-FT'
             Transitions:
               Base: &CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
                 - CoilPerformance:DX:Cooling:
-                    dx_cooling_coil_gross_rated_sensible_heat_ratio:
-                      gross_rated_sensible_heat_ratio: '{dx_cooling_coil_gross_rated_sensible_heat_ratio} * 0.9'
-              DehumidificationObjects: &CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects
+                    dx_cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
+                - CoilPerformance:DX:Cooling:
+                    cooling_coil_gross_rated_total_capacity:
+                      gross_rated_total_cooling_capacity: '{cooling_coil_gross_rated_total_capacity} / 2'
+                    cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
+                    cooling_coil_gross_rated_cop: gross_rated_cooling_cop
+              Base2: &CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions2
                 - CoilPerformance:DX:Cooling:
                     dx_cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
+                - CoilPerformance:DX:Cooling:
+                    cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
+                    cooling_coil_gross_rated_sensible_heat_ratio: gross_rated_sensible_heat_ratio
+                    cooling_coil_gross_rated_cop: gross_rated_cooling_cop
+              DehumidificationObjects1: &CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects1
+                - CoilPerformance:DX:Cooling:
+                    dx_cooling_coil_gross_rated_sensible_heat_ratio:
+                      gross_rated_sensible_heat_ratio: '{dx_cooling_coil_gross_rated_sensible_heat_ratio} * 0.9'
+                - CoilPerformance:DX:Cooling:
+                    cooling_coil_gross_rated_total_capacity:
+                      gross_rated_total_cooling_capacity: '{cooling_coil_gross_rated_total_capacity} / 2'
+                    cooling_coil_gross_rated_sensible_heat_ratio:
+                      gross_rated_sensible_heat_ratio: '{cooling_coil_gross_rated_sensible_heat_ratio} * 0.9'
+                    cooling_coil_gross_rated_cop:
+                      gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop} * 0.9'
+              DehumidificationObjects2: &CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects2
+                - CoilPerformance:DX:Cooling:
+                    dx_cooling_coil_gross_rated_sensible_heat_ratio:
+                      gross_rated_sensible_heat_ratio: '{dx_cooling_coil_gross_rated_sensible_heat_ratio} * 0.9'
+                - CoilPerformance:DX:Cooling:
+                    cooling_coil_gross_rated_total_capacity: gross_rated_total_cooling_capacity
+                    cooling_coil_gross_rated_sensible_heat_ratio:
+                      gross_rated_sensible_heat_ratio: '{cooling_coil_gross_rated_sensible_heat_ratio} * 0.9'
+                    cooling_coil_gross_rated_cop:
+                      gross_rated_cooling_cop: '{cooling_coil_gross_rated_cop} * 0.9'
           NoHumidity: &CoilCoolingDXTwoStageWithHumidityControlModeNoHumiditySuperObject
             Fields: &CoilCoolingDXTwoStageWithHumidityControlModeNoHumidityFields
               <<: *CoilCoolingCommonFields
               normal_mode_stage_1_2_coil_performance_name: '{} Standard Perf 1+2'
               normal_mode_stage_1_2_coil_performance_object_type: 'CoilPerformance:DX:Cooling'
-              normal_mode_stage_1_coil_performance_name: "DOAS Standard Perf 1"
+              normal_mode_stage_1_coil_performance_name: "{} Standard Perf 1"
               normal_mode_stage_1_coil_performance_object_type: "CoilPerformance:DX:Cooling"
               number_of_capacity_stages: 2
               number_of_enhanced_dehumidification_modes: 0
@@ -5045,6 +5085,25 @@ OptionTree:
                                 use_outdoor_air_dx_cooling_coil: 'Yes'
                               Connectors:
                                 AirLoop: False
+                          - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard1
+                        Transitions:
+                          - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
+                        Mappings:
+                          - *CoilSystemCoolingDXCommonMappings
+                      TwoSpeedHumidControlDX:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedHumidControlDX
+                          - *CoilCoolingDXTwoStageWithHumidityControlModeWithHumidtyControlCommonObjects
+                          - Coil:Cooling:DX:TwoStageWithHumidityControlMode: *CoilCoolingDXTwoStageWithHumidityControlModeSuperObject
+                          - CoilSystem:Cooling:DX:
+                              Fields:
+                                <<: *CoilSystemCoolingDXFields
+                                dehumidification_control_type: '{dehumidification_control_type}'
+                              Connectors:
+                                AirLoop: False
+                          - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard1
                         Transitions:
                           - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
                         Mappings:
@@ -5066,9 +5125,39 @@ OptionTree:
                           - *CoilCoolingWaterToAirHeatPumpEquationFitCommonObjects
                           - *CoilCoolingWaterToAirHeatPumpCommonObjects
                         Transitions: *CoilCoolingWaterToAirHeatPumpEquationFitCommonTransitions
-                  - cooling_coil_type: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumidificationObjects
+                  - cooling_coil_type: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardObjects2
                       # This action is added so that some CoilPerformance objects can be inserted with different transitions
-                      #  for the dehumidification objects
+                      #  for the standard performance 1+2 objects
+                      ChilledWater:
+                      ChilledWaterDetailedFlatModel:
+                      HeatExchangerAssistedChilledWater:
+                      HeatExchangerAssistedDX:
+                      SingleSpeedDX:
+                      TwoSpeedDX:
+                      TwoStageDX:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardPerf2ObjectsObjects
+                          - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard2
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions2
+                      TwoStageHumidityControlDX:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard2
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions2
+                      TwoSpeedHumidControlDX:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard2
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions2
+                      MultiSpeedDX:
+                      SingleSpeedDXWaterCooled:
+                  - cooling_coil_type: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects1
+                      # This action is added so that some CoilPerformance objects can be inserted with different transitions
+                      #  for the dehumidification performance 1 objects
                       ChilledWater:
                       ChilledWaterDetailedFlatModel:
                       HeatExchangerAssistedChilledWater:
@@ -5080,9 +5169,40 @@ OptionTree:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumidificationObjectsObjects
-                          - *CoilCoolingDXTwoStageWithHumidityControlModeWithHumidtyControlCommonObjectsDehumidificationObjects
-                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumidification1ObjectsObjects
+                          - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceDehum1
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects1
+                      TwoSpeedHumidControlDX:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumidification1ObjectsObjects
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects1
+                      MultiSpeedDX:
+                      SingleSpeedDXWaterCooled:
+                  - cooling_coil_type: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects2
+                      # This action is added so that some CoilPerformance objects can be inserted with different transitions
+                      #  for the dehumidification 1+2 objects
+                      ChilledWater:
+                      ChilledWaterDetailedFlatModel:
+                      HeatExchangerAssistedChilledWater:
+                      HeatExchangerAssistedDX:
+                      SingleSpeedDX:
+                      TwoSpeedDX:
+                      TwoStageDX:
+                      TwoStageHumidityControlDX:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumidificationObjects2Objects
+                          - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceDehum2
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects2
+                      TwoSpeedHumidControlDX:
+                        ObjectReference: OutdoorAir:Mixer
+                        Location: After
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumidificationObjects2Objects
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects2
                       MultiSpeedDX:
                       SingleSpeedDXWaterCooled:
               CoolingCoilLast:
@@ -5123,6 +5243,10 @@ OptionTree:
                         Location: -1
                         ActionType: Insert
                         Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDX
+                      TwoSpeedHumidControlDX:
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedHumidControlDX
                       MultiSpeedDX:
                         Location: -1
                         ActionType: Insert
@@ -5143,8 +5267,53 @@ OptionTree:
                       TwoStageHumidityControlDX:
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumidificationObjectsObjects
-                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardPerf2ObjectsObjects
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions2
+                      TwoSpeedHumidControlDX:
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardPerf2ObjectsObjects
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions2
+                      MultiSpeedDX:
+                      SingleSpeedDXWaterCooled:
+                  - cooling_coil_type:
+                      ChilledWater:
+                      ChilledWaterDetailedFlatModel:
+                      HeatExchangerAssistedChilledWater:
+                      HeatExchangerAssistedDX:
+                      SingleSpeedDX:
+                      TwoSpeedDX:
+                      TwoStageDX:
+                      TwoStageHumidityControlDX:
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects1
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects1
+                      TwoSpeedHumidControlDX:
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects1
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects1
+                      MultiSpeedDX:
+                      SingleSpeedDXWaterCooled:
+                  - cooling_coil_type:
+                      ChilledWater:
+                      ChilledWaterDetailedFlatModel:
+                      HeatExchangerAssistedChilledWater:
+                      HeatExchangerAssistedDX:
+                      SingleSpeedDX:
+                      TwoSpeedDX:
+                      TwoStageDX:
+                      TwoStageHumidityControlDX:
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects2
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects2
+                      TwoSpeedHumidControlDX:
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects2
+                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitionsDehumidificationObjects2
                       MultiSpeedDX:
                       SingleSpeedDXWaterCooled:
             Base: &SystemCommonBuildPathActionsHeatingCoilAfterMixer
@@ -6168,9 +6337,12 @@ OptionTree:
                           use_outdoor_air_dx_cooling_coil: 'Yes'
                         Connectors:
                           AirLoop: False
+                    - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard1
                   Transitions:
                     - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
-            - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumidificationObjects
+            - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardObjects2
+            - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects1
+            - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects2
             - return_fan: *SystemCommonBuildPathActionsConstantVolumeReturnFan
             - outside_air_equipment_type: *SystemCommonBuildPathActionsOutsideAirEquipment
             - dehumidification_control_type:
@@ -6533,7 +6705,8 @@ OptionTree:
             - *SizingSystemCommonTransitions
           Mappings: *SizingSystemCommonMappings
         TemplateObjects:
-          <<: *SystemCommonTemplateObjects
+          airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+          night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           cooling_coil_setpoint_control_type_detailed:
             NoneBlowThrough:
               Objects:
@@ -6686,6 +6859,7 @@ OptionTree:
                       - node_name:
                           ^OutdoorAir:Mixer: mixed_air_node_name
           heating_coil_setpoint_control_type_detailed:
+            None: # This is triggered when heating_coil_type = None
             NoneBlowThrough:
               Objects:
                 - SetpointManager:Scheduled:
