@@ -833,28 +833,146 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
             epjson_output['SetpointManager:Scheduled']['DXVAV Sys 1 Heating Supply Air Temp Manager']['schedule_name'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:minimum_outdoor_air_control_type"
-                                              "proportional_minimum")
-    def test_minimum_outdoor_air_control_type_proportional_minimum(self):
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['minimum_outdoor_air_control_type'] = \
-            'ProportionalMinimum'
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "heating_coil_design_setpoint")
+    def test_heating_coil_design_setpoint(self):
+        # todo_eo: Warning issued in legacy which does not appear to be correct.
+        #   ** Warning ** Output:PreprocessorMessage="ExpandObjects" has the following Warning conditions:
+        #   **   ~~~   ** Warning:  In HVACTemplate:System:PackagedVAV "DXVAV Sys 1" the Heating Coil
+        #   **   ~~~   ** Design Setpoint is greater than the Cooling Coil Design Setpoint. This may
+        #   **   ~~~   ** cause the heating coil and cooling coil to operate simultaneously. Check
+        #   **   ~~~   ** results carefully and adjust controls if needed.
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'heating_coil_setpoint_reset_type'] = 'None'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'heating_coil_design_setpoint'] = 9.0
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            'ProportionalMinimum',
+            'HVACTemplate-Always9.0',
+            epjson_output['SetpointManager:Scheduled']['DXVAV Sys 1 Heating Supply Air Temp Manager']['schedule_name'])
+        self.assertEqual(
+            9.0,
+            epjson_output['Sizing:System']['DXVAV Sys 1 Sizing System'][
+                'central_heating_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "heating_coil_capacity")
+    def test_heating_coil_capacity(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'heating_coil_capacity'] = 1000
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            1000,
+            epjson_output['Coil:Heating:Fuel']['DXVAV Sys 1 Heating Coil']['nominal_capacity'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "gas_heating_coil_efficiency")
+    def test_gas_heating_coil_efficiency(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'gas_heating_coil_efficiency'] = 0.77
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.77,
+            epjson_output['Coil:Heating:Fuel']['DXVAV Sys 1 Heating Coil']['burner_efficiency'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "gas_heating_coil_parasitic_electric_load")
+    def test_gas_heating_coil_parasitic_electric_load(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'gas_heating_coil_parasitic_electric_load'] = 1
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            1,
+            epjson_output['Coil:Heating:Fuel']['DXVAV Sys 1 Heating Coil']['parasitic_electric_load'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "outdoor_air_flow_rates")
+    def test_outdoor_air_flow_rates(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'supply_fan_placement'] = 'BlowThrough'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'maximum_outdoor_air_flow_rate'] = 0.66
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'minimum_outdoor_air_flow_rate'] = 0.1
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.66,
+            epjson_output['Controller:OutdoorAir']['DXVAV Sys 1 OA Controller']['maximum_outdoor_air_flow_rate'])
+        self.assertEqual(
+            0.1,
+            epjson_output['Controller:OutdoorAir']['DXVAV Sys 1 OA Controller']['minimum_outdoor_air_flow_rate'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "minimum_outdoor_air_control_type_proportional_minimum")
+    def test_minimum_outdoor_air_control_type_proportional_minimum(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'minimum_outdoor_air_control_type'] = 'ProportionalMinimum'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'ProportionalMimimum',
             epjson_output['Controller:OutdoorAir']['DXVAV Sys 1 OA Controller']['minimum_limit_type'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:minimum_outdoor_air_control_type"
-                                              "fixed_minimum")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "minimum_outdoor_air_control_type_fixed_minimum")
     def test_minimum_outdoor_air_control_type_fixed_minimum(self):
-        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1']['minimum_outdoor_air_control_type'] = \
-            'FixedMinimum'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'minimum_outdoor_air_control_type'] = 'FixedMinimum'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'FixedMimimum',
+            epjson_output['Controller:OutdoorAir']['DXVAV Sys 1 OA Controller']['minimum_limit_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:minimum_outdoor_air_schedule_name")
+    def test_minimum_outdoor_air_schedule_name(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'minimum_outdoor_air_schedule_name'] = 'Always0.8'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            'FixedMinimum',
-            epjson_output['Controller:OutdoorAir']['DXVAV Sys 1 OA Controller']['minimum_limit_type'])
+            'Always0.8',
+            epjson_output['Controller:OutdoorAir']['DXVAV Sys 1 OA Controller']['minimum_outdoor_air_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:economizer_type_no_economizer")
+    def test_economizer_type_no_economizer(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'economizer_type'] = 'NoEconomizer'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'NoEconomizer',
+            epjson_output['Controller:OutdoorAir']['DXVAV Sys 1 OA Controller']['economizer_control_type'])
         return
