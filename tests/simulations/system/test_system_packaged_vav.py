@@ -1319,8 +1319,19 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:heat_recovery_sensible")
     def test_heat_recovery_sensible(self):
-        self.base_epjson['HVACTemplate:System:ConstantVolume']['DXVAV Sys 1'][
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
             'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:heat_recovery_enthalpy")
+    def test_heat_recovery_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'heat_recovery_type'] = 'Enthalpy'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath(

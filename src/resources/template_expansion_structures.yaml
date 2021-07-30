@@ -6494,7 +6494,7 @@ OptionTree:
         BuildPath:
           BaseObjects:
           Actions:
-            - outside_air_equipment_type: *SystemCommonBuildPathActionsOutsideAirEquipmentOutdoorAirMixer
+            - outside_air_equipment_type: *SystemCommonBuildPathActionsOutsideAirEquipmentOutdoorAirMixer # Must be first in list because it sets the OutdoorAir:Mixer
             - heating_coil_type: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixer
             - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilType
             - supply_fan_placement: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
@@ -6923,10 +6923,24 @@ OptionTree:
       PackagedVAV:
         BuildPath:
           BaseObjects:
-            Objects: *SystemCommonBuildPathObjects
           Actions:
+            - heat_recovery_type: # Must be first in list because it sets the OutdoorAir:Mixer
+                None:
+                  Location: 0
+                  ActionType: Insert
+                  Objects:
+                    - OutdoorAir:Mixer: *OutdoorAirMixerSuperObject
+                Sensible: &PackagedVAVBuildPathOutsideAirEquipmenttypeSensibleHROAMixer
+                  Location: 0
+                  ActionType: Insert
+                  Objects:
+                    - OutdoorAir:Mixer:
+                        Fields:
+                          <<: *OutdoorAirMixerFields
+                          outdoor_air_stream_node_name: '{} Heat Recovery Supply Outlet'
+                        Connectors: *OutdooAirMixerConnectors
+                Enthalpy: *PackagedVAVBuildPathOutsideAirEquipmenttypeSensibleHROAMixer
             - *SystemCommonBuildPathActionsHeatingCoilAfterMixer
-            - *SystemCommonBuildPathActionsHeatRecovery
             - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionsVariableVolumeFan
         BaseObjects:
@@ -6939,6 +6953,50 @@ OptionTree:
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerType
+          heat_recovery_type:
+            Sensible:
+              Objects:
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManager
+                    name: '{} Heat Recovery Air Temp Manager'
+                    schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
+                - HeatExchanger:AirToAir:SensibleAndLatent:
+                    <<: *HeatExchangerAirToAirSensibleAndLatentFields
+                    frost_control_type: ExhaustOnly
+                    initial_defrost_time_fraction: 0.167
+                    latent_effectiveness_at_75_cooling_air_flow: 0
+                    latent_effectiveness_at_75_heating_air_flow: 0
+                    latent_effectiveness_at_100_cooling_air_flow: 0
+                    latent_effectiveness_at_100_heating_air_flow: 0
+                    rate_of_defrost_time_fraction_increase: 0.024
+                    sensible_effectiveness_at_75_cooling_air_flow: 0.75
+                    sensible_effectiveness_at_75_heating_air_flow: 0.75
+                    sensible_effectiveness_at_100_cooling_air_flow: 0.7
+                    sensible_effectiveness_at_100_heating_air_flow: 0.7
+                    threshold_temperature: -1.1
+              Transitions:
+                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
+            Enthalpy:
+              Objects:
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManager
+                    name: '{} Heat Recovery Air Temp Manager'
+                    schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
+                - HeatExchanger:AirToAir:SensibleAndLatent:
+                    <<: *HeatExchangerAirToAirSensibleAndLatentFields
+                    frost_control_type: MinimumExhaustTemperature
+                    latent_effectiveness_at_75_cooling_air_flow: 0.7
+                    latent_effectiveness_at_75_heating_air_flow: 0.7
+                    latent_effectiveness_at_100_cooling_air_flow: 0.65
+                    latent_effectiveness_at_100_heating_air_flow: 0.65
+                    sensible_effectiveness_at_75_cooling_air_flow: 0.75
+                    sensible_effectiveness_at_75_heating_air_flow: 0.75
+                    sensible_effectiveness_at_100_cooling_air_flow: 0.7
+                    sensible_effectiveness_at_100_heating_air_flow: 0.7
+              Transitions:
+                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           cooling_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsPackagedVAVCoolingCoilSetpointControlTypeDetailed
           heating_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsPackagedVAVHeatingCoilSetpointControlTypeDetailed
