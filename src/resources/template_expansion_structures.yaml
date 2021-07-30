@@ -2171,7 +2171,7 @@ Objects:
           economizer_maximum_limit_dewpoint_temperature: '{economizer_maximum_limit_dewpoint_temperature}'
           economizer_maximum_limit_dry_bulb_temperature: '{economizer_maximum_limit_dry_bulb_temperature}'
           economizer_minimum_limit_dry_bulb_temperature: '{economizer_minimum_limit_dry_bulb_temperature}'
-          economizer_maximum_limit_enthalpy: '{economizer_upper_enthalpy_limit}'
+          economizer_maximum_limit_enthalpy: '{economizer_maximum_limit_enthalpy}'
           maximum_outdoor_air_flow_rate: Autosize # template default, required by schema
           minimum_limit_type: '{minimum_outdoor_air_control_type}'
           minimum_outdoor_air_flow_rate: Autosize # template default, required by schema
@@ -2406,6 +2406,34 @@ Objects:
                     fan_power_coefficient_5: 0
                     fan_power_minimum_flow_rate_input_method: Fraction
                   InletVaneDampers: *FanVariableVolumeSupplyPLRCoefficients
+                  OutletDampers:
+                    fan_power_coefficient_1: 0.37073425
+                    fan_power_coefficient_2: 0.97250253
+                    fan_power_coefficient_3: -0.34240761
+                    fan_power_coefficient_4: 0
+                    fan_power_coefficient_5: 0
+                    fan_power_minimum_flow_rate_input_method: Fraction
+                  VariableSpeedMotor:
+                    fan_power_coefficient_1: 0.0015302446
+                    fan_power_coefficient_2: 0.0052080574
+                    fan_power_coefficient_3: 1.1086242
+                    fan_power_coefficient_4: -0.11635563
+                    fan_power_coefficient_5: 0
+                    fan_power_minimum_flow_rate_input_method: Fraction
+                  ASHRAE90.1-2004AppendixG:
+                    fan_power_coefficient_1: 0.0013
+                    fan_power_coefficient_2: 0.147
+                    fan_power_coefficient_3: 0.9506
+                    fan_power_coefficient_4: -0.0998
+                    fan_power_coefficient_5: 0
+                    fan_power_minimum_flow_rate_input_method: Fraction
+                  VariableSpeedMotorPressureReset:
+                    fan_power_coefficient_1: 0.040759894
+                    fan_power_coefficient_2: 0.08804497
+                    fan_power_coefficient_3: -0.07292612
+                    fan_power_coefficient_4: 0.943739823
+                    fan_power_coefficient_5: 0
+                    fan_power_minimum_flow_rate_input_method: Fraction
                 return_fan_part_load_power_coefficients:
                   InletVaneDampers:
                     <<: *FanVariableVolumeSupplyPLRCoefficients
@@ -6373,7 +6401,7 @@ OptionTree:
                             ^OutdoorAir:Mixer: mixed_air_node_name
             economizer_type_detailed: &SystemCommonTemplateObjectsPackagedVAVEconomizerType
               None: &SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNone
-                Objects:
+                Objects: &SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNoneObjects
                   - Controller:OutdoorAir: *ControllerOutdoorAir
                 Transitions: *ControllerOutdoorAirCommonTransitions
                 Mappings: *ControllerOutdoorAirCommonMappings
@@ -6391,7 +6419,7 @@ OptionTree:
               FixedDewPointAndDryBulbDrawThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNone
               ElectronicEnthalpyBlowThrough:
                 Objects:
-                  - *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNone
+                  - *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNoneObjects
                   - Curve:Cubic:
                       name: '{} ElectrEnthCurve'
                       coefficient1_constant: 0.01342704
@@ -6402,7 +6430,7 @@ OptionTree:
                       minimum_value_of_x: 16.6
               ElectronicEnthalpyDrawThrough:
                 Objects:
-                  - *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNone
+                  - *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNoneObjects
                   - Curve:Cubic:
                       name: '{} ElectrEnthCurve'
                       coefficient1_constant: 0.01342704
