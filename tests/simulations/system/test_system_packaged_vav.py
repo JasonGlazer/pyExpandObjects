@@ -1338,3 +1338,77 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
             '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:heat_recovery_effectiveness_sensible")
+    def test_heat_recovery_effectiveness_sensible(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'heat_recovery_type'] = 'Sensible'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'sensible_heat_recovery_effectiveness'] = 0.72
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_heating_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_heating_air_flow'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:heat_recovery_effectiveness_enthalpy")
+    def test_heat_recovery_effectiveness_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'sensible_heat_recovery_effectiveness'] = 0.72
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'latent_heat_recovery_effectiveness'] = 0.61
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_heating_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_heating_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'latent_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'latent_effectiveness_at_100_heating_air_flow'])
+        self.assertEqual(
+            0.66,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'latent_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.66,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
+                'latent_effectiveness_at_75_heating_air_flow'])
+        return

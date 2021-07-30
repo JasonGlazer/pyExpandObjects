@@ -2574,22 +2574,22 @@ Objects:
             Base: &HeatExchangerAirToAirSensibleAndLatentCommonTransitions
               - HeatExchanger:AirToAir:SensibleAndLatent:
                   sensible_heat_recovery_effectiveness:
-                    sensible_effectiveness_at_75_cooling_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                    sensible_effectiveness_at_75_cooling_air_flow: 'min(1, {sensible_heat_recovery_effectiveness} + 0.05)'
                   heat_recovery_sensible_effectiveness:
-                    sensible_effectiveness_at_75_cooling_air_flow: '{heat_recovery_sensible_effectiveness} + 0.05'
+                    sensible_effectiveness_at_75_cooling_air_flow: 'min(1, {heat_recovery_sensible_effectiveness} + 0.05)'
                   latent_heat_recovery_effectiveness:
-                    latent_effectiveness_at_75_cooling_air_flow: '{latent_heat_recovery_effectiveness} + 0.05'
+                    latent_effectiveness_at_75_cooling_air_flow: 'min(1, {latent_heat_recovery_effectiveness} + 0.05)'
                   heat_recovery_latent_effectiveness:
-                    latent_effectiveness_at_75_cooling_air_flow: '{heat_recovery_latent_effectiveness} + 0.05'
+                    latent_effectiveness_at_75_cooling_air_flow: 'min(1, {heat_recovery_latent_effectiveness} + 0.05)'
               - HeatExchanger:AirToAir:SensibleAndLatent:
                   sensible_heat_recovery_effectiveness:
-                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                    sensible_effectiveness_at_75_heating_air_flow: 'min(1, {sensible_heat_recovery_effectiveness} + 0.05)'
                   heat_recovery_sensible_effectiveness:
-                    sensible_effectiveness_at_75_heating_air_flow: '{heat_recovery_sensible_effectiveness} + 0.05'
+                    sensible_effectiveness_at_75_heating_air_flow: 'min(1, {heat_recovery_sensible_effectiveness} + 0.05)'
                   latent_heat_recovery_effectiveness:
-                    latent_effectiveness_at_75_heating_air_flow: '{latent_heat_recovery_effectiveness} + 0.05'
+                    latent_effectiveness_at_75_heating_air_flow: 'min(1, {latent_heat_recovery_effectiveness} + 0.05)'
                   heat_recovery_latent_effectiveness:
-                    latent_effectiveness_at_75_heating_air_flow: '{heat_recovery_latent_effectiveness} + 0.05'
+                    latent_effectiveness_at_75_heating_air_flow: 'min(1, {heat_recovery_latent_effectiveness} + 0.05)'
               - HeatExchanger:AirToAir:SensibleAndLatent:
                   sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
                   heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
@@ -2603,14 +2603,14 @@ Objects:
             SensibleOnly: &HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
               - HeatExchanger:AirToAir:SensibleAndLatent:
                   sensible_heat_recovery_effectiveness:
-                    sensible_effectiveness_at_75_cooling_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                    sensible_effectiveness_at_75_cooling_air_flow: 'min(1, {sensible_heat_recovery_effectiveness} + 0.05)'
                   heat_recovery_sensible_effectiveness:
-                    sensible_effectiveness_at_75_cooling_air_flow: '{heat_recovery_sensible_effectiveness} + 0.05'
+                    sensible_effectiveness_at_75_cooling_air_flow: 'min(1, {heat_recovery_sensible_effectiveness} + 0.05)'
               - HeatExchanger:AirToAir:SensibleAndLatent:
                   sensible_heat_recovery_effectiveness:
-                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                    sensible_effectiveness_at_75_heating_air_flow: 'min(1, {sensible_heat_recovery_effectiveness} + 0.05)'
                   heat_recovery_sensible_effectiveness:
-                    sensible_effectiveness_at_75_heating_air_flow: '{sensible_heat_recovery_effectiveness} + 0.05'
+                    sensible_effectiveness_at_75_heating_air_flow: 'min(1, {sensible_heat_recovery_effectiveness} + 0.05)'
               - HeatExchanger:AirToAir:SensibleAndLatent:
                   sensible_heat_recovery_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
                   heat_recovery_sensible_effectiveness: sensible_effectiveness_at_100_cooling_air_flow
@@ -5718,7 +5718,7 @@ OptionTree:
                           Connectors: *FanOnOffConnectors
                     Transitions: *FanCommonTransitionsReturn
             VAV: &SystemCommonBuildPathActionsVariableVolumeFan
-              - supply_fan_placement:
+              - supply_fan_placement: &SystemCommonBuildPathActionsVariableVolumeFanSupplyFan
                   None: &SystemCommonBuildPathActionsVariableVolumeSupplyFanPlacementNone
                     Location: -1
                     ActionType: Insert
@@ -5735,7 +5735,7 @@ OptionTree:
                       - Fan:VariableVolume: *FanVariableVolumeSuperObject
                     Transitions: *FanCommonTransitionsSupply
                     Mappings: *FanCommonMappingsVariableVolume
-              - return_fan:
+              - return_fan: &SystemCommonBuildPathActionsVariableVolumeFanReturnFan
                   'Yes': # Quotes necessary to prevent boolean conversion
                     Location: 0
                     ActionType: Insert
@@ -6940,9 +6940,13 @@ OptionTree:
                           outdoor_air_stream_node_name: '{} Heat Recovery Supply Outlet'
                         Connectors: *OutdooAirMixerConnectors
                 Enthalpy: *PackagedVAVBuildPathOutsideAirEquipmenttypeSensibleHROAMixer
-            - *SystemCommonBuildPathActionsHeatingCoilAfterMixer
-            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
-            - *SystemCommonBuildPathActionsVariableVolumeFan
+            - heating_coil_type: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixer
+            - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilType
+            - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardObjects2
+            - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects1
+            - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects2
+            - supply_fan_placement: *SystemCommonBuildPathActionsVariableVolumeFanSupplyFan
+            - return_fan: *SystemCommonBuildPathActionsVariableVolumeFanReturnFan
         BaseObjects:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
@@ -6987,6 +6991,7 @@ OptionTree:
                 - HeatExchanger:AirToAir:SensibleAndLatent:
                     <<: *HeatExchangerAirToAirSensibleAndLatentFields
                     frost_control_type: MinimumExhaustTemperature
+                    heat_exchanger_type: Rotary
                     latent_effectiveness_at_75_cooling_air_flow: 0.7
                     latent_effectiveness_at_75_heating_air_flow: 0.7
                     latent_effectiveness_at_100_cooling_air_flow: 0.65
