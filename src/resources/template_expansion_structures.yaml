@@ -2113,6 +2113,7 @@ Objects:
           Fields: &CoilSystemCoolingDXFields
             name: '{} Cooling System'
             <<: *CoilSystemCoolingCommonFields
+            dehumidification_control_type: '{dehumidification_control_type}'
             dx_cooling_coil_system_inlet_node_name:
               BuildPathReference:
                 Location: Coil:Cooling:DX.*
@@ -2395,56 +2396,63 @@ Objects:
                   fan_power_minimum_flow_rate_input_method: Fraction
                   fan_power_minimum_flow_fraction: 0
         VariableVolume:
-          CommonMappings: &FanCommonMappingsVariableVolume
-            - Fan:.*:
-                supply_fan_part_load_power_coefficients:
-                  None: &FanVariableVolumeSupplyPLRCoefficients
-                    fan_power_coefficient_1: 0.35071223
-                    fan_power_coefficient_2: 0.30850535
-                    fan_power_coefficient_3: -0.54137364
-                    fan_power_coefficient_4: 0.87198823
-                    fan_power_coefficient_5: 0
-                    fan_power_minimum_flow_rate_input_method: Fraction
-                  InletVaneDampers: *FanVariableVolumeSupplyPLRCoefficients
-                  OutletDampers:
-                    fan_power_coefficient_1: 0.37073425
-                    fan_power_coefficient_2: 0.97250253
-                    fan_power_coefficient_3: -0.34240761
-                    fan_power_coefficient_4: 0
-                    fan_power_coefficient_5: 0
-                    fan_power_minimum_flow_rate_input_method: Fraction
-                  VariableSpeedMotor:
-                    fan_power_coefficient_1: 0.0015302446
-                    fan_power_coefficient_2: 0.0052080574
-                    fan_power_coefficient_3: 1.1086242
-                    fan_power_coefficient_4: -0.11635563
-                    fan_power_coefficient_5: 0
-                    fan_power_minimum_flow_rate_input_method: Fraction
-                  ASHRAE90.1-2004AppendixG:
-                    fan_power_coefficient_1: 0.0013
-                    fan_power_coefficient_2: 0.147
-                    fan_power_coefficient_3: 0.9506
-                    fan_power_coefficient_4: -0.0998
-                    fan_power_coefficient_5: 0
-                    fan_power_minimum_flow_rate_input_method: Fraction
-                  VariableSpeedMotorPressureReset:
-                    fan_power_coefficient_1: 0.040759894
-                    fan_power_coefficient_2: 0.08804497
-                    fan_power_coefficient_3: -0.07292612
-                    fan_power_coefficient_4: 0.943739823
-                    fan_power_coefficient_5: 0
-                    fan_power_minimum_flow_rate_input_method: Fraction
-                return_fan_part_load_power_coefficients:
-                  InletVaneDampers:
-                    <<: *FanVariableVolumeSupplyPLRCoefficients
-                    fan_power_minimum_flow_fraction: 0
-                supply_fan_minimum_flow_rate:
-                  None:
-                    fan_power_minimum_flow_fraction: 0.25
-                  Autosize:
-                    fan_power_minimum_flow_fraction: 0.25
-                  AnyNumber:
-                    fan_power_minimum_flow_rate_input_method: FixedFlowRate
+          Common:
+            Mappings:
+              Supply: &FanCommonMappingsVariableVolumeSupply
+                - Fan:.*:
+                    supply_fan_part_load_power_coefficients:
+                      None: &FanVariableVolumeSupplyPLRCoefficients
+                        fan_power_coefficient_1: 0.35071223
+                        fan_power_coefficient_2: 0.30850535
+                        fan_power_coefficient_3: -0.54137364
+                        fan_power_coefficient_4: 0.87198823
+                        fan_power_coefficient_5: 0
+                        fan_power_minimum_flow_rate_input_method: Fraction
+                      InletVaneDampers: *FanVariableVolumeSupplyPLRCoefficients
+                      OutletDampers: &FanVariableVolumeSupplyOutletDampers
+                        fan_power_coefficient_1: 0.37073425
+                        fan_power_coefficient_2: 0.97250253
+                        fan_power_coefficient_3: -0.34240761
+                        fan_power_coefficient_4: 0
+                        fan_power_coefficient_5: 0
+                        fan_power_minimum_flow_rate_input_method: Fraction
+                      VariableSpeedMotor: &FanVariableVolumeSupplyVariableSpeedMotor
+                        fan_power_coefficient_1: 0.0015302446
+                        fan_power_coefficient_2: 0.0052080574
+                        fan_power_coefficient_3: 1.1086242
+                        fan_power_coefficient_4: -0.11635563
+                        fan_power_coefficient_5: 0
+                        fan_power_minimum_flow_rate_input_method: Fraction
+                      ASHRAE90.1-2004AppendixG: &FanVariableVolumeSupplyAppG
+                        fan_power_coefficient_1: 0.0013
+                        fan_power_coefficient_2: 0.147
+                        fan_power_coefficient_3: 0.9506
+                        fan_power_coefficient_4: -0.0998
+                        fan_power_coefficient_5: 0
+                        fan_power_minimum_flow_rate_input_method: Fraction
+                      VariableSpeedMotorPressureReset: &FanVariableVolumeSupplyPressureReset
+                        fan_power_coefficient_1: 0.040759894
+                        fan_power_coefficient_2: 0.08804497
+                        fan_power_coefficient_3: -0.07292612
+                        fan_power_coefficient_4: 0.943739823
+                        fan_power_coefficient_5: 0
+                        fan_power_minimum_flow_rate_input_method: Fraction
+                    supply_fan_minimum_flow_rate:
+                      None:
+                        fan_power_minimum_flow_fraction: 0.25
+                      Autosize:
+                        fan_power_minimum_flow_fraction: 0.25
+                      AnyNumber:
+                        fan_power_minimum_flow_rate_input_method: FixedFlowRate
+              Return: &FanCommonMappingsVariableVolumeReturn
+                - Fan:.*:
+                    return_fan_part_load_power_coefficients:
+                      None: *FanVariableVolumeSupplyPLRCoefficients
+                      InletVaneDampers: *FanVariableVolumeSupplyPLRCoefficients
+                      OutletDampers: *FanVariableVolumeSupplyOutletDampers
+                      VariableSpeedMotor: *FanVariableVolumeSupplyVariableSpeedMotor
+                      ASHRAE90.1-2004AppendixG: *FanVariableVolumeSupplyAppG
+                      VariableSpeedMotorPressureReset: *FanVariableVolumeSupplyPressureReset
       Transitions:
         SystemModel: &FanCommonTransitionsSystemModel
           - Fan:.*:
@@ -5108,7 +5116,6 @@ OptionTree:
                           - CoilSystem:Cooling:DX:
                               Fields:
                                 <<: *CoilSystemCoolingDXFields
-                                dehumidification_control_type: '{dehumidification_control_type}'
                                 run_on_latent_load: 'Yes'
                                 use_outdoor_air_dx_cooling_coil: 'Yes'
                               Connectors:
@@ -5128,7 +5135,6 @@ OptionTree:
                           - CoilSystem:Cooling:DX:
                               Fields:
                                 <<: *CoilSystemCoolingDXFields
-                                dehumidification_control_type: '{dehumidification_control_type}'
                               Connectors:
                                 AirLoop: False
                           - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard1
@@ -5725,7 +5731,7 @@ OptionTree:
                     Objects:
                       - Fan:VariableVolume: *FanVariableVolumeSuperObject
                     Transitions: *FanCommonTransitionsSupply
-                    Mappings: *FanCommonMappingsVariableVolume
+                    Mappings: *FanCommonMappingsVariableVolumeSupply
                   DrawThrough: *SystemCommonBuildPathActionsVariableVolumeSupplyFanPlacementNone
                   BlowThrough:
                     ObjectReference: OutdoorAir:Mixer
@@ -5734,8 +5740,9 @@ OptionTree:
                     Objects:
                       - Fan:VariableVolume: *FanVariableVolumeSuperObject
                     Transitions: *FanCommonTransitionsSupply
-                    Mappings: *FanCommonMappingsVariableVolume
+                    Mappings: *FanCommonMappingsVariableVolumeSupply
               - return_fan: &SystemCommonBuildPathActionsVariableVolumeFanReturnFan
+                  'No':
                   'Yes': # Quotes necessary to prevent boolean conversion
                     Location: 0
                     ActionType: Insert
@@ -5747,9 +5754,10 @@ OptionTree:
                             air_inlet_node_name: *AirLoopInlet
                             air_outlet_node_name: '{} Return Fan Outlet'
                             pressure_rise: 500 # override base fan default
+                            fan_power_minimum_flow_fraction: 0.0
                           Connectors: *FanVariableVolumeConnectors
                     Transitions: *FanCommonTransitionsReturn
-                    Mappings: *FanCommonMappingsVariableVolume
+                    Mappings: *FanCommonMappingsVariableVolumeReturn
         BaseObjects:
           Objects:
             VAV:
@@ -5822,6 +5830,8 @@ OptionTree:
                       dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_relative_humidity_setpoint}'
                 Transitions:
                   - ZoneControl:Humidistat:
+                      dehumidification_setpoint:
+                        dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
                       dehumidification_relative_humidity_setpoint_schedule_name: dehumidifying_relative_humidity_setpoint_schedule_name
               Humidification:
                 Objects:
@@ -5832,7 +5842,9 @@ OptionTree:
                       humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_relative_humidity_setpoint}'
                 Transitions:
                   - ZoneControl:Humidistat:
-                      humidifier_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
+                      humidifier_setpoint:
+                        humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_setpoint}'
+                      humidifying_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
               DehumidificationAndHumidification:
                 Objects:
                   - ZoneControl:Humidistat:
@@ -5843,8 +5855,12 @@ OptionTree:
                       humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_relative_humidity_setpoint}'
                 Transitions:
                   - ZoneControl:Humidistat:
+                      dehumidification_setpoint:
+                        dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
+                      humidifier_setpoint:
+                        humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_setpoint}'
                       dehumidification_relative_humidity_setpoint_schedule_name: dehumidifying_relative_humidity_setpoint_schedule_name
-                      humidifier_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
+                      humidifying_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
             dehumidification_control_type: &SystemCommonTemplateObjectsDehumidificationControlType
               CoolReheat:
                 Objects:
@@ -6892,7 +6908,7 @@ OptionTree:
                     Objects:
                       - Fan:ConstantVolume: *FanConstantVolumeSuperObject
                     Transitions: *FanCommonTransitionsSupply
-                    Mappings: *FanCommonMappingsVariableVolume
+                    Mappings: *FanCommonMappingsVariableVolumeSupply
           BaseObjects:
           TemplateObjects:
             heating_coil_setpoint_control_type_detailed:
@@ -6947,6 +6963,7 @@ OptionTree:
             - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects2
             - supply_fan_placement: *SystemCommonBuildPathActionsVariableVolumeFanSupplyFan
             - return_fan: *SystemCommonBuildPathActionsVariableVolumeFanReturnFan
+            - humidifier_type: *SystemCommonBuildPathActionsConstantVolumeHumidifierType
         BaseObjects:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
@@ -6956,7 +6973,10 @@ OptionTree:
           Mappings: *SizingSystemCommonMappings
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+          dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
           economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerType
+          humidistat_type: *SystemCommonTemplateObjectsHumidistatType
+          humidifier_type: *SystemCommonTemplateObjectsHumidifierType
           heat_recovery_type:
             Sensible:
               Objects:

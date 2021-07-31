@@ -275,6 +275,11 @@ class HVACTemplate(EPJSON):
                             'cooling_coil_design_setpoint_temperature': 12.8,
                             'heating_coil_design_setpoint': 12.2
                         },
+                        'HVACTemplate:System:PackagedVAV': {
+                            'cooling_coil_type': 'TwoSpeedDX',
+                            'cooling_coil_design_setpoint': 12.8,
+                            'heating_coil_design_setpoint': 10
+                        },
                         'HVACTemplate:System:VAV': {
                             'preheat_coil_design_setpoint': 7.2
                         },

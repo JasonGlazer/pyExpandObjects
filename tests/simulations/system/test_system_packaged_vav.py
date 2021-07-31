@@ -138,6 +138,7 @@ hot_water_objects = {
     }
 }
 
+
 class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
     def setUp(self):
         self.ej = EPJSON()
@@ -149,6 +150,32 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
         return
 
     def teardown(self):
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:minimum_inputs")
+    def test_minimum_inputs(self):
+        # todo_eo: legacy fails with error
+        #  <root>[ZoneControl:Humidistat][DXVAV Sys 1 Humidification Humidistat] - Missing required property 'zone_name'
+        self.base_epjson['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 2'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 3'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 4'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:System:PackagedVAV'].pop('DXVAV Sys 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:System:PackagedVAV': {
+                    'DXVAV Sys 1': {
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:system_availability_schedule_name")
@@ -932,7 +959,7 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath(
             '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            'ProportionalMimimum',
+            'ProportionalMinimum',
             epjson_output['Controller:OutdoorAir']['DXVAV Sys 1 OA Controller']['minimum_limit_type'])
         return
 
@@ -946,7 +973,7 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath(
             '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            'FixedMimimum',
+            'FixedMinimum',
             epjson_output['Controller:OutdoorAir']['DXVAV Sys 1 OA Controller']['minimum_limit_type'])
         return
 
@@ -1252,7 +1279,7 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath(
             '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            0.0013,
+            0.040759894,
             epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Supply Fan']['fan_power_coefficient_1'])
         return
 
@@ -1411,4 +1438,236 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
             0.66,
             epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['DXVAV Sys 1 Heat Recovery'][
                 'latent_effectiveness_at_75_heating_air_flow'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:dehumidification_control_type_none")
+    def test_dehumidification_control_type_none(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'dehumidification_control_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:dehumidification_control_type_cool_reheat")
+    def test_dehumidification_control_type_cool_reheat(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'dehumidification_control_type'] = 'CoolReheat'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'dehumidification_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'dehumidification_setpoint'] = 62
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'HVACTemplate-Always62.0',
+            epjson_output['ZoneControl:Humidistat']['DXVAV Sys 1 Dehumidification Humidistat'][
+                'dehumidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:humidifier_type")
+    def test_humidifier_type(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'humidifier_setpoint'] = 29
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('DXVAV Sys 1 Humidifier'))
+        self.assertEqual(
+            'HVACTemplate-Always29.0',
+            epjson_output['ZoneControl:Humidistat']['DXVAV Sys 1 humidification Humidistat'][
+                'humidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:humidifier_inputs")
+    def test_humidifier_inputs(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'humidifier_setpoint'] = 29
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'humidifier_availability_schedule_name'] = 'OCCUPY-1'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'humidifier_rated_capacity'] = 1
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'humidifier_rated_electric_power'] = 1000
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('DXVAV Sys 1 Humidifier'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Humidifier:Steam:Electric']['DXVAV Sys 1 Humidifier']['availability_schedule_name'])
+        self.assertEqual(
+            1,
+            epjson_output['Humidifier:Steam:Electric']['DXVAV Sys 1 Humidifier']['rated_capacity'])
+        self.assertEqual(
+            1000,
+            epjson_output['Humidifier:Steam:Electric']['DXVAV Sys 1 Humidifier']['rated_power'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:sizing_option_non_coincident")
+    def test_sizing_option_non_coincident(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'sizing_option'] = 'NonCoincident'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'NonCoincident',
+            epjson_output['Sizing:System']['DXVAV Sys 1 Sizing System']['type_of_zone_sum_to_use'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:sizing_option_non_coincident")
+    def test_sizing_option_coincident(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'sizing_option'] = 'Coincident'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Coincident',
+            epjson_output['Sizing:System']['DXVAV Sys 1 Sizing System']['type_of_zone_sum_to_use'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:return_fan_yes")
+    def test_return_fan_yes(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan'] = 'Yes'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Fan:VariableVolume'].get('DXVAV Sys 1 Return Fan'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:return_fan_no")
+    def test_return_fan_no(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan'] = 'No'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output['Fan:VariableVolume'].get('DXVAV Sys 1 Return Fan'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:return_fan_inputs")
+    def test_return_fan_inputs(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan'] = 'Yes'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan_total_efficiency'] = 0.72
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan_delta_pressure'] = 295
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan_motor_efficiency'] = 0.85
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan_motor_in_air_stream_fraction'] = 0.9
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.72,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Return Fan']['fan_total_efficiency'])
+        self.assertEqual(
+            295,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Return Fan']['pressure_rise'])
+        self.assertEqual(
+            0.85,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Return Fan']['motor_efficiency'])
+        self.assertEqual(
+            0.9,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Return Fan']['motor_in_airstream_fraction'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "return_fan_part_load_power_coefficients_inlet_vane_dampers")
+    def test_return_fan_part_load_power_coefficients_inlet_vane_dampers(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan'] = 'Yes'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan_part_load_power_coefficients'] = 'InletVaneDampers'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.35071223,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Return Fan']['fan_power_coefficient_1'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "return_fan_part_load_power_coefficients_outlet_dampers")
+    def test_return_fan_part_load_power_coefficients_outlet_dampers(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan'] = 'Yes'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan_part_load_power_coefficients'] = 'OutletDampers'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.37073425,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Return Fan']['fan_power_coefficient_1'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "return_fan_part_load_power_coefficients_variable_speed_motor")
+    def test_return_fan_part_load_power_coefficients_variable_speed_motor(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan'] = 'Yes'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan_part_load_power_coefficients'] = 'VariableSpeedMotor'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.0015302446,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Return Fan']['fan_power_coefficient_1'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "return_fan_part_load_power_coefficients_ASHRAE901_2004_appendix_g")
+    def test_return_fan_part_load_power_coefficients_ASHRAE901_2004_appendix_g(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan'] = 'Yes'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan_part_load_power_coefficients'] = 'ASHRAE90.1-2004AppendixG'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.0013,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Return Fan']['fan_power_coefficient_1'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:PackagedVAV:"
+                                              "return_fan_part_load_power_coefficients_"
+                                              "variable_speed_motor_pressure_resst")
+    def test_return_fan_part_load_power_coefficients_variable_speed_motor_pressure_reset(self):
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan'] = 'Yes'
+        self.base_epjson['HVACTemplate:System:PackagedVAV']['DXVAV Sys 1'][
+            'return_fan_part_load_power_coefficients'] = 'VariableSpeedMotorPressureReset'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.040759894,
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Return Fan']['fan_power_coefficient_1'])
         return

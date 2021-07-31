@@ -1919,7 +1919,8 @@ class HeatingCoilSetpointControlTypeDetailed:
 
 class HumidistatType:
     """
-    Create class attribute to select Humidistat type based on other template attributes for YAML TemplateObjects lookup.
+    Create class attribute humidistat_type to select Humidistat type based on other template attributes
+    for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
         return obj._humidistat_type
