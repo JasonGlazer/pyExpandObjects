@@ -5776,21 +5776,7 @@ OptionTree:
                       - node_name:
                           ^OutdoorAir:Mixer: mixed_air_node_name
         TemplateObjects:
-          Base: &SystemCommonTemplateObjects
-            night_cycle_control: &SystemCommonTemplateObjectsNightCycle
-              CycleOnAny: &SystemCommonTemplateObjectsNightCycleControlCycleOnAny
-                Objects:
-                  - AvailabilityManager:NightCycle: *AvailabilityManagerNightCycle
-                Transitions: *AvailabilityManagerNightCycleCommonTransitions
-              CycleOnControlZone: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
-              CycleOnAnyZoneFansOnly: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
-              StayOff: &HVACTemplateSystemCommonTemplateObjectsBaseNightCycleControlStayOff
-                Objects:
-                  - AvailabilityManager:NightCycle:
-                      <<: *AvailabilityManagerNightCycle
-                      control_type: StayOff
-                Transitions: *AvailabilityManagerNightCycleCommonTransitions
-              None: *HVACTemplateSystemCommonTemplateObjectsBaseNightCycleControlStayOff
+          Base:
             airloop_hvac_object_type: &SystemCommonTemplateObjectsAirLoopHVACObjectType
               Base:
                 Objects:
@@ -5819,7 +5805,20 @@ OptionTree:
 #                Transitions: # Allow for autosizing even when variable is set
 #                  - AirLoopHVAC:
 #                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
-          ConstantVolume:
+            night_cycle_control: &SystemCommonTemplateObjectsNightCycle
+              CycleOnAny: &SystemCommonTemplateObjectsNightCycleControlCycleOnAny
+                Objects:
+                  - AvailabilityManager:NightCycle: *AvailabilityManagerNightCycle
+                Transitions: *AvailabilityManagerNightCycleCommonTransitions
+              CycleOnControlZone: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
+              CycleOnAnyZoneFansOnly: *SystemCommonTemplateObjectsNightCycleControlCycleOnAny
+              StayOff: &HVACTemplateSystemCommonTemplateObjectsBaseNightCycleControlStayOff
+                Objects:
+                  - AvailabilityManager:NightCycle:
+                      <<: *AvailabilityManagerNightCycle
+                      control_type: StayOff
+                Transitions: *AvailabilityManagerNightCycleCommonTransitions
+              None: *HVACTemplateSystemCommonTemplateObjectsBaseNightCycleControlStayOff
             humidistat_type: &SystemCommonTemplateObjectsHumidistatType
               Dehumidification:
                 Objects:
@@ -5881,12 +5880,13 @@ OptionTree:
               ElectricSteam:
                 Objects:
                   - SetpointManager:SingleZone:Humidity:Minimum: *SetpointManagerSingleZoneHumidityMinimum
-            outside_air_equipment_type: &SystemCommonTemplateObjectsOutsideAirEquipmentType
+          ConstantVolume:
+            outside_air_equipment_type: &SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentType
               None:
               HotWaterPreheat:
               ElectricPreheat:
               GasPreheat:
-              HotWaterPreheatSensibleHR: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
+              HotWaterPreheatSensibleHR: &SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
                 Objects:
                   - SetpointManager:Scheduled:
                       <<: *SetpointManager
@@ -5907,9 +5907,9 @@ OptionTree:
                       sensible_effectiveness_at_100_heating_air_flow: 0.7
                 Transitions:
                   - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
-              ElectricPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
-              GasPreheatSensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
-              HotWaterPreheatEnthalpyHR: &ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
+              ElectricPreheatSensibleHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
+              GasPreheatSensibleHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
+              HotWaterPreheatEnthalpyHR: &SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
                 Objects:
                   - SetpointManager:Scheduled:
                       <<: *SetpointManager
@@ -5929,10 +5929,10 @@ OptionTree:
                       sensible_effectiveness_at_100_heating_air_flow: 0.7
                 Transitions:
                   - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
-              ElectricPreheatEnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
-              GasPreheatEnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
-              SensibleHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
-              EnthalpyHR: *ConstantVolumeTemplateObjectsOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
+              ElectricPreheatEnthalpyHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
+              GasPreheatEnthalpyHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
+              SensibleHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
+              EnthalpyHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
             economizer_type_detailed: &SystemCommonTemplateObjectsConstantVolumeEconomizerType
               None: &SystemCommonTemplateObjectsConstantVolumeEconomizerTypeNone
                 Objects:
@@ -5941,8 +5941,8 @@ OptionTree:
                 Mappings: *ControllerOutdoorAirCommonMappings
               NoEconomizerBlowThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeNone
               NoEconomizerDrawThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeNone
-              FixedDryBulbBlowThrough: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
-                Objects: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulbObjects
+              FixedDryBulbBlowThrough: &SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedBlowThroughFixedDryBulb
+                Objects: &SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedBlowThroughFixedDryBulbObjects
                   - SetpointManager:MixedAir:
                       <<: *SetpointManagerMixedAirEconomizer
                       reference_setpoint_node_name:
@@ -5953,8 +5953,8 @@ OptionTree:
                   - Controller:OutdoorAir: *ControllerOutdoorAir
                 Transitions: *ControllerOutdoorAirCommonTransitions
                 Mappings: *ControllerOutdoorAirCommonMappings
-              FixedDryBulbDrawThrough: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
-                Objects: &ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulbObjects
+              FixedDryBulbDrawThrough: &SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedDrawThroughFixedDryBulb
+                Objects: &SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedDrawThroughFixedDryBulbObjects
                   - SetpointManager:MixedAir:
                       <<: *SetpointManagerMixedAirEconomizer
                       reference_setpoint_node_name:
@@ -5964,17 +5964,17 @@ OptionTree:
                   - Controller:OutdoorAir: *ControllerOutdoorAir
                 Transitions: *ControllerOutdoorAirCommonTransitions
                 Mappings: *ControllerOutdoorAirCommonMappings
-              FixedEnthalpyBlowThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
-              FixedEnthalpyDrawThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
-              DifferentialDryBulbBlowThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
-              DifferentialDryBulbDrawThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
-              DifferentialEnthalpyBlowThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
-              DifferentialEnthalpyDrawThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
-              FixedDewPointAndDryBulbBlowThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
-              FixedDewPointAndDryBulbDrawThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
+              FixedEnthalpyBlowThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedBlowThroughFixedDryBulb
+              FixedEnthalpyDrawThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedDrawThroughFixedDryBulb
+              DifferentialDryBulbBlowThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedBlowThroughFixedDryBulb
+              DifferentialDryBulbDrawThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedDrawThroughFixedDryBulb
+              DifferentialEnthalpyBlowThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedBlowThroughFixedDryBulb
+              DifferentialEnthalpyDrawThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedDrawThroughFixedDryBulb
+              FixedDewPointAndDryBulbBlowThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedBlowThroughFixedDryBulb
+              FixedDewPointAndDryBulbDrawThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedDrawThroughFixedDryBulb
               ElectronicEnthalpyBlowThrough:
                 Objects:
-                  - *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulbObjects
+                  - *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedBlowThroughFixedDryBulbObjects
                   - Curve:Cubic:
                       name: '{} ElectrEnthCurve'
                       coefficient1_constant: 0.01342704
@@ -5985,7 +5985,7 @@ OptionTree:
                       minimum_value_of_x: 16.6
               ElectronicEnthalpyDrawThrough:
                 Objects:
-                  - *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulbObjects
+                  - *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedDrawThroughFixedDryBulbObjects
                   - Curve:Cubic:
                       name: '{} ElectrEnthCurve'
                       coefficient1_constant: 0.01342704
@@ -5994,8 +5994,8 @@ OptionTree:
                       coefficient4_x_3: -1.8103e-06
                       maximum_value_of_x: 29.13
                       minimum_value_of_x: 16.6
-              DifferentialDryBulbAndEnthalpyBlowThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedBlowThroughFixedDryBulb
-              DifferentialDryBulbAndEnthalpyDrawThrough: *ConstantVolumeTemplateObjectsEconomizerTypeDetailedDrawThroughFixedDryBulb
+              DifferentialDryBulbAndEnthalpyBlowThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedBlowThroughFixedDryBulb
+              DifferentialDryBulbAndEnthalpyDrawThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedDrawThroughFixedDryBulb
             cooling_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType # created by descriptors
               ControlZoneBlowThrough:
                 Objects:
@@ -6538,7 +6538,7 @@ OptionTree:
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
           cooling_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
           heating_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
-          outside_air_equipment_type: *SystemCommonTemplateObjectsOutsideAirEquipmentType
+          outside_air_equipment_type: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentType
       DedicatedOutdoorAir:
         BuildPath:
           BaseObjects:
@@ -6590,6 +6590,59 @@ OptionTree:
                     - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard1
                   Transitions:
                     - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
+                HeatExchangerAssistedDX:
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
+                  Objects:
+                    - HeatExchanger:AirToAir:SensibleAndLatent:
+                        Fields:
+                          <<: *HeatExchangerAirToAirSensibleAndLatentCoolingCoilFields
+                          exhaust_air_inlet_node_name: '{} Cooling Coil Outlet'
+                          exhaust_air_outlet_node_name: '{} Cooling Coil HX Unit Outlet'
+                        Connectors:
+                          AirLoop:
+                            Inlet: supply_air_inlet_node_name
+                            Outlet: exhaust_air_outlet_node_name
+                    - Coil:Cooling:DX:SingleSpeed:
+                        <<: *CoilCoolingDXSingleSpeedFields
+                        air_inlet_node_name: '{} HX Supply Outlet'
+                    - DummyObject:
+                        Fields:
+                          name: '{} Dummy HX'
+                          supply_air_inlet_node_name: 'Dummy Val'
+                          exhaust_air_outlet_node_name: '{} Cooling Coil HX Unit Outlet'
+                        Connectors:
+                          AirLoop:
+                            Inlet: supply_air_inlet_node_name
+                            Outlet: exhaust_air_outlet_node_name
+                    - CoilSystem:Cooling:DX:
+                        Fields:
+                          <<: *CoilSystemCoolingDXFields
+                          cooling_coil_name: '{} Heat Exchanger Assisted Cooling Coil'
+                          cooling_coil_object_type: CoilSystem:Cooling:DX:HeatExchangerAssisted
+                          dx_cooling_coil_system_inlet_node_name:
+                            BuildPathReference:
+                              Location: (Coil:Cooling:.*|HeatExchanger:AirToAir:SensibleAndLatent)
+                              Occurrence: -1
+                              ValueLocation: Inlet
+                          dx_cooling_coil_system_outlet_node_name: '{} Cooling Coil HX Unit Outlet'
+                          dx_cooling_coil_system_sensor_node_name: '{} Cooling Coil HX Unit Outlet'
+                          use_outdoor_air_dx_cooling_coil: 'Yes'
+                        Connectors:
+                          AirLoop: False
+                    - CoilSystem:Cooling:DX:HeatExchangerAssisted:
+                        name: '{} Heat Exchanger Assisted Cooling Coil'
+                        cooling_coil_name: '{} Cooling Coil'
+                        cooling_coil_object_type: Coil:Cooling:DX:SingleSpeed
+                        heat_exchanger_name: '{} Cooling Coil Heat Exchanger'
+                        heat_exchanger_object_type: HeatExchanger:AirToAir:SensibleAndLatent
+                    - *CoilCoolingDXSingleSpeedCommonObjects
+                  Transitions:
+                    - *CoilCoolingDXSingleSpeedCommonTransitions
+                  Mappings:
+                    - *CoilSystemCoolingDXCommonMappings
+            # Additional Action instructions for CoilPerformance objects
             - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardObjects2
             - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects1
             - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeDehumObjects2
@@ -6872,7 +6925,8 @@ OptionTree:
             - *ControllerOutdoorAirCommonTransitions
             - *SizingSystemCommonTransitions
         TemplateObjects:
-          <<: *SystemCommonTemplateObjects
+          airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+          night_cycle_control: *SystemCommonTemplateObjectsNightCycle
         ColdDuct:
           BuildPath:
             BaseObjects:
@@ -7080,7 +7134,9 @@ OptionTree:
             - *ControllerOutdoorAirCommonTransitions
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-        TemplateObjects: *SystemCommonTemplateObjects
+        TemplateObjects:
+          airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+          night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       UnitaryHeatPump:
         AirToAir:
           BuildPath:
@@ -7107,7 +7163,9 @@ OptionTree:
             Transitions:
               - *SizingSystemCommonTransitions
               - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-          TemplateObjects: *SystemCommonTemplateObjects
+          TemplateObjects:
+            airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+            night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       UnitarySystem:
         BuildPath:
           BaseObjects:
@@ -7213,7 +7271,9 @@ OptionTree:
             - *AvailabilityManagerScheduledCommonTransitions
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-        TemplateObjects: *SystemCommonTemplateObjects
+        TemplateObjects:
+          airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+          night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       VAV:
         BuildPath:
           BaseObjects:
@@ -7227,7 +7287,8 @@ OptionTree:
           Objects: *SystemCommonBaseObjectsVariableVolume
           Transitions: *ControllerOutdoorAirCommonTransitions
         TemplateObjects:
-          <<: *SystemCommonTemplateObjects
+          airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+          night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           <<: *SystemCommonTemplateObjectsVAV
       VRF:
         BaseObjects:
