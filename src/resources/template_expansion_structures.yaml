@@ -670,7 +670,7 @@ Objects:
             Transitions: &AirTerminalSingleDuctParallelPIUReheatCommonTransitions
               - AirTerminal:SingleDuct:ParallelPIU:Reheat:
                   parallel_fan_on_flow_fraction: fan_on_flow_fraction
-                  primary_supply_air_maximum_flow_rate: maximum_primary_air_flow_rate
+#                  primary_supply_air_maximum_flow_rate: maximum_primary_air_flow_rate # Only set this value in Sizing:Zone
                   primary_supply_air_minimum_flow_fraction: minimum_primary_air_flow_fraction
                   secondary_supply_air_maximum_flow_rate: maximum_secondary_air_flow_rate
           Base:
@@ -711,7 +711,7 @@ Objects:
           Common:
             Transitions: &AirTerminalSingleDuctSeriesPIUReheatCommonTransitions
               - AirTerminal:SingleDuct:SeriesPIU:Reheat:
-                  primary_supply_air_maximum_flow_rate: maximum_primary_air_flow_rate
+#                  primary_supply_air_maximum_flow_rate: maximum_primary_air_flow_rate # Only set this value in Sizing:Zone
                   primary_supply_air_minimum_flow_fraction: minimum_primary_air_flow_fraction
                   secondary_supply_air_maximum_flow_rate: maximum_air_flow_rate
           Base:
@@ -4714,7 +4714,6 @@ OptionTree:
                     Location: After
                     ActionType: Insert
                     Objects: &ZoneVAVFanPoweredBuildPathActionsReheatCoilTypeSeriesGasObjects
-                      - *CoilHeatingFuelCommonObjects
                       - Coil:Heating:Fuel:
                           Fields:
                             <<: *CoilHeatingFuelFields
