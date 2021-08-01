@@ -616,8 +616,12 @@ class ExpandObjects(EPJSON):
                     (super_object_type_check, _), = super_object.items()
                     if re.match(location, super_object_type_check):
                         (super_object_type, super_object_structure), = super_object.items()
-                        # If the called object is a manipulated super object (Connectors = False) then grab the object before it
-                        if not super_object_structure['Connectors'][connector_path]:
+                        # If the called object is a manipulated super object (Connectors = False)
+                        # and 'key' or 'self' is not specified then grab the object before it
+                        # todo_eo: test this conditional clause to see if it is still being used and in what cases.
+                        #  make more explicit explanation if needed.
+                        if not super_object_structure['Connectors'][connector_path] and \
+                                value_location.lower() not in ['self', 'key']:
                             (super_object_type, super_object_structure), = previous_object.items()
                         match_count += 1
                         if match_count == occurrence:
@@ -1574,11 +1578,114 @@ class VRFType:
         return
 
 
+class SystemTransitions:
+    """
+    Set zone attributes based on system attributes
+    """
+    def __get__(self, obj, owner):
+        return obj._system_transitions
+
+    def __set__(self, obj, value):
+        """
+        Set priority list of plant loops to attach the equipment.  Apply defaults if no input is given.
+        """
+        # set value and check at the end for error output
+        obj._system_transitions = {}
+        # If a string is passed, then use it as the entry
+        if isinstance(value, str):
+            obj._system_transitions = value
+        else:
+            # extract the template
+            # try/except not needed here because the template has already been validated from super class init
+            (template_type, template_structure), = value['template'].items()
+            (_, template_fields), = template_structure.items()
+            # make a tuple of fields that identify the system
+            system_identifiers = (
+                'template_constant_volume_system_name',
+                'dedicated_outdoor_air_system_name',
+                'template_dual_duct_system_name',
+                'template_unitary_system_name',
+                'template_vav_system_name',
+                'template_vrf_system_name')
+            # retrieve system from zone template
+            reference_system_name = None
+            for si in system_identifiers:
+                reference_system_name = template_fields.get(si, None)
+                if reference_system_name:
+                    break
+            if not reference_system_name:
+                return
+            obj._system_transitions.update({'system_name': reference_system_name})
+            if not value.get('system_class_objects'):
+                return
+            reference_system = value['system_class_objects'][reference_system_name]
+            obj._system_transitions.update({'system_object': reference_system})
+            # Apply system template attributes to zone template
+            if template_type == 'HVACTemplate:Zone:VAV:FanPowered' and\
+                    getattr(reference_system, 'system_availability_schedule_name', None):
+                setattr(
+                    obj,
+                    'system_availability_schedule_name',
+                    getattr(reference_system, 'system_availability_schedule_name'))
+            if getattr(
+                    obj,
+                    'zone_cooling_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'cooling_design_supply_air_temperature', None)
+                if system_field:
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if getattr(
+                    obj,
+                    'zone_heating_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'heating_design_supply_air_temperature', None)
+                if system_field:
+                    setattr(obj, 'zone_heating_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_heating_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if getattr(
+                    obj,
+                    'zone_cooling_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'cooling_coil_design_setpoint', None)
+                if system_field:
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if getattr(
+                    obj,
+                    'zone_heating_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'heating_coil_design_setpoint', None)
+                if system_field:
+                    setattr(obj, 'zone_heating_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_heating_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if getattr(
+                    obj,
+                    'zone_cooling_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'cooling_coil_design_setpoint_temperature', None)
+                if system_field:
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if getattr(
+                    obj,
+                    'zone_heating_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'heating_coil_design_setpoint_temperature', None)
+                if system_field:
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_heating_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            return
+
+
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
 
     Attributes from Descriptors:
+
+        system_transitions
+
         zone_hvac_equipmentlist_object_type
 
         design_specification_outdoor_air_object_status
@@ -1594,6 +1701,7 @@ class ExpandZone(ExpandObjects):
         fan_powered_reheat_type
     """
 
+    system_transitions = SystemTransitions()
     zone_hvac_equipmentlist_object_type = ZonevacEquipmentListObjectType()
     design_specification_outdoor_air_object_status = DesignSpecificationOutsideAirObjectStatus()
     design_specification_zone_air_distribution_object_status = DesignSpecificationZoneAirDistributionObjectStatus()
@@ -1603,7 +1711,7 @@ class ExpandZone(ExpandObjects):
     fan_powered_reheat_type = FanPoweredReheatType()
     vrf_type = VRFType()
 
-    def __init__(self, template, logger_level='WARNING', epjson=None):
+    def __init__(self, template, logger_level='WARNING', epjson=None, system_class_objects=None):
         # fill/create class attributes values with template inputs
         super().__init__(template=template, logger_level=logger_level)
         try:
@@ -1612,6 +1720,8 @@ class ExpandZone(ExpandObjects):
                 raise InvalidTemplateException("Error: Zone name not provided in template: {}".format(template))
         except AttributeError:
             raise InvalidTemplateException("Error: Zone name not provided in zone template: {}".format(template))
+        system_class_objects = {'system_class_objects': system_class_objects} if system_class_objects else {}
+        self.system_transitions = {'template': template, **system_class_objects}
         self.zone_hvac_equipmentlist_object_type = template
         self.design_specification_outdoor_air_object_status = template
         self.design_specification_zone_air_distribution_object_status = template

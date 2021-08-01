@@ -1536,89 +1536,6 @@ class HVACTemplate(EPJSON):
             object_dictionary=resolved_path_dictionary)
         return
 
-    def _apply_system_fields_to_zone_template(
-            self,
-            zone_template_type,
-            template_name,
-            template_fields,
-            system_templates):
-        """
-        Set zone attributes based on system templates where appropriate.  This function calls a structured object
-        that contains lists of instructions to perform the map.  Each list is structured in the following manner:
-
-            [
-                zone_field_name: { # The zone field to check to apply the action
-                    {
-                        zone_field_value: # The zone field value to trigger the mapping
-                            system_field: system_field_name # The system field that contains the referenced value
-                            zone_field: zone_field_name # The zone field to apply the value
-                    }
-                }
-            ]
-
-        :param zone_template_type: HVACTemplate:Zone type
-        :param template_name: HVACTemplate:Zone unique name
-        :param template_fields: HVACTemplate:Zone fields
-        :param system_templates: dictionary of HVACTemplate:System objects
-        :return: None.  the zone template is updated in the class attributes
-        """
-        # make a tuple of fields that identify the system
-        system_identifiers = (
-            'template_constant_volume_system_name',
-            'dedicated_outdoor_air_system_name',
-            'template_dual_duct_system_name',
-            'template_unitary_system_name',
-            'template_vav_system_name',
-            'template_vrf_system_name')
-        # get system to zone mapping structure
-        eo = ExpandObjects(logger_level=self.logger_level)
-        mapping_indicators = eo.get_structure(structure_hierarchy=['SystemToZoneMappings'])
-        # retrieve system from zone template
-        reference_system_name = None
-        for si in system_identifiers:
-            reference_system_name = template_fields.get(si, None)
-            if reference_system_name:
-                break
-        if not reference_system_name:
-            return
-        try:
-            # iterate over systems
-            applied_value = False
-            matched_system = False
-            for system_template in system_templates.values():
-                for system_name, system_fields in system_template.items():
-                    # if a match is found, apply the map
-                    if reference_system_name == system_name:
-                        matched_system = True
-                        for mi in mapping_indicators:
-                            for zone_field, mapping_instructions in mi.items():
-                                for val, value_map in mapping_instructions.items():
-                                    if template_fields.get(zone_field, None) == val:
-                                        if value_map.get('system_field') and system_fields.get(value_map['system_field']):
-                                            try:
-                                                template_fields[value_map['zone_field']] = \
-                                                    system_fields[value_map['system_field']]
-                                                if val == 'SystemSupplyAirTemperature':
-                                                    template_fields[zone_field] = 'SupplyAirTemperature'
-                                                applied_value = True
-                                            except (ValueError, KeyError):
-                                                self.logger.warning(
-                                                    'Zone field {} does not exist for mapping'
-                                                    'values: {}'.format(value_map['zone_field'], value_map))
-            if not matched_system:
-                raise InvalidTemplateException(
-                    'Error: In {} ({}) No system was matched'
-                    .format(zone_template_type, template_name))
-            if not applied_value:
-                self.logger.info(
-                    'In {} ({}) System to zone mapping had no results'
-                    .format(zone_template_type, template_name))
-        except ValueError:
-            raise InvalidTemplateException(
-                "Error: Mapping of system to zone variables failed. zone_template: {}, "
-                "system template: {}".format(template_fields, system_templates))
-        return
-
     def run(self, input_epjson=None):
         """
         Execute HVAC Template process workflow
@@ -1634,25 +1551,19 @@ class HVACTemplate(EPJSON):
         self.epjson_process(epjson_ref=input_epjson)
         self.logger.info('##### PreProcessing Data #####')
         self._hvac_template_preprocess(epjson=self.input_epjson)
-        for zone_template_type, zone_templates in self.templates_zones.items():
-            for template_name, template_fields in zone_templates.items():
-                self._apply_system_fields_to_zone_template(
-                    zone_template_type=zone_template_type,
-                    template_name=template_name,
-                    template_fields=template_fields,
-                    system_templates=self.templates_systems)
         self.logger.info('##### Processing Thermostats #####')
         self.expanded_thermostats = self._expand_templates(
             templates=self.templates_thermostats,
             expand_class=ExpandThermostat)
-        self.logger.info('##### Processing Zones #####')
-        self.expanded_zones = self._expand_templates(
-            templates=self.templates_zones,
-            expand_class=ExpandZone)
         self.logger.info('##### Processing Systems #####')
         self.expanded_systems = self._expand_templates(
             templates=self.templates_systems,
             expand_class=ExpandSystem)
+        self.logger.info('##### Processing Zones #####')
+        self.expanded_zones = self._expand_templates(
+            templates=self.templates_zones,
+            expand_class=ExpandZone,
+            system_class_objects=self.expanded_systems)
         self.logger.info('##### Building Zone-Thermostat Connections #####')
         for _, zone_class_object in self.expanded_zones.items():
             self._create_zonecontrol_thermostat(zone_class_object=zone_class_object)

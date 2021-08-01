@@ -99,32 +99,6 @@ GlobalNames:
     ReturnOutlet: &ZoneReturnOutlet
       '{} Return Outlet'
 
-SystemToZoneMappings:
-  - zone_cooling_design_supply_air_temperature_input_method:
-      SystemSupplyAirTemperature:
-        system_field: cooling_design_supply_air_temperature
-        zone_field: zone_cooling_design_supply_air_temperature
-  - zone_heating_design_supply_air_temperature_input_method:
-      SystemSupplyAirTemperature:
-        system_field: heating_design_supply_air_temperature
-        zone_field: zone_heating_design_supply_air_temperature
-  - zone_cooling_design_supply_air_temperature_input_method:
-      SystemSupplyAirTemperature:
-        system_field: cooling_coil_design_setpoint
-        zone_field: zone_cooling_design_supply_air_temperature
-  - zone_heating_design_supply_air_temperature_input_method:
-      SystemSupplyAirTemperature:
-        system_field: heating_coil_design_setpoint
-        zone_field: zone_heating_design_supply_air_temperature
-  - zone_cooling_design_supply_air_temperature_input_method:
-      SystemSupplyAirTemperature:
-        system_field: cooling_coil_design_setpoint_temperature
-        zone_field: zone_cooling_design_supply_air_temperature
-  - zone_heating_design_supply_air_temperature_input_method:
-      SystemSupplyAirTemperature:
-        system_field: heating_coil_design_setpoint_temperature
-        zone_field: zone_heating_design_supply_air_temperature
-
 Objects:
   Common:
     Objects:
@@ -4671,7 +4645,11 @@ OptionTree:
                             AirLoop:
                               Inlet: False
                               Outlet: outlet_node_name
-                      - Fan:ConstantVolume: *FanConstantVolumeSuperObject
+                      - Fan:ConstantVolume:
+                          Fields:
+                            <<: *FanConstantVolumeFields
+                            availability_schedule_name: '{system_availability_schedule_name}' # transitioned from system object
+                          Connectors: *FanConstantVolumeConnectors
                     Transitions:
                       - *FanCommonTransitionsSupply
                       - *FanCommonTransitionsPIU
@@ -4684,6 +4662,7 @@ OptionTree:
                           Fields:
                             <<: *FanConstantVolumeFields
                             air_inlet_node_name: *ZoneReturn
+                            availability_schedule_name: '{system_availability_schedule_name}' # transitioned from system object
                           Connectors:
                             AirLoop: False
                       - AirLoopHVAC:ZoneMixer:
@@ -7285,7 +7264,9 @@ OptionTree:
             - *SystemCommonBuildPathActionsVariableVolumeFan
         BaseObjects:
           Objects: *SystemCommonBaseObjectsVariableVolume
-          Transitions: *ControllerOutdoorAirCommonTransitions
+          Transitions:
+            - *ControllerOutdoorAirCommonTransitions
+            - *SizingSystemCommonTransitions
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle

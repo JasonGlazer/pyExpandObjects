@@ -83,7 +83,8 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.25,
-            epjson_output['AirTerminal:SingleDuct:SeriesPIU:Reheat']['SPACE1-1 Series PIU Reheat']['minimum_primary_air_flow_fraction'])
+            epjson_output['AirTerminal:SingleDuct:SeriesPIU:Reheat']['SPACE1-1 Series PIU Reheat'][
+                'minimum_primary_air_flow_fraction'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:flow_type_series")
@@ -92,7 +93,8 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
             'flow_type'] = 'Series'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:SeriesPIU:Reheat'].get('SPACE1-1 Series PIU Reheat'))
         return
 
@@ -102,8 +104,10 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
             'flow_type'] = 'Parallel'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ParallelPIU:Reheat'].get('SPACE1-1 Parallel PIU Reheat'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ParallelPIU:Reheat'].get(
+            'SPACE1-1 Parallel PIU Reheat'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:flow_type_series_from_plenum")
