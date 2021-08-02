@@ -6968,7 +6968,7 @@ OptionTree:
                       dehumidifying_relative_humidity_setpoint_schedule_name: HVACTemplate-Always100
                       humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_relative_humidity_setpoint}'
                       zone_name: '{humidifier_control_zone_name}'
-      PackagedVAV:
+      PackagedVAV: &HVACTemplateSystemPackagedVAV
         BuildPath:
           BaseObjects:
           Actions:
@@ -7252,24 +7252,7 @@ OptionTree:
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
-      VAV:
-        BuildPath:
-          BaseObjects:
-            Objects: *SystemCommonBuildPathObjects
-          Actions:
-            - *SystemCommonBuildPathActionsHeatingCoilAfterMixer
-            - *SystemCommonBuildPathActionsHeatRecovery
-            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
-            - *SystemCommonBuildPathActionsVariableVolumeFan
-        BaseObjects:
-          Objects: *SystemCommonBaseObjectsVariableVolume
-          Transitions:
-            - *ControllerOutdoorAirCommonTransitions
-            - *SizingSystemCommonTransitions
-        TemplateObjects:
-          airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
-          night_cycle_control: *SystemCommonTemplateObjectsNightCycle
-          <<: *SystemCommonTemplateObjectsVAV
+      VAV: *HVACTemplateSystemPackagedVAV
       VRF:
         BaseObjects:
         TemplateObjects:
