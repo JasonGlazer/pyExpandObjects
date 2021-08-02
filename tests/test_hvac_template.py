@@ -907,7 +907,7 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             }
         }
         st = {
-            'HVACTemplate:System:VAV': {
+            'HVACTemplate:System:PackagedVAV': {
                 'System Template 1': {
                     'cooling_design_supply_air_temperature': 14.0
                 }

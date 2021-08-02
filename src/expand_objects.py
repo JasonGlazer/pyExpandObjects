@@ -873,7 +873,9 @@ class ExpandObjects(EPJSON):
                             epjson=reference_epjson,
                             field_name=field_name,
                             input_value=field_value)
+                        generated_output = False
                         for ig in input_generator:
+                            generated_output = True
                             # if None was returned as the value, pop the key out of the dictionary and skip it.
                             # use the zero comparison to specifically pass that number.  The 'is not None' clause is
                             # not used here as this is more strict.
@@ -892,6 +894,14 @@ class ExpandObjects(EPJSON):
                                 object_fields[ig['field']] = ig['value']
                             else:
                                 object_fields.pop(ig['field'])
+                        # The second half of the if statement is mainly for testing cases that have
+                        # object type Mock and no complex input information.  Otherwise, all mock tests
+                        # that hit this section fail with this exception.
+                        if not generated_output and isinstance(field_value, (dict, list)):
+                            raise PyExpandObjectsYamlStructureException(
+                                "Error: in {} ({}) The complex input ({}) was not resolved for "
+                                "the field {} in the {} object"
+                                .format(self.template_type, self.template_name, field_value, field_name, object_type))
         # if a schedule dictionary was created, add it to the class epjson
         if schedule_dictionary:
             self.merge_epjson(

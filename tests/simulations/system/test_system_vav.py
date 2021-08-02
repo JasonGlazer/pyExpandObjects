@@ -19,11 +19,13 @@ class TestSimulationsSystemVAV(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:Return Fan")
-    def test_return_fan(self):
-        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1']['return_fan'] = 'Yes'
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:system_availability_schedule_name")
+    def test_system_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1']['system_availability_schedule_name'] = 'OCCUPY-1'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        # todo_eo: write assert statement
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Fan:VariableVolume']['DXVAV Sys 1 Supply Fan']['availability_schedule_name'])
         return

@@ -765,7 +765,7 @@ Objects:
               maximum_reheat_air_temperature: '{maximum_reheat_air_temperature}'
           Transitions: &AirTerminalSingleDuctVAVCommonTransitions
             - AirTerminal:.*:
-                supply_air_maximum_flow_rate: maximum_air_flow_rate
+#                supply_air_maximum_flow_rate: maximum_air_flow_rate # Set this in Sizing:Zone
                 damper_heating_action: damper_heating_action
         HeatAndCool:
           Common:
