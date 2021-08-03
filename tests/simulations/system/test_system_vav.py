@@ -404,7 +404,7 @@ class TestSimulationsSystemVAV(BaseSimulationTest):
             epjson_output['Coil:Heating:Fuel']['VAV Sys 1 Heating Coil']['parasitic_electric_load'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:prheat_coil_type_none")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:preheat_coil_type_none")
     def test_preheat_coil_type_none(self):
         self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
             'preheat_coil_type'] = 'None'
@@ -416,7 +416,7 @@ class TestSimulationsSystemVAV(BaseSimulationTest):
             epjson_output['Coil:Heating:Water'].get('VAV Sys 1 Preheat Coil'))
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:prheat_coil_type_hot_water")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:preheat_coil_type_hot_water")
     def test_preheat_coil_type_hot_water(self):
         self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
             'preheat_coil_type'] = 'HotWater'
@@ -429,7 +429,7 @@ class TestSimulationsSystemVAV(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:"
-                                              "prheat_coil_type_hot_water_heat_recovery_type_sensible")
+                                              "preheat_coil_type_hot_water_heat_recovery_type_sensible")
     def test_preheat_coil_type_none_heat_recovery_type_sensible(self):
         self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
             'preheat_coil_type'] = 'None'
@@ -444,7 +444,7 @@ class TestSimulationsSystemVAV(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:"
-                                              "prheat_coil_type_hot_water_heat_recovery_type_enthalpy")
+                                              "preheat_coil_type_hot_water_heat_recovery_type_enthalpy")
     def test_preheat_coil_type_none_heat_recovery_type_enthalpy(self):
         self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
             'preheat_coil_type'] = 'None'
@@ -459,8 +459,11 @@ class TestSimulationsSystemVAV(BaseSimulationTest):
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:"
-                                              "prheat_coil_type_hot_water_heat_recovery_type_sensible")
+                                              "preheat_coil_type_hot_water_heat_recovery_type_sensible")
     def test_preheat_coil_type_hot_water_heat_recovery_type_sensible(self):
+        # todo_eo: OutdoorAirSystem:EquipmentList for EO has a different order of components, and does not appear to
+        #  travel in air flow path.  There is a slight variation, test if the order changes anything and report
+        #  regardless
         self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
             'preheat_coil_type'] = 'HotWater'
         self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
@@ -471,4 +474,91 @@ class TestSimulationsSystemVAV(BaseSimulationTest):
             '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(
             epjson_output['Coil:Heating:Water'].get('VAV Sys 1 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('VAV Sys 1 Heat Recovery'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:"
+                                              "preheat_coil_type_hot_water_heat_recovery_type_enthalpy")
+    def test_preheat_coil_type_hot_water_heat_recovery_type_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
+            'preheat_coil_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Water'].get('VAV Sys 1 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('VAV Sys 1 Heat Recovery'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:"
+                                              "preheat_coil_type_electric_heat_recovery_type_sensible")
+    def test_preheat_coil_type_electric_heat_recovery_type_sensible(self):
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
+            'preheat_coil_type'] = 'Electric'
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Electric'].get('VAV Sys 1 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('VAV Sys 1 Heat Recovery'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:"
+                                              "preheat_coil_type_electric_heat_recovery_type_enthalpy")
+    def test_preheat_coil_type_electric_heat_recovery_type_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
+            'preheat_coil_type'] = 'Electric'
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Electric'].get('VAV Sys 1 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('VAV Sys 1 Heat Recovery'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:"
+                                              "preheat_coil_type_gas_heat_recovery_type_sensible")
+    def test_preheat_coil_type_gas_heat_recovery_type_sensible(self):
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
+            'preheat_coil_type'] = 'Gas'
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Fuel'].get('VAV Sys 1 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('VAV Sys 1 Heat Recovery'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:"
+                                              "preheat_coil_type_gas_heat_recovery_type_enthalpy")
+    def test_preheat_coil_type_gas_heat_recovery_type_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
+            'preheat_coil_type'] = 'Gas'
+        self.base_epjson['HVACTemplate:System:VAV']['VAV Sys 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Fuel'].get('VAV Sys 1 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('VAV Sys 1 Heat Recovery'))
         return

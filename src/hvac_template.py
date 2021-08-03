@@ -1612,7 +1612,8 @@ class HVACTemplate(EPJSON):
             *[j.epjson for i, j in self.expanded_plant_loops.items()],
             *[j.epjson for i, j in self.expanded_plant_equipment.items()]]
         output_epjson = {}
-        # todo_eo: unique name override enabled due to ObjectReference templates having the base equipment in them as well.
+        # todo_eo: unique name override enabled due to ObjectReference templates
+        #  having the base equipment in them as well.
         #  look into better solution to turn this back off
         for merge_dictionary in merge_list:
             self.merge_epjson(
