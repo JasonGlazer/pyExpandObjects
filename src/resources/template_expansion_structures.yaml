@@ -670,7 +670,8 @@ Objects:
             Transitions: &AirTerminalSingleDuctParallelPIUReheatCommonTransitions
               - AirTerminal:SingleDuct:ParallelPIU:Reheat:
                   parallel_fan_on_flow_fraction: fan_on_flow_fraction
-#                  primary_supply_air_maximum_flow_rate: maximum_primary_air_flow_rate # Only set this value in Sizing:Zone
+#                  primary_supply_air_maximum_flow_rate:
+#                    maximum_primary_air_flow_rate: '{primary_supply_air_maximum_flow_rate} / 1' # Only set this in Sizing:zone
                   primary_supply_air_minimum_flow_fraction: minimum_primary_air_flow_fraction
                   secondary_supply_air_maximum_flow_rate: maximum_secondary_air_flow_rate
           Base:
@@ -681,12 +682,12 @@ Objects:
                   Location: Fan:.*
                   ValueLocation: key
               fan_on_flow_fraction: Autosize
+              maximum_primary_air_flow_rate: Autosize
               maximum_hot_water_or_steam_flow_rate: Autosize # unstable results if not included
               outlet_node_name:
                 BuildPathReference:
                   Location: -1
                   ValueLocation: Outlet
-              primary_supply_air_maximum_flow_rate: Autosize # template default
               reheat_coil_air_inlet_node_name:
                 BuildPathReference:
                   Location: AirLoopHVAC:ZoneMixer

@@ -128,6 +128,7 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:minimum_inputs")
     def test_minimum_inputs(self):
+        # todo_eo: HotWater is default heating coil type, but legacy creates a system with the 'None' option.
         self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 1'][
             'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
         self.base_epjson['HVACTemplate:Zone:ConstantVolume']['HVACTemplate:Zone:ConstantVolume 2'][

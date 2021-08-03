@@ -1483,7 +1483,7 @@ class TestSimulationsSystemPackagedVAV(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('DXVAV Sys 1 Humidifier'))
         self.assertEqual(
             'HVACTemplate-Always29.0',
-            epjson_output['ZoneControl:Humidistat']['DXVAV Sys 1 humidification Humidistat'][
+            epjson_output['ZoneControl:Humidistat']['DXVAV Sys 1 Humidification Humidistat'][
                 'humidifying_relative_humidity_setpoint_schedule_name'])
         return
 
