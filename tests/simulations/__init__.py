@@ -257,9 +257,9 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             # compare epjsons by summary count
             if compare_epjson_files:
                 expanded_base_file = self.expand_idf(base_idf_test_file_path)
-                comparison_base_epjson = self.convert_file(
+                comparison_base_epjson_file_path = self.convert_file(
                     str(test_dir / '..' / 'simulation' / 'test' / expanded_base_file))
-                with open(comparison_base_epjson, 'r') as f:
+                with open(comparison_base_epjson_file_path, 'r') as f:
                     comparison_base_epjson = json.load(f)
                 with open(test_input_file_path, 'r') as f:
                     comparison_test_epjson = json.load(f)
@@ -452,7 +452,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     on=['Date/Time', 'variable'])
                 test_df['diff'] = abs(test_df['value_x'] - test_df['value_y']) / np.maximum(1, test_df['value_x'])
                 # Filter out low percentage differences
-                test_filtered_df = test_df.loc[test_df['diff'] > 0.0001].copy()
+                test_filtered_df = test_df.loc[test_df['diff'] > 0.0000001].copy()
                 test_filtered_df.rename(columns={
                     "value_x": os.path.basename(simulation_files[energy_idx]),
                     "value_y": os.path.basename(simulation_files[i])
