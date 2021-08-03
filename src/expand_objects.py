@@ -442,7 +442,10 @@ class ExpandObjects(EPJSON):
                                                 # are present.  regex match is to avoid any operator symbols used in
                                                 # variable names, but not intended for evaluation, e.g. HVACTemplate-Always
                                                 if re.match(r'.*[a-zA-Z]\s*[-+/*]\s*[a-zA-Z].*', object_val):
-                                                    object_value = object_val
+                                                    if '{' in object_val:
+                                                        object_value = object_val.replace('{', '{0.').format(self)
+                                                    else:
+                                                        object_value = object_val
                                                 elif any(i in ['*', '+', '/', '-'] for i in object_val) and '{' in object_val:
                                                     # Add '0.' for accessing class object attributes
                                                     try:
@@ -1988,7 +1991,7 @@ class HeatingCoilSetpointControlTypeDetailed:
             obj._heating_coil_setpoint_control_type_detailed = value
         else:
             (template_type, template_structure), = value.items()
-            (_, template_fields), = template_structure.items()
+            (template_name, template_fields), = template_structure.items()
             heating_coil_type = None if template_fields.get('heating_coil_type', 'None') == 'None' else \
                 template_fields.get('heating_coil_type')
             if not heating_coil_type:
@@ -2014,19 +2017,19 @@ class HeatingCoilSetpointControlTypeDetailed:
                         getattr(obj, 'heating_coil_design_setpoint', None) and \
                         getattr(obj, 'heating_coil_design_setpoint') > getattr(obj, 'preheat_coil_design_setpoint'):
                     obj.logger.warning(
-                        'Warning:  In {}'
+                        'Warning:  In {} ({})'
                         ' the Heating Coil Design Setpoint is greater than the Preheat Coil Design Setpoint,'
                         ' but Heating Coil Type=None. Using Preheat Coil Design Setpoint for the Sizing:System'
-                        ' Central Heating Design Supply Air Temperature.'.format(template_type))
+                        ' Central Heating Design Supply Air Temperature.'.format(template_type, template_name))
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
                 elif getattr(obj, 'preheat_coil_design_setpoint', None) and \
                         getattr(obj, 'preheat_coil_type', 'None') == 'None':
                     obj.logger.warning(
-                        'Warning:  In {}'
+                        'Warning:  In {} ({})'
                         ' there is no Heating Coil and no Preheat Coil.'
                         ' The Preheat Coil Design Setpoint will be used for the Sizing:System'
                         ' Central Heating Design Supply Air Temperature. This will be the inlet air temperature for'
-                        ' sizing reheat coils.')
+                        ' sizing reheat coils.'.format(template_type, template_name))
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
                 elif getattr(obj, 'preheat_coil_design_setpoint', None):
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)

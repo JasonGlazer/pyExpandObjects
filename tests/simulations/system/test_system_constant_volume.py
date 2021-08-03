@@ -820,7 +820,10 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             'preheat_coil_type'] = 'HotWater'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Water'].get('AHU 1 Spaces 1-4 Preheat Coil'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_electric")
@@ -829,7 +832,10 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             'preheat_coil_type'] = 'Electric'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Electric'].get('AHU 1 Spaces 1-4 Preheat Coil'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_electric")
@@ -838,7 +844,40 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             'preheat_coil_type'] = 'Gas'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Fuel'].get('AHU 1 Spaces 1-4 Preheat Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_none"
+                                              "_heat_recovery_sensible")
+    def test_preheat_coil_type_none_heat_recovery_sensible(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'None'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('AHU 1 Spaces 1-4 Heat Recovery'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_none"
+                                              "_heat_recovery_enthalpy")
+    def test_preheat_coil_type_none_heat_recovery_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'preheat_coil_type'] = 'None'
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('AHU 1 Spaces 1-4 Heat Recovery'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_hot_water"
@@ -850,7 +889,12 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             'heat_recovery_type'] = 'Sensible'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Water'].get('AHU 1 Spaces 1-4 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('AHU 1 Spaces 1-4 Heat Recovery'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_electric"
@@ -862,7 +906,12 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             'heat_recovery_type'] = 'Sensible'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Electric'].get('AHU 1 Spaces 1-4 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('AHU 1 Spaces 1-4 Heat Recovery'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_gas"
@@ -874,7 +923,12 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             'heat_recovery_type'] = 'Sensible'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Fuel'].get('AHU 1 Spaces 1-4 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('AHU 1 Spaces 1-4 Heat Recovery'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_hot_water"
@@ -886,7 +940,12 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             'heat_recovery_type'] = 'Enthalpy'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Water'].get('AHU 1 Spaces 1-4 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('AHU 1 Spaces 1-4 Heat Recovery'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_electric"
@@ -898,7 +957,12 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             'heat_recovery_type'] = 'Enthalpy'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Electric'].get('AHU 1 Spaces 1-4 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('AHU 1 Spaces 1-4 Heat Recovery'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_type_gas"
@@ -910,7 +974,12 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             'heat_recovery_type'] = 'Enthalpy'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Fuel'].get('AHU 1 Spaces 1-4 Preheat Coil'))
+        self.assertIsNotNone(
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent'].get('AHU 1 Spaces 1-4 Heat Recovery'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:preheat_coil_availability_schedule_name")
@@ -1433,7 +1502,7 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('AHU 1 Spaces 1-4 Humidifier'))
         self.assertEqual(
             'HVACTemplate-Always29.0',
-            epjson_output['ZoneControl:Humidistat']['AHU 1 Spaces 1-4 humidification Humidistat'][
+            epjson_output['ZoneControl:Humidistat']['AHU 1 Spaces 1-4 Humidification Humidistat'][
                 'humidifying_relative_humidity_setpoint_schedule_name'])
         return
 
@@ -1483,7 +1552,7 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('AHU 1 Spaces 1-4 Humidifier'))
         self.assertEqual(
             'Always29',
-            epjson_output['ZoneControl:Humidistat']['AHU 1 Spaces 1-4 humidification Humidistat'][
+            epjson_output['ZoneControl:Humidistat']['AHU 1 Spaces 1-4 Humidification Humidistat'][
                 'humidifying_relative_humidity_setpoint_schedule_name'])
         return
 

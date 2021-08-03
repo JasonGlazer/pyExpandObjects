@@ -5814,7 +5814,7 @@ OptionTree:
                 Objects:
                   - ZoneControl:Humidistat:
                       <<: *ZoneControlHumidistat
-                      name: '{} humidification Humidistat'
+                      name: '{} Humidification Humidistat'
                       zone_name: '{humidifier_control_zone_name}'
                       humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_relative_humidity_setpoint}'
                 Transitions:
@@ -5822,6 +5822,7 @@ OptionTree:
                       humidifier_setpoint:
                         humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_setpoint}'
                       humidifying_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
+                      humidifier_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
               DehumidificationAndHumidification:
                 Objects:
                   - ZoneControl:Humidistat:
@@ -5836,8 +5837,9 @@ OptionTree:
                         dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
                       humidifier_setpoint:
                         humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_setpoint}'
-                      dehumidification_relative_humidity_setpoint_schedule_name: dehumidifying_relative_humidity_setpoint_schedule_name
+                      dehumidifiying_relative_humidity_setpoint_schedule_name: dehumidifying_relative_humidity_setpoint_schedule_name
                       humidifying_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
+                      humidifier_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
             dehumidification_control_type: &SystemCommonTemplateObjectsDehumidificationControlType
               CoolReheat:
                 Objects:
@@ -5859,58 +5861,6 @@ OptionTree:
                 Objects:
                   - SetpointManager:SingleZone:Humidity:Minimum: *SetpointManagerSingleZoneHumidityMinimum
           ConstantVolume:
-            outside_air_equipment_type: &SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentType
-              None:
-              HotWaterPreheat:
-              ElectricPreheat:
-              GasPreheat:
-              HotWaterPreheatSensibleHR: &SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
-                Objects:
-                  - SetpointManager:Scheduled:
-                      <<: *SetpointManager
-                      name: '{} Heat Recovery Air Temp Manager'
-                      schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
-                      setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
-                  - HeatExchanger:AirToAir:SensibleAndLatent:
-                      <<: *HeatExchangerAirToAirSensibleAndLatentFields
-#                      economizer_lockout: 'Yes'
-                      latent_effectiveness_at_75_cooling_air_flow: 0
-                      latent_effectiveness_at_75_heating_air_flow: 0
-                      latent_effectiveness_at_100_cooling_air_flow: 0
-                      latent_effectiveness_at_100_heating_air_flow: 0
-                      nominal_electric_power: 250
-                      sensible_effectiveness_at_75_cooling_air_flow: 0.75
-                      sensible_effectiveness_at_75_heating_air_flow: 0.75
-                      sensible_effectiveness_at_100_cooling_air_flow: 0.7
-                      sensible_effectiveness_at_100_heating_air_flow: 0.7
-                Transitions:
-                  - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
-              ElectricPreheatSensibleHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
-              GasPreheatSensibleHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
-              HotWaterPreheatEnthalpyHR: &SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
-                Objects:
-                  - SetpointManager:Scheduled:
-                      <<: *SetpointManager
-                      name: '{} Heat Recovery Air Temp Manager'
-                      schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
-                      setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
-                  - HeatExchanger:AirToAir:SensibleAndLatent:
-                      <<: *HeatExchangerAirToAirSensibleAndLatentFields
-#                      economizer_lockout: 'Yes'
-                      latent_effectiveness_at_75_cooling_air_flow: 0.7
-                      latent_effectiveness_at_75_heating_air_flow: 0.7
-                      latent_effectiveness_at_100_cooling_air_flow: 0.65
-                      latent_effectiveness_at_100_heating_air_flow: 0.65
-                      sensible_effectiveness_at_75_cooling_air_flow: 0.75
-                      sensible_effectiveness_at_75_heating_air_flow: 0.75
-                      sensible_effectiveness_at_100_cooling_air_flow: 0.7
-                      sensible_effectiveness_at_100_heating_air_flow: 0.7
-                Transitions:
-                  - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
-              ElectricPreheatEnthalpyHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
-              GasPreheatEnthalpyHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
-              SensibleHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatSensibleHR
-              EnthalpyHR: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentTypeHotWaterPreheatEnthalpyHR
             economizer_type_detailed: &SystemCommonTemplateObjectsConstantVolumeEconomizerType
               None: &SystemCommonTemplateObjectsConstantVolumeEconomizerTypeNone
                 Objects:
@@ -6476,14 +6426,7 @@ OptionTree:
                       outdoor_low_temperature: -6.7
                       setpoint_at_outdoor_high_temperature: 4.8
                       setpoint_at_outdoor_low_temperature: '{heating_coil_design_setpoint}'
-          VAV: &SystemCommonTemplateObjectsVAV
-            cooling_coil_setpoint_reset_type:
-              None:
-                Objects:
-                  - SetpointManager:Scheduled: *SetpointManagerScheduledCooling
-              WarmestTemperatureFirst:
-                Objects:
-                  - SetpointManager:WarmestTemperatureFlow: *SetpointManagerWarmestTemperatureFlow
+          VAV:
       ConstantVolume:
         BuildPath:
           BaseObjects:
@@ -6516,7 +6459,47 @@ OptionTree:
                 - SetpointManager:MixedAir: *SetpointManagerMixedAirCooling
           cooling_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
           heating_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
-          outside_air_equipment_type: *SystemCommonTemplateObjectsConstantVolumeOutsideAirEquipmentType
+          heat_recovery_type:
+            None:
+            Sensible:
+              Objects:
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManager
+                    name: '{} Heat Recovery Air Temp Manager'
+                    schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
+                - HeatExchanger:AirToAir:SensibleAndLatent:
+                    <<: *HeatExchangerAirToAirSensibleAndLatentFields
+                    latent_effectiveness_at_75_cooling_air_flow: 0
+                    latent_effectiveness_at_75_heating_air_flow: 0
+                    latent_effectiveness_at_100_cooling_air_flow: 0
+                    latent_effectiveness_at_100_heating_air_flow: 0
+                    nominal_electric_power: 250
+                    sensible_effectiveness_at_75_cooling_air_flow: 0.75
+                    sensible_effectiveness_at_75_heating_air_flow: 0.75
+                    sensible_effectiveness_at_100_cooling_air_flow: 0.7
+                    sensible_effectiveness_at_100_heating_air_flow: 0.7
+              Transitions:
+                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
+            Enthalpy:
+              Objects:
+                - SetpointManager:Scheduled:
+                    <<: *SetpointManager
+                    name: '{} Heat Recovery Air Temp Manager'
+                    schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
+                - HeatExchanger:AirToAir:SensibleAndLatent:
+                    <<: *HeatExchangerAirToAirSensibleAndLatentFields
+                    latent_effectiveness_at_75_cooling_air_flow: 0.7
+                    latent_effectiveness_at_75_heating_air_flow: 0.7
+                    latent_effectiveness_at_100_cooling_air_flow: 0.65
+                    latent_effectiveness_at_100_heating_air_flow: 0.65
+                    sensible_effectiveness_at_75_cooling_air_flow: 0.75
+                    sensible_effectiveness_at_75_heating_air_flow: 0.75
+                    sensible_effectiveness_at_100_cooling_air_flow: 0.7
+                    sensible_effectiveness_at_100_heating_air_flow: 0.7
+              Transitions:
+                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
       DedicatedOutdoorAir:
         BuildPath:
           BaseObjects:
@@ -6972,22 +6955,7 @@ OptionTree:
         BuildPath:
           BaseObjects:
           Actions:
-            - heat_recovery_type: # Must be first in list because it sets the OutdoorAir:Mixer
-                None:
-                  Location: 0
-                  ActionType: Insert
-                  Objects:
-                    - OutdoorAir:Mixer: *OutdoorAirMixerSuperObject
-                Sensible: &PackagedVAVBuildPathOutsideAirEquipmenttypeSensibleHROAMixer
-                  Location: 0
-                  ActionType: Insert
-                  Objects:
-                    - OutdoorAir:Mixer:
-                        Fields:
-                          <<: *OutdoorAirMixerFields
-                          outdoor_air_stream_node_name: '{} Heat Recovery Supply Outlet'
-                        Connectors: *OutdooAirMixerConnectors
-                Enthalpy: *PackagedVAVBuildPathOutsideAirEquipmenttypeSensibleHROAMixer
+            - outside_air_equipment_type: *SystemCommonBuildPathActionsOutsideAirEquipmentOutdoorAirMixer # Must be first in list because it sets the OutdoorAir:Mixer
             - heating_coil_type: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixer
             - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilType
             - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardObjects2
@@ -6996,6 +6964,7 @@ OptionTree:
             - supply_fan_placement: *SystemCommonBuildPathActionsVariableVolumeFanSupplyFan
             - return_fan: *SystemCommonBuildPathActionsVariableVolumeFanReturnFan
             - humidifier_type: *SystemCommonBuildPathActionsConstantVolumeHumidifierType
+            - outside_air_equipment_type: *SystemCommonBuildPathActionsOutsideAirEquipment
         BaseObjects:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
