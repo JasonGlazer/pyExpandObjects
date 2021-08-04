@@ -816,6 +816,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     "HVACTemplate:System:VAV": {
                         "VAV Sys 1": {
                             'preheat_coil_type': 'None',
+                            'heating_coil_design_setpoint': 2,  # Needs to be specified to override default value
                             'preheat_coil_design_setpoint': 7
                         }
                     }

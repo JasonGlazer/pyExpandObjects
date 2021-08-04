@@ -116,7 +116,8 @@ schedule_objects = {
 class TestSimulationsSystemVAV(BaseSimulationTest):
     def setUp(self):
         self.ej = EPJSON()
-        base_idf_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled.idf')
+        base_idf_file_path = test_dir.joinpath(
+            '..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneVAVWaterCooled.idf')
         base_copy_file_path = self._copy_to_test_directory(base_idf_file_path)
         # read in base file, then edit inputs for alternate tests
         self.base_epjson = self.get_epjson_object_from_idf_file(base_copy_file_path)
@@ -124,6 +125,32 @@ class TestSimulationsSystemVAV(BaseSimulationTest):
         return
 
     def teardown(self):
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:minimum_inputs")
+    def test_minimum_inputs(self):
+        self.base_epjson['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 2'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 3'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 4'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 5'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:System:VAV'].pop('VAV Sys 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:System:VAV': {
+                    'VAV Sys 1': {
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:system_availability_schedule_name")

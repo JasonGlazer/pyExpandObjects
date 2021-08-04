@@ -262,26 +262,49 @@ class HVACTemplate(EPJSON):
                         'HVACTemplate:System:ConstantVolume': {
                             'cooling_coil_type': 'ChilledWater',
                             'cooling_coil_design_setpoint_temperature': 12.8,
+                            'cooling_coil_setpoint_at_outdoor_dry_bulb_low': 15.6,
+                            'cooling_coil_reset_outdoor_dry_bulb_low': 15.6,
+                            'cooling_coil_setpoint_at_outdoor_dry_bulb_high': 12.8,
+                            'cooling_coil_reset_outdoor_dry_bulb_high': 23.3,
                             'economizer_type': 'NoEconomizer',
                             'heating_coil_type': 'HotWater',
                             'heating_coil_design_setpoint': 10,
-                            'supply_fan_placement': 'DrawThrough',
+                            'heating_coil_setpoint_at_outdoor_dry_bulb_low': 15.0,
+                            'heating_coil_reset_outdoor_dry_bulb_low': 7.8,
+                            'heating_coil_setpoint_at_outdoor_dry_bulb_high': 12.2,
+                            'heating_coil_reset_outdoor_dry_bulb_high': 12.2
                         },
                         'HVACTemplate:System:DedicatedOutdoorAir': {
                             'air_outlet_type': 'DirectIntoZone',
                             'cooling_coil_type': 'ChilledWater',
-                            'heating_coil_type': 'HotWater',
-                            'supply_fan_placement': 'DrawThrough',
                             'cooling_coil_design_setpoint_temperature': 12.8,
-                            'heating_coil_design_setpoint': 12.2
+                            'cooling_coil_setpoint_at_outdoor_dry_bulb_low': 15.6,
+                            'cooling_coil_reset_outdoor_dry_bulb_low': 15.6,
+                            'cooling_coil_setpoint_at_outdoor_dry_bulb_high': 12.8,
+                            'cooling_coil_reset_outdoor_dry_bulb_high': 23.3,
+                            'dx_cooling_coil_gross_rated_cop': 3.0,
+                            'heating_coil_type': 'HotWater',
+                            'heating_coil_design_setpoint': 12.2,
+                            'heating_coil_setpoint_at_outdoor_dry_bulb_low': 15.0,
+                            'heating_coil_reset_outdoor_dry_bulb_low': 7.8,
+                            'heating_coil_setpoint_at_outdoor_dry_bulb_high': 12.2,
+                            'heating_coil_reset_outdoor_dry_bulb_high': 12.2,
+                            'humidifier_rated_capacity': 1e-06,
+                            'humidifier_constant_setpoint': 0.003
                         },
                         'HVACTemplate:System:PackagedVAV': {
                             'cooling_coil_type': 'TwoSpeedDX',
                             'cooling_coil_design_setpoint': 12.8,
+                            'cooling_coil_gross_rated_cop': 3.0,
                             'heating_coil_design_setpoint': 10
                         },
                         'HVACTemplate:System:VAV': {
-                            'preheat_coil_design_setpoint': 7.2
+                            'cooling_coil_type': 'ChilledWater',
+                            'cooling_coil_design_setpoint': 12.8,
+                            'heating_coil_type': 'None',
+                            'heating_coil_design_setpoint': 10,
+                            'preheat_coil_design_setpoint': 7.2,
+                            'humidifier_rated_capacity': 1e-06
                         },
                         'HVACTemplate:System:Unitary': {
                             'preheat_coil_design_setpoint': 7.0
