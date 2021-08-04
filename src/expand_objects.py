@@ -2180,9 +2180,10 @@ class ExpandSystem(ExpandObjects):
         super().__init__(template=template, logger_level=logger_level)
         # map variable variants to common value and remove original
         self.rename_attribute('cooling_coil_design_setpoint_temperature', 'cooling_coil_design_setpoint')
-        self.rename_attribute('economizer_upper_temperature_limit', 'economizer_maximum_limit_dry_bulb_temperature')
-        self.rename_attribute('economizer_lower_temperature_limit', 'economizer_minimum_limit_dry_bulb_temperature')
-        self.rename_attribute('economizer_upper_enthalpy_limit', 'economizer_maximum_limit_enthalpy')
+        # These items are removed since they require little work to apply in yaml
+        # self.rename_attribute('economizer_upper_temperature_limit', 'economizer_maximum_limit_dry_bulb_temperature')
+        # self.rename_attribute('economizer_lower_temperature_limit', 'economizer_minimum_limit_dry_bulb_temperature')
+        # self.rename_attribute('economizer_upper_enthalpy_limit', 'economizer_maximum_limit_enthalpy')
         self.unique_name = self.template_name
         self.epjson = epjson or self.epjson
         self.build_path = None

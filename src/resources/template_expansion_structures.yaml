@@ -2125,6 +2125,9 @@ Objects:
           - Controller:OutdoorAir:
               economizer_lockout: lockout_type
               economizer_type: economizer_control_type
+              economizer_upper_temperature_limit: economizer_maximum_limit_dry_bulb_temperature
+              economizer_lower_temperature_limit: economizer_minimum_limit_dry_bulb_temperature
+              economizer_upper_enthalpy_limit: economizer_maximum_limit_enthalpy
               maximum_outdoor_air_flow_rate: maximum_outdoor_air_flow_rate
               minimum_outdoor_air_flow_rate: minimum_outdoor_air_flow_rate
         Mappings: &ControllerOutdoorAirCommonMappings
@@ -6467,7 +6470,7 @@ OptionTree:
                 - SetpointManager:Scheduled:
                     <<: *SetpointManager
                     name: '{} Heat Recovery Air Temp Manager'
-                    schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    schedule_name: 'HVACTemplate-Always5'
                     setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
                 - HeatExchanger:AirToAir:SensibleAndLatent:
                     <<: *HeatExchangerAirToAirSensibleAndLatentFields
@@ -6482,12 +6485,17 @@ OptionTree:
                     sensible_effectiveness_at_100_heating_air_flow: 0.7
               Transitions:
                 - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
+                - SetpointManager:Scheduled:
+                    economizer_minimum_limit_dry_bulb_temperature:
+                      schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    economizer_lower_temperature_limit:
+                      schedule_name: 'HVACTemplate-Always{economizer_lower_temperature_limit}'
             Enthalpy:
               Objects:
                 - SetpointManager:Scheduled:
                     <<: *SetpointManager
                     name: '{} Heat Recovery Air Temp Manager'
-                    schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    schedule_name: 'HVACTemplate-Always5'
                     setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
                 - HeatExchanger:AirToAir:SensibleAndLatent:
                     <<: *HeatExchangerAirToAirSensibleAndLatentFields
@@ -6501,6 +6509,11 @@ OptionTree:
                     sensible_effectiveness_at_100_heating_air_flow: 0.7
               Transitions:
                 - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+                - SetpointManager:Scheduled:
+                    economizer_minimum_limit_dry_bulb_temperature:
+                      schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    economizer_lower_temperature_limit:
+                      schedule_name: 'HVACTemplate-Always{economizer_lower_temperature_limit}'
       DedicatedOutdoorAir:
         BuildPath:
           BaseObjects:
@@ -6985,7 +6998,7 @@ OptionTree:
                 - SetpointManager:Scheduled:
                     <<: *SetpointManager
                     name: '{} Heat Recovery Air Temp Manager'
-                    schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    schedule_name: 'HVACTemplate-Always5'
                     setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
                 - HeatExchanger:AirToAir:SensibleAndLatent:
                     <<: *HeatExchangerAirToAirSensibleAndLatentFields
@@ -7003,12 +7016,17 @@ OptionTree:
                     threshold_temperature: -1.1
               Transitions:
                 - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
+                - SetpointManager:Scheduled:
+                    economizer_minimum_limit_dry_bulb_temperature:
+                      schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    economizer_lower_temperature_limit:
+                      schedule_name: 'HVACTemplate-Always{economizer_lower_temperature_limit}'
             Enthalpy:
               Objects:
                 - SetpointManager:Scheduled:
                     <<: *SetpointManager
                     name: '{} Heat Recovery Air Temp Manager'
-                    schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    schedule_name: 'HVACTemplate-Always5'
                     setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
                 - HeatExchanger:AirToAir:SensibleAndLatent:
                     <<: *HeatExchangerAirToAirSensibleAndLatentFields
@@ -7024,6 +7042,11 @@ OptionTree:
                     sensible_effectiveness_at_100_heating_air_flow: 0.7
               Transitions:
                 - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+                - SetpointManager:Scheduled:
+                    economizer_minimum_limit_dry_bulb_temperature:
+                      schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                    economizer_lower_temperature_limit:
+                      schedule_name: 'HVACTemplate-Always{economizer_lower_temperature_limit}'
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           cooling_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsPackagedVAVCoolingCoilSetpointControlTypeDetailed
           heating_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsPackagedVAVHeatingCoilSetpointControlTypeDetailed

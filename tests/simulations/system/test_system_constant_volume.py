@@ -1118,13 +1118,40 @@ class TestSimulationsSystemConstantVolume(BaseSimulationTest):
             epjson_output['Controller:OutdoorAir']['AHU 1 Spaces 1-4 OA Controller']['economizer_control_type'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:economizer_type_fixed_dew_point_and_dry_bulb")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:economizer_type_differential_dry_bulb")
+    def test_economizer_type_differential_dry_bulb(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'economizer_type'] = 'DifferentialDryBulb'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'DifferentialDryBulb',
+            epjson_output['Controller:OutdoorAir']['AHU 1 Spaces 1-4 OA Controller']['economizer_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:economizer_type_differential_enthalpy")
+    def test_economizer_type_differential_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
+            'economizer_type'] = 'DifferentialEnthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'DifferentialEnthalpy',
+            epjson_output['Controller:OutdoorAir']['AHU 1 Spaces 1-4 OA Controller']['economizer_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:"
+                                              "economizer_type_fixed_dew_point_and_dry_bulb")
     def test_economizer_type_fixed_dew_point_and_dry_bulb(self):
         self.base_epjson['HVACTemplate:System:ConstantVolume']['AHU 1 Spaces 1-4'][
             'economizer_type'] = 'FixedDewPointAndDryBulb'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             'FixedDewPointAndDryBulb',
             epjson_output['Controller:OutdoorAir']['AHU 1 Spaces 1-4 OA Controller']['economizer_control_type'])
