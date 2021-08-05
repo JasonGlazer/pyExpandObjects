@@ -2438,7 +2438,7 @@ Objects:
               supply_fan_delta_pressure: design_pressure_rise
               supply_fan_motor_efficiency: motor_efficiency
               supply_fan_total_efficiency: fan_total_efficiency
-              supply_fan_motor_in_air_stream_fraction: motor_in_airstream_fraction
+              supply_fan_motor_in_air_stream_fraction: motor_in_air_stream_fraction
         Supply: &FanCommonTransitionsSupply
           - Fan:.*:
               fan_delta_pressure: pressure_rise
@@ -2470,7 +2470,6 @@ Objects:
         air_outlet_node_name: '{} Supply Fan Outlet' # required by schema
         availability_schedule_name: '{system_availability_schedule_name}'
 #        fan_power_minimum_flow_rate: # todo_eo: autosize is specified in template but only numbers allowed
-        motor_in_airstream_fraction: 1.0 # set by template
       Connectors: &FanConnectors
         AirLoop: *ConnectorsAirLoop
     ConstantVolume:
@@ -2478,6 +2477,7 @@ Objects:
         Fields: &FanConstantVolumeFields
           << : *FanFields
           maximum_flow_rate: Autosize
+          motor_in_airstream_fraction: 1.0 # set by template
           pressure_rise: 600
         Connectors: &FanConstantVolumeConnectors
           <<: *FanConnectors
@@ -2487,6 +2487,7 @@ Objects:
           <<: *FanFields
           fan_total_efficiency: 0.7
           maximum_flow_rate: Autosize
+          motor_in_airstream_fraction: 1.0 # set by template
           pressure_rise: 600
         Connectors: &FanOnOffConnectors
           <<: *FanConnectors
@@ -2499,6 +2500,7 @@ Objects:
           design_power_sizing_method: TotalEfficiencyAndPressure # set by legacy, not reachable by template, not default
           electric_power_minimum_flow_rate_fraction: 0 # set by legacy, not reachable by template, not default
           fan_total_efficiency: 0.7
+          motor_in_air_stream_fraction: 1
         Connectors: *FanConnectors
     VariableVolume:
       Base: &FanVariableVolumeSuperObject
@@ -2506,6 +2508,7 @@ Objects:
           << : *FanFields
           pressure_rise: 1000 # set by HVACTemplate:System:VAV template
           maximum_flow_rate: Autosize
+          motor_in_airstream_fraction: 1.0 # set by template
         Connectors: &FanVariableVolumeConnectors
           << : *FanConnectors
   HeaderedPumps:
@@ -5915,6 +5918,8 @@ OptionTree:
                       coefficient4_x_3: -1.8103e-06
                       maximum_value_of_x: 29.13
                       minimum_value_of_x: 16.6
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
               ElectronicEnthalpyDrawThrough:
                 Objects:
                   - *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedDrawThroughFixedDryBulbObjects
@@ -5926,6 +5931,8 @@ OptionTree:
                       coefficient4_x_3: -1.8103e-06
                       maximum_value_of_x: 29.13
                       minimum_value_of_x: 16.6
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
               DifferentialDryBulbAndEnthalpyBlowThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedBlowThroughFixedDryBulb
               DifferentialDryBulbAndEnthalpyDrawThrough: *SystemCommonTemplateObjectsConstantVolumeEconomizerTypeDetailedDrawThroughFixedDryBulb
             cooling_coil_setpoint_control_type_detailed: &SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType # created by descriptors
@@ -6376,6 +6383,8 @@ OptionTree:
                       coefficient4_x_3: -1.8103e-06
                       maximum_value_of_x: 29.13
                       minimum_value_of_x: 16.6
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
               ElectronicEnthalpyDrawThrough:
                 Objects:
                   - *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNoneObjects
@@ -6387,6 +6396,8 @@ OptionTree:
                       coefficient4_x_3: -1.8103e-06
                       maximum_value_of_x: 29.13
                       minimum_value_of_x: 16.6
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
               DifferentialDryBulbAndEnthalpyBlowThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNone
               DifferentialDryBulbAndEnthalpyDrawThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNone
             heating_coil_setpoint_type_detaild: &SystemCommonTemplateObjectsPackagedVAVHeatingCoilSetpointControlTypeDetailed
