@@ -1800,6 +1800,8 @@ class AirLoopHVACUnitaryObjectType:
             'None' else True
         if template_type == 'HVACTemplate:System:Unitary' and cooling_coil_type and heating_coil_type:
             obj._airloop_hvac_unitary_object_type = 'Furnace:HeatCool'
+        elif template_type == 'HVACTemplate:System:Unitary' and heating_coil_type:
+            obj._airloop_hvac_unitary_object_type = 'Furnace:HeatOnly'
         elif template_type == 'HVACTemplate:System:UnitaryHeatPump:AirToAir':
             obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
         elif template_type == 'HVACTemplate:System:UnitarySystem':
@@ -2609,11 +2611,20 @@ class ExpandSystem(ExpandObjects):
         equipment_lookup = (
             (
                 ['HVACTemplate:System:Unitary', ],
-                'AirLoopHVAC:Unitary:.*',
+                'AirLoopHVAC:Unitary:Furnace:HeatCool',
                 {'Inlet': 'furnace_air_inlet_node_name',
                  'Outlet': 'furnace_air_outlet_node_name'},
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
+                    ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
+                    ('Fan:.*', True)),
+                []),
+            (
+                ['HVACTemplate:System:Unitary', ],
+                'AirLoopHVAC:Unitary:Furnace:HeatOnly',
+                {'Inlet': 'furnace_air_inlet_node_name',
+                 'Outlet': 'furnace_air_outlet_node_name'},
+                (
                     ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
                     ('Fan:.*', True)),
                 []),
@@ -2696,7 +2707,8 @@ class ExpandSystem(ExpandObjects):
                         # if equipment is a CoilSystem:Cooling:Water then the air node fields need to be added just for
                         # the build path.  A better solution should be made in the future rather than hard-coding the
                         # names to the object.
-                        if self.template_type in ['HVACTemplate:System:DedicatedOutdoorAir', 'HVACTemplate:System:ConstantVolume']:
+                        if self.template_type in ['HVACTemplate:System:DedicatedOutdoorAir',
+                                                  'HVACTemplate:System:ConstantVolume']:
                             if equipment_regex == 'CoilSystem:Cooling:Water.*':
                                 if getattr(self, 'supply_fan_placement', None) == 'BlowThrough':
                                     equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \

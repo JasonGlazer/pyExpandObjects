@@ -476,22 +476,11 @@ Objects:
             supply_side_outlet_node_names: *SystemSupplySideOutletNodeList
     Unitary:
       Common:
-        Transitions: &AirLoopHVACUnitaryCommonTransitions
+        Transitions: &AirLoopHVACUnitaryCommonTransitionsHeating
           - AirLoopHVAC:Unitary.*:
               heating_supply_air_flow_rate: heating_supply_air_flow_rate
         Fields: &AirLoopHVACUnitaryCommonFields
           controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
-          cooling_coil_name:
-            BuildPathReference:
-              Location: Coil:Cooling.*
-              Occurrence: 1
-              ValueLocation: key
-          cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
-          cooling_coil_object_type:
-            BuildPathReference:
-              Location: Coil:Cooling.*
-              Occurrence: 1
-              ValueLocation: self
           heating_coil_name:
             BuildPathReference:
               Location: ^Coil:Heating:((?!Desuperheater).)*$
@@ -532,6 +521,17 @@ Objects:
           Fields:
             name: '{} Furnace with DX Cooling'
             <<: *AirLoopHVACUnitaryCommonFields
+            cooling_coil_name:
+              BuildPathReference:
+                Location: Coil:Cooling.*
+                Occurrence: 1
+                ValueLocation: key
+            cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
+            cooling_coil_object_type:
+              BuildPathReference:
+                Location: Coil:Cooling.*
+                Occurrence: 1
+                ValueLocation: self
             dehumidification_control_type: '{dehumidification_control_type}'
             furnace_air_inlet_node_name:
               BuildPathReference:
@@ -553,6 +553,31 @@ Objects:
             supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
           Connectors:
             AirLoop: False
+      HeatOnly:
+        Base: &AirLoopHVACUnitaryHeatOnlySuperObject
+          Fields:
+            name: '{} Furnace'
+            <<: *AirLoopHVACUnitaryCommonFields
+            furnace_air_inlet_node_name:
+              BuildPathReference:
+                Location: OutdoorAir:Mixer
+                ValueLocation: Outlet
+            furnace_air_outlet_node_name:
+              BuildPathReference:
+                Location: -1
+                ValueLocation: Outlet
+            maximum_supply_air_temperature: 80
+            supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
+            supply_fan_name:
+              BuildPathReference:
+                Location: Fan:.*
+                ValueLocation: key
+            supply_fan_object_type:
+              BuildPathReference:
+                Location: Fan:.*
+                ValueLocation: self
+          Connectors:
+            AirLoop: False
     UnitaryHeatPump:
       AirToAir:
         WithSupplemental: &AirLoopHVACUnitaryHeatPumpAirToAirWithSupplementalSuperObject
@@ -560,6 +585,17 @@ Objects:
             name: '{} Heat Pump'
             <<: *AirLoopHVACUnitaryCommonFields
             <<: *AirLoopHVACUnitaryCommonHeatPumpFields
+            cooling_coil_name:
+              BuildPathReference:
+                Location: Coil:Cooling.*
+                Occurrence: 1
+                ValueLocation: key
+            cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
+            cooling_coil_object_type:
+              BuildPathReference:
+                Location: Coil:Cooling.*
+                Occurrence: 1
+                ValueLocation: self
             supplemental_heating_coil_name:
               BuildPathReference:
                 Location: ^Coil:Heating:((?!Desuperheater).)*$
@@ -602,6 +638,17 @@ Objects:
         Fields:
           name: '{} Unitary System'
           <<: *AirLoopHVACUnitaryCommonFields
+          cooling_coil_name:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: 1
+              ValueLocation: key
+          cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
+          cooling_coil_object_type:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: 1
+              ValueLocation: self
           <<: *AirLoopHVACUnitarySystemCommonObjects
         Connectors:
           AirLoop: False
@@ -609,6 +656,17 @@ Objects:
         Fields:
           name: '{} Heat Pump'
           <<: *AirLoopHVACUnitaryCommonFields
+          cooling_coil_name:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: 1
+              ValueLocation: key
+          cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
+          cooling_coil_object_type:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: 1
+              ValueLocation: self
           <<: *AirLoopHVACUnitarySystemCommonObjects
           supplemental_heating_coil_name:
             BuildPathReference:
@@ -626,6 +684,17 @@ Objects:
         Fields:
           name: '{} Unitary System'
           <<: *AirLoopHVACUnitaryCommonFields
+          cooling_coil_name:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: 1
+              ValueLocation: key
+          cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
+          cooling_coil_object_type:
+            BuildPathReference:
+              Location: Coil:Cooling.*
+              Occurrence: 1
+              ValueLocation: self
           <<: *AirLoopHVACUnitarySystemCommonObjects
           design_specification_multispeed_object_name:
             UnitarySystemPerformance.*: key
@@ -3110,7 +3179,7 @@ Objects:
                   central_heating_maximum_system_air_flow_ratio: 0.3 # set by legacy, not default, required by schema
         Transitions:
           Base: &SizingSystemCommonTransitions
-            - Sizing:System: &SizingSystemCommonTransitionsFields
+            - Sizing:System:
                 cooling_coil_design_setpoint_temperature: central_cooling_design_supply_air_temperature
                 cooling_coil_design_setpoint: central_cooling_design_supply_air_temperature
                 cooling_design_supply_air_temperature: central_cooling_design_supply_air_temperature
@@ -3121,30 +3190,36 @@ Objects:
                 preheat_coil_design_setpoint: preheat_design_temperature
                 supply_fan_maximum_flow_rate:
                   cooling_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
-          Additional: &SizingSystemCommonTransitionsAdditional
             - Sizing:System:
-                <<: *SizingSystemCommonTransitionsFields
+                supply_fan_maximum_flow_rate:
+                  cooling_supply_air_flow_rate_method: 'Flow/System'
+          Additional: &SizingSystemCommonTransitionsAdditional
+            - *SizingSystemCommonTransitions
+            - Sizing:System:
                 dehumidification_setpoint: central_cooling_design_supply_air_humidity_ratio
           HeatingSupplyAirFlowRate: &SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
             - Sizing:System:
                 supply_fan_maximum_flow_rate:
                   heating_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
+            - Sizing:System:
+                supply_fan_maximum_flow_rate:
+                  heating_supply_air_flow_rate_method: 'Flow/System'
           DedicatedOutdoorAir: &SizingSystemCommonTransitionsDedicatedOutdoorAir
             - Sizing:System:
                 supply_fan_flow_rate:
                   cooling_supply_air_flow_rate: '{supply_fan_flow_rate} / 1' # trigger eval() to parse out non numeric
                 dehumidification_setpoint: central_cooling_design_supply_air_humidity_ratio
             - Sizing:System:
+                supply_fan_flow_rate:
+                  cooling_supply_air_flow_rate_method: 'Flow/System'
+            - Sizing:System:
                 supply_fan_flow_rate: design_outdoor_air_flow_rate
             - Sizing:System:
                 supply_fan_flow_rate:
                   heating_supply_air_flow_rate: '{supply_fan_flow_rate} / 1' # trigger eval() to parse out non numeric
-        Mappings:
-          Base: &SizingSystemCommonMappings
-          - Sizing:System:
-              supply_fan_maximum_flow_rate:
-                AnyNumber:
-                  cooling_supply_air_flow_rate_method: 'Flow/System'
+            - Sizing:System:
+                supply_fan_flow_rate:
+                  heating_supply_air_flow_rate_method: 'Flow/System'
     Plant:
       Common:
         Fields: &SizingPlantCommonFields
@@ -6457,9 +6532,7 @@ OptionTree:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Sizing:System: *SizingSystemConstantVolume
-          Transitions:
-            - *SizingSystemCommonTransitionsAdditional
-          Mappings: *SizingSystemCommonMappings
+          Transitions: *SizingSystemCommonTransitionsAdditional
         TemplateObjects:
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
@@ -6684,7 +6757,6 @@ OptionTree:
             - AvailabilityManager:Scheduled: *AvailabilityManagerScheduledFields
           Transitions:
             - *SizingSystemCommonTransitions
-            - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
             - *SizingSystemCommonTransitionsDedicatedOutdoorAir
             - *AvailabilityManagerScheduledCommonTransitions
         TemplateObjects:
@@ -6994,9 +7066,7 @@ OptionTree:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Sizing:System: *SizingSystemVAV
-          Transitions:
-            - *SizingSystemCommonTransitions
-          Mappings: *SizingSystemCommonMappings
+          Transitions: *SizingSystemCommonTransitions
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
@@ -7091,7 +7161,15 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:Unitary:Furnace:HeatCool: *AirLoopHVACUnitaryHeatCoolSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitions
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                Furnace:HeatOnly:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:Unitary:Furnace:HeatOnly: *AirLoopHVACUnitaryHeatOnlySuperObject
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
         BaseObjects:
           Objects: &SystemUnitaryBaseObjects
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
@@ -7138,7 +7216,7 @@ OptionTree:
                     Objects:
                       # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                       - AirLoopHVAC:UnitaryHeatPump:AirToAir: *AirLoopHVACUnitaryHeatPumpAirToAirWithSupplementalSuperObject
-                    Transitions: *AirLoopHVACUnitaryCommonTransitions
+                    Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
           BaseObjects:
             Objects:
               - *SystemUnitaryBaseObjects
@@ -7228,7 +7306,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitions
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
                 HeatPump:AirToAirWithSupplemental:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -7236,7 +7314,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemWithSupplementalSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitions
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
                 HeatPump:AirToAirMultiSpeedDX:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -7244,7 +7322,7 @@ OptionTree:
                   Objects:
                     - UnitarySystemPerformance:Multispeed: *UnitarySystemPerformanceMultispeedFields
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemMultiSpeedDXSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitions
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
         BaseObjects:
           Objects:
             - *SystemUnitaryBaseObjects
