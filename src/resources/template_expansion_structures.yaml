@@ -4047,12 +4047,6 @@ OptionTree:
                             Connectors: *FanOnOffConnectors
                       Transitions:
                         - *FanCommonTransitionsSupply
-        BaseObjects:
-          Objects:
-            Base: &ZoneCommonBaseObjectsObjects
-              - DesignSpecification:OutdoorAir: *DesignSpecificationOutdoorAir
-              - DesignSpecification:ZoneAirDistribution: *DesignSpecificationZoneAirDistribution
-              - Sizing:Zone: *SizingZoneOA
         TemplateObjects:
           Baseboard: &ZoneCommonTemplateObjectsBaseboardHeatingType
             baseboard_heating_type:
@@ -5818,23 +5812,6 @@ OptionTree:
                           Connectors: *FanVariableVolumeConnectors
                     Transitions: *FanCommonTransitionsReturn
                     Mappings: *FanCommonMappingsVariableVolumeReturn
-        BaseObjects:
-          Objects:
-            VAV:
-              Base: &SystemCommonBaseObjectsVariableVolume
-                - SetpointManager:MixedAir: *SetpointManagerMixedAirHeating
-                - Controller:OutdoorAir: *ControllerOutdoorAir
-                - OutdoorAir:NodeList: *OutdoorAirNodeListFields
-                - Sizing:System: *SizingSystemVAV
-                - SetpointManager:Scheduled: *SetpointManagerScheduledHeating
-                - SetpointManager:MixedAir: *SetpointManagerMixedAirCoolingSystemNodelist
-                - NodeList:
-                    name: *SystemMixedAirNodelistName
-                    nodes:
-                      - node_name:
-                          ^Coil:Cooling:.*: air_outlet_node_name
-                      - node_name:
-                          ^OutdoorAir:Mixer: mixed_air_node_name
         TemplateObjects:
           Base:
             airloop_hvac_object_type: &SystemCommonTemplateObjectsAirLoopHVACObjectType
