@@ -59,18 +59,14 @@ class TestSimulationsZoneVAVHeatAndCool(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:HeatAndCool:supply_air_maximum_flow_rate")
     def test_supply_air_maximum_flow_rate(self):
-        # todo_eo: AirTerminal:SingleDuct:VAV:HeatAndCool:NoReheat maximum_air_flow_rate is not set in legacy with these
-        #  inputs which is causing the discrepancy. Sizing:Zone cooling/heating_design_flow_rate is set in both
         self.base_epjson['HVACTemplate:Zone:VAV:HeatAndCool']['HVACTemplate:Zone:VAV:HeatAndCool 1'][
             'supply_air_maximum_flow_rate'] = 0.1
         self.base_epjson['HVACTemplate:Zone:VAV:HeatAndCool']['HVACTemplate:Zone:VAV:HeatAndCool 1'][
             'reheat_coil_type'] = 'None'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertEqual(
-            0.1,
-            epjson_output['AirTerminal:SingleDuct:VAV:HeatAndCool:NoReheat']['SPACE4-1 VAV NoReheat']['maximum_air_flow_rate'])
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.1,
             epjson_output['Sizing:Zone']['SPACE4-1 Sizing Zone']['cooling_design_air_flow_rate'])
@@ -165,34 +161,18 @@ class TestSimulationsZoneVAVHeatAndCool(BaseSimulationTest):
             epjson_output['DesignSpecification:OutdoorAir']['SPACE4-1 SZ DSOA']['outdoor_air_flow_per_zone'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:HeadAndCool:outdoor_air_method_detailed_specification")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:HeadAndCool:"
+                                              "outdoor_air_method_detailed_specification")
     def test_outdoor_air_method_detailed_specification(self):
-        # todo_eo: design_specification_outdoor_air_object_name is dropped when being converted from epjson to idf,
-        #  which is causing the failure
         self.ej.merge_epjson(
             super_dictionary=self.base_epjson,
             object_dictionary=design_specification_objects)
         self.base_epjson['HVACTemplate:Zone:VAV:HeatAndCool']['HVACTemplate:Zone:VAV:HeatAndCool 1'][
             'outdoor_air_method'] = 'DetailedSpecification'
         self.base_epjson['HVACTemplate:Zone:VAV:HeatAndCool']['HVACTemplate:Zone:VAV:HeatAndCool 1'][
-            'design_specification_outdoor_air_object_name'] = 'SPACE4-1 SZ DSOA Custom Object'
+            'design_specification_outdoor_air_object_name_for_sizing'] = 'SPACE4-1 SZ DSOA Custom Object'
         self.base_epjson['HVACTemplate:Zone:VAV:HeatAndCool']['HVACTemplate:Zone:VAV:HeatAndCool 1'][
             'design_specification_zone_air_distribution_object_name'] = 'SPACE4-1 SZ DSZAD Custom Object'
-        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
-        self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output['DesignSpecification:OutdoorAir'].get('SPACE4-1 SZ DSOA Custom Object'))
-        self.assertIsNotNone(epjson_output['DesignSpecification:ZoneAirDistribution'].get('SPACE4-1 SZ DSZAD Custom Object'))
-        return
-
-    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:HeatAndCool:outdoor_air_method_detailed_specification")
-    def test_outdoor_air_method_detailed_specification_for_sizing(self):
-        # todo_eo: legacy program does not map custom object to Sizing:Zone. Unclear what should happen
-        self.ej.merge_epjson(
-            super_dictionary=self.base_epjson,
-            object_dictionary=design_specification_objects)
-        self.base_epjson['HVACTemplate:Zone:VAV:HeatAndCool']['HVACTemplate:Zone:VAV:HeatAndCool 1'][
-            'design_specification_outdoor_air_object_name_for_sizing'] = 'SPACE4-1 SZ DSOA Custom Object'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))

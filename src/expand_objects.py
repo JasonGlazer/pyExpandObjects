@@ -442,7 +442,10 @@ class ExpandObjects(EPJSON):
                                                 # are present.  regex match is to avoid any operator symbols used in
                                                 # variable names, but not intended for evaluation, e.g. HVACTemplate-Always
                                                 if re.match(r'.*[a-zA-Z]\s*[-+/*]\s*[a-zA-Z].*', object_val):
-                                                    object_value = object_val
+                                                    if '{' in object_val:
+                                                        object_value = object_val.replace('{', '{0.').format(self)
+                                                    else:
+                                                        object_value = object_val
                                                 elif any(i in ['*', '+', '/', '-'] for i in object_val) and '{' in object_val:
                                                     # Add '0.' for accessing class object attributes
                                                     try:
@@ -616,8 +619,12 @@ class ExpandObjects(EPJSON):
                     (super_object_type_check, _), = super_object.items()
                     if re.match(location, super_object_type_check):
                         (super_object_type, super_object_structure), = super_object.items()
-                        # If the called object is a manipulated super object (Connectors = False) then grab the object before it
-                        if not super_object_structure['Connectors'][connector_path]:
+                        # If the called object is a manipulated super object (Connectors = False)
+                        # and 'key' or 'self' is not specified then grab the object before it
+                        # todo_eo: test this conditional clause to see if it is still being used and in what cases.
+                        #  make more explicit explanation if needed.
+                        if not super_object_structure['Connectors'][connector_path] and \
+                                value_location.lower() not in ['self', 'key']:
                             (super_object_type, super_object_structure), = previous_object.items()
                         match_count += 1
                         if match_count == occurrence:
@@ -679,8 +686,12 @@ class ExpandObjects(EPJSON):
             try:
                 formatted_value = input_value.replace('{}', '{unique_name}').replace('{', '{0.').format(self)
             except AttributeError:
+                # If the format attempt failed, but autosize is indicated in the field value, then use it.
+                #  example '{class_attribute} / 2 or Autosize'
+                if 'Autosize' in input_value:
+                    formatted_value = 'Autosize'
                 # If the class attribute does not exist, yield None as flag to handle in parent process.
-                yield {'field': field_name, 'value': None}
+                yield {'field': field_name, 'value': formatted_value}
             if formatted_value:
                 # if a simple schedule is indicated by name, create it here.  The schedule
                 # is stored to the class epjson attribute.
@@ -865,7 +876,9 @@ class ExpandObjects(EPJSON):
                             epjson=reference_epjson,
                             field_name=field_name,
                             input_value=field_value)
+                        generated_output = False
                         for ig in input_generator:
+                            generated_output = True
                             # if None was returned as the value, pop the key out of the dictionary and skip it.
                             # use the zero comparison to specifically pass that number.  The 'is not None' clause is
                             # not used here as this is more strict.
@@ -884,6 +897,14 @@ class ExpandObjects(EPJSON):
                                 object_fields[ig['field']] = ig['value']
                             else:
                                 object_fields.pop(ig['field'])
+                        # The second half of the if statement is mainly for testing cases that have
+                        # object type Mock and no complex input information.  Otherwise, all mock tests
+                        # that hit this section fail with this exception.
+                        if not generated_output and isinstance(field_value, (dict, list)):
+                            raise PyExpandObjectsYamlStructureException(
+                                "Error: in {} ({}) The complex input ({}) was not resolved for "
+                                "the field {} in the {} object"
+                                .format(self.template_type, self.template_name, field_value, field_name, object_type))
         # if a schedule dictionary was created, add it to the class epjson
         if schedule_dictionary:
             self.merge_epjson(
@@ -1570,11 +1591,114 @@ class VRFType:
         return
 
 
+class SystemTransitions:
+    """
+    Set zone attributes based on system attributes
+    """
+    def __get__(self, obj, owner):
+        return obj._system_transitions
+
+    def __set__(self, obj, value):
+        """
+        Set priority list of plant loops to attach the equipment.  Apply defaults if no input is given.
+        """
+        # set value and check at the end for error output
+        obj._system_transitions = {}
+        # If a string is passed, then use it as the entry
+        if isinstance(value, str):
+            obj._system_transitions = value
+        else:
+            # extract the template
+            # try/except not needed here because the template has already been validated from super class init
+            (template_type, template_structure), = value['template'].items()
+            (_, template_fields), = template_structure.items()
+            # make a tuple of fields that identify the system
+            system_identifiers = (
+                'template_constant_volume_system_name',
+                'dedicated_outdoor_air_system_name',
+                'template_dual_duct_system_name',
+                'template_unitary_system_name',
+                'template_vav_system_name',
+                'template_vrf_system_name')
+            # retrieve system from zone template
+            reference_system_name = None
+            for si in system_identifiers:
+                reference_system_name = template_fields.get(si, None)
+                if reference_system_name:
+                    break
+            if not reference_system_name:
+                return
+            obj._system_transitions.update({'system_name': reference_system_name})
+            if not value.get('system_class_objects'):
+                return
+            reference_system = value['system_class_objects'][reference_system_name]
+            obj._system_transitions.update({'system_object': reference_system})
+            # Apply system template attributes to zone template
+            if template_type == 'HVACTemplate:Zone:VAV:FanPowered' and\
+                    getattr(reference_system, 'system_availability_schedule_name', None):
+                setattr(
+                    obj,
+                    'system_availability_schedule_name',
+                    getattr(reference_system, 'system_availability_schedule_name'))
+            if getattr(
+                    obj,
+                    'zone_cooling_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'cooling_design_supply_air_temperature', None)
+                if system_field:
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if getattr(
+                    obj,
+                    'zone_heating_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'heating_design_supply_air_temperature', None)
+                if system_field:
+                    setattr(obj, 'zone_heating_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_heating_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if getattr(
+                    obj,
+                    'zone_cooling_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'cooling_coil_design_setpoint', None)
+                if system_field:
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if getattr(
+                    obj,
+                    'zone_heating_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'heating_coil_design_setpoint', None)
+                if system_field:
+                    setattr(obj, 'zone_heating_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_heating_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if getattr(
+                    obj,
+                    'zone_cooling_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'cooling_coil_design_setpoint_temperature', None)
+                if system_field:
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if getattr(
+                    obj,
+                    'zone_heating_design_supply_air_temperature_input_method',
+                    None) == 'SystemSupplyAirTemperature':
+                system_field = getattr(reference_system, 'heating_coil_design_setpoint_temperature', None)
+                if system_field:
+                    setattr(obj, 'zone_cooling_design_supply_air_temperature', system_field)
+                    setattr(obj, 'zone_heating_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            return
+
+
 class ExpandZone(ExpandObjects):
     """
     Zone expansion operations
 
     Attributes from Descriptors:
+
+        system_transitions
+
         zone_hvac_equipmentlist_object_type
 
         design_specification_outdoor_air_object_status
@@ -1590,6 +1714,7 @@ class ExpandZone(ExpandObjects):
         fan_powered_reheat_type
     """
 
+    system_transitions = SystemTransitions()
     zone_hvac_equipmentlist_object_type = ZonevacEquipmentListObjectType()
     design_specification_outdoor_air_object_status = DesignSpecificationOutsideAirObjectStatus()
     design_specification_zone_air_distribution_object_status = DesignSpecificationZoneAirDistributionObjectStatus()
@@ -1599,7 +1724,7 @@ class ExpandZone(ExpandObjects):
     fan_powered_reheat_type = FanPoweredReheatType()
     vrf_type = VRFType()
 
-    def __init__(self, template, logger_level='WARNING', epjson=None):
+    def __init__(self, template, logger_level='WARNING', epjson=None, system_class_objects=None):
         # fill/create class attributes values with template inputs
         super().__init__(template=template, logger_level=logger_level)
         try:
@@ -1608,6 +1733,8 @@ class ExpandZone(ExpandObjects):
                 raise InvalidTemplateException("Error: Zone name not provided in template: {}".format(template))
         except AttributeError:
             raise InvalidTemplateException("Error: Zone name not provided in zone template: {}".format(template))
+        system_class_objects = {'system_class_objects': system_class_objects} if system_class_objects else {}
+        self.system_transitions = {'template': template, **system_class_objects}
         self.zone_hvac_equipmentlist_object_type = template
         self.design_specification_outdoor_air_object_status = template
         self.design_specification_zone_air_distribution_object_status = template
@@ -1673,6 +1800,8 @@ class AirLoopHVACUnitaryObjectType:
             'None' else True
         if template_type == 'HVACTemplate:System:Unitary' and cooling_coil_type and heating_coil_type:
             obj._airloop_hvac_unitary_object_type = 'Furnace:HeatCool'
+        elif template_type == 'HVACTemplate:System:Unitary' and heating_coil_type:
+            obj._airloop_hvac_unitary_object_type = 'Furnace:HeatOnly'
         elif template_type == 'HVACTemplate:System:UnitaryHeatPump:AirToAir':
             obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
         elif template_type == 'HVACTemplate:System:UnitarySystem':
@@ -1748,9 +1877,7 @@ class EconomizerTypeDetailed:
             (_, template_fields), = template_structure.items()
             economizer_type = None if template_fields.get('economizer_type', 'None') == 'None' else \
                 template_fields.get('economizer_type')
-            cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
-                template_fields.get('cooling_coil_type')
-            if economizer_type and cooling_coil_type:
+            if economizer_type:
                 if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
                                      'HVACTemplate:System:Unitary']:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
@@ -1764,6 +1891,41 @@ class EconomizerTypeDetailed:
                     else:
                         supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
                 obj._economizer_type_detailed = ''.join([economizer_type, supply_fan_placement])
+        return
+
+
+class MixedAirSetpointControlTypeDetailed:
+    """
+    set mixed_air_setpoint_control_type_detailed based on other template attributes for YAML TemplateObjects lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._mixed_air_setpoint_control_type_detailed
+
+    def __set__(self, obj, value):
+        # If the field is getting set on load with a string, then just return the string.
+        # Otherwise, modify it with the template
+        if isinstance(value, str):
+            obj._mixed_air_setpoint_control_type_detailed = value
+        else:
+            (template_type, template_structure), = value.items()
+            (_, template_fields), = template_structure.items()
+            cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
+                template_fields.get('cooling_coil_type')
+            if template_type in ['HVACTemplate:System:ConstantVolume', 'HVACTemplate:System:DualDuct',
+                                 'HVACTemplate:System:DedicatedOutdoorAir']:
+                cooling_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
+            elif template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV']:
+                cooling_setpoint = template_fields.get('cooling_coil_setpoint_reset_type', 'None')
+            else:
+                cooling_setpoint = ''
+            if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
+                                 'HVACTemplate:System:Unitary']:
+                supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
+            else:
+                supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
+            if template_type == 'HVACTemplate:System:ConstantVolume' and cooling_coil_type and \
+                    (supply_fan_placement == 'DrawThrough' or cooling_setpoint == 'FixedSetpoint'):
+                obj._mixed_air_setpoint_control_type_detailed = 'IncludeMixedAir'
         return
 
 
@@ -1782,32 +1944,36 @@ class CoolingCoilSetpointControlTypeDetailed:
         else:
             (template_type, template_structure), = value.items()
             (_, template_fields), = template_structure.items()
+            if template_type in ['HVACTemplate:System:ConstantVolume', 'HVACTemplate:System:DualDuct',
+                                 'HVACTemplate:System:DedicatedOutdoorAir']:
+                cooling_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
+            elif template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV']:
+                cooling_setpoint = template_fields.get('cooling_coil_setpoint_reset_type', 'None')
+            else:
+                cooling_setpoint = ''
+            if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
+                                 'HVACTemplate:System:Unitary']:
+                supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
+            else:
+                if template_type == 'HVACTemplate:System:DualDuct':
+                    cold_duct_supply_fan_placement = \
+                        template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
+                    hot_duct_supply_fan_placement = \
+                        template_fields.get('hot_duct_supply_fan_placement', 'BlowThrough')
+                    supply_fan_placement = ''
+                    setattr(obj, 'cold_duct_cooling_coil_setpoint_control_type_detailed',
+                            ''.join([cooling_setpoint, cold_duct_supply_fan_placement]))
+                    setattr(obj, 'hot_duct_heating_coil_setpoint_control_type_detailed',
+                            ''.join([cooling_setpoint, hot_duct_supply_fan_placement]))
+                else:
+                    supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
             cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
                 template_fields.get('cooling_coil_type')
+            # decide when to set the command, which can vary between systems
             if cooling_coil_type:
-                if template_type in ['HVACTemplate:System:ConstantVolume', 'HVACTemplate:System:DualDuct',
-                                     'HVACTemplate:System:DedicatedOutdoorAir']:
-                    cooling_setpoint = template_fields.get('cooling_coil_setpoint_control_type', 'FixedSetpoint')
-                elif template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV']:
-                    cooling_setpoint = template_fields.get('cooling_coil_setpoint_reset_type', 'None')
-                else:
-                    cooling_setpoint = ''
-                if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
-                                     'HVACTemplate:System:Unitary']:
-                    supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
-                else:
-                    if template_type == 'HVACTemplate:System:DualDuct':
-                        cold_duct_supply_fan_placement = \
-                            template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
-                        hot_duct_supply_fan_placement = \
-                            template_fields.get('hot_duct_supply_fan_placement', 'BlowThrough')
-                        supply_fan_placement = ''
-                        setattr(obj, 'cold_duct_cooling_coil_setpoint_control_type_detailed',
-                                ''.join([cooling_setpoint, cold_duct_supply_fan_placement]))
-                        setattr(obj, 'hot_duct_heating_coil_setpoint_control_type_detailed',
-                                ''.join([cooling_setpoint, hot_duct_supply_fan_placement]))
-                    else:
-                        supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
+                obj._cooling_coil_setpoint_control_type_detailed = ''.join([cooling_setpoint, supply_fan_placement])
+            elif template_type == 'HVACTemplate:System:ConstantVolume' and \
+                    (supply_fan_placement != 'BlowThrough' or cooling_setpoint == 'FixedSetpoint'):
                 obj._cooling_coil_setpoint_control_type_detailed = ''.join([cooling_setpoint, supply_fan_placement])
         return
 
@@ -1827,7 +1993,7 @@ class HeatingCoilSetpointControlTypeDetailed:
             obj._heating_coil_setpoint_control_type_detailed = value
         else:
             (template_type, template_structure), = value.items()
-            (_, template_fields), = template_structure.items()
+            (template_name, template_fields), = template_structure.items()
             heating_coil_type = None if template_fields.get('heating_coil_type', 'None') == 'None' else \
                 template_fields.get('heating_coil_type')
             if not heating_coil_type:
@@ -1853,22 +2019,24 @@ class HeatingCoilSetpointControlTypeDetailed:
                         getattr(obj, 'heating_coil_design_setpoint', None) and \
                         getattr(obj, 'heating_coil_design_setpoint') > getattr(obj, 'preheat_coil_design_setpoint'):
                     obj.logger.warning(
-                        'Warning:  In {}'
+                        'Warning:  In {} ({})'
                         ' the Heating Coil Design Setpoint is greater than the Preheat Coil Design Setpoint,'
                         ' but Heating Coil Type=None. Using Preheat Coil Design Setpoint for the Sizing:System'
-                        ' Central Heating Design Supply Air Temperature.'.format(template_type))
+                        ' Central Heating Design Supply Air Temperature.'.format(template_type, template_name))
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
                 elif getattr(obj, 'preheat_coil_design_setpoint', None) and \
                         getattr(obj, 'preheat_coil_type', 'None') == 'None':
                     obj.logger.warning(
-                        'Warning:  In {}'
+                        'Warning:  In {} ({})'
                         ' there is no Heating Coil and no Preheat Coil.'
                         ' The Preheat Coil Design Setpoint will be used for the Sizing:System'
                         ' Central Heating Design Supply Air Temperature. This will be the inlet air temperature for'
-                        ' sizing reheat coils.')
+                        ' sizing reheat coils.'.format(template_type, template_name))
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
                 elif getattr(obj, 'preheat_coil_design_setpoint', None):
                     setattr(obj, 'heating_coil_design_setpoint', obj.preheat_coil_design_setpoint)
+                elif getattr(obj, 'heating_coil_design_setpoint', None):
+                    pass
                 elif getattr(obj, 'cooling_coil_design_setpoint', None):
                     setattr(obj, 'heating_coil_design_setpoint', obj.cooling_coil_design_setpoint)
         return
@@ -1876,7 +2044,8 @@ class HeatingCoilSetpointControlTypeDetailed:
 
 class HumidistatType:
     """
-    Create class attribute to select Humidistat type based on other template attributes for YAML TemplateObjects lookup.
+    Create class attribute humidistat_type to select Humidistat type based on other template attributes
+    for YAML TemplateObjects lookup.
     """
     def __get__(self, obj, owner):
         return obj._humidistat_type
@@ -1983,6 +2152,8 @@ class ExpandSystem(ExpandObjects):
 
         economizer_type_detailed
 
+        mixed_air_setpoint_control_type_detailed
+
         cooling_coil_setpoint_control_type_detailed
 
         heating_coil_setpoint_control_type_detailed
@@ -2000,6 +2171,7 @@ class ExpandSystem(ExpandObjects):
     airloop_hvac_object_type = AirLoopHVACObjectType()
     airloop_hvac_unitary_fan_type_and_placement = AirLoopHVACUnitaryFanTypeAndPlacement()
     economizer_type_detailed = EconomizerTypeDetailed()
+    mixed_air_setpoint_control_type_detailed = MixedAirSetpointControlTypeDetailed()
     cooling_coil_setpoint_control_type_detailed = CoolingCoilSetpointControlTypeDetailed()
     heating_coil_setpoint_control_type_detailed = HeatingCoilSetpointControlTypeDetailed()
     humidistat_type = HumidistatType()
@@ -2010,8 +2182,10 @@ class ExpandSystem(ExpandObjects):
         super().__init__(template=template, logger_level=logger_level)
         # map variable variants to common value and remove original
         self.rename_attribute('cooling_coil_design_setpoint_temperature', 'cooling_coil_design_setpoint')
-        self.rename_attribute('economizer_upper_temperature_limit', 'economizer_maximum_limit_dry_bulb_temperature')
-        self.rename_attribute('economizer_lower_temperature_limit', 'economizer_minimum_limit_dry_bulb_temperature')
+        # These items are removed since they require little work to apply in yaml
+        # self.rename_attribute('economizer_upper_temperature_limit', 'economizer_maximum_limit_dry_bulb_temperature')
+        # self.rename_attribute('economizer_lower_temperature_limit', 'economizer_minimum_limit_dry_bulb_temperature')
+        # self.rename_attribute('economizer_upper_enthalpy_limit', 'economizer_maximum_limit_enthalpy')
         self.unique_name = self.template_name
         self.epjson = epjson or self.epjson
         self.build_path = None
@@ -2019,6 +2193,7 @@ class ExpandSystem(ExpandObjects):
         self.airloop_hvac_object_type = template
         self.airloop_hvac_unitary_fan_type_and_placement = template
         self.economizer_type_detailed = template
+        self.mixed_air_setpoint_control_type_detailed = template
         self.cooling_coil_setpoint_control_type_detailed = template
         self.heating_coil_setpoint_control_type_detailed = template
         try:
@@ -2027,7 +2202,7 @@ class ExpandSystem(ExpandObjects):
                          'Heating', self.heating_coil_setpoint_control_type_detailed])\
                 .replace('BlowThrough', '', 1).replace('DrawThrough', '', 1)
         except AttributeError:
-            self.setpoint_control_type = None
+            self.setpoint_control_type_detailed = None
         self.humidistat_type = template
         self.outside_air_equipment_type = template
         self.dehumidification_control_type = template
@@ -2315,9 +2490,9 @@ class ExpandSystem(ExpandObjects):
                         oa_controller_list_name = object_name
                         break
         if not oa_controller_list_name:
-            raise PyExpandObjectsException("Error: No outdoor air AirLoopHVAC:ControllerList present in the {} system "
-                                           "build process, possibly because no Controller:OutdooAir object present "
-                                           "in template creation process either.".format(self.unique_name))
+            self.logger.info("No outdoor air AirLoopHVAC:ControllerList present in the {} system "
+                             "build process, possibly because no Controller:OutdooAir object present "
+                             "in template creation process either.".format(self.unique_name))
         # get outdoor air system equipment list
         try:
             oa_system_equipment_list_object = epjson.get('AirLoopHVAC:OutdoorAirSystem:EquipmentList')
@@ -2335,7 +2510,8 @@ class ExpandSystem(ExpandObjects):
         outdoor_air_system_yaml_object = \
             self.get_structure(structure_hierarchy=['AutoCreated', 'System', 'AirLoopHVAC', 'OutdoorAirSystem', 'Base'])
         outdoor_air_system_yaml_object['availability_manager_list_name'] = availability_manager_name
-        outdoor_air_system_yaml_object['controller_list_name'] = oa_controller_list_name
+        if oa_controller_list_name:
+            outdoor_air_system_yaml_object['controller_list_name'] = oa_controller_list_name
         outdoor_air_system_yaml_object['outdoor_air_equipment_list_name'] = oa_system_equipment_name
         outdoor_air_system_list_object = self.yaml_list_to_epjson_dictionaries([
             {'AirLoopHVAC:OutdoorAirSystem': outdoor_air_system_yaml_object}, ])
@@ -2435,11 +2611,20 @@ class ExpandSystem(ExpandObjects):
         equipment_lookup = (
             (
                 ['HVACTemplate:System:Unitary', ],
-                'AirLoopHVAC:Unitary:.*',
+                'AirLoopHVAC:Unitary:Furnace:HeatCool',
                 {'Inlet': 'furnace_air_inlet_node_name',
                  'Outlet': 'furnace_air_outlet_node_name'},
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
+                    ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
+                    ('Fan:.*', True)),
+                []),
+            (
+                ['HVACTemplate:System:Unitary', ],
+                'AirLoopHVAC:Unitary:Furnace:HeatOnly',
+                {'Inlet': 'furnace_air_inlet_node_name',
+                 'Outlet': 'furnace_air_outlet_node_name'},
+                (
                     ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
                     ('Fan:.*', True)),
                 []),
@@ -2522,7 +2707,8 @@ class ExpandSystem(ExpandObjects):
                         # if equipment is a CoilSystem:Cooling:Water then the air node fields need to be added just for
                         # the build path.  A better solution should be made in the future rather than hard-coding the
                         # names to the object.
-                        if self.template_type in ['HVACTemplate:System:DedicatedOutdoorAir', 'HVACTemplate:System:ConstantVolume']:
+                        if self.template_type in ['HVACTemplate:System:DedicatedOutdoorAir',
+                                                  'HVACTemplate:System:ConstantVolume']:
                             if equipment_regex == 'CoilSystem:Cooling:Water.*':
                                 if getattr(self, 'supply_fan_placement', None) == 'BlowThrough':
                                     equipment_object[super_object_type]['Fields']['air_inlet_node_name'] = \

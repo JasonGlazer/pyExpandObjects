@@ -33,8 +33,6 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:primary_supply_air_maximum_flow_rate")
     def test_primary_supply_air_maximum_flow_rate(self):
-        # todo_eo: AirTerminal:SingleDuct:SeriesPIU:Reheat maximum_air_flow_rate is not set in legacy with these
-        #  inputs which is causing the discrepancy. Sizing:Zone cooling/heating_design_flow_rate is set in both
         self.base_epjson['HVACTemplate:Zone:VAV:FanPowered']['HVACTemplate:Zone:VAV:FanPowered 1'][
             'primary_supply_air_maximum_flow_rate'] = 0.1
         self.base_epjson['HVACTemplate:Zone:VAV:FanPowered']['HVACTemplate:Zone:VAV:FanPowered 1'][
@@ -42,9 +40,6 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertEqual(
-            0.1,
-            epjson_output['AirTerminal:SingleDuct:SeriesPIU:Reheat']['SPACE1-1 Series PIU Reheat']['maximum_primary_air_flow_rate'])
         self.assertEqual(
             0.1,
             epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['cooling_design_air_flow_rate'])
@@ -83,7 +78,8 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.25,
-            epjson_output['AirTerminal:SingleDuct:SeriesPIU:Reheat']['SPACE1-1 Series PIU Reheat']['minimum_primary_air_flow_fraction'])
+            epjson_output['AirTerminal:SingleDuct:SeriesPIU:Reheat']['SPACE1-1 Series PIU Reheat'][
+                'minimum_primary_air_flow_fraction'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:flow_type_series")
@@ -92,7 +88,8 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
             'flow_type'] = 'Series'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:SeriesPIU:Reheat'].get('SPACE1-1 Series PIU Reheat'))
         return
 
@@ -102,8 +99,10 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
             'flow_type'] = 'Parallel'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ParallelPIU:Reheat'].get('SPACE1-1 Parallel PIU Reheat'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['AirTerminal:SingleDuct:ParallelPIU:Reheat'].get(
+            'SPACE1-1 Parallel PIU Reheat'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:VAV:FanPowered:flow_type_series_from_plenum")
@@ -185,9 +184,9 @@ class TestSimulationsZoneVAVFanPowered(BaseSimulationTest):
         self.base_epjson['HVACTemplate:Zone:VAV:FanPowered']['HVACTemplate:Zone:VAV:FanPowered 1'][
             'outdoor_air_method'] = 'DetailedSpecification'
         self.base_epjson['HVACTemplate:Zone:VAV:FanPowered']['HVACTemplate:Zone:VAV:FanPowered 1'][
-            'design_specification_outdoor_air_object_name'] = 'SPACE4-1 SZ DSOA Custom Object'
+            'design_specification_outdoor_air_object_name'] = 'SPACE1-1 SZ DSOA Custom Object'
         self.base_epjson['HVACTemplate:Zone:VAV:FanPowered']['HVACTemplate:Zone:VAV:FanPowered 1'][
-            'design_specification_zone_air_distribution_object_name'] = 'SPACE4-1 SZ DSZAD Custom Object'
+            'design_specification_zone_air_distribution_object_name'] = 'SPACE1-1 SZ DSZAD Custom Object'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))

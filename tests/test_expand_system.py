@@ -434,8 +434,6 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         no_oa_controller_epjson = copy.deepcopy(test_epjson)
         no_oa_controller_epjson["AirLoopHVAC:ControllerList"].pop("VAV Sys 1 OA System Controllers")
         es.epjson = no_oa_controller_epjson
-        with self.assertRaisesRegex(PyExpandObjectsException, 'No outdoor air AirLoopHVAC:ControllerList'):
-            es._create_outdoor_air_system()
         no_oa_system_epjson = copy.deepcopy(test_epjson)
         no_oa_system_epjson.pop('AirLoopHVAC:OutdoorAirSystem:EquipmentList')
         es.epjson = no_oa_system_epjson

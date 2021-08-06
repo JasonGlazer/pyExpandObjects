@@ -257,9 +257,9 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
             # compare epjsons by summary count
             if compare_epjson_files:
                 expanded_base_file = self.expand_idf(base_idf_test_file_path)
-                comparison_base_epjson = self.convert_file(
+                comparison_base_epjson_file_path = self.convert_file(
                     str(test_dir / '..' / 'simulation' / 'test' / expanded_base_file))
-                with open(comparison_base_epjson, 'r') as f:
+                with open(comparison_base_epjson_file_path, 'r') as f:
                     comparison_base_epjson = json.load(f)
                 with open(test_input_file_path, 'r') as f:
                     comparison_test_epjson = json.load(f)

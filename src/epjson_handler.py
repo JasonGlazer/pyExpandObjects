@@ -355,7 +355,7 @@ class EPJSON(Logger):
             input_epjson = self._get_json_file(epjson_ref)
         self._validate_epjson(input_epjson)
         self.logger.info(
-            'input EPJSON file loaded, %s top level objects',
+            'input EPJSON file loaded, %s EnergyPlus object types',
             len(self.input_epjson.keys())
         )
         return self.input_epjson

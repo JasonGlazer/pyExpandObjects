@@ -2,6 +2,7 @@ import unittest
 
 from src.hvac_template import HVACTemplate
 from src.hvac_template import InvalidTemplateException, InvalidEpJSONException
+from src.expand_objects import ExpandSystem, ExpandZone
 from . import BaseTest
 
 minimum_objects_d = {
@@ -900,30 +901,31 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             'HVACTemplate:Zone:VAV': {
                 "Zone Template 1": {
                     'template_vav_system_name': 'System Template 1',
-                    'zone_cooling_design_supply_air_temperature_input_method': 'SystemSupplyAirTemperature'
+                    'zone_cooling_design_supply_air_temperature_input_method': 'SystemSupplyAirTemperature',
+                    'zone_name': 'SPACE1-1'
                 }
             }
         }
         st = {
-            'HVACTemplate:System:VAV': {
+            'HVACTemplate:System:PackagedVAV': {
                 'System Template 1': {
                     'cooling_design_supply_air_temperature': 14.0
                 }
             }
         }
-        (_, zone_template), = zt.items()
-        (_, template_fields), = zone_template.items()
-        self.hvac_template._apply_system_fields_to_zone_template(
-            zone_template_type='ZoneTemplateType',
-            template_name='ZoneTemplateName',
-            template_fields=template_fields,
-            system_templates=st)
+        self.expanded_systems = self.hvac_template._expand_templates(
+            templates=st,
+            expand_class=ExpandSystem)
+        self.expanded_zones = self.hvac_template._expand_templates(
+            templates=zt,
+            expand_class=ExpandZone,
+            system_class_objects=self.expanded_systems)
         self.assertEqual(
             14,
-            zone_template['Zone Template 1']['zone_cooling_design_supply_air_temperature'])
+            getattr(self.expanded_zones['Zone Template 1'], 'zone_cooling_design_supply_air_temperature'))
         self.assertEqual(
             'SupplyAirTemperature',
-            zone_template['Zone Template 1']['zone_cooling_design_supply_air_temperature_input_method'])
+            getattr(self.expanded_zones['Zone Template 1'], 'zone_cooling_design_supply_air_temperature_input_method'))
         return
 
     # todo_eo: wrap all dictionary unpacking (_, _), = dict.items() with exceptions and test

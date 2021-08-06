@@ -273,7 +273,7 @@ class TestSimulationsZoneFanCoil(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.8,
-            epjson_output['Fan:SystemModel']['SPACE1-1 Supply Fan']['motor_in_airstream_fraction'])
+            epjson_output['Fan:SystemModel']['SPACE1-1 Supply Fan']['motor_in_air_stream_fraction'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:FanCoil:cooling_coil_type_chilled_water_detailed_flat_model")
