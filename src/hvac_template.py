@@ -500,6 +500,7 @@ class HVACTemplate(EPJSON):
                             'fuel_type': 'NaturalGas',
                             'priority': '1',
                             'efficiency': 0.8
+                            'water_outlet_upper_temperature_limit': 100.0
                         },
                         'HVACTemplate:Plant:Boiler:ObjectReference': {
                             'boiler_object_type': 'Boiler:HotWater',

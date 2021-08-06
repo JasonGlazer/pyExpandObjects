@@ -5021,13 +5021,13 @@ OptionTree:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerChilledWater
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerChilledWaterObjects
                           - *CoilCoolingWaterCommonObjects
                           - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
                           - Controller:WaterCoil:
                               <<: *ControllerWaterCoil
                               name: '{} Cooling Coil Controller'
-                        Mappings:
+                        Mappings: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerChilledWaterMappings
                           - Controller:WaterCoil:
                               dehumidification_control_type:
                                 CoolReheat:
@@ -5081,7 +5081,7 @@ OptionTree:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatExchangerAssistedDX
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatExchangerAssistedDXObjects
                           - HeatExchanger:AirToAir:SensibleAndLatent:
                               Fields:
                                 <<: *HeatExchangerAirToAirSensibleAndLatentCoolingCoilFields
@@ -5124,47 +5124,48 @@ OptionTree:
                               heat_exchanger_name: '{} Cooling Coil Heat Exchanger'
                               heat_exchanger_object_type: HeatExchanger:AirToAir:SensibleAndLatent
                           - *CoilCoolingDXSingleSpeedCommonObjects
-                        Transitions:
+                        Transitions: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatExchangerAssistedDXTransitions
                           - *CoilCoolingDXSingleSpeedCommonTransitions
-                        Mappings:
+                        Mappings: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatExchangerAssistedDXMappings
                           - *CoilSystemCoolingDXCommonMappings
                       SingleSpeedDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDX
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXObjects
                           - *CoilCoolingDXSingleSpeedCommonObjects
                           - Coil:Cooling:DX:SingleSpeed: *CoilCoolingDXSingleSpeedSuperObject
-                        Transitions: *CoilCoolingDXSingleSpeedCommonTransitions
+                        Transitions: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXTransitions
+                          - *CoilCoolingDXSingleSpeedCommonTransitions
                       TwoSpeedDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDX
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDXObjects
                           - Coil:Cooling:DX:TwoSpeed: *CoilCoolingDXTwoSpeedSuperObject
                           - CoilSystem:Cooling:DX: *CoilSystemCoolingDXSuperObject
                           - *CoilCoolingDXTwoSpeedCommonObjects
-                        Transitions:
+                        Transitions: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDXTransitions
                           - *CoilCoolingDXTwoSpeedCommonTransitions
-                        Mappings:
+                        Mappings: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDXMappings
                           - *CoilSystemCoolingDXCommonMappings
                       TwoStageDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatTwoStageDX
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatTwoStageDXObjects
                           - *CoilCoolingDXTwoStageHumidityControlModeNoHumidityControlCommonObjects
                           - Coil:Cooling:DX:TwoStageWithHumidityControlMode: *CoilCoolingDXTwoStageWithHumidityControlModeNoHumiditySuperObject
                           - CoilSystem:Cooling:DX: *CoilSystemCoolingDXSuperObject
-                        Transitions:
+                        Transitions: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatTwoStageDXTransitions
                           - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
-                        Mappings:
+                        Mappings: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatTwoStageDXMappings
                           - *CoilSystemCoolingDXCommonMappings
                       TwoStageHumidityControlDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDX
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDXObjects
                           - *CoilCoolingDXTwoStageWithHumidityControlModeWithHumidtyControlCommonObjects
                           - Coil:Cooling:DX:TwoStageWithHumidityControlMode: *CoilCoolingDXTwoStageWithHumidityControlModeSuperObject
                           - CoilSystem:Cooling:DX:
@@ -5175,15 +5176,15 @@ OptionTree:
                               Connectors:
                                 AirLoop: False
                           - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard1
-                        Transitions:
+                        Transitions: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDXTransitions
                           - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
-                        Mappings:
+                        Mappings: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDXMappings
                           - *CoilSystemCoolingDXCommonMappings
                       TwoSpeedHumidControlDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedHumidControlDX
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedHumidControlDXObjects
                           - *CoilCoolingDXTwoStageWithHumidityControlModeWithHumidtyControlCommonObjects
                           - Coil:Cooling:DX:TwoStageWithHumidityControlMode: *CoilCoolingDXTwoStageWithHumidityControlModeSuperObject
                           - CoilSystem:Cooling:DX:
@@ -5192,27 +5193,29 @@ OptionTree:
                               Connectors:
                                 AirLoop: False
                           - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard1
-                        Transitions:
+                        Transitions: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedHumidControlDXTransitions
                           - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions
-                        Mappings:
+                        Mappings: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedHumidControlDXMappings
                           - *CoilSystemCoolingDXCommonMappings
                       MultiSpeedDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDX
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDXObjects
                           - Coil:Cooling:DX:MultiSpeed: *CoilCoolingDXMultiSpeedSuperObject
                           - *CoilCoolingDXMultiSpeedCommonObjects
-                        Transitions: *CoilCoolingDXMultiSpeedCommonTransitions
+                        Transitions: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDXTransitions
+                          - *CoilCoolingDXMultiSpeedCommonTransitions
                       SingleSpeedDXWaterCooled:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
                         ActionType: Insert
-                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooled
+                        Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooledObjects
                           - Coil:Cooling:WaterToAirHeatPump:EquationFit: *CoilCoolingWatertoAirHeatPumpEquationFitSuperObject
                           - *CoilCoolingWaterToAirHeatPumpEquationFitCommonObjects
                           - *CoilCoolingWaterToAirHeatPumpCommonObjects
-                        Transitions: *CoilCoolingWaterToAirHeatPumpEquationFitCommonTransitions
+                        Transitions: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooledTransitions
+                          - *CoilCoolingWaterToAirHeatPumpEquationFitCommonTransitions
                   - cooling_coil_type: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardObjects2
                       # This action is added so that some CoilPerformance objects can be inserted with different transitions
                       #  for the standard performance 1+2 objects
@@ -5228,7 +5231,8 @@ OptionTree:
                         ActionType: Insert
                         Objects: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardPerf2ObjectsObjects
                           - *CoilCoolingDXTwoStageHumidityControlModeCommonObjectsCoilPerformanceStandard2
-                        Transitions: *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions2
+                        Transitions: &SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardPerf2ObjectsTransitions
+                          - *CoilCoolingDXTwoStageWithHumidityControlModeCommonTransitions2
                       TwoStageHumidityControlDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: After
@@ -5299,7 +5303,8 @@ OptionTree:
                       ChilledWater:
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerChilledWater
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerChilledWaterObjects
+                        Mappings: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerChilledWaterMappings
                       ChilledWaterDetailedFlatModel:
                         Location: -1
                         ActionType: Insert
@@ -5313,37 +5318,50 @@ OptionTree:
                         ObjectReference: OutdoorAir:Mixer
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatExchangerAssistedDX
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatExchangerAssistedDXObjects
+                        Transitions: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatExchangerAssistedDXTransitions
+                        Mappings: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatExchangerAssistedDXMappings
                       SingleSpeedDX:
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDX
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXObjects
+                        Transitions: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXTransitions
                       TwoSpeedDX:
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDX
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDXObjects
+                        Transitions: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDXTransitions
+                        Mappings: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedDXMappings
                       TwoStageDX:
                         ObjectReference: OutdoorAir:Mixer
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatTwoStageDX
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatTwoStageDXObjects
+                        Transitions: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatTwoStageDXTransitions
+                        Mappings: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeHeatTwoStageDXMappings
                       TwoStageHumidityControlDX:
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDX
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDXObjects
+                        Transitions: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDXTransitions
+                        Mappings: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoStageHumidityControlDXMappings
                       TwoSpeedHumidControlDX:
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedHumidControlDX
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedHumidControlDXObjects
+                        Transitions: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedHumidControlDXTransitions
+                        Mappings: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerTwoSpeedHumidControlDXMappings
                       MultiSpeedDX:
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDX
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDXObjects
+                        Transitions: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerMultiSpeedDXTransitions
                       SingleSpeedDXWaterCooled:
                         ObjectReference: OutdoorAir:Mixer
                         Location: -1
                         ActionType: Insert
-                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooled
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooledObjects
+                        Transitions: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerSingleSpeedDXWaterCooledTransitions
                   - cooling_coil_type:
                       ChilledWater:
                       ChilledWaterDetailedFlatModel:
@@ -5352,6 +5370,10 @@ OptionTree:
                       SingleSpeedDX:
                       TwoSpeedDX:
                       TwoStageDX:
+                        Location: -1
+                        ActionType: Insert
+                        Objects: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardPerf2ObjectsObjects
+                        Transitions: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilTypeStandardPerf2ObjectsTransitions
                       TwoStageHumidityControlDX:
                         Location: -1
                         ActionType: Insert
@@ -7114,8 +7136,7 @@ OptionTree:
             Objects:
               - *SystemCommonBuildPathObjects
           Actions:
-            - heating_coil_type:
-                <<: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixer
+            - heating_coil_type: # Custom objects needed, can't use common template
                 Gas: # Override existing Gas option with different Coil:Heating:Fuel object
                   ObjectReference: OutdoorAir:Mixer
                   Location: After
@@ -7128,6 +7149,14 @@ OptionTree:
                   ActionType: Insert
                   Objects:
                     - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
+                HotWater: # No Controller:WaterCoil
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Water: *CoilHeatingWaterSuperObject
+                    - *CoilHeatingWaterCommonObjects
+                  Mappings: *CoilHeatingWaterCommonMappings
             - *SystemCommonBuildPathActionsCommonCoolingCoilLast
             - *SystemCommonBuildPathActionFanOnOff
             - airloop_hvac_unitary_object_type:
@@ -7171,6 +7200,8 @@ OptionTree:
             - *ControllerOutdoorAirCommonTransitions
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
+            - SetpointManager:SingleZone:Cooling: # todo_eo: This is not done in legacy, check if this is the intended action
+                cooling_design_supply_air_temperature: minimum_supply_air_temperature
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
