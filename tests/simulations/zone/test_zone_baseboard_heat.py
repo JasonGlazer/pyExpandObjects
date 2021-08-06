@@ -75,6 +75,22 @@ class TestSimulationsZoneBaseboardHeat(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:BaseboardHeat:minimum_inputs")
+    def test_minimum_inputs(self):
+        self.base_epjson['HVACTemplate:Zone:BaseboardHeat'].pop('HVACTemplate:Zone:BaseboardHeat 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Zone:BaseboardHeat': {
+                    'HVACTemplate:Zone:BaseboardHeat 1': {}
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:BaseboardHeat:zone_heating_sizing_factor")
     def test_zone_heating_sizing_factor(self):
         self.base_epjson['HVACTemplate:Zone:BaseboardHeat']['HVACTemplate:Zone:BaseboardHeat 1']['zone_heating_sizing_factor'] = 1.2

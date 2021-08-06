@@ -73,18 +73,43 @@ class HVACTemplate(EPJSON):
                               'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|DualDuct)$',
                               object_type):
                     zone_default_map = {
+                        'HVACTemplate:Zone:BaseboardHeat': {
+                            'baseboard_heating_type': 'HotWater',
+                            'outdoor_air_method': 'Flow/Person'
+                        },
                         'HVACTemplate:Zone:ConstantVolume': {
-                            'zone_cooling_design_supply_air_temperature': 12.8
+                            'outdoor_air_method': 'Flow/Person',
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SystemSupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature': 12.8,
+                            'zone_cooling_design_supply_air_temperature_difference': 11.11,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature': 50.0,
+                            'zone_heating_design_supply_air_temperature_difference': 30.0
                         },
                         'HVACTemplate:Zone:FanCoil': {
                             'cooling_coil_type': 'ChilledWater',
                             'heating_coil_type': 'HotWater',
                             'outdoor_air_method': 'Flow/Person',
-                            'outdoor_air_flow_rate_per_person': 0.00944
+                            'supply_fan_delta_pressure': 75,
+                            'cooling_coil_design_setpoint': 14.0,
+                            'heating_coil_design_setpoint': 50.0,
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature_difference': 11.11,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature_difference': 30.0
                         },
                         'HVACTemplate:Zone:PTAC': {
+                            'outdoor_air_method': 'Flow/Person',
+                            'supply_fan_placement': 'DrawThrough',
                             'cooling_coil_type': 'SingleSpeedDX',
-                            'heating_coil_type': 'Electric'
+                            'cooling_coil_gross_rated_cooling_cop': 3.0,
+                            'heating_coil_type': 'Electric',
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature': 14.0,
+                            'zone_cooling_design_supply_air_temperature_difference': 11.0,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature': 50.0,
+                            'zone_heating_design_supply_air_temperature_difference': 30.0
                         },
                         'HVACTemplate:Zone:PTHP': {
                             'cooling_coil_type': 'SingleSpeedDX',
@@ -433,11 +458,19 @@ class HVACTemplate(EPJSON):
                         'HVACTemplate:Plant:ChilledWaterLoop': {
                             'chilled_water_design_setpoint': 7.22,
                             'condenser_water_design_setpoint': 29.4,
-                            'chilled_water_pump_configuration': 'ConstantPrimaryNoSecondary'
+                            'chilled_water_pump_configuration': 'ConstantPrimaryNoSecondary',
+                            'chilled_water_setpoint_at_outdoor_dry_bulb_low': 12.2,
+                            'chilled_water_reset_outdoor_dry_bulb_low': 15.6,
+                            'chilled_water_setpoint_at_outdoor_dry_bulb_high': 6.7,
+                            'chilled_water_reset_outdoor_dry_bulb_high': 26.7
                         },
                         'HVACTemplate:Plant:HotWaterLoop': {
                             'hot_water_design_setpoint': 82,
-                            'hot_water_pump_configuration': 'ConstantFlow'
+                            'hot_water_pump_configuration': 'ConstantFlow',
+                            'hot_water_setpoint_at_outdoor_dry_bulb_low': 82.2,
+                            'hot_water_reset_outdoor_dry_bulb_low': -6.7,
+                            'hot_water_setpoint_at_outdoor_dry_bulb_high': 65.6,
+                            'hot_water_reset_outdoor_dry_bulb_high': 10
                         },
                         'HVACTemplate:Plant:MixedWaterLoop': {
                             'high_temperature_design_setpoint': 33,
