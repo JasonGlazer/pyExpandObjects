@@ -1811,6 +1811,11 @@ class AirLoopHVACUnitaryObjectType:
                 obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAir'
             elif cooling_coil_type and heating_coil_type and supplemental_heating_type:
                 obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
+        if template_type in ['HVACTemplate:System:Unitary', ] and\
+                getattr(obj, '_airloop_hvac_unitary_object_type', None) and \
+                template_fields.get('humidifier_type') == 'ElectricSteam':
+            obj._airloop_hvac_unitary_object_type = \
+                ''.join([obj._airloop_hvac_unitary_object_type, 'WithHumidificationElectricSteam'])
         return
 
 

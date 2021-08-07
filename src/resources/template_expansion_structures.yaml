@@ -518,7 +518,7 @@ Objects:
             supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always0
       HeatCool:
         Base: &AirLoopHVACUnitaryHeatCoolSuperObject
-          Fields:
+          Fields: &AirLoopHVACUnitaryHeatCoolFields
             name: '{} Furnace with DX Cooling'
             <<: *AirLoopHVACUnitaryCommonFields
             cooling_coil_name:
@@ -555,7 +555,7 @@ Objects:
             AirLoop: False
       HeatOnly:
         Base: &AirLoopHVACUnitaryHeatOnlySuperObject
-          Fields:
+          Fields: &AirLoopHVACUnitaryHeatOnlyFields
             name: '{} Furnace'
             <<: *AirLoopHVACUnitaryCommonFields
             furnace_air_inlet_node_name:
@@ -5938,6 +5938,7 @@ OptionTree:
               CoolReheatDesuperheater: *SystemCommonTemplateObjectsConstantVolumeDehumidificationControlTypeCoolReheatHeatingCoil
               Multimode: *SystemCommonTemplateObjectsConstantVolumeDehumidificationControlTypeCoolReheatHeatingCoil
             humidifier_type: &SystemCommonTemplateObjectsHumidifierType
+              None:
               ElectricSteam:
                 Objects:
                   - SetpointManager:SingleZone:Humidity:Minimum: *SetpointManagerSingleZoneHumidityMinimum
@@ -6474,6 +6475,54 @@ OptionTree:
                 Mappings: *ControllerOutdoorAirCommonMappings
               DifferentialDryBulbAndEnthalpyBlowThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNone
               DifferentialDryBulbAndEnthalpyDrawThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeNone
+            economizer_type_detailed_with_fixed_minimum: &SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimum
+              None: &SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+                Objects: &SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNoneObjects
+                  - Controller:OutdoorAir:
+                      <<: *ControllerOutdoorAir
+                      minimum_limit_type: FixedMinimum
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
+              NoEconomizerBlowThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              NoEconomizerDrawThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              FixedDryBulbBlowThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              FixedDryBulbDrawThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              FixedEnthalpyBlowThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              FixedEnthalpyDrawThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              DifferentialDryBulbBlowThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              DifferentialDryBulbDrawThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              DifferentialEnthalpyBlowThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              DifferentialEnthalpyDrawThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              FixedDewPointAndDryBulbBlowThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              FixedDewPointAndDryBulbDrawThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              ElectronicEnthalpyBlowThrough:
+                Objects:
+                  - *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNoneObjects
+                  - Curve:Cubic:
+                      name: '{} ElectrEnthCurve'
+                      coefficient1_constant: 0.01342704
+                      coefficient2_x: -0.00047892
+                      coefficient3_x_2: 5.3352e-05
+                      coefficient4_x_3: -1.8103e-06
+                      maximum_value_of_x: 29.13
+                      minimum_value_of_x: 16.6
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
+              ElectronicEnthalpyDrawThrough:
+                Objects:
+                  - *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNoneObjects
+                  - Curve:Cubic:
+                      name: '{} ElectrEnthCurve'
+                      coefficient1_constant: 0.01342704
+                      coefficient2_x: -0.00047892
+                      coefficient3_x_2: 5.3352e-05
+                      coefficient4_x_3: -1.8103e-06
+                      maximum_value_of_x: 29.13
+                      minimum_value_of_x: 16.6
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
+              DifferentialDryBulbAndEnthalpyBlowThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
+              DifferentialDryBulbAndEnthalpyDrawThrough: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimumNone
             heating_coil_setpoint_type_detaild: &SystemCommonTemplateObjectsPackagedVAVHeatingCoilSetpointControlTypeDetailed
               None: # This is triggered when heating_coil_type = None
               NoneBlowThrough:
@@ -7142,6 +7191,7 @@ OptionTree:
                   Location: After
                   ActionType: Insert
                   Objects: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasObjects
+                  Transitions: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasTransitions
                   Mappings: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeGasMappings
                 Electric: # Remove temperature_setpoint_node field
                   ObjectReference: OutdoorAir:Mixer
@@ -7149,6 +7199,7 @@ OptionTree:
                   ActionType: Insert
                   Objects:
                     - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
+                  Transitions: *ZoneCommonBuildPathActionsObjectsHeatingCoilTypeElectricTransitions
                 HotWater: # No Controller:WaterCoil
                   ObjectReference: OutdoorAir:Mixer
                   Location: After
@@ -7159,6 +7210,7 @@ OptionTree:
                   Mappings: *CoilHeatingWaterCommonMappings
             - *SystemCommonBuildPathActionsCommonCoolingCoilLast
             - *SystemCommonBuildPathActionFanOnOff
+            - humidifier_type: *SystemCommonBuildPathActionsConstantVolumeHumidifierType
             - airloop_hvac_unitary_object_type:
                 Furnace:HeatCool:
                   ObjectReference: OutdoorAir:Mixer
@@ -7168,6 +7220,22 @@ OptionTree:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:Unitary:Furnace:HeatCool: *AirLoopHVACUnitaryHeatCoolSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                Furnace:HeatCoolWithHumidificationElectricSteam:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:Unitary:Furnace:HeatCool:
+                        Fields:
+                          <<: *AirLoopHVACUnitaryHeatCoolFields
+                          furnace_air_inlet_node_name:
+                            BuildPathReference:
+                              Location: Humidifier:Steam:Electric
+                              ValueLocation: Outlet
+                        Connectors:
+                          AirLoop: False
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
                 Furnace:HeatOnly:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -7176,13 +7244,26 @@ OptionTree:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:Unitary:Furnace:HeatOnly: *AirLoopHVACUnitaryHeatOnlySuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                Furnace:HeatOnlyWithHumidificationElectricSteam:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:Unitary:Furnace:HeatOnly:
+                        Fields:
+                          <<: *AirLoopHVACUnitaryHeatOnlyFields
+                          furnace_air_inlet_node_name:
+                            BuildPathReference:
+                              Location: Humidifier:Steam:Electric
+                              ValueLocation: Outlet
+                        Connectors:
+                          AirLoop: False
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
         BaseObjects:
           Objects: &SystemUnitaryBaseObjects
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Sizing:System: *SizingSystemConstantVolume
-            - Controller:OutdoorAir:
-                <<: *ControllerOutdoorAir
-                minimum_limit_type: FixedMinimum
             - SetpointManager:SingleZone:Cooling:
                 <<: *SetpointManagerSingleZoneCooling
                 maximum_supply_air_temperature: 45 # set by legacy, todo_eo: doesn't seem like it needs to be hard coded
@@ -7202,9 +7283,14 @@ OptionTree:
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
             - SetpointManager:SingleZone:Cooling: # todo_eo: This is not done in legacy, check if this is the intended action
                 cooling_design_supply_air_temperature: minimum_supply_air_temperature
+            - SetpointManager:SingleZone:Cooling: # todo_eo: This is not done in legacy, check if this is the intended action
+                heating_design_supply_air_temperature: maximum_supply_air_temperature
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
+          economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimum
+          humidistat_type: *SystemCommonTemplateObjectsHumidistatType
+          humidifier_type: *SystemCommonTemplateObjectsHumidifierType
       UnitaryHeatPump:
         AirToAir:
           BuildPath:
@@ -7233,6 +7319,7 @@ OptionTree:
               - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
           TemplateObjects:
             airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+            economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimum
             night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       UnitarySystem:
         BuildPath:
@@ -7341,6 +7428,7 @@ OptionTree:
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+          economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimum
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       VAV: *HVACTemplateSystemPackagedVAV
       VRF:
