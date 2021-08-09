@@ -112,9 +112,9 @@ Objects:
             name: 'HVACTemplate-Always{}'
             schedule_type_limits_name: Any Number
             data:
-              - field: Through 12/31
-              - field: For AllDays
-              - field: Until 24:00
+              - field: 'Through: 12/31'
+              - field: 'For: AllDays'
+              - field: 'Until: 24:00'
               - field: '{}'
   AirConditioner:
     VariableRefrigerantFlow:
@@ -3190,9 +3190,6 @@ Objects:
                 preheat_coil_design_setpoint: preheat_design_temperature
                 supply_fan_maximum_flow_rate:
                   cooling_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
-            - Sizing:System:
-                supply_fan_maximum_flow_rate:
-                  cooling_supply_air_flow_rate_method: 'Flow/System'
           Additional: &SizingSystemCommonTransitionsAdditional
             - *SizingSystemCommonTransitions
             - Sizing:System:
@@ -3201,25 +3198,35 @@ Objects:
             - Sizing:System:
                 supply_fan_maximum_flow_rate:
                   heating_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
-            - Sizing:System:
-                supply_fan_maximum_flow_rate:
-                  heating_supply_air_flow_rate_method: 'Flow/System'
           DedicatedOutdoorAir: &SizingSystemCommonTransitionsDedicatedOutdoorAir
             - Sizing:System:
                 supply_fan_flow_rate:
                   cooling_supply_air_flow_rate: '{supply_fan_flow_rate} / 1' # trigger eval() to parse out non numeric
                 dehumidification_setpoint: central_cooling_design_supply_air_humidity_ratio
             - Sizing:System:
-                supply_fan_flow_rate:
-                  cooling_supply_air_flow_rate_method: 'Flow/System'
-            - Sizing:System:
                 supply_fan_flow_rate: design_outdoor_air_flow_rate
             - Sizing:System:
                 supply_fan_flow_rate:
                   heating_supply_air_flow_rate: '{supply_fan_flow_rate} / 1' # trigger eval() to parse out non numeric
+        Mappings:
+          Cooling: &SizingSystemCommonMappingsCooling
+            - Sizing:System:
+                supply_fan_maximum_flow_rate:
+                  AnyNumber:
+                    cooling_supply_air_flow_rate_method: 'Flow/System'
             - Sizing:System:
                 supply_fan_flow_rate:
-                  heating_supply_air_flow_rate_method: 'Flow/System'
+                  AnyNumber:
+                    cooling_supply_air_flow_rate_method: 'Flow/System'
+          Heating: &SizingSystemCommonMappingsHeating
+            - Sizing:System:
+                supply_fan_maximum_flow_rate:
+                  AnyNumber:
+                    heating_supply_air_flow_rate_method: 'Flow/System'
+            - Sizing:System:
+                supply_fan_flow_rate:
+                  AnyNumber:
+                    heating_supply_air_flow_rate_method: 'Flow/System'
     Plant:
       Common:
         Fields: &SizingPlantCommonFields
@@ -5864,6 +5871,61 @@ OptionTree:
 #                Transitions: # Allow for autosizing even when variable is set
 #                  - AirLoopHVAC:
 #                      supply_fan_maximum_flow_rate: design_supply_air_flow_rate
+            heat_recovery_type: &SystemCommonTemplateObjectsHeatRecoveryType
+              Sensible:
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManager
+                      name: '{} Heat Recovery Air Temp Manager'
+                      schedule_name: 'HVACTemplate-Always5'
+                      setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
+                  - HeatExchanger:AirToAir:SensibleAndLatent:
+                      <<: *HeatExchangerAirToAirSensibleAndLatentFields
+                      frost_control_type: ExhaustOnly
+                      initial_defrost_time_fraction: 0.167
+                      latent_effectiveness_at_75_cooling_air_flow: 0
+                      latent_effectiveness_at_75_heating_air_flow: 0
+                      latent_effectiveness_at_100_cooling_air_flow: 0
+                      latent_effectiveness_at_100_heating_air_flow: 0
+                      rate_of_defrost_time_fraction_increase: 0.024
+                      sensible_effectiveness_at_75_cooling_air_flow: 0.75
+                      sensible_effectiveness_at_75_heating_air_flow: 0.75
+                      sensible_effectiveness_at_100_cooling_air_flow: 0.7
+                      sensible_effectiveness_at_100_heating_air_flow: 0.7
+                      threshold_temperature: -1.1
+                Transitions:
+                  - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
+                  - SetpointManager:Scheduled:
+                      economizer_minimum_limit_dry_bulb_temperature:
+                        schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                      economizer_lower_temperature_limit:
+                        schedule_name: 'HVACTemplate-Always{economizer_lower_temperature_limit}'
+              Enthalpy:
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManager
+                      name: '{} Heat Recovery Air Temp Manager'
+                      schedule_name: 'HVACTemplate-Always5'
+                      setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
+                  - HeatExchanger:AirToAir:SensibleAndLatent:
+                      <<: *HeatExchangerAirToAirSensibleAndLatentFields
+                      frost_control_type: MinimumExhaustTemperature
+                      heat_exchanger_type: Rotary
+                      latent_effectiveness_at_75_cooling_air_flow: 0.7
+                      latent_effectiveness_at_75_heating_air_flow: 0.7
+                      latent_effectiveness_at_100_cooling_air_flow: 0.65
+                      latent_effectiveness_at_100_heating_air_flow: 0.65
+                      sensible_effectiveness_at_75_cooling_air_flow: 0.75
+                      sensible_effectiveness_at_75_heating_air_flow: 0.75
+                      sensible_effectiveness_at_100_cooling_air_flow: 0.7
+                      sensible_effectiveness_at_100_heating_air_flow: 0.7
+                Transitions:
+                  - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
+                  - SetpointManager:Scheduled:
+                      economizer_minimum_limit_dry_bulb_temperature:
+                        schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
+                      economizer_lower_temperature_limit:
+                        schedule_name: 'HVACTemplate-Always{economizer_lower_temperature_limit}'
             night_cycle_control: &SystemCommonTemplateObjectsNightCycle
               CycleOnAny: &SystemCommonTemplateObjectsNightCycleControlCycleOnAny
                 Objects:
@@ -5888,6 +5950,8 @@ OptionTree:
                       dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_relative_humidity_setpoint}'
                 Transitions:
                   - ZoneControl:Humidistat:
+                      control_zone_or_thermostat_location_name: zone_name
+                  - ZoneControl:Humidistat:
                       dehumidification_setpoint:
                         dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
                       dehumidification_relative_humidity_setpoint_schedule_name: dehumidifying_relative_humidity_setpoint_schedule_name
@@ -5899,6 +5963,8 @@ OptionTree:
                       zone_name: '{humidifier_control_zone_name}'
                       humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_relative_humidity_setpoint}'
                 Transitions:
+                  - ZoneControl:Humidistat:
+                      control_zone_or_thermostat_location_name: zone_name
                   - ZoneControl:Humidistat:
                       humidifier_setpoint:
                         humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_setpoint}'
@@ -5913,6 +5979,8 @@ OptionTree:
                       dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_relative_humidity_setpoint}'
                       humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_relative_humidity_setpoint}'
                 Transitions:
+                  - ZoneControl:Humidistat:
+                      control_zone_or_thermostat_location_name: zone_name
                   - ZoneControl:Humidistat:
                       dehumidification_setpoint:
                         dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
@@ -6581,6 +6649,7 @@ OptionTree:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Sizing:System: *SizingSystemConstantVolume
           Transitions: *SizingSystemCommonTransitionsAdditional
+          Mappings: *SizingSystemCommonMappingsCooling
         TemplateObjects:
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
@@ -6807,6 +6876,9 @@ OptionTree:
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsDedicatedOutdoorAir
             - *AvailabilityManagerScheduledCommonTransitions
+          Mappings:
+            - *SizingSystemCommonMappingsCooling
+            - *SizingSystemCommonMappingsHeating
         TemplateObjects:
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
@@ -7030,6 +7102,8 @@ OptionTree:
           Transitions:
             - *ControllerOutdoorAirCommonTransitions
             - *SizingSystemCommonTransitions
+          Mappings:
+            - *SizingSystemCommonMappingsCooling
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
@@ -7115,76 +7189,22 @@ OptionTree:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
             - Sizing:System: *SizingSystemVAV
           Transitions: *SizingSystemCommonTransitions
+          Mappings: *SizingSystemCommonMappingsCooling
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
           economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerType
           humidistat_type: *SystemCommonTemplateObjectsHumidistatType
           humidifier_type: *SystemCommonTemplateObjectsHumidifierType
-          heat_recovery_type:
-            Sensible:
-              Objects:
-                - SetpointManager:Scheduled:
-                    <<: *SetpointManager
-                    name: '{} Heat Recovery Air Temp Manager'
-                    schedule_name: 'HVACTemplate-Always5'
-                    setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
-                - HeatExchanger:AirToAir:SensibleAndLatent:
-                    <<: *HeatExchangerAirToAirSensibleAndLatentFields
-                    frost_control_type: ExhaustOnly
-                    initial_defrost_time_fraction: 0.167
-                    latent_effectiveness_at_75_cooling_air_flow: 0
-                    latent_effectiveness_at_75_heating_air_flow: 0
-                    latent_effectiveness_at_100_cooling_air_flow: 0
-                    latent_effectiveness_at_100_heating_air_flow: 0
-                    rate_of_defrost_time_fraction_increase: 0.024
-                    sensible_effectiveness_at_75_cooling_air_flow: 0.75
-                    sensible_effectiveness_at_75_heating_air_flow: 0.75
-                    sensible_effectiveness_at_100_cooling_air_flow: 0.7
-                    sensible_effectiveness_at_100_heating_air_flow: 0.7
-                    threshold_temperature: -1.1
-              Transitions:
-                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitionsSensibleOnly
-                - SetpointManager:Scheduled:
-                    economizer_minimum_limit_dry_bulb_temperature:
-                      schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
-                    economizer_lower_temperature_limit:
-                      schedule_name: 'HVACTemplate-Always{economizer_lower_temperature_limit}'
-            Enthalpy:
-              Objects:
-                - SetpointManager:Scheduled:
-                    <<: *SetpointManager
-                    name: '{} Heat Recovery Air Temp Manager'
-                    schedule_name: 'HVACTemplate-Always5'
-                    setpoint_node_or_nodelist_name: '{} Heat Recovery Supply Outlet'
-                - HeatExchanger:AirToAir:SensibleAndLatent:
-                    <<: *HeatExchangerAirToAirSensibleAndLatentFields
-                    frost_control_type: MinimumExhaustTemperature
-                    heat_exchanger_type: Rotary
-                    latent_effectiveness_at_75_cooling_air_flow: 0.7
-                    latent_effectiveness_at_75_heating_air_flow: 0.7
-                    latent_effectiveness_at_100_cooling_air_flow: 0.65
-                    latent_effectiveness_at_100_heating_air_flow: 0.65
-                    sensible_effectiveness_at_75_cooling_air_flow: 0.75
-                    sensible_effectiveness_at_75_heating_air_flow: 0.75
-                    sensible_effectiveness_at_100_cooling_air_flow: 0.7
-                    sensible_effectiveness_at_100_heating_air_flow: 0.7
-              Transitions:
-                - *HeatExchangerAirToAirSensibleAndLatentCommonTransitions
-                - SetpointManager:Scheduled:
-                    economizer_minimum_limit_dry_bulb_temperature:
-                      schedule_name: 'HVACTemplate-Always{economizer_minimum_limit_dry_bulb_temperature}'
-                    economizer_lower_temperature_limit:
-                      schedule_name: 'HVACTemplate-Always{economizer_lower_temperature_limit}'
+          heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           cooling_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsPackagedVAVCoolingCoilSetpointControlTypeDetailed
           heating_coil_setpoint_control_type_detailed: *SystemCommonTemplateObjectsPackagedVAVHeatingCoilSetpointControlTypeDetailed
       Unitary:
         BuildPath:
           BaseObjects:
-            Objects:
-              - *SystemCommonBuildPathObjects
           Actions:
+            - outside_air_equipment_type: *SystemCommonBuildPathActionsOutsideAirEquipmentOutdoorAirMixer # Must be first in list because it sets the OutdoorAir:Mixer
             - heating_coil_type: # Custom objects needed, can't use common template
                 Gas: # Override existing Gas option with different Coil:Heating:Fuel object
                   ObjectReference: OutdoorAir:Mixer
@@ -7208,9 +7228,49 @@ OptionTree:
                     - Coil:Heating:Water: *CoilHeatingWaterSuperObject
                     - *CoilHeatingWaterCommonObjects
                   Mappings: *CoilHeatingWaterCommonMappings
-            - *SystemCommonBuildPathActionsCommonCoolingCoilLast
+            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
             - *SystemCommonBuildPathActionFanOnOff
             - humidifier_type: *SystemCommonBuildPathActionsConstantVolumeHumidifierType
+            - dehumidification_control_type_detailed:
+                None:
+                CoolReheat:
+                CoolReheatHeatingCoilGas:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Fuel:
+                        Fields:
+                          <<: *CoilHeatingFuelFields
+                          name: '{} Reheat Coil'
+                          air_inlet_node_name: '{} Reheat Coil Inlet'
+                          air_outlet_node_name: '{} Reheat Coil Outlet'
+                          part_load_fraction_correlation_curve_name: '{} Reheat Coil PLF-FPLR'
+                        Connectors:
+                          AirLoop: *ConnectorsAirLoop
+                    - Curve:Cubic:
+                        <<: *CoilHeatingFuelCommonObjectsPLFFPLRCurve
+                        name: '{} Reheat Coil PLF-FPLR'
+                CoolReheatDesuperheater:
+                  ObjectReference: (Coil:Cooling:.*|CoilSystem:Cooling.*)
+                  Location: After
+                  ActionType: Insert
+                  Objects:
+                    - SetpointManager:Scheduled:
+                        <<: *SetpointManagerScheduledCooling
+                        name: '{} Desuperheater Temp Manager'
+                        setpoint_node_or_nodelist_name: '{} Reheat Coil Outlet'
+                    - Coil:Heating:Desuperheater:
+                        Fields:
+                          name: '{} Reheat Coil'
+                          air_inlet_node_name: '{} Reheat Coil Inlet'
+                          air_outlet_node_name: '{} Reheat Coil Outlet'
+                          heat_reclaim_recovery_efficiency: 0.3
+                          heating_source_name: '{} Cooling Coil'
+                          heating_source_object_type: Coil:Cooling:DX:TwoStageWithHumidityControlMode
+                          temperature_setpoint_node_name: '{} Reheat Coil Outlet'
+                        Connectors:
+                          AirLoop: *ConnectorsAirLoop
+                Multimode:
             - airloop_hvac_unitary_object_type:
                 Furnace:HeatCool:
                   ObjectReference: OutdoorAir:Mixer
@@ -7220,6 +7280,33 @@ OptionTree:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:Unitary:Furnace:HeatCool: *AirLoopHVACUnitaryHeatCoolSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                Furnace:HeatCoolWithCoolReheatHeatingCoil:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:Unitary:Furnace:HeatCool:
+                        Fields:
+                          <<: *AirLoopHVACUnitaryHeatCoolFields
+                          reheat_coil_name:
+                            BuildPathReference:
+                              Location: Coil:Heating:.*
+                              Occurrence: -1
+                              ValueLocation: key
+                          reheat_coil_object_type:
+                            BuildPathReference:
+                              Location: Coil:Heating:.*
+                              Occurrence: -1
+                              ValueLocation: self
+                        Connectors:
+                          AirLoop: False
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Mappings:
+                    - AirLoopHVAC:Unitary:Furnace:HeatCool:
+                        dehumidification_control_type:
+                          CoolReheatHeatingCoil:
+                            dehumidification_control_type: CoolReheat
                 Furnace:HeatCoolWithHumidificationElectricSteam:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -7281,16 +7368,20 @@ OptionTree:
             - *ControllerOutdoorAirCommonTransitions
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-            - SetpointManager:SingleZone:Cooling: # todo_eo: This is not done in legacy, check if this is the intended action
-                cooling_design_supply_air_temperature: minimum_supply_air_temperature
-            - SetpointManager:SingleZone:Cooling: # todo_eo: This is not done in legacy, check if this is the intended action
-                heating_design_supply_air_temperature: maximum_supply_air_temperature
+#            - SetpointManager:SingleZone:Cooling: # todo_eo: This is not done in legacy, check if this is the intended action
+#                cooling_design_supply_air_temperature: minimum_supply_air_temperature
+#            - SetpointManager:SingleZone:Cooling: # todo_eo: This is not done in legacy, check if this is the intended action
+#                heating_design_supply_air_temperature: maximum_supply_air_temperature
+          Mappings:
+            - *SizingSystemCommonMappingsCooling
+            - *SizingSystemCommonMappingsHeating
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
-          night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimum
-          humidistat_type: *SystemCommonTemplateObjectsHumidistatType
+          heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
           humidifier_type: *SystemCommonTemplateObjectsHumidifierType
+          humidistat_type: *SystemCommonTemplateObjectsHumidistatType
+          night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       UnitaryHeatPump:
         AirToAir:
           BuildPath:
@@ -7317,6 +7408,9 @@ OptionTree:
             Transitions:
               - *SizingSystemCommonTransitions
               - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
+            Mappings:
+              - *SizingSystemCommonMappingsCooling
+              - *SizingSystemCommonMappingsHeating
           TemplateObjects:
             airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
             economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimum
@@ -7426,6 +7520,9 @@ OptionTree:
             - *AvailabilityManagerScheduledCommonTransitions
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
+          Mappings:
+            - *SizingSystemCommonMappingsCooling
+            - *SizingSystemCommonMappingsHeating
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimum
