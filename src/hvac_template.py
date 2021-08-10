@@ -367,6 +367,18 @@ class HVACTemplate(EPJSON):
                             'cooling_coil_gross_rated_cop': 3.0,
                             'heating_coil_design_setpoint': 10
                         },
+                        'HVACTemplate:System:Unitary': {
+                            'cooling_coil_type': 'SingleSpeedDX',
+                            'cooling_design_supply_air_temperature': 12.8,
+                            'cooling_coil_gross_rated_cop': 3.0,
+                            'heating_design_supply_air_temperature': 50.0,
+                            'economizer_type': 'NoEconomizer',
+                            'economizer_lockout': 'NoLockout',
+                            'supply_fan_placement': 'BlowThrough',
+                            'dehumidification_setpoint': 60.0,
+                            'humidifier_rated_capacity': 1e-06,
+                            'humidifier_setpoint': 30.0
+                        },
                         'HVACTemplate:System:VAV': {
                             'cooling_coil_type': 'ChilledWater',
                             'cooling_coil_design_setpoint': 12.8,
@@ -374,9 +386,6 @@ class HVACTemplate(EPJSON):
                             'heating_coil_design_setpoint': 10,
                             'preheat_coil_design_setpoint': 7.2,
                             'humidifier_rated_capacity': 1e-06
-                        },
-                        'HVACTemplate:System:Unitary': {
-                            'preheat_coil_design_setpoint': 7.0
                         }
                     }
                     for object_name, object_fields in object_structure.items():

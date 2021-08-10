@@ -20,4 +20,3 @@ class TestSimulationsZoneUnitaryHeatPump(BaseSimulationTest):
     def teardown(self):
         return
 
-    
