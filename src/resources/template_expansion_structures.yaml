@@ -544,10 +544,12 @@ Objects:
             supply_fan_name:
               BuildPathReference:
                 Location: Fan:.*
+                Occurrence: -1
                 ValueLocation: key
             supply_fan_object_type:
               BuildPathReference:
                 Location: Fan:.*
+                Occurrence: -1
                 ValueLocation: self
             maximum_supply_air_temperature: 80
             supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
@@ -5776,7 +5778,7 @@ OptionTree:
                           Connectors: *FanConstantVolumeConnectors
                     Transitions: *FanCommonTransitionsReturn
             OnOff: &SystemCommonBuildPathActionFanOnOff
-              - supply_fan_placement:
+              - supply_fan_placement: &SystemCommonBuildPathActionFanOnOffSupplyFanPlacement
                   None: &SystemCommonBuildPathActionsOnOffSupplyFanPlacementNone
                     ObjectReference: OutdoorAir:Mixer
                     ActionType: Insert
@@ -7228,9 +7230,24 @@ OptionTree:
                     - Coil:Heating:Water: *CoilHeatingWaterSuperObject
                     - *CoilHeatingWaterCommonObjects
                   Mappings: *CoilHeatingWaterCommonMappings
-            - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
-            - *SystemCommonBuildPathActionFanOnOff
+            - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilType
+            - supply_fan_placement: *SystemCommonBuildPathActionFanOnOffSupplyFanPlacement
             - humidifier_type: *SystemCommonBuildPathActionsConstantVolumeHumidifierType
+            - return_fan:
+                'No':
+                'Yes': # Quotes necessary to prevent boolean conversion
+                  Location: 0
+                  ActionType: Insert
+                  Objects:
+                    - Fan:ConstantVolume:
+                        Fields:
+                          <<: *FanConstantVolumeFields
+                          name: '{} Return Fan'
+                          air_inlet_node_name: *AirLoopInlet
+                          air_outlet_node_name: '{} Return Fan Outlet'
+                          pressure_rise: 300 # override base fan default
+                        Connectors: *FanConstantVolumeConnectors
+                  Transitions: *FanCommonTransitionsReturn
             - dehumidification_control_type_detailed:
                 None:
                 CoolReheat:
@@ -7250,6 +7267,45 @@ OptionTree:
                     - Curve:Cubic:
                         <<: *CoilHeatingFuelCommonObjectsPLFFPLRCurve
                         name: '{} Reheat Coil PLF-FPLR'
+                CoolReheatHeatingCoilElectric:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Electric:
+                        Fields:
+                          <<: *CoilHeatingElectricFields
+                          name: '{} Reheat Coil'
+                          air_inlet_node_name: '{} Reheat Coil Inlet'
+                          air_outlet_node_name: '{} Reheat Coil Outlet'
+                        Connectors:
+                          AirLoop: *ConnectorsAirLoop
+                  Transitions: *CoilHeatingElectricCommonTransitions
+                CoolReheatHeatingCoilHotWater:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Water:
+                        Fields:
+                          <<: *CoilHeatingWaterFields
+                          name: '{} Reheat Coil'
+                          air_inlet_node_name: '{} Reheat Coil Inlet'
+                          air_outlet_node_name: '{} Reheat Coil Outlet'
+                          water_inlet_node_name: '{} Reheat Coil Hw Inlet'
+                          water_outlet_node_name: '{} Reheat Coil Hw Outlet'
+                        Connectors:
+                          AirLoop: *ConnectorsAirLoop
+                    - Branch:
+                        name: '{} Reheat Coil Hw Branch'
+                        components:
+                          - component_inlet_node_name:
+                              Coil:Heating:Water: water_inlet_node_name
+                            component_name:
+                              Coil:Heating:Water: key
+                            component_object_type:
+                              Coil:Heating:Water: self
+                            component_outlet_node_name:
+                              Coil:Heating:Water: water_outlet_node_name
+                  Mappings: *CoilHeatingWaterCommonMappings
                 CoolReheatDesuperheater:
                   ObjectReference: (Coil:Cooling:.*|CoilSystem:Cooling.*)
                   Location: After
@@ -7323,6 +7379,39 @@ OptionTree:
                         Connectors:
                           AirLoop: False
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                Furnace:HeatCoolWithHumidificationElectricSteamWithCoolReheatHeatingCoil:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:Unitary:Furnace:HeatCool:
+                        Fields:
+                          <<: *AirLoopHVACUnitaryHeatCoolFields
+                          furnace_air_inlet_node_name:
+                            BuildPathReference:
+                              Location: Humidifier:Steam:Electric
+                              ValueLocation: Outlet
+                          reheat_coil_name:
+                            BuildPathReference:
+                              Location: Coil:Heating:.*
+                              Occurrence: -1
+                              ValueLocation: key
+                          reheat_coil_object_type:
+                            BuildPathReference:
+                              Location: Coil:Heating:.*
+                              Occurrence: -1
+                              ValueLocation: self
+                        Connectors:
+                          AirLoop: False
+                  Transitions:
+                    - *AirLoopHVACUnitaryCommonTransitionsHeating
+                    - *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Mappings:
+                    - AirLoopHVAC:Unitary:Furnace:HeatCool:
+                        dehumidification_control_type:
+                          CoolReheatHeatingCoil:
+                            dehumidification_control_type: CoolReheat
                 Furnace:HeatOnly:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert

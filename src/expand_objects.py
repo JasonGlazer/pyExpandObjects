@@ -2780,15 +2780,22 @@ class ExpandSystem(ExpandObjects):
                     # Iterate through list and remove objects that match the check list as well as dummy objects
                     parsed_build_path = []
                     removed_items = 0
-                    for super_object in copy.deepcopy(build_path):
+                    for idx, super_object in enumerate(copy.deepcopy(build_path)):
                         (super_object_type, super_object_structure), = super_object.items()
                         keep_object = True
-                        for object_reference, object_presence in object_check_list:
-                            if re.match(object_reference, super_object_type) and object_presence or \
-                                    super_object_type == 'DummyObject':
-                                keep_object = None
-                                if super_object_type != 'DummyObject':
-                                    removed_items += 1
+                        # if a return fan is specified for unitary systems, then keep it for the
+                        # branchlist object.  Otherwise, it will get removed via the removal regex expressions.
+                        if self.template_type in ['HVACTemplate:System:Unitary', ] and \
+                            getattr(self, 'return_fan', 'None') == 'Yes' and idx == 0 and \
+                                re.match(r'Fan:.*', super_object_type):
+                            pass
+                        else:
+                            for object_reference, object_presence in object_check_list:
+                                if re.match(object_reference, super_object_type) and object_presence or \
+                                        super_object_type == 'DummyObject':
+                                    keep_object = None
+                                    if super_object_type != 'DummyObject':
+                                        removed_items += 1
                         if keep_object:
                             parsed_build_path.append(super_object)
                         # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the

@@ -886,8 +886,11 @@ class TestSimulationsSystemUnitary(BaseSimulationTest):
             '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:dehumidification_control_type_cool_reheat")
-    def test_dehumidification_control_type_cool_reheat_heating_coil(self):
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:"
+                                              "dehumidification_control_type_cool_reheat_gas")
+    def test_dehumidification_control_type_cool_reheat_heating_coil_gas(self):
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'heating_coil_type'] = 'Gas'
         self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
             'dehumidification_control_type'] = 'CoolReheatHeatingCoil'
         self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
@@ -902,10 +905,64 @@ class TestSimulationsSystemUnitary(BaseSimulationTest):
             'HVACTemplate-Always62.0',
             epjson_output['ZoneControl:Humidistat']['Furnace DX 1-1 Dehumidification Humidistat'][
                 'dehumidifying_relative_humidity_setpoint_schedule_name'])
+        self.assertEqual(
+            'Coil:Heating:Fuel',
+            epjson_output['AirLoopHVAC:Unitary:Furnace:HeatCool']['Furnace DX 1-1 Furnace with DX Cooling'][
+                'heating_coil_object_type'])
         return
 
-    # todo_eo: need to make test for each heating coil type which modifies dehumidification_control_type_detailed
-    #  and also combinations with humidifier
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:"
+                                              "dehumidification_control_type_cool_reheat_electric")
+    def test_dehumidification_control_type_cool_reheat_heating_coil_electric(self):
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'heating_coil_type'] = 'Electric'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'dehumidification_control_type'] = 'CoolReheatHeatingCoil'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'dehumidification_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'dehumidification_setpoint'] = 62
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'HVACTemplate-Always62.0',
+            epjson_output['ZoneControl:Humidistat']['Furnace DX 1-1 Dehumidification Humidistat'][
+                'dehumidifying_relative_humidity_setpoint_schedule_name'])
+        self.assertEqual(
+            'Coil:Heating:Electric',
+            epjson_output['AirLoopHVAC:Unitary:Furnace:HeatCool']['Furnace DX 1-1 Furnace with DX Cooling'][
+                'heating_coil_object_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:"
+                                              "dehumidification_control_type_cool_reheat_hot_water")
+    def test_dehumidification_control_type_cool_reheat_heating_coil_hot_water(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=hot_water_objects)
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'heating_coil_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'dehumidification_control_type'] = 'CoolReheatHeatingCoil'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'dehumidification_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'dehumidification_setpoint'] = 62
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'HVACTemplate-Always62.0',
+            epjson_output['ZoneControl:Humidistat']['Furnace DX 1-1 Dehumidification Humidistat'][
+                'dehumidifying_relative_humidity_setpoint_schedule_name'])
+        self.assertEqual(
+            'Coil:Heating:Water',
+            epjson_output['AirLoopHVAC:Unitary:Furnace:HeatCool']['Furnace DX 1-1 Furnace with DX Cooling'][
+                'heating_coil_object_type'])
+        return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:humidifier_type")
     def test_humidifier_type(self):
@@ -924,4 +981,117 @@ class TestSimulationsSystemUnitary(BaseSimulationTest):
             'HVACTemplate-Always29.0',
             epjson_output['ZoneControl:Humidistat']['Furnace DX 1-1 Humidification Humidistat'][
                 'humidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:humidifier_inputs")
+    def test_humidifier_inputs(self):
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'humidifier_relative_humidity_setpoint'] = 29
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'humidifier_availability_schedule_name'] = 'OCCUPY-1'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'humidifier_rated_capacity'] = 1
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'humidifier_rated_electric_power'] = 1000
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('Furnace DX 1-1 Humidifier'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Humidifier:Steam:Electric']['Furnace DX 1-1 Humidifier']['availability_schedule_name'])
+        self.assertEqual(
+            1,
+            epjson_output['Humidifier:Steam:Electric']['Furnace DX 1-1 Humidifier']['rated_capacity'])
+        self.assertEqual(
+            1000,
+            epjson_output['Humidifier:Steam:Electric']['Furnace DX 1-1 Humidifier']['rated_power'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:humidifier_type")
+    def test_humidifier_and_dehumidifier(self):
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'humidifier_setpoint'] = 29
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'heating_coil_type'] = 'Electric'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'dehumidification_control_type'] = 'CoolReheatHeatingCoil'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'dehumidification_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'dehumidification_setpoint'] = 62
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'HVACTemplate-Always62.0',
+            epjson_output['ZoneControl:Humidistat']['Furnace DX 1-1 Humidistat'][
+                'dehumidifying_relative_humidity_setpoint_schedule_name'])
+        self.assertEqual(
+            'Coil:Heating:Electric',
+            epjson_output['AirLoopHVAC:Unitary:Furnace:HeatCool']['Furnace DX 1-1 Furnace with DX Cooling'][
+                'heating_coil_object_type'])
+        self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('Furnace DX 1-1 Humidifier'))
+        self.assertEqual(
+            'HVACTemplate-Always29.0',
+            epjson_output['ZoneControl:Humidistat']['Furnace DX 1-1 Humidistat'][
+                'humidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:return_fan_yes")
+    def test_return_fan_yes(self):
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'return_fan'] = 'Yes'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Fan:ConstantVolume'].get('Furnace DX 1-1 Return Fan'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:return_fan_no")
+    def test_return_fan_no(self):
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'return_fan'] = 'No'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output.get('Fan:ConstantVolume'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:return_fan_inputs")
+    def test_return_fan_inputs(self):
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'return_fan'] = 'Yes'
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'return_fan_total_efficiency'] = 0.72
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'return_fan_delta_pressure'] = 295
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'return_fan_motor_efficiency'] = 0.85
+        self.base_epjson['HVACTemplate:System:Unitary']['Furnace DX 1-1'][
+            'return_fan_motor_in_air_stream_fraction'] = 0.9
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.72,
+            epjson_output['Fan:ConstantVolume']['Furnace DX 1-1 Return Fan']['fan_total_efficiency'])
+        self.assertEqual(
+            295,
+            epjson_output['Fan:ConstantVolume']['Furnace DX 1-1 Return Fan']['pressure_rise'])
+        self.assertEqual(
+            0.85,
+            epjson_output['Fan:ConstantVolume']['Furnace DX 1-1 Return Fan']['motor_efficiency'])
+        self.assertEqual(
+            0.9,
+            epjson_output['Fan:ConstantVolume']['Furnace DX 1-1 Return Fan']['motor_in_airstream_fraction'])
         return
