@@ -478,6 +478,7 @@ Objects:
       Common:
         Transitions: &AirLoopHVACUnitaryCommonTransitionsHeating
           - AirLoopHVAC:Unitary.*:
+              cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
               heating_supply_air_flow_rate: heating_supply_air_flow_rate
         Fields: &AirLoopHVACUnitaryCommonFields
           controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
@@ -3192,6 +3193,8 @@ Objects:
                 preheat_coil_design_setpoint: preheat_design_temperature
                 supply_fan_maximum_flow_rate:
                   cooling_supply_air_flow_rate: '{supply_fan_maximum_flow_rate} / 1' # trigger eval() to parse out non numeric
+                cooling_supply_air_flow_rate: '{cooling_supply_air_flow_rate} / 1' # trigger eval() to parse out non numeric
+                heating_supply_air_flow_rate: '{heating_supply_air_flow_rate} / 1' # trigger eval() to parse out non numeric
           Additional: &SizingSystemCommonTransitionsAdditional
             - *SizingSystemCommonTransitions
             - Sizing:System:
@@ -3216,6 +3219,9 @@ Objects:
                 supply_fan_maximum_flow_rate:
                   AnyNumber:
                     cooling_supply_air_flow_rate_method: 'Flow/System'
+                cooling_supply_air_flow_rate:
+                  AnyNumber:
+                    cooling_supply_air_flow_rate_method: 'Flow/System'
             - Sizing:System:
                 supply_fan_flow_rate:
                   AnyNumber:
@@ -3223,6 +3229,9 @@ Objects:
           Heating: &SizingSystemCommonMappingsHeating
             - Sizing:System:
                 supply_fan_maximum_flow_rate:
+                  AnyNumber:
+                    heating_supply_air_flow_rate_method: 'Flow/System'
+                heating_supply_air_flow_rate:
                   AnyNumber:
                     heating_supply_air_flow_rate_method: 'Flow/System'
             - Sizing:System:
@@ -7478,9 +7487,31 @@ OptionTree:
               Objects:
                 - *SystemCommonBuildPathObjects
             Actions:
-              - heat_pump_heating_coil_type: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixer
+              - heat_pump_heating_coil_type: # transition override required
+                  SingleSpeedDXHeatPump:
+                    ObjectReference: OutdoorAir:Mixer
+                    Location: After
+                    ActionType: Insert
+                    Objects:
+                      - Coil:Heating:DX:SingleSpeed: *CoilHeatingDXSingleSpeedSuperObject
+                      - *CoilHeatingDXSingleSpeedCommonObjects
+                    Transitions:
+                      - *CoilHeatingDXSingleSpeedCommonTransitions
+                      - Coil:Heating:DX:SingleSpeed:
+                          heating_supply_air_flow_rate: rated_air_flow_rate
               - supplemental_heating_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
-              - *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixer
+              - cooling_coil_type: # transition override required
+                  SingleSpeedDX:
+                    ObjectReference: OutdoorAir:Mixer
+                    Location: After
+                    ActionType: Insert
+                    Objects:
+                      - *CoilCoolingDXSingleSpeedCommonObjects
+                      - Coil:Cooling:DX:SingleSpeed: *CoilCoolingDXSingleSpeedSuperObject
+                    Transitions:
+                      - *CoilCoolingDXSingleSpeedCommonTransitions
+                      - Coil:Cooling:DX:SingleSpeed:
+                          cooling_supply_air_flow_rate: rated_air_flow_rate
               - *SystemCommonBuildPathActionFanOnOff
               - airloop_hvac_unitary_object_type:
                   HeatPump:AirToAirWithSupplemental:
@@ -7495,6 +7526,7 @@ OptionTree:
             Objects:
               - *SystemUnitaryBaseObjects
             Transitions:
+              - *ControllerOutdoorAirCommonTransitions
               - *SizingSystemCommonTransitions
               - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
             Mappings:
