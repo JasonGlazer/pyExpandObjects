@@ -133,6 +133,15 @@ class HVACTemplate(EPJSON):
                             'zone_heating_design_supply_air_temperature': 50.0,
                             'zone_heating_design_supply_air_temperature_difference': 30.0
                         },
+                        'HVACTemplate:Zone:Unitary': {
+                            'outdoor_air_method': 'Flow/Person',
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SystemSupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature': 12.8,
+                            'zone_cooling_design_supply_air_temperature_difference': 11.11,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SystemSupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature': 50.0,
+                            'zone_heating_design_supply_air_temperature_difference': 30.0
+                        },
                         'HVACTemplate:Zone:VRF': {
                             'outdoor_air_method': 'Flow/Person',
                             'supply_air_fan_placement': 'BlowThrough',

@@ -57,6 +57,24 @@ class TestSimulationsZoneUnitary(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:Unitary:test_minimum_inputs")
+    def test_minimum_inputs(self):
+        self.base_epjson['HVACTemplate:Zone:Unitary'].pop('HVACTemplate:Zone:Unitary 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:Zone:Unitary': {
+                    'HVACTemplate:Zone:Unitary 1': {
+                        "template_thermostat_name": "All Zones",
+                        "zone_name": "SPACE1-1"
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:Unitary:supply_air_maximum_flow_rate")
     def test_supply_air_maximum_flow_rate(self):
         self.base_epjson['HVACTemplate:Zone:Unitary']['HVACTemplate:Zone:Unitary 1'][
