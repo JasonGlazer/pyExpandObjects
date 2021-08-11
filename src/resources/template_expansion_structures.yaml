@@ -480,6 +480,8 @@ Objects:
           - AirLoopHVAC:Unitary.*:
               cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
               heating_supply_air_flow_rate: heating_supply_air_flow_rate
+              no_load_supply_air_flow_rate: no_load_supply_air_flow_rate
+              supply_fan_operating_mode_schedule_name: supply_air_fan_operating_mode_schedule_name
         Fields: &AirLoopHVACUnitaryCommonFields
           controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
           heating_coil_name:
@@ -7499,7 +7501,6 @@ OptionTree:
                       - *CoilHeatingDXSingleSpeedCommonTransitions
                       - Coil:Heating:DX:SingleSpeed:
                           heating_supply_air_flow_rate: rated_air_flow_rate
-              - supplemental_heating_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
               - cooling_coil_type: # transition override required
                   SingleSpeedDX:
                     ObjectReference: OutdoorAir:Mixer
@@ -7512,7 +7513,8 @@ OptionTree:
                       - *CoilCoolingDXSingleSpeedCommonTransitions
                       - Coil:Cooling:DX:SingleSpeed:
                           cooling_supply_air_flow_rate: rated_air_flow_rate
-              - *SystemCommonBuildPathActionFanOnOff
+              - supply_fan_placement: *SystemCommonBuildPathActionFanOnOffSupplyFanPlacement
+              - supplemental_heating_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
               - airloop_hvac_unitary_object_type:
                   HeatPump:AirToAirWithSupplemental:
                     ObjectReference: OutdoorAir:Mixer
@@ -7524,7 +7526,23 @@ OptionTree:
                     Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
           BaseObjects:
             Objects:
-              - *SystemUnitaryBaseObjects
+              - OutdoorAir:NodeList: *OutdoorAirNodeListFields
+              - Sizing:System:
+                  <<: *SizingSystemConstantVolume
+                  preheat_coil_design_setpoint: 7.0
+              - SetpointManager:SingleZone:Cooling:
+                  <<: *SetpointManagerSingleZoneCooling
+                  maximum_supply_air_temperature: 45 # set by legacy, todo_eo: doesn't seem like it needs to be hard coded
+                  minimum_supply_air_temperature: 13 # set by legacy, todo_eo: doesn't seem like it needs to be hard coded
+                  control_zone_name: '{control_zone_or_thermostat_location_name}' # todo_eo: combine this name to common
+                  zone_node_name: '{control_zone_or_thermostat_location_name} Zone Air Node' # todo_eo: combine this name to common?
+                  zone_inlet_node_name: '{control_zone_or_thermostat_location_name} Supply Inlet' # todo_eo: combine this name to common?
+              - SetpointManager:MixedAir:
+                  <<: *SetpointManagerMixedAirCooling
+                  setpoint_node_or_nodelist_name:
+                    BuildPathReference:
+                      Location: OutdoorAir:Mixer
+                      ValueLocation: Outlet
             Transitions:
               - *ControllerOutdoorAirCommonTransitions
               - *SizingSystemCommonTransitions
