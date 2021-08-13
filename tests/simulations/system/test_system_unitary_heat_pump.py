@@ -694,6 +694,22 @@ class TestSimulationsSystemUnitaryHeatPump(BaseSimulationTest):
                 'minimum_outdoor_air_schedule_name'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+                                              "supplemental_gas_heating_coil_parasitic_electric_load")
+    def test_supplemental_gas_heating_coil_parasitic_electric_load(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'supplemental_heating_coil_type'] = 'Gas'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'supplemental_gas_heating_coil_parasitic_electric_load'] = 1
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            1,
+            epjson_output['Coil:Heating:Fuel']['Heat Pump 1 Supp Heating Coil']['parasitic_electric_load'])
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:economizer_type_no_economizer")
     def test_economizer_type_no_economizer(self):
         self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
@@ -783,7 +799,7 @@ class TestSimulationsSystemUnitaryHeatPump(BaseSimulationTest):
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:economizer_type_"
                                               "differential_dry_bulb_and_enthalpy")
     def test_economizer_type_differential_dry_bulb_and_enthalpy(self):
-        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir'][':System:UnitaryHeatPump:AirToAir'][
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
             'economizer_type'] = 'DifferentialDryBulbAndEnthalpy'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
@@ -793,20 +809,123 @@ class TestSimulationsSystemUnitaryHeatPump(BaseSimulationTest):
             epjson_output['Controller:OutdoorAir']['Heat Pump 1 OA Controller']['economizer_control_type'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
-                                              "supplemental_gas_heating_coil_parasitic_electric_load")
-    def test_supplemental_gas_heating_coil_parasitic_electric_load(self):
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:economizer_lockout_no_lockout")
+    def test_economizer_lockout_no_lockout(self):
         self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
-            'supplemental_heating_coil_type'] = 'Gas'
+            'economizer_lockout'] = 'NoLockout'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'NoLockout',
+            epjson_output['Controller:OutdoorAir']['Heat Pump 1 OA Controller']['lockout_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:economizer_lockout_lockout_with_heating")
+    def test_economizer_lockout_lockout_with_heating(self):
         self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
-            'supplemental_gas_heating_coil_parasitic_electric_load'] = 1
+            'economizer_lockout'] = 'LockoutWithHeating'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath(
             '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
-            1,
-            epjson_output['Coil:Heating:Fuel']['Heat Pump 1 Supp Heating Coil']['parasitic_electric_load'])
+            'LockoutWithHeating',
+            epjson_output['Controller:OutdoorAir']['Heat Pump 1 OA Controller']['lockout_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+                                              "economizer_lockout_lockout_with_compressor")
+    def test_economizer_lockout_lockout_with_compressor(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'economizer_lockout'] = 'LockoutWithCompressor'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'LockoutWithCompressor',
+            epjson_output['Controller:OutdoorAir']['Heat Pump 1 OA Controller']['lockout_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:economizer_temperature_limits")
+    def test_economizer_temperature_limits(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'economizer_type'] = 'FixedDryBulb'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'economizer_maximum_limit_dry_bulb_temperature'] = 18
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'economizer_minimum_limit_dry_bulb_temperature'] = 5
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            18,
+            epjson_output['Controller:OutdoorAir']['Heat Pump 1 OA Controller'][
+                'economizer_maximum_limit_dry_bulb_temperature'])
+        self.assertEqual(
+            5,
+            epjson_output['Controller:OutdoorAir']['Heat Pump 1 OA Controller'][
+                'economizer_minimum_limit_dry_bulb_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:economizer_upper_enthalpy_limit")
+    def test_economizer_maximum_limit_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'economizer_maximum_limit_enthalpy'] = 100
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            100,
+            epjson_output['Controller:OutdoorAir']['Heat Pump 1 OA Controller']['economizer_maximum_limit_enthalpy'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+                                              "economizer_maximum_limit_dewpoint_temperature")
+    def test_economizer_maximum_limit_dewpoint_temperature(self):
+        # todo_eo: Notes say that limit is applied regardless of what economizer type is applied.  However, EO only
+        #  applies the value when certain economizer is selected.  Figure out what is preferred method.
+        # self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+        #     'economizer_type'] = 'FixedDewPointAndDryBulb'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'economizer_maximum_limit_dewpoint_temperature'] = 20
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            20,
+            epjson_output['Controller:OutdoorAir']['Heat Pump 1 OA Controller'][
+                'economizer_maximum_limit_dewpoint_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:supply_plenum_name")
+    def test_supply_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'supply_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'PLENUM-1',
+            epjson_output['AirLoopHVAC:SupplyPlenum']['Heat Pump 1 Supply Plenum']['zone_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:return_plenum_name")
+    def test_return_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'return_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'PLENUM-1',
+            epjson_output['AirLoopHVAC:ReturnPlenum']['Heat Pump 1 Return Plenum']['zone_name'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:night_cycle_control_stay_off")
@@ -853,4 +972,207 @@ class TestSimulationsSystemUnitaryHeatPump(BaseSimulationTest):
             'SPACE1-1',
             epjson_output['AvailabilityManager:NightCycle']['Heat Pump 1 Availability'][
                 'control_zone_or_zone_list_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:heat_recovery_sensible")
+    def test_heat_recovery_sensible(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:heat_recovery_enthalpy")
+    def test_heat_recovery_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:heat_recovery_effectiveness_sensible")
+    def test_heat_recovery_effectiveness_sensible(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'heat_recovery_type'] = 'Sensible'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'sensible_heat_recovery_effectiveness'] = 0.72
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_heating_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_heating_air_flow'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:heat_recovery_effectiveness_enthalpy")
+    def test_heat_recovery_effectiveness_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'sensible_heat_recovery_effectiveness'] = 0.72
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'latent_heat_recovery_effectiveness'] = 0.61
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_heating_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_heating_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'latent_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'latent_effectiveness_at_100_heating_air_flow'])
+        self.assertEqual(
+            0.66,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'latent_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.66,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Heat Pump 1 Heat Recovery'][
+                'latent_effectiveness_at_75_heating_air_flow'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:humidifier_type")
+    def test_humidifier_type(self):
+        # todo_eo: legacy fails due to missing dehumidification default schedule
+        #  ** Severe  ** ZoneControl:Humidistat="HEAT PUMP 1 HUMIDISTAT invalid
+        #  Dehumidifying Relative Humidity Setpoint Schedule Name="" not found.
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'humidifier_setpoint'] = 29
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('Heat Pump 1 Humidifier'))
+        self.assertEqual(
+            'HVACTemplate-Always29.0',
+            epjson_output['ZoneControl:Humidistat']['Heat Pump 1 Humidification Humidistat'][
+                'humidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:humidifier_inputs")
+    def test_humidifier_inputs(self):
+        # todo_eo: legacy fails due to missing dehumidification default schedule
+        #  ** Severe  ** ZoneControl:Humidistat="HEAT PUMP 1 HUMIDISTAT invalid
+        #  Dehumidifying Relative Humidity Setpoint Schedule Name="" not found.
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'humidifier_setpoint'] = 29
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'humidifier_availability_schedule_name'] = 'OCCUPY-1'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'humidifier_rated_capacity'] = 1
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'humidifier_rated_electric_power'] = 1000
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('Heat Pump 1 Humidifier'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Humidifier:Steam:Electric']['Heat Pump 1 Humidifier']['availability_schedule_name'])
+        self.assertEqual(
+            1,
+            epjson_output['Humidifier:Steam:Electric']['Heat Pump 1 Humidifier']['rated_capacity'])
+        self.assertEqual(
+            1000,
+            epjson_output['Humidifier:Steam:Electric']['Heat Pump 1 Humidifier']['rated_power'])
+        self.assertEqual(
+            'HVACTemplate-Always29.0',
+            epjson_output['ZoneControl:Humidistat']['Heat Pump 1 Humidification Humidistat'][
+                'humidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:return_fan_yes")
+    def test_return_fan_yes(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'return_fan'] = 'Yes'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Fan:ConstantVolume'].get('Heat Pump 1 Return Fan'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:return_fan_no")
+    def test_return_fan_no(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'return_fan'] = 'No'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output.get('Fan:ConstantVolume'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:return_fan_inputs")
+    def test_return_fan_inputs(self):
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'return_fan'] = 'Yes'
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'return_fan_total_efficiency'] = 0.72
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'return_fan_delta_pressure'] = 295
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'return_fan_motor_efficiency'] = 0.85
+        self.base_epjson['HVACTemplate:System:UnitaryHeatPump:AirToAir']['Heat Pump 1'][
+            'return_fan_motor_in_air_stream_fraction'] = 0.9
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.72,
+            epjson_output['Fan:ConstantVolume']['Heat Pump 1 Return Fan']['fan_total_efficiency'])
+        self.assertEqual(
+            295,
+            epjson_output['Fan:ConstantVolume']['Heat Pump 1 Return Fan']['pressure_rise'])
+        self.assertEqual(
+            0.85,
+            epjson_output['Fan:ConstantVolume']['Heat Pump 1 Return Fan']['motor_efficiency'])
+        self.assertEqual(
+            0.9,
+            epjson_output['Fan:ConstantVolume']['Heat Pump 1 Return Fan']['motor_in_airstream_fraction'])
         return

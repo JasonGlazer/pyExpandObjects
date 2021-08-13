@@ -513,10 +513,12 @@ Objects:
             supply_air_fan_name:
               BuildPathReference:
                 Location: Fan:.*
+                Occurrence: -1
                 ValueLocation: key
             supply_air_fan_object_type:
               BuildPathReference:
                 Location: Fan:.*
+                Occurrence: -1
                 ValueLocation: self
             supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always0
       HeatCool:
@@ -586,7 +588,7 @@ Objects:
     UnitaryHeatPump:
       AirToAir:
         WithSupplemental: &AirLoopHVACUnitaryHeatPumpAirToAirWithSupplementalSuperObject
-          Fields:
+          Fields: &AirLoopHVACUnitaryHeatPumpAirToAirWithSupplementalFields
             name: '{} Heat Pump'
             <<: *AirLoopHVACUnitaryCommonFields
             <<: *AirLoopHVACUnitaryCommonHeatPumpFields
@@ -5819,6 +5821,22 @@ OptionTree:
                             pressure_rise: 500 # override base fan default
                           Connectors: *FanOnOffConnectors
                     Transitions: *FanCommonTransitionsReturn
+            ReturnFanConstantVolume:
+              - return_fan: &SystemCommonBuildPathActionsReturnFanConstantVolume
+                  'No':
+                  'Yes': # Quotes necessary to prevent boolean conversion
+                    Location: 0
+                    ActionType: Insert
+                    Objects:
+                      - Fan:ConstantVolume:
+                          Fields:
+                            <<: *FanConstantVolumeFields
+                            name: '{} Return Fan'
+                            air_inlet_node_name: *AirLoopInlet
+                            air_outlet_node_name: '{} Return Fan Outlet'
+                            pressure_rise: 300 # override base fan default
+                          Connectors: *FanConstantVolumeConnectors
+                    Transitions: *FanCommonTransitionsReturn
             VAV: &SystemCommonBuildPathActionsVariableVolumeFan
               - supply_fan_placement: &SystemCommonBuildPathActionsVariableVolumeFanSupplyFan
                   None: &SystemCommonBuildPathActionsVariableVolumeSupplyFanPlacementNone
@@ -7244,21 +7262,7 @@ OptionTree:
             - cooling_coil_type: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilType
             - supply_fan_placement: *SystemCommonBuildPathActionFanOnOffSupplyFanPlacement
             - humidifier_type: *SystemCommonBuildPathActionsConstantVolumeHumidifierType
-            - return_fan:
-                'No':
-                'Yes': # Quotes necessary to prevent boolean conversion
-                  Location: 0
-                  ActionType: Insert
-                  Objects:
-                    - Fan:ConstantVolume:
-                        Fields:
-                          <<: *FanConstantVolumeFields
-                          name: '{} Return Fan'
-                          air_inlet_node_name: *AirLoopInlet
-                          air_outlet_node_name: '{} Return Fan Outlet'
-                          pressure_rise: 300 # override base fan default
-                        Connectors: *FanConstantVolumeConnectors
-                  Transitions: *FanCommonTransitionsReturn
+            - return_fan: *SystemCommonBuildPathActionsReturnFanConstantVolume
             - dehumidification_control_type_detailed:
                 None:
                 CoolReheat:
@@ -7513,7 +7517,9 @@ OptionTree:
                       - Coil:Cooling:DX:SingleSpeed:
                           cooling_supply_air_flow_rate: rated_air_flow_rate
               - supply_fan_placement: *SystemCommonBuildPathActionFanOnOffSupplyFanPlacement
+              - humidifier_type: *SystemCommonBuildPathActionsConstantVolumeHumidifierType
               - supplemental_heating_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
+              - return_fan: *SystemCommonBuildPathActionsReturnFanConstantVolume
               - airloop_hvac_unitary_object_type:
                   HeatPump:AirToAirWithSupplemental:
                     ObjectReference: OutdoorAir:Mixer
@@ -7522,6 +7528,22 @@ OptionTree:
                     Objects:
                       # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                       - AirLoopHVAC:UnitaryHeatPump:AirToAir: *AirLoopHVACUnitaryHeatPumpAirToAirWithSupplementalSuperObject
+                    Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  HeatPump:AirToAirWithSupplementalWithHumidificationElectricSteam:
+                    ObjectReference: OutdoorAir:Mixer
+                    ActionType: Insert
+                    Location: After
+                    Objects:
+                      # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                      - AirLoopHVAC:UnitaryHeatPump:AirToAir:
+                          Fields:
+                            <<: *AirLoopHVACUnitaryHeatPumpAirToAirWithSupplementalFields
+                            air_inlet_node_name:
+                              BuildPathReference:
+                                Location: Humidifier:Steam:Electric
+                                ValueLocation: Outlet
+                          Connectors:
+                            AirLoop: False
                     Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
           BaseObjects:
             Objects:
@@ -7551,6 +7573,9 @@ OptionTree:
           TemplateObjects:
             airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
             economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimum
+            heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
+            humidifier_type: *SystemCommonTemplateObjectsHumidifierType
+            humidistat_type: *SystemCommonTemplateObjectsHumidistatType
             night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       UnitarySystem:
         BuildPath:
