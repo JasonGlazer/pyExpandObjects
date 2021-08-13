@@ -1811,6 +1811,15 @@ class AirLoopHVACUnitaryObjectType:
                 obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAir'
             elif cooling_coil_type and heating_coil_type and supplemental_heating_type:
                 obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
+        if template_type in ['HVACTemplate:System:Unitary', ]:
+            if getattr(obj, '_airloop_hvac_unitary_object_type', None) and \
+                    template_fields.get('humidifier_type') == 'ElectricSteam':
+                obj._airloop_hvac_unitary_object_type = \
+                    ''.join([obj._airloop_hvac_unitary_object_type, 'WithHumidificationElectricSteam'])
+            if getattr(obj, '_airloop_hvac_unitary_object_type', None) and \
+                    template_fields.get('dehumidification_control_type') == 'CoolReheatHeatingCoil':
+                obj._airloop_hvac_unitary_object_type = \
+                    ''.join([obj._airloop_hvac_unitary_object_type, 'WithCoolReheatHeatingCoil'])
         return
 
 
@@ -2139,6 +2148,37 @@ class ModifyDehumidificationControlType:
         return
 
 
+class DehumidificationControlTypeDetailed:
+    """
+    Create attribute dehumidification_control_type_detailed based on other template attributes for
+    YAML TemplateObjects lookup.
+    """
+    def __get__(self, obj, owner):
+        return obj._dehumidification_control_type_detailed
+
+    def __set__(self, obj, value):
+        # If the field is getting set on load with a string, then just return the string.  Otherwise, modify it with
+        #  the template
+        if isinstance(value, str):
+            obj._dehumidification_control_type_detailed = value
+        else:
+            (template_type, template_structure), = value.items()
+            (_, template_fields), = template_structure.items()
+            dehumidification_control_type = template_fields.get('dehumidification_control_type') if \
+                template_fields.get('dehumidification_control_type', 'None') != 'None' else 'None'
+            if dehumidification_control_type == 'CoolReheatHeatingCoil':
+                heating_coil_type = None if template_fields.get('heating_coil_type', 'None') == 'None' else \
+                    template_fields.get('heating_coil_type')
+                if not heating_coil_type:
+                    heating_coil_type = None if template_fields.get('heat_pump_heating_coil_type') == 'None' else \
+                        template_fields.get('heat_pump_heating_coil_type')
+                obj._dehumidification_control_type_detailed = \
+                    ''.join([dehumidification_control_type, heating_coil_type])
+            else:
+                obj._dehumidification_control_type_detailed = dehumidification_control_type
+        return
+
+
 class ExpandSystem(ExpandObjects):
     """
     System expansion operations
@@ -2165,6 +2205,8 @@ class ExpandSystem(ExpandObjects):
         outside_air_equipment_type
 
         dehumidification_control_type
+
+        dehumidification_control_type_detailed
     """
 
     airloop_hvac_unitary_object_type = AirLoopHVACUnitaryObjectType()
@@ -2177,6 +2219,7 @@ class ExpandSystem(ExpandObjects):
     humidistat_type = HumidistatType()
     outside_air_equipment_type = OutsideAirEquipmentType()
     dehumidification_control_type = ModifyDehumidificationControlType()
+    dehumidification_control_type_detailed = DehumidificationControlTypeDetailed()
 
     def __init__(self, template, logger_level='WARNING', epjson=None):
         super().__init__(template=template, logger_level=logger_level)
@@ -2206,6 +2249,7 @@ class ExpandSystem(ExpandObjects):
         self.humidistat_type = template
         self.outside_air_equipment_type = template
         self.dehumidification_control_type = template
+        self.dehumidification_control_type_detailed = template
         # System Warnings
         if self.template_type in ['HVACTemplate:System:VAV', 'HVACTemplate:System:PackagedVAV',
                                   'HVACTemplate:System:ConstantVolume']:
@@ -2420,12 +2464,17 @@ class ExpandSystem(ExpandObjects):
         # if return fan is specified skip the first object as long as it is a (return) fan
         # Put in HR if specified
         if getattr(self, 'heat_recovery_type', 'None') != 'None':
-            heat_recovery_object = self.get_epjson_objects(
-                epjson=self.epjson,
-                object_type_regexp='HeatExchanger:AirToAir:SensibleAndLatent',
-                object_name_regexp=r'.*heat\s+recovery*')
-            (heat_recovery_object_type, heat_recovery_object_structure), = heat_recovery_object.items()
-            (heat_recovery_object_name, _), = heat_recovery_object_structure.items()
+            try:
+                heat_recovery_object = self.get_epjson_objects(
+                    epjson=self.epjson,
+                    object_type_regexp='HeatExchanger:AirToAir:SensibleAndLatent',
+                    object_name_regexp=r'.*heat\s+recovery*')
+                (heat_recovery_object_type, heat_recovery_object_structure), = heat_recovery_object.items()
+                (heat_recovery_object_name, _), = heat_recovery_object_structure.items()
+            except (ValueError, KeyError, AttributeError):
+                raise PyExpandObjectsYamlStructureException(
+                    'Error: In {} ({}) Heat recovery was indicated but no object was created'
+                    .format(self.template_type, self.template_name))
             oa_equipment_list_dictionary['component_{}_object_type'.format(object_count)] = \
                 heat_recovery_object_type
             oa_equipment_list_dictionary['component_{}_name'.format(object_count)] = \
@@ -2731,15 +2780,22 @@ class ExpandSystem(ExpandObjects):
                     # Iterate through list and remove objects that match the check list as well as dummy objects
                     parsed_build_path = []
                     removed_items = 0
-                    for super_object in copy.deepcopy(build_path):
+                    for idx, super_object in enumerate(copy.deepcopy(build_path)):
                         (super_object_type, super_object_structure), = super_object.items()
                         keep_object = True
-                        for object_reference, object_presence in object_check_list:
-                            if re.match(object_reference, super_object_type) and object_presence or \
-                                    super_object_type == 'DummyObject':
-                                keep_object = None
-                                if super_object_type != 'DummyObject':
-                                    removed_items += 1
+                        # if a return fan is specified for unitary systems, then keep it for the
+                        # branchlist object.  Otherwise, it will get removed via the removal regex expressions.
+                        if self.template_type in ['HVACTemplate:System:Unitary', ] and \
+                            getattr(self, 'return_fan', 'None') == 'Yes' and idx == 0 and \
+                                re.match(r'Fan:.*', super_object_type):
+                            pass
+                        else:
+                            for object_reference, object_presence in object_check_list:
+                                if re.match(object_reference, super_object_type) and object_presence or \
+                                        super_object_type == 'DummyObject':
+                                    keep_object = None
+                                    if super_object_type != 'DummyObject':
+                                        removed_items += 1
                         if keep_object:
                             parsed_build_path.append(super_object)
                         # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the

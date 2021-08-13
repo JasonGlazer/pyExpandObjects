@@ -73,38 +73,107 @@ class HVACTemplate(EPJSON):
                               'VRF|Unitary|VAV|VAV:FanPowered|VAV:HeatAndCool|DualDuct)$',
                               object_type):
                     zone_default_map = {
+                        'HVACTemplate:Zone:BaseboardHeat': {
+                            'baseboard_heating_type': 'HotWater',
+                            'outdoor_air_method': 'Flow/Person'
+                        },
                         'HVACTemplate:Zone:ConstantVolume': {
-                            'zone_cooling_design_supply_air_temperature': 12.8
+                            'outdoor_air_method': 'Flow/Person',
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SystemSupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature': 12.8,
+                            'zone_cooling_design_supply_air_temperature_difference': 11.11,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature': 50.0,
+                            'zone_heating_design_supply_air_temperature_difference': 30.0
                         },
                         'HVACTemplate:Zone:FanCoil': {
                             'cooling_coil_type': 'ChilledWater',
                             'heating_coil_type': 'HotWater',
                             'outdoor_air_method': 'Flow/Person',
-                            'outdoor_air_flow_rate_per_person': 0.00944
+                            'supply_fan_delta_pressure': 75,
+                            'cooling_coil_design_setpoint': 14.0,
+                            'heating_coil_design_setpoint': 50.0,
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature_difference': 11.11,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature_difference': 30.0
                         },
                         'HVACTemplate:Zone:PTAC': {
+                            'outdoor_air_method': 'Flow/Person',
+                            'supply_fan_placement': 'DrawThrough',
                             'cooling_coil_type': 'SingleSpeedDX',
-                            'heating_coil_type': 'Electric'
+                            'supply_fan_total_efficiency': 0.7,
+                            'cooling_coil_gross_rated_cooling_cop': 3.0,
+                            'heating_coil_type': 'Electric',
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature': 14.0,
+                            'zone_cooling_design_supply_air_temperature_difference': 11.0,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature': 50.0,
+                            'zone_heating_design_supply_air_temperature_difference': 30.0
                         },
                         'HVACTemplate:Zone:PTHP': {
+                            'outdoor_air_method': 'Flow/Person',
+                            'supply_fan_placement': 'DrawThrough',
                             'cooling_coil_type': 'SingleSpeedDX',
+                            'cooling_coil_gross_rated_cop': 3.0,
+                            'supply_fan_total_efficiency': 0.7,
                             'heat_pump_heating_coil_type': 'SingleSpeedDXHeatPump',
-                            'supplemental_heating_coil_type': 'Electric'
+                            'heat_pump_heating_coil_gross_rated_cop': 2.75,
+                            'heat_pump_heating_minimum_outdoor_dry_bulb_temperature': -8.0,
+                            'heat_pump_defrost_maximum_outdoor_dry_bulb_temperature': 5.0,
+                            'heat_pump_defrost_strategy': 'ReverseCycle',
+                            'heat_pump_defrost_control': 'Timed',
+                            'supplemental_heating_coil_type': 'Electric',
+                            'supplemental_heating_coil_maximum_outdoor_dry_bulb_temperature': 21.0,
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature': 14.0,
+                            'zone_cooling_design_supply_air_temperature_difference': 11.11,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature': 50.0,
+                            'zone_heating_design_supply_air_temperature_difference': 30.0
+                        },
+                        'HVACTemplate:Zone:Unitary': {
+                            'outdoor_air_method': 'Flow/Person',
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SystemSupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature': 12.8,
+                            'zone_cooling_design_supply_air_temperature_difference': 11.11,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SystemSupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature': 50.0,
+                            'zone_heating_design_supply_air_temperature_difference': 30.0
                         },
                         'HVACTemplate:Zone:VRF': {
+                            'outdoor_air_method': 'Flow/Person',
+                            'supply_air_fan_placement': 'BlowThrough',
                             'cooling_coil_type': 'VariableRefrigerantFlowDX',
-                            'heating_coil_type': 'VariableRefrigerantFlowDX'
+                            'supply_fan_total_efficiency': 0.7,
+                            'heating_coil_type': 'VariableRefrigerantFlowDX',
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature': 14.0,
+                            'zone_cooling_design_supply_air_temperature_difference': 11.11,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature': 50.0,
+                            'zone_heating_design_supply_air_temperature_difference': 30.0
                         },
                         'HVACTemplate:Zone:WaterToAirHeatPump': {
+                            'outdoor_air_method': 'Flow/Person',
+                            'supply_fan_placement': 'DrawThrough',
                             'cooling_coil_type': 'Coil:Cooling:WaterToAirHeatPump:EquationFit',
                             'cooling_coil_gross_rated_cop': 3.5,
                             # todo_eo: template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched for this field
-                            'supply_fan_placement': 'DrawThrough',
                             # Not default efficiency for Fan:OnOff
                             'supply_fan_total_efficiency': 0.7,
                             'heat_pump_heating_coil_type': 'Coil:Heating:WaterToAirHeatPump:EquationFit',
                             'heat_pump_heating_coil_gross_rated_cop': 4.2,
-                            'supplemental_heating_coil_type': 'Electric'
+                            'maximum_cycling_rate': 2.5,
+                            'supplemental_heating_coil_type': 'Electric',
+                            'zone_cooling_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_cooling_design_supply_air_temperature': 14.0,
+                            'zone_cooling_design_supply_air_temperature_difference': 11.11,
+                            'zone_heating_design_supply_air_temperature_input_method': 'SupplyAirTemperature',
+                            'zone_heating_design_supply_air_temperature': 50.0,
+                            'zone_heating_design_supply_air_temperature_difference': 30.0,
+                            'heat_pump_coil_water_flow_mode': 'Cycling'
                         }
                     }
                     for object_name, object_fields in object_structure.items():
@@ -298,6 +367,18 @@ class HVACTemplate(EPJSON):
                             'cooling_coil_gross_rated_cop': 3.0,
                             'heating_coil_design_setpoint': 10
                         },
+                        'HVACTemplate:System:Unitary': {
+                            'cooling_coil_type': 'SingleSpeedDX',
+                            'cooling_design_supply_air_temperature': 12.8,
+                            'cooling_coil_gross_rated_cop': 3.0,
+                            'heating_design_supply_air_temperature': 50.0,
+                            'economizer_type': 'NoEconomizer',
+                            'economizer_lockout': 'NoLockout',
+                            'supply_fan_placement': 'BlowThrough',
+                            'dehumidification_setpoint': 60.0,
+                            'humidifier_rated_capacity': 1e-06,
+                            'humidifier_setpoint': 30.0
+                        },
                         'HVACTemplate:System:VAV': {
                             'cooling_coil_type': 'ChilledWater',
                             'cooling_coil_design_setpoint': 12.8,
@@ -305,9 +386,6 @@ class HVACTemplate(EPJSON):
                             'heating_coil_design_setpoint': 10,
                             'preheat_coil_design_setpoint': 7.2,
                             'humidifier_rated_capacity': 1e-06
-                        },
-                        'HVACTemplate:System:Unitary': {
-                            'preheat_coil_design_setpoint': 7.0
                         }
                     }
                     for object_name, object_fields in object_structure.items():
@@ -433,11 +511,19 @@ class HVACTemplate(EPJSON):
                         'HVACTemplate:Plant:ChilledWaterLoop': {
                             'chilled_water_design_setpoint': 7.22,
                             'condenser_water_design_setpoint': 29.4,
-                            'chilled_water_pump_configuration': 'ConstantPrimaryNoSecondary'
+                            'chilled_water_pump_configuration': 'ConstantPrimaryNoSecondary',
+                            'chilled_water_setpoint_at_outdoor_dry_bulb_low': 12.2,
+                            'chilled_water_reset_outdoor_dry_bulb_low': 15.6,
+                            'chilled_water_setpoint_at_outdoor_dry_bulb_high': 6.7,
+                            'chilled_water_reset_outdoor_dry_bulb_high': 26.7
                         },
                         'HVACTemplate:Plant:HotWaterLoop': {
                             'hot_water_design_setpoint': 82,
-                            'hot_water_pump_configuration': 'ConstantFlow'
+                            'hot_water_pump_configuration': 'ConstantFlow',
+                            'hot_water_setpoint_at_outdoor_dry_bulb_low': 82.2,
+                            'hot_water_reset_outdoor_dry_bulb_low': -6.7,
+                            'hot_water_setpoint_at_outdoor_dry_bulb_high': 65.6,
+                            'hot_water_reset_outdoor_dry_bulb_high': 10
                         },
                         'HVACTemplate:Plant:MixedWaterLoop': {
                             'high_temperature_design_setpoint': 33,
@@ -499,7 +585,8 @@ class HVACTemplate(EPJSON):
                         'HVACTemplate:Plant:Boiler': {
                             'fuel_type': 'NaturalGas',
                             'priority': '1',
-                            'efficiency': 0.8
+                            'efficiency': 0.8,
+                            'water_outlet_upper_temperature_limit': 100.0
                         },
                         'HVACTemplate:Plant:Boiler:ObjectReference': {
                             'boiler_object_type': 'Boiler:HotWater',
