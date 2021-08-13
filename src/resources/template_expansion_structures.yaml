@@ -7486,9 +7486,8 @@ OptionTree:
         AirToAir:
           BuildPath:
             BaseObjects:
-              Objects:
-                - *SystemCommonBuildPathObjects
             Actions:
+              - outside_air_equipment_type: *SystemCommonBuildPathActionsOutsideAirEquipmentOutdoorAirMixer # Must be first in list because it sets the OutdoorAir:Mixer
               - heat_pump_heating_coil_type: # transition override required
                   SingleSpeedDXHeatPump:
                     ObjectReference: OutdoorAir:Mixer
@@ -7544,7 +7543,6 @@ OptionTree:
                       Location: OutdoorAir:Mixer
                       ValueLocation: Outlet
             Transitions:
-              - *ControllerOutdoorAirCommonTransitions
               - *SizingSystemCommonTransitions
               - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
             Mappings:
