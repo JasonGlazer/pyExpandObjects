@@ -482,6 +482,11 @@ Objects:
               heating_supply_air_flow_rate: heating_supply_air_flow_rate
               no_load_supply_air_flow_rate: no_load_supply_air_flow_rate
               supply_fan_operating_mode_schedule_name: supply_air_fan_operating_mode_schedule_name
+        Mappings: &AirLoopHVACUnitaryCommonMappings
+          - AirLoopHVAC:UnitarySystem:
+              control_type:
+                SetPoint:
+                  supply_air_fan_operating_mode_schedule_name: 'HVACTemplate-Always1'
         Fields: &AirLoopHVACUnitaryCommonFields
           controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
           heating_coil_name:
@@ -617,7 +622,7 @@ Objects:
             AirLoop: False
     UnitarySystem:
       Common:
-        Objects: &AirLoopHVACUnitarySystemCommonObjects
+        Fields: &AirLoopHVACUnitarySystemCommonFields
           air_inlet_node_name:
             BuildPathReference:
               Location: OutdoorAir:Mixer
@@ -645,6 +650,7 @@ Objects:
         Fields:
           name: '{} Unitary System'
           <<: *AirLoopHVACUnitaryCommonFields
+          <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_coil_name:
             BuildPathReference:
               Location: Coil:Cooling.*
@@ -656,13 +662,13 @@ Objects:
               Location: Coil:Cooling.*
               Occurrence: 1
               ValueLocation: self
-          <<: *AirLoopHVACUnitarySystemCommonObjects
         Connectors:
           AirLoop: False
       WithSupplemental: &AirLoopHVACUnitarySystemWithSupplementalSuperObject
         Fields:
           name: '{} Heat Pump'
           <<: *AirLoopHVACUnitaryCommonFields
+          <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_coil_name:
             BuildPathReference:
               Location: Coil:Cooling.*
@@ -674,7 +680,6 @@ Objects:
               Location: Coil:Cooling.*
               Occurrence: 1
               ValueLocation: self
-          <<: *AirLoopHVACUnitarySystemCommonObjects
           supplemental_heating_coil_name:
             BuildPathReference:
               Location: ^Coil:Heating:((?!Desuperheater).)*$
@@ -691,6 +696,7 @@ Objects:
         Fields:
           name: '{} Unitary System'
           <<: *AirLoopHVACUnitaryCommonFields
+          <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_coil_name:
             BuildPathReference:
               Location: Coil:Cooling.*
@@ -702,7 +708,6 @@ Objects:
               Location: Coil:Cooling.*
               Occurrence: 1
               ValueLocation: self
-          <<: *AirLoopHVACUnitarySystemCommonObjects
           design_specification_multispeed_object_name:
             UnitarySystemPerformance.*: key
           design_specification_multispeed_object_type:
@@ -7615,6 +7620,15 @@ OptionTree:
                   Objects:
                     - *CoilCoolingWaterCommonObjects
                     - Coil:Cooling:Water: *CoolingCoilWaterSuperObject
+                TwoSpeedDX: # No coilsystem
+                  ObjectReference: OutdoorAir:Mixer
+                  Location: After
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Cooling:DX:TwoSpeed: *CoilCoolingDXTwoSpeedSuperObject
+                    - *CoilCoolingDXTwoSpeedCommonObjects
+                  Transitions: *CoilCoolingDXTwoSpeedCommonTransitions
+                  Mappings: *CoilSystemCoolingDXCommonMappings
             - airloop_hvac_unitary_fan_type_and_placement:
                 BaseBlowThrough: *SystemCommonBuildPathActionsOnOffSupplyFanPlacementNone
                 BaseDrawThrough: *SystemCommonBuildPathActionsOnOffSupplyFanPlacementDrawThrough
@@ -7658,6 +7672,7 @@ OptionTree:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Mappings: *AirLoopHVACUnitaryCommonMappings
                 HeatPump:AirToAirWithSupplemental:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -7666,6 +7681,7 @@ OptionTree:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemWithSupplementalSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Mappings: *AirLoopHVACUnitaryCommonMappings
                 HeatPump:AirToAirMultiSpeedDX:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -7674,6 +7690,7 @@ OptionTree:
                     - UnitarySystemPerformance:Multispeed: *UnitarySystemPerformanceMultispeedFields
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemMultiSpeedDXSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Mappings: *AirLoopHVACUnitaryCommonMappings
         BaseObjects:
           Objects:
             - *SystemUnitaryBaseObjects

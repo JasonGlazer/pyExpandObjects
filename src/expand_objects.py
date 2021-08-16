@@ -1837,7 +1837,7 @@ class AirLoopHVACUnitaryFanTypeAndPlacement:
             template_fields.get('supply_fan_placement')
         cooling_coil_type = 'Base' if template_fields.get('cooling_coil_type', 'None') == 'None' else \
             template_fields.get('cooling_coil_type')
-        if cooling_coil_type == 'MultiSpeedDX':
+        if cooling_coil_type in ['TwoSpeedDX', 'MultiSpeedDX']:
             supply_fan_type = 'VariableVolume'
         else:
             supply_fan_type = 'Base'
