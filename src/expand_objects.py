@@ -1807,10 +1807,18 @@ class AirLoopHVACUnitaryObjectType:
         elif template_type == 'HVACTemplate:System:UnitarySystem':
             if cooling_coil_type == 'MultiSpeedDX' and heating_coil_type and not supplemental_heating_type:
                 obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirMultiSpeedDX'
-            elif cooling_coil_type and heating_coil_type and not supplemental_heating_type:
+            elif cooling_coil_type and heating_coil_type:
                 obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAir'
-            elif cooling_coil_type and heating_coil_type and supplemental_heating_type:
-                obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirWithSupplemental'
+            elif not cooling_coil_type and heating_coil_type:
+                obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirNoCool'
+            elif cooling_coil_type and not heating_coil_type:
+                obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirNoHeat'
+            elif not cooling_coil_type and not heating_coil_type:
+                obj._airloop_hvac_unitary_object_type = 'HeatPump:AirToAirNoCoolNoHeat'
+            if getattr(obj, '_airloop_hvac_unitary_object_type', None) and \
+                    supplemental_heating_type:
+                obj._airloop_hvac_unitary_object_type = \
+                    ''.join([obj._airloop_hvac_unitary_object_type, 'WithSupplemental'])
         if template_type in ['HVACTemplate:System:Unitary', 'HVACTemplate:System:UnitaryHeatPump:AirToAir']:
             if getattr(obj, '_airloop_hvac_unitary_object_type', None) and \
                     template_fields.get('humidifier_type') == 'ElectricSteam':
@@ -2679,12 +2687,26 @@ class ExpandSystem(ExpandObjects):
                 []),
             (
                 ['HVACTemplate:System:UnitarySystem', ],
-                'AirLoopHVAC:Unitary*',
+                'AirLoopHVAC:UnitarySystem',
+                {'Inlet': 'air_inlet_node_name',
+                 'Outlet': 'air_outlet_node_name'},
+                (
+                    ('HeatExchanger:AirToAir:SensibleAndLatent',
+                     None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
+                    ('CoilSystem.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
+                    ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
+                    ('Fan:.*', True)),
+                ['HeatExchangerAssistedDX', 'HeatExchangerAssistedChilledWater']),
+            (
+                ['HVACTemplate:System:UnitarySystem', ],
+                'AirLoopHVAC:UnitarySystem',
                 {'Inlet': 'air_inlet_node_name',
                  'Outlet': 'air_outlet_node_name'},
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
-                    ('Coil:Heating.*', None if getattr(self, 'heating_coil_type', 'None') == 'None' else True),
+                    ('Coil:Heating.*',
+                     None if getattr(self, 'heating_coil_type', 'None') == 'None' and
+                     getattr(self, 'supplemental_heating_or_reheat_coil_type', 'None') == 'None' else True),
                     ('Fan:.*', True)),
                 []),
             (
@@ -2771,7 +2793,9 @@ class ExpandSystem(ExpandObjects):
                 if equipment_object:
                     try:
                         (_, equipment_object_keys), = equipment_object.items()
-                        if {'Fields', 'Connectors'} != set(equipment_object_keys.keys()):
+                        # check that the super object is valid
+                        if {'Fields', 'Connectors'} != set(equipment_object_keys.keys()) or \
+                                not equipment_object_keys['Connectors'][loop_type]:
                             raise ValueError
                     except ValueError:
                         raise PyExpandObjectsException(
@@ -2801,7 +2825,7 @@ class ExpandSystem(ExpandObjects):
                             parsed_build_path.append(super_object)
                         # if object_check_list is empty, it's done.  Pass the equipment then proceed.  Add one to the
                         # removed_items so it isn't called again
-                        if removed_items == len(object_check_list):
+                        if removed_items == sum(1 for i, j in object_check_list if j):
                             parsed_build_path.append(equipment_object)
                             removed_items += 1
                     if removed_items < sum(1 for i, j in object_check_list if j):
@@ -2865,7 +2889,7 @@ class ExpandSystem(ExpandObjects):
                 component['component_object_type'] = super_object_type
                 component['component_name'] = super_object_structure['Fields']['name']
                 components.append(component)
-            except (AttributeError, KeyError):
+            except (AttributeError, KeyError, TypeError):
                 raise PyExpandObjectsYamlStructureException(
                     "Error: Field/Connector mismatch or name not in Fields. Object: {}, connectors: {}"
                     .format(super_object_structure, connectors))
