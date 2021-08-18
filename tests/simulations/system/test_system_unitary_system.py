@@ -1458,3 +1458,24 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
             epjson_output['ZoneControl:Humidistat']['Sys 1 Furnace DX Cool SnglSpd Dehumidification Humidistat'][
                 'dehumidifying_relative_humidity_setpoint_schedule_name'])
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:humidifier_type")
+    def test_humidifier_type(self):
+        # todo_eo: EO fails with this option and comparison is hard to make.
+        #  ** Severe  ** <root>[ZoneControl:Humidistat][Sys 1 Furnace DX Cool SnglSpd Humidification Humidistat]
+        #  - Missing required property 'zone_name'.
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'humidifier_relative_humidity_setpoint'] = 29
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Humidifier:Steam:Electric'].get('Sys 1 Furnace DX Cool SnglSpd Humidifier'))
+        self.assertEqual(
+            'HVACTemplate-Always29.0',
+            epjson_output['ZoneControl:Humidistat']['Sys 1 Furnace DX Cool SnglSpd Humidification Humidistat'][
+                'humidifying_relative_humidity_setpoint_schedule_name'])
+        return

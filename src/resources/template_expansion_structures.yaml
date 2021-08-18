@@ -637,7 +637,8 @@ Objects:
               ValueLocation: Outlet
           air_outlet_node_name:
             BuildPathReference:
-              Location: -1
+              Location: ^(?!Humidifier).*
+              Occurrence: -1
               ValueLocation: Outlet
           control_type: '{control_type}'
           controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
@@ -7508,7 +7509,7 @@ OptionTree:
             - supply_fan_placement: *SystemCommonBuildPathActionFanOnOffSupplyFanPlacement
             - humidifier_type: *SystemCommonBuildPathActionsConstantVolumeHumidifierType
             - return_fan: *SystemCommonBuildPathActionsReturnFanConstantVolume
-            - dehumidification_control_type_detailed: &SystemCommonBuildPathActionsDehumidificationControlTypeDetailed
+            - dehumidification_control_type_detailed:
                 None:
                 CoolReheat:
                 CoolReheatHeatingCoilGas:
@@ -8011,6 +8012,12 @@ OptionTree:
                           fan_power_minimum_flow_fraction: 0.0
                         Connectors: *FanVariableVolumeConnectors
                   Transitions: *FanCommonTransitionsSupply
+            - humidifier_type:
+                ElectricSteam:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Humidifier:Steam:Electric: *HumidifierSteamElectricSuperObject
             - airloop_hvac_unitary_object_type:
                 HeatPump:AirToAir:
                   ObjectReference: OutdoorAir:Mixer
