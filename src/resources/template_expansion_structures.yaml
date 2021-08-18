@@ -622,7 +622,15 @@ Objects:
             AirLoop: False
     UnitarySystem:
       Common:
+        Mappings: &AirLoopHVACUnitarySystemCommonMappings
+          - AirLoopHVAC:UnitarySystem:
+              dehumidification_control_type:
+                CoolReheat:
+                  latent_load_control: LatentWithSensibleLoadControl
+                Multimode:
+                  latent_load_control: LatentWithSensibleLoadControl
         Fields: &AirLoopHVACUnitarySystemCommonFields
+          name: '{} Unitary System'
           air_inlet_node_name:
             BuildPathReference:
               Location: OutdoorAir:Mixer
@@ -634,6 +642,7 @@ Objects:
           control_type: '{control_type}'
           controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
           cooling_supply_air_flow_rate_method: SupplyAirFlowRate # Set by legacy, no default
+          dehumidification_control_type: '{dehumidification_control_type}'
           heating_supply_air_flow_rate_method: SupplyAirFlowRate # Set by legacy, no default
           maximum_supply_air_temperature: Autosize
           no_load_supply_air_flow_rate_method: SupplyAirFlowRate # Set by legacy, no default
@@ -648,7 +657,6 @@ Objects:
           supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
       Base: &AirLoopHVACUnitarySystemSuperObject
         Fields:
-          name: '{} Unitary System'
           <<: *AirLoopHVACUnitaryCommonFields
           <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_coil_name:
@@ -666,7 +674,6 @@ Objects:
           AirLoop: False
       NoCool: &AirLoopHVACUnitarySystemNoCoolSuperObject
         Fields:
-          name: '{} Unitary System'
           <<: *AirLoopHVACUnitaryCommonFields
           <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
@@ -674,7 +681,6 @@ Objects:
           AirLoop: False
       NoHeat: &AirLoopHVACUnitarySystemNoHeatSuperObject
         Fields:
-          name: '{} Unitary System'
           <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_coil_name:
             BuildPathReference:
@@ -695,7 +701,6 @@ Objects:
           AirLoop: False
       NoCoolNoHeat: &AirLoopHVACUnitarySystemNoCoolNoHeatSuperObject
         Fields:
-          name: '{} Unitary System'
           <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
           controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
@@ -706,7 +711,6 @@ Objects:
           AirLoop: False
       WithSupplemental: &AirLoopHVACUnitarySystemWithSupplementalSuperObject
         Fields:
-          name: '{} Heat Pump'
           <<: *AirLoopHVACUnitaryCommonFields
           <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_coil_name:
@@ -722,37 +726,37 @@ Objects:
               ValueLocation: self
           supplemental_heating_coil_name:
             BuildPathReference:
-              Location: ^Coil:Heating:((?!Desuperheater).)*$
+              Location: Coil:Heating:*
               Occurrence: -1
               ValueLocation: key
           supplemental_heating_coil_object_type:
             BuildPathReference:
-              Location: ^Coil:Heating:((?!Desuperheater).)*$
+              Location: Coil:Heating:*
               Occurrence: -1
               ValueLocation: self
+          maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: '{supplemental_heating_or_reheat_coil_maximum_outdoor_dry_bulb_temperature}'
         Connectors:
           AirLoop: False
       NoCoolWithSupplemental: &AirLoopHVACUnitarySystemNoCoolWithSupplementalSuperObject
         Fields:
-          name: '{} Heat Pump'
           <<: *AirLoopHVACUnitaryCommonFields
           <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
           supplemental_heating_coil_name:
             BuildPathReference:
-              Location: ^Coil:Heating:((?!Desuperheater).)*$
+              Location: Coil:Heating:*
               Occurrence: -1
               ValueLocation: key
           supplemental_heating_coil_object_type:
             BuildPathReference:
-              Location: ^Coil:Heating:((?!Desuperheater).)*$
+              Location: Coil:Heating:*
               Occurrence: -1
               ValueLocation: self
+          maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: '{supplemental_heating_or_reheat_coil_maximum_outdoor_dry_bulb_temperature}'
         Connectors:
           AirLoop: False
-      NoHeat: &AirLoopHVACUnitarySystemNoHeatWithSupplementalSuperObject
+      NoHeatWithSupplemental: &AirLoopHVACUnitarySystemNoHeatWithSupplementalSuperObject
         Fields:
-          name: '{} Unitary System'
           <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_coil_name:
             BuildPathReference:
@@ -767,14 +771,15 @@ Objects:
               ValueLocation: self
           supplemental_heating_coil_name:
             BuildPathReference:
-              Location: ^Coil:Heating:((?!Desuperheater).)*$
+              Location: Coil:Heating:*
               Occurrence: -1
               ValueLocation: key
           supplemental_heating_coil_object_type:
             BuildPathReference:
-              Location: ^Coil:Heating:((?!Desuperheater).)*$
+              Location: Coil:Heating:*
               Occurrence: -1
               ValueLocation: self
+          maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: '{supplemental_heating_or_reheat_coil_maximum_outdoor_dry_bulb_temperature}'
           controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
           fan_placement: '{supply_fan_placement}'
           heating_supply_air_flow_rate: Autosize
@@ -783,7 +788,6 @@ Objects:
           AirLoop: False
       NoCoolNoHeatWithSupplemental: &AirLoopHVACUnitarySystemNoCoolNoHeatWithSupplementalSuperObject
         Fields:
-          name: '{} Unitary System'
           <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_supply_air_flow_rate: Autosize # not reachable by template, required by schema
           controlling_zone_or_thermostat_location: '{control_zone_or_thermostat_location_name}'
@@ -792,19 +796,19 @@ Objects:
           no_load_supply_air_flow_rate: Autosize
           supplemental_heating_coil_name:
             BuildPathReference:
-              Location: ^Coil:Heating:((?!Desuperheater).)*$
+              Location: Coil:Heating:*
               Occurrence: -1
               ValueLocation: key
           supplemental_heating_coil_object_type:
             BuildPathReference:
-              Location: ^Coil:Heating:((?!Desuperheater).)*$
+              Location: Coil:Heating:*
               Occurrence: -1
               ValueLocation: self
+          maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation: '{supplemental_heating_or_reheat_coil_maximum_outdoor_dry_bulb_temperature}'
         Connectors:
           AirLoop: False
       MultiSpeedDX: &AirLoopHVACUnitarySystemMultiSpeedDXSuperObject
         Fields:
-          name: '{} Unitary System'
           <<: *AirLoopHVACUnitaryCommonFields
           <<: *AirLoopHVACUnitarySystemCommonFields
           cooling_coil_name:
@@ -2073,6 +2077,24 @@ Objects:
           availability_schedule_name: '{heating_coil_availability_schedule_name}'
         Connectors:
           AirLoop: *ConnectorsAirLoop
+      Desuperheater: &CoilHeatingDesuperheaterSuperObject
+          Fields: &CoilHeatingDesuperheaterFields
+            name: '{} Supp Heating Coil'
+            air_inlet_node_name: '{} Supp Heating Coil Inlet'
+            air_outlet_node_name: '{} Supp Heating Coil Outlet'
+            heat_reclaim_recovery_efficiency: 0.3
+            heating_source_name:
+              BuildPathReference:
+                Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
+                Occurrence: 1
+                ValueLocation: key
+            heating_source_object_type:
+              BuildPathReference:
+                Location: (Coil:Cooling.*|CoilSystem:Cooling.*)
+                Occurrence: 1
+                ValueLocation: self
+          Connectors:
+            AirLoop: *ConnectorsAirLoop
       Electric:
         Common:
           Transitions:
@@ -2275,6 +2297,9 @@ Objects:
             Supplemental: &CoilHeatingWaterCommonMappingsSupplemental
               - Coil:Heating:Water.*:
                   supplemental_heating_coil_capacity:
+                    AnyNumber:
+                      performance_input_method: NominalCapacity
+                  supplemental_heating_or_reheat_coil_capacity:
                     AnyNumber:
                       performance_input_method: NominalCapacity
         Base: &CoilHeatingWaterSuperObject
@@ -4817,6 +4842,7 @@ OptionTree:
                     - Coil:Heating:Electric:
                         supplemental_heating_coil_capacity: nominal_capacity
                         supplemental_heating_or_reheat_coil_capacity: nominal_capacity
+                        supplemental_heating_or_reheat_coil_availability_schedule_name: availability_schedule_name
                 Gas:
                   Location: -1
                   ActionType: Insert
@@ -4840,6 +4866,9 @@ OptionTree:
                     - Coil:Heating:Fuel:
                         supplemental_heating_coil_capacity: nominal_capacity
                         supplemental_heating_or_reheat_coil_capacity: nominal_capacity
+                        supplemental_heating_or_reheat_coil_availability_schedule_name: availability_schedule_name
+                        supplemental_gas_heating_or_reheat_coil_efficiency: burner_efficiency
+                        supplemental_gas_heating_or_reheat_coil_parasitic_electric_load: parasitic_electric_load
                 HotWater:
                   Location: -1
                   ActionType: Insert
@@ -4857,7 +4886,8 @@ OptionTree:
                   Transitions:
                     - Coil:Heating:Water:
                         supplemental_heating_coil_capacity: rated_capacity
-                        supplemental_heating_or_reheat_coil_capacity: nominal_capacity
+                        supplemental_heating_or_reheat_coil_capacity: rated_capacity
+                        supplemental_heating_or_reheat_coil_availability_schedule_name: availability_schedule_name
                   Mappings: *CoilHeatingWaterCommonMappingsSupplemental
         BaseObjects:
           Objects:
@@ -7478,7 +7508,7 @@ OptionTree:
             - supply_fan_placement: *SystemCommonBuildPathActionFanOnOffSupplyFanPlacement
             - humidifier_type: *SystemCommonBuildPathActionsConstantVolumeHumidifierType
             - return_fan: *SystemCommonBuildPathActionsReturnFanConstantVolume
-            - dehumidification_control_type_detailed:
+            - dehumidification_control_type_detailed: &SystemCommonBuildPathActionsDehumidificationControlTypeDetailed
                 None:
                 CoolReheat:
                 CoolReheatHeatingCoilGas:
@@ -7684,7 +7714,6 @@ OptionTree:
                     Location: OutdoorAir:Mixer
                     ValueLocation: Outlet
           Transitions:
-            - *ControllerOutdoorAirCommonTransitions
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
 #            - SetpointManager:SingleZone:Cooling: # todo_eo: This is not done in legacy, check if this is the intended action
@@ -7795,9 +7824,8 @@ OptionTree:
       UnitarySystem:
         BuildPath:
           BaseObjects:
-            Objects:
-              - *SystemCommonBuildPathObjects
           Actions:
+            - outside_air_equipment_type: *SystemCommonBuildPathActionsOutsideAirEquipmentOutdoorAirMixer # Must be first in list because it sets the OutdoorAir:Mixer
             - heating_coil_type:
                 <<: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixer
                 HotWater: # Override with no Controller:Watercoil
@@ -7823,7 +7851,16 @@ OptionTree:
                   Objects:
                     - Coil:Heating:Electric: *CoilHeatingElectricSuperObject
                   Transitions: *CoilHeatingElectricCommonTransitions
-            - supplemental_heating_or_reheat_coil_type: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
+            - supplemental_heating_or_reheat_coil_type:
+                <<: *ZonePTHPBuildPathActionsSupplementalHeatingCoilType
+                DesuperHeater:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Coil:Heating:Desuperheater: *CoilHeatingDesuperheaterSuperObject
+                  Transitions:
+                    - Coil:Heating:Desuperheater:
+                        supplemental_heating_or_reheat_coil_availability_schedule_name: availability_schedule_name
             - cooling_coil_type:
                 <<: *SystemCommonBuildPathActionsCommonCoolingCoilAfterMixerCoolingCoilType
                 ChilledWater: # Override with no Controller:Watercoil
@@ -7983,7 +8020,9 @@ OptionTree:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
-                  Mappings: *AirLoopHVACUnitaryCommonMappings
+                  Mappings:
+                    - *AirLoopHVACUnitaryCommonMappings
+                    - *AirLoopHVACUnitarySystemCommonMappings
                 HeatPump:AirToAirNoCool:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -7992,7 +8031,9 @@ OptionTree:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoCoolSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
-                  Mappings: *AirLoopHVACUnitaryCommonMappings
+                  Mappings:
+                    - *AirLoopHVACUnitaryCommonMappings
+                    - *AirLoopHVACUnitarySystemCommonMappings
                 HeatPump:AirToAirNoHeat:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -8001,7 +8042,9 @@ OptionTree:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoHeatSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
-                  Mappings: *AirLoopHVACUnitaryCommonMappings
+                  Mappings:
+                    - *AirLoopHVACUnitaryCommonMappings
+                    - *AirLoopHVACUnitarySystemCommonMappings
                 HeatPump:AirToAirNoCoolNoHeat:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -8010,43 +8053,9 @@ OptionTree:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoCoolNoHeatSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
-                  Mappings: *AirLoopHVACUnitaryCommonMappings
-                HeatPump:AirToAirWithSupplemental:
-                  ObjectReference: OutdoorAir:Mixer
-                  ActionType: Insert
-                  Location: After
-                  Objects:
-                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
-                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemWithSupplementalSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
-                  Mappings: *AirLoopHVACUnitaryCommonMappings
-                HeatPump:AirToAirNoCoolWithSupplemental:
-                  ObjectReference: OutdoorAir:Mixer
-                  ActionType: Insert
-                  Location: After
-                  Objects:
-                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
-                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoCoolWithSupplementalSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
-                  Mappings: *AirLoopHVACUnitaryCommonMappings
-                HeatPump:AirToAirNoHeatWithSupplemental:
-                  ObjectReference: OutdoorAir:Mixer
-                  ActionType: Insert
-                  Location: After
-                  Objects:
-                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
-                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoHeatWithSupplementalSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
-                  Mappings: *AirLoopHVACUnitaryCommonMappings
-                HeatPump:AirToAirNoCoolNoHeatWithSupplemental:
-                  ObjectReference: OutdoorAir:Mixer
-                  ActionType: Insert
-                  Location: After
-                  Objects:
-                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
-                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoCoolNoHeatWithSupplementalSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
-                  Mappings: *AirLoopHVACUnitaryCommonMappings
+                  Mappings:
+                    - *AirLoopHVACUnitaryCommonMappings
+                    - *AirLoopHVACUnitarySystemCommonMappings
                 HeatPump:AirToAirMultiSpeedDX:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -8055,7 +8064,53 @@ OptionTree:
                     - UnitarySystemPerformance:Multispeed: *UnitarySystemPerformanceMultispeedFields
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemMultiSpeedDXSuperObject
                   Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
-                  Mappings: *AirLoopHVACUnitaryCommonMappings
+                  Mappings:
+                    - *AirLoopHVACUnitaryCommonMappings
+                    - *AirLoopHVACUnitarySystemCommonMappings
+                HeatPump:AirToAirWithSupplemental:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemWithSupplementalSuperObject
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Mappings:
+                    - *AirLoopHVACUnitaryCommonMappings
+                    - *AirLoopHVACUnitarySystemCommonMappings
+                HeatPump:AirToAirNoCoolWithSupplemental:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoCoolWithSupplementalSuperObject
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Mappings:
+                    - *AirLoopHVACUnitaryCommonMappings
+                    - *AirLoopHVACUnitarySystemCommonMappings
+                HeatPump:AirToAirNoHeatWithSupplemental:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoHeatWithSupplementalSuperObject
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Mappings:
+                    - *AirLoopHVACUnitaryCommonMappings
+                    - *AirLoopHVACUnitarySystemCommonMappings
+                HeatPump:AirToAirNoCoolNoHeatWithSupplemental:
+                  ObjectReference: OutdoorAir:Mixer
+                  ActionType: Insert
+                  Location: After
+                  Objects:
+                    # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
+                    - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoCoolNoHeatWithSupplementalSuperObject
+                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Mappings:
+                    - *AirLoopHVACUnitaryCommonMappings
+                    - *AirLoopHVACUnitarySystemCommonMappings
         BaseObjects:
           Objects:
             - *SystemUnitaryBaseObjects
@@ -8070,6 +8125,8 @@ OptionTree:
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimum
+          heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
+          humidistat_type: *SystemCommonTemplateObjectsHumidistatType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       VAV: *HVACTemplateSystemPackagedVAV
       VRF:

@@ -5,6 +5,45 @@ from src.epjson_handler import EPJSON
 
 test_dir = Path(__file__).parent.parent.parent
 
+schedule_objects = {
+    "Schedule:Compact": {
+        "Always0.8": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 0.8
+                }
+            ],
+            "schedule_type_limits_name": "Any Number"
+        },
+        "Always62": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 62.0
+                }
+            ],
+            "schedule_type_limits_name": "Any Number"
+        }
+    }
+}
+
 
 class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
     def setUp(self):
@@ -765,4 +804,657 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
             2,
             epjson_output['Coil:Heating:DX:SingleSpeed']['Sys 1 Furnace DX Cool SnglSpd Heating Coil'][
                 'maximum_outdoor_dry_bulb_temperature_for_defrost_operation'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "heat_pump_defrost_strategy_reverse_cycle")
+    def test_heat_pump_defrost_strategy_reverse_cycle(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heating_coil_type'] = 'SingleSpeedDXHeatPumpAirSource'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heat_pump_defrost_strategy'] = 'ReverseCycle'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'ReverseCycle',
+            epjson_output['Coil:Heating:DX:SingleSpeed']['Sys 1 Furnace DX Cool SnglSpd Heating Coil'][
+                'defrost_strategy'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "heat_pump_defrost_strategy_resistive")
+    def test_heat_pump_defrost_strategy_resistive(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heating_coil_type'] = 'SingleSpeedDXHeatPumpAirSource'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heat_pump_defrost_strategy'] = 'Resistive'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Resistive',
+            epjson_output['Coil:Heating:DX:SingleSpeed']['Sys 1 Furnace DX Cool SnglSpd Heating Coil'][
+                'defrost_strategy'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "heat_pump_defrost_control_timed")
+    def test_heat_pump_defrost_control_timed(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heating_coil_type'] = 'SingleSpeedDXHeatPumpAirSource'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heat_pump_defrost_control'] = 'Timed'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heat_pump_defrost_time_period_fraction'] = 0.06
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Timed',
+            epjson_output['Coil:Heating:DX:SingleSpeed']['Sys 1 Furnace DX Cool SnglSpd Heating Coil'][
+                'defrost_control'])
+        self.assertEqual(
+            0.06,
+            epjson_output['Coil:Heating:DX:SingleSpeed']['Sys 1 Furnace DX Cool SnglSpd Heating Coil'][
+                'defrost_time_period_fraction'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "heat_pump_defrost_control_on_demand")
+    def test_heat_pump_defrost_control_on_demand(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heating_coil_type'] = 'SingleSpeedDXHeatPumpAirSource'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heat_pump_defrost_control'] = 'OnDemand'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OnDemand',
+            epjson_output['Coil:Heating:DX:SingleSpeed']['Sys 1 Furnace DX Cool SnglSpd Heating Coil'][
+                'defrost_control'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+                                              "supplemental_heating_or_reheat_coil_type_none")
+    def test_supplemental_heating_or_reheat_coil_type_none(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output['Coil:Heating:Electric'].get('Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+                                              "supplemental_heating_or_reheat_coil_type_electric")
+    def test_supplemental_heating_or_reheat_coil_type_electric(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_type'] = 'Electric'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Electric'].get('Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+                                              "supplemental_heating_or_reheat_coil_type_electric")
+    def test_supplemental_heating_or_reheat_coil_type_gas(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_type'] = 'Gas'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Coil:Heating:Fuel'].get('Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+                                              "supplemental_heating_or_reheat_coil_type_hot_water")
+    def test_supplemental_heating_or_reheat_coil_type_hot_water(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_type'] = 'HotWater'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Coil:Heating:Water'].get('Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+                                              "supplemental_heating_or_reheat_coil_type_desuperheater")
+    def test_supplemental_heating_or_reheat_coil_type_desuperheater(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_type'] = 'DesuperHeater'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Desuperheater'].get('Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+                                              "supplemental_heating_or_reheat_coil_availability_schedule_name")
+    def test_supplemental_heating_or_reheat_coil_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_type'] = 'Electric'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_availability_schedule_name'] = 'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Coil:Heating:Electric']['Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'][
+                'availability_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+                                              "supplemental_heating_or_reheat_coil_capacity")
+    def test_supplemental_heating_or_reheat_coil_capacity(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_type'] = 'HotWater'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_capacity'] = 2000
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            2000,
+            epjson_output['Coil:Heating:Water']['Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'][
+                'rated_capacity'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "supplemental_heating_or_reheat_coil_maximum_outdoor_dry"
+                                              "_bulb_temperature")
+    def test_supplemental_heating_or_reheat_coil_maximum_outdoor_dry_bulb_temperature(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_type'] = 'Electric'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_maximum_outdoor_dry_bulb_temperature'] = 19
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            19,
+            epjson_output['AirLoopHVAC:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd Unitary System'][
+                'maximum_outdoor_dry_bulb_temperature_for_supplemental_heater_operation'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "supplemental_gas_heating_or_reheat_coil_inputs")
+    def test_supplemental_gas_heating_or_reheat_coil_inputs(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_heating_or_reheat_coil_type'] = 'Gas'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_gas_heating_or_reheat_coil_efficiency'] = 0.77
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supplemental_gas_heating_or_reheat_coil_parasitic_electric_load'] = 1
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.77,
+            epjson_output['Coil:Heating:Fuel']['Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil']['burner_efficiency'])
+        self.assertEqual(
+            1,
+            epjson_output['Coil:Heating:Fuel']['Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'][
+                'parasitic_electric_load'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "outdoor_air_flow_rates")
+    def test_outdoor_air_flow_rates(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'maximum_outdoor_air_flow_rate'] = 0.66
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'minimum_outdoor_air_flow_rate'] = 0.1
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.66,
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'maximum_outdoor_air_flow_rate'])
+        self.assertEqual(
+            0.1,
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'minimum_outdoor_air_flow_rate'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:minimum_outdoor_air_schedule_name")
+    def test_minimum_outdoor_air_schedule_name(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'minimum_outdoor_air_schedule_name'] = 'Always0.8'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Always0.8',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'minimum_outdoor_air_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:economizer_type_no_economizer")
+    def test_economizer_type_no_economizer(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_type'] = 'NoEconomizer'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'NoEconomizer',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_type_fixed_dry_bulb")
+    def test_economizer_type_fixed_dry_bulb(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_type'] = 'FixedDryBulb'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'FixedDryBulb',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_type_fixed_enthalpy")
+    def test_economizer_type_fixed_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_type'] = 'FixedEnthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'FixedEnthalpy',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_type_differential_dry_bulb")
+    def test_economizer_type_differential_dry_bulb(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_type'] = 'DifferentialDryBulb'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'DifferentialDryBulb',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_type_differential_enthalpy")
+    def test_economizer_type_differential_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_type'] = 'DifferentialEnthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'DifferentialEnthalpy',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_type_fixed_dew_point_and_dry_bulb")
+    def test_economizer_type_fixed_dew_point_and_dry_bulb(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_type'] = 'FixedDewPointAndDryBulb'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'FixedDewPointAndDryBulb',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_type_electronic_enthalpy")
+    def test_economizer_type_electronic_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_type'] = 'ElectronicEnthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'ElectronicEnthalpy',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_type_differential_dry_bulb_and_enthalpy")
+    def test_economizer_type_differential_dry_bulb_and_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_type'] = 'DifferentialDryBulbAndEnthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'DifferentialDryBulbAndEnthalpy',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_lockout_no_lockout")
+    def test_economizer_lockout_no_lockout(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_lockout'] = 'NoLockout'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'NoLockout',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'lockout_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_lockout_lockout_with_heating")
+    def test_economizer_lockout_lockout_with_heating(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_lockout'] = 'LockoutWithHeating'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'LockoutWithHeating',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'lockout_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_lockout_lockout_with_heating")
+    def test_economizer_lockout_lockout_with_compressor(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_lockout'] = 'LockoutWithCompressor'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'LockoutWithCompressor',
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'lockout_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:economizer_temperature_limits")
+    def test_economizer_temperature_limits(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_type'] = 'FixedDryBulb'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_maximum_limit_dry_bulb_temperature'] = 18
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_minimum_limit_dry_bulb_temperature'] = 5
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            18,
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_maximum_limit_dry_bulb_temperature'])
+        self.assertEqual(
+            5,
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_minimum_limit_dry_bulb_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:economizer_upper_enthalpy_limit")
+    def test_economizer_maximum_limit_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_maximum_limit_enthalpy'] = 100
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            100,
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_maximum_limit_enthalpy'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "economizer_maximum_limit_dewpoint_temperature")
+    def test_economizer_maximum_limit_dewpoint_temperature(self):
+        # todo_eo: Notes say that limit is applied regardless of what economizer type is applied.  However, EO only
+        #  applies the value when certain economizer is selected.  Figure out what is preferred method.
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_type'] = 'FixedDewPointAndDryBulb'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'economizer_maximum_limit_dewpoint_temperature'] = 20
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            20,
+            epjson_output['Controller:OutdoorAir']['Sys 1 Furnace DX Cool SnglSpd OA Controller'][
+                'economizer_maximum_limit_dewpoint_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:supply_plenum_name")
+    def test_supply_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'supply_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'PLENUM-1',
+            epjson_output['AirLoopHVAC:SupplyPlenum']['Sys 1 Furnace DX Cool SnglSpd Supply Plenum']['zone_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:return_plenum_name")
+    def test_return_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'return_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'PLENUM-1',
+            epjson_output['AirLoopHVAC:ReturnPlenum']['Sys 1 Furnace DX Cool SnglSpd Return Plenum']['zone_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:heat_recovery_sensible")
+    def test_heat_recovery_sensible(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:heat_recovery_enthalpy")
+    def test_heat_recovery_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:heat_recovery_effectiveness_sensible")
+    def test_heat_recovery_effectiveness_sensible(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heat_recovery_type'] = 'Sensible'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'sensible_heat_recovery_effectiveness'] = 0.72
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'sensible_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'sensible_effectiveness_at_75_heating_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'sensible_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'sensible_effectiveness_at_100_heating_air_flow'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:heat_recovery_effectiveness_enthalpy")
+    def test_heat_recovery_effectiveness_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'sensible_heat_recovery_effectiveness'] = 0.72
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'latent_heat_recovery_effectiveness'] = 0.61
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'sensible_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'sensible_effectiveness_at_75_heating_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'sensible_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'sensible_effectiveness_at_100_heating_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'latent_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'latent_effectiveness_at_100_heating_air_flow'])
+        self.assertEqual(
+            0.66,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'latent_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.66,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['Sys 1 Furnace DX Cool SnglSpd Heat Recovery'][
+                'latent_effectiveness_at_75_heating_air_flow'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:dehumidification_control_type_none")
+    def test_dehumidification_control_type_none(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'dehumidification_control_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "dehumidification_control_type_cool_reheat")
+    def test_dehumidification_control_type_cool_reheat(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'dehumidification_control_type'] = 'CoolReheat'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'dehumidification_relative_humidity_setpoint'] = 62
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'HVACTemplate-Always62.0',
+            epjson_output['ZoneControl:Humidistat']['Sys 1 Furnace DX Cool SnglSpd Dehumidification Humidistat'][
+                'dehumidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "dehumidification_control_type_multimode")
+    def test_dehumidification_control_type_multimode(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'dehumidification_control_type'] = 'Multimode'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'dehumidification_relative_humidity_setpoint'] = 62
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'HVACTemplate-Always62.0',
+            epjson_output['ZoneControl:Humidistat']['Sys 1 Furnace DX Cool SnglSpd Dehumidification Humidistat'][
+                'dehumidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
+                                              "dehumidification_relative_humidity_setpoint_schedule_name")
+    def test_dehumidification_relative_humidity_setpoint_schedule_name(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'dehumidification_control_type'] = 'Multimode'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'dehumidification_relative_humidity_setpoint_schedule_name'] = 'Always62'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Always62',
+            epjson_output['ZoneControl:Humidistat']['Sys 1 Furnace DX Cool SnglSpd Dehumidification Humidistat'][
+                'dehumidifying_relative_humidity_setpoint_schedule_name'])
         return
