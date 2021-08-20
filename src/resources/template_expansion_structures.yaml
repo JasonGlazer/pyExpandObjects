@@ -419,14 +419,14 @@ Objects:
           master_thermostat_priority_control_type: '{master_thermostat_priority_control_type}'
           maximum_outdoor_dry_bulb_temperature_for_crankcase_heater: '{maximum_outdoor_dry_bulb_temperature_for_crankcase_heater}'
           maximum_outdoor_dry_bulb_temperature_for_defrost_operation: '{maximum_outdoor_dry_bulb_temperature_for_defrost_operation}'
-          maximum_outdoor_temperature_in_cooling_mode: '{maximum_outdoor_temperature_in_cooling_mode}'
-          maximum_outdoor_temperature_in_heat_recovery_mode: '{maximum_outdoor_temperature_in_heat_recovery_mode}'
-          maximum_outdoor_temperature_in_heating_mode: '{maximum_outdoor_temperature_in_heating_mode}'
+          maximum_condenser_inlet_node_temperature_in_cooling_mode: '{maximum_outdoor_temperature_in_cooling_mode}'
+          maximum_condenser_inlet_node_temperature_in_heat_recovery_mode: '{maximum_outdoor_temperature_in_heat_recovery_mode}'
+          maximum_condenser_inlet_node_temperature_in_heating_mode: '{maximum_outdoor_temperature_in_heating_mode}'
           # todo_eo: this was hard-coded to 0.25 despite having an input in the template, discuss with team
           minimum_heat_pump_part_load_ratio: 0.25
-          minimum_outdoor_temperature_in_cooling_mode: '{minimum_outdoor_temperature_in_cooling_mode}'
-          minimum_outdoor_temperature_in_heat_recovery_mode: '{minimum_outdoor_temperature_in_heat_recovery_mode}'
-          minimum_outdoor_temperature_in_heating_mode: '{minimum_outdoor_temperature_in_heating_mode}'
+          minimum_condenser_inlet_node_temperature_in_cooling_mode: '{minimum_outdoor_temperature_in_cooling_mode}'
+          minimum_condenser_inlet_node_temperature_in_heat_recovery_mode: '{minimum_outdoor_temperature_in_heat_recovery_mode}'
+          minimum_condenser_inlet_node_temperature_in_heating_mode: '{minimum_outdoor_temperature_in_heating_mode}'
           number_of_compressors: '{number_of_compressors}'
           piping_correction_factor_for_height_in_cooling_mode_coefficient: -0.000386 # set by legacy, not default
           piping_correction_factor_for_length_in_cooling_mode_curve_name: '{} CoolingLengthCorrectionFactor'
@@ -650,10 +650,12 @@ Objects:
           supply_fan_name:
             BuildPathReference:
               Location: Fan:.*
+              Occurrence: -1
               ValueLocation: key
           supply_fan_object_type:
             BuildPathReference:
               Location: Fan:.*
+              Occurrence: -1
               ValueLocation: self
           supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
       Base: &AirLoopHVACUnitarySystemSuperObject
@@ -5205,12 +5207,12 @@ OptionTree:
             None:
               Objects:
                 - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAirUsingBuildPath
-              Transitions: *ZoneHVACCommonZoneEquipmentTransitions
+#              Transitions: *ZoneHVACCommonZoneEquipmentTransitions
             AnyValue:
               Objects:
                 - *ZoneCommonTemplateObjectsDOASBaseDedicatedOutdoorAirSystemName
               Transitions:
-                - *ZoneHVACCommonZoneEquipmentTransitions
+#                - *ZoneHVACCommonZoneEquipmentTransitions
                 - AirTerminal:SingleDuct.*:
                     # todo_eo Maybe this value should get merged with supply_air_maximum_flow_rate if not set
                     #   This is to size the DOAS AirTerminal object
@@ -8018,6 +8020,7 @@ OptionTree:
                   ActionType: Insert
                   Objects:
                     - Humidifier:Steam:Electric: *HumidifierSteamElectricSuperObject
+            - return_fan: *SystemCommonBuildPathActionsReturnFanConstantVolume
             - airloop_hvac_unitary_object_type:
                 HeatPump:AirToAir:
                   ObjectReference: OutdoorAir:Mixer
@@ -8120,7 +8123,23 @@ OptionTree:
                     - *AirLoopHVACUnitarySystemCommonMappings
         BaseObjects:
           Objects:
-            - *SystemUnitaryBaseObjects
+            - OutdoorAir:NodeList: *OutdoorAirNodeListFields
+            - Sizing:System:
+                <<: *SizingSystemConstantVolume
+                preheat_design_temperature: 7
+            - SetpointManager:SingleZone:Cooling:
+                <<: *SetpointManagerSingleZoneCooling
+                maximum_supply_air_temperature: 45 # set by legacy, todo_eo: doesn't seem like it needs to be hard coded
+                minimum_supply_air_temperature: 13 # set by legacy, todo_eo: doesn't seem like it needs to be hard coded
+                control_zone_name: '{control_zone_or_thermostat_location_name}' # todo_eo: combine this name to common
+                zone_node_name: '{control_zone_or_thermostat_location_name} Zone Air Node' # todo_eo: combine this name to common?
+                zone_inlet_node_name: '{control_zone_or_thermostat_location_name} Supply Inlet' # todo_eo: combine this name to common?
+            - SetpointManager:MixedAir:
+                <<: *SetpointManagerMixedAirCooling
+                setpoint_node_or_nodelist_name:
+                  BuildPathReference:
+                    Location: OutdoorAir:Mixer
+                    ValueLocation: Outlet
             - AvailabilityManager:Scheduled: *AvailabilityManagerScheduledFields
           Transitions:
             - *AvailabilityManagerScheduledCommonTransitions
@@ -8134,6 +8153,16 @@ OptionTree:
           economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerTypeWithFixedMinimum
           heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
           humidistat_type: *SystemCommonTemplateObjectsHumidistatType
+          humidifier_type:
+            ElectricSteam:
+              Objects:
+                - SetpointManager:SingleZone:Humidity:Minimum:
+                    name: '{} Humidification Setpoint Manager'
+                    control_zone_air_node_name: '{humidifier_control_zone_name} Zone Air Node'
+                    setpoint_node_or_nodelist_name:
+                      BuildPathReference:
+                        Location: Humidifier:Steam:Electric
+                        ValueLocation: Outlet
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       VAV: *HVACTemplateSystemPackagedVAV
       VRF:

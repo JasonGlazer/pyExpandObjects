@@ -123,13 +123,16 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
         return os.path.basename(file_location).replace('.idf', 'Expanded.idf')
 
     @staticmethod
-    def convert_file(file_location):
+    def convert_file(file_location, working_dir=None):
         """
         Convert idf to epJSON and vice versa.
         converted file in alternative format is created in same directory as base file
         :param file_location: Path or string reference to file location
+        :param working_dir: working directory
         :return: file path to converted file
         """
+        if not working_dir:
+            working_dir = os.path.dirname(file_location)
         # convert to Path if a string is passed
         if isinstance(file_location, str):
             file_location = Path(file_location)
@@ -143,7 +146,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     '../ConvertInputFormat.exe',
                     os.path.basename(file_location)
                 ],
-                cwd=os.path.dirname(file_location),
+                cwd=working_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
@@ -154,7 +157,7 @@ class BaseSimulationTest(BaseTest, unittest.TestCase):
                     '../ConvertInputFormatIgnoreVersion.exe',
                     os.path.basename(file_location)
                 ],
-                cwd=os.path.dirname(file_location),
+                cwd=working_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )

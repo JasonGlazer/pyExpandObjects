@@ -2810,7 +2810,9 @@ class ExpandSystem(ExpandObjects):
                         # if a return fan is specified for unitary systems, then keep it for the
                         # branchlist object.  Otherwise, it will get removed via the removal regex expressions.
                         if self.template_type in \
-                                ['HVACTemplate:System:Unitary', 'HVACTemplate:System:UnitaryHeatPump:AirToAir'] and \
+                                ['HVACTemplate:System:Unitary',
+                                 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
+                                 'HVACTemplate:System:UnitarySystem'] and \
                             getattr(self, 'return_fan', 'None') == 'Yes' and idx == 0 and \
                                 re.match(r'Fan:.*', super_object_type):
                             pass

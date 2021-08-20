@@ -1461,11 +1461,10 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:humidifier_type")
     def test_humidifier_type(self):
-        # todo_eo: EO fails with this option and comparison is hard to make.
-        #  ** Severe  ** <root>[ZoneControl:Humidistat][Sys 1 Furnace DX Cool SnglSpd Humidification Humidistat]
-        #  - Missing required property 'zone_name'.
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
             'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
             'humidifier_relative_humidity_setpoint'] = 29
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
@@ -1474,8 +1473,128 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
             '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertIsNotNone(
             epjson_output['Humidifier:Steam:Electric'].get('Sys 1 Furnace DX Cool SnglSpd Humidifier'))
+        self.assertIsNotNone(
+            epjson_output['SetpointManager:SingleZone:Humidity:Minimum']
+            .get('Sys 1 Furnace DX Cool SnglSpd Humidification Setpoint Manager'))
         self.assertEqual(
             'HVACTemplate-Always29.0',
             epjson_output['ZoneControl:Humidistat']['Sys 1 Furnace DX Cool SnglSpd Humidification Humidistat'][
                 'humidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:humidifier_inputs")
+    def test_humidifier_inputs(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'humidifier_type'] = 'ElectricSteam'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'humidifier_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'humidifier_relative_humidity_setpoint'] = 29
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'humidifier_availability_schedule_name'] = 'OCCUPY-1'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'humidifier_rated_capacity'] = 1
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'humidifier_rated_electric_power'] = 1000
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output['Humidifier:Steam:Electric'].get('Sys 1 Furnace DX Cool SnglSpd Humidifier'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Humidifier:Steam:Electric'][
+                'Sys 1 Furnace DX Cool SnglSpd Humidifier']['availability_schedule_name'])
+        self.assertEqual(
+            1,
+            epjson_output['Humidifier:Steam:Electric'][
+                'Sys 1 Furnace DX Cool SnglSpd Humidifier']['rated_capacity'])
+        self.assertEqual(
+            1000,
+            epjson_output['Humidifier:Steam:Electric'][
+                'Sys 1 Furnace DX Cool SnglSpd Humidifier']['rated_power'])
+        self.assertEqual(
+            'HVACTemplate-Always29.0',
+            epjson_output['ZoneControl:Humidistat']['Sys 1 Furnace DX Cool SnglSpd Humidification Humidistat'][
+                'humidifying_relative_humidity_setpoint_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:sizing_option_non_coincident")
+    def test_sizing_option_non_coincident(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'sizing_option'] = 'NonCoincident'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'NonCoincident',
+            epjson_output['Sizing:System']['Sys 1 Furnace DX Cool SnglSpd Sizing System']['type_of_zone_sum_to_use']
+        )
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:sizing_option_non_coincident")
+    def test_sizing_option_coincident(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'sizing_option'] = 'Coincident'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Coincident',
+            epjson_output['Sizing:System']['Sys 1 Furnace DX Cool SnglSpd Sizing System']['type_of_zone_sum_to_use']
+        )
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:return_fan_no")
+    def test_return_fan_no(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'return_fan'] = 'No'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output.get('Fan:ConstantVolume'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:return_fan_yes")
+    def test_return_fan_yes(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'return_fan'] = 'Yes'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('Fan:ConstantVolume'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:return_fan_inputs")
+    def test_return_fan_inputs(self):
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'return_fan'] = 'Yes'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'return_fan_total_efficiency'] = 0.72
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'return_fan_delta_pressure'] = 295
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'return_fan_motor_efficiency'] = 0.85
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'return_fan_motor_in_air_stream_fraction'] = 0.9
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.72,
+            epjson_output['Fan:ConstantVolume']['Sys 1 Furnace DX Cool SnglSpd Return Fan']['fan_total_efficiency'])
+        self.assertEqual(
+            295,
+            epjson_output['Fan:ConstantVolume']['Sys 1 Furnace DX Cool SnglSpd Return Fan']['pressure_rise'])
+        self.assertEqual(
+            0.85,
+            epjson_output['Fan:ConstantVolume']['Sys 1 Furnace DX Cool SnglSpd Return Fan']['motor_efficiency'])
+        self.assertEqual(
+            0.9,
+            epjson_output['Fan:ConstantVolume']['Sys 1 Furnace DX Cool SnglSpd Return Fan']['motor_in_airstream_fraction'])
         return
