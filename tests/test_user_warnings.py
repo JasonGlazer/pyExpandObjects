@@ -1074,6 +1074,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     },
                     "HVACTemplate:System:UnitarySystem": {
                         "CV Sys 1": {
+                            'control_zone_or_thermostat_location_name': 'SPACE1-1',
                             'dx_cooling_coil_gross_rated_sensible_heat_ratio': 0.66
                         }
                     }
@@ -1105,6 +1106,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
                     },
                     "HVACTemplate:System:UnitarySystem": {
                         "CV Sys 1": {
+                            'control_zone_or_thermostat_location_name': 'SPACE1-1',
                             'dx_cooling_coil_gross_rated_total_capacity': 1000
                         }
                     }

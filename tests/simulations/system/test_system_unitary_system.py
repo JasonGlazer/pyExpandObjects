@@ -62,6 +62,28 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:minimum_inputs")
+    def test_minimum_inputs(self):
+        self.base_epjson['HVACTemplate:Zone:Unitary']['HVACTemplate:Zone:Unitary 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:Unitary']['HVACTemplate:Zone:Unitary 1'][
+            'zone_heating_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:System:UnitarySystem'].pop('Sys 1 Furnace DX Cool SnglSpd')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:System:UnitarySystem': {
+                    'Sys 1 Furnace DX Cool SnglSpd': {
+                        'control_zone_or_thermostat_location_name': 'SPACE1-1',
+                        'supplemental_heating_or_reheat_coil_type': 'Electric'
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:system_availability_schedule_name")
     def test_system_availability_schedule_name(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][

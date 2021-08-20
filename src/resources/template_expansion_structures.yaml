@@ -476,7 +476,7 @@ Objects:
             supply_side_outlet_node_names: *SystemSupplySideOutletNodeList
     Unitary:
       Common:
-        Transitions: &AirLoopHVACUnitaryCommonTransitionsHeating
+        Transitions: &AirLoopHVACUnitaryCommonTransitions
           - AirLoopHVAC:Unitary.*:
               cooling_supply_air_flow_rate: cooling_supply_air_flow_rate
               heating_supply_air_flow_rate: heating_supply_air_flow_rate
@@ -657,7 +657,7 @@ Objects:
               Location: Fan:.*
               Occurrence: -1
               ValueLocation: self
-          supply_air_fan_operating_mode_schedule_name: '{supply_fan_operating_mode_schedule_name}'
+          supply_air_fan_operating_mode_schedule_name: HVACTemplate-Always0
       Base: &AirLoopHVACUnitarySystemSuperObject
         Fields:
           <<: *AirLoopHVACUnitaryCommonFields
@@ -7598,7 +7598,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:Unitary:Furnace:HeatCool: *AirLoopHVACUnitaryHeatCoolSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                 Furnace:HeatCoolWithCoolReheatHeatingCoil:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -7620,7 +7620,7 @@ OptionTree:
                               ValueLocation: self
                         Connectors:
                           AirLoop: False
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - AirLoopHVAC:Unitary:Furnace:HeatCool:
                         dehumidification_control_type:
@@ -7641,7 +7641,7 @@ OptionTree:
                               ValueLocation: Outlet
                         Connectors:
                           AirLoop: False
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                 Furnace:HeatCoolWithHumidificationElectricSteamWithCoolReheatHeatingCoil:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -7668,8 +7668,8 @@ OptionTree:
                         Connectors:
                           AirLoop: False
                   Transitions:
-                    - *AirLoopHVACUnitaryCommonTransitionsHeating
-                    - *AirLoopHVACUnitaryCommonTransitionsHeating
+                    - *AirLoopHVACUnitaryCommonTransitions
+                    - *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - AirLoopHVAC:Unitary:Furnace:HeatCool:
                         dehumidification_control_type:
@@ -7682,7 +7682,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:Unitary:Furnace:HeatOnly: *AirLoopHVACUnitaryHeatOnlySuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                 Furnace:HeatOnlyWithHumidificationElectricSteam:
                   ObjectReference: OutdoorAir:Mixer
                   ActionType: Insert
@@ -7698,7 +7698,7 @@ OptionTree:
                               ValueLocation: Outlet
                         Connectors:
                           AirLoop: False
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
         BaseObjects:
           Objects: &SystemUnitaryBaseObjects
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
@@ -7775,7 +7775,7 @@ OptionTree:
                     Objects:
                       # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                       - AirLoopHVAC:UnitaryHeatPump:AirToAir: *AirLoopHVACUnitaryHeatPumpAirToAirWithSupplementalSuperObject
-                    Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                    Transitions: *AirLoopHVACUnitaryCommonTransitions
                   HeatPump:AirToAirWithSupplementalWithHumidificationElectricSteam:
                     ObjectReference: OutdoorAir:Mixer
                     ActionType: Insert
@@ -7791,7 +7791,7 @@ OptionTree:
                                 ValueLocation: Outlet
                           Connectors:
                             AirLoop: False
-                    Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                    Transitions: *AirLoopHVACUnitaryCommonTransitions
           BaseObjects:
             Objects:
               - OutdoorAir:NodeList: *OutdoorAirNodeListFields
@@ -8029,7 +8029,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - *AirLoopHVACUnitaryCommonMappings
                     - *AirLoopHVACUnitarySystemCommonMappings
@@ -8040,7 +8040,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoCoolSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - *AirLoopHVACUnitaryCommonMappings
                     - *AirLoopHVACUnitarySystemCommonMappings
@@ -8051,7 +8051,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoHeatSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - *AirLoopHVACUnitaryCommonMappings
                     - *AirLoopHVACUnitarySystemCommonMappings
@@ -8062,7 +8062,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoCoolNoHeatSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - *AirLoopHVACUnitaryCommonMappings
                     - *AirLoopHVACUnitarySystemCommonMappings
@@ -8073,7 +8073,7 @@ OptionTree:
                   Objects:
                     - UnitarySystemPerformance:Multispeed: *UnitarySystemPerformanceMultispeedFields
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemMultiSpeedDXSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - *AirLoopHVACUnitaryCommonMappings
                     - *AirLoopHVACUnitarySystemCommonMappings
@@ -8084,7 +8084,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemWithSupplementalSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - *AirLoopHVACUnitaryCommonMappings
                     - *AirLoopHVACUnitarySystemCommonMappings
@@ -8095,7 +8095,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoCoolWithSupplementalSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - *AirLoopHVACUnitaryCommonMappings
                     - *AirLoopHVACUnitarySystemCommonMappings
@@ -8106,7 +8106,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoHeatWithSupplementalSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - *AirLoopHVACUnitaryCommonMappings
                     - *AirLoopHVACUnitarySystemCommonMappings
@@ -8117,7 +8117,7 @@ OptionTree:
                   Objects:
                     # AirLoopHVAC:Unitary equipment must be super object with Connectors: False
                     - AirLoopHVAC:UnitarySystem: *AirLoopHVACUnitarySystemNoCoolNoHeatWithSupplementalSuperObject
-                  Transitions: *AirLoopHVACUnitaryCommonTransitionsHeating
+                  Transitions: *AirLoopHVACUnitaryCommonTransitions
                   Mappings:
                     - *AirLoopHVACUnitaryCommonMappings
                     - *AirLoopHVACUnitarySystemCommonMappings
@@ -8127,6 +8127,7 @@ OptionTree:
             - Sizing:System:
                 <<: *SizingSystemConstantVolume
                 preheat_design_temperature: 7
+                central_heating_design_supply_air_temperature: 12.2
             - SetpointManager:SingleZone:Cooling:
                 <<: *SetpointManagerSingleZoneCooling
                 maximum_supply_air_temperature: 45 # set by legacy, todo_eo: doesn't seem like it needs to be hard coded

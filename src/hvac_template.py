@@ -379,6 +379,32 @@ class HVACTemplate(EPJSON):
                             'humidifier_rated_capacity': 1e-06,
                             'humidifier_setpoint': 30.0
                         },
+                        'HVACTemplate:System:UnitarySystem': {
+                            'control_type': 'Load',
+                            'supply_fan_placement': 'BlowThrough',
+                            'cooling_coil_type': 'SingleSpeedDX',
+                            'number_of_speeds_for_cooling': 1,
+                            'dx_cooling_coil_gross_rated_cop': 3.0,
+                            'heating_coil_type': 'Gas',
+                            'number_of_speeds_or_stages_for_heating': 1,
+                            'heat_pump_heating_coil_gross_rated_cop': 2.75,
+                            'heat_pump_heating_minimum_outdoor_dry_bulb_temperature': -8.0,
+                            'heat_pump_defrost_maximum_outdoor_dry_bulb_temperature': 5.0,
+                            'heat_pump_defrost_strategy': 'ReverseCycle',
+                            'heat_pump_defrost_control': 'Timed',
+                            'supplemental_heating_or_reheat_coil_type': 'None',
+                            'supplemental_heating_or_reheat_coil_maximum_outdoor_dry_bulb_temperature': 21.0,
+                            'economizer_type': 'NoEconomizer',
+                            'economizer_lockout': 'NoLockout',
+                            'heat_recovery_frost_control_type': 'None',
+                            'dehumidification_control_type': 'None',
+                            'dehumidification_relative_humidity_setpoint': 60.0,
+                            'humidifier_type': 'None',
+                            'humidifier_rated_capacity': 1e-06,
+                            'humidifier_relative_humidity_setpoint': 30.0,
+                            'sizing_option': 'NonCoincident',
+                            'return_fan': 'No'
+                        },
                         'HVACTemplate:System:VAV': {
                             'cooling_coil_type': 'ChilledWater',
                             'cooling_coil_design_setpoint': 12.8,
@@ -415,7 +441,9 @@ class HVACTemplate(EPJSON):
                                                 'set to Cycle on Control Zone for {} with unique name {}'
                                                 .format(object_type, object_name))
                     # check for control zones
-                    if object_type in ['HVACTemplate:System:Unitary', 'HVACTemplate:System:ConstantVolume']:
+                    if object_type in ['HVACTemplate:System:Unitary',
+                                       'HVACTemplate:System:ConstantVolume',
+                                       'HVACTemplate:System:UnitarySystem']:
                         for object_name, object_fields in object_structure.items():
                             try:
                                 zone_system_field = self._get_zone_template_field_from_system_type(object_type)
@@ -432,7 +460,7 @@ class HVACTemplate(EPJSON):
                                     'Error: In {} ({}) No HVACTemplate:Zone template objects reference'
                                     ' the system object'
                                     .format(object_type, object_name))
-                            if object_type == 'HVACTemplate:System:Unitary' and \
+                            if object_type in ['HVACTemplate:System:Unitary', 'HVACTemplate:System:UnitarySystem'] and \
                                     object_fields.get('control_zone_or_thermostat_location_name') and \
                                     object_fields.get('control_zone_or_thermostat_location_name') not in zones_served:
                                 raise InvalidTemplateException(
@@ -442,7 +470,8 @@ class HVACTemplate(EPJSON):
                                         object_type,
                                         object_name,
                                         object_fields.get('control_zone_or_thermostat_location_name')))
-                            elif object_type == 'HVACTemplate:System:Unitary' and \
+                            elif object_type in ['HVACTemplate:System:Unitary',
+                                                 'HVACTemplate:System:UnitarySystem'] and \
                                     not object_fields.get('control_zone_or_thermostat_location_name'):
                                 raise InvalidTemplateException(
                                     'Error: control_zone_or_thermostat_location_name must '
