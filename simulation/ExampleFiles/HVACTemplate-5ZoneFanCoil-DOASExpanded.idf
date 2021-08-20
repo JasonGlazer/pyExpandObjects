@@ -99,7 +99,7 @@
 ! Environmental Emissions:        None
 ! Utility Tariffs:                None
 
-  Version,9.5;
+  Version,9.6;
 
   Building,
     Fan Coil with DOAS,      !- Name
@@ -3478,8 +3478,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   DOAS OA System,                                          !- Name
   DOAS OA System Controllers,                              !- Controller List Name
-  DOAS OA System Equipment,                                !- Outdoor Air Equipment List Name
-  DOAS Availability Managers;                              !- Availability Manager List Name
+  DOAS OA System Equipment;                                !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   DOAS OA System Controllers,                              !- Name

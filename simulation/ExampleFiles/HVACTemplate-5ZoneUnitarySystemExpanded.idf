@@ -101,7 +101,7 @@
 ! Environmental Emissions:        None
 ! Utility Tariffs:                None
 
-  Version,9.5;
+  Version,9.6;
 
   Building,
     Building,                !- Name
@@ -3144,8 +3144,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Sys 1 Furnace DX Cool SnglSpd OA System,                 !- Name
   Sys 1 Furnace DX Cool SnglSpd OA System Controllers,     !- Controller List Name
-  Sys 1 Furnace DX Cool SnglSpd OA System Equipment,       !- Outdoor Air Equipment List Name
-  Sys 1 Furnace DX Cool SnglSpd Availability Managers;     !- Availability Manager List Name
+  Sys 1 Furnace DX Cool SnglSpd OA System Equipment;       !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Sys 1 Furnace DX Cool SnglSpd OA System Controllers,     !- Name
@@ -3582,8 +3581,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Sys 2 Furnace DX Cool MultiSpd OA System,                !- Name
   Sys 2 Furnace DX Cool MultiSpd OA System Controllers,    !- Controller List Name
-  Sys 2 Furnace DX Cool MultiSpd OA System Equipment,      !- Outdoor Air Equipment List Name
-  Sys 2 Furnace DX Cool MultiSpd Availability Managers;    !- Availability Manager List Name
+  Sys 2 Furnace DX Cool MultiSpd OA System Equipment;      !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Sys 2 Furnace DX Cool MultiSpd OA System Controllers,    !- Name
@@ -3989,8 +3987,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Sys 3 Heat Pump AirSource SnglSpd OA System,             !- Name
   Sys 3 Heat Pump AirSource SnglSpd OA System Controllers,  !- Controller List Name
-  Sys 3 Heat Pump AirSource SnglSpd OA System Equipment,   !- Outdoor Air Equipment List Name
-  Sys 3 Heat Pump AirSource SnglSpd Availability Managers;  !- Availability Manager List Name
+  Sys 3 Heat Pump AirSource SnglSpd OA System Equipment;   !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Sys 3 Heat Pump AirSource SnglSpd OA System Controllers,  !- Name
@@ -4367,8 +4364,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Sys 4 Heat Pump WaterSource SnglSpd OA System,           !- Name
   Sys 4 Heat Pump WaterSource SnglSpd OA System Controllers,  !- Controller List Name
-  Sys 4 Heat Pump WaterSource SnglSpd OA System Equipment,  !- Outdoor Air Equipment List Name
-  Sys 4 Heat Pump WaterSource SnglSpd Availability Managers;  !- Availability Manager List Name
+  Sys 4 Heat Pump WaterSource SnglSpd OA System Equipment;  !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Sys 4 Heat Pump WaterSource SnglSpd OA System Controllers,  !- Name
@@ -4647,8 +4643,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Sys 5 HW ChW System OA System,                           !- Name
   Sys 5 HW ChW System OA System Controllers,               !- Controller List Name
-  Sys 5 HW ChW System OA System Equipment,                 !- Outdoor Air Equipment List Name
-  Sys 5 HW ChW System Availability Managers;               !- Availability Manager List Name
+  Sys 5 HW ChW System OA System Equipment;                 !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Sys 5 HW ChW System OA System Controllers,               !- Name

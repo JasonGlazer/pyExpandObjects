@@ -242,7 +242,7 @@ class TraceCallbackTests(unittest.TestCase):
         # Can't execute bound parameters as their values don't appear
         # in traced statements before SQLite 3.6.21
         # (cf. http://www.sqlite.org/draft/releaselog/3_6_21.html)
-        con.execute('insert into foo(x) values ("%s")' % unicode_value)
+        con.execute("insert into foo(x) values ('%s')" % unicode_value)
         con.commit()
         self.assertTrue(any(unicode_value in stmt for stmt in traced_statements),
                         "Unicode data %s garbled in trace callback: %s"
@@ -265,6 +265,14 @@ class TraceCallbackTests(unittest.TestCase):
         cur.execute(queries[0])
         con2.execute("create table bar(x)")
         cur.execute(queries[1])
+
+        # Extract from SQLite 3.7.15 changelog:
+        # Avoid invoking the sqlite3_trace() callback multiple times when a
+        # statement is automatically reprepared due to SQLITE_SCHEMA errors.
+        #
+        # See bpo-40810
+        if sqlite.sqlite_version_info < (3, 7, 15):
+            queries.append(queries[-1])
         self.assertEqual(traced_statements, queries)
 
 

@@ -148,7 +148,8 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(d.count(None), 16)
 
     def test_comparisons(self):
-        d = deque('xabc'); d.popleft()
+        d = deque('xabc')
+        d.popleft()
         for e in [d, deque('abc'), deque('ab'), deque(), list(d)]:
             self.assertEqual(d==e, type(d)==type(e) and list(d)==list(e))
             self.assertEqual(d!=e, not(type(d)==type(e) and list(d)==list(e)))
@@ -182,6 +183,18 @@ class TestBasic(unittest.TestCase):
         d[n//2] = BadCmp()
         with self.assertRaises(RuntimeError):
             n in d
+
+    def test_contains_count_stop_crashes(self):
+        class A:
+            def __eq__(self, other):
+                d.clear()
+                return NotImplemented
+        d = deque([A(), A()])
+        with self.assertRaises(RuntimeError):
+            _ = 3 in d
+        d = deque([A(), A()])
+        with self.assertRaises(RuntimeError):
+            _ = d.count(3)
 
     def test_extend(self):
         d = deque('a')
@@ -287,6 +300,14 @@ class TestBasic(unittest.TestCase):
                             d.index(element, start, stop)
                     else:
                         self.assertEqual(d.index(element, start, stop), target)
+
+        # Test large start argument
+        d = deque(range(0, 10000, 10))
+        for step in range(100):
+            i = d.index(8500, 700)
+            self.assertEqual(d[i], 8500)
+            # Repeat test with a different internal offset
+            d.rotate()
 
     def test_index_bug_24913(self):
         d = deque('A' * 3)
@@ -542,8 +563,8 @@ class TestBasic(unittest.TestCase):
             support.unlink(support.TESTFN)
 
     def test_init(self):
-        self.assertRaises(TypeError, deque, 'abc', 2, 3);
-        self.assertRaises(TypeError, deque, 1);
+        self.assertRaises(TypeError, deque, 'abc', 2, 3)
+        self.assertRaises(TypeError, deque, 1)
 
     def test_hash(self):
         self.assertRaises(TypeError, hash, deque('abc'))

@@ -261,7 +261,7 @@ class Finalize(object):
         if self._kwargs:
             x += ', kwargs=' + str(self._kwargs)
         if self._key[0] is not None:
-            x += ', exitprority=' + str(self._key[0])
+            x += ', exitpriority=' + str(self._key[0])
         return x + '>'
 
 
@@ -367,13 +367,13 @@ atexit.register(_exit_function)
 
 class ForkAwareThreadLock(object):
     def __init__(self):
-        self._reset()
-        register_after_fork(self, ForkAwareThreadLock._reset)
-
-    def _reset(self):
         self._lock = threading.Lock()
         self.acquire = self._lock.acquire
         self.release = self._lock.release
+        register_after_fork(self, ForkAwareThreadLock._at_fork_reinit)
+
+    def _at_fork_reinit(self):
+        self._lock._at_fork_reinit()
 
     def __enter__(self):
         return self._lock.__enter__()
@@ -452,10 +452,16 @@ def spawnv_passfds(path, args, passfds):
         return _posixsubprocess.fork_exec(
             args, [os.fsencode(path)], True, passfds, None, None,
             -1, -1, -1, -1, -1, -1, errpipe_read, errpipe_write,
-            False, False, None)
+            False, False, None, None, None, -1, None)
     finally:
         os.close(errpipe_read)
         os.close(errpipe_write)
+
+
+def close_fds(*fds):
+    """Close each file descriptor given as an argument"""
+    for fd in fds:
+        os.close(fd)
 
 
 def _cleanup_tests():
@@ -470,6 +476,10 @@ def _cleanup_tests():
     # Stop the ForkServer process if it's running
     from multiprocessing import forkserver
     forkserver._forkserver._stop()
+
+    # Stop the ResourceTracker process if it's running
+    from multiprocessing import resource_tracker
+    resource_tracker._resource_tracker._stop()
 
     # bpo-37421: Explicitly call _run_finalizers() to remove immediately
     # temporary directories created by multiprocessing.util.get_temp_dir().

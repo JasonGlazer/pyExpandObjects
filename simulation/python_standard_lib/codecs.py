@@ -386,7 +386,7 @@ class StreamWriter(Codec):
 
     def reset(self):
 
-        """ Flushes and resets the codec buffers used for keeping state.
+        """ Resets the codec buffers used for keeping internal state.
 
             Calling this method should ensure that the data on the
             output is put into a clean state, that allows appending
@@ -620,7 +620,7 @@ class StreamReader(Codec):
 
     def reset(self):
 
-        """ Resets the codec buffers used for keeping state.
+        """ Resets the codec buffers used for keeping internal state.
 
             Note that no stream repositioning should take place.
             This method is primarily intended to be able to recover
@@ -868,7 +868,7 @@ class StreamRecoder:
 
 ### Shortcuts
 
-def open(filename, mode='r', encoding=None, errors='strict', buffering=1):
+def open(filename, mode='r', encoding=None, errors='strict', buffering=-1):
 
     """ Open an encoded file using the given mode and return
         a wrapped version providing transparent encoding/decoding.
@@ -889,7 +889,8 @@ def open(filename, mode='r', encoding=None, errors='strict', buffering=1):
         encoding error occurs.
 
         buffering has the same meaning as for the builtin open() API.
-        It defaults to line buffered.
+        It defaults to -1 which means that the default buffer size will
+        be used.
 
         The returned wrapped file object provides an extra attribute
         .encoding which allows querying the used encoding. This

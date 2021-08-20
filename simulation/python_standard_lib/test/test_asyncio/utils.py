@@ -1,5 +1,6 @@
 """Utilities shared by tests."""
 
+import asyncio
 import collections
 import contextlib
 import io
@@ -57,7 +58,7 @@ PEERCERT = {
     'issuer': ((('countryName', 'XY'),),
             (('organizationName', 'Python Software Foundation CA'),),
             (('commonName', 'our-ca-server'),)),
-    'notAfter': 'Jul  7 14:23:16 2028 GMT',
+    'notAfter': 'Oct 28 14:23:16 2037 GMT',
     'notBefore': 'Aug 29 14:23:16 2018 GMT',
     'serialNumber': 'CB2D80995A69525C',
     'subject': ((('countryName', 'XY'),),
@@ -106,14 +107,14 @@ def run_briefly(loop):
         gen.close()
 
 
-def run_until(loop, pred, timeout=30):
+def run_until(loop, pred, timeout=support.SHORT_TIMEOUT):
     deadline = time.monotonic() + timeout
     while not pred():
         if timeout is not None:
             timeout = deadline - time.monotonic()
             if timeout <= 0:
                 raise futures.TimeoutError()
-        loop.run_until_complete(tasks.sleep(0.001, loop=loop))
+        loop.run_until_complete(tasks.sleep(0.001))
 
 
 def run_once(loop):
@@ -138,7 +139,7 @@ class SilentWSGIRequestHandler(WSGIRequestHandler):
 
 class SilentWSGIServer(WSGIServer):
 
-    request_timeout = 2
+    request_timeout = support.LOOPBACK_TIMEOUT
 
     def get_request(self):
         request, client_addr = super().get_request()
@@ -174,11 +175,21 @@ class SSLWSGIServer(SSLWSGIServerMixin, SilentWSGIServer):
 
 def _run_test_server(*, address, use_ssl=False, server_cls, server_ssl_cls):
 
+    def loop(environ):
+        size = int(environ['CONTENT_LENGTH'])
+        while size:
+            data = environ['wsgi.input'].read(min(size, 0x10000))
+            yield data
+            size -= len(data)
+
     def app(environ, start_response):
         status = '200 OK'
         headers = [('Content-type', 'text/plain')]
         start_response(status, headers)
-        return [b'Test message']
+        if environ['PATH_INFO'] == '/loop':
+            return loop(environ)
+        else:
+            return [b'Test message']
 
     # Run the test WSGI server in a separate thread in order not to
     # interfere with event handling in the main thread
@@ -209,7 +220,7 @@ if hasattr(socket, 'AF_UNIX'):
 
     class UnixWSGIServer(UnixHTTPServer, WSGIServer):
 
-        request_timeout = 2
+        request_timeout = support.LOOPBACK_TIMEOUT
 
         def server_bind(self):
             UnixHTTPServer.server_bind(self)
@@ -498,10 +509,24 @@ def get_function_source(func):
 class TestCase(unittest.TestCase):
     @staticmethod
     def close_loop(loop):
-        executor = loop._default_executor
-        if executor is not None:
-            executor.shutdown(wait=True)
+        if loop._default_executor is not None:
+            if not loop.is_closed():
+                loop.run_until_complete(loop.shutdown_default_executor())
+            else:
+                loop._default_executor.shutdown(wait=True)
         loop.close()
+        policy = support.maybe_get_event_loop_policy()
+        if policy is not None:
+            try:
+                watcher = policy.get_child_watcher()
+            except NotImplementedError:
+                # watcher is not implemented by EventLoopPolicy, e.g. Windows
+                pass
+            else:
+                if isinstance(watcher, asyncio.ThreadedChildWatcher):
+                    threads = list(watcher._threads.values())
+                    for thread in threads:
+                        thread.join()
 
     def set_event_loop(self, loop, *, cleanup=True):
         assert loop is not None

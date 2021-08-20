@@ -31,12 +31,10 @@
     },
     "AirLoopHVAC:OutdoorAirSystem": {
         "DXVAV Sys 1 OA System": {
-            "availability_manager_list_name": "DXVAV Sys 1 Availability Managers",
             "controller_list_name": "DXVAV Sys 1 OA System Controllers",
             "outdoor_air_equipment_list_name": "DXVAV Sys 1 OA System Equipment"
         },
         "DXVAV Sys 2 OA System": {
-            "availability_manager_list_name": "DXVAV Sys 2 Availability Managers",
             "controller_list_name": "DXVAV Sys 2 OA System Controllers",
             "outdoor_air_equipment_list_name": "DXVAV Sys 2 OA System Equipment"
         }
@@ -3712,7 +3710,7 @@
     },
     "Version": {
         "Version 1": {
-            "version_identifier": "9.5"
+            "version_identifier": "9.6"
         }
     },
     "WindowMaterial:Gas": {

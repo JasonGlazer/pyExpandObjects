@@ -7,6 +7,7 @@ import keyword
 import builtins
 import functools
 import _thread
+from types import GenericAlias
 
 
 __all__ = ['dataclass',
@@ -199,12 +200,22 @@ _POST_INIT_NAME = '__post_init__'
 # https://bugs.python.org/issue33453 for details.
 _MODULE_IDENTIFIER_RE = re.compile(r'^(?:\s*(\w+)\s*\.)?\s*(\w+)')
 
-class _InitVarMeta(type):
-    def __getitem__(self, params):
-        return self
+class InitVar:
+    __slots__ = ('type', )
 
-class InitVar(metaclass=_InitVarMeta):
-    pass
+    def __init__(self, type):
+        self.type = type
+
+    def __repr__(self):
+        if isinstance(self.type, type):
+            type_name = self.type.__name__
+        else:
+            # typing objects, e.g. List[int]
+            type_name = repr(self.type)
+        return f'dataclasses.InitVar[{type_name}]'
+
+    def __class_getitem__(cls, type):
+        return InitVar(type)
 
 
 # Instances of Field are only ever created from within this module,
@@ -273,6 +284,8 @@ class Field:
             # There is a __set_name__ method on the descriptor, call
             # it.
             func(self.default, owner, name)
+
+    __class_getitem__ = classmethod(GenericAlias)
 
 
 class _DataclassParams:
@@ -592,7 +605,8 @@ def _is_classvar(a_type, typing):
 def _is_initvar(a_type, dataclasses):
     # The module we're checking against is the module we're
     # currently in (dataclasses.py).
-    return a_type is dataclasses.InitVar
+    return (a_type is dataclasses.InitVar
+            or type(a_type) is dataclasses.InitVar)
 
 
 def _is_type(annotation, cls, a_module, a_type, is_type_predicate):
@@ -682,7 +696,7 @@ def _get_field(cls, a_name, a_type):
     # In addition to checking for actual types here, also check for
     # string annotations.  get_type_hints() won't always work for us
     # (see https://github.com/python/typing/issues/508 for example),
-    # plus it's expensive and would require an eval for every stirng
+    # plus it's expensive and would require an eval for every string
     # annotation.  So, make a best effort to see if this is a ClassVar
     # or InitVar using regex's and checking that the thing referenced
     # is actually of the correct type.
@@ -822,7 +836,7 @@ def _process_class(cls, init, repr, eq, order, unsafe_hash, frozen):
         # Only process classes that have been processed by our
         # decorator.  That is, they have a _FIELDS attribute.
         base_fields = getattr(b, _FIELDS, None)
-        if base_fields:
+        if base_fields is not None:
             has_dataclass_bases = True
             for f in base_fields.values():
                 fields[f.name] = f
@@ -930,7 +944,7 @@ def _process_class(cls, init, repr, eq, order, unsafe_hash, frozen):
         _set_new_attribute(cls, '__repr__', _repr_fn(flds, globals))
 
     if eq:
-        # Create _eq__ method.  There's no need for a __ne__ method,
+        # Create __eq__ method.  There's no need for a __ne__ method,
         # since python will call __eq__ and negate it.
         flds = [f for f in field_list if f.compare]
         self_tuple = _tuple_str('self', flds)
@@ -981,10 +995,7 @@ def _process_class(cls, init, repr, eq, order, unsafe_hash, frozen):
     return cls
 
 
-# _cls should never be specified by keyword, so start it with an
-# underscore.  The presence of _cls is used to detect if this
-# decorator is being called with parameters or not.
-def dataclass(_cls=None, *, init=True, repr=True, eq=True, order=False,
+def dataclass(cls=None, /, *, init=True, repr=True, eq=True, order=False,
               unsafe_hash=False, frozen=False):
     """Returns the same class as was passed in, with dunder methods
     added based on the fields defined in the class.
@@ -1002,12 +1013,12 @@ def dataclass(_cls=None, *, init=True, repr=True, eq=True, order=False,
         return _process_class(cls, init, repr, eq, order, unsafe_hash, frozen)
 
     # See if we're being called as @dataclass or @dataclass().
-    if _cls is None:
+    if cls is None:
         # We're called with parens.
         return wrap
 
     # We're called as @dataclass without parens.
-    return wrap(_cls)
+    return wrap(cls)
 
 
 def fields(class_or_instance):
@@ -1083,7 +1094,7 @@ def _asdict_inner(obj, dict_factory):
         # method, because:
         # - it does not recurse in to the namedtuple fields and
         #   convert them to dicts (using dict_factory).
-        # - I don't actually want to return a dict here.  The the main
+        # - I don't actually want to return a dict here.  The main
         #   use case here is json.dumps, and it handles converting
         #   namedtuples to lists.  Admittedly we're losing some
         #   information here when we produce a json list instead of a
@@ -1222,7 +1233,7 @@ def make_dataclass(cls_name, fields, *, bases=(), namespace=None, init=True,
                      unsafe_hash=unsafe_hash, frozen=frozen)
 
 
-def replace(*args, **changes):
+def replace(obj, /, **changes):
     """Return a new object replacing specified fields with new values.
 
     This is especially useful for frozen classes.  Example usage:
@@ -1236,14 +1247,6 @@ def replace(*args, **changes):
       c1 = replace(c, x=3)
       assert c1.x == 3 and c1.y == 2
       """
-    if len(args) > 1:
-        raise TypeError(f'replace() takes 1 positional argument but {len(args)} were given')
-    if args:
-        obj, = args
-    elif 'obj' in changes:
-        obj = changes.pop('obj')
-    else:
-        raise TypeError("replace() missing 1 required positional argument: 'obj'")
 
     # We're going to mutate 'changes', but that's okay because it's a
     # new dict, even if called with 'replace(obj, **my_changes)'.
@@ -1268,7 +1271,7 @@ def replace(*args, **changes):
             continue
 
         if f.name not in changes:
-            if f._field_type is _FIELD_INITVAR:
+            if f._field_type is _FIELD_INITVAR and f.default is MISSING:
                 raise ValueError(f"InitVar {f.name!r} "
                                  'must be specified with replace()')
             changes[f.name] = getattr(obj, f.name)

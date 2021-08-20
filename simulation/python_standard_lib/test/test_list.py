@@ -1,5 +1,6 @@
 import sys
 from test import list_tests
+from test.support import cpython_only
 import pickle
 import unittest
 
@@ -186,6 +187,14 @@ class ListTest(list_tests.CommonTest):
         list3 = [Z()]
         list4 = [1]
         self.assertFalse(list3 == list4)
+
+    @cpython_only
+    def test_preallocation(self):
+        iterable = [0] * 10
+        iter_size = sys.getsizeof(iterable)
+
+        self.assertEqual(iter_size, sys.getsizeof(list([0] * 10)))
+        self.assertEqual(iter_size, sys.getsizeof(list(range(10))))
 
     def test_count_index_remove_crashes(self):
         # bpo-38610: The count(), index(), and remove() methods were not

@@ -1,3 +1,4 @@
+import asyncio
 import builtins
 import locale
 import logging
@@ -6,6 +7,7 @@ import shutil
 import sys
 import sysconfig
 import threading
+import urllib.request
 import warnings
 from test import support
 from test.libregrtest.utils import print_warning
@@ -66,7 +68,25 @@ class saved_test_environment:
                  'sysconfig._CONFIG_VARS', 'sysconfig._INSTALL_SCHEMES',
                  'files', 'locale', 'warnings.showwarning',
                  'shutil_archive_formats', 'shutil_unpack_formats',
+                 'asyncio.events._event_loop_policy',
+                 'urllib.requests._url_tempfiles', 'urllib.requests._opener',
                 )
+
+    def get_urllib_requests__url_tempfiles(self):
+        return list(urllib.request._url_tempfiles)
+    def restore_urllib_requests__url_tempfiles(self, tempfiles):
+        for filename in tempfiles:
+            support.unlink(filename)
+
+    def get_urllib_requests__opener(self):
+        return urllib.request._opener
+    def restore_urllib_requests__opener(self, opener):
+        urllib.request._opener = opener
+
+    def get_asyncio_events__event_loop_policy(self):
+        return support.maybe_get_event_loop_policy()
+    def restore_asyncio_events__event_loop_policy(self, policy):
+        asyncio.set_event_loop_policy(policy)
 
     def get_sys_argv(self):
         return id(sys.argv), sys.argv, sys.argv[:]

@@ -3,21 +3,23 @@
 Written by Cody A.W. Somerville <cody-somerville@ubuntu.com>,
 Josip Dzolonga, and Michael Otteneder for the 2007/08 GHOP contest.
 """
-
+from collections import OrderedDict
 from http.server import BaseHTTPRequestHandler, HTTPServer, \
      SimpleHTTPRequestHandler, CGIHTTPRequestHandler
 from http import server, HTTPStatus
 
 import os
+import socket
 import sys
 import re
 import base64
 import ntpath
+import pathlib
 import shutil
 import email.message
 import email.utils
 import html
-import http.client
+import http, http.client
 import urllib.parse
 import tempfile
 import time
@@ -424,6 +426,7 @@ class SimpleHTTPServerTestCase(BaseTestCase):
         self.check_status_and_reason(response, HTTPStatus.OK)
         response = self.request(self.base_url)
         self.check_status_and_reason(response, HTTPStatus.MOVED_PERMANENTLY)
+        self.assertEqual(response.getheader("Content-Length"), "0")
         response = self.request(self.base_url + '/?hi=2')
         self.check_status_and_reason(response, HTTPStatus.OK)
         response = self.request(self.base_url + '?hi=1')
@@ -584,6 +587,15 @@ print()
 print(os.environ["%s"])
 """
 
+cgi_file6 = """\
+#!%s
+import os
+
+print("Content-type: text/plain")
+print()
+print(repr(os.environ))
+"""
+
 
 @unittest.skipIf(hasattr(os, 'geteuid') and os.geteuid() == 0,
         "This test can't be run reliably as root (issue #13308).")
@@ -599,19 +611,27 @@ class CGIHTTPServerTestCase(BaseTestCase):
         self.parent_dir = tempfile.mkdtemp()
         self.cgi_dir = os.path.join(self.parent_dir, 'cgi-bin')
         self.cgi_child_dir = os.path.join(self.cgi_dir, 'child-dir')
+        self.sub_dir_1 = os.path.join(self.parent_dir, 'sub')
+        self.sub_dir_2 = os.path.join(self.sub_dir_1, 'dir')
+        self.cgi_dir_in_sub_dir = os.path.join(self.sub_dir_2, 'cgi-bin')
         os.mkdir(self.cgi_dir)
         os.mkdir(self.cgi_child_dir)
+        os.mkdir(self.sub_dir_1)
+        os.mkdir(self.sub_dir_2)
+        os.mkdir(self.cgi_dir_in_sub_dir)
         self.nocgi_path = None
         self.file1_path = None
         self.file2_path = None
         self.file3_path = None
         self.file4_path = None
+        self.file5_path = None
 
         # The shebang line should be pure ASCII: use symlink if possible.
         # See issue #7668.
+        self._pythonexe_symlink = None
         if support.can_symlink():
             self.pythonexe = os.path.join(self.parent_dir, 'python')
-            os.symlink(sys.executable, self.pythonexe)
+            self._pythonexe_symlink = support.PythonSymlink(self.pythonexe).__enter__()
         else:
             self.pythonexe = sys.executable
 
@@ -649,13 +669,23 @@ class CGIHTTPServerTestCase(BaseTestCase):
             file4.write(cgi_file4 % (self.pythonexe, 'QUERY_STRING'))
         os.chmod(self.file4_path, 0o777)
 
+        self.file5_path = os.path.join(self.cgi_dir_in_sub_dir, 'file5.py')
+        with open(self.file5_path, 'w', encoding='utf-8') as file5:
+            file5.write(cgi_file1 % self.pythonexe)
+        os.chmod(self.file5_path, 0o777)
+
+        self.file6_path = os.path.join(self.cgi_dir, 'file6.py')
+        with open(self.file6_path, 'w', encoding='utf-8') as file6:
+            file6.write(cgi_file6 % self.pythonexe)
+        os.chmod(self.file6_path, 0o777)
+
         os.chdir(self.parent_dir)
 
     def tearDown(self):
         try:
             os.chdir(self.cwd)
-            if self.pythonexe != sys.executable:
-                os.remove(self.pythonexe)
+            if self._pythonexe_symlink:
+                self._pythonexe_symlink.__exit__(None, None, None)
             if self.nocgi_path:
                 os.remove(self.nocgi_path)
             if self.file1_path:
@@ -666,8 +696,15 @@ class CGIHTTPServerTestCase(BaseTestCase):
                 os.remove(self.file3_path)
             if self.file4_path:
                 os.remove(self.file4_path)
+            if self.file5_path:
+                os.remove(self.file5_path)
+            if self.file6_path:
+                os.remove(self.file6_path)
             os.rmdir(self.cgi_child_dir)
             os.rmdir(self.cgi_dir)
+            os.rmdir(self.cgi_dir_in_sub_dir)
+            os.rmdir(self.sub_dir_2)
+            os.rmdir(self.sub_dir_1)
             os.rmdir(self.parent_dir)
         finally:
             BaseTestCase.tearDown(self)
@@ -786,12 +823,40 @@ class CGIHTTPServerTestCase(BaseTestCase):
              'text/html', HTTPStatus.OK),
             (res.read(), res.getheader('Content-type'), res.status))
 
+    def test_cgi_path_in_sub_directories(self):
+        try:
+            CGIHTTPRequestHandler.cgi_directories.append('/sub/dir/cgi-bin')
+            res = self.request('/sub/dir/cgi-bin/file5.py')
+            self.assertEqual(
+                (b'Hello World' + self.linesep, 'text/html', HTTPStatus.OK),
+                (res.read(), res.getheader('Content-type'), res.status))
+        finally:
+            CGIHTTPRequestHandler.cgi_directories.remove('/sub/dir/cgi-bin')
+
+    def test_accept(self):
+        browser_accept = \
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        tests = (
+            ((('Accept', browser_accept),), browser_accept),
+            ((), ''),
+            # Hack case to get two values for the one header
+            ((('Accept', 'text/html'), ('ACCEPT', 'text/plain')),
+               'text/html,text/plain'),
+        )
+        for headers, expected in tests:
+            headers = OrderedDict(headers)
+            with self.subTest(headers):
+                res = self.request('/cgi-bin/file6.py', 'GET', headers=headers)
+                self.assertEqual(http.HTTPStatus.OK, res.status)
+                expected = f"'HTTP_ACCEPT': {expected!r}"
+                self.assertIn(expected.encode('ascii'), res.read())
+
 
 class SocketlessRequestHandler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, directory=None):
         request = mock.Mock()
         request.makefile.return_value = BytesIO()
-        super().__init__(request, None, None)
+        super().__init__(request, None, None, directory=directory)
 
         self.get_called = False
         self.protocol_version = "HTTP/1.1"
@@ -1066,41 +1131,91 @@ class BaseHTTPRequestHandlerTestCase(unittest.TestCase):
 class SimpleHTTPRequestHandlerTestCase(unittest.TestCase):
     """ Test url parsing """
     def setUp(self):
-        self.translated = os.getcwd()
-        self.translated = os.path.join(self.translated, 'filename')
-        self.handler = SocketlessRequestHandler()
+        self.translated_1 = os.path.join(os.getcwd(), 'filename')
+        self.translated_2 = os.path.join('foo', 'filename')
+        self.translated_3 = os.path.join('bar', 'filename')
+        self.handler_1 = SocketlessRequestHandler()
+        self.handler_2 = SocketlessRequestHandler(directory='foo')
+        self.handler_3 = SocketlessRequestHandler(directory=pathlib.PurePath('bar'))
 
     def test_query_arguments(self):
-        path = self.handler.translate_path('/filename')
-        self.assertEqual(path, self.translated)
-        path = self.handler.translate_path('/filename?foo=bar')
-        self.assertEqual(path, self.translated)
-        path = self.handler.translate_path('/filename?a=b&spam=eggs#zot')
-        self.assertEqual(path, self.translated)
+        path = self.handler_1.translate_path('/filename')
+        self.assertEqual(path, self.translated_1)
+        path = self.handler_2.translate_path('/filename')
+        self.assertEqual(path, self.translated_2)
+        path = self.handler_3.translate_path('/filename')
+        self.assertEqual(path, self.translated_3)
+
+        path = self.handler_1.translate_path('/filename?foo=bar')
+        self.assertEqual(path, self.translated_1)
+        path = self.handler_2.translate_path('/filename?foo=bar')
+        self.assertEqual(path, self.translated_2)
+        path = self.handler_3.translate_path('/filename?foo=bar')
+        self.assertEqual(path, self.translated_3)
+
+        path = self.handler_1.translate_path('/filename?a=b&spam=eggs#zot')
+        self.assertEqual(path, self.translated_1)
+        path = self.handler_2.translate_path('/filename?a=b&spam=eggs#zot')
+        self.assertEqual(path, self.translated_2)
+        path = self.handler_3.translate_path('/filename?a=b&spam=eggs#zot')
+        self.assertEqual(path, self.translated_3)
 
     def test_start_with_double_slash(self):
-        path = self.handler.translate_path('//filename')
-        self.assertEqual(path, self.translated)
-        path = self.handler.translate_path('//filename?foo=bar')
-        self.assertEqual(path, self.translated)
+        path = self.handler_1.translate_path('//filename')
+        self.assertEqual(path, self.translated_1)
+        path = self.handler_2.translate_path('//filename')
+        self.assertEqual(path, self.translated_2)
+        path = self.handler_3.translate_path('//filename')
+        self.assertEqual(path, self.translated_3)
+
+        path = self.handler_1.translate_path('//filename?foo=bar')
+        self.assertEqual(path, self.translated_1)
+        path = self.handler_2.translate_path('//filename?foo=bar')
+        self.assertEqual(path, self.translated_2)
+        path = self.handler_3.translate_path('//filename?foo=bar')
+        self.assertEqual(path, self.translated_3)
 
     def test_windows_colon(self):
         with support.swap_attr(server.os, 'path', ntpath):
-            path = self.handler.translate_path('c:c:c:foo/filename')
+            path = self.handler_1.translate_path('c:c:c:foo/filename')
             path = path.replace(ntpath.sep, os.sep)
-            self.assertEqual(path, self.translated)
+            self.assertEqual(path, self.translated_1)
+            path = self.handler_2.translate_path('c:c:c:foo/filename')
+            path = path.replace(ntpath.sep, os.sep)
+            self.assertEqual(path, self.translated_2)
+            path = self.handler_3.translate_path('c:c:c:foo/filename')
+            path = path.replace(ntpath.sep, os.sep)
+            self.assertEqual(path, self.translated_3)
 
-            path = self.handler.translate_path('\\c:../filename')
+            path = self.handler_1.translate_path('\\c:../filename')
             path = path.replace(ntpath.sep, os.sep)
-            self.assertEqual(path, self.translated)
+            self.assertEqual(path, self.translated_1)
+            path = self.handler_2.translate_path('\\c:../filename')
+            path = path.replace(ntpath.sep, os.sep)
+            self.assertEqual(path, self.translated_2)
+            path = self.handler_3.translate_path('\\c:../filename')
+            path = path.replace(ntpath.sep, os.sep)
+            self.assertEqual(path, self.translated_3)
 
-            path = self.handler.translate_path('c:\\c:..\\foo/filename')
+            path = self.handler_1.translate_path('c:\\c:..\\foo/filename')
             path = path.replace(ntpath.sep, os.sep)
-            self.assertEqual(path, self.translated)
+            self.assertEqual(path, self.translated_1)
+            path = self.handler_2.translate_path('c:\\c:..\\foo/filename')
+            path = path.replace(ntpath.sep, os.sep)
+            self.assertEqual(path, self.translated_2)
+            path = self.handler_3.translate_path('c:\\c:..\\foo/filename')
+            path = path.replace(ntpath.sep, os.sep)
+            self.assertEqual(path, self.translated_3)
 
-            path = self.handler.translate_path('c:c:foo\\c:c:bar/filename')
+            path = self.handler_1.translate_path('c:c:foo\\c:c:bar/filename')
             path = path.replace(ntpath.sep, os.sep)
-            self.assertEqual(path, self.translated)
+            self.assertEqual(path, self.translated_1)
+            path = self.handler_2.translate_path('c:c:foo\\c:c:bar/filename')
+            path = path.replace(ntpath.sep, os.sep)
+            self.assertEqual(path, self.translated_2)
+            path = self.handler_3.translate_path('c:c:foo\\c:c:bar/filename')
+            path = path.replace(ntpath.sep, os.sep)
+            self.assertEqual(path, self.translated_3)
 
 
 class MiscTestCase(unittest.TestCase):
@@ -1116,6 +1231,66 @@ class MiscTestCase(unittest.TestCase):
         self.assertCountEqual(server.__all__, expected)
 
 
+class ScriptTestCase(unittest.TestCase):
+
+    def mock_server_class(self):
+        return mock.MagicMock(
+            return_value=mock.MagicMock(
+                __enter__=mock.MagicMock(
+                    return_value=mock.MagicMock(
+                        socket=mock.MagicMock(
+                            getsockname=lambda: ('', 0),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+    @mock.patch('builtins.print')
+    def test_server_test_unspec(self, _):
+        mock_server = self.mock_server_class()
+        server.test(ServerClass=mock_server, bind=None)
+        self.assertIn(
+            mock_server.address_family,
+            (socket.AF_INET6, socket.AF_INET),
+        )
+
+    @mock.patch('builtins.print')
+    def test_server_test_localhost(self, _):
+        mock_server = self.mock_server_class()
+        server.test(ServerClass=mock_server, bind="localhost")
+        self.assertIn(
+            mock_server.address_family,
+            (socket.AF_INET6, socket.AF_INET),
+        )
+
+    ipv6_addrs = (
+        "::",
+        "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        "::1",
+    )
+
+    ipv4_addrs = (
+        "0.0.0.0",
+        "8.8.8.8",
+        "127.0.0.1",
+    )
+
+    @mock.patch('builtins.print')
+    def test_server_test_ipv6(self, _):
+        for bind in self.ipv6_addrs:
+            mock_server = self.mock_server_class()
+            server.test(ServerClass=mock_server, bind=bind)
+            self.assertEqual(mock_server.address_family, socket.AF_INET6)
+
+    @mock.patch('builtins.print')
+    def test_server_test_ipv4(self, _):
+        for bind in self.ipv4_addrs:
+            mock_server = self.mock_server_class()
+            server.test(ServerClass=mock_server, bind=bind)
+            self.assertEqual(mock_server.address_family, socket.AF_INET)
+
+
 def test_main(verbose=None):
     cwd = os.getcwd()
     try:
@@ -1127,6 +1302,7 @@ def test_main(verbose=None):
             CGIHTTPServerTestCase,
             SimpleHTTPRequestHandlerTestCase,
             MiscTestCase,
+            ScriptTestCase
         )
     finally:
         os.chdir(cwd)
