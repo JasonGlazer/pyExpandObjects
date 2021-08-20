@@ -5,7 +5,7 @@ Note: test_regrtest cannot be run twice in parallel.
 """
 
 import contextlib
-import faulthandler
+import glob
 import io
 import os.path
 import platform
@@ -27,9 +27,8 @@ ROOT_DIR = os.path.abspath(os.path.normpath(ROOT_DIR))
 LOG_PREFIX = r'[0-9]+:[0-9]+:[0-9]+ (?:load avg: [0-9]+\.[0-9]{2} )?'
 
 TEST_INTERRUPTED = textwrap.dedent("""
-    from signal import SIGINT
+    from signal import SIGINT, raise_signal
     try:
-        from _testcapi import raise_signal
         raise_signal(SIGINT)
     except ImportError:
         import os
@@ -55,8 +54,6 @@ class ParseArgsTestCase(unittest.TestCase):
                     libregrtest._parse_args([opt])
                 self.assertIn('Run Python regression tests.', out.getvalue())
 
-    @unittest.skipUnless(hasattr(faulthandler, 'dump_traceback_later'),
-                         "faulthandler.dump_traceback_later() required")
     def test_timeout(self):
         ns = libregrtest._parse_args(['--timeout', '4.2'])
         self.assertEqual(ns.timeout, 4.2)
@@ -520,7 +517,7 @@ class BaseTestCase(unittest.TestCase):
         if not input:
             input = ''
         if 'stderr' not in kw:
-            kw['stderr'] = subprocess.PIPE
+            kw['stderr'] = subprocess.STDOUT
         proc = subprocess.run(args,
                               universal_newlines=True,
                               input=input,
@@ -550,6 +547,31 @@ class BaseTestCase(unittest.TestCase):
         return proc.stdout
 
 
+class CheckActualTests(BaseTestCase):
+    """
+    Check that regrtest appears to find the expected set of tests.
+    """
+
+    def test_finds_expected_number_of_tests(self):
+        args = ['-Wd', '-E', '-bb', '-m', 'test.regrtest', '--list-tests']
+        output = self.run_python(args)
+        rough_number_of_tests_found = len(output.splitlines())
+        actual_testsuite_glob = os.path.join(glob.escape(os.path.dirname(__file__)),
+                                             'test*.py')
+        rough_counted_test_py_files = len(glob.glob(actual_testsuite_glob))
+        # We're not trying to duplicate test finding logic in here,
+        # just give a rough estimate of how many there should be and
+        # be near that.  This is a regression test to prevent mishaps
+        # such as https://bugs.python.org/issue37667 in the future.
+        # If you need to change the values in here during some
+        # mythical future test suite reorganization, don't go
+        # overboard with logic and keep that goal in mind.
+        self.assertGreater(rough_number_of_tests_found,
+                           rough_counted_test_py_files*9//10,
+                           msg='Unexpectedly low number of tests found in:\n'
+                           f'{", ".join(output.splitlines())}')
+
+
 class ProgramsTestCase(BaseTestCase):
     """
     Test various ways to run the Python test suite. Use options close
@@ -567,8 +589,7 @@ class ProgramsTestCase(BaseTestCase):
         self.python_args = ['-Wd', '-E', '-bb']
         self.regrtest_args = ['-uall', '-rwW',
                               '--testdir=%s' % self.tmptestdir]
-        if hasattr(faulthandler, 'dump_traceback_later'):
-            self.regrtest_args.extend(('--timeout', '3600', '-j4'))
+        self.regrtest_args.extend(('--timeout', '3600', '-j4'))
         if sys.platform == 'win32':
             self.regrtest_args.append('-n')
 
@@ -637,7 +658,11 @@ class ProgramsTestCase(BaseTestCase):
         # Tools\buildbot\test.bat
         script = os.path.join(ROOT_DIR, 'Tools', 'buildbot', 'test.bat')
         test_args = ['--testdir=%s' % self.tmptestdir]
-        if platform.architecture()[0] == '64bit':
+        if platform.machine() == 'ARM64':
+            test_args.append('-arm64') # ARM 64-bit build
+        elif platform.machine() == 'ARM':
+            test_args.append('-arm32')   # 32-bit ARM build
+        elif platform.architecture()[0] == '64bit':
             test_args.append('-x64')   # 64-bit build
         if not Py_DEBUG:
             test_args.append('+d')     # Release build, use python.exe
@@ -650,7 +675,11 @@ class ProgramsTestCase(BaseTestCase):
         if not os.path.isfile(script):
             self.skipTest(f'File "{script}" does not exist')
         rt_args = ["-q"]             # Quick, don't run tests twice
-        if platform.architecture()[0] == '64bit':
+        if platform.machine() == 'ARM64':
+            rt_args.append('-arm64') # ARM 64-bit build
+        elif platform.machine() == 'ARM':
+            rt_args.append('-arm32')   # 32-bit ARM build
+        elif platform.architecture()[0] == '64bit':
             rt_args.append('-x64')   # 64-bit build
         if Py_DEBUG:
             rt_args.append('-d')     # Debug build, use python_d.exe
@@ -1203,6 +1232,39 @@ class ArgsTestCase(BaseTestCase):
                                   failed=testname)
         self.assertRegex(output,
                          re.compile('%s timed out' % testname, re.MULTILINE))
+
+    def test_unraisable_exc(self):
+        # --fail-env-changed must catch unraisable exception.
+        # The exceptioin must be displayed even if sys.stderr is redirected.
+        code = textwrap.dedent(r"""
+            import unittest
+            import weakref
+            from test.support import captured_stderr
+
+            class MyObject:
+                pass
+
+            def weakref_callback(obj):
+                raise Exception("weakref callback bug")
+
+            class Tests(unittest.TestCase):
+                def test_unraisable_exc(self):
+                    obj = MyObject()
+                    ref = weakref.ref(obj, weakref_callback)
+                    with captured_stderr() as stderr:
+                        # call weakref_callback() which logs
+                        # an unraisable exception
+                        obj = None
+                    self.assertEqual(stderr.getvalue(), '')
+        """)
+        testname = self.create_test(code=code)
+
+        output = self.run_tests("--fail-env-changed", "-v", testname, exitcode=3)
+        self.check_executed_tests(output, [testname],
+                                  env_changed=[testname],
+                                  fail_env_changed=True)
+        self.assertIn("Warning -- Unraisable exception", output)
+        self.assertIn("Exception: weakref callback bug", output)
 
     def test_cleanup(self):
         dirname = os.path.join(self.tmptestdir, "test_python_123")

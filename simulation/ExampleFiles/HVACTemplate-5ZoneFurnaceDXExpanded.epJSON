@@ -70,27 +70,22 @@
     },
     "AirLoopHVAC:OutdoorAirSystem": {
         "Furnace DX 1-1 OA System": {
-            "availability_manager_list_name": "Furnace DX 1-1 Availability Managers",
             "controller_list_name": "Furnace DX 1-1 OA System Controllers",
             "outdoor_air_equipment_list_name": "Furnace DX 1-1 OA System Equipment"
         },
         "Furnace DX 2-1 OA System": {
-            "availability_manager_list_name": "Furnace DX 2-1 Availability Managers",
             "controller_list_name": "Furnace DX 2-1 OA System Controllers",
             "outdoor_air_equipment_list_name": "Furnace DX 2-1 OA System Equipment"
         },
         "Furnace DX 3-1 OA System": {
-            "availability_manager_list_name": "Furnace DX 3-1 Availability Managers",
             "controller_list_name": "Furnace DX 3-1 OA System Controllers",
             "outdoor_air_equipment_list_name": "Furnace DX 3-1 OA System Equipment"
         },
         "Furnace DX 4-1 OA System": {
-            "availability_manager_list_name": "Furnace DX 4-1 Availability Managers",
             "controller_list_name": "Furnace DX 4-1 OA System Controllers",
             "outdoor_air_equipment_list_name": "Furnace DX 4-1 OA System Equipment"
         },
         "Furnace DX 5-1 OA System": {
-            "availability_manager_list_name": "Furnace DX 5-1 Availability Managers",
             "controller_list_name": "Furnace DX 5-1 OA System Controllers",
             "outdoor_air_equipment_list_name": "Furnace DX 5-1 OA System Equipment"
         }
@@ -4333,7 +4328,7 @@
     },
     "Version": {
         "Version 1": {
-            "version_identifier": "9.5"
+            "version_identifier": "9.6"
         }
     },
     "WindowMaterial:Gas": {

@@ -102,7 +102,7 @@
 ! Environmental Emissions:        None
 ! Utility Tariffs:                None
 
-  Version,9.5;
+  Version,9.6;
 
   Building,
     Building,                !- Name
@@ -3015,8 +3015,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   AHU 1 Spaces 1-4 OA System,                              !- Name
   AHU 1 Spaces 1-4 OA System Controllers,                  !- Controller List Name
-  AHU 1 Spaces 1-4 OA System Equipment,                    !- Outdoor Air Equipment List Name
-  AHU 1 Spaces 1-4 Availability Managers;                  !- Availability Manager List Name
+  AHU 1 Spaces 1-4 OA System Equipment;                    !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   AHU 1 Spaces 1-4 OA System Controllers,                  !- Name
@@ -3309,8 +3308,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   AHU 2 Space 5 OA System,                                 !- Name
   AHU 2 Space 5 OA System Controllers,                     !- Controller List Name
-  AHU 2 Space 5 OA System Equipment,                       !- Outdoor Air Equipment List Name
-  AHU 2 Space 5 Availability Managers;                     !- Availability Manager List Name
+  AHU 2 Space 5 OA System Equipment;                       !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   AHU 2 Space 5 OA System Controllers,                     !- Name

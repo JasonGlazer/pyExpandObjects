@@ -96,7 +96,7 @@
 ! Environmental Emissions:        None
 ! Utility Tariffs:                None
 
-  Version,9.5;
+  Version,9.6;
 
   Building,
     Building,                !- Name
@@ -2951,8 +2951,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   DXVAV Sys 1 OA System,                                   !- Name
   DXVAV Sys 1 OA System Controllers,                       !- Controller List Name
-  DXVAV Sys 1 OA System Equipment,                         !- Outdoor Air Equipment List Name
-  DXVAV Sys 1 Availability Managers;                       !- Availability Manager List Name
+  DXVAV Sys 1 OA System Equipment;                         !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   DXVAV Sys 1 OA System Controllers,                       !- Name
@@ -3308,8 +3307,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   DXVAV Sys 2 OA System,                                   !- Name
   DXVAV Sys 2 OA System Controllers,                       !- Controller List Name
-  DXVAV Sys 2 OA System Equipment,                         !- Outdoor Air Equipment List Name
-  DXVAV Sys 2 Availability Managers;                       !- Availability Manager List Name
+  DXVAV Sys 2 OA System Equipment;                         !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   DXVAV Sys 2 OA System Controllers,                       !- Name

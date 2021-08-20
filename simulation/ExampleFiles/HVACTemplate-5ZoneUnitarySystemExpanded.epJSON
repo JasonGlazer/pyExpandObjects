@@ -70,27 +70,22 @@
     },
     "AirLoopHVAC:OutdoorAirSystem": {
         "Sys 1 Furnace DX Cool SnglSpd OA System": {
-            "availability_manager_list_name": "Sys 1 Furnace DX Cool SnglSpd Availability Managers",
             "controller_list_name": "Sys 1 Furnace DX Cool SnglSpd OA System Controllers",
             "outdoor_air_equipment_list_name": "Sys 1 Furnace DX Cool SnglSpd OA System Equipment"
         },
         "Sys 2 Furnace DX Cool MultiSpd OA System": {
-            "availability_manager_list_name": "Sys 2 Furnace DX Cool MultiSpd Availability Managers",
             "controller_list_name": "Sys 2 Furnace DX Cool MultiSpd OA System Controllers",
             "outdoor_air_equipment_list_name": "Sys 2 Furnace DX Cool MultiSpd OA System Equipment"
         },
         "Sys 3 Heat Pump AirSource SnglSpd OA System": {
-            "availability_manager_list_name": "Sys 3 Heat Pump AirSource SnglSpd Availability Managers",
             "controller_list_name": "Sys 3 Heat Pump AirSource SnglSpd OA System Controllers",
             "outdoor_air_equipment_list_name": "Sys 3 Heat Pump AirSource SnglSpd OA System Equipment"
         },
         "Sys 4 Heat Pump WaterSource SnglSpd OA System": {
-            "availability_manager_list_name": "Sys 4 Heat Pump WaterSource SnglSpd Availability Managers",
             "controller_list_name": "Sys 4 Heat Pump WaterSource SnglSpd OA System Controllers",
             "outdoor_air_equipment_list_name": "Sys 4 Heat Pump WaterSource SnglSpd OA System Equipment"
         },
         "Sys 5 HW ChW System OA System": {
-            "availability_manager_list_name": "Sys 5 HW ChW System Availability Managers",
             "controller_list_name": "Sys 5 HW ChW System OA System Controllers",
             "outdoor_air_equipment_list_name": "Sys 5 HW ChW System OA System Equipment"
         }
@@ -5641,7 +5636,7 @@
     },
     "Version": {
         "Version 1": {
-            "version_identifier": "9.5"
+            "version_identifier": "9.6"
         }
     },
     "WindowMaterial:Gas": {

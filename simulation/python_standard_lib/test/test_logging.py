@@ -1,4 +1,4 @@
-# Copyright 2001-2017 by Vinay Sajip. All Rights Reserved.
+# Copyright 2001-2019 by Vinay Sajip. All Rights Reserved.
 #
 # Permission to use, copy, modify, and distribute this software and its
 # documentation for any purpose and without fee is hereby granted,
@@ -16,7 +16,7 @@
 
 """Test harness for the logging module. Run all tests.
 
-Copyright (C) 2001-2017 Vinay Sajip. All Rights Reserved.
+Copyright (C) 2001-2019 Vinay Sajip. All Rights Reserved.
 """
 
 import logging
@@ -25,6 +25,7 @@ import logging.config
 
 import codecs
 import configparser
+import copy
 import datetime
 import pathlib
 import pickle
@@ -35,13 +36,14 @@ import os
 import queue
 import random
 import re
-import signal
 import socket
 import struct
 import sys
 import tempfile
 from test.support.script_helper import assert_python_ok, assert_python_failure
 from test import support
+from test.support import socket_helper
+from test.support.logging_helper import TestHandler
 import textwrap
 import threading
 import time
@@ -313,12 +315,6 @@ class BuiltinLevelsTest(BaseTest):
         """See issue #22386 for more information."""
         self.assertEqual(logging.getLevelName('INFO'), logging.INFO)
         self.assertEqual(logging.getLevelName(logging.INFO), 'INFO')
-
-    def test_regression_29220(self):
-        """See issue #29220 for more information."""
-        logging.addLevelName(logging.INFO, '')
-        self.addCleanup(logging.addLevelName, logging.INFO, 'INFO')
-        self.assertEqual(logging.getLevelName(logging.INFO), '')
 
     def test_issue27935(self):
         fatal = logging.getLevelName('FATAL')
@@ -732,30 +728,19 @@ class HandlerTest(BaseTest):
 
         locks_held__ready_to_fork.wait()
         pid = os.fork()
-        if pid == 0:  # Child.
+        if pid == 0:
+            # Child process
             try:
                 test_logger.info(r'Child process did not deadlock. \o/')
             finally:
                 os._exit(0)
-        else:  # Parent.
+        else:
+            # Parent process
             test_logger.info(r'Parent process returned from fork. \o/')
             fork_happened__release_locks_and_end_thread.set()
             lock_holder_thread.join()
-            start_time = time.monotonic()
-            while True:
-                test_logger.debug('Waiting for child process.')
-                waited_pid, status = os.waitpid(pid, os.WNOHANG)
-                if waited_pid == pid:
-                    break  # child process exited.
-                if time.monotonic() - start_time > 7:
-                    break  # so long? implies child deadlock.
-                time.sleep(0.05)
-            test_logger.debug('Done waiting.')
-            if waited_pid != pid:
-                os.kill(pid, signal.SIGKILL)
-                waited_pid, status = os.waitpid(pid, 0)
-                self.fail("child process deadlocked.")
-            self.assertEqual(status, 0, msg="child process error")
+
+            support.wait_process(pid, exitcode=0)
 
 
 class BadStream(object):
@@ -841,6 +826,7 @@ class TestSMTPServer(smtpd.SMTPServer):
         self.port = self.socket.getsockname()[1]
         self._handler = handler
         self._thread = None
+        self._quit = False
         self.poll_interval = poll_interval
 
     def process_message(self, peer, mailfrom, rcpttos, data):
@@ -872,19 +858,18 @@ class TestSMTPServer(smtpd.SMTPServer):
                               :func:`select` or :func:`poll` call by
                               :func:`asyncore.loop`.
         """
-        asyncore.loop(poll_interval, map=self._map)
+        while not self._quit:
+            asyncore.loop(poll_interval, map=self._map, count=1)
 
-    def stop(self, timeout=None):
+    def stop(self):
         """
         Stop the thread by closing the server instance.
         Wait for the server thread to terminate.
-
-        :param timeout: How long to wait for the server thread
-                        to terminate.
         """
-        self.close()
-        support.join_thread(self._thread, timeout)
+        self._quit = True
+        support.join_thread(self._thread)
         self._thread = None
+        self.close()
         asyncore.close_all(map=self._map, ignore_all=True)
 
 
@@ -927,16 +912,13 @@ class ControlMixin(object):
         self.ready.set()
         super(ControlMixin, self).serve_forever(poll_interval)
 
-    def stop(self, timeout=None):
+    def stop(self):
         """
         Tell the server thread to stop, and wait for it to do so.
-
-        :param timeout: How long to wait for the server thread
-                        to terminate.
         """
         self.shutdown()
         if self._thread is not None:
-            support.join_thread(self._thread, timeout)
+            support.join_thread(self._thread)
             self._thread = None
         self.server_close()
         self.ready.clear()
@@ -1070,15 +1052,15 @@ if hasattr(socket, "AF_UNIX"):
 # - end of server_helper section
 
 class SMTPHandlerTest(BaseTest):
-    # bpo-14314, bpo-19665, bpo-34092: don't wait forever, timeout of 1 minute
-    TIMEOUT = 60.0
+    # bpo-14314, bpo-19665, bpo-34092: don't wait forever
+    TIMEOUT = support.LONG_TIMEOUT
 
     def test_basic(self):
         sockmap = {}
-        server = TestSMTPServer((support.HOST, 0), self.process_message, 0.001,
+        server = TestSMTPServer((socket_helper.HOST, 0), self.process_message, 0.001,
                                 sockmap)
         server.start()
-        addr = (support.HOST, server.port)
+        addr = (socket_helper.HOST, server.port)
         h = logging.handlers.SMTPHandler(addr, 'me', 'you', 'Log',
                                          timeout=self.TIMEOUT)
         self.assertEqual(h.toaddrs, ['you'])
@@ -1177,6 +1159,32 @@ class MemoryHandlerTest(BaseTest):
         self.mem_hdlr.close()
         # assert that no new lines have been added
         self.assert_log_lines(lines)  # no change
+
+    def test_race_between_set_target_and_flush(self):
+        class MockRaceConditionHandler:
+            def __init__(self, mem_hdlr):
+                self.mem_hdlr = mem_hdlr
+                self.threads = []
+
+            def removeTarget(self):
+                self.mem_hdlr.setTarget(None)
+
+            def handle(self, msg):
+                thread = threading.Thread(target=self.removeTarget)
+                self.threads.append(thread)
+                thread.start()
+
+        target = MockRaceConditionHandler(self.mem_hdlr)
+        try:
+            self.mem_hdlr.setTarget(target)
+
+            for _ in range(10):
+                time.sleep(0.005)
+                self.mem_logger.info("not flushed")
+                self.mem_logger.warning("flushed")
+        finally:
+            for thread in target.threads:
+                support.join_thread(thread)
 
 
 class ExceptionFormatter(logging.Formatter):
@@ -1596,6 +1604,30 @@ class ConfigFileTest(BaseTest):
         self.apply_config(self.disable_test, disable_existing_loggers=False)
         self.assertFalse(logger.disabled)
 
+    def test_config_set_handler_names(self):
+        test_config = """
+            [loggers]
+            keys=root
+
+            [handlers]
+            keys=hand1
+
+            [formatters]
+            keys=form1
+
+            [logger_root]
+            handlers=hand1
+
+            [handler_hand1]
+            class=StreamHandler
+            formatter=form1
+
+            [formatter_form1]
+            format=%(levelname)s ++ %(message)s
+            """
+        self.apply_config(test_config)
+        self.assertEqual(logging.getLogger().handlers[0].name, 'hand1')
+
     def test_defaults_do_no_interpolation(self):
         """bpo-33802 defaults should not get interpolated"""
         ini = textwrap.dedent("""
@@ -1680,7 +1712,7 @@ class SocketHandlerTest(BaseTest):
                 self.root_logger.removeHandler(self.sock_hdlr)
                 self.sock_hdlr.close()
             if self.server:
-                self.server.stop(2.0)
+                self.server.stop()
         finally:
             BaseTest.tearDown(self)
 
@@ -1717,7 +1749,7 @@ class SocketHandlerTest(BaseTest):
         # one-second timeout on socket.create_connection() (issue #16264).
         self.sock_hdlr.retryStart = 2.5
         # Kill the server
-        self.server.stop(2.0)
+        self.server.stop()
         # The logging call should try to connect, which should fail
         try:
             raise RuntimeError('Deliberate mistake')
@@ -1791,7 +1823,7 @@ class DatagramHandlerTest(BaseTest):
         """Shutdown the UDP server."""
         try:
             if self.server:
-                self.server.stop(2.0)
+                self.server.stop()
             if self.sock_hdlr:
                 self.root_logger.removeHandler(self.sock_hdlr)
                 self.sock_hdlr.close()
@@ -1872,7 +1904,7 @@ class SysLogHandlerTest(BaseTest):
         """Shutdown the server."""
         try:
             if self.server:
-                self.server.stop(2.0)
+                self.server.stop()
             if self.sl_hdlr:
                 self.root_logger.removeHandler(self.sl_hdlr)
                 self.sl_hdlr.close()
@@ -1919,7 +1951,7 @@ class UnixSysLogHandlerTest(SysLogHandlerTest):
         SysLogHandlerTest.tearDown(self)
         support.unlink(self.address)
 
-@unittest.skipUnless(support.IPV6_ENABLED,
+@unittest.skipUnless(socket_helper.IPV6_ENABLED,
                      'IPv6 support required for this test.')
 class IPv6SysLogHandlerTest(SysLogHandlerTest):
 
@@ -2009,7 +2041,7 @@ class HTTPHandlerTest(BaseTest):
                 self.assertEqual(d['funcName'], ['test_output'])
                 self.assertEqual(d['msg'], [msg])
 
-            self.server.stop(2.0)
+            self.server.stop()
             self.root_logger.removeHandler(self.h_hdlr)
             self.h_hdlr.close()
 
@@ -2156,6 +2188,10 @@ class WarningsTest(BaseTest):
 
 def formatFunc(format, datefmt=None):
     return logging.Formatter(format, datefmt)
+
+class myCustomFormatter:
+    def __init__(self, fmt, datefmt=None):
+        pass
 
 def handlerFunc():
     return logging.StreamHandler()
@@ -2797,6 +2833,114 @@ class ConfigDictTest(BaseTest):
         }
     }
 
+    # Configuration with custom logging.Formatter subclass as '()' key and 'validate' set to False
+    custom_formatter_class_validate = {
+        'version': 1,
+        'formatters': {
+            'form1': {
+                '()': __name__ + '.ExceptionFormatter',
+                'format': '%(levelname)s:%(name)s:%(message)s',
+                'validate': False,
+            },
+        },
+        'handlers' : {
+            'hand1' : {
+                'class': 'logging.StreamHandler',
+                'formatter': 'form1',
+                'level': 'NOTSET',
+                'stream': 'ext://sys.stdout',
+            },
+        },
+        "loggers": {
+            "my_test_logger_custom_formatter": {
+                "level": "DEBUG",
+                "handlers": ["hand1"],
+                "propagate": "true"
+            }
+        }
+    }
+
+    # Configuration with custom logging.Formatter subclass as 'class' key and 'validate' set to False
+    custom_formatter_class_validate2 = {
+        'version': 1,
+        'formatters': {
+            'form1': {
+                'class': __name__ + '.ExceptionFormatter',
+                'format': '%(levelname)s:%(name)s:%(message)s',
+                'validate': False,
+            },
+        },
+        'handlers' : {
+            'hand1' : {
+                'class': 'logging.StreamHandler',
+                'formatter': 'form1',
+                'level': 'NOTSET',
+                'stream': 'ext://sys.stdout',
+            },
+        },
+        "loggers": {
+            "my_test_logger_custom_formatter": {
+                "level": "DEBUG",
+                "handlers": ["hand1"],
+                "propagate": "true"
+            }
+        }
+    }
+
+    # Configuration with custom class that is not inherited from logging.Formatter
+    custom_formatter_class_validate3 = {
+        'version': 1,
+        'formatters': {
+            'form1': {
+                'class': __name__ + '.myCustomFormatter',
+                'format': '%(levelname)s:%(name)s:%(message)s',
+                'validate': False,
+            },
+        },
+        'handlers' : {
+            'hand1' : {
+                'class': 'logging.StreamHandler',
+                'formatter': 'form1',
+                'level': 'NOTSET',
+                'stream': 'ext://sys.stdout',
+            },
+        },
+        "loggers": {
+            "my_test_logger_custom_formatter": {
+                "level": "DEBUG",
+                "handlers": ["hand1"],
+                "propagate": "true"
+            }
+        }
+    }
+
+    # Configuration with custom function and 'validate' set to False
+    custom_formatter_with_function = {
+        'version': 1,
+        'formatters': {
+            'form1': {
+                '()': formatFunc,
+                'format': '%(levelname)s:%(name)s:%(message)s',
+                'validate': False,
+            },
+        },
+        'handlers' : {
+            'hand1' : {
+                'class': 'logging.StreamHandler',
+                'formatter': 'form1',
+                'level': 'NOTSET',
+                'stream': 'ext://sys.stdout',
+            },
+        },
+        "loggers": {
+            "my_test_logger_custom_formatter": {
+                "level": "DEBUG",
+                "handlers": ["hand1"],
+                "propagate": "true"
+            }
+        }
+    }
+
     def apply_config(self, conf):
         logging.config.dictConfig(conf)
 
@@ -3097,7 +3241,7 @@ class ConfigDictTest(BaseTest):
         finally:
             t.ready.wait(2.0)
             logging.config.stopListening()
-            support.join_thread(t, 2.0)
+            support.join_thread(t)
 
     def test_listen_config_10_ok(self):
         with support.captured_stdout() as output:
@@ -3195,11 +3339,42 @@ class ConfigDictTest(BaseTest):
         ], pat=r"^[\w.]+ -> (\w+): (\d+)$")
 
     def test_out_of_order(self):
-        self.apply_config(self.out_of_order)
+        self.assertRaises(ValueError, self.apply_config, self.out_of_order)
+
+    def test_out_of_order_with_dollar_style(self):
+        config = copy.deepcopy(self.out_of_order)
+        config['formatters']['mySimpleFormatter']['format'] = "${asctime} (${name}) ${levelname}: ${message}"
+
+        self.apply_config(config)
         handler = logging.getLogger('mymodule').handlers[0]
         self.assertIsInstance(handler.target, logging.Handler)
         self.assertIsInstance(handler.formatter._style,
                               logging.StringTemplateStyle)
+
+    def test_custom_formatter_class_with_validate(self):
+        self.apply_config(self.custom_formatter_class_validate)
+        handler = logging.getLogger("my_test_logger_custom_formatter").handlers[0]
+        self.assertIsInstance(handler.formatter, ExceptionFormatter)
+
+    def test_custom_formatter_class_with_validate2(self):
+        self.apply_config(self.custom_formatter_class_validate2)
+        handler = logging.getLogger("my_test_logger_custom_formatter").handlers[0]
+        self.assertIsInstance(handler.formatter, ExceptionFormatter)
+
+    def test_custom_formatter_class_with_validate2_with_wrong_fmt(self):
+        config = self.custom_formatter_class_validate.copy()
+        config['formatters']['form1']['style'] = "$"
+
+        # Exception should not be raise as we have configured 'validate' to False
+        self.apply_config(config)
+        handler = logging.getLogger("my_test_logger_custom_formatter").handlers[0]
+        self.assertIsInstance(handler.formatter, ExceptionFormatter)
+
+    def test_custom_formatter_class_with_validate3(self):
+        self.assertRaises(ValueError, self.apply_config, self.custom_formatter_class_validate3)
+
+    def test_custom_formatter_function_with_validate(self):
+        self.assertRaises(ValueError, self.apply_config, self.custom_formatter_with_function)
 
     def test_baseconfig(self):
         d = {
@@ -3378,7 +3553,7 @@ class QueueHandlerTest(BaseTest):
     @unittest.skipUnless(hasattr(logging.handlers, 'QueueListener'),
                          'logging.handlers.QueueListener required for this test')
     def test_queue_listener(self):
-        handler = support.TestHandler(support.Matcher())
+        handler = TestHandler(support.Matcher())
         listener = logging.handlers.QueueListener(self.queue, handler)
         listener.start()
         try:
@@ -3394,7 +3569,7 @@ class QueueHandlerTest(BaseTest):
 
         # Now test with respect_handler_level set
 
-        handler = support.TestHandler(support.Matcher())
+        handler = TestHandler(support.Matcher())
         handler.setLevel(logging.CRITICAL)
         listener = logging.handlers.QueueListener(self.queue, handler,
                                                   respect_handler_level=True)
@@ -3483,9 +3658,9 @@ if hasattr(logging.handlers, 'QueueListener'):
 
         @patch.object(logging.handlers.QueueListener, 'handle')
         def test_handle_called_with_mp_queue(self, mock_handle):
-            # Issue 28668: The multiprocessing (mp) module is not functional
+            # bpo-28668: The multiprocessing (mp) module is not functional
             # when the mp.synchronize module cannot be imported.
-            support.import_module('multiprocessing.synchronize')
+            support.skip_if_broken_multiprocessing_synchronize()
             for i in range(self.repeat):
                 log_queue = multiprocessing.Queue()
                 self.setup_and_log(log_queue, '%s_%s' % (self.id(), i))
@@ -3509,9 +3684,9 @@ if hasattr(logging.handlers, 'QueueListener'):
             indicates that messages were not registered on the queue until
             _after_ the QueueListener stopped.
             """
-            # Issue 28668: The multiprocessing (mp) module is not functional
+            # bpo-28668: The multiprocessing (mp) module is not functional
             # when the mp.synchronize module cannot be imported.
-            support.import_module('multiprocessing.synchronize')
+            support.skip_if_broken_multiprocessing_synchronize()
             for i in range(self.repeat):
                 queue = multiprocessing.Queue()
                 self.setup_and_log(queue, '%s_%s' %(self.id(), i))
@@ -3571,20 +3746,26 @@ class FormatterTest(unittest.TestCase):
             result.update(self.variants[name])
         return logging.makeLogRecord(result)
 
+    def assert_error_message(self, exception, message, *args, **kwargs):
+        try:
+            self.assertRaises(exception, *args, **kwargs)
+        except exception as e:
+            self.assertEqual(message, e.message)
+
     def test_percent(self):
         # Test %-formatting
         r = self.get_record()
         f = logging.Formatter('${%(message)s}')
         self.assertEqual(f.format(r), '${Message with 2 placeholders}')
         f = logging.Formatter('%(random)s')
-        self.assertRaises(KeyError, f.format, r)
+        self.assertRaises(ValueError, f.format, r)
         self.assertFalse(f.usesTime())
         f = logging.Formatter('%(asctime)s')
         self.assertTrue(f.usesTime())
         f = logging.Formatter('%(asctime)-15s')
         self.assertTrue(f.usesTime())
-        f = logging.Formatter('asctime')
-        self.assertFalse(f.usesTime())
+        f = logging.Formatter('%(asctime)#15s')
+        self.assertTrue(f.usesTime())
 
     def test_braces(self):
         # Test {}-formatting
@@ -3592,7 +3773,8 @@ class FormatterTest(unittest.TestCase):
         f = logging.Formatter('$%{message}%$', style='{')
         self.assertEqual(f.format(r), '$%Message with 2 placeholders%$')
         f = logging.Formatter('{random}', style='{')
-        self.assertRaises(KeyError, f.format, r)
+        self.assertRaises(ValueError, f.format, r)
+        f = logging.Formatter("{message}", style='{')
         self.assertFalse(f.usesTime())
         f = logging.Formatter('{asctime}', style='{')
         self.assertTrue(f.usesTime())
@@ -3600,27 +3782,177 @@ class FormatterTest(unittest.TestCase):
         self.assertTrue(f.usesTime())
         f = logging.Formatter('{asctime:15}', style='{')
         self.assertTrue(f.usesTime())
-        f = logging.Formatter('asctime', style='{')
-        self.assertFalse(f.usesTime())
 
     def test_dollars(self):
         # Test $-formatting
         r = self.get_record()
+        f = logging.Formatter('${message}', style='$')
+        self.assertEqual(f.format(r), 'Message with 2 placeholders')
         f = logging.Formatter('$message', style='$')
         self.assertEqual(f.format(r), 'Message with 2 placeholders')
         f = logging.Formatter('$$%${message}%$$', style='$')
         self.assertEqual(f.format(r), '$%Message with 2 placeholders%$')
         f = logging.Formatter('${random}', style='$')
-        self.assertRaises(KeyError, f.format, r)
+        self.assertRaises(ValueError, f.format, r)
         self.assertFalse(f.usesTime())
         f = logging.Formatter('${asctime}', style='$')
         self.assertTrue(f.usesTime())
-        f = logging.Formatter('${asctime', style='$')
-        self.assertFalse(f.usesTime())
         f = logging.Formatter('$asctime', style='$')
         self.assertTrue(f.usesTime())
-        f = logging.Formatter('asctime', style='$')
+        f = logging.Formatter('${message}', style='$')
         self.assertFalse(f.usesTime())
+        f = logging.Formatter('${asctime}--', style='$')
+        self.assertTrue(f.usesTime())
+
+    def test_format_validate(self):
+        # Check correct formatting
+        # Percentage style
+        f = logging.Formatter("%(levelname)-15s - %(message) 5s - %(process)03d - %(module) - %(asctime)*.3s")
+        self.assertEqual(f._fmt, "%(levelname)-15s - %(message) 5s - %(process)03d - %(module) - %(asctime)*.3s")
+        f = logging.Formatter("%(asctime)*s - %(asctime)*.3s - %(process)-34.33o")
+        self.assertEqual(f._fmt, "%(asctime)*s - %(asctime)*.3s - %(process)-34.33o")
+        f = logging.Formatter("%(process)#+027.23X")
+        self.assertEqual(f._fmt, "%(process)#+027.23X")
+        f = logging.Formatter("%(foo)#.*g")
+        self.assertEqual(f._fmt, "%(foo)#.*g")
+
+        # StrFormat Style
+        f = logging.Formatter("$%{message}%$ - {asctime!a:15} - {customfield['key']}", style="{")
+        self.assertEqual(f._fmt, "$%{message}%$ - {asctime!a:15} - {customfield['key']}")
+        f = logging.Formatter("{process:.2f} - {custom.f:.4f}", style="{")
+        self.assertEqual(f._fmt, "{process:.2f} - {custom.f:.4f}")
+        f = logging.Formatter("{customfield!s:#<30}", style="{")
+        self.assertEqual(f._fmt, "{customfield!s:#<30}")
+        f = logging.Formatter("{message!r}", style="{")
+        self.assertEqual(f._fmt, "{message!r}")
+        f = logging.Formatter("{message!s}", style="{")
+        self.assertEqual(f._fmt, "{message!s}")
+        f = logging.Formatter("{message!a}", style="{")
+        self.assertEqual(f._fmt, "{message!a}")
+        f = logging.Formatter("{process!r:4.2}", style="{")
+        self.assertEqual(f._fmt, "{process!r:4.2}")
+        f = logging.Formatter("{process!s:<#30,.12f}- {custom:=+#30,.1d} - {module:^30}", style="{")
+        self.assertEqual(f._fmt, "{process!s:<#30,.12f}- {custom:=+#30,.1d} - {module:^30}")
+        f = logging.Formatter("{process!s:{w},.{p}}", style="{")
+        self.assertEqual(f._fmt, "{process!s:{w},.{p}}")
+        f = logging.Formatter("{foo:12.{p}}", style="{")
+        self.assertEqual(f._fmt, "{foo:12.{p}}")
+        f = logging.Formatter("{foo:{w}.6}", style="{")
+        self.assertEqual(f._fmt, "{foo:{w}.6}")
+        f = logging.Formatter("{foo[0].bar[1].baz}", style="{")
+        self.assertEqual(f._fmt, "{foo[0].bar[1].baz}")
+        f = logging.Formatter("{foo[k1].bar[k2].baz}", style="{")
+        self.assertEqual(f._fmt, "{foo[k1].bar[k2].baz}")
+        f = logging.Formatter("{12[k1].bar[k2].baz}", style="{")
+        self.assertEqual(f._fmt, "{12[k1].bar[k2].baz}")
+
+        # Dollar style
+        f = logging.Formatter("${asctime} - $message", style="$")
+        self.assertEqual(f._fmt, "${asctime} - $message")
+        f = logging.Formatter("$bar $$", style="$")
+        self.assertEqual(f._fmt, "$bar $$")
+        f = logging.Formatter("$bar $$$$", style="$")
+        self.assertEqual(f._fmt, "$bar $$$$")  # this would print two $($$)
+
+        # Testing when ValueError being raised from incorrect format
+        # Percentage Style
+        self.assertRaises(ValueError, logging.Formatter, "%(asctime)Z")
+        self.assertRaises(ValueError, logging.Formatter, "%(asctime)b")
+        self.assertRaises(ValueError, logging.Formatter, "%(asctime)*")
+        self.assertRaises(ValueError, logging.Formatter, "%(asctime)*3s")
+        self.assertRaises(ValueError, logging.Formatter, "%(asctime)_")
+        self.assertRaises(ValueError, logging.Formatter, '{asctime}')
+        self.assertRaises(ValueError, logging.Formatter, '${message}')
+        self.assertRaises(ValueError, logging.Formatter, '%(foo)#12.3*f')  # with both * and decimal number as precision
+        self.assertRaises(ValueError, logging.Formatter, '%(foo)0*.8*f')
+
+        # StrFormat Style
+        # Testing failure for '-' in field name
+        self.assert_error_message(
+            ValueError,
+            "invalid field name/expression: 'name-thing'",
+            logging.Formatter, "{name-thing}", style="{"
+        )
+        # Testing failure for style mismatch
+        self.assert_error_message(
+            ValueError,
+            "invalid format: no fields",
+            logging.Formatter, '%(asctime)s', style='{'
+        )
+        # Testing failure for invalid conversion
+        self.assert_error_message(
+            ValueError,
+            "invalid conversion: 'Z'"
+        )
+        self.assertRaises(ValueError, logging.Formatter, '{asctime!s:#30,15f}', style='{')
+        self.assert_error_message(
+            ValueError,
+            "invalid format: expected ':' after conversion specifier",
+            logging.Formatter, '{asctime!aa:15}', style='{'
+        )
+        # Testing failure for invalid spec
+        self.assert_error_message(
+            ValueError,
+            "bad specifier: '.2ff'",
+            logging.Formatter, '{process:.2ff}', style='{'
+        )
+        self.assertRaises(ValueError, logging.Formatter, '{process:.2Z}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{process!s:<##30,12g}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{process!s:<#30#,12g}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{process!s:{{w}},{{p}}}', style='{')
+        # Testing failure for mismatch braces
+        self.assert_error_message(
+            ValueError,
+            "invalid format: unmatched '{' in format spec",
+            logging.Formatter, '{process', style='{'
+        )
+        self.assert_error_message(
+            ValueError,
+            "invalid format: unmatched '{' in format spec",
+            logging.Formatter, 'process}', style='{'
+        )
+        self.assertRaises(ValueError, logging.Formatter, '{{foo!r:4.2}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{{foo!r:4.2}}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{foo/bar}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{foo:{{w}}.{{p}}}}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{foo!X:{{w}}.{{p}}}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{foo!a:random}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{foo!a:ran{dom}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{foo!a:ran{d}om}', style='{')
+        self.assertRaises(ValueError, logging.Formatter, '{foo.!a:d}', style='{')
+
+        # Dollar style
+        # Testing failure for mismatch bare $
+        self.assert_error_message(
+            ValueError,
+            "invalid format: bare \'$\' not allowed",
+            logging.Formatter, '$bar $$$', style='$'
+        )
+        self.assert_error_message(
+            ValueError,
+            "invalid format: bare \'$\' not allowed",
+            logging.Formatter, 'bar $', style='$'
+        )
+        self.assert_error_message(
+            ValueError,
+            "invalid format: bare \'$\' not allowed",
+            logging.Formatter, 'foo $.', style='$'
+        )
+        # Testing failure for mismatch style
+        self.assert_error_message(
+            ValueError,
+            "invalid format: no fields",
+            logging.Formatter, '{asctime}', style='$'
+        )
+        self.assertRaises(ValueError, logging.Formatter, '%(asctime)s', style='$')
+
+        # Testing failure for incorrect fields
+        self.assert_error_message(
+            ValueError,
+            "invalid format: no fields",
+            logging.Formatter, 'foo', style='$'
+        )
+        self.assertRaises(ValueError, logging.Formatter, '${asctime', style='$')
 
     def test_invalid_style(self):
         self.assertRaises(ValueError, logging.Formatter, None, None, 'x')
@@ -3638,6 +3970,19 @@ class FormatterTest(unittest.TestCase):
         self.assertEqual(f.formatTime(r, '%Y:%d'), '1993:21')
         f.format(r)
         self.assertEqual(r.asctime, '1993-04-21 08:03:00,123')
+
+    def test_default_msec_format_none(self):
+        class NoMsecFormatter(logging.Formatter):
+            default_msec_format = None
+            default_time_format = '%d/%m/%Y %H:%M:%S'
+
+        r = self.get_record()
+        dt = datetime.datetime(1993, 4, 21, 8, 3, 0, 123, utc)
+        r.created = time.mktime(dt.astimezone(None).timetuple())
+        f = NoMsecFormatter()
+        f.converter = time.gmtime
+        self.assertEqual(f.formatTime(r), '21/04/1993 08:03:00')
+
 
 class TestBufferingFormatter(logging.BufferingFormatter):
     def formatHeader(self, records):
@@ -3849,6 +4194,15 @@ class ModuleLevelMiscTest(BaseTest):
         logging.disable(83)
         self.assertEqual(logging.root.manager.disable, 83)
 
+        self.assertRaises(ValueError, logging.disable, "doesnotexists")
+
+        class _NotAnIntOrString:
+            pass
+
+        self.assertRaises(TypeError, logging.disable, _NotAnIntOrString())
+
+        logging.disable("WARN")
+
         # test the default value introduced in 3.7
         # (Issue #28524)
         logging.disable()
@@ -3939,7 +4293,6 @@ class ModuleLevelMiscTest(BaseTest):
             h.close()
             logging.setLoggerClass(logging.Logger)
 
-    @support.requires_type_collecting
     def test_logging_at_shutdown(self):
         # Issue #20037
         code = """if 1:
@@ -4132,10 +4485,10 @@ class BasicConfigTest(unittest.TestCase):
         self.assertEqual(handler.stream, stream)
 
     def test_format(self):
-        logging.basicConfig(format='foo')
+        logging.basicConfig(format='%(asctime)s - %(message)s')
 
         formatter = logging.root.handlers[0].formatter
-        self.assertEqual(formatter._style._fmt, 'foo')
+        self.assertEqual(formatter._style._fmt, '%(asctime)s - %(message)s')
 
     def test_datefmt(self):
         logging.basicConfig(datefmt='bar')
@@ -4164,11 +4517,11 @@ class BasicConfigTest(unittest.TestCase):
         handlers = [logging.StreamHandler()]
         stream = sys.stderr
         assertRaises(ValueError, logging.basicConfig, filename='test.log',
-                                                     stream=stream)
+                                                      stream=stream)
         assertRaises(ValueError, logging.basicConfig, filename='test.log',
-                                                     handlers=handlers)
+                                                      handlers=handlers)
         assertRaises(ValueError, logging.basicConfig, stream=stream,
-                                                     handlers=handlers)
+                                                      handlers=handlers)
         # Issue 23207: test for invalid kwargs
         assertRaises(ValueError, logging.basicConfig, loglevel=logging.INFO)
         # Should pop both filename and filemode even if filename is None
@@ -4190,6 +4543,120 @@ class BasicConfigTest(unittest.TestCase):
         self.assertIsNotNone(handlers[1].formatter)
         self.assertIs(handlers[2].formatter, f)
         self.assertIs(handlers[0].formatter, handlers[1].formatter)
+
+    def test_force(self):
+        old_string_io = io.StringIO()
+        new_string_io = io.StringIO()
+        old_handlers = [logging.StreamHandler(old_string_io)]
+        new_handlers = [logging.StreamHandler(new_string_io)]
+        logging.basicConfig(level=logging.WARNING, handlers=old_handlers)
+        logging.warning('warn')
+        logging.info('info')
+        logging.debug('debug')
+        self.assertEqual(len(logging.root.handlers), 1)
+        logging.basicConfig(level=logging.INFO, handlers=new_handlers,
+                            force=True)
+        logging.warning('warn')
+        logging.info('info')
+        logging.debug('debug')
+        self.assertEqual(len(logging.root.handlers), 1)
+        self.assertEqual(old_string_io.getvalue().strip(),
+                         'WARNING:root:warn')
+        self.assertEqual(new_string_io.getvalue().strip(),
+                         'WARNING:root:warn\nINFO:root:info')
+
+    def test_encoding(self):
+        try:
+            encoding = 'utf-8'
+            logging.basicConfig(filename='test.log', encoding=encoding,
+                                errors='strict',
+                                format='%(message)s', level=logging.DEBUG)
+
+            self.assertEqual(len(logging.root.handlers), 1)
+            handler = logging.root.handlers[0]
+            self.assertIsInstance(handler, logging.FileHandler)
+            self.assertEqual(handler.encoding, encoding)
+            logging.debug('The Øresund Bridge joins Copenhagen to Malmö')
+        finally:
+            handler.close()
+            with open('test.log', encoding='utf-8') as f:
+                data = f.read().strip()
+            os.remove('test.log')
+            self.assertEqual(data,
+                             'The Øresund Bridge joins Copenhagen to Malmö')
+
+    def test_encoding_errors(self):
+        try:
+            encoding = 'ascii'
+            logging.basicConfig(filename='test.log', encoding=encoding,
+                                errors='ignore',
+                                format='%(message)s', level=logging.DEBUG)
+
+            self.assertEqual(len(logging.root.handlers), 1)
+            handler = logging.root.handlers[0]
+            self.assertIsInstance(handler, logging.FileHandler)
+            self.assertEqual(handler.encoding, encoding)
+            logging.debug('The Øresund Bridge joins Copenhagen to Malmö')
+        finally:
+            handler.close()
+            with open('test.log', encoding='utf-8') as f:
+                data = f.read().strip()
+            os.remove('test.log')
+            self.assertEqual(data, 'The resund Bridge joins Copenhagen to Malm')
+
+    def test_encoding_errors_default(self):
+        try:
+            encoding = 'ascii'
+            logging.basicConfig(filename='test.log', encoding=encoding,
+                                format='%(message)s', level=logging.DEBUG)
+
+            self.assertEqual(len(logging.root.handlers), 1)
+            handler = logging.root.handlers[0]
+            self.assertIsInstance(handler, logging.FileHandler)
+            self.assertEqual(handler.encoding, encoding)
+            self.assertEqual(handler.errors, 'backslashreplace')
+            logging.debug('😂: ☃️: The Øresund Bridge joins Copenhagen to Malmö')
+        finally:
+            handler.close()
+            with open('test.log', encoding='utf-8') as f:
+                data = f.read().strip()
+            os.remove('test.log')
+            self.assertEqual(data, r'\U0001f602: \u2603\ufe0f: The \xd8resund '
+                                   r'Bridge joins Copenhagen to Malm\xf6')
+
+    def test_encoding_errors_none(self):
+        # Specifying None should behave as 'strict'
+        try:
+            encoding = 'ascii'
+            logging.basicConfig(filename='test.log', encoding=encoding,
+                                errors=None,
+                                format='%(message)s', level=logging.DEBUG)
+
+            self.assertEqual(len(logging.root.handlers), 1)
+            handler = logging.root.handlers[0]
+            self.assertIsInstance(handler, logging.FileHandler)
+            self.assertEqual(handler.encoding, encoding)
+            self.assertIsNone(handler.errors)
+
+            message = []
+
+            def dummy_handle_error(record):
+                _, v, _ = sys.exc_info()
+                message.append(str(v))
+
+            handler.handleError = dummy_handle_error
+            logging.debug('The Øresund Bridge joins Copenhagen to Malmö')
+            self.assertTrue(message)
+            self.assertIn("'ascii' codec can't encode "
+                          "character '\\xd8' in position 4:", message[0])
+        finally:
+            handler.close()
+            with open('test.log', encoding='utf-8') as f:
+                data = f.read().strip()
+            os.remove('test.log')
+            # didn't write anything due to the encoding error
+            self.assertEqual(data, r'')
+
 
     def _test_log(self, method, level=None):
         # logging.root has no handlers so basicConfig should be called
@@ -4390,6 +4857,37 @@ class LoggerTest(BaseTest):
         self.assertEqual(len(called), 1)
         self.assertEqual('Stack (most recent call last):\n', called[0])
 
+    def test_find_caller_with_stacklevel(self):
+        the_level = 1
+
+        def innermost():
+            self.logger.warning('test', stacklevel=the_level)
+
+        def inner():
+            innermost()
+
+        def outer():
+            inner()
+
+        records = self.recording.records
+        outer()
+        self.assertEqual(records[-1].funcName, 'innermost')
+        lineno = records[-1].lineno
+        the_level += 1
+        outer()
+        self.assertEqual(records[-1].funcName, 'inner')
+        self.assertGreater(records[-1].lineno, lineno)
+        lineno = records[-1].lineno
+        the_level += 1
+        outer()
+        self.assertEqual(records[-1].funcName, 'outer')
+        self.assertGreater(records[-1].lineno, lineno)
+        lineno = records[-1].lineno
+        the_level += 1
+        outer()
+        self.assertEqual(records[-1].funcName, 'test_find_caller_with_stacklevel')
+        self.assertGreater(records[-1].lineno, lineno)
+
     def test_make_record_with_extra_overwrite(self):
         name = 'my record'
         level = 13
@@ -4430,11 +4928,24 @@ class LoggerTest(BaseTest):
         self.addCleanup(setattr, self.logger.manager, 'disable', old_disable)
         self.assertFalse(self.logger.isEnabledFor(22))
 
+    def test_is_enabled_for_disabled_logger(self):
+        old_disabled = self.logger.disabled
+        old_disable = self.logger.manager.disable
+
+        self.logger.disabled = True
+        self.logger.manager.disable = 21
+
+        self.addCleanup(setattr, self.logger, 'disabled', old_disabled)
+        self.addCleanup(setattr, self.logger.manager, 'disable', old_disable)
+
+        self.assertFalse(self.logger.isEnabledFor(22))
+
     def test_root_logger_aliases(self):
         root = logging.getLogger()
         self.assertIs(root, logging.root)
         self.assertIs(root, logging.getLogger(None))
         self.assertIs(root, logging.getLogger(''))
+        self.assertIs(root, logging.getLogger('root'))
         self.assertIs(root, logging.getLogger('foo').root)
         self.assertIs(root, logging.getLogger('foo.bar').root)
         self.assertIs(root, logging.getLogger('foo').parent)
@@ -4584,7 +5095,26 @@ class RotatingFileHandlerTest(BaseFileTest):
         self.assertFalse(os.path.exists(namer(self.fn + ".3")))
         rh.close()
 
-    @support.requires_zlib
+    def test_namer_rotator_inheritance(self):
+        class HandlerWithNamerAndRotator(logging.handlers.RotatingFileHandler):
+            def namer(self, name):
+                return name + ".test"
+
+            def rotator(self, source, dest):
+                if os.path.exists(source):
+                    os.replace(source, dest + ".rotated")
+
+        rh = HandlerWithNamerAndRotator(
+            self.fn, backupCount=2, maxBytes=1)
+        self.assertEqual(rh.namer(self.fn), self.fn + ".test")
+        rh.emit(self.next_rec())
+        self.assertLogFile(self.fn)
+        rh.emit(self.next_rec())
+        self.assertLogFile(rh.namer(self.fn + ".1") + ".rotated")
+        self.assertFalse(os.path.exists(rh.namer(self.fn + ".1")))
+        rh.close()
+
+    @support.requires_zlib()
     def test_rotator(self):
         def namer(name):
             return name + ".gz"

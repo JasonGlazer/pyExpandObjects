@@ -99,7 +99,7 @@
 ! Environmental Emissions:        None
 ! Utility Tariffs:                None
 
-  Version,9.5;
+  Version,9.6;
 
   Building,
     Building,                !- Name
@@ -2990,8 +2990,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Heat Pump 1 OA System,                                   !- Name
   Heat Pump 1 OA System Controllers,                       !- Controller List Name
-  Heat Pump 1 OA System Equipment,                         !- Outdoor Air Equipment List Name
-  Heat Pump 1 Availability Managers;                       !- Availability Manager List Name
+  Heat Pump 1 OA System Equipment;                         !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Heat Pump 1 OA System Controllers,                       !- Name
@@ -3370,8 +3369,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Heat Pump 2 OA System,                                   !- Name
   Heat Pump 2 OA System Controllers,                       !- Controller List Name
-  Heat Pump 2 OA System Equipment,                         !- Outdoor Air Equipment List Name
-  Heat Pump 2 Availability Managers;                       !- Availability Manager List Name
+  Heat Pump 2 OA System Equipment;                         !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Heat Pump 2 OA System Controllers,                       !- Name
@@ -3750,8 +3748,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Heat Pump 3 OA System,                                   !- Name
   Heat Pump 3 OA System Controllers,                       !- Controller List Name
-  Heat Pump 3 OA System Equipment,                         !- Outdoor Air Equipment List Name
-  Heat Pump 3 Availability Managers;                       !- Availability Manager List Name
+  Heat Pump 3 OA System Equipment;                         !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Heat Pump 3 OA System Controllers,                       !- Name
@@ -4130,8 +4127,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Heat Pump 4 OA System,                                   !- Name
   Heat Pump 4 OA System Controllers,                       !- Controller List Name
-  Heat Pump 4 OA System Equipment,                         !- Outdoor Air Equipment List Name
-  Heat Pump 4 Availability Managers;                       !- Availability Manager List Name
+  Heat Pump 4 OA System Equipment;                         !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Heat Pump 4 OA System Controllers,                       !- Name
@@ -4510,8 +4506,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Heat Pump 5 OA System,                                   !- Name
   Heat Pump 5 OA System Controllers,                       !- Controller List Name
-  Heat Pump 5 OA System Equipment,                         !- Outdoor Air Equipment List Name
-  Heat Pump 5 Availability Managers;                       !- Availability Manager List Name
+  Heat Pump 5 OA System Equipment;                         !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Heat Pump 5 OA System Controllers,                       !- Name

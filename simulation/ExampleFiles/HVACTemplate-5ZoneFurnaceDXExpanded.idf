@@ -95,7 +95,7 @@
 ! Environmental Emissions:        None
 ! Utility Tariffs:                None
 
-  Version,9.5;
+  Version,9.6;
 
   Building,
     Building,                !- Name
@@ -2841,8 +2841,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Furnace DX 1-1 OA System,                                !- Name
   Furnace DX 1-1 OA System Controllers,                    !- Controller List Name
-  Furnace DX 1-1 OA System Equipment,                      !- Outdoor Air Equipment List Name
-  Furnace DX 1-1 Availability Managers;                    !- Availability Manager List Name
+  Furnace DX 1-1 OA System Equipment;                      !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Furnace DX 1-1 OA System Controllers,                    !- Name
@@ -3153,8 +3152,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Furnace DX 2-1 OA System,                                !- Name
   Furnace DX 2-1 OA System Controllers,                    !- Controller List Name
-  Furnace DX 2-1 OA System Equipment,                      !- Outdoor Air Equipment List Name
-  Furnace DX 2-1 Availability Managers;                    !- Availability Manager List Name
+  Furnace DX 2-1 OA System Equipment;                      !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Furnace DX 2-1 OA System Controllers,                    !- Name
@@ -3465,8 +3463,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Furnace DX 3-1 OA System,                                !- Name
   Furnace DX 3-1 OA System Controllers,                    !- Controller List Name
-  Furnace DX 3-1 OA System Equipment,                      !- Outdoor Air Equipment List Name
-  Furnace DX 3-1 Availability Managers;                    !- Availability Manager List Name
+  Furnace DX 3-1 OA System Equipment;                      !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Furnace DX 3-1 OA System Controllers,                    !- Name
@@ -3764,8 +3761,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Furnace DX 4-1 OA System,                                !- Name
   Furnace DX 4-1 OA System Controllers,                    !- Controller List Name
-  Furnace DX 4-1 OA System Equipment,                      !- Outdoor Air Equipment List Name
-  Furnace DX 4-1 Availability Managers;                    !- Availability Manager List Name
+  Furnace DX 4-1 OA System Equipment;                      !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Furnace DX 4-1 OA System Controllers,                    !- Name
@@ -4063,8 +4059,7 @@ OutdoorAir:NodeList,
 AirLoopHVAC:OutdoorAirSystem,
   Furnace DX 5-1 OA System,                                !- Name
   Furnace DX 5-1 OA System Controllers,                    !- Controller List Name
-  Furnace DX 5-1 OA System Equipment,                      !- Outdoor Air Equipment List Name
-  Furnace DX 5-1 Availability Managers;                    !- Availability Manager List Name
+  Furnace DX 5-1 OA System Equipment;                      !- Outdoor Air Equipment List Name
 
 AirLoopHVAC:ControllerList,
   Furnace DX 5-1 OA System Controllers,                    !- Name

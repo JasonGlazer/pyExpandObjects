@@ -11,7 +11,8 @@ def abstractmethod(funcobj):
     class that has a metaclass derived from ABCMeta cannot be
     instantiated unless all of its abstract methods are overridden.
     The abstract methods can be called using any of the normal
-    'super' call mechanisms.
+    'super' call mechanisms.  abstractmethod() may be used to declare
+    abstract methods for properties and descriptors.
 
     Usage:
 
@@ -27,17 +28,14 @@ def abstractmethod(funcobj):
 class abstractclassmethod(classmethod):
     """A decorator indicating abstract classmethods.
 
-    Similar to abstractmethod.
+    Deprecated, use 'classmethod' with 'abstractmethod' instead:
 
-    Usage:
-
-        class C(metaclass=ABCMeta):
-            @abstractclassmethod
+        class C(ABC):
+            @classmethod
+            @abstractmethod
             def my_abstract_classmethod(cls, ...):
                 ...
 
-    'abstractclassmethod' is deprecated. Use 'classmethod' with
-    'abstractmethod' instead.
     """
 
     __isabstractmethod__ = True
@@ -50,17 +48,14 @@ class abstractclassmethod(classmethod):
 class abstractstaticmethod(staticmethod):
     """A decorator indicating abstract staticmethods.
 
-    Similar to abstractmethod.
+    Deprecated, use 'staticmethod' with 'abstractmethod' instead:
 
-    Usage:
-
-        class C(metaclass=ABCMeta):
-            @abstractstaticmethod
+        class C(ABC):
+            @staticmethod
+            @abstractmethod
             def my_abstract_staticmethod(...):
                 ...
 
-    'abstractstaticmethod' is deprecated. Use 'staticmethod' with
-    'abstractmethod' instead.
     """
 
     __isabstractmethod__ = True
@@ -73,29 +68,14 @@ class abstractstaticmethod(staticmethod):
 class abstractproperty(property):
     """A decorator indicating abstract properties.
 
-    Requires that the metaclass is ABCMeta or derived from it.  A
-    class that has a metaclass derived from ABCMeta cannot be
-    instantiated unless all of its abstract properties are overridden.
-    The abstract properties can be called using any of the normal
-    'super' call mechanisms.
+    Deprecated, use 'property' with 'abstractmethod' instead:
 
-    Usage:
-
-        class C(metaclass=ABCMeta):
-            @abstractproperty
+        class C(ABC):
+            @property
+            @abstractmethod
             def my_abstract_property(self):
                 ...
 
-    This defines a read-only property; you can also define a read-write
-    abstract property using the 'long' form of property declaration:
-
-        class C(metaclass=ABCMeta):
-            def getx(self): ...
-            def setx(self, value): ...
-            x = abstractproperty(getx, setx)
-
-    'abstractproperty' is deprecated. Use 'property' with 'abstractmethod'
-    instead.
     """
 
     __isabstractmethod__ = True

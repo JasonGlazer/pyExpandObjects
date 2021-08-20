@@ -25,7 +25,6 @@
     },
     "AirLoopHVAC:OutdoorAirSystem": {
         "DOAS OA System": {
-            "availability_manager_list_name": "DOAS Availability Managers",
             "controller_list_name": "DOAS OA System Controllers",
             "outdoor_air_equipment_list_name": "DOAS OA System Equipment"
         }
@@ -4921,7 +4920,7 @@
     },
     "Version": {
         "Version 1": {
-            "version_identifier": "9.5"
+            "version_identifier": "9.6"
         }
     },
     "WindowMaterial:Gas": {

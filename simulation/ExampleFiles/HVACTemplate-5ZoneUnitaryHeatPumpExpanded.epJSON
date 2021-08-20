@@ -70,27 +70,22 @@
     },
     "AirLoopHVAC:OutdoorAirSystem": {
         "Heat Pump 1 OA System": {
-            "availability_manager_list_name": "Heat Pump 1 Availability Managers",
             "controller_list_name": "Heat Pump 1 OA System Controllers",
             "outdoor_air_equipment_list_name": "Heat Pump 1 OA System Equipment"
         },
         "Heat Pump 2 OA System": {
-            "availability_manager_list_name": "Heat Pump 2 Availability Managers",
             "controller_list_name": "Heat Pump 2 OA System Controllers",
             "outdoor_air_equipment_list_name": "Heat Pump 2 OA System Equipment"
         },
         "Heat Pump 3 OA System": {
-            "availability_manager_list_name": "Heat Pump 3 Availability Managers",
             "controller_list_name": "Heat Pump 3 OA System Controllers",
             "outdoor_air_equipment_list_name": "Heat Pump 3 OA System Equipment"
         },
         "Heat Pump 4 OA System": {
-            "availability_manager_list_name": "Heat Pump 4 Availability Managers",
             "controller_list_name": "Heat Pump 4 OA System Controllers",
             "outdoor_air_equipment_list_name": "Heat Pump 4 OA System Equipment"
         },
         "Heat Pump 5 OA System": {
-            "availability_manager_list_name": "Heat Pump 5 Availability Managers",
             "controller_list_name": "Heat Pump 5 OA System Controllers",
             "outdoor_air_equipment_list_name": "Heat Pump 5 OA System Equipment"
         }
@@ -4652,7 +4647,7 @@
     },
     "Version": {
         "Version 1": {
-            "version_identifier": "9.5"
+            "version_identifier": "9.6"
         }
     },
     "WindowMaterial:Gas": {

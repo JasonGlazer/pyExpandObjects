@@ -119,7 +119,7 @@ def submodule(parent, name, pkg_dir, content=''):
     return '{}.{}'.format(parent, name), path
 
 
-def _get_code_from_pyc(pyc_path):
+def get_code_from_pyc(pyc_path):
     """Reads a pyc file and returns the unmarshalled code object within.
 
     No header validation is performed.
@@ -331,6 +331,17 @@ def ensure_bytecode_path(bytecode_path):
 
 
 @contextlib.contextmanager
+def temporary_pycache_prefix(prefix):
+    """Adjust and restore sys.pycache_prefix."""
+    _orig_prefix = sys.pycache_prefix
+    sys.pycache_prefix = prefix
+    try:
+        yield
+    finally:
+        sys.pycache_prefix = _orig_prefix
+
+
+@contextlib.contextmanager
 def create_modules(*names):
     """Temporarily create each named module with an attribute (named 'attr')
     that contains the name passed into the context manager that caused the
@@ -443,7 +454,7 @@ def create_package(file, path, is_package=True, contents=()):
                 yield entry
 
     name = 'testingpackage'
-    # Unforunately importlib.util.module_from_spec() was not introduced until
+    # Unfortunately importlib.util.module_from_spec() was not introduced until
     # Python 3.5.
     module = types.ModuleType(name)
     loader = Reader()
@@ -488,7 +499,7 @@ class CommonResourceTests(abc.ABC):
             self.execute(data01, full_path)
 
     def test_relative_path(self):
-        # A reative path is a ValueError.
+        # A relative path is a ValueError.
         with self.assertRaises(ValueError):
             self.execute(data01, '../data01/utf-8.file')
 

@@ -45,12 +45,10 @@
     },
     "AirLoopHVAC:OutdoorAirSystem": {
         "AHU 1 Spaces 1-4 OA System": {
-            "availability_manager_list_name": "AHU 1 Spaces 1-4 Availability Managers",
             "controller_list_name": "AHU 1 Spaces 1-4 OA System Controllers",
             "outdoor_air_equipment_list_name": "AHU 1 Spaces 1-4 OA System Equipment"
         },
         "AHU 2 Space 5 OA System": {
-            "availability_manager_list_name": "AHU 2 Space 5 Availability Managers",
             "controller_list_name": "AHU 2 Space 5 OA System Controllers",
             "outdoor_air_equipment_list_name": "AHU 2 Space 5 OA System Equipment"
         }
@@ -4716,7 +4714,7 @@
     },
     "Version": {
         "Version 1": {
-            "version_identifier": "9.5"
+            "version_identifier": "9.6"
         }
     },
     "WindowMaterial:Gas": {
