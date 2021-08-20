@@ -2705,8 +2705,8 @@ class ExpandSystem(ExpandObjects):
                 (
                     ('Coil:Cooling.*', None if getattr(self, 'cooling_coil_type', 'None') == 'None' else True),
                     ('Coil:Heating.*',
-                     None if getattr(self, 'heating_coil_type', 'None') == 'None' and
-                     getattr(self, 'supplemental_heating_or_reheat_coil_type', 'None') == 'None' else True),
+                     None if getattr(self, 'heating_coil_type', 'None') == 'None' and getattr(
+                         self, 'supplemental_heating_or_reheat_coil_type', 'None') == 'None' else True),
                     ('Fan:.*', True)),
                 []),
             (
@@ -2813,7 +2813,7 @@ class ExpandSystem(ExpandObjects):
                                 ['HVACTemplate:System:Unitary',
                                  'HVACTemplate:System:UnitaryHeatPump:AirToAir',
                                  'HVACTemplate:System:UnitarySystem'] and \
-                            getattr(self, 'return_fan', 'None') == 'Yes' and idx == 0 and \
+                                getattr(self, 'return_fan', 'None') == 'Yes' and idx == 0 and \
                                 re.match(r'Fan:.*', super_object_type):
                             pass
                         else:
