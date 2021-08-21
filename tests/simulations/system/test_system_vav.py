@@ -127,7 +127,10 @@ class TestSimulationsSystemVAV(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:minimum_inputs")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VAV:minimum_inputs")
+    # todo_eo: EO fails when transitioning to epJSON
+    #  Conversion message output: b'<root>[Controller:OutdoorAir][VAV Sys 1 OA Controller][economizer_control_type]
+    #  - "None" - Failed to match against any enum values.
     def test_minimum_inputs(self):
         self.base_epjson['HVACTemplate:Zone:VAV']['HVACTemplate:Zone:VAV 1'][
             'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
