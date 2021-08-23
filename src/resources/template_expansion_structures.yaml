@@ -371,11 +371,14 @@ Objects:
           - AirConditioner:VariableRefrigerantFlow:
               gross_rated_heating_capacity: gross_rated_heating_capacity
               gross_rated_total_cooling_capacity: gross_rated_total_cooling_capacity
+              zone_name_for_master_thermostat_priority_control_type: master_thermostat_priority_control_type
+              thermostat_priority_schedule_name: thermostat_priority_schedule_name
               # todo_eo: this was hard-coded to 0.25 despite having an input in the template, discuss with team
 #              minimum_heat_pump_part_load_ratio: minimum_heat_pump_part_load_ratio
       Base:
         Fields: &AirConditionerVariableRefrigerantFlowFields
           name: '{} VRF Heat Pump'
+          availability_schedule_name: '{system_availability_schedule_name}'
           basin_heater_setpoint_temperature: '{basin_heater_setpoint_temperature}'
           condenser_inlet_node_name: '{} Condenser Inlet Node'
           condenser_outlet_node_name: '{} Condenser Outlet Node'
@@ -8170,13 +8173,14 @@ OptionTree:
         BaseObjects:
         TemplateObjects:
           condenser_type:
-            AirCooled:
+            AirCooled: &SystemVRFTemplateObjectsCondenserTypeAirCooled
               Objects:
                 - *AirConditionerVariableRefrigerantFlowCommonObjects
                 - AirConditioner:VariableRefrigerantFlow: *AirConditionerVariableRefrigerantFlowFields
                 - OutdoorAir:Node:
                     name: '{} Condenser Inlet Node'
               Transitions: *AirConditionerVariableRefrigerantFlowCommonTransitions
+            EvaporativelyCooled: *SystemVRFTemplateObjectsCondenserTypeAirCooled
             WaterCooled:
               Objects:
                 - *AirConditionerVariableRefrigerantFlowCommonObjects
