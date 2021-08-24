@@ -570,3 +570,275 @@ class TestSimulationsSystemVRF(BaseSimulationTest):
             epjson_output['AirConditioner:VariableRefrigerantFlow'][
                 'VRF Sys 2 Air Source VRF Heat Pump']['condenser_type'])
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:water_condenser_volume_flow_rate")
+    def test_water_condenser_volume_flow_rate(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'condenser_type'] = 'EvaporativelyCooled'
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'water_condenser_volume_flow_rate'] = 0.1
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.1,
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['water_condenser_volume_flow_rate'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:evaporative_condenser_effectiveness")
+    def test_evaporative_condenser_effectiveness(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'condenser_type'] = 'EvaporativelyCooled'
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'evaporative_condenser_effectiveness'] = 0.85
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.85,
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['evaporative_condenser_effectiveness'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:evaporative_condenser_air_flow_rate")
+    def test_evaporative_condenser_air_flow_rate(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'condenser_type'] = 'EvaporativelyCooled'
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'evaporative_condenser_air_flow_rate'] = 0.5
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            0.5,
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['evaporative_condenser_air_flow_rate'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:"
+                                              "evaporative_condenser_pump_rated_power_consumption")
+    def test_evaporative_condenser_pump_rated_power_consumption(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'condenser_type'] = 'EvaporativelyCooled'
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'evaporative_condenser_pump_rated_power_consumption'] = 500
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            500,
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['evaporative_condenser_pump_rated_power_consumption'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:basin_heater_capacity")
+    def test_basin_heater_capacity(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'condenser_type'] = 'EvaporativelyCooled'
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'basin_heater_capacity'] = 500
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            500,
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['basin_heater_capacity'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:basin_heater_setpoint_temperature")
+    def test_basin_heater_setpoint_temperature(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'condenser_type'] = 'EvaporativelyCooled'
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'basin_heater_setpoint_temperature'] = 3
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            3,
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['basin_heater_setpoint_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:basin_heater_operating_schedule_name")
+    def test_basin_heater_operating_schedule_name(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'condenser_type'] = 'EvaporativelyCooled'
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'basin_heater_capacity'] = 500
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'basin_heater_operating_schedule_name'] = 'Always1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Always1',
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['basin_heater_operating_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:fuel_type_electricity")
+    def test_fuel_type_electricity(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'fuel_type'] = 'Electricity'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Electricity',
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['fuel_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:fuel_type_natural_gas")
+    def test_fuel_type_natural_gas(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'fuel_type'] = 'NaturalGas'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'NaturalGas',
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['fuel_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:fuel_type_propane")
+    def test_fuel_type_propane(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'fuel_type'] = 'Propane'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Propane',
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['fuel_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:fuel_type_diesel")
+    def test_fuel_type_diesel(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'fuel_type'] = 'Diesel'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Diesel',
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['fuel_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:fuel_type_gasoline")
+    def test_fuel_type_gasoline(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'fuel_type'] = 'Gasoline'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Gasoline',
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['fuel_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:fuel_type_fuel_oil_no_1")
+    def test_fuel_type_fuel_oil_no_1(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'fuel_type'] = 'FuelOilNo1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'FuelOilNo1',
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['fuel_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:fuel_type_fuel_oil_no_2")
+    def test_fuel_type_fuel_oil_no_2(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'fuel_type'] = 'FuelOilNo2'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'FuelOilNo2',
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['fuel_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:fuel_type_other_fuel_1")
+    def test_fuel_type_other_fuel_1(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'fuel_type'] = 'OtherFuel1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OtherFuel1',
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['fuel_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:fuel_type_other_fuel_2")
+    def test_fuel_type_other_fuel_2(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'fuel_type'] = 'OtherFuel2'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OtherFuel2',
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['fuel_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:minimum_outdoor_temperature_in_heat_recovery_mode")
+    def test_minimum_outdoor_temperature_in_heat_recovery_mode(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'minimum_outdoor_temperature_in_heat_recovery_mode'] = -14
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            -14,
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['minimum_condenser_inlet_node_temperature_in_heat_recovery_mode'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:VRF:maximum_outdoor_temperature_in_heat_recovery_mode")
+    def test_maximum_outdoor_temperature_in_heat_recovery_mode(self):
+        self.base_epjson['HVACTemplate:System:VRF']['VRF Sys 2 Air Source'][
+            'maximum_outdoor_temperature_in_heat_recovery_mode'] = 44
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            44,
+            epjson_output['AirConditioner:VariableRefrigerantFlow'][
+                'VRF Sys 2 Air Source VRF Heat Pump']['maximum_condenser_inlet_node_temperature_in_heat_recovery_mode'])
+        return

@@ -379,6 +379,8 @@ Objects:
         Fields: &AirConditionerVariableRefrigerantFlowFields
           name: '{} VRF Heat Pump'
           availability_schedule_name: '{system_availability_schedule_name}'
+          basin_heater_capacity: '{basin_heater_capacity}'
+          basin_heater_operating_schedule_name: '{basin_heater_operating_schedule_name}'
           basin_heater_setpoint_temperature: '{basin_heater_setpoint_temperature}'
           condenser_inlet_node_name: '{} Condenser Inlet Node'
           condenser_outlet_node_name: '{} Condenser Outlet Node'
@@ -401,6 +403,7 @@ Objects:
           equivalent_piping_length_used_for_piping_correction_factor_in_heating_mode: '{equivalent_piping_length_used_for_piping_correction_factor_in_heating_mode}'
           evaporative_condenser_air_flow_rate: '{evaporative_condenser_air_flow_rate}'
           evaporative_condenser_effectiveness: '{evaporative_condenser_effectiveness}'
+          evaporative_condenser_pump_rated_power_consumption: '{evaporative_condenser_pump_rated_power_consumption}'
           fuel_type: '{fuel_type}'
           gross_rated_cooling_cop: '{gross_rated_cooling_cop}'
           gross_rated_heating_capacity: Autosize
@@ -4649,7 +4652,9 @@ OptionTree:
             - AirTerminal:DualDuct:ConstantVolume: *AirTerminalDualDuctConstantVolumeFields
           Transitions:
             - *SizingZoneCommonTransitions
-            - *AirTerminalDualDuctCommonTransitions
+            # supply_air_maximum_flow_rate is only applied to Sizing:Zone so this transitions is commented out since
+            #  it only transitions that input.
+#            - *AirTerminalDualDuctCommonTransitions
         TemplateObjects:
           <<: *ZoneCommonTemplateObjectsZoneHVACEquipmentListObjectType
           <<: *ZoneCommonTemplateObjectsBaseboardHeatingType
@@ -7352,6 +7357,15 @@ OptionTree:
             Objects:
               - *SystemCommonBuildPathObjects
           Actions:
+            - system_configuration_type:
+                DualFanConstantVolume:
+                DualFanVariableVolume:
+                SingleFanConstantVolume:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Fan:ConstantVolume: *FanConstantVolumeSuperObject
+                  Transitions: *FanCommonTransitionsSupply
             - *SystemCommonBuildPathActionsHeatRecovery
             - return_fan: *SystemCommonBuildPathActionsConstantVolumeReturnFan
         BaseObjects:
@@ -7376,7 +7390,7 @@ OptionTree:
                   - outlet_branch_name: '{} ColdDuct Main Branch'
                 inlet_branch_name: '{} Main Branch'
             - NodeList:
-                name: '{} ColdDuct Mixed Air Nodes'
+                name: '{} ColdDuct Cooling Setpoint Nodes'
                 nodes:
                   - node_name:
                       ^Coil:Cooling.*: air_outlet_node_name
@@ -7394,17 +7408,30 @@ OptionTree:
             BaseObjects:
             Actions:
               - *SystemCommonBuildPathActionsCommonCoolingCoilLast
-              - supply_fan_placement: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
+              - supply_fan_placement:
+                  <<: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
+                  NoFan:
           BaseObjects:
           TemplateObjects:
-            cooling_coil_setpoint_control_type_detailed:
-              <<: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
-              OutdoorAirTemperatureResetDrawThrough:
+            system_configuration_type:
+              DualFanConstantVolume: &SystemDualDuctColdDuctTemplateObjectsSystemConfigurationTypeDualFanConstantVolume
                 Objects:
                   - SetpointManager:MixedAir:
                       <<: *SetpointManagerMixedAirCooling
-                      setpoint_node_or_nodelist_name: '{} Mixed Air Nodes'
+                      setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
+              DualFanVariableVolume: *SystemDualDuctColdDuctTemplateObjectsSystemConfigurationTypeDualFanConstantVolume
+              SingleFanConstantVolume:
+              SingleFanVariableVolume:
+            cooling_coil_setpoint_control_type_detailed:
+              <<: *SystemCommonTemplateObjectsConstantVolumeCoolingCoilSetpointControlType
+              DualOutdoorAirTemperatureResetDrawThrough:
+                Objects:
                   - SetpointManager:OutdoorAirReset: *SetpointManagerOutdoorAirResetCooling
+              SingleOutdoorAirTemperatureResetDrawThrough:
+                Objects:
+                  - SetpointManager:OutdoorAirReset:
+                      <<: *SetpointManagerOutdoorAirResetCooling
+                      setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
         HotDuct:
           BuildPath:
             BaseObjects:
@@ -7424,7 +7451,7 @@ OptionTree:
                     Objects:
                       - Fan:ConstantVolume: *FanConstantVolumeSuperObject
                     Transitions: *FanCommonTransitionsSupply
-                    Mappings: *FanCommonMappingsVariableVolumeSupply
+                  NoFan:
           BaseObjects:
           TemplateObjects:
             heating_coil_setpoint_control_type_detailed:

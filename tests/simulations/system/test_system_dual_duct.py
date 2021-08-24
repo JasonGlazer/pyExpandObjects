@@ -19,13 +19,54 @@ class TestSimulationsSystemDualDuct(BaseSimulationTest):
     def teardown(self):
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:system_configuration_type_dual_fan_constant_volume")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:system_availability_schedule_name")
+    def test_system_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'system_availability_schedule_name'] = 'OCCUPY-1'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'night_cycle_control'] = 'CycleOnAny'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Fan:ConstantVolume']['SYS 1 ColdDuct Supply Fan']['availability_schedule_name'])
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Fan:ConstantVolume']['SYS 1 HotDuct Supply Fan']['availability_schedule_name'])
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['AvailabilityManager:NightCycle']['SYS 1 Availability'][
+                'fan_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "system_configuration_type_dual_fan_constant_volume")
     def test_system_configuration_type_dual_fan_constant_volume(self):
         self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['system_configuration_type'] = 'DualFanConstantVolume'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
-        epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         # self.assertEqual(
         #     'LIGHTS-1',
         #     epjson_output['Fan:VariableVolume']['DOAS Supply Fan']['availability_schedule_name'])
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "system_configuration_type_single_fan_constant_volume")
+    def test_system_configuration_type_single_fan_constant_volume(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['system_configuration_type'] = \
+            'SingleFanConstantVolume'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        # self.assertEqual(
+        #     'LIGHTS-1',
+        #     epjson_output['Fan:VariableVolume']['DOAS Supply Fan']['availability_schedule_name'])
+        return
+
+    # todo_eo: need to make test for each constant/variable condition for each cooling coil type detailed and possibly
+    #  heating_coil_type_detailed

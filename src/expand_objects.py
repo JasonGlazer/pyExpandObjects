@@ -2943,6 +2943,15 @@ class ExpandSystem(ExpandObjects):
                     duct_system_class_object,
                     attribute.replace(''.join([duct_field_name, '_']), ''),
                     getattr(duct_system_class_object, attribute))
+            # Change hot and cold template variables based on system configuration type
+            if 'Single' in getattr(self, 'system_configuration_type', 'None'):
+                setattr(duct_system_class_object, 'supply_fan_placement', 'NoFan')
+                setattr(
+                    duct_system_class_object,
+                    'cooling_coil_setpoint_control_type_detailed',
+                    ''.join([
+                        'Single',
+                        getattr(duct_system_class_object, 'cooling_coil_setpoint_control_type_detailed', 'None')]))
             duct_system_class_object._create_objects()
             tmp_build_path.extend(duct_system_class_object.build_path)
             duct_system_class_object._create_branch_and_branchlist_from_build_path(
@@ -2971,7 +2980,7 @@ class ExpandSystem(ExpandObjects):
             build_path=tmp_build_path,
             epjson=self.epjson)
         # rename main branch for regular processing
-        for attribute in [i for i in vars(self).keys() if i.startswith(duct_field_name)]:
+        for attribute in [i for i in vars(self).keys() if i.startswith('main_supply_fan')]:
             setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))
         return
 
