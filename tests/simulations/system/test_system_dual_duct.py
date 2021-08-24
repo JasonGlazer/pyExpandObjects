@@ -68,5 +68,18 @@ class TestSimulationsSystemDualDuct(BaseSimulationTest):
         #     epjson_output['Fan:VariableVolume']['DOAS Supply Fan']['availability_schedule_name'])
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "system_configuration_type_dual_fan_variable_volume")
+    def test_system_configuration_type_dual_fan_variable_volume(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['system_configuration_type'] = 'DualFanVariableVolume'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        # self.assertEqual(
+        #     'LIGHTS-1',
+        #     epjson_output['Fan:VariableVolume']['DOAS Supply Fan']['availability_schedule_name'])
+        return
+
     # todo_eo: need to make test for each constant/variable condition for each cooling coil type detailed and possibly
     #  heating_coil_type_detailed

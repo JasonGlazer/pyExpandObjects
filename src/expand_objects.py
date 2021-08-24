@@ -1688,6 +1688,11 @@ class SystemTransitions:
                 if system_field:
                     setattr(obj, 'zone_cooling_design_supply_air_temperature', system_field)
                     setattr(obj, 'zone_heating_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if template_type == 'HVACTemplate:Zone:DualDuct':
+                setattr(
+                    obj,
+                    'system_configuration_type',
+                    getattr(reference_system, 'system_configuration_type'))
             return
 
 
@@ -2944,14 +2949,33 @@ class ExpandSystem(ExpandObjects):
                     attribute.replace(''.join([duct_field_name, '_']), ''),
                     getattr(duct_system_class_object, attribute))
             # Change hot and cold template variables based on system configuration type
+            configuration_modifier = None
+            fan_modifier = None
             if 'Single' in getattr(self, 'system_configuration_type', 'None'):
-                setattr(duct_system_class_object, 'supply_fan_placement', 'NoFan')
+                setattr(duct_system_class_object, 'supply_fan_placement_detailed', 'NoFan')
+                configuration_modifier = 'Single'
+            else:
+                configuration_modifier = 'Dual'
+            if 'Variable' in getattr(self, 'system_configuration_type', 'None'):
+                fan_modifier = 'Variable'
+            else:
+                fan_modifier = 'Constant'
+            setattr(
+                duct_system_class_object,
+                'cooling_coil_setpoint_control_type_detailed',
+                ''.join([
+                    configuration_modifier,
+                    getattr(duct_system_class_object, 'cooling_coil_setpoint_control_type_detailed', 'None')]))
+            if configuration_modifier == 'Dual' and fan_modifier:
                 setattr(
                     duct_system_class_object,
-                    'cooling_coil_setpoint_control_type_detailed',
-                    ''.join([
-                        'Single',
-                        getattr(duct_system_class_object, 'cooling_coil_setpoint_control_type_detailed', 'None')]))
+                    'supply_fan_placement_detailed',
+                    ''.join([fan_modifier, getattr(duct_system_class_object, 'supply_fan_placement', 'DrawThrough')]))
+            if fan_modifier:
+                setattr(
+                    self,
+                    'return_fan_detailed',
+                    ''.join([fan_modifier, getattr(self, 'return_fan', 'No')]))
             duct_system_class_object._create_objects()
             tmp_build_path.extend(duct_system_class_object.build_path)
             duct_system_class_object._create_branch_and_branchlist_from_build_path(

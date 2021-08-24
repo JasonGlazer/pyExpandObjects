@@ -1025,6 +1025,15 @@ Objects:
             cold_air_inlet_node_name: *ZoneEquipColdInlet
             hot_air_inlet_node_name: *ZoneEquipHotInlet
             maximum_air_flow_rate: Autosize
+      VAV:
+        Base:
+          Fields: &AirTerminalDualDuctVAVFields
+            name: '{} Dual Duct'
+            air_outlet_node_name: *ZoneSupplyInlet
+            cold_air_inlet_node_name: *ZoneEquipColdInlet
+            hot_air_inlet_node_name: *ZoneEquipHotInlet
+            maximum_damper_air_flow_rate: Autosize
+            zone_minimum_air_flow_fraction: 0.2 # set by legacy
   AvailabilityManager:
     NightCycle:
       Common:
@@ -4649,7 +4658,6 @@ OptionTree:
             - Sizing:Zone: *SizingZoneOA
             - ZoneHVAC:EquipmentConnections: *ZoneHVACEquipmentConnectionsFieldsAir
             - ZoneHVAC:AirDistributionUnit: *ZoneHVACAirDistributionUnit
-            - AirTerminal:DualDuct:ConstantVolume: *AirTerminalDualDuctConstantVolumeFields
           Transitions:
             - *SizingZoneCommonTransitions
             # supply_air_maximum_flow_rate is only applied to Sizing:Zone so this transitions is commented out since
@@ -4684,6 +4692,15 @@ OptionTree:
                     zone_name: '{hot_supply_plenum_name}'
                     zone_node_name: '{hot_supply_plenum_name} Zone Air Node'
           <<: *ZoneCommonTemplateObjectsReturnPlenum
+          system_configuration_type:
+            DualFanConstantVolume: &ZoneDualDuctTemplateObjectsSystemConfigurationTypeDualFanConstantVolume
+              Objects:
+                - AirTerminal:DualDuct:ConstantVolume: *AirTerminalDualDuctConstantVolumeFields
+            DualFanVariableVolume: &ZoneDualDuctTemplateObjectsSystemConfigurationTypeDualFanVariableVolume
+              Objects:
+                - AirTerminal:DualDuct:VAV: *AirTerminalDualDuctVAVFields
+            SingleFanConstantVolume: *ZoneDualDuctTemplateObjectsSystemConfigurationTypeDualFanConstantVolume
+            SingleFanVariableVolume: *ZoneDualDuctTemplateObjectsSystemConfigurationTypeDualFanVariableVolume
       FanCoil:
         BuildPath:
           BaseObjects:
@@ -7366,8 +7383,44 @@ OptionTree:
                   Objects:
                     - Fan:ConstantVolume: *FanConstantVolumeSuperObject
                   Transitions: *FanCommonTransitionsSupply
+                SingleFanVariableVolume:
+                  Location: -1
+                  ActionType: Insert
+                  Objects:
+                    - Fan:VariableVolume: *FanVariableVolumeSuperObject
+                  Transitions: *FanCommonTransitionsSupply
+                  Mappings: *FanCommonMappingsVariableVolumeSupply
             - *SystemCommonBuildPathActionsHeatRecovery
-            - return_fan: *SystemCommonBuildPathActionsConstantVolumeReturnFan
+            - return_fan_detailed:
+                ConstantNo:
+                VariableNo:
+                ConstantYes:
+                  Location: 0
+                  ActionType: Insert
+                  Objects:
+                    - Fan:ConstantVolume:
+                        Fields:
+                          <<: *FanConstantVolumeFields
+                          name: '{} Return Fan'
+                          air_inlet_node_name: *AirLoopInlet
+                          air_outlet_node_name: '{} Return Fan Outlet'
+                          pressure_rise: 500 # override base fan default
+                        Connectors: *FanConstantVolumeConnectors
+                  Transitions: *FanCommonTransitionsReturn
+                VariableYes:
+                  Location: 0
+                  ActionType: Insert
+                  Objects:
+                    - Fan:VariableVolume:
+                        Fields:
+                          <<: *FanVariableVolumeFields
+                          name: '{} Return Fan'
+                          air_inlet_node_name: *AirLoopInlet
+                          air_outlet_node_name: '{} Return Fan Outlet'
+                          pressure_rise: 500 # override base fan default
+                        Connectors: *FanVariableVolumeConnectors
+                  Transitions: *FanCommonTransitionsReturn
+                  Mappings: *FanCommonMappingsVariableVolumeSupply
         BaseObjects:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
@@ -7408,8 +7461,35 @@ OptionTree:
             BaseObjects:
             Actions:
               - *SystemCommonBuildPathActionsCommonCoolingCoilLast
-              - supply_fan_placement:
-                  <<: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
+              - supply_fan_placement_detailed: &SystemDualDuctBuildPathActionsSupplyFanPlacementDetailed
+                  ConstantNone: &SystemDualDuctBuildPathActionsSupplyFanPlacementDetailedConstantNone
+                    Location: -1
+                    ActionType: Insert
+                    Objects:
+                      - Fan:ConstantVolume: *FanConstantVolumeSuperObject
+                    Transitions: *FanCommonTransitionsSupply
+                  VariableNone: &SystemDualDuctBuildPathActionsSupplyFanPlacementDetailedVariableNone
+                    Location: -1
+                    ActionType: Insert
+                    Objects:
+                      - Fan:VariableVolume: *FanVariableVolumeSuperObject
+                    Transitions: *FanCommonTransitionsSupply
+                    Mappings: *FanCommonMappingsVariableVolumeSupply
+                  ConstantDrawThrough: *SystemDualDuctBuildPathActionsSupplyFanPlacementDetailedConstantNone
+                  VariableDrawThrough: *SystemDualDuctBuildPathActionsSupplyFanPlacementDetailedVariableNone
+                  ConstantBlowThrough:
+                    Location: 0
+                    ActionType: Insert
+                    Objects:
+                      - Fan:ConstantVolume: *FanConstantVolumeSuperObject
+                    Transitions: *FanCommonTransitionsSupply
+                  VariableBlowThrough:
+                    Location: 0
+                    ActionType: Insert
+                    Objects:
+                      - Fan:VariableVolume: *FanVariableVolumeSuperObject
+                    Transitions: *FanCommonTransitionsSupply
+                    Mappings: *FanCommonMappingsVariableVolumeSupply
                   NoFan:
           BaseObjects:
           TemplateObjects:
@@ -7443,15 +7523,7 @@ OptionTree:
                     ActionType: Insert
                     Objects:
                       - Humidifier:Steam:Electric: *HumidifierSteamElectricSuperObject
-              - supply_fan_placement:
-                  <<: *SystemCommonBuildPathActionsConstantVolumeSupplyFanPlacement
-                  BlowThrough:
-                    Location: 0
-                    ActionType: Insert
-                    Objects:
-                      - Fan:ConstantVolume: *FanConstantVolumeSuperObject
-                    Transitions: *FanCommonTransitionsSupply
-                  NoFan:
+              - supply_fan_placement_detailed: *SystemDualDuctBuildPathActionsSupplyFanPlacementDetailed
           BaseObjects:
           TemplateObjects:
             heating_coil_setpoint_control_type_detailed:
