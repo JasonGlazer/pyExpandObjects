@@ -5,6 +5,28 @@ from src.epjson_handler import EPJSON
 
 test_dir = Path(__file__).parent.parent.parent
 
+schedule_objects = {
+    "Schedule:Compact": {
+        "Always12.5": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 12.5
+                }
+            ],
+            "schedule_type_limits_name": "Any Number"
+        }
+    }
+}
+
 
 class TestSimulationsSystemDualDuct(BaseSimulationTest):
     def setUp(self):
@@ -1090,4 +1112,96 @@ class TestSimulationsSystemDualDuct(BaseSimulationTest):
             'SYS 1 ColdDuct Cooling Setpoint Nodes',
             epjson_output['SetpointManager:Warmest']['SYS 1 ColdDuct Cooling Supply Air Temp Manager'][
                 'setpoint_node_or_nodelist_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "cooling_coil_warmest_temperature")
+    def test_cooling_coil_warmest_temperature(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['system_configuration_type'] = \
+            'DualFanVariableVolume'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cooling_coil_setpoint_control_type'] = \
+            'Warmest'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cooling_coil_design_setpoint_temperature'] = 13
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            18.2,
+            epjson_output['SetpointManager:Warmest']['SYS 1 ColdDuct Cooling Supply Air Temp Manager'][
+                'maximum_setpoint_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "cooling_coil_design_setpoint_temperature")
+    def test_cooling_coil_design_setpoint_temperature(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['system_configuration_type'] = \
+            'DualFanVariableVolume'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cooling_coil_design_setpoint_temperature'] = 13
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            13,
+            epjson_output['Sizing:System']['SYS 1 Sizing System']['central_cooling_design_supply_air_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "cooling_coil_setpoint_schedule_name")
+    def test_cooling_coil_setpoint_schedule_name(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cooling_coil_setpoint_control_type'] = \
+            'Scheduled'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['system_configuration_type'] = \
+            'DualFanVariableVolume'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cooling_coil_setpoint_schedule_name'] = 'Always12.5'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Always12.5',
+            epjson_output['SetpointManager:Scheduled']['SYS 1 ColdDuct Cooling Supply Air Temp Manager'][
+                'schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:cooling_coil_outdoor_reset_inputs")
+    def test_cooling_coil_outdoor_reset_inputs(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['system_configuration_type'] = \
+            'DualFanVariableVolume'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cooling_coil_setpoint_control_type'] = \
+            'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'cooling_coil_setpoint_control_type'] = 'OutdoorAirTemperatureReset'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'cooling_coil_setpoint_at_outdoor_dry_bulb_low'] = 15.5
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'cooling_coil_reset_outdoor_dry_bulb_low'] = 15.4
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'cooling_coil_setpoint_at_outdoor_dry_bulb_high'] = 12.5
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'cooling_coil_reset_outdoor_dry_bulb_high'] = 23.2
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            23.2,
+            epjson_output['SetpointManager:OutdoorAirReset']['SYS 1 ColdDuct Cooling Supply Air Temp Manager'][
+                'outdoor_high_temperature'])
+        self.assertEqual(
+            12.5,
+            epjson_output['SetpointManager:OutdoorAirReset']['SYS 1 ColdDuct Cooling Supply Air Temp Manager'][
+                'setpoint_at_outdoor_high_temperature'])
+        self.assertEqual(
+            15.4,
+            epjson_output['SetpointManager:OutdoorAirReset']['SYS 1 ColdDuct Cooling Supply Air Temp Manager'][
+                'outdoor_low_temperature'])
+        self.assertEqual(
+            15.5,
+            epjson_output['SetpointManager:OutdoorAirReset']['SYS 1 ColdDuct Cooling Supply Air Temp Manager'][
+                'setpoint_at_outdoor_low_temperature'])
         return

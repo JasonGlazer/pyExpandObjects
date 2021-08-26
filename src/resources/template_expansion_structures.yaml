@@ -7589,8 +7589,7 @@ OptionTree:
                           ValueLocation: Outlet
                 Transitions:
                   - SetpointManager:Warmest:
-                      maximum_setpoint_temperature:
-                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+1.0)'
+                      maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
               DualWarmestBlowThrough: &SystemDualDuctColdDuctTemplateObjectsCoolingCoilSetpointControlTypeDetailedDualWarmestBlowThrough
                 Objects:
                   - SetpointManager:Warmest:
@@ -7600,8 +7599,7 @@ OptionTree:
                       setpoint_node_or_nodelist_name: '{} Cooling Setpoint Nodes'
                 Transitions:
                   - SetpointManager:Warmest:
-                      maximum_setpoint_temperature:
-                        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+1.0)'
+                      maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
               SingleWarmestDrawThrough: *SystemDualDuctColdDuctTemplateObjectsCoolingCoilSetpointControlTypeDetailedDualWarmestBlowThrough
               SingleWarmestBlowThrough: *SystemDualDuctColdDuctTemplateObjectsCoolingCoilSetpointControlTypeDetailedDualWarmestBlowThrough
         HotDuct:
