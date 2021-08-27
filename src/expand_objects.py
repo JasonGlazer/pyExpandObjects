@@ -1979,7 +1979,7 @@ class CoolingCoilSetpointControlTypeDetailed:
                                  'HVACTemplate:System:Unitary']:
                 supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
             elif template_type == 'HVACTemplate:System:DualDuct':
-                    supply_fan_placement = template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
+                supply_fan_placement = template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
             else:
                 supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
             cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
