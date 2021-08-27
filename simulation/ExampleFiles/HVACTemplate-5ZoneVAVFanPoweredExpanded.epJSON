@@ -2626,7 +2626,7 @@
             "fraction_lost": 0,
             "fraction_radiant": 0.3,
             "schedule_name": "EQUIP-1",
-            "zone_or_zonelist_name": "SPACE1-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE1-1"
         },
         "SPACE2-1 ElecEq 1": {
             "design_level": 456,
@@ -2635,7 +2635,7 @@
             "fraction_lost": 0,
             "fraction_radiant": 0.3,
             "schedule_name": "EQUIP-1",
-            "zone_or_zonelist_name": "SPACE2-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE2-1"
         },
         "SPACE3-1 ElecEq 1": {
             "design_level": 1056,
@@ -2644,7 +2644,7 @@
             "fraction_lost": 0,
             "fraction_radiant": 0.3,
             "schedule_name": "EQUIP-1",
-            "zone_or_zonelist_name": "SPACE3-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE3-1"
         },
         "SPACE4-1 ElecEq 1": {
             "design_level": 456,
@@ -2653,7 +2653,7 @@
             "fraction_lost": 0,
             "fraction_radiant": 0.3,
             "schedule_name": "EQUIP-1",
-            "zone_or_zonelist_name": "SPACE4-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE4-1"
         },
         "SPACE5-1 ElecEq 1": {
             "design_level": 1976,
@@ -2662,7 +2662,7 @@
             "fraction_lost": 0,
             "fraction_radiant": 0.3,
             "schedule_name": "EQUIP-1",
-            "zone_or_zonelist_name": "SPACE5-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE5-1"
         }
     },
     "Fan:ConstantVolume": {
@@ -2870,7 +2870,7 @@
             "lighting_level": 1584,
             "return_air_fraction": 0.2,
             "schedule_name": "LIGHTS-1",
-            "zone_or_zonelist_name": "SPACE1-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE1-1"
         },
         "SPACE2-1 Lights 1": {
             "design_level_calculation_method": "LightingLevel",
@@ -2881,7 +2881,7 @@
             "lighting_level": 684,
             "return_air_fraction": 0.2,
             "schedule_name": "LIGHTS-1",
-            "zone_or_zonelist_name": "SPACE2-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE2-1"
         },
         "SPACE3-1 Lights 1": {
             "design_level_calculation_method": "LightingLevel",
@@ -2892,7 +2892,7 @@
             "lighting_level": 1584,
             "return_air_fraction": 0.2,
             "schedule_name": "LIGHTS-1",
-            "zone_or_zonelist_name": "SPACE3-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE3-1"
         },
         "SPACE4-1 Lights 1": {
             "design_level_calculation_method": "LightingLevel",
@@ -2903,7 +2903,7 @@
             "lighting_level": 684,
             "return_air_fraction": 0.2,
             "schedule_name": "LIGHTS-1",
-            "zone_or_zonelist_name": "SPACE4-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE4-1"
         },
         "SPACE5-1 Lights 1": {
             "design_level_calculation_method": "LightingLevel",
@@ -2914,7 +2914,7 @@
             "lighting_level": 2964,
             "return_air_fraction": 0.2,
             "schedule_name": "LIGHTS-1",
-            "zone_or_zonelist_name": "SPACE5-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE5-1"
         }
     },
     "Material": {
@@ -3336,7 +3336,7 @@
             "number_of_people": 11,
             "number_of_people_calculation_method": "People",
             "number_of_people_schedule_name": "OCCUPY-1",
-            "zone_or_zonelist_name": "SPACE1-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE1-1"
         },
         "SPACE2-1 People 1": {
             "activity_level_schedule_name": "ActSchd",
@@ -3344,7 +3344,7 @@
             "number_of_people": 5,
             "number_of_people_calculation_method": "People",
             "number_of_people_schedule_name": "OCCUPY-1",
-            "zone_or_zonelist_name": "SPACE2-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE2-1"
         },
         "SPACE3-1 People 1": {
             "activity_level_schedule_name": "ActSchd",
@@ -3352,7 +3352,7 @@
             "number_of_people": 11,
             "number_of_people_calculation_method": "People",
             "number_of_people_schedule_name": "OCCUPY-1",
-            "zone_or_zonelist_name": "SPACE3-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE3-1"
         },
         "SPACE4-1 People 1": {
             "activity_level_schedule_name": "ActSchd",
@@ -3360,7 +3360,7 @@
             "number_of_people": 5,
             "number_of_people_calculation_method": "People",
             "number_of_people_schedule_name": "OCCUPY-1",
-            "zone_or_zonelist_name": "SPACE4-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE4-1"
         },
         "SPACE5-1 People 1": {
             "activity_level_schedule_name": "ActSchd",
@@ -3368,7 +3368,7 @@
             "number_of_people": 20,
             "number_of_people_calculation_method": "People",
             "number_of_people_schedule_name": "OCCUPY-1",
-            "zone_or_zonelist_name": "SPACE5-1"
+            "zone_or_zonelist_or_space_or_spacelist_name": "SPACE5-1"
         }
     },
     "Pipe:Adiabatic": {
