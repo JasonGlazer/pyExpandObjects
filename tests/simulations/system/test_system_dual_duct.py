@@ -1205,3 +1205,175 @@ class TestSimulationsSystemDualDuct(BaseSimulationTest):
             epjson_output['SetpointManager:OutdoorAirReset']['SYS 1 ColdDuct Cooling Supply Air Temp Manager'][
                 'setpoint_at_outdoor_low_temperature'])
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_type_hot_water")
+    def test_heating_coil_type_hot_water(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_type'] = 'HotWater'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Water'].get('SYS 1 HotDuct Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_type_electric")
+    def test_heating_coil_type_electric(self):
+        self.base_epjson.pop('HVACTemplate:Plant:Boiler')
+        self.base_epjson.pop('HVACTemplate:Plant:HotWaterLoop')
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_type'] = 'Electric'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Electric'].get('SYS 1 HotDuct Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_type_gas")
+    def test_heating_coil_type_gas(self):
+        self.base_epjson.pop('HVACTemplate:Plant:Boiler')
+        self.base_epjson.pop('HVACTemplate:Plant:HotWaterLoop')
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_type'] = 'Gas'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['Coil:Heating:Fuel'].get('SYS 1 HotDuct Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_type_none")
+    def test_heating_coil_type_none(self):
+        # todo_eo: EO issues two messages when only one seems necessary
+        self.base_epjson.pop('HVACTemplate:Plant:Boiler')
+        self.base_epjson.pop('HVACTemplate:Plant:HotWaterLoop')
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(
+            epjson_output['Coil:Heating:Water'].get('SYS 1 HotDuct Heating Coil'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_availability_schedule_name")
+    def test_heating_coil_availability_schedule_name(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_availability_schedule_name'] = \
+            'OCCUPY-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'OCCUPY-1',
+            epjson_output['Coil:Heating:Water']['SYS 1 HotDuct Heating Coil']['availability_schedule_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_setpoint_control_type_fixed_setpoint_draw_through")
+    def test_heating_coil_setpoint_control_type_fixed_setpoint_draw_through(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cold_duct_supply_fan_placement'] = \
+            'DrawThrough'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_setpoint_control_type'] = \
+            'FixedSetpoint'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'SYS 1 HotDuct Heating Coil Outlet',
+            epjson_output['SetpointManager:Scheduled']['SYS 1 HotDuct Heating Supply Air Temp Manager'][
+                'setpoint_node_or_nodelist_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_setpoint_control_type_fixed_setpoint_blow_through")
+    def test_heating_coil_setpoint_control_type_fixed_setpoint_blow_through(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cold_duct_supply_fan_placement'] = \
+            'BlowThrough'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_setpoint_control_type'] = \
+            'FixedSetpoint'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'SYS 1 HotDuct Heating Coil Outlet',
+            epjson_output['SetpointManager:Scheduled']['SYS 1 HotDuct Heating Supply Air Temp Manager'][
+                'setpoint_node_or_nodelist_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_setpoint_control_type_scheduled_draw_through")
+    def test_heating_coil_setpoint_control_type_scheduled_draw_through(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cold_duct_supply_fan_placement'] = \
+            'DrawThrough'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_setpoint_control_type'] = \
+            'Scheduled'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'SYS 1 HotDuct Heating Coil Outlet',
+            epjson_output['SetpointManager:Scheduled']['SYS 1 HotDuct Heating Supply Air Temp Manager'][
+                'setpoint_node_or_nodelist_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_setpoint_control_type_scheduled_blow_through")
+    def test_heating_coil_setpoint_control_type_scheduled_blow_through(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cold_duct_supply_fan_placement'] = \
+            'BlowThrough'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_setpoint_control_type'] = \
+            'Scheduled'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'SYS 1 HotDuct Heating Coil Outlet',
+            epjson_output['SetpointManager:Scheduled']['SYS 1 HotDuct Heating Supply Air Temp Manager'][
+                'setpoint_node_or_nodelist_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_setpoint_control_type_scheduled_draw_through")
+    def test_heating_coil_setpoint_control_type_scheduled_draw_through(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cold_duct_supply_fan_placement'] = \
+            'DrawThrough'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_setpoint_control_type'] = \
+            'Scheduled'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'SYS 1 HotDuct Heating Coil Outlet',
+            epjson_output['SetpointManager:Scheduled']['SYS 1 HotDuct Heating Supply Air Temp Manager'][
+                'setpoint_node_or_nodelist_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heating_coil_setpoint_control_type_"
+                                              "outdoor_air_temperature_reset_draw_through")
+    def test_heating_coil_setpoint_control_type_outdoor_air_temperature_reset_draw_through(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['cold_duct_supply_fan_placement'] = \
+            'DrawThrough'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heating_coil_setpoint_control_type'] = \
+            'OutdoorAirTemperatureReset'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'SYS 1 HotDuct Heating Coil Outlet',
+            epjson_output['SetpointManager:OutdoorAirReset']['SYS 1 HotDuct Heating Supply Air Temp Manager'][
+                'setpoint_node_or_nodelist_name'])
+        return

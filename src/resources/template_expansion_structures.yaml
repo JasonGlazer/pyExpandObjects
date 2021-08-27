@@ -7616,8 +7616,26 @@ OptionTree:
                       - Humidifier:Steam:Electric: *HumidifierSteamElectricSuperObject
           BaseObjects:
           TemplateObjects:
+            system_configuration_type_detailed:
+              DualFanConstantVolumeDrawThrough: &SystemDualDuctHotDuctTemplateObjectsSystemConfigurationTypeDualFanConstantVolumeDrawThrough
+              DualFanConstantVolumeBlowThrough:
+              DualFanVariableVolumeDrawThrough: *SystemDualDuctHotDuctTemplateObjectsSystemConfigurationTypeDualFanConstantVolumeDrawThrough
+              DualFanVariableVolumeBlowThrough:
+              SingleFanConstantVolumeDrawThrough:
+              SingleFanConstantVolumeBlowThrough:
+              SingleFanVariableVolumeDrawThrough:
+              SingleFanVariableVolumeBlowThrough:
             heating_coil_setpoint_control_type_detailed:
               <<: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
+              FixedSetpointBlowThrough: &SystemDualDuctHotDuctTemplateObjectsHeatingCoilSetpointControlTypeDetailedFixedSetpointBlowThrough
+                Objects:
+                  - SetpointManager:Scheduled:
+                      <<: *SetpointManagerScheduledHeating
+                      setpoint_node_or_nodelist_name:
+                        BuildPathReference:
+                          Location: Coil:Heating.*
+                          ValueLocation: Outlet
+              FixedSetpointDrawThrough: *SystemDualDuctHotDuctTemplateObjectsHeatingCoilSetpointControlTypeDetailedFixedSetpointBlowThrough
               OutdoorAirTemperatureResetBlowThrough:
                 Objects:
                   - SetpointManager:OutdoorAirReset:
