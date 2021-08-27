@@ -42,7 +42,16 @@ class TestSimulationsZoneDualDuct(BaseSimulationTest):
         epjson_output = self.ej._get_json_file(test_dir.joinpath('..', 'simulation', 'test', 'test_input_epjson.epJSON'))
         self.assertEqual(
             0.1,
-            epjson_output['AAirTerminal:DualDuct:ConstantVolume']['SPACE1-1 Dual Duct']['maximum_air_flow_rate'])
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['cooling_design_air_flow_rate'])
+        self.assertEqual(
+            'Flow/Zone',
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['cooling_design_air_flow_method'])
+        self.assertEqual(
+            0.1,
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['heating_design_air_flow_rate'])
+        self.assertEqual(
+            'Flow/Zone',
+            epjson_output['Sizing:Zone']['SPACE1-1 Sizing Zone']['heating_design_air_flow_method'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Zone:DualDuct:zone_heating_sizing_factor")

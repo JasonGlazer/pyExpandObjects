@@ -62,6 +62,28 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:minimum_inputs")
+    def test_minimum_inputs(self):
+        self.base_epjson['HVACTemplate:Zone:Unitary']['HVACTemplate:Zone:Unitary 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:Unitary']['HVACTemplate:Zone:Unitary 1'][
+            'zone_heating_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:System:UnitarySystem'].pop('Sys 1 Furnace DX Cool SnglSpd')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:System:UnitarySystem': {
+                    'Sys 1 Furnace DX Cool SnglSpd': {
+                        'control_zone_or_thermostat_location_name': 'SPACE1-1',
+                        'supplemental_heating_or_reheat_coil_type': 'Electric'
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:system_availability_schedule_name")
     def test_system_availability_schedule_name(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
@@ -554,6 +576,8 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
         # todo_eo: EO fails so making identical template objects is difficult.  Check in with team
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
             'heating_coil_type'] = 'MultiSpeedDXHeatPumpAirSource'
+        self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
+            'number_of_speeds_or_stages_for_heating'] = 2
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath(
@@ -580,6 +604,9 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
                                               "heating_coil_type_multi_stage_electric")
     def test_heating_coil_type_multi_stage_electric(self):
         # todo_eo: EO fails and unable to make comparison for template objects
+        #  ** Severe  ** <root>[Coil:Heating:Gas:MultiStage][Sys 1 Furnace DX Cool SnglSpd Heating Coil]
+        #  [stage_2_gas_burner_efficiency] - Value type "string" for input "Curve:Cubic" not permitted by
+        #  'type' constraint.  More similar errors.
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
             'number_of_speeds_or_stages_for_heating'] = 2
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
@@ -597,6 +624,8 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
                                               "heating_coil_type_multi_stage_gas")
     def test_heating_coil_type_multi_stage_gas(self):
         # todo_eo: EO fails and unable to make comparison for template objects
+        #  [Controller:OutdoorAir][VAV Sys 1 OA Controller][economizer_control_type] - "None" - Failed to match
+        #  against any enum values
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
             'number_of_speeds_or_stages_for_heating'] = 2
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][

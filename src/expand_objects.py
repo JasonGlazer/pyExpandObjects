@@ -436,6 +436,8 @@ class ExpandObjects(EPJSON):
                                             tmp_object_field = copy.deepcopy(object_field)
                                             if isinstance(tmp_object_field, str) and '{' in tmp_object_field:
                                                 tmp_object_field = {template_field: tmp_object_field}
+                                            # if the value is a dictionary, then do the same thing without the
+                                            # preformatting above.
                                             if isinstance(tmp_object_field, dict):
                                                 (tmp_object_field, object_val), = tmp_object_field.items()
                                                 # Try to perform numeric evaluation if operators and formatting brackets
@@ -1688,6 +1690,11 @@ class SystemTransitions:
                 if system_field:
                     setattr(obj, 'zone_cooling_design_supply_air_temperature', system_field)
                     setattr(obj, 'zone_heating_design_supply_air_temperature_input_method', 'SupplyAirTemperature')
+            if template_type == 'HVACTemplate:Zone:DualDuct':
+                setattr(
+                    obj,
+                    'system_configuration_type',
+                    getattr(reference_system, 'system_configuration_type'))
             return
 
 
@@ -1971,19 +1978,10 @@ class CoolingCoilSetpointControlTypeDetailed:
             if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
                                  'HVACTemplate:System:Unitary']:
                 supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
+            elif template_type == 'HVACTemplate:System:DualDuct':
+                supply_fan_placement = template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
             else:
-                if template_type == 'HVACTemplate:System:DualDuct':
-                    cold_duct_supply_fan_placement = \
-                        template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
-                    hot_duct_supply_fan_placement = \
-                        template_fields.get('hot_duct_supply_fan_placement', 'BlowThrough')
-                    supply_fan_placement = ''
-                    setattr(obj, 'cold_duct_cooling_coil_setpoint_control_type_detailed',
-                            ''.join([cooling_setpoint, cold_duct_supply_fan_placement]))
-                    setattr(obj, 'hot_duct_heating_coil_setpoint_control_type_detailed',
-                            ''.join([cooling_setpoint, hot_duct_supply_fan_placement]))
-                else:
-                    supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
+                supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
             cooling_coil_type = None if template_fields.get('cooling_coil_type', 'None') == 'None' else \
                 template_fields.get('cooling_coil_type')
             # decide when to set the command, which can vary between systems
@@ -2027,6 +2025,8 @@ class HeatingCoilSetpointControlTypeDetailed:
                 if template_type in ['HVACTemplate:System:UnitarySystem', 'HVACTemplate:System:UnitaryHeatPump:AirToAir',
                                      'HVACTemplate:System:Unitary']:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
+                elif template_type in ['HVACTemplate:System:DualDuct']:
+                    supply_fan_placement = template_fields.get('hot_duct_supply_fan_placement', 'BlowThrough')
                 else:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
                 obj._heating_coil_setpoint_control_type_detailed = ''.join([heating_setpoint, supply_fan_placement])
@@ -2936,6 +2936,7 @@ class ExpandSystem(ExpandObjects):
             duct_system_class_object.epjson = {}
             duct_system_class_object.build_path = []
             duct_system_class_object.template_type = ':'.join(['HVACTemplate:System:DualDuct', duct_type])
+            duct_system_class_object.unique_name_main = duct_system_class_object.unique_name
             duct_system_class_object.unique_name = ' '.join([duct_system_class_object.unique_name, duct_type])
             # rename hot/cold duct to typical names now that their type is identified by the class
             for attribute in [i for i in vars(duct_system_class_object).keys() if i.startswith(duct_field_name)]:
@@ -2943,6 +2944,40 @@ class ExpandSystem(ExpandObjects):
                     duct_system_class_object,
                     attribute.replace(''.join([duct_field_name, '_']), ''),
                     getattr(duct_system_class_object, attribute))
+            # Change hot and cold template variables based on system configuration type
+            configuration_modifier = None
+            fan_modifier = None
+            if 'Single' in getattr(self, 'system_configuration_type', 'None'):
+                setattr(duct_system_class_object, 'supply_fan_placement_detailed', 'NoFan')
+                configuration_modifier = 'Single'
+            else:
+                configuration_modifier = 'Dual'
+            if 'Variable' in getattr(self, 'system_configuration_type', 'None'):
+                fan_modifier = 'Variable'
+            else:
+                fan_modifier = 'Constant'
+            setattr(
+                duct_system_class_object,
+                'system_configuration_type_detailed',
+                ''.join([
+                    getattr(self, 'system_configuration_type', 'None'),
+                    getattr(self, 'cold_duct_supply_fan_placement', 'DrawThrough')]))
+            setattr(
+                duct_system_class_object,
+                'cooling_coil_setpoint_control_type_detailed',
+                ''.join([
+                    configuration_modifier,
+                    getattr(duct_system_class_object, 'cooling_coil_setpoint_control_type_detailed', 'None')]))
+            if configuration_modifier == 'Dual' and fan_modifier:
+                setattr(
+                    duct_system_class_object,
+                    'supply_fan_placement_detailed',
+                    ''.join([fan_modifier, getattr(duct_system_class_object, 'supply_fan_placement', 'DrawThrough')]))
+            if fan_modifier:
+                setattr(
+                    self,
+                    'return_fan_detailed',
+                    ''.join([fan_modifier, getattr(self, 'return_fan', 'No')]))
             duct_system_class_object._create_objects()
             tmp_build_path.extend(duct_system_class_object.build_path)
             duct_system_class_object._create_branch_and_branchlist_from_build_path(
@@ -2955,7 +2990,8 @@ class ExpandSystem(ExpandObjects):
             last_build_path_object = duct_system_class_object.build_path[-1]
             (_, super_object), = last_build_path_object.items()
             tmp_out_node_list.append(
-                super_object['Fields'][super_object['Connectors']['AirLoop']['Outlet']].format(duct_system_class_object.unique_name))
+                super_object['Fields'][super_object['Connectors']['AirLoop']['Outlet']].format(
+                    duct_system_class_object.unique_name))
         # Create supply side outlet nodelist
         supply_side_nodelist = self.get_structure(
             structure_hierarchy=['AutoCreated', 'System', 'NodeList', 'SupplySideOutlet'])
@@ -2971,7 +3007,7 @@ class ExpandSystem(ExpandObjects):
             build_path=tmp_build_path,
             epjson=self.epjson)
         # rename main branch for regular processing
-        for attribute in [i for i in vars(self).keys() if i.startswith(duct_field_name)]:
+        for attribute in [i for i in vars(self).keys() if i.startswith('main_supply_fan')]:
             setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))
         return
 
