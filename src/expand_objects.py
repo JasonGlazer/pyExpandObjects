@@ -3002,10 +3002,20 @@ class ExpandSystem(ExpandObjects):
             object_dictionary=supply_side_nodelist_object)
         # Create ControllerList for just the Controller:WaterCoil objects, which are in the hot/cold class objects of
         # a dual duct system.
+        # drop preheat attribute while controller list operations are performed, then add it back on afterwards
+        #  This just affects the hot/cold duct subsystems, and the preheat_coil_type will be processed later on
+        #  with the main system.
+        if hasattr(self, 'preheat_coil_type'):
+            tmp_preheat = getattr(self, 'preheat_coil_type')
+            delattr(self, 'preheat_coil_type')
+        else:
+            tmp_preheat = None
         self._create_controller_list_from_epjson(
             controller_list=('Controller:WaterCoil', ),
             build_path=tmp_build_path,
             epjson=self.epjson)
+        if tmp_preheat:
+            setattr(self, 'preheat_coil_type', tmp_preheat)
         # rename main branch for regular processing
         for attribute in [i for i in vars(self).keys() if i.startswith('main_supply_fan')]:
             setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))

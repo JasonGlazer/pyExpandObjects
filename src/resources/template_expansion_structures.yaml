@@ -5809,27 +5809,34 @@ OptionTree:
                       Location: -1
                       ActionType: Insert
                       Objects: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerElectric
+                      Transitions: *CoilHeatingElectricCommonTransitions
                     HotWater:
                       ObjectReference: OutdoorAir:Mixer
                       Location: -1
                       ActionType: Insert
                       Objects: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerHotWater
+                      Transitions: *CoilHeatingWaterCommonTransitions
+                      Mappings: *CoilHeatingWaterCommonMappings
                     Gas:
                       ObjectReference: OutdoorAir:Mixer
                       Location: -1
                       ActionType: Insert
                       Objects: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerGas
+                      Transitions: *CoilHeatingFuelCommonTransitions
+                      Mappings: *CoilHeatingFuelCommonMappings
                     SingleSpeedDXHeatPump: &SystemCommonBuildPathActionsHeatingCoilLatSingleSpeedDXHeatPump
                       ObjectReference: OutdoorAir:Mixer
                       Location: -1
                       ActionType: Insert
                       Objects: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerSingleSpeedDXHeatPump
+                      Transitions: *CoilHeatingDXSingleSpeedCommonTransitions
                     SingleSpeedDXHeatPumpAirSource: *SystemCommonBuildPathActionsHeatingCoilLatSingleSpeedDXHeatPump
                     SingleSpeedDXHeatPumpWaterSource:
                       ObjectReference: OutdoorAir:Mixer
                       Location: -1
                       ActionType: Insert
                       Objects: *SystemCommonBuildPathActionsHeatingCoilTypeAfterMixerSingleSpeedDXHeatPumpWaterSource
+                      Transitions: *CoilHeatingWaterToAirHeatPumpEquationFitCommonTransitions
             HumidifierType:
               - humidifier_type: &SystemCommonBuildPathActionsConstantVolumeHumidifierType
                   ElectricSteam:
@@ -7373,9 +7380,8 @@ OptionTree:
       DualDuct:
         BuildPath:
           BaseObjects:
-            Objects:
-              - OutdoorAir:Mixer: *OutdoorAirMixerSuperObject
           Actions:
+            - outside_air_equipment_type: *SystemCommonBuildPathActionsOutsideAirEquipmentOutdoorAirMixer
             - system_configuration_type:
                 DualFanConstantVolume:
                 DualFanVariableVolume:
@@ -7394,7 +7400,6 @@ OptionTree:
                   Mappings:
                     - Fan:.*:
                         supply_fan_part_load_power_coefficients: *FanCommonMappingsVariableVolumeSupplySupplyFanPartLoadPowerCoefficients
-            - *SystemCommonBuildPathActionsHeatRecovery
             - return_fan_detailed:
                 ConstantNo:
                 VariableNo:
@@ -7426,6 +7431,7 @@ OptionTree:
                         Connectors: *FanVariableVolumeConnectors
                   Transitions: *FanCommonTransitionsReturn
                   Mappings: *FanCommonMappingsVariableVolumeReturn
+            - outside_air_equipment_type: *SystemCommonBuildPathActionsOutsideAirEquipment
         BaseObjects:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
@@ -7458,6 +7464,7 @@ OptionTree:
             - *SizingSystemCommonMappingsCooling
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+          heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           system_configuration_type:
             DualFanConstantVolume:
