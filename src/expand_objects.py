@@ -1906,14 +1906,7 @@ class EconomizerTypeDetailed:
                                      'HVACTemplate:System:Unitary']:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
                 else:
-                    if template_type == 'HVACTemplate:System:DualDuct':
-                        cold_duct_supply_fan_placement = \
-                            template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
-                        setattr(obj, 'cold_duct_economizer_type_detailed',
-                                ''.join([economizer_type, cold_duct_supply_fan_placement]))
-                        supply_fan_placement = ''
-                    else:
-                        supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
+                    supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
                 obj._economizer_type_detailed = ''.join([economizer_type, supply_fan_placement])
         return
 

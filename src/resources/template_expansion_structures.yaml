@@ -7435,7 +7435,6 @@ OptionTree:
         BaseObjects:
           Objects:
             - OutdoorAir:NodeList: *OutdoorAirNodeListFields
-            - Controller:OutdoorAir: *ControllerOutdoorAir
             # supply_side_outlet_node_names created in Python due to issues with multiple build paths
             - NodeList:
                 name: *SystemSupplyPathInletNodeList
@@ -7464,6 +7463,32 @@ OptionTree:
             - *SizingSystemCommonMappingsCooling
         TemplateObjects:
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
+          economizer_type:
+              None: &SystemDualDuctTemplateObjectsEconomizerTypeNone
+                Objects:
+                  - Controller:OutdoorAir: *ControllerOutdoorAir
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
+              NoEconomizer: *SystemDualDuctTemplateObjectsEconomizerTypeNone
+              FixedDryBulb: *SystemDualDuctTemplateObjectsEconomizerTypeNone
+              FixedEnthalpy: *SystemDualDuctTemplateObjectsEconomizerTypeNone
+              DifferentialDryBulb: *SystemDualDuctTemplateObjectsEconomizerTypeNone
+              DifferentialEnthalpy: *SystemDualDuctTemplateObjectsEconomizerTypeNone
+              FixedDewPointAndDryBulb: *SystemDualDuctTemplateObjectsEconomizerTypeNone
+              ElectronicEnthalpy:
+                Objects:
+                  - Controller:OutdoorAir: *ControllerOutdoorAir
+                  - Curve:Cubic:
+                      name: '{} ElectrEnthCurve'
+                      coefficient1_constant: 0.01342704
+                      coefficient2_x: -0.00047892
+                      coefficient3_x_2: 5.3352e-05
+                      coefficient4_x_3: -1.8103e-06
+                      maximum_value_of_x: 29.13
+                      minimum_value_of_x: 16.6
+                Transitions: *ControllerOutdoorAirCommonTransitions
+                Mappings: *ControllerOutdoorAirCommonMappings
+              DifferentialDryBulbAndEnthalpy: *SystemDualDuctTemplateObjectsEconomizerTypeNone
           heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           system_configuration_type:
