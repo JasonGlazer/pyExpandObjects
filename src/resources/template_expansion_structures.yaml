@@ -4086,6 +4086,17 @@ AutoCreated:
           inlet_node_name: *SystemSupplyPathInlet
           zone_name: '{supply_plenum_name}'
           zone_node_name: '{supply_plenum_name} Zone Air Node'
+        DualDuct:
+          Cold:
+            name: '{} Supply Plenum'
+            inlet_node_name: *SystemSupplyPathInlet
+            zone_name: '{cold_supply_plenum_name}'
+            zone_node_name: '{cold_supply_plenum_name} Zone Air Node'
+          Hot:
+            name: '{} Supply Plenum'
+            inlet_node_name: *SystemSupplyPathInlet
+            zone_name: '{hot_supply_plenum_name}'
+            zone_node_name: '{hot_supply_plenum_name} Zone Air Node'
       ZoneMixer:
         Base:
           name: '{} Zone Mixer'
@@ -5839,6 +5850,7 @@ OptionTree:
                       Transitions: *CoilHeatingWaterToAirHeatPumpEquationFitCommonTransitions
             HumidifierType:
               - humidifier_type: &SystemCommonBuildPathActionsConstantVolumeHumidifierType
+                  None:
                   ElectricSteam:
                     ObjectReference: OutdoorAir:Mixer
                     Location: After
@@ -6302,6 +6314,7 @@ OptionTree:
                       dehumidifiying_relative_humidity_setpoint_schedule_name: dehumidifying_relative_humidity_setpoint_schedule_name
                       humidifying_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
                       humidifier_relative_humidity_setpoint_schedule_name: humidifying_relative_humidity_setpoint_schedule_name
+            humidistat_type_2: *SystemCommonTemplateObjectsHumidistatType
             dehumidification_control_type: &SystemCommonTemplateObjectsDehumidificationControlType
               CoolReheat:
                 Objects:
@@ -6967,6 +6980,7 @@ OptionTree:
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
           airloop_hvac_object_type: *SystemCommonTemplateObjectsAirLoopHVACObjectType
           humidistat_type: *SystemCommonTemplateObjectsHumidistatType
+          humidistat_type_2: *SystemCommonTemplateObjectsHumidistatType
           humidifier_type: *SystemCommonTemplateObjectsHumidifierType
           dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
           economizer_type_detailed: *SystemCommonTemplateObjectsConstantVolumeEconomizerType
@@ -7491,6 +7505,8 @@ OptionTree:
               DifferentialDryBulbAndEnthalpy: *SystemDualDuctTemplateObjectsEconomizerTypeNone
           heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
+          humidistat_type: *SystemCommonTemplateObjectsHumidistatType
+          humidistat_type_2: *SystemCommonTemplateObjectsHumidistatType
           system_configuration_type:
             DualFanConstantVolume:
               Objects:
@@ -7551,6 +7567,7 @@ OptionTree:
                   NoFan:
           BaseObjects:
           TemplateObjects:
+            dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
             system_configuration_type_detailed:
               DualFanConstantVolumeDrawThrough: &SystemDualDuctColdDuctTemplateObjectsSystemConfigurationTypeDualFanConstantVolumeDrawThrough
                 Objects:
@@ -7641,6 +7658,7 @@ OptionTree:
               - *SystemCommonBuildPathActionsCommonHeatingCoilLast
               - supply_fan_placement_detailed: *SystemDualDuctBuildPathActionsSupplyFanPlacementDetailed
               - humidifier_type:
+                  None:
                   ElectricSteam:
                     Location: -1
                     ActionType: Insert
@@ -7648,6 +7666,7 @@ OptionTree:
                       - Humidifier:Steam:Electric: *HumidifierSteamElectricSuperObject
           BaseObjects:
           TemplateObjects:
+            humidifier_type: *SystemCommonTemplateObjectsHumidifierType
             system_configuration_type_detailed:
               DualFanConstantVolumeDrawThrough: &SystemDualDuctHotDuctTemplateObjectsSystemConfigurationTypeDualFanConstantVolumeDrawThrough
               DualFanConstantVolumeBlowThrough:
@@ -7676,21 +7695,6 @@ OptionTree:
                         BuildPathReference:
                           Location: Coil:Heating.*
                           ValueLocation: Outlet
-            humidifier_type:
-              ElectricSteam:
-                Objects:
-                  - SetpointManager:SingleZone:Humidity:Minimum:
-                      name: '{} Humidification Setpoint Manager'
-                      control_zone_air_node_name: '{humidifier_control_zone_name} Zone Air Node'
-                      setpoint_node_or_nodelist_name:
-                        BuildPathReference:
-                          Location: Humidifier:Steam:Electric
-                          ValueLocation: Outlet
-                  - ZoneControl:Humidistat:
-                      name: '{} Humidification Humidistat'
-                      dehumidifying_relative_humidity_setpoint_schedule_name: HVACTemplate-Always100
-                      humidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{humidifier_relative_humidity_setpoint}'
-                      zone_name: '{humidifier_control_zone_name}'
       PackagedVAV: &HVACTemplateSystemPackagedVAV
         BuildPath:
           BaseObjects:
@@ -7716,6 +7720,7 @@ OptionTree:
           dehumidification_control_type: *SystemCommonTemplateObjectsDehumidificationControlType
           economizer_type_detailed: *SystemCommonTemplateObjectsPackagedVAVEconomizerType
           humidistat_type: *SystemCommonTemplateObjectsHumidistatType
+          humidistat_type_2: *SystemCommonTemplateObjectsHumidistatType
           humidifier_type: *SystemCommonTemplateObjectsHumidifierType
           heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
@@ -7974,6 +7979,7 @@ OptionTree:
           heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
           humidifier_type: *SystemCommonTemplateObjectsHumidifierType
           humidistat_type: *SystemCommonTemplateObjectsHumidistatType
+          humidistat_type_2: *SystemCommonTemplateObjectsHumidistatType
           night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       UnitaryHeatPump:
         AirToAir:
@@ -8065,6 +8071,7 @@ OptionTree:
             heat_recovery_type: *SystemCommonTemplateObjectsHeatRecoveryType
             humidifier_type: *SystemCommonTemplateObjectsHumidifierType
             humidistat_type: *SystemCommonTemplateObjectsHumidistatType
+            humidistat_type_2: *SystemCommonTemplateObjectsHumidistatType
             night_cycle_control: *SystemCommonTemplateObjectsNightCycle
       UnitarySystem:
         BuildPath:

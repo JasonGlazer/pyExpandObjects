@@ -2065,10 +2065,18 @@ class HumidistatType:
         (_, template_fields), = template_structure.items()
         dehumidification = template_fields.get('dehumidification_control_type') if \
             template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+        dehumidification_zone = template_fields.get('dehumidification_control_type') if \
+            template_fields.get('dehumidification_control_zone_name', 'None') != 'None' else False
         humidification = template_fields.get('humidifier_type') if \
             template_fields.get('humidifier_type', 'None') != 'None' else False
+        humidification_zone = template_fields.get('humidifier_type') if \
+            template_fields.get('humidifier_control_zone_name', 'None') != 'None' else False
         if dehumidification and humidification:
-            obj._humidistat_type = 'DehumidificationAndHumidification'
+            if dehumidification_zone == humidification_zone:
+                obj._humidistat_type = 'DehumidificationAndHumidification'
+            else:
+                obj._humidistat_type = 'Dehumidification'
+                setattr(obj, 'humidistat_type_2', 'Humidification')
         elif dehumidification:
             obj._humidistat_type = 'Dehumidification'
         elif humidification:

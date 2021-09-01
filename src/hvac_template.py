@@ -1046,8 +1046,25 @@ class HVACTemplate(EPJSON):
                             }
                         )
             # create plenums or spliters/mixers, depending on template inputs
+            supply_object = None
             supply_plenum_name = getattr(system_class_object, 'supply_plenum_name', None)
-            if supply_plenum_name:
+            cold_supply_plenum_name = getattr(system_class_object, 'cold_supply_plenum_name', None)
+            hot_supply_plenum_name = getattr(system_class_object, 'hot_supply_plenum_name', None)
+            if system_class_object.template_type == 'HVACTemplate:System:DualDuct' and \
+                    cold_supply_plenum_name and inlet_node.startswith('cold_air'):
+                eo.cold_supply_plenum_name = cold_supply_plenum_name
+                cold_supply_object = eo.get_structure(structure_hierarchy=[
+                    'AutoCreated', 'System', 'AirLoopHVAC', 'SupplyPlenum', 'DualDuct', 'Cold'])
+                cold_supply_object['nodes'] = zone_splitters
+                supply_object = {'AirLoopHVAC:SupplyPlenum': cold_supply_object}
+            elif system_class_object.template_type == 'HVACTemplate:System:DualDuct' and \
+                    hot_supply_plenum_name and inlet_node.startswith('hot_air'):
+                eo.hot_supply_plenum_name = hot_supply_plenum_name
+                hot_supply_object = eo.get_structure(structure_hierarchy=[
+                    'AutoCreated', 'System', 'AirLoopHVAC', 'SupplyPlenum', 'DualDuct', 'Hot'])
+                hot_supply_object['nodes'] = zone_splitters
+                supply_object = {'AirLoopHVAC:SupplyPlenum': hot_supply_object}
+            elif supply_plenum_name:
                 # set return plenum name attribute for transition and mapping processing
                 eo.supply_plenum_name = supply_plenum_name
                 supply_object = eo.get_structure(structure_hierarchy=[

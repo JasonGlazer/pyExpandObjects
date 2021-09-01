@@ -1842,3 +1842,431 @@ class TestSimulationsSystemDualDuct(BaseSimulationTest):
             'DifferentialDryBulbAndEnthalpy',
             epjson_output['Controller:OutdoorAir']['SYS 1 OA Controller']['economizer_control_type'])
         return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:economizer_upper_temperature_limit")
+    def test_economizer_upper_temperature_limit(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'economizer_upper_temperature_limit'] = 18
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            18,
+            epjson_output['Controller:OutdoorAir']['SYS 1 OA Controller'][
+                'economizer_maximum_limit_dry_bulb_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:economizer_lower_temperature_limit")
+    def test_economizer_lower_temperature_limit(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'economizer_lower_temperature_limit'] = 6
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            6,
+            epjson_output['Controller:OutdoorAir']['SYS 1 OA Controller'][
+                'economizer_minimum_limit_dry_bulb_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:economizer_upper_enthalpy_limit")
+    def test_economizer_upper_enthalpy_limit(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'economizer_upper_enthalpy_limit'] = 100
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            100,
+            epjson_output['Controller:OutdoorAir']['SYS 1 OA Controller']['economizer_maximum_limit_enthalpy'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "economizer_maximum_limit_dewpoint_temperature")
+    def test_economizer_maximum_limit_dewpoint_temperature(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'economizer_maximum_limit_dewpoint_temperature'] = 20
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            20,
+            epjson_output['Controller:OutdoorAir']['SYS 1 OA Controller'][
+                'economizer_maximum_limit_dewpoint_temperature'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "cold_supply_plenum_name")
+    def test_cold_supply_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'].pop('return_plenum_name')
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'cold_supply_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['AirLoopHVAC:SupplyPlenum'].get('SYS 1 Cold Supply Plenum'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "hot_supply_plenum_name")
+    def test_hot_supply_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'].pop('return_plenum_name')
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'hot_supply_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['AirLoopHVAC:SupplyPlenum'].get('SYS 1 Hot Supply Plenum'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "cold_and_hot_supply_plenum_name")
+    def test_cold_and_hot_supply_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'].pop('return_plenum_name')
+        self.base_epjson['Zone']['PLENUM-2'] = \
+            self.base_epjson['Zone']['PLENUM-1']
+        self.base_epjson['BuildingSurface:Detailed']['C1-2P'] = \
+            self.base_epjson['BuildingSurface:Detailed']['C1-1P']
+        self.base_epjson['BuildingSurface:Detailed']['C1-2P']['zone_name'] = 'PLENUM-2'
+        self.base_epjson['BuildingSurface:Detailed']['C2-2P'] = \
+            self.base_epjson['BuildingSurface:Detailed']['C2-1P']
+        self.base_epjson['BuildingSurface:Detailed']['C2-2P']['zone_name'] = 'PLENUM-2'
+        self.base_epjson['BuildingSurface:Detailed']['C3-2P'] = \
+            self.base_epjson['BuildingSurface:Detailed']['C3-1P']
+        self.base_epjson['BuildingSurface:Detailed']['C3-2P']['zone_name'] = 'PLENUM-2'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'cold_supply_plenum_name'] = 'PLENUM-1'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'hot_supply_plenum_name'] = 'PLENUM-2'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['AirLoopHVAC:SupplyPlenum'].get('SYS 1 Hot Supply Plenum'))
+        self.assertIsNotNone(
+            epjson_output['AirLoopHVAC:SupplyPlenum'].get('SYS 1 Cold Supply Plenum'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "return_plenum_name")
+    def test_return_plenum_name_none(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'].pop('return_plenum_name')
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(
+            epjson_output.get('AirLoopHVAC:ReturnPlenum'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "return_plenum_name")
+    def test_return_plenum_name(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['return_plenum_name'] = 'PLENUM-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(
+            epjson_output['AirLoopHVAC:ReturnPlenum'].get('SYS 1 Return Plenum'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "night_cycle_control_stay_off")
+    def test_night_cycle_control_stay_off(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['night_cycle_control'] = 'StayOff'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'StayOff',
+            epjson_output['AvailabilityManager:NightCycle']['SYS 1 Availability']['control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "night_cycle_control_cycle_on_any")
+    def test_night_cycle_control_cycle_on_any(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['night_cycle_control'] = 'CycleOnAny'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'CycleOnAny',
+            epjson_output['AvailabilityManager:NightCycle']['SYS 1 Availability']['control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "cycle_on_control_zone")
+    def test_night_cycle_control_cycle_on_control_zone(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['night_cycle_control'] = 'CycleOnControlZone'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['night_cycle_control_zone_name'] = 'SPACE1-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'CycleOnControlZone',
+            epjson_output['AvailabilityManager:NightCycle']['SYS 1 Availability']['control_type'])
+        self.assertEqual(
+            'SPACE1-1',
+            epjson_output['AvailabilityManager:NightCycle']['SYS 1 Availability']['control_zone_or_zone_list_name'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heat_recovery_none")
+    def test_heat_recovery_type_none(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heat_recovery_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heat_recovery_sensible")
+    def test_heat_recovery_type_sensible(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heat_recovery_type'] = 'Sensible'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:ConstantVolume:heat_recovery_sensible")
+    def test_heat_recovery_type_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1']['heat_recovery_type'] = 'Enthalpy'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:heat_recovery_effectiveness_sensible")
+    def test_heat_recovery_effectiveness_sensible(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_type'] = 'Sensible'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'sensible_heat_recovery_effectiveness'] = 0.72
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_heating_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_heating_air_flow'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:heat_recovery_effectiveness_enthalpy")
+    def test_heat_recovery_effectiveness_enthalpy(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'sensible_heat_recovery_effectiveness'] = 0.72
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'latent_heat_recovery_effectiveness'] = 0.61
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertIsNotNone(epjson_output.get('HeatExchanger:AirToAir:SensibleAndLatent'))
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.77,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'sensible_effectiveness_at_75_heating_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.72,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'sensible_effectiveness_at_100_heating_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'latent_effectiveness_at_100_cooling_air_flow'])
+        self.assertEqual(
+            0.61,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'latent_effectiveness_at_100_heating_air_flow'])
+        self.assertEqual(
+            0.66,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'latent_effectiveness_at_75_cooling_air_flow'])
+        self.assertEqual(
+            0.66,
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery'][
+                'latent_effectiveness_at_75_heating_air_flow'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:heat_recovery_exchanger_type_plate_enthalpy")
+    def test_heat_recovery_exchanger_type_plate_enthalpy(self):
+        # todo_eo: This input is frozen for enthalpy HR.  This is common to the input type so affects other systems
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_heat_exchanger_type'] = 'Plate'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Rotary',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['heat_exchanger_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:heat_recovery_exchanger_type_plate_sensible")
+    def test_heat_recovery_exchanger_type_plate_sensible(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_type'] = 'Sensible'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_heat_exchanger_type'] = 'Plate'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Plate',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['heat_exchanger_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:heat_recovery_exchanger_type_rotary")
+    def test_heat_recovery_exchanger_type_rotary(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_heat_exchanger_type'] = 'Rotary'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'Rotary',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['heat_exchanger_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:heat_recovery_frost_control_type_none")
+    def test_heat_recovery_frost_control_type_none_enthalpy(self):
+        # todo_eo: This input is frozen for enthalpy HR.  This is common to the input type so affects other systems
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_frost_control_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'MinimumExhaustTemperature',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['frost_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:heat_recovery_frost_control_type_none")
+    def test_heat_recovery_frost_control_type_none_sensible(self):
+        # todo_eo: This input is frozen for enthalpy HR.  This is common to the input type so affects other systems
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_type'] = 'Sensible'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_frost_control_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'ExhaustOnly',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['frost_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heat_recovery_frost_control_type_exhaust_air_recirculation_enthalpy")
+    def test_heat_recovery_frost_control_type_exhaust_air_recirculation_enthalpy(self):
+        # todo_eo: This input is frozen for enthalpy HR.  This is common to the input type so affects other systems
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_type'] = 'Enthalpy'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_frost_control_type'] = 'ExhaustAirRecirculation'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'MinimumExhaustTemperature',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['frost_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "heat_recovery_frost_control_type_exhaust_air_recirculation_sensible")
+    def test_heat_recovery_frost_control_type_exhaust_air_recirculation_sensible(self):
+        # todo_eo: This input is frozen for enthalpy HR.  This is common to the input type so affects other systems
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_type'] = 'Sensible'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'heat_recovery_frost_control_type'] = 'ExhaustAirRecirculation'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        self.assertEqual(
+            'ExhaustOnly',
+            epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['frost_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "dehumidification_control_type_none")
+    def test_dehumidification_control_type_none(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'dehumidification_control_type'] = 'None'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        # self.assertEqual(
+        #     'ExhaustOnly',
+        #     epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['frost_control_type'])
+        return
+
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
+                                              "dehumidification_control_type_cool_reheat")
+    def test_dehumidification_control_type_cool_reheat(self):
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'dehumidification_control_type'] = 'CoolReheat'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'dehumidification_control_zone_name'] = 'SPACE1-1'
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        epjson_output = self.ej._get_json_file(test_dir.joinpath(
+            '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
+        # self.assertEqual(
+        #     'ExhaustOnly',
+        #     epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['frost_control_type'])
+        return
