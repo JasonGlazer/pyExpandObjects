@@ -57,6 +57,23 @@ schedule_objects = {
                 }
             ],
             "schedule_type_limits_name": "Any Number"
+        },
+        "Always62": {
+            "data": [
+                {
+                    "field": "Through: 12/31"
+                },
+                {
+                    "field": "For: AllDays"
+                },
+                {
+                    "field": "Until: 24:00"
+                },
+                {
+                    "field": 62.0
+                }
+            ],
+            "schedule_type_limits_name": "Any Number"
         }
     }
 }
@@ -2250,23 +2267,32 @@ class TestSimulationsSystemDualDuct(BaseSimulationTest):
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath(
             '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        # self.assertEqual(
-        #     'ExhaustOnly',
-        #     epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['frost_control_type'])
+        self.assertIsNone(
+            epjson_output.get('SetpointManager:SingleZone:Humidity:Maximum'))
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:"
                                               "dehumidification_control_type_cool_reheat")
-    def test_dehumidification_control_type_cool_reheat(self):
+    def test_dehumidification_relative_humidity_setpoint_schedule_name(self):
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary=schedule_objects)
         self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
             'dehumidification_control_type'] = 'CoolReheat'
         self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
             'dehumidification_control_zone_name'] = 'SPACE1-1'
+        self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
+            'dehumidification_relative_humidity_setpoint_schedule_name'] = 'Always62'
         base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         epjson_output = self.ej._get_json_file(test_dir.joinpath(
             '..', 'simulation', 'test', 'test_input_epjson.epJSON'))
-        # self.assertEqual(
-        #     'ExhaustOnly',
-        #     epjson_output['HeatExchanger:AirToAir:SensibleAndLatent']['SYS 1 Heat Recovery']['frost_control_type'])
+        self.assertEqual(
+            'SPACE1-1 Zone Air Node',
+            epjson_output['SetpointManager:SingleZone:Humidity:Maximum'][
+                'SYS 1 ColdDuct Dehumidification Setpoint Manager']['control_zone_air_node_name'])
+        self.assertEqual(
+            'Always62',
+            epjson_output['ZoneControl:Humidistat'][
+                'SYS 1 Dehumidification Humidistat']['dehumidifying_relative_humidity_setpoint_schedule_name'])
         return
