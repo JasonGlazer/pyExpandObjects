@@ -7582,6 +7582,8 @@ OptionTree:
               SingleFanVariableVolumeDrawThrough:
               SingleFanVariableVolumeBlowThrough:
             cooling_coil_setpoint_control_type_detailed:
+              DualNone:
+              SingleNone:
               DualFixedSetpointBlowThrough: &SystemDualDuctTemplateObjectsCoolingCoilSetpointControlTypeDetailedFixedSetpointBlowThrough
                 Objects:
                   - SetpointManager:Scheduled:
@@ -7678,6 +7680,7 @@ OptionTree:
               SingleFanVariableVolumeBlowThrough:
             heating_coil_setpoint_control_type_detailed:
               <<: *SystemCommonTemplateObjectsConstantVolumeHeatingCoilSetpointControlType
+              None:
               FixedSetpointBlowThrough: &SystemDualDuctHotDuctTemplateObjectsHeatingCoilSetpointControlTypeDetailedFixedSetpointBlowThrough
                 Objects:
                   - SetpointManager:Scheduled:
@@ -7966,8 +7969,8 @@ OptionTree:
           Transitions:
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-#            - SetpointManager:SingleZone:Cooling: # todo_eo: This is not done in legacy, check if this is the intended action
-#                cooling_design_supply_air_temperature: minimum_supply_air_temperature
+            - SetpointManager:SingleZone:Cooling:
+                cooling_design_supply_air_temperature: minimum_supply_air_temperature
 #            - SetpointManager:SingleZone:Cooling: # todo_eo: This is not done in legacy, check if this is the intended action
 #                heating_design_supply_air_temperature: maximum_supply_air_temperature
           Mappings:
