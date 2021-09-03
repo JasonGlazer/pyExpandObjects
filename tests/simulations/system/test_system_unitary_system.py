@@ -1511,7 +1511,7 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
                 'humidifying_relative_humidity_setpoint_schedule_name'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:humidifier_inputs")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:humidifier_inputs")
     def test_humidifier_inputs(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
             'humidifier_type'] = 'ElectricSteam'
