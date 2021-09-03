@@ -1906,14 +1906,7 @@ class EconomizerTypeDetailed:
                                      'HVACTemplate:System:Unitary']:
                     supply_fan_placement = template_fields.get('supply_fan_placement', 'BlowThrough')
                 else:
-                    if template_type == 'HVACTemplate:System:DualDuct':
-                        cold_duct_supply_fan_placement = \
-                            template_fields.get('cold_duct_supply_fan_placement', 'BlowThrough')
-                        setattr(obj, 'cold_duct_economizer_type_detailed',
-                                ''.join([economizer_type, cold_duct_supply_fan_placement]))
-                        supply_fan_placement = ''
-                    else:
-                        supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
+                    supply_fan_placement = template_fields.get('supply_fan_placement', 'DrawThrough')
                 obj._economizer_type_detailed = ''.join([economizer_type, supply_fan_placement])
         return
 
@@ -2072,10 +2065,18 @@ class HumidistatType:
         (_, template_fields), = template_structure.items()
         dehumidification = template_fields.get('dehumidification_control_type') if \
             template_fields.get('dehumidification_control_type', 'None') != 'None' else False
+        dehumidification_zone = template_fields.get('dehumidification_control_type') if \
+            template_fields.get('dehumidification_control_zone_name', 'None') != 'None' else False
         humidification = template_fields.get('humidifier_type') if \
             template_fields.get('humidifier_type', 'None') != 'None' else False
+        humidification_zone = template_fields.get('humidifier_type') if \
+            template_fields.get('humidifier_control_zone_name', 'None') != 'None' else False
         if dehumidification and humidification:
-            obj._humidistat_type = 'DehumidificationAndHumidification'
+            if dehumidification_zone == humidification_zone:
+                obj._humidistat_type = 'DehumidificationAndHumidification'
+            else:
+                obj._humidistat_type = 'Dehumidification'
+                setattr(obj, 'humidistat_type_2', 'Humidification')
         elif dehumidification:
             obj._humidistat_type = 'Dehumidification'
         elif humidification:
@@ -3002,10 +3003,20 @@ class ExpandSystem(ExpandObjects):
             object_dictionary=supply_side_nodelist_object)
         # Create ControllerList for just the Controller:WaterCoil objects, which are in the hot/cold class objects of
         # a dual duct system.
+        # drop preheat attribute while controller list operations are performed, then add it back on afterwards
+        #  This just affects the hot/cold duct subsystems, and the preheat_coil_type will be processed later on
+        #  with the main system.
+        if hasattr(self, 'preheat_coil_type'):
+            tmp_preheat = getattr(self, 'preheat_coil_type')
+            delattr(self, 'preheat_coil_type')
+        else:
+            tmp_preheat = None
         self._create_controller_list_from_epjson(
             controller_list=('Controller:WaterCoil', ),
             build_path=tmp_build_path,
             epjson=self.epjson)
+        if tmp_preheat:
+            setattr(self, 'preheat_coil_type', tmp_preheat)
         # rename main branch for regular processing
         for attribute in [i for i in vars(self).keys() if i.startswith('main_supply_fan')]:
             setattr(self, attribute.replace('main_supply_fan', 'supply_fan'), getattr(self, attribute))

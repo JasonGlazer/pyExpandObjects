@@ -361,6 +361,29 @@ class HVACTemplate(EPJSON):
                             'humidifier_rated_capacity': 1e-06,
                             'humidifier_constant_setpoint': 0.003
                         },
+                        'HVACTemplate:System:DualDuct': {
+                            'system_configuration_type': 'SingleFanConstantVolume',
+                            'main_supply_fan_minimum_flow_fraction': 0.2,
+                            'cold_duct_supply_fan_minimum_flow_fraction': 0.2,
+                            'cold_duct_supply_fan_placement': 'DrawThrough',
+                            'hot_duct_supply_fan_minimum_flow_fraction': 0.2,
+                            'hot_duct_supply_fan_placement': 'DrawThrough',
+                            'cooling_coil_type': 'ChilledWater',
+                            'cooling_coil_setpoint_control_type': 'FixedSetpoint',
+                            'cooling_coil_design_setpoint_temperature': 12.8,
+                            'cooling_coil_setpoint_at_outdoor_dry_bulb_low': 15.6,
+                            'cooling_coil_reset_outdoor_dry_bulb_low': 15.6,
+                            'cooling_coil_setpoint_at_outdoor_dry_bulb_high': 12.8,
+                            'cooling_coil_reset_outdoor_dry_bulb_high': 23.3,
+                            'heating_coil_type': 'HotWater',
+                            'heating_coil_setpoint_control_type': 'FixedSetpoint',
+                            'heating_coil_design_setpoint': 50,
+                            'heating_coil_setpoint_at_outdoor_dry_bulb_low': 50,
+                            'heating_coil_reset_outdoor_dry_bulb_low': 7.8,
+                            'heating_coil_setpoint_at_outdoor_dry_bulb_high': 26,
+                            'heating_coil_reset_outdoor_dry_bulb_high': 12.2,
+                            'preheat_coil_design_setpoint': 7.2
+                        },
                         'HVACTemplate:System:PackagedVAV': {
                             'cooling_coil_type': 'TwoSpeedDX',
                             'cooling_coil_design_setpoint': 12.8,
@@ -1046,8 +1069,25 @@ class HVACTemplate(EPJSON):
                             }
                         )
             # create plenums or spliters/mixers, depending on template inputs
+            supply_object = None
             supply_plenum_name = getattr(system_class_object, 'supply_plenum_name', None)
-            if supply_plenum_name:
+            cold_supply_plenum_name = getattr(system_class_object, 'cold_supply_plenum_name', None)
+            hot_supply_plenum_name = getattr(system_class_object, 'hot_supply_plenum_name', None)
+            if system_class_object.template_type == 'HVACTemplate:System:DualDuct' and \
+                    cold_supply_plenum_name and inlet_node.startswith('cold_air'):
+                eo.cold_supply_plenum_name = cold_supply_plenum_name
+                cold_supply_object = eo.get_structure(structure_hierarchy=[
+                    'AutoCreated', 'System', 'AirLoopHVAC', 'SupplyPlenum', 'DualDuct', 'Cold'])
+                cold_supply_object['nodes'] = zone_splitters
+                supply_object = {'AirLoopHVAC:SupplyPlenum': cold_supply_object}
+            elif system_class_object.template_type == 'HVACTemplate:System:DualDuct' and \
+                    hot_supply_plenum_name and inlet_node.startswith('hot_air'):
+                eo.hot_supply_plenum_name = hot_supply_plenum_name
+                hot_supply_object = eo.get_structure(structure_hierarchy=[
+                    'AutoCreated', 'System', 'AirLoopHVAC', 'SupplyPlenum', 'DualDuct', 'Hot'])
+                hot_supply_object['nodes'] = zone_splitters
+                supply_object = {'AirLoopHVAC:SupplyPlenum': hot_supply_object}
+            elif supply_plenum_name:
                 # set return plenum name attribute for transition and mapping processing
                 eo.supply_plenum_name = supply_plenum_name
                 supply_object = eo.get_structure(structure_hierarchy=[
