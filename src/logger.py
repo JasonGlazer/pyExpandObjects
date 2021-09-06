@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from pathlib import Path
 from logging.config import fileConfig
 from io import StringIO
@@ -28,7 +29,11 @@ class Logger:
         global stream
         # noinspection PyBroadException
         # Use a different file for testing logger
-        logging_dir = str(this_script_path.parent.parent / 'logs')
+        # When packaged, the logs file is under the src/ directorey, so change the directory based on mode
+        if getattr(sys, 'frozen', False):
+            logging_dir = os.path.join(os.path.dirname(this_script_path), 'logs')
+        else:
+            logging_dir = str(this_script_path.parent.parent / 'logs')
         log_file_location = os.path.join(
             logging_dir,
             r'{}.log'.format(log_file_name)
