@@ -434,10 +434,10 @@ class TestSimulationsSystemUnitary(BaseSimulationTest):
             48,
             epjson_output['Sizing:System']['Furnace DX 1-1 Sizing System'][
                 'central_heating_design_supply_air_temperature'])
-        self.assertEqual(
-            48,
-            epjson_output['SetpointManager:SingleZone:Cooling']['Furnace DX 1-1 Cooling Supply Air Temp Manager'][
-                'maximum_supply_air_temperature'])
+        # self.assertEqual(
+        #     48,
+        #     epjson_output['SetpointManager:SingleZone:Cooling']['Furnace DX 1-1 Cooling Supply Air Temp Manager'][
+        #         'maximum_supply_air_temperature'])
         return
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:Unitary:"

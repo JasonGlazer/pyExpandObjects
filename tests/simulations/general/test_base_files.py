@@ -82,6 +82,8 @@ class TestSimulationsBase(BaseSimulationTest):
 
     @BaseSimulationTest._test_logger(doc_text="Simulation:Full:Base:HVACTemplate-5ZoneUnitaryHeatPump")
     def test_5_zone_unitary_heat_pump(self):
+        # todo_eo: cooling_design_supply_air_temperature should affect minimum_supply_air_temperature, but does not
+        #  currently in EO.
         base_file_path = test_dir.joinpath('..', 'simulation', 'ExampleFiles', 'HVACTemplate-5ZoneUnitaryHeatPump.idf')
         self.perform_full_comparison(base_idf_file_path=base_file_path)
         return
