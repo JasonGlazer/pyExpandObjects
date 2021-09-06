@@ -92,6 +92,33 @@ class TestSimulationsSystemDualDuct(BaseSimulationTest):
     def teardown(self):
         return
 
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:minimum_inputs")
+    def test_minimum_inputs(self):
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 1'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 2'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 3'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 4'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:Zone:DualDuct']['HVACTemplate:Zone:DualDuct 5'][
+            'zone_cooling_design_supply_air_temperature_input_method'] = 'SupplyAirTemperature'
+        self.base_epjson['HVACTemplate:System:DualDuct'].pop('SYS 1')
+        self.ej.merge_epjson(
+            super_dictionary=self.base_epjson,
+            object_dictionary={
+                'HVACTemplate:System:DualDuct': {
+                    'SYS 1': {
+                        'economizer_type': 'NoEconomizer'
+                    }
+                }
+            }
+        )
+        base_file_path = self.create_idf_file_from_epjson(epjson=self.base_epjson, file_name='base_pre_input.epJSON')
+        self.perform_full_comparison(base_idf_file_path=base_file_path)
+        return
+
     @BaseSimulationTest._test_logger(doc_text="Simulation:System:DualDuct:system_availability_schedule_name")
     def test_system_availability_schedule_name(self):
         self.base_epjson['HVACTemplate:System:DualDuct']['SYS 1'][
