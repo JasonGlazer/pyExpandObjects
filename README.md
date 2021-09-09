@@ -27,3 +27,27 @@ Unless `--no_backup` is specified, this program will output three files.  If `--
 * original-file-name_base.epJSON: Contains all non HVACTemplate objects from original file
 * original-file-name_hvac_templates.epJSON: Contains all HVACTemplate objects from original file
 * original-file-name_expanded.epJSON: Expanded file for simulation.
+
+#### Build Instructions
+
+Option 1 - Executables can be created with PyInstaller by calling spec files.
+
+* linux_onefile_main.spec - Used for linux based systems
+* main.spec (future) - Used for windows based systems
+
+Option 2 - A Dockerfile is provided to create installations using different operating systems.  An executable can be created and retrieved with the following:
+
+* Build Instructions
+    1. Install [Docker](https://docs.docker.com/get-docker/)
+    2. Run `docker build -t ubuntu .` from the command line.
+    3. Run `docker run -dit ubuntu` from the command line.
+    4. A long alphanumeric string will be returned to show you the 'container-id'.  you can also pull this up with `docker ps`, which lists active docker containers.
+    5. Run `docker cp <some-container-id-characters>:/home/project/pyExpandObjects/dist/pyExpandObjects /path/to/copy/on/your/machine` from the command line.
+
+* Cleanup  
+    Docker uses a lot of disk space when building resources because it saves each step of the process.  To recover this space, do the following after completing a build.
+
+  1. Run `docker ps` to get a list of running containers.
+  2. Run `docker stop <first-few-container-id-values> <second-container-id-if-necessary>`
+  3. Run `docker system prune -a`.  This will clear all your images that are not in use (see step 2 to stop them).
+  4. Confirm nothing is saved using `docker ps` and `docker images`.
