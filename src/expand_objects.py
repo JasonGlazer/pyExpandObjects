@@ -14,6 +14,14 @@ source_dir = Path(__file__).parent
 
 yaml_file = None
 
+this_script_path = Path(__file__).resolve()
+
+try:
+    expansion_structure_location = \
+        str(this_script_path.parent / 'resources' / 'template_expansion_structures.yaml')
+except FileNotFoundError:
+    raise PyExpandObjectsFileNotFoundError('YAML file not found')
+
 
 class ExpansionStructureLocation:
     """
@@ -122,7 +130,7 @@ class ExpandObjects(EPJSON):
     def __init__(
             self,
             template=None,
-            expansion_structure=str(source_dir / 'resources' / 'template_expansion_structures.yaml'),
+            expansion_structure=expansion_structure_location,
             logger_level='WARNING'):
         super().__init__(logger_level=logger_level)
         self.logger.setLevel(logger_level)

@@ -157,19 +157,38 @@ Once a set of instructions has been selected, the specific information to create
     - Fan:.*:
         supply_fan_delta_pressure: design_pressure_rise
 
-* Transitions with string reformatting
+* Transitions With String Reformatting
 
-  A string reformat may be specified to mutate the input value.  For example, if the template value provided for `chilled_water_design_setpoint` is 12.8, then The following code will yield a string value in the schedule_name field of 'HVACTemplate-Always12.8'.  When a string is formatted to 'HVACTemplate-Always[numeric]', a Schedule:Compact object is automateically created.
+    A string reformat may be specified to mutate the input value.  For example, if the template value provided for `chilled_water_design_setpoint` is 12.8, then The following code will yield a string value in the schedule_name field of 'HVACTemplate-Always12.8'.  When a string is formatted to 'HVACTemplate-Always[numeric]', a Schedule:Compact object is automateically created.
 
   .. code-block:: yaml
 
     Fields: &SetpointManagerScheduledChilledWater
-            <<: *SetpointManagerScheduled
-            schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
+      <<: *SetpointManagerScheduled
+      schedule_name: 'HVACTemplate-Always{chilled_water_design_setpoint}'
+
+* Transition Using Different Template Field
+
+    In addition to string reformatting, a separate template field may be updated by specifying the value as another dictionary object.  In this example, if a value is given for dehumidification_setpoint then dehumidifying_relative_humidity_setpoint_schedule_name is updated.
+
+  .. code-block:: yaml
+
+    - ZoneControl:Humidistat:
+        dehumidification_setpoint:
+          dehumidifying_relative_humidity_setpoint_schedule_name: 'HVACTemplate-Always{dehumidification_setpoint}'
+
+* Transition Including Numerical Operations
+
+    Numerical and other mathematical operations that can performed using the eval() function in Python can be used.  In this example, a maximum value is returned between a static number and a template field.
+
+  .. code-block:: yaml
+
+    - SetpointManager:Warmest:
+        maximum_setpoint_temperature: 'max(18, {cooling_coil_design_setpoint}+5.2)'
 
 * Mappings
 
-  A set of field objects can be created or overridden base on one template input.  The mapped values can be statically typed.  In this example 'None' means that no tempalte input was provided.
+    A set of field objects can be created or overridden base on one template input.  The mapped values can be statically typed.  In this example 'None' means that no tempalte input was provided.
 
   .. code-block:: yaml
 
