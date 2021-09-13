@@ -51,3 +51,20 @@ Option 2 - A Dockerfile is provided to create installations using different oper
   2. Run `docker stop <first-few-container-id-values> <second-container-id-if-necessary>`
   3. Run `docker system prune -a`.  This will clear all your images that are not in use (see step 2 to stop them).
   4. Confirm nothing is saved using `docker ps` and `docker images`.
+
+#### Example Files
+
+  Input and output example simulation files are provided within this package.
+
+  * **simulation/ExampleFiles**  
+    This directory contains files that are directly build from **_ExpandObjects_** for comparison to the outputs of this application.
+      * HVACTemplate-<template-name>.idf - Directly copied from EnergyPlus ExampleFiles directory
+      * HVACTemplate-<template-name>.epJSON - Converted base template
+      * HVACTemplate-<template-name>Expanded.idf - Output of ExpandObjects on base template file
+      * HVACTemplate-<template-name>Expanded.epJSON - Converted expanded template file
+
+  * **simulation/ExampleOutputs**
+    This directory contains the pyExpandObjects outputs of the conveted base templates in simulation/ExampleFiles (HVACTemplate-<template-name>.epJSON)
+      * HVACTemplate-<template-name>_base.epJSON - Non-HVACTemplate objects of the base file
+      * HVACTemplate-<template-name>_hvac_template.epJSON - HVACTemplate objects of the base file
+      * HVACTemplate-<template-name>_expanded.epJSON - Output of pyExpandObjects on the base template file
