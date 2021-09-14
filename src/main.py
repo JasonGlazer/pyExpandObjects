@@ -94,7 +94,7 @@ def main(args=None):
     elif isinstance(args.file, (pathlib.PosixPath, pathlib.WindowsPath)):
         file_suffix_check = args.file.suffix == '.epJSON'
     else:
-        raise InvalidInputException('Invalid input file reference')  # pragma: no cover - unlikely to be hit
+        raise InvalidInputException('Invalid input file reference')
     output = {}
     raw_output = {'Output:PreprocessorMessage': ''}
     if file_suffix_check:
@@ -181,6 +181,10 @@ def main(args=None):
 
 if __name__ == "__main__":
     epJSON_parser = build_parser()
-    epJSON_args = epJSON_parser.parse_args()
+    epJSON_args, unknown_args = epJSON_parser.parse_known_args()
+    # If unknown arguments are passed, and no file specified, then put the arguments
+    #  in the file namespace.
+    if not epJSON_args.file and unknown_args:
+        epJSON_args.file = unknown_args[0]
     main(epJSON_args)
     logging.shutdown()
