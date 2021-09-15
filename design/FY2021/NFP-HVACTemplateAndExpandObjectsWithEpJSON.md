@@ -65,7 +65,7 @@ The current HVACTemplate Processing section (2.1) will be revised to directly ad
 ***2.1.1 Overview***
 
 **Unlike other EnergyPlus objects, the HVACTemplate objects are not handled by EnergyPlus
-directly.** Instead, they are preprocessed by a program called ExpandObjects. If you use EP-Launch or
+directly.** Instead, they are preprocessed by a program called ExpandObjects or pyExpandObjects. If you use EP-Launch or
 RunEPlus.bat, this preprocessor step is performed automatically using *one of the following sequences, depending on the input file format*:  
 
 **IDF Files**  
@@ -75,9 +75,9 @@ RunEPlus.bat, this preprocessor step is performed automatically using *one of th
 4. If there are error messages from EnergyPlus, they will refer to the contents of the expidf file. Specific objects referred to in error messages may exist in the original idf, but they may be objects created by ExpandObjects and only exist in the expidf. Remember that the expidf will be overwritten everytime the original idf is run using EP-Launch or RunEPlus.bat  
 
 ***epJSON Files***
-1. *The preprocessor program, pyExpandObjects, reads your IDF file, verifies it meets the current schema requirements, and converts all the HVACTemplate objects into other EnergyPlus objects.*
+1. *The preprocessor program, pyExpandObjects, reads your epJSON file, verifies it meets the current schema requirements, and converts all the HVACTemplate objects into other EnergyPlus objects.*
 2. *The pyExpandObjects program writes one to three new files.  
-   a. *A renamed file with the naming format "\<original-file-name\>_expanded.epJSON". This “expanded” file may be used as a standard EnergyPlus epJSON file if the extension is changed to epJSON; however, for safety’s sake, both filename and extension should be changed.  Note, the HVACTemplate objects will be completely removed from the expanded file, so ensure to save a copy of the original file before overwriting!*  
+   a. *A renamed file with the naming format "\<original-file-name\>_expanded.epJSON". This “expanded” file may be used as a standard EnergyPlus epJSON file.  Note, the HVACTemplate objects will be completely removed from the expanded file, so ensure to save a copy of the original file before deleting anything!*  
    b. *Optional - A file with the name "\<original-file-name\>_hvac_templates.epJSON" which has all the HVACTemplate objects from the input file.*  
   c. *Optional - A file with the name "\<original-file-name\>_base.epJSON" which has all the HVACTemplate objects removed.*
 3. *The EnergyPlus simulation proceeds using the expanded file as the input stream.*
