@@ -927,6 +927,3 @@ class TestHVACTemplateObject(BaseTest, unittest.TestCase):
             'SupplyAirTemperature',
             getattr(self.expanded_zones['Zone Template 1'], 'zone_cooling_design_supply_air_temperature_input_method'))
         return
-
-    # todo_eo: wrap all dictionary unpacking (_, _), = dict.items() with exceptions and test
-    # todo_eo: make check that no loops are empty

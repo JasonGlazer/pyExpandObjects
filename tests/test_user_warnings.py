@@ -93,7 +93,7 @@ class TestUserWarnings(BaseTest, unittest.TestCase):
         return
 
     def test_invalid_choice(self):
-        # todo_eo: this only works if schema validation is turned on.  The point of turning it off is to speed up
+        # This only works if schema validation is turned on.  The point of turning it off is to speed up
         #  the process so no output in that case may be the only option
         with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
             json.dump(

@@ -96,6 +96,8 @@ Example:
         Inlet: outdoor_air_stream_node_name
         Outlet: mixed_air_node_name
 
+Note, some build path objects are created with null connectors (i.e. `{ Connectors: { Air: None }}`).  These objects are created this way such that they can be specifically manipulated in `expand_objects._modify_build_path_for_equipment()`.  The most common reason for this modification is that a build path exists, but it is not directly reflected in the AirLoop system BranchList.
+
 **OptionTree Structure**
 
 .. code-block:: yaml

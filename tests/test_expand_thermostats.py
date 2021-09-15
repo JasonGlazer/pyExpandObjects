@@ -235,6 +235,3 @@ class TestExpandThermostat(BaseTest, unittest.TestCase):
             ['heating_setpoint_temperature_schedule_name'],
             'HVACTemplate-Always12')
         return
-
-    # todo_eo: Should there be a test to ensure empty template isn't provided or verify that an empty template does
-    #   nothing and is just passed?

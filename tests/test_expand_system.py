@@ -708,5 +708,3 @@ class TestExpandSystem(BaseTest, unittest.TestCase):
         with self.assertRaisesRegex(PyExpandObjectsYamlStructureException, "Super object is missing Connectors"):
             es._create_branch_and_branchlist_from_build_path(build_path=temp_mock_build_path)
         return
-
-# todo_eo: descriptors need to be tested

@@ -7958,8 +7958,8 @@ OptionTree:
           Transitions:
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-#            - SetpointManager:SingleZone:Cooling:
-#                cooling_design_supply_air_temperature: minimum_supply_air_temperature
+            - SetpointManager:SingleZone:Cooling:
+                cooling_design_supply_air_temperature: minimum_supply_air_temperature
 #            - SetpointManager:SingleZone:Cooling:
 #                heating_design_supply_air_temperature: maximum_supply_air_temperature
           Mappings:
@@ -8054,8 +8054,8 @@ OptionTree:
             Transitions:
               - *SizingSystemCommonTransitions
               - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-#              - SetpointManager:SingleZone:Cooling:
-#                  cooling_design_supply_air_temperature: minimum_supply_air_temperature
+              - SetpointManager:SingleZone:Cooling:
+                  cooling_design_supply_air_temperature: minimum_supply_air_temperature
             Mappings:
               - *SizingSystemCommonMappingsCooling
               - *SizingSystemCommonMappingsHeating
@@ -8389,8 +8389,8 @@ OptionTree:
             - *AvailabilityManagerScheduledCommonTransitions
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-#            - SetpointManager:SingleZone:Cooling:
-#                cooling_design_supply_air_temperature: minimum_supply_air_temperature
+            - SetpointManager:SingleZone:Cooling:
+                cooling_design_supply_air_temperature: minimum_supply_air_temperature
           Mappings:
             - *SizingSystemCommonMappingsCooling
             - *SizingSystemCommonMappingsHeating
