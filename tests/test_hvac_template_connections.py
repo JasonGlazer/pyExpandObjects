@@ -350,8 +350,6 @@ class TestHVACTemplateObjectConnections(BaseTest, unittest.TestCase):
         )
         return
 
-    # todo_eo: write tests for successful implementations of supply_plenum_name and return_plenum_name for zones.
-
     def test_system_path_objects_both_plenum(self):
         eo = ExpandObjects()
         es = ExpandSystem(template={

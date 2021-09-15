@@ -160,8 +160,8 @@ class HVACTemplate(EPJSON):
                             'supply_fan_placement': 'DrawThrough',
                             'cooling_coil_type': 'Coil:Cooling:WaterToAirHeatPump:EquationFit',
                             'cooling_coil_gross_rated_cop': 3.5,
-                            # todo_eo: template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched for this field
-                            # Not default efficiency for Fan:OnOff
+                            # todo_eo: The template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched for this
+                            #  field. This is not default efficiency for Fan:OnOff
                             'supply_fan_total_efficiency': 0.7,
                             'heat_pump_heating_coil_type': 'Coil:Heating:WaterToAirHeatPump:EquationFit',
                             'heat_pump_heating_coil_gross_rated_cop': 4.2,
@@ -1108,7 +1108,6 @@ class HVACTemplate(EPJSON):
                 (_, supply_path_object_fields), = supply_path_object.items()
                 supply_path_object_fields['components'].extend(zone_supply_plenums)
             # Rename objects if multi-inlet node system is used
-            # todo_eo: this can possibly be removed it the unique name is changed on object creations
             if system_class_object.template_type == 'HVACTemplate:System:DualDuct':
                 (_, supply_object_fields), = supply_object.items()
                 (_, supply_path_object_fields), = supply_path_object.items()
@@ -1360,8 +1359,8 @@ class HVACTemplate(EPJSON):
                         'Error: In {} ({}) A branch object failed to create component fields {}'
                         .format(pe.template_type, pe.template_name, branch_name))
             # Special handling for chillers with condenser water and chilled water branches
-            # todo_eo: find a better way to separate the branches instead of searching for chw or cnd in the branch
-            #  names.  It may be unreliable with future user inputs.
+            # todo_eo: Currently the chilled and condenser water branches are separated by parsing the names.  A more
+            #  robust solution should be investigated.
             if pe.template_type in ['HVACTemplate:Plant:Chiller', 'HVACTemplate:Plant:Chiller:ObjectReference'] \
                     and getattr(pe, 'condenser_type', 'WaterCooled') == 'WaterCooled':
                 for branch_name, branch_structure in branch_objects.items():
@@ -1391,7 +1390,6 @@ class HVACTemplate(EPJSON):
         :return: epJSON formatted dictionary of branch objects
         """
         # create list of regex matches for the given loop
-        # todo_eo: object searching regex need to be expanded and/or optimized
         if 'chilledwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:Cooling:Water($|:DetailedGeometry)+', ]
         elif 'hotwater' in plant_loop_class_object.template_type.lower():
@@ -1791,9 +1789,9 @@ class HVACTemplate(EPJSON):
             *[j.epjson for i, j in self.expanded_plant_loops.items()],
             *[j.epjson for i, j in self.expanded_plant_equipment.items()]]
         output_epjson = {}
-        # todo_eo: unique name override enabled due to ObjectReference templates
-        #  having the base equipment in them as well.
-        #  look into better solution to turn this back off
+        # The unique_name_override option is enabled here due to ObjectReference templates having the base equipment
+        # in them as well as being present in the base epjson.  A better solution should be investigated so that this
+        # option can be turned back off.
         for merge_dictionary in merge_list:
             self.merge_epjson(
                 super_dictionary=output_epjson,

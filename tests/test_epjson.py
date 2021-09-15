@@ -519,5 +519,3 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 object_type_regexp='^Z.*',
                 object_name_regexp='^Space2.*')
         return
-
-    # todo_eo: need to provide path for user provided schema location

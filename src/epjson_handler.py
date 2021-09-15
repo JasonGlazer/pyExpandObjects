@@ -115,7 +115,6 @@ class EPJSON(Logger):
             (.* removes all objects)
         :return: epJSON with items referenced in purge_dictionary removed.
         """
-        # todo_eo: edit this function to also return the popped items in a separate dictionary
         tmp_d = copy.deepcopy(epjson)
         if purge_dictionary:
             for object_type, object_structure in epjson.items():

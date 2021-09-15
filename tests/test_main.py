@@ -27,7 +27,15 @@ minimum_objects_d = {
 
 
 class TestMain(BaseTest, unittest.TestCase):
-    @unittest.skip  # todo_eo: undo skip when expansion is complete
+    """
+    Test behaviour of calling main.py
+    """
+    def setUp(self):
+        return
+
+    def tearDown(self):
+        return
+
     def test_no_schema_main(self):
         output = {}
         exception_raised = False
@@ -37,7 +45,8 @@ class TestMain(BaseTest, unittest.TestCase):
                     Namespace(
                         no_schema=True,
                         file=str(
-                            test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooled.epJSON'),
+                            test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooled.epJSON'
+                        ),
                         output_directory=output_directory
                     )
                 )
@@ -45,10 +54,9 @@ class TestMain(BaseTest, unittest.TestCase):
             self.assertEqual(e, e)
             exception_raised = True
         self.assertFalse(exception_raised)
-        self.assertIn('outputPreProcessorMessage', output.keys())
+        self.assertIn('Output:PreprocessorMessage', output.keys())
         return
 
-    @unittest.skip  # todo_eo: undo skip when expansion is complete
     def test_output_message_contains_class_keys(self):
         output = {}
         exception_raised = False
@@ -58,16 +66,18 @@ class TestMain(BaseTest, unittest.TestCase):
                     Namespace(
                         no_schema=True,
                         file=str(
-                            test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooled.epJSON'),
-                        output_directory=output_directory
+                            test_dir / '..' / 'simulation' / 'ExampleFiles' / 'HVACTemplate-5ZoneVAVWaterCooled.epJSON'
+                        ),
+                        output_directory=output_directory,
+                        logger_level='INFO'
                     )
                 )
         except Exception as e:
             self.assertEqual(e, e)
             exception_raised = True
         self.assertFalse(exception_raised)
-        self.assertIn('outputPreProcessorMessage', output.keys())
-        msg_rgx = re.match('.*##### HVACTemplate #####.*', output['outputPreProcessorMessage'].replace('\n', ' '))
+        self.assertIn('Output:PreprocessorMessage', output.keys())
+        msg_rgx = re.match('.*##### HVACTemplate #####.*', output['Output:PreprocessorMessage'].replace('\n', ' '))
         msg_status = False
         if msg_rgx:
             msg_status = True

@@ -46,7 +46,8 @@ class ExpansionStructureLocation:
                         with open(value, 'r') as f:
                             try:
                                 # todo_eo: discuss tradeoff of safety vs functionality of SafeLoader/FullLoader.
-                                #   With FullLoader there would be more functionality but might not be necessary.
+                                #   With FullLoader there would be more functionality and the ability to create more
+                                #   complex yaml files but it might not be necessary.
                                 parsed_value = yaml.load(f, Loader=yaml.SafeLoader)
                                 yaml_file = parsed_value
                             except yaml.YAMLError as err:
@@ -267,13 +268,6 @@ class ExpandObjects(EPJSON):
                 "Error: In {} ({}) Call to YAML object was not a list of structure keys: {}"
                 .format(self.template_type, self.template_name, structure_hierarchy))
         structure = self.get_structure(structure_hierarchy=structure_hierarchy)
-        # todo_eo: this restriction is temporarily commented out.  It might not be necessary and too strict
-        # Check structure keys.  Return error if there is an unexpected value
-        # for key in structure:
-        #     if key not in ['BuildPath', 'InsertObject', 'ReplaceObject', 'RemoveObject',
-        #                    'BaseObjects', 'TemplateObjects']:
-        #         raise PyExpandObjectsYamlStructureException(
-        #             "YAML object is incorrectly formatted: {}, bad key: {}".format(structure, key))
         return structure
 
     def _get_option_tree_objects(
@@ -288,10 +282,6 @@ class ExpandObjects(EPJSON):
         self.logger.info('Processing option tree: {}'.format(structure_hierarchy))
         option_tree = self._get_option_tree(structure_hierarchy=structure_hierarchy)
         option_tree_dictionary = {}
-        # todo_eo: this requirement is temporarily commented out, may be too strict
-        # if not set(list(options)).issubset({'BaseObjects', 'TemplateObjects', 'BuildPath'}):
-        #     raise PyExpandObjectsYamlError("Invalid OptionTree leaf type provided in YAML: {}"
-        #                                    .format(options))
         if "BuildPath" in option_tree.keys():
             object_list = self._process_build_path(option_tree=option_tree['BuildPath'])
             self.merge_epjson(
@@ -356,7 +346,6 @@ class ExpandObjects(EPJSON):
         :param leaf_path: path to leaf node of option tree
         :return: Formatted dictionary with objects and alternative options to be applied.
         """
-        # todo_eo: check needs to be made that the right format is returned (e.g. dictionary with correct keys to pop)
         option_leaf = self.get_structure(structure_hierarchy=leaf_path, structure=option_tree)
         if option_leaf:
             transitions = option_leaf.pop('Transitions', None)
@@ -470,12 +459,11 @@ class ExpandObjects(EPJSON):
                                                 object_value = getattr(self, template_field)
                                         except (AttributeError, KeyError, NameError):
                                             object_value = None
-                                            # todo_eo: may not be necessary, overly used
-                                            # self.logger.info("A template value was attempted to be applied "
-                                            #                  "to an object field but the template "
-                                            #                  "field was not present in template object. "
-                                            #                  "object: {}, object fieled: {}, template field: {}"
-                                            #                  .format(object_type, object_field, template_field))
+                                            self.logger.debug("A template value was attempted to be applied "
+                                                              "to an object field but the template "
+                                                              "field was not present in template object. "
+                                                              "object: {}, object fieled: {}, template field: {}"
+                                                              .format(object_type, object_field, template_field))
                                         if object_value:
                                             # On a match and valid value, apply the field.
                                             # If the object is a 'super' object used in a
@@ -1357,7 +1345,8 @@ class ExpandThermostat(ExpandObjects):
                 }
             }
         else:
-            # todo_eo: should the final else case make a floating thermostat or this error?
+            # todo_eo: Currently, if no condits are met, an error is produced, but a floating thermostat might be
+            #  created.  Testing needs to be performed to see what downstream processes are affected.
             raise InvalidTemplateException(
                 'Error: In {} ({}) No setpoints or schedules provided to object'
                 .format(self.template_type, self.template_name))
@@ -2370,7 +2359,7 @@ class ExpandSystem(ExpandObjects):
         actuator_list = []
         for bp in build_path:
             # Get coil objects except for preheat
-            # todo_eo: preheat coil is avoided by name here.  Look into better ways to avoid grabbing it.
+            # todo_eo: Coils are referenced by name here.  A more robust solution should be investigated.
             (super_object_type, super_object_structure), = bp.items()
             if re.match(r'Coil:(Cooling|Heating):Water.*', super_object_type):
                 epjson_object = self.yaml_list_to_epjson_dictionaries([bp])
@@ -2672,8 +2661,8 @@ class ExpandSystem(ExpandObjects):
         :param build_path: list of EnergyPlus Super objects
         :return: build path
         """
-        # todo_eo: move this to YAML file
-        # todo_eo: Coil:Heating:.* will remove the heating coil and supplemental heating coil, might be an issue
+        # The regex lookup is general so something like Coil:Heating:.* will remove the heating coil and
+        #   supplemental heating coil, which might be an issue in some cases/
         equipment_lookup = (
             (
                 ['HVACTemplate:System:Unitary', ],
