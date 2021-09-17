@@ -5,12 +5,11 @@
 [![Coverage Status](https://coveralls.io/repos/github/john-grando/pyExpandObjects/badge.svg?branch=main)](https://coveralls.io/github/john-grando/pyExpandObjects?branch=main)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/john-grando/pyExpandObjects/Flake8?label=pep8)](https://github.com/john-grando/pyExpandObjects/actions)
 
-HVACTemplate and ExpandObjects support with epJSON
+HVACTemplate and ExpandObjects support for epJSON files used with the EnergyPlus simulation program.
 
 #### Overview
 
-Much like the existing ExpandObjects program packaged in EnergyPlus, the pyExpandObjects expands HVACTem-
-plate objects from into an expanded file that can be directly run in EnergyPlus, but in this case the processed files are in epJSON format.  Additionally, in order to achieve greater alignment with other programming initiatives in EnergyPlus, take advantage of the epJSON schema structure, and make use of object-oriented programming methodologies, this program is written in Python.  This tool provides the same deliverable as its predecessor, which is an output file with regular objects that have been mapped from template objects, but in epJSON format.
+Much like the existing ExpandObjects program that works with IDF files in EnergyPlus, pyExpandObjects expands HVACTemplate objects in a source file into an expanded file that can be directly run in EnergyPlus, but in this case the processed files are in epJSON format.  Additionally, in order to achieve greater alignment with other programming initiatives in EnergyPlus, take advantage of the epJSON schema structure, and make use of object-oriented programming methodologies, this program is written in Python.  This tool provides the same deliverable as its predecessor, which is an output file with regular objects that have been mapped from template objects, but in epJSON format.
 
 #### General Instructions
 
