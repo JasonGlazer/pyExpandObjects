@@ -1269,7 +1269,7 @@ class HVACTemplate(EPJSON):
                         cndw_attributes[cndw_attribute] = getattr(chw_loop[0], chw_attribute)
                     except AttributeError:
                         self.logger.debug('Chilled water attribute {} not set by user, using default for '
-                                         'condenser water'.format(chw_attribute))
+                                          'condenser water'.format(chw_attribute))
             cndw_attributes['template_plant_loop_type'] = 'CondenserWaterLoop'
             self.merge_epjson(
                 super_dictionary=plant_loop_dictionary,
