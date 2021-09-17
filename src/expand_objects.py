@@ -132,8 +132,9 @@ class ExpandObjects(EPJSON):
             self,
             template=None,
             expansion_structure=expansion_structure_location,
-            logger_level='WARNING'):
-        super().__init__(logger_level=logger_level)
+            logger_level='WARNING',
+            logger_name='console_only_logger'):
+        super().__init__(logger_level=logger_level, logger_name=logger_name)
         self.logger.setLevel(logger_level)
         self.expansion_structure = expansion_structure
         self.template = template
@@ -459,11 +460,13 @@ class ExpandObjects(EPJSON):
                                                 object_value = getattr(self, template_field)
                                         except (AttributeError, KeyError, NameError):
                                             object_value = None
-                                            self.logger.debug("A template value was attempted to be applied "
-                                                              "to an object field but the template "
-                                                              "field was not present in template object. "
-                                                              "object: {}, object fieled: {}, template field: {}"
-                                                              .format(object_type, object_field, template_field))
+                                            self.logger.debug("A template field ({}) / value ({}) pair was attempted "
+                                                              "to be applied to an object ({}) field ({}) but the "
+                                                              "transition did not complete."
+                                                              .format(template_field,
+                                                                      getattr(self, template_field, None),
+                                                                      object_type,
+                                                                      object_field))
                                         if object_value:
                                             # On a match and valid value, apply the field.
                                             # If the object is a 'super' object used in a
@@ -1288,9 +1291,9 @@ class ExpandThermostat(ExpandObjects):
     Thermostat expansion operations
     """
 
-    def __init__(self, template, logger_level='WARNING', epjson=None):
+    def __init__(self, template, logger_level='WARNING', logger_name='console_only_logger', epjson=None):
         # fill/create class attributes values with template inputs
-        super().__init__(template=template, logger_level=logger_level)
+        super().__init__(template=template, logger_level=logger_level, logger_name=logger_name)
         self.unique_name = self.template_name
         self.epjson = epjson or self.epjson
         return
@@ -1728,9 +1731,10 @@ class ExpandZone(ExpandObjects):
     fan_powered_reheat_type = FanPoweredReheatType()
     vrf_type = VRFType()
 
-    def __init__(self, template, logger_level='WARNING', epjson=None, system_class_objects=None):
+    def __init__(self, template, logger_level='WARNING', logger_name='console_only_logger',
+                 epjson=None, system_class_objects=None):
         # fill/create class attributes values with template inputs
-        super().__init__(template=template, logger_level=logger_level)
+        super().__init__(template=template, logger_level=logger_level, logger_name=logger_name)
         try:
             self.unique_name = getattr(self, 'zone_name')
             if not self.unique_name:
@@ -2227,8 +2231,8 @@ class ExpandSystem(ExpandObjects):
     dehumidification_control_type = ModifyDehumidificationControlType()
     dehumidification_control_type_detailed = DehumidificationControlTypeDetailed()
 
-    def __init__(self, template, logger_level='WARNING', epjson=None):
-        super().__init__(template=template, logger_level=logger_level)
+    def __init__(self, template, logger_level='WARNING', logger_name='console_only_logger', epjson=None):
+        super().__init__(template=template, logger_level=logger_level, logger_name=logger_name)
         # map variable variants to common value and remove original
         self.rename_attribute('cooling_coil_design_setpoint_temperature', 'cooling_coil_design_setpoint')
         # These items are removed since they require little work to apply in yaml
@@ -3121,8 +3125,8 @@ class ExpandPlantLoop(ExpandObjects):
     primary_pump_flow_and_type = PrimaryPumpFlowAndType()
     secondary_pump_flow_and_type = SecondaryPumpFlowAndType()
 
-    def __init__(self, template, logger_level='WARNING', epjson=None):
-        super().__init__(template=template, logger_level=logger_level)
+    def __init__(self, template, logger_level='WARNING', logger_name='console_only_logger', epjson=None):
+        super().__init__(template=template, logger_level=logger_level, logger_name=logger_name)
         self.unique_name = self.template_name
         self.primary_pump_flow_and_type = template
         self.secondary_pump_flow_and_type = template
@@ -3387,14 +3391,15 @@ class ExpandPlantEquipment(ExpandObjects):
     chiller_and_condenser_type = ChillerAndCondenserType()
     primary_pump_type = PrimaryPumpType()
 
-    def __init__(self, template, logger_level='WARNING', plant_loop_class_objects=None, epjson=None):
+    def __init__(self, template, logger_level='WARNING', logger_name='console_only_logger',
+                 plant_loop_class_objects=None, epjson=None):
         """
         Initialize class
 
         :param template: HVACTemplate:Plant:(Chiller|Tower|Boiler) objects
         :param plant_loop_class_objects: dictionary of ExpandPlantLoop objects
         """
-        super().__init__(template=template, logger_level=logger_level)
+        super().__init__(template=template, logger_level=logger_level, logger_name=logger_name)
         self.unique_name = self.template_name
         plant_loops = {'plant_loop_class_objects': plant_loop_class_objects} if plant_loop_class_objects else {}
         self.template_plant_loop_type = {'template': template, **plant_loops}

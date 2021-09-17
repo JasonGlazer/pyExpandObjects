@@ -32,12 +32,15 @@ class HVACTemplate(EPJSON):
             self,
             no_schema=False,
             logger_level='WARNING',
+            logger_name='console_only_logger',
             reset_stream=True):
         """
         :param no_schema: Boolean flag for skipping schema validation
         """
-        super().__init__(no_schema=no_schema, logger_level=logger_level, reset_stream=reset_stream)
+        super().__init__(no_schema=no_schema, logger_level=logger_level, logger_name=logger_name,
+                         reset_stream=reset_stream)
         self.logger_level = logger_level
+        self.logger_name = logger_name
         self.templates = {}
         self.base_objects = {}
         self.templates_systems = {}
@@ -840,6 +843,7 @@ class HVACTemplate(EPJSON):
                 template=template,
                 epjson=external_epjson_objects,
                 logger_level=self.logger_level,
+                logger_name=self.logger_name,
                 **kwargs).run()
             expanded_template_dictionary[template_name] = expanded_template
         return expanded_template_dictionary
@@ -880,17 +884,20 @@ class HVACTemplate(EPJSON):
             (thermostat_name, _), = thermostat_structure.items()
             # create control schedule based on thermostat type
             if thermostat_type == "ThermostatSetpoint:SingleHeating":
-                control_schedule = ExpandObjects(logger_level=self.logger_level).build_compact_schedule(
-                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
-                    insert_values=[1, ])
+                control_schedule = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)\
+                    .build_compact_schedule(
+                        structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                        insert_values=[1, ])
             elif thermostat_type == "ThermostatSetpoint:SingleCooling":
-                control_schedule = ExpandObjects(logger_level=self.logger_level).build_compact_schedule(
-                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
-                    insert_values=[2, ])
+                control_schedule = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)\
+                    .build_compact_schedule(
+                        structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                        insert_values=[2, ])
             elif thermostat_type == "ThermostatSetpoint:DualSetpoint":
-                control_schedule = ExpandObjects(logger_level=self.logger_level).build_compact_schedule(
-                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
-                    insert_values=[4, ])
+                control_schedule = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)\
+                    .build_compact_schedule(
+                        structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                        insert_values=[4, ])
             else:
                 raise InvalidTemplateException("Error: {} ({}) Invalid thermostat type set in ExpandThermostat"
                                                .format(thermostat_type, thermostat_object.unique_name))
@@ -964,7 +971,7 @@ class HVACTemplate(EPJSON):
         else:
             inlet_nodes = ['air_inlet_node_name', ]
         # create ExpandObjects class object to use some yaml and epjson functions
-        eo = ExpandObjects(logger_level=self.logger_level)
+        eo = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)
         eo.unique_name = getattr(system_class_object, 'template_name')
         # iterate over expanded zones and if the system reference field exists, and is for the referenced system,
         # append them in the splitter and mixer lists
@@ -1180,7 +1187,7 @@ class HVACTemplate(EPJSON):
             AirLoopHVAC:ReturnPlenum or AirLoopHVAC:ZoneMixer.
         """
         # create ExpandObjects class object to use some yaml and epjson functions
-        eo = ExpandObjects(logger_level=self.logger_level)
+        eo = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)
         eo.unique_name = getattr(system_class_object, 'template_name')
         vrf_object_name_list = []
         zone_system_template_field_name = \
@@ -1261,7 +1268,7 @@ class HVACTemplate(EPJSON):
                     try:
                         cndw_attributes[cndw_attribute] = getattr(chw_loop[0], chw_attribute)
                     except AttributeError:
-                        self.logger.info('Chilled water attribute {} not set by user, using default for '
+                        self.logger.debug('Chilled water attribute {} not set by user, using default for '
                                          'condenser water'.format(chw_attribute))
             cndw_attributes['template_plant_loop_type'] = 'CondenserWaterLoop'
             self.merge_epjson(
@@ -1528,7 +1535,7 @@ class HVACTemplate(EPJSON):
                 .format(plant_loop_class_object.template_type, plant_loop_class_object.unique_name,
                         ' '.join(msg)))
         # Use ExpandObjects class for helper functions
-        eo = ExpandObjects(logger_level=self.logger_level)
+        eo = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)
         eo.unique_name = getattr(plant_loop_class_object, 'template_name')
         # create connector objects based on template attributes
         if (plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
@@ -1675,7 +1682,7 @@ class HVACTemplate(EPJSON):
                 'equipment_object_type': sb['components'][-1]['component_object_type']
             })
         # use ExpandObjects functions
-        eo = ExpandObjects(logger_level=self.logger_level)
+        eo = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)
         eo.unique_name = getattr(plant_loop_class_object, 'template_name')
         if 'hotwater' in plant_loop_class_object.template_type.lower() or \
                 'chilledwater' in plant_loop_class_object.template_type.lower():

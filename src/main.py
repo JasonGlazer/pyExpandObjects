@@ -48,6 +48,11 @@ def build_parser():  # pragma: no cover
         default='WARNING',
         help='Specify logger level.'
     )
+    parser.add_argument(
+        '--write_logs',
+        '-wl',
+        action='store_true',
+        help='Write logs to file')
     return parser
 
 
@@ -86,9 +91,14 @@ def main(args=None):
         args.no_backup = False
     if not hasattr(args, 'no_schema'):
         args.no_schema = False
+    if getattr(args, 'write_logs', None):
+        logger_name = 'expand_objects_logger'
+    else:
+        logger_name = 'console_only_logger'
     hvt = HVACTemplate(
         no_schema=args.no_schema,
-        logger_level=args.logger_level)
+        logger_level=args.logger_level,
+        logger_name=logger_name)
     if isinstance(args.file, str):
         file_suffix_check = args.file.endswith('.epJSON')
     elif isinstance(args.file, (pathlib.PosixPath, pathlib.WindowsPath)):

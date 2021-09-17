@@ -32,6 +32,8 @@ Unless `--no_backup` is specified, this program will output three files.  If `--
 
 Option 1 - Executables can be created with PyInstaller by calling spec files.
 
+`pyinstaller --upx-dir ./ --clean linux_onefile_main.spec`
+
 * linux_onefile_main.spec - Used for linux based systems
 * main.spec (future) - Used for windows based systems
 
