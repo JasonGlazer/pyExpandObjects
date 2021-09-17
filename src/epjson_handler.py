@@ -27,8 +27,8 @@ class EPJSON(Logger):
         input_epjson_is_valid: initialized as None.  False if failed, True if passed.
     """
 
-    def __init__(self, no_schema=False, logger_level="WARNING", reset_stream=False):
-        super().__init__(logger_level=logger_level, reset_stream=reset_stream)
+    def __init__(self, no_schema=False, logger_level="WARNING", logger_name='console_only_logger', reset_stream=False):
+        super().__init__(logger_level=logger_level, logger_name=logger_name, reset_stream=reset_stream)
         self.no_schema = no_schema
         self.schema = None
         self.Validator = jsonschema.Draft4Validator
@@ -115,7 +115,6 @@ class EPJSON(Logger):
             (.* removes all objects)
         :return: epJSON with items referenced in purge_dictionary removed.
         """
-        # todo_eo: edit this function to also return the popped items in a separate dictionary
         tmp_d = copy.deepcopy(epjson)
         if purge_dictionary:
             for object_type, object_structure in epjson.items():

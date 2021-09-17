@@ -19,7 +19,7 @@ class Logger:
     def __init__(
             self,
             logging_file_name='logging.conf',
-            logger_name='expand_objects_logger',
+            logger_name='console_only_logger',
             log_file_name='base',
             logger_level='WARNING',
             reset_stream=False):

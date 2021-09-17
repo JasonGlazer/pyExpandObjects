@@ -1,5 +1,7 @@
 import os
+from argparse import Namespace
 from tests.simulations import BaseSimulationTest
+from src.main import main as py_main
 
 base_project_path = os.path.dirname(
     os.path.dirname(
@@ -13,6 +15,7 @@ def main():
     :return: None
     """
     file_directory = os.path.join(base_project_path, 'simulation', 'ExampleFiles')
+    sample_output_directory = os.path.join(base_project_path, 'simulation', 'ExampleOutputs')
     template_files = [
         i for i in os.listdir(file_directory)
         if i.startswith('HVACTemplate') and 'expanded' not in i.lower() and i.endswith('.idf')]
@@ -30,6 +33,13 @@ def main():
             file_location=os.path.join(file_directory, expanded_file),
             working_dir=file_directory)
         print('Expanded epJSON file: {}'.format(expanded_epjson_file))
+        py_main(
+            Namespace(
+                file=os.path.join(file_directory, tf.replace('.idf', '.epJSON')),
+                no_schema=False,
+                output_directory=sample_output_directory,
+                no_backup=False))
+        print('pyExpandObjects Sample file {}'.format(tf.replace('.idf', '.epJSON')))
     return
 
 

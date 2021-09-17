@@ -1,5 +1,6 @@
 from pathlib import Path
 import unittest
+import tempfile
 
 from . import BaseTest
 from src.epjson_handler import EPJSON
@@ -416,11 +417,25 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
         self.assertEqual(len(self.epjson_handler_no_schema.input_epjson.keys()), 3)
         return
 
+    def test_bad_file_path_object_returns_error(self):
+        with self.assertRaisesRegex(PyExpandObjectsFileNotFoundError, 'input is not a string'):
+            self.epjson_handler._get_json_file(
+                json_location={})
+        return
+
     def test_bad_file_path_returns_error(self):
         with self.assertRaisesRegex(PyExpandObjectsFileNotFoundError, 'file does not exist'):
             self.epjson_handler._get_json_file(
-                json_location='bad/file/path.epJSON'
-            )
+                json_location='bad/file/path.epJSON')
+        return
+
+    def test_bad_file_returns_error(self):
+        with self.assertRaisesRegex(PyExpandObjectsTypeError, 'not a valid json'):
+            with tempfile.NamedTemporaryFile(suffix='.epJSON', mode='w') as temp_file:
+                temp_file.write('bad file data')
+                temp_file.seek(0)
+                self.epjson_handler._get_json_file(
+                    json_location=temp_file.name)
         return
 
     def test_get_epjson_objects_object_type(self):
@@ -504,5 +519,3 @@ class TestEPJSONHandler(BaseTest, unittest.TestCase):
                 object_type_regexp='^Z.*',
                 object_name_regexp='^Space2.*')
         return
-
-    # todo_eo: need to provide path for user provided schema location

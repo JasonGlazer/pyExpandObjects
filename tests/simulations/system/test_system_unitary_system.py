@@ -171,7 +171,7 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
                 'heating_supply_air_flow_rate'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:no_load_supplY_air_flow_rate")
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:no_load_supplY_air_flow_rate")
     def test_no_load_supply_air_flow_rate(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
             'no_load_supply_air_flow_rate'] = 1.01
@@ -909,7 +909,7 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
                 'defrost_control'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
                                               "supplemental_heating_or_reheat_coil_type_none")
     def test_supplemental_heating_or_reheat_coil_type_none(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
@@ -921,7 +921,7 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
         self.assertIsNone(epjson_output['Coil:Heating:Electric'].get('Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'))
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
                                               "supplemental_heating_or_reheat_coil_type_electric")
     def test_supplemental_heating_or_reheat_coil_type_electric(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
@@ -934,7 +934,7 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
             epjson_output['Coil:Heating:Electric'].get('Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'))
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
                                               "supplemental_heating_or_reheat_coil_type_electric")
     def test_supplemental_heating_or_reheat_coil_type_gas(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
@@ -946,7 +946,7 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['Coil:Heating:Fuel'].get('Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'))
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
                                               "supplemental_heating_or_reheat_coil_type_hot_water")
     def test_supplemental_heating_or_reheat_coil_type_hot_water(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
@@ -958,7 +958,7 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
         self.assertIsNotNone(epjson_output['Coil:Heating:Water'].get('Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'))
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
                                               "supplemental_heating_or_reheat_coil_type_desuperheater")
     def test_supplemental_heating_or_reheat_coil_type_desuperheater(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
@@ -971,7 +971,7 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
             epjson_output['Coil:Heating:Desuperheater'].get('Sys 1 Furnace DX Cool SnglSpd Supp Heating Coil'))
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
                                               "supplemental_heating_or_reheat_coil_availability_schedule_name")
     def test_supplemental_heating_or_reheat_coil_availability_schedule_name(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][
@@ -988,7 +988,7 @@ class TestSimulationsSystemUnitarySystem(BaseSimulationTest):
                 'availability_schedule_name'])
         return
 
-    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitaryHeatPump:"
+    @BaseSimulationTest._test_logger(doc_text="Simulation:System:UnitarySystem:"
                                               "supplemental_heating_or_reheat_coil_capacity")
     def test_supplemental_heating_or_reheat_coil_capacity(self):
         self.base_epjson['HVACTemplate:System:UnitarySystem']['Sys 1 Furnace DX Cool SnglSpd'][

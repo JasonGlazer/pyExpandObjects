@@ -48,6 +48,11 @@ def build_parser():  # pragma: no cover
         default='WARNING',
         help='Specify logger level.'
     )
+    parser.add_argument(
+        '--write_logs',
+        '-wl',
+        action='store_true',
+        help='Write logs to file')
     return parser
 
 
@@ -86,15 +91,20 @@ def main(args=None):
         args.no_backup = False
     if not hasattr(args, 'no_schema'):
         args.no_schema = False
+    if getattr(args, 'write_logs', None):
+        logger_name = 'expand_objects_logger'
+    else:
+        logger_name = 'console_only_logger'
     hvt = HVACTemplate(
         no_schema=args.no_schema,
-        logger_level=args.logger_level)
+        logger_level=args.logger_level,
+        logger_name=logger_name)
     if isinstance(args.file, str):
         file_suffix_check = args.file.endswith('.epJSON')
     elif isinstance(args.file, (pathlib.PosixPath, pathlib.WindowsPath)):
         file_suffix_check = args.file.suffix == '.epJSON'
     else:
-        raise InvalidInputException('Invalid input file reference')  # pragma: no cover - unlikely to be hit
+        raise InvalidInputException('Invalid input file reference')
     output = {}
     raw_output = {'Output:PreprocessorMessage': ''}
     if file_suffix_check:
@@ -181,6 +191,10 @@ def main(args=None):
 
 if __name__ == "__main__":
     epJSON_parser = build_parser()
-    epJSON_args = epJSON_parser.parse_args()
+    epJSON_args, unknown_args = epJSON_parser.parse_known_args()
+    # If unknown arguments are passed, and no file specified, then put the arguments
+    #  in the file namespace.
+    if not epJSON_args.file and unknown_args:
+        epJSON_args.file = unknown_args[0]
     main(epJSON_args)
     logging.shutdown()

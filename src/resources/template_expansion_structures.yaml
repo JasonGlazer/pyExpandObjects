@@ -7958,7 +7958,7 @@ OptionTree:
           Transitions:
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-#            - SetpointManager:SingleZone:Cooling:
+#            - SetpointManager:SingleZone:Cooling: # todo_eo: Re-enable when EO gets updated
 #                cooling_design_supply_air_temperature: minimum_supply_air_temperature
 #            - SetpointManager:SingleZone:Cooling:
 #                heating_design_supply_air_temperature: maximum_supply_air_temperature
@@ -8054,7 +8054,7 @@ OptionTree:
             Transitions:
               - *SizingSystemCommonTransitions
               - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-#              - SetpointManager:SingleZone:Cooling:
+#              - SetpointManager:SingleZone:Cooling: # todo_eo: Re-enable when EO gets updated
 #                  cooling_design_supply_air_temperature: minimum_supply_air_temperature
             Mappings:
               - *SizingSystemCommonMappingsCooling
@@ -8389,7 +8389,7 @@ OptionTree:
             - *AvailabilityManagerScheduledCommonTransitions
             - *SizingSystemCommonTransitions
             - *SizingSystemCommonTransitionsHeatingSupplyAirFlowRate
-#            - SetpointManager:SingleZone:Cooling:
+#            - SetpointManager:SingleZone:Cooling: # todo_eo: Re-enable when EO gets updated
 #                cooling_design_supply_air_temperature: minimum_supply_air_temperature
           Mappings:
             - *SizingSystemCommonMappingsCooling

@@ -32,12 +32,15 @@ class HVACTemplate(EPJSON):
             self,
             no_schema=False,
             logger_level='WARNING',
+            logger_name='console_only_logger',
             reset_stream=True):
         """
         :param no_schema: Boolean flag for skipping schema validation
         """
-        super().__init__(no_schema=no_schema, logger_level=logger_level, reset_stream=reset_stream)
+        super().__init__(no_schema=no_schema, logger_level=logger_level, logger_name=logger_name,
+                         reset_stream=reset_stream)
         self.logger_level = logger_level
+        self.logger_name = logger_name
         self.templates = {}
         self.base_objects = {}
         self.templates_systems = {}
@@ -160,8 +163,8 @@ class HVACTemplate(EPJSON):
                             'supply_fan_placement': 'DrawThrough',
                             'cooling_coil_type': 'Coil:Cooling:WaterToAirHeatPump:EquationFit',
                             'cooling_coil_gross_rated_cop': 3.5,
-                            # todo_eo: template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched for this field
-                            # Not default efficiency for Fan:OnOff
+                            # todo_eo: The template and ZoneHVAC:WaterToAirHeatPump defaults are mismatched for this
+                            #  field. This is not default efficiency for Fan:OnOff
                             'supply_fan_total_efficiency': 0.7,
                             'heat_pump_heating_coil_type': 'Coil:Heating:WaterToAirHeatPump:EquationFit',
                             'heat_pump_heating_coil_gross_rated_cop': 4.2,
@@ -840,6 +843,7 @@ class HVACTemplate(EPJSON):
                 template=template,
                 epjson=external_epjson_objects,
                 logger_level=self.logger_level,
+                logger_name=self.logger_name,
                 **kwargs).run()
             expanded_template_dictionary[template_name] = expanded_template
         return expanded_template_dictionary
@@ -880,17 +884,20 @@ class HVACTemplate(EPJSON):
             (thermostat_name, _), = thermostat_structure.items()
             # create control schedule based on thermostat type
             if thermostat_type == "ThermostatSetpoint:SingleHeating":
-                control_schedule = ExpandObjects(logger_level=self.logger_level).build_compact_schedule(
-                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
-                    insert_values=[1, ])
+                control_schedule = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)\
+                    .build_compact_schedule(
+                        structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                        insert_values=[1, ])
             elif thermostat_type == "ThermostatSetpoint:SingleCooling":
-                control_schedule = ExpandObjects(logger_level=self.logger_level).build_compact_schedule(
-                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
-                    insert_values=[2, ])
+                control_schedule = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)\
+                    .build_compact_schedule(
+                        structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                        insert_values=[2, ])
             elif thermostat_type == "ThermostatSetpoint:DualSetpoint":
-                control_schedule = ExpandObjects(logger_level=self.logger_level).build_compact_schedule(
-                    structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
-                    insert_values=[4, ])
+                control_schedule = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)\
+                    .build_compact_schedule(
+                        structure_hierarchy=['Objects', 'Common', 'Objects', 'Schedule', 'Compact', 'ALWAYS_VAL'],
+                        insert_values=[4, ])
             else:
                 raise InvalidTemplateException("Error: {} ({}) Invalid thermostat type set in ExpandThermostat"
                                                .format(thermostat_type, thermostat_object.unique_name))
@@ -964,7 +971,7 @@ class HVACTemplate(EPJSON):
         else:
             inlet_nodes = ['air_inlet_node_name', ]
         # create ExpandObjects class object to use some yaml and epjson functions
-        eo = ExpandObjects(logger_level=self.logger_level)
+        eo = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)
         eo.unique_name = getattr(system_class_object, 'template_name')
         # iterate over expanded zones and if the system reference field exists, and is for the referenced system,
         # append them in the splitter and mixer lists
@@ -1108,7 +1115,6 @@ class HVACTemplate(EPJSON):
                 (_, supply_path_object_fields), = supply_path_object.items()
                 supply_path_object_fields['components'].extend(zone_supply_plenums)
             # Rename objects if multi-inlet node system is used
-            # todo_eo: this can possibly be removed it the unique name is changed on object creations
             if system_class_object.template_type == 'HVACTemplate:System:DualDuct':
                 (_, supply_object_fields), = supply_object.items()
                 (_, supply_path_object_fields), = supply_path_object.items()
@@ -1181,7 +1187,7 @@ class HVACTemplate(EPJSON):
             AirLoopHVAC:ReturnPlenum or AirLoopHVAC:ZoneMixer.
         """
         # create ExpandObjects class object to use some yaml and epjson functions
-        eo = ExpandObjects(logger_level=self.logger_level)
+        eo = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)
         eo.unique_name = getattr(system_class_object, 'template_name')
         vrf_object_name_list = []
         zone_system_template_field_name = \
@@ -1262,8 +1268,8 @@ class HVACTemplate(EPJSON):
                     try:
                         cndw_attributes[cndw_attribute] = getattr(chw_loop[0], chw_attribute)
                     except AttributeError:
-                        self.logger.info('Chilled water attribute {} not set by user, using default for '
-                                         'condenser water'.format(chw_attribute))
+                        self.logger.debug('Chilled water attribute {} not set by user, using default for '
+                                          'condenser water'.format(chw_attribute))
             cndw_attributes['template_plant_loop_type'] = 'CondenserWaterLoop'
             self.merge_epjson(
                 super_dictionary=plant_loop_dictionary,
@@ -1360,8 +1366,8 @@ class HVACTemplate(EPJSON):
                         'Error: In {} ({}) A branch object failed to create component fields {}'
                         .format(pe.template_type, pe.template_name, branch_name))
             # Special handling for chillers with condenser water and chilled water branches
-            # todo_eo: find a better way to separate the branches instead of searching for chw or cnd in the branch
-            #  names.  It may be unreliable with future user inputs.
+            # todo_eo: Currently the chilled and condenser water branches are separated by parsing the names.  A more
+            #  robust solution should be investigated.
             if pe.template_type in ['HVACTemplate:Plant:Chiller', 'HVACTemplate:Plant:Chiller:ObjectReference'] \
                     and getattr(pe, 'condenser_type', 'WaterCooled') == 'WaterCooled':
                 for branch_name, branch_structure in branch_objects.items():
@@ -1391,7 +1397,6 @@ class HVACTemplate(EPJSON):
         :return: epJSON formatted dictionary of branch objects
         """
         # create list of regex matches for the given loop
-        # todo_eo: object searching regex need to be expanded and/or optimized
         if 'chilledwater' in plant_loop_class_object.template_type.lower():
             branch_rgx = ['^Coil:Cooling:Water($|:DetailedGeometry)+', ]
         elif 'hotwater' in plant_loop_class_object.template_type.lower():
@@ -1530,7 +1535,7 @@ class HVACTemplate(EPJSON):
                 .format(plant_loop_class_object.template_type, plant_loop_class_object.unique_name,
                         ' '.join(msg)))
         # Use ExpandObjects class for helper functions
-        eo = ExpandObjects(logger_level=self.logger_level)
+        eo = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)
         eo.unique_name = getattr(plant_loop_class_object, 'template_name')
         # create connector objects based on template attributes
         if (plant_loop_class_object.template_type == 'HVACTemplate:Plant:ChilledWaterLoop' and getattr(
@@ -1677,7 +1682,7 @@ class HVACTemplate(EPJSON):
                 'equipment_object_type': sb['components'][-1]['component_object_type']
             })
         # use ExpandObjects functions
-        eo = ExpandObjects(logger_level=self.logger_level)
+        eo = ExpandObjects(logger_level=self.logger_level, logger_name=self.logger_name)
         eo.unique_name = getattr(plant_loop_class_object, 'template_name')
         if 'hotwater' in plant_loop_class_object.template_type.lower() or \
                 'chilledwater' in plant_loop_class_object.template_type.lower():
@@ -1791,9 +1796,9 @@ class HVACTemplate(EPJSON):
             *[j.epjson for i, j in self.expanded_plant_loops.items()],
             *[j.epjson for i, j in self.expanded_plant_equipment.items()]]
         output_epjson = {}
-        # todo_eo: unique name override enabled due to ObjectReference templates
-        #  having the base equipment in them as well.
-        #  look into better solution to turn this back off
+        # The unique_name_override option is enabled here due to ObjectReference templates having the base equipment
+        # in them as well as being present in the base epjson.  A better solution should be investigated so that this
+        # option can be turned back off.
         for merge_dictionary in merge_list:
             self.merge_epjson(
                 super_dictionary=output_epjson,
