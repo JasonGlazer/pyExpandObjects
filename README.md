@@ -5,7 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/john-grando/pyExpandObjects/badge.svg?branch=main)](https://coveralls.io/github/john-grando/pyExpandObjects?branch=main)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/john-grando/pyExpandObjects/Flake8?label=pep8)](https://github.com/john-grando/pyExpandObjects/actions)
 
-HVACTemplate and ExpandObjects support for epJSON files used with the EnergyPlus simulation program.
+Support tool for the EnergyPlus simulation program which pre-processes epJSON files containing HVACTemplate objects.
 
 #### Overview
 
