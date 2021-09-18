@@ -9,7 +9,7 @@ Support tool for the EnergyPlus simulation program which pre-processes epJSON fi
 
 #### Overview
 
-Much like the existing ExpandObjects program that works with IDF files in EnergyPlus, pyExpandObjects expands HVACTemplate objects in a source file into an expanded file that can be directly run in EnergyPlus, but in this case the processed files are in epJSON format.  Additionally, in order to achieve greater alignment with other programming initiatives in EnergyPlus, take advantage of the epJSON schema structure, and make use of object-oriented programming methodologies, this program is written in Python.  This tool provides the same deliverable as its predecessor, which is an output file with regular objects that have been mapped from template objects, but in epJSON format.
+Much like the existing ExpandObjects program that works with IDF files in EnergyPlus, pyExpandObjects expands HVACTemplate objects from a source file into an expanded file that can be directly run in EnergyPlus, but in this case the processed files are in epJSON format.  Additionally, in order to achieve greater alignment with other programming initiatives in EnergyPlus, take advantage of the epJSON schema structure, and make use of object-oriented programming methodologies, this program is written in Python.  This tool provides the same deliverable as its predecessor, which is an output file with regular objects that have been mapped from template objects, but in epJSON format.
 
 #### General Instructions
 
