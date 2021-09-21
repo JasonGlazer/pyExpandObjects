@@ -1,6 +1,7 @@
 import argparse
 import os
 import pathlib
+import re
 
 from hvac_template import HVACTemplate
 from epjson_handler import EPJSON
@@ -8,6 +9,23 @@ import logging
 import json
 
 from custom_exceptions import InvalidInputException
+
+
+def get_property(prop):
+    """
+    Get property value from __init__.py file in src directory
+
+    :param prop: Property name
+    :return: Return value for a given property
+    """
+    try:
+        result = re.search(
+            r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format(prop),
+            open(os.path.join(os.path.dirname(__file__), '__init__.py')).read())
+        output = result.group(1)
+    except AttributeError:
+        output = '{} could not be found'.format(prop)
+    return output
 
 
 def build_parser():  # pragma: no cover
@@ -49,6 +67,11 @@ def build_parser():  # pragma: no cover
         help='Specify logger level.'
     )
     parser.add_argument(
+        '--version',
+        '-v',
+        action='store_true',
+        help='Display version information')
+    parser.add_argument(
         '--write_logs',
         '-wl',
         action='store_true',
@@ -84,6 +107,10 @@ def output_preprocessor_message_formatter(output_stream):
 
 
 def main(args=None):
+    if hasattr(args, 'version') and args.version:
+        version = get_property('__version__')
+        print('pyExpandObjects Version: {}'.format(version))
+        return
     # set the arg defaults for testing when Namespace is used
     if not hasattr(args, 'logger_level'):
         args.logger_level = 'WARNING'
