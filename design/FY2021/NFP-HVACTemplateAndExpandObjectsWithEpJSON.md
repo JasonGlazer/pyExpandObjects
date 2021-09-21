@@ -114,7 +114,12 @@ present in the idf */ epJSON* file.
 *It is not possible to comment sections of code in JSON formatted files.  Therefore, the output expanded files do not have the ability to retain the HVACTemplate objects used to create the current document.  If the original file were to be overwritten, then all template data would be lost.  In an attempt to provide and additional layer of backups, the -nb option is set to False by default which means two files will be created: one with HVACTemplate objects, and one with all other objects.  With these files, the original input file can be created, or specific objects can be copied and pasted.*
 
 ```
--ns --no-schema     Skip all schema validation checks
+-o --output_directory : Specify output directory.  If not provided, then input file directory is used.  
+```
+
+
+```
+-ns --no-schema : Skip all schema validation checks
 ```
 
 *One benefit of the JSON file format is that files can be validated before simulation.  This means that erroneous inputs can be found before simulation, which saves time debugging output files and reading through logs, unsure of the error source.  This includes syntax errors, values that are out of range, and missing required inputs.  However, situations may occur when the user wishes to skip schema validation, in which case this flag should be used.  By default, schema validation is enabled.*
