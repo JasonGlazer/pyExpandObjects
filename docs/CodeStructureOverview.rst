@@ -327,10 +327,28 @@ References to object field values may take multiple forms.  This feature is inte
 Command Line Interface
 ----------------------
 
-`-xb --output-backups     Output separated epJSON`
+`-f, --file FILE\_NAME : Specify file to expand`
 
-It is not possible to comment sections of code in JSON formatted files.  Therefore, \<original-file-name\>_expanded.epJSON files do not have the ability to retain the HVACTemplate objects used to create the current document.  If the original file were to be overwritten, then all template data would be lost.  In an attempt to provide and additional layer of backups, this option will output two files: one with HVACTemplate objects, and one with all other objects.  With these files, the original input file can be created, or specific objects can be copied and pasted.
+This argument may be omitted.  A value passed to the program with no argument will be assumed to be a file name.
 
-`-ns --no-schema     Skip all schema validation checks`
+`-h, --help : Display help information`
 
-One benefit of the JSON file format is that files can be validated before simulation.  This means that erroneous inputs can be found before simulation, which saves time debugging output files and reading through logs, unsure of the error source.  This includes syntax errors, values that are out of range, and missing required inputs.  However, situations may occur when the user wishes to skip schema validation, in which case this flag should be used.
+`-nb, --no\_backup : Do no create backup files`
+
+It is not possible to comment sections of code in JSON formatted files.  Therefore, the output expanded files do not have the ability to retain the HVACTemplate objects used to create the current document.  If the original file were to be overwritten, then all template data would be lost.  In an attempt to provide and additional layer of backups, the -nb option is set to False by default which means two files will be created: one with HVACTemplate objects, and one with all other objects.  With these files, the original input file can be created, or specific objects can be copied and pasted.
+
+`-ns, --no\_schema : Skip schema validation checks for pyExpandObjects.  Note, this does not skip other schema validation operations within EnergyPlus itself.`
+
+One benefit of the JSON file format is that files can be validated before simulation.  This means that erroneous inputs can be found before simulation, which saves time debugging output files and reading through logs, unsure of the error source.  This includes syntax errors, values that are out of range, and missing required inputs.  However, situations may occur when the user wishes to skip schema validation, in which case this flag should be used.  By default, schema validation is enabled.
+
+`-o, --output\_directory : Specify output directory.  If not provided, then input file directory is used.`
+
+`-l, --logger\_level LOGGER\_LEVEL: Set logging output level`
+
+Various levels of logging output are available for debugging, and other, purposes.  A valid level, consistent with Python logging naming structure (i.e. DEBUG, INFO, WARNING, ERROR, CRITICAL), must be provided.
+
+`-v, --version : Display version information`
+
+`-wl, --write-logs : Write logs to file`
+
+When this expansion tool is run from its source directory, the output can be written to a file, which is located in the logs directory (logs/base.log).
