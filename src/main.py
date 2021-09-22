@@ -8,8 +8,6 @@ from epjson_handler import EPJSON
 import logging
 import json
 
-from custom_exceptions import InvalidInputException
-
 
 def get_property(prop):
     """
