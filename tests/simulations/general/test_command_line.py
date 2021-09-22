@@ -1,6 +1,5 @@
 from pathlib import Path
 import subprocess
-import tempfile
 
 from tests.simulations import BaseSimulationTest
 
