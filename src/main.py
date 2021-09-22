@@ -131,7 +131,8 @@ def main(args=None):
     elif isinstance(args.file, (pathlib.PosixPath, pathlib.WindowsPath)):
         file_suffix_check = args.file.suffix == '.epJSON'
     else:
-        raise InvalidInputException('Invalid input file reference')
+        hvt.logger.error('Error: Invalid input file reference')
+        return
     # get or set output directory
     if hasattr(args, 'output_directory') and args.output_directory:
         if not os.path.exists(args.output_directory):
@@ -160,7 +161,8 @@ def main(args=None):
             if not args.no_backup else None
         # check that file names are not the same as the original
         if input_file_name in [expanded_file_name, hvac_templates_file_name, base_file_name]:
-            raise InvalidInputException('file could not be renamed')  # pragma: no cover - unlikely to be hit
+            hvt.logger.error('Error: file could not be renamed')  # pragma: no cover - unlikely to be hit
+            return
         if os.path.exists(args.file):
             hvt.logger.info('Processing %s', args.file)
             # QA skipped since any unanticipated condition should still get caught and returned to user.
