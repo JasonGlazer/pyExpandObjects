@@ -1,6 +1,7 @@
 import argparse
 import os
 import pathlib
+import re
 
 from hvac_template import HVACTemplate
 from epjson_handler import EPJSON
@@ -8,6 +9,23 @@ import logging
 import json
 
 from custom_exceptions import InvalidInputException
+
+
+def get_property(prop):
+    """
+    Get property value from __init__.py file in src directory
+
+    :param prop: Property name
+    :return: Return value for a given property
+    """
+    try:
+        result = re.search(
+            r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format(prop),
+            open(os.path.join(os.path.dirname(__file__), '__init__.py')).read())
+        output = result.group(1)
+    except AttributeError:
+        output = '{} could not be found'.format(prop)
+    return output
 
 
 def build_parser():  # pragma: no cover
@@ -49,6 +67,11 @@ def build_parser():  # pragma: no cover
         help='Specify logger level.'
     )
     parser.add_argument(
+        '--version',
+        '-v',
+        action='store_true',
+        help='Display version information')
+    parser.add_argument(
         '--write_logs',
         '-wl',
         action='store_true',
@@ -84,6 +107,10 @@ def output_preprocessor_message_formatter(output_stream):
 
 
 def main(args=None):
+    if hasattr(args, 'version') and args.version:
+        version = get_property('__version__')
+        print('pyExpandObjects Version: {}'.format(version))
+        return
     # set the arg defaults for testing when Namespace is used
     if not hasattr(args, 'logger_level'):
         args.logger_level = 'WARNING'
@@ -105,47 +132,50 @@ def main(args=None):
         file_suffix_check = args.file.suffix == '.epJSON'
     else:
         raise InvalidInputException('Invalid input file reference')
-    output = {}
-    raw_output = {'Output:PreprocessorMessage': ''}
+    # get or set output directory
+    if hasattr(args, 'output_directory') and args.output_directory:
+        if not os.path.exists(args.output_directory):
+            hvt.logger.error('Specified output directory %s does not exist. '
+                             'Files will be written to default directory %s.',
+                             args.output_directory,
+                             os.path.dirname(os.path.abspath(args.file)))
+            output_directory = os.path.dirname(os.path.abspath(args.file))
+        else:
+            output_directory = args.output_directory
+    else:
+        output_directory = os.path.dirname(os.path.abspath(args.file))
+    # start blank dictionary for processing
+    output = {
+        'epJSON': {},
+        'Output:PreprocessorMessage': ''}
     if file_suffix_check:
+        # write output and keep list of written files
+        output_file_dictionary = {}
+        # create file names and raise error if modified name is the same as the base name
+        input_file_name = os.path.basename(args.file)
+        expanded_file_name = input_file_name.replace('.epJSON', '_expanded.epJSON')
+        hvac_templates_file_name = input_file_name.replace('.epJSON', '_hvac_templates.epJSON') \
+            if not args.no_backup else None
+        base_file_name = input_file_name.replace('.epJSON', '_base.epJSON') \
+            if not args.no_backup else None
+        # check that file names are not the same as the original
+        if input_file_name in [expanded_file_name, hvac_templates_file_name, base_file_name]:
+            raise InvalidInputException('file could not be renamed')  # pragma: no cover - unlikely to be hit
         if os.path.exists(args.file):
             hvt.logger.info('Processing %s', args.file)
             # QA skipped since any unanticipated condition should still get caught and returned to user.
             try:
-                output = hvt.run(input_epjson=args.file)
-                output['Output:PreprocessorMessage'] = hvt.stream.getvalue()
+                output.update(hvt.run(input_epjson=args.file))
+                output_file_dictionary['expanded'] = os.path.join(output_directory, str(expanded_file_name))
             except:  # noqa: E722
-                output = {'Output:PreprocessorMessage': hvt.stream.getvalue()}
-            raw_output['Output:PreprocessorMessage'] = output['Output:PreprocessorMessage']
-            # merge hvac template output to output dictionary
-            # for output_key, output_val in hvt_output.items():
-            #     if output_key == 'Output:PreprocessorMessage':
-            #         output['Output:PreprocessorMessage'] = '\n'.join([
-            #             output['Output:PreprocessorMessage'],
-            #             hvt_output['Output:PreprocessorMessage']])
-            #     else:
-            #         output[output_key] = output_val
-            # get output directory
-            if hasattr(args, 'output_directory') and args.output_directory:
-                output_directory = args.output_directory
-            else:
-                output_directory = os.path.dirname(os.path.abspath(args.file))
-            # create file names and raise error if modified name is the same as the base name
-            input_file_name = os.path.basename(args.file)
-            expanded_file_name = input_file_name.replace('.epJSON', '_expanded.epJSON')
-            hvac_templates_file_name = input_file_name.replace('.epJSON', '_hvac_templates.epJSON') \
-                if not args.no_backup else None
-            base_file_name = input_file_name.replace('.epJSON', '_base.epJSON') \
-                if not args.no_backup else None
-            # check that file names are not the same as the original
-            if input_file_name in [expanded_file_name, hvac_templates_file_name, base_file_name]:
-                raise InvalidInputException('file could not be renamed')  # pragma: no cover - unlikely to be hit
-            # write output and keep list of written files
-            output_file_dictionary = {}
+                output.update({'Output:PreprocessorMessage': hvt.stream.getvalue()})
             if output.get('epJSON'):
                 # verify expanded epJSON is valid if schema validation is turned on.
                 if not args.no_schema:
-                    ej = EPJSON(no_schema=False)
+                    ej = EPJSON(
+                        no_schema=False,
+                        logger_level=args.logger_level,
+                        logger_name=logger_name)
                     try:
                         ej.epjson_process(epjson_ref=output['epJSON'])
                     except:  # noqa: E722
@@ -153,12 +183,6 @@ def main(args=None):
                             output['Output:PreprocessorMessage'],
                             'Error: Output epJSON schema validation failed. See output files for details.\n',
                             ej.stream.getvalue()])
-                raw_output['Output:PreprocessorMessage'] = output['Output:PreprocessorMessage']
-                output['epJSON']['Output:PreprocessorMessage'] = \
-                    output_preprocessor_message_formatter(output['Output:PreprocessorMessage'])
-                with open(os.path.join(output_directory, expanded_file_name), 'w') as expanded_file:
-                    json.dump(output['epJSON'], expanded_file, indent=4, sort_keys=True)
-                    output_file_dictionary['expanded'] = os.path.join(output_directory, str(expanded_file_name))
             if not args.no_backup and output.get('epJSON_hvac_templates'):
                 with open(os.path.join(output_directory, hvac_templates_file_name), 'w') as hvac_template_file:
                     json.dump(output['epJSON_hvac_templates'], hvac_template_file, indent=4, sort_keys=True)
@@ -168,24 +192,38 @@ def main(args=None):
                 with open(os.path.join(output_directory, base_file_name), 'w') as base_file:
                     json.dump(output['epJSON_base'], base_file, indent=4, sort_keys=True)
                     output_file_dictionary['base'] = os.path.join(output_directory, str(base_file_name))
-            if not output_file_dictionary:
-                raw_output['Output:PreprocessorMessage'] = '\n'.join([
-                    raw_output['Output:PreprocessorMessage'],
-                    'Error: No output files written'])
+            if output_file_dictionary and output['epJSON']:
+                output_file_dictionary['expanded'] = os.path.join(output_directory, str(expanded_file_name))
+                hvt.logger.info('Output files written %s', output_file_dictionary)
             else:
-                raw_output['Output:PreprocessorMessage'] = r'\n'.join([
-                    raw_output['Output:PreprocessorMessage'],
-                    'Output files written: {}'.format(output_file_dictionary)])
+                output['Output:PreprocessorMessage'] = '\n'.join([
+                    output['Output:PreprocessorMessage'],
+                    'Error: No expanded epJSON object created, check Output:Preprocessor object at {} for details'
+                    .format(os.path.join(output_directory, str(expanded_file_name)))])
+                hvt.logger.error('Error: No expanded epJSON object created, check '
+                                 'Output:Preprocessor object at %s for details',
+                                 os.path.join(output_directory, str(expanded_file_name)))
             output['output_files'] = output_file_dictionary
         else:
-            raw_output['Output:PreprocessorMessage'] = r'\n'.join([
-                raw_output['Output:PreprocessorMessage'],
+            output['Output:PreprocessorMessage'] = r'\n'.join([
+                output['Output:PreprocessorMessage'],
                 'Error: File does not exist: {}.  File not processed'.format(args.file)])
+            hvt.logger.error('Error: File does not exist: %s.  File not processed', args.file)
+        output['epJSON']['Output:PreprocessorMessage'] = \
+            output_preprocessor_message_formatter(output['Output:PreprocessorMessage'])
+        # Write out epJSON file.
+        with open(os.path.join(output_directory, expanded_file_name), 'w') as expanded_file:
+            json.dump(output['epJSON'], expanded_file, indent=4, sort_keys=True)
+        # write out successful file creation to base preprocessor object
+        if output_file_dictionary and output['epJSON']:
+            output['Output:PreprocessorMessage'] = '\n'.join([
+                output['Output:PreprocessorMessage'],
+                'Output files written: {}'.format(output_file_dictionary)])
     else:
-        raw_output['Output:PreprocessorMessage'] = r'\n'.join([
-            raw_output['Output:PreprocessorMessage'],
+        output['Output:PreprocessorMessage'] = r'\n'.join([
+            output['Output:PreprocessorMessage'],
             'Error: Bad file extension for {}.  File not processed'.format(args.file)])
-    output.update({'Output:PreprocessorMessage': raw_output['Output:PreprocessorMessage']})
+        hvt.logger.error('Error: Bad file extension for %s.  File not processed', args.file)
     return output
 
 
