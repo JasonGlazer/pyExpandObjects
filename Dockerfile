@@ -30,5 +30,5 @@ WORKDIR /home/project/pyExpandObjects/
 
 RUN python -m pip install -r requirements.txt
 
-RUN pyinstaller linux_onefile_main.spec
+RUN pyinstaller onefile_main.spec
 #RUN pyinstaller main.spec
