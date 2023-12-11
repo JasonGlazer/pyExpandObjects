@@ -17,4 +17,4 @@ pandas==1.2.3
 nose-exclude==0.5.0
 
 # for building packages
-pyinstaller==4.2
+pyinstaller==5.13.1
